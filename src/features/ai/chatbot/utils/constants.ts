@@ -6,6 +6,11 @@ export const CHATBOT_SETTINGS_STORAGE_KEY = "chatbot.settings.v1";
 
 export const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
   model: "",
+  temperature: 0.7,
+  maxTokens: 2048,
+  systemPrompt: "",
+  enableMemory: false,
+  enableContext: false,
   webSearchEnabled: false,
   useGlobalContext: false,
   useLocalContext: false,

@@ -78,13 +78,13 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
     parts.push(rule.pattern);
     parts.push(rule.flags);
   }
-  (rule.similar ?? []).forEach((sim) => {
+  (rule.similar ?? []).forEach((sim: { pattern: string; flags?: string | undefined; suggestion: string; comment?: string | null | undefined }) => {
     parts.push(sim.pattern);
     parts.push(sim.flags ?? "");
     parts.push(sim.suggestion);
     parts.push(sim.comment ?? "");
   });
-  (rule.autofix?.operations ?? []).forEach((op) => {
+  (rule.autofix?.operations ?? []).forEach((op: PromptAutofixOperation) => {
     parts.push(op.kind);
     if (op.kind === "replace") {
       parts.push(op.pattern);
@@ -331,7 +331,7 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
                   <div className="text-[11px] text-gray-500">Similar patterns (suggestions)</div>
                   {rule.similar && rule.similar.length > 0 ? (
                     <div className="space-y-2">
-                      {rule.similar.map((sim, index: number) => (
+                      {rule.similar.map((sim: { pattern: string; flags?: string | undefined; suggestion: string; comment?: string | null | undefined }, index: number) => (
                         <div
                           key={`${rule.id}:${index}`}
                           className="rounded-md border border-border bg-card/50 p-2 text-[11px] text-gray-200"

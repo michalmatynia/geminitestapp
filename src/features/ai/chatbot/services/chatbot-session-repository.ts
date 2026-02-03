@@ -15,7 +15,9 @@ function documentToSession(doc: ChatSessionDocument): ChatSession {
   return {
     id: doc._id.toString(),
     title: doc.title,
+    userId: null,
     messages: doc.messages,
+    messageCount: doc.messages.length,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     settings: doc.settings,
@@ -68,7 +70,9 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
     return {
       id: result.insertedId.toString(),
       title: doc.title,
+      userId: null,
       messages: doc.messages,
+      messageCount: doc.messages.length,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       settings: doc.settings,

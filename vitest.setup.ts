@@ -282,7 +282,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       return data.map(item => {
           const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-          return applyInclude(withDefaults, args?.include, name);
+          return applyInclude(withDefaults, args?.include, name, getStore);
       });
     }),
     findUnique: vi.fn().mockImplementation(async (args) => {
@@ -290,7 +290,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       const item = data.find(item => matches(item, args.where)) || null;
       if (!item) return null;
       const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-      return applyInclude(withDefaults, args?.include, name);
+      return applyInclude(withDefaults, args?.include, name, getStore);
     }),
     findFirst: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -300,7 +300,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       if (!item) return null;
       const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-      return applyInclude(withDefaults, args?.include, name);
+      return applyInclude(withDefaults, args?.include, name, getStore);
     }),
     create: vi.fn().mockImplementation(async (args) => {
       const data = { ...args?.data };
@@ -327,7 +327,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       });
 
       getStore(name).push(newItem);
-      return applyInclude(newItem, args?.include, name);
+      return applyInclude(newItem, args?.include, name, getStore);
     }),
     createMany: vi.fn().mockImplementation(async (args) => {
       const data = Array.isArray(args?.data) ? args.data : [args?.data];

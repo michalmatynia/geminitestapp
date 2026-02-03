@@ -495,6 +495,7 @@ export default function Menu(): React.ReactNode {
           href: "/admin/image-studio",
           keywords: ["images", "mask", "polygon", "relight", "studio"],
           children: [
+            { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio/settings" },
             { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio/validation-patterns" },
           ],
         },

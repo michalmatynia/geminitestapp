@@ -1,5 +1,5 @@
-import { DtoBase, NamedDto } from '../types/base';
-import type { Status } from '../types/common';
+import { DtoBase } from '../types/base';
+import type { Status } from './common';
 
 /**
  * DTO for a single chat message
@@ -15,11 +15,12 @@ export interface ChatMessageDto {
 /**
  * DTO for a chat session
  */
-export interface ChatbotSessionDto extends NamedDto {
+export interface ChatbotSessionDto extends DtoBase {
+  title: string;
   userId: string | null;
   messages: ChatMessageDto[];
   messageCount: number;
-  settings?: ChatbotSessionSettingsDto;
+  settings?: ChatbotSessionSettingsDto | undefined;
 }
 
 /**
@@ -61,6 +62,8 @@ export interface ChatbotSettingsDto {
   enableMemory: boolean;
   enableContext: boolean;
   webSearchEnabled: boolean;
+  useGlobalContext: boolean;
+  useLocalContext: boolean;
   localContextMode: "override" | "append";
   searchProvider: string;
   playwrightPersonaId?: string | null;
@@ -122,7 +125,7 @@ export interface SendMessageDto {
 /**
  * DTO for updating chatbot settings
  */
-export type UpdateChatbotSettingsDto = Partial<ChatbotSettingsDto>;
+export interface UpdateChatbotSettingsDto extends Partial<ChatbotSettingsDto> {}
 
 /**
  * DTO for chatbot debug state
@@ -138,15 +141,23 @@ export interface ChatbotDebugStateDto {
 }
 
 /**
+ * DTO for chatbot job payload
+ */
+export interface ChatbotJobPayloadDto {
+  messages: ChatMessageDto[];
+  model: string;
+}
+
+/**
  * DTO for a chatbot job (AI processing)
  */
 export interface ChatbotJobDto extends DtoBase {
   sessionId: string;
   status: Status;
-  model?: string;
-  payload: Record<string, unknown>;
-  resultText?: string;
-  errorMessage?: string;
+  model?: string | undefined;
+  payload: ChatbotJobPayloadDto;
+  resultText?: string | undefined;
+  errorMessage?: string | undefined;
 }
 
 /**

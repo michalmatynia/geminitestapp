@@ -253,12 +253,12 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
   ]);
 
   const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, "embedding">) => {
-    const docMetadata = doc.metadata ?? null;
-    const docName = docMetadata?.title ?? doc.text.slice(0, 50).trim() || "Untitled";
+    const docMetadata: AgentTeachingEmbeddingDocumentMetadata = doc.metadata ?? {};
+    const docName = docMetadata.title ?? (doc.text.slice(0, 50).trim() || "Untitled");
     return {
       id: doc._id,
       name: docName,
-      description: docMetadata?.source ?? null,
+      description: docMetadata.source ?? null,
       collectionId: doc.collectionId,
       text: doc.text,
       metadata: docMetadata,
@@ -295,12 +295,12 @@ export async function createEmbeddingDocument(params: {
     updatedAt: now,
   };
   await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).insertOne(doc);
-  const returnMetadata = params.metadata ?? null;
-  const returnName = returnMetadata?.title ?? params.text.slice(0, 50).trim() || "Untitled";
+  const returnMetadata: AgentTeachingEmbeddingDocumentMetadata = params.metadata ?? {};
+  const returnName = returnMetadata.title ?? (params.text.slice(0, 50).trim() || "Untitled");
   return {
     id,
     name: returnName,
-    description: returnMetadata?.source ?? null,
+    description: returnMetadata.source ?? null,
     collectionId: params.collectionId,
     text: params.text,
     metadata: returnMetadata,

@@ -165,7 +165,7 @@ const stringifyRegexSelection = (value: unknown): string => {
   try {
     return JSON.stringify(value);
   } catch {
-    return String(value);
+    return typeof value === "object" ? "[Object]" : String(value as string | number | boolean);
   }
 };
 
@@ -277,11 +277,11 @@ export function RegexNodeConfigSection({
       typeof callbackValue === "string"
         ? callbackValue
         : callbackValue !== undefined && callbackValue !== null
-          ? (() => {
+          ? ((): string => {
               try {
                 return JSON.stringify(callbackValue, null, 2);
               } catch {
-                return String(callbackValue);
+                return typeof callbackValue === "object" ? "[Object]" : String(callbackValue as string | number | boolean);
               }
             })()
           : "";
@@ -578,8 +578,7 @@ export function RegexNodeConfigSection({
     try {
       return JSON.stringify(sampleSource, null, 2);
     } catch {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return String(sampleSource as any);
+      return typeof sampleSource === "object" ? "[Object]" : String(sampleSource as string | number | boolean);
     }
   }, [sampleSource]);
 

@@ -1,0 +1,318 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
+  34:9  warning  The 'promptConfig' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. To fix this, wrap the initialization of 'promptConfig' in its own useMemo() Hook                                           react-hooks/exhaustive-deps
+  37:9  warning  The 'runtimeInputs' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'runtimeInputs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx
+  168:60  error  'value' will use Object's default stringification format ('[object Object]') when stringified          @typescript-eslint/no-base-to-string
+  284:80  error  'callbackValue' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  581:69  error  'sampleSource' will use Object's default stringification format ('[object Object]') when stringified   @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+   113:60   warning  React Hook ets]);
+ has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
+   137:14   error    Unknown property 'der' found                                                                                                                                                                  react/no-unknown-property
+   139:13   error    Unknown property '}>
+ ' found                                                                                                                                                                 react/no-unknown-property
+   140:13   error    Unknown property '       ty' found                                                                                                                                                            react/no-unknown-property
+   144:13   error    Unknown property 'd/60"' found                                                                                                                                                                react/no-unknown-property
+   145:13   error    Unknown property 't: 8 + ' found                                                                                                                                                              react/no-unknown-property
+   146:13   error    Unknown property 'ctFolder(node' found                                                                                                                                                        react/no-unknown-property
+   147:13   error    Unknown property ' => t' found                                                                                                                                                                react/no-unknown-property
+   149:19   error    Unknown property '"}
+      ' found                                                                                                                                                            react/no-unknown-property
+   149:49   error    Unknown property 'an clas' found                                                                                                                                                              react/no-unknown-property
+   151:23   error    Unknown property 'file") ? ' found                                                                                                                                                            react/no-unknown-property
+   153:23   error    Unknown property '     ) : ' found                                                                                                                                                            react/no-unknown-property
+   157:19   error    Unknown property 't-gray-40' found                                                                                                                                                            react/no-unknown-property
+   173:9    error    Unknown property '  r' found                                                                                                                                                                  react/no-unknown-property
+   174:9    error    Unknown property 'on
+ ' found                                                                                                                                                                 react/no-unknown-property
+   175:9    error    Unknown property 'd}
+      ' found                                                                                                                                                            react/no-unknown-property
+   179:9    error    Unknown property ':bg-m' found                                                                                                                                                                react/no-unknown-property
+   180:9    error    Unknown property 'Left: 1' found                                                                                                                                                              react/no-unknown-property
+   181:9    error    Unknown property '=> on' found                                                                                                                                                                react/no-unknown-property
+   184:15   error    Unknown property ' text-gra' found                                                                                                                                                            react/no-unknown-property
+   190:10   error    Unknown property '    );
+  ' found                                                                                                                                                            react/no-unknown-property
+   311:10   error    Unknown property 'hange]
+  ' found                                                                                                                                                            react/no-unknown-property
+   314:16   error    Unknown property 'rc ? (
+  ' found                                                                                                                                                            react/no-unknown-property
+   327:13   error    Unknown property 'v>
+' found                                                                                                                                                                  react/no-unknown-property
+   328:13   error    Unknown property '     ref=' found                                                                                                                                                            react/no-unknown-property
+   332:13   error    Unknown property 'ault"
+ ' found                                                                                                                                                              react/no-unknown-property
+   336:14   error    Unknown property '    </>
+ ' found                                                                                                                                                            react/no-unknown-property
+   555:9    warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 560) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   771:10   error    Unknown property 'xtractedP' found                                                                                                                                                            react/no-unknown-property
+   776:16   error    Unknown property ' py-10">
+' found                                                                                                                                                            react/no-unknown-property
+   803:12   error    Unknown property '
+        ' found                                                                                                                                                            react/no-unknown-property
+   826:16   error    Unknown property ' {rightPa' found                                                                                                                                                            react/no-unknown-property
+   871:16   error    Unknown property 'ze-4" />
+' found                                                                                                                                                            react/no-unknown-property
+   873:18   error    Unknown property 'on" ? "de' found                                                                                                                                                            react/no-unknown-property
+   897:18   error    Unknown property '   title=' found                                                                                                                                                            react/no-unknown-property
+   912:18   error    Unknown property 'anelColla' found                                                                                                                                                            react/no-unknown-property
+   913:20   error    Unknown property 'y-100"
+  ' found                                                                                                                                                            react/no-unknown-property
+   914:31   error    Unknown property 'iv classN' found                                                                                                                                                            react/no-unknown-property
+   916:20   error    Unknown property '     <div' found                                                                                                                                                            react/no-unknown-property
+   945:16   error    Unknown property '-center g' found                                                                                                                                                            react/no-unknown-property
+   959:16   error    Unknown property '   Create' found                                                                                                                                                            react/no-unknown-property
+   960:18   error    Unknown property ' classNam' found                                                                                                                                                            react/no-unknown-property
+   961:20   error    Unknown property 'tween gap' found                                                                                                                                                            react/no-unknown-property
+   962:20   error    Unknown property '00">
+    ' found                                                                                                                                                            react/no-unknown-property
+   964:18   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+   970:16   error    Unknown property 'eImportOp' found                                                                                                                                                            react/no-unknown-property
+   982:16   error    Unknown property 'Selected=' found                                                                                                                                                            react/no-unknown-property
+   995:16   error    Unknown property 'ctFolder=' found                                                                                                                                                            react/no-unknown-property
+   997:20   error    Unknown property '>
+       ' found                                                                                                                                                            react/no-unknown-property
+   998:20   error    Unknown property '}
+       ' found                                                                                                                                                            react/no-unknown-property
+  1000:18   error    Unknown property 'assName="' found                                                                                                                                                            react/no-unknown-property
+  1049:18   error    Unknown property '"
+       ' found                                                                                                                                                            react/no-unknown-property
+  1050:20   error    Unknown property '2">
+     ' found                                                                                                                                                            react/no-unknown-property
+  1051:22   error    Unknown property 'iv>
+     ' found                                                                                                                                                            react/no-unknown-property
+  1052:22   error    Unknown property '+ params ' found                                                                                                                                                            react/no-unknown-property
+  1072:22   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1075:20   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1076:22   error    Unknown property 'on.mode =' found                                                                                                                                                            react/no-unknown-property
+  1078:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1079:26   error    Unknown property 't wired y' found                                                                                                                                                            react/no-unknown-property
+  1080:28   error    Unknown property 'ptExtract' found                                                                                                                                                            react/no-unknown-property
+  1103:26   error    Unknown property 'etween ga' found                                                                                                                                                            react/no-unknown-property
+  1104:28   error    Unknown property 't-xs text' found                                                                                                                                                            react/no-unknown-property
+  1122:24   error    Unknown property 'settingsL' found                                                                                                                                                            react/no-unknown-property
+  1123:26   error    Unknown property 'xs text-g' found                                                                                                                                                            react/no-unknown-property
+  1124:28   error    Unknown property '      ) :' found                                                                                                                                                            react/no-unknown-property
+  1146:26   error    Unknown property ' <SelectC' found                                                                                                                                                            react/no-unknown-property
+  1147:28   error    Unknown property 'Item valu' found                                                                                                                                                            react/no-unknown-property
+  1171:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1172:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1173:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1194:26   error    Unknown property 'v classNa' found                                                                                                                                                            react/no-unknown-property
+  1200:22   error    Unknown property 'ings.prom' found                                                                                                                                                            react/no-unknown-property
+  1201:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1203:28   error    Unknown property 'raw === "' found                                                                                                                                                            react/no-unknown-property
+  1205:25   error    Unknown property '    ' found                                                                                                                                                                 react/no-unknown-property
+  1206:25   error    Unknown property '((prev:' found                                                                                                                                                              react/no-unknown-property
+  1207:25   error    Unknown property '        ' found                                                                                                                                                             react/no-unknown-property
+  1217:24   error    Unknown property 'div>
+    ' found                                                                                                                                                            react/no-unknown-property
+  1218:141  error    Unknown property 't-[11px] ' found                                                                                                                                                            react/no-unknown-property
+  1227:26   error    Unknown property ')) return' found                                                                                                                                                            react/no-unknown-property
+  1231:22   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1234:24   error    Unknown property 'raction.g' found                                                                                                                                                            react/no-unknown-property
+  1235:26   error    Unknown property '       },' found                                                                                                                                                            react/no-unknown-property
+  1236:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1256:26   error    Unknown property '   ...pre' found                                                                                                                                                            react/no-unknown-property
+  1257:28   error    Unknown property 'dation: {' found                                                                                                                                                            react/no-unknown-property
+  1272:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1273:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1274:28   error    Unknown property 'onRulesEr' found                                                                                                                                                            react/no-unknown-property
+  1293:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1294:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1315:24   error    Unknown property 'ame="h-8"' found                                                                                                                                                            react/no-unknown-property
+  1316:26   error    Unknown property '.targetAi' found                                                                                                                                                            react/no-unknown-property
+  1317:28   error    Unknown property 'e-1" : "e' found                                                                                                                                                            react/no-unknown-property
+  1335:26   error    Unknown property '       }}' found                                                                                                                                                            react/no-unknown-property
+  1336:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1355:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1356:26   error    Unknown property 'h-8"
+    ' found                                                                                                                                                            react/no-unknown-property
+  1357:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1376:26   error    Unknown property 'utput_tok' found                                                                                                                                                            react/no-unknown-property
+  1377:28   error    Unknown property '}));
+    ' found                                                                                                                                                            react/no-unknown-property
+  1398:24   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1399:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1401:25   error    Unknown property '    ' found                                                                                                                                                                 react/no-unknown-property
+  1402:25   error    Unknown property 'gap-2">' found                                                                                                                                                              react/no-unknown-property
+  1403:25   error    Unknown property '      <d' found                                                                                                                                                             react/no-unknown-property
+  1413:26   error    Unknown property 'if (raw !' found                                                                                                                                                            react/no-unknown-property
+  1414:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1439:24   error    Unknown property 'nai: { ..' found                                                                                                                                                            react/no-unknown-property
+  1440:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1441:28   error    Unknown property '     }}
+ ' found                                                                                                                                                            react/no-unknown-property
+  1469:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1470:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1498:24   error    Unknown property 'v.targetA' found                                                                                                                                                            react/no-unknown-property
+  1499:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1500:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1516:26   error    Unknown property '   </Sele' found                                                                                                                                                            react/no-unknown-property
+  1517:56   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1522:26   error    Unknown property '"}
+      ' found                                                                                                                                                            react/no-unknown-property
+  1523:28   error    Unknown property 'ettings((' found                                                                                                                                                            react/no-unknown-property
+  1525:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1526:30   error    Unknown property 'prev.targ' found                                                                                                                                                            react/no-unknown-property
+  1527:32   error    Unknown property '
+        ' found                                                                                                                                                            react/no-unknown-property
+  1546:30   error    Unknown property '
+        ' found                                                                                                                                                            react/no-unknown-property
+  1547:32   error    Unknown property 'value={st' found                                                                                                                                                            react/no-unknown-property
+  1578:28   error    Unknown property 'gs((prev:' found                                                                                                                                                            react/no-unknown-property
+  1579:30   error    Unknown property '    ...pr' found                                                                                                                                                            react/no-unknown-property
+  1580:32   error    Unknown property ' {
+      ' found                                                                                                                                                            react/no-unknown-property
+  1609:30   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1610:32   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1637:28   error    Unknown property '
+        ' found                                                                                                                                                            react/no-unknown-property
+  1638:30   error    Unknown property 'age,
+    ' found                                                                                                                                                            react/no-unknown-property
+  1639:32   error    Unknown property ' value ==' found                                                                                                                                                            react/no-unknown-property
+  1663:30   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1664:49   error    Unknown property '
+        ' found                                                                                                                                                            react/no-unknown-property
+  1670:24   error    Unknown property 'age, form' found                                                                                                                                                            react/no-unknown-property
+  1671:26   error    Unknown property ',
+       ' found                                                                                                                                                            react/no-unknown-property
+  1679:28   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1695:20   error    Unknown property ' ? null :' found                                                                                                                                                            react/no-unknown-property
+  1696:22   error    Unknown property 't) || !Nu' found                                                                                                                                                            react/no-unknown-property
+  1698:25   error    Unknown property 'oSettings' found                                                                                                                                                            react/no-unknown-property
+  1708:26   error    Unknown property '  s' found                                                                                                                                                                  react/no-unknown-property
+  1708:45   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1709:28   error    Unknown property 'div class' found                                                                                                                                                            react/no-unknown-property
+  1710:28   error    Unknown property '<span cla' found                                                                                                                                                            react/no-unknown-property
+  1712:29   error    Unknown property '        )' found                                                                                                                                                            react/no-unknown-property
+  1714:33   error    Unknown property '   ' found                                                                                                                                                                  react/no-unknown-property
+  1716:48   error    Unknown property 'ndleAdvan' found                                                                                                                                                            react/no-unknown-property
+  1717:50   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1728:20   error    Unknown property '    ) : n' found                                                                                                                                                            react/no-unknown-property
+  1732:16   error    Unknown property '      onC' found                                                                                                                                                            react/no-unknown-property
+  1734:18   error    Unknown property '40 font-m' found                                                                                                                                                            react/no-unknown-property
+  1736:22   error    Unknown property '(quoted k' found                                                                                                                                                            react/no-unknown-property
+  1737:24   error    Unknown property '     {pro' found                                                                                                                                                            react/no-unknown-property
+  1738:26   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1741:31   error    Unknown property 's)</span>' found                                                                                                                                                            react/no-unknown-property
+  1745:35   error    Unknown property 'r"
+      ' found                                                                                                                                                            react/no-unknown-property
+  1747:35   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1751:35   error    Unknown property 'iv key={i' found                                                                                                                                                            react/no-unknown-property
+  1753:35   error    Unknown property 'ue.title}' found                                                                                                                                                            react/no-unknown-property
+  1758:26   error    Unknown property '  <ul cla' found                                                                                                                                                            react/no-unknown-property
+  1788:22   error    Unknown property 'ry.warnin' found                                                                                                                                                            react/no-unknown-property
+  1793:16   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1803:16   error    Unknown property 'ngs > 0 ?' found                                                                                                                                                            react/no-unknown-property
+  1804:18   error    Unknown property '00">{vali' found                                                                                                                                                            react/no-unknown-property
+  1871:10   error    Unknown property '<div clas' found                                                                                                                                                            react/no-unknown-property
+  1872:12   error    Unknown property 'v classNa' found                                                                                                                                                            react/no-unknown-property
+  1873:14   error    Unknown property '(for futu' found                                                                                                                                                            react/no-unknown-property
+  1874:16   error    Unknown property '     </di' found                                                                                                                                                            react/no-unknown-property
+  1876:14   error    Unknown property 'nClick={(' found                                                                                                                                                            react/no-unknown-property
+  1877:16   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  1902:14   error    Unknown property 'rity === ' found                                                                                                                                                            react/no-unknown-property
+  1903:23   error    Unknown property ' "border-' found                                                                                                                                                            react/no-unknown-property
+  1908:14   error    Unknown property 'ue);
+  co' found                                                                                                                                                            react/no-unknown-property
+  1909:29   error    Unknown property 'eof value' found                                                                                                                                                            react/no-unknown-property
+  1914:14   error    Unknown property 'ing ? "st' found                                                                                                                                                            react/no-unknown-property
+  1916:18   error    Unknown property '  (' found                                                                                                                                                                  react/no-unknown-property
+  1916:71   error    Unknown property 'enum" && ' found                                                                                                                                                            react/no-unknown-property
+  1921:18   error    Unknown property 'lue' found                                                                                                                                                                  react/no-unknown-property
+  1921:71   error    Unknown property 'ation = r' found                                                                                                                                                            react/no-unknown-property
+  1930:16   error    Unknown property 'o (${para' found                                                                                                                                                            react/no-unknown-property
+  1949:18   error    Unknown property 'value ===' found                                                                                                                                                            react/no-unknown-property
+  1950:20   error    Unknown property '{sel' found                                                                                                                                                                 react/no-unknown-property
+  1950:36   error    Unknown property 'ol}
+   ' found                                                                                                                                                              react/no-unknown-property
+  1950:52   error    Unknown property 'onValueC' found                                                                                                                                                             react/no-unknown-property
+  1958:16   error    Unknown property 'UiControl' found                                                                                                                                                            react/no-unknown-property
+  1990:14   error    Unknown property 'ow-300">
+' found                                                                                                                                                            react/no-unknown-property
+  1993:15   error    Unknown property 'uest' found                                                                                                                                                                 react/no-unknown-property
+  1994:15   error    Unknown property ' ui' found                                                                                                                                                                  react/no-unknown-property
+  1995:15   error    Unknown property '
+  ' found                                                                                                                                                                  react/no-unknown-property
+  1996:15   error    Unknown property 'ons"' found                                                                                                                                                                 react/no-unknown-property
+  1997:15   error    Unknown property 'items' found                                                                                                                                                                react/no-unknown-property
+  1998:15   error    Unknown property 'nt={valu' found                                                                                                                                                             react/no-unknown-property
+  2003:15   error    Unknown property 'ariant={!' found                                                                                                                                                            react/no-unknown-property
+  2023:14   error    Unknown property 'tions ? (' found                                                                                                                                                            react/no-unknown-property
+  2025:18   error    Unknown property 'enu' found                                                                                                                                                                  react/no-unknown-property
+  2025:30   error    Unknown property 'map((opt:' found                                                                                                                                                            react/no-unknown-property
+  2026:20   error    Unknown property 'on
+      ' found                                                                                                                                                            react/no-unknown-property
+  2048:14   error    Unknown property '         ' found                                                                                                                                                            react/no-unknown-property
+  2050:18   error    Unknown property 'll}' found                                                                                                                                                                  react/no-unknown-property
+  2050:30   error    Unknown property 'requested' found                                                                                                                                                            react/no-unknown-property
+  2051:20   error    Unknown property '"number" ' found                                                                                                                                                            react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioSettingsPage.tsx
+  71:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioSettingsPage.tsx:71:5
+  69 |         : stored;
+  70 |
+> 71 |     setStudioSettings(hydrated);
+     |     ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  72 |     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
+  73 |     setPromptValidationRulesText(JSON.stringify(hydrated.promptValidation.rules, null, 2));
+  74 |     setPromptValidationRulesError(null);  react-hooks/set-state-in-effect
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx
+   81:33  error  Expected sim to have a type annotation  @typescript-eslint/typedef
+   87:45  error  Expected op to have a type annotation   @typescript-eslint/typedef
+  334:42  error  Expected sim to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-params.ts
+  395:11  error  Expected segment to have a type annotation  @typescript-eslint/typedef
+  396:14  error  Expected value to have a type annotation    @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-validator.ts
+  30:29  error  Unsafe argument of type error typed assigned to a parameter of type `string`              @typescript-eslint/no-unsafe-argument
+  30:33  error  Unsafe member access .pattern on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  30:42  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
+  30:46  error  Unsafe member access .flags on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  35:7   error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  35:23  error  Unsafe member access .suggestion on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  37:7   error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  37:20  error  Unsafe member access .comment on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'editingUser?.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/BackgroundSyncProvider.tsx
+  6:1  error  '@/shared/ui/QueryDevPanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/agent-teaching.ts
+  25:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  27:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  29:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  31:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/user-preferences.ts
+  9:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/status-badge.tsx
+  41:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 233 problems (227 errors, 6 warnings)
+

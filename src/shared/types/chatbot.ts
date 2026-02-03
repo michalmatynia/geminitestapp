@@ -1,9 +1,10 @@
 import type { ObjectId } from "mongodb";
 import { Status } from './common';
-import type { 
-  ChatMessageDto, 
-  ChatbotSessionDto, 
-  ChatbotJobDto, 
+import type {
+  ChatMessageDto,
+  ChatbotSessionDto,
+  ChatbotJobDto,
+  ChatbotJobPayloadDto,
   ChatbotDebugStateDto,
   ChatbotSettingsDto,
   AgentSnapshotDto,
@@ -12,10 +13,11 @@ import type {
   UpdateChatSessionDto
 } from "../dtos/chatbot";
 
-export type { 
-  ChatMessageDto, 
-  ChatbotSessionDto, 
-  ChatbotJobDto, 
+export type {
+  ChatMessageDto,
+  ChatbotSessionDto,
+  ChatbotJobDto,
+  ChatbotJobPayloadDto,
   ChatbotDebugStateDto,
   ChatbotSettingsDto,
   AgentSnapshotDto,
@@ -48,16 +50,13 @@ export interface ChatSessionDocument {
 
 export type ChatbotJobStatus = Status;
 
-export type ChatbotJobPayload = {
-  messages: ChatMessage[];
-  model: string;
-};
+export type ChatbotJobPayload = ChatbotJobPayloadDto;
 
 export interface ChatbotJob extends Omit<ChatbotJobDto, "createdAt" | "updatedAt"> {
   createdAt: Date;
-  updatedAt?: Date;
-  startedAt?: Date;
-  finishedAt?: Date;
+  updatedAt?: Date | undefined;
+  startedAt?: Date | undefined;
+  finishedAt?: Date | undefined;
 }
 
 export interface ChatbotJobDocument {
@@ -122,4 +121,29 @@ export type ModelTaskRule = {
   minSize?: number;
   maxSize?: number;
   preferReasoning?: boolean;
+};
+
+export type AgentSettingsPayload = {
+  agentBrowser: string;
+  runHeadless: boolean;
+  ignoreRobotsTxt: boolean;
+  requireHumanApproval: boolean;
+  memoryValidationModel: string;
+  plannerModel: string;
+  selfCheckModel: string;
+  extractionValidationModel: string;
+  toolRouterModel: string;
+  loopGuardModel: string;
+  approvalGateModel: string;
+  memorySummarizationModel: string;
+  selectorInferenceModel: string;
+  outputNormalizationModel: string;
+  maxSteps: number;
+  maxStepAttempts: number;
+  maxReplanCalls: number;
+  replanEverySteps: number;
+  maxSelfChecks: number;
+  loopGuardThreshold: number;
+  loopBackoffBaseMs: number;
+  loopBackoffMaxMs: number;
 };

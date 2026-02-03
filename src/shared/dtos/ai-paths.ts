@@ -117,3 +117,38 @@ export interface AiDbQueryPresetDto extends NamedDto {
   queryTemplate: string;
   updateTemplate?: string;
 }
+
+/**
+ * DTO for creating an AI Path
+ */
+export interface CreateAiPathDto {
+  name: string;
+  description?: string | null;
+  nodes?: AiNodeDto[];
+  edges?: AiEdgeDto[];
+  config?: Record<string, unknown>;
+  enabled?: boolean;
+}
+
+/**
+ * DTO for updating an AI Path
+ */
+export interface UpdateAiPathDto {
+  name?: string;
+  description?: string | null;
+  nodes?: AiNodeDto[];
+  edges?: AiEdgeDto[];
+  config?: Record<string, unknown>;
+  enabled?: boolean;
+  version?: number;
+}
+
+/**
+ * DTO for executing an AI Path
+ */
+export interface ExecuteAiPathDto {
+  pathId: string;
+  triggerNodeId?: string;
+  triggerEvent?: string;
+  context?: Record<string, unknown>;
+}

@@ -5,7 +5,7 @@ export type { ChatbotSessionListItem } from "./api";
 export type {
   ChatbotMemoryItemDto as ChatbotMemoryItem,
   ChatbotContextSegmentDto as ChatbotContextSegment,
-  ChatbotMessageDto,
+  ChatMessageDto as ChatbotMessageDto,
   CreateChatSessionDto,
   SendMessageDto,
   UpdateChatbotSettingsDto,

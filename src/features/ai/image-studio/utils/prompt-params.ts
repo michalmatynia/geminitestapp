@@ -392,8 +392,8 @@ function parseEnumOptionsFromHint(hint: string): string[] | null {
   if (!hint.includes("|")) return null;
   const options = hint
     .split("|")
-    .map((segment) => normalizeEnumToken(segment))
-    .filter((value): value is string => Boolean(value));
+    .map((segment: string) => normalizeEnumToken(segment))
+    .filter((value: string | null): value is string => Boolean(value));
   const unique = Array.from(new Set(options));
   return unique.length >= 2 ? unique : null;
 }

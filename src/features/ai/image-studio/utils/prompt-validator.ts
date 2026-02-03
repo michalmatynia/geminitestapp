@@ -1,5 +1,5 @@
 import { extractParamsFromPrompt } from "./prompt-params";
-import type { PromptValidationRule, PromptValidationSettings, PromptValidationSeverity } from "./studio-settings";
+import type { PromptValidationRule, PromptValidationSettings, PromptValidationSeverity, PromptValidationSimilarPattern } from "./studio-settings";
 
 export type PromptValidationSuggestion = {
   suggestion: string;

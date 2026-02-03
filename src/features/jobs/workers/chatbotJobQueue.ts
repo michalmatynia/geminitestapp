@@ -69,7 +69,7 @@ const processJob = async (jobId: string): Promise<void> => {
   await chatbotSessionRepository.addMessage(job.sessionId, {
     role: "assistant",
     content: reply,
-    timestamp: new Date(),
+    timestamp: new Date().toISOString(),
   });
 
   await chatbotJobRepository.update(job.id, {

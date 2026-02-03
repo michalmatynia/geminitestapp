@@ -204,6 +204,11 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const currentSettings = useMemo<ChatbotSettingsPayload>(
     () => ({
       model,
+      temperature: DEFAULT_CHATBOT_SETTINGS.temperature,
+      maxTokens: DEFAULT_CHATBOT_SETTINGS.maxTokens,
+      systemPrompt: DEFAULT_CHATBOT_SETTINGS.systemPrompt,
+      enableMemory: DEFAULT_CHATBOT_SETTINGS.enableMemory,
+      enableContext: DEFAULT_CHATBOT_SETTINGS.enableContext,
       webSearchEnabled,
       useGlobalContext,
       useLocalContext,

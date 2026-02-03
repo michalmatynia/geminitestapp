@@ -12,7 +12,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const [sessions, setSessions] = useState<ChatbotSessionListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       if (selectingAll) return;
       setSelectingAll(true);
       try {
-        const term: string = query.trim();
+        const term: string = searchQuery.trim();
         const ids: string[] = await chatbotApi.fetchChatbotSessionIds(
           term || undefined
         );
@@ -90,13 +90,13 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   }, [toast]);
 
   const filteredSessions = useMemo((): ChatbotSessionListItem[] => {
-    const term: string = query.trim().toLowerCase();
+    const term: string = searchQuery.trim().toLowerCase();
     if (!term) return sessions;
     return sessions.filter((session: ChatbotSessionListItem): boolean => {
       const title: string = session.title?.toLowerCase() || "";
       return title.includes(term) || session.id.toLowerCase().includes(term);
     });
-  }, [query, sessions]);
+  }, [searchQuery, sessions]);
 
   const startEditing = (session: ChatbotSessionListItem): void => {
     setEditingId(session.id);
@@ -211,9 +211,9 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <div className="max-w-sm">
                 <SearchInput
                   placeholder="Search sessions..."
-                  value={query}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-                  onClear={() => setQuery("")}
+                  value={searchQuery}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+                  onClear={() => setSearchQuery("")}
                   className="h-8 text-sm"
                 />
               </div>

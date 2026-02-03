@@ -1,0 +1,278 @@
+"use client";
+
+import Link from "next/link";
+import React from "react";
+import { Input, ItemLibrary, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
+import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
+import { buildModelProfile } from "@/features/ai/chatbot/utils";
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
+import { useDeleteTeachingAgentMutation, useTeachingAgents, useTeachingCollections, useUpsertTeachingAgentMutation } from "../hooks/useAgentTeaching";
+
+const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
+
+export function AgentTeachingAgentsPage(): React.JSX.Element {
+  const { toast } = useToast();
+
+  const { data: agents = [], isLoading: loadingAgents } = useTeachingAgents();
+  const { data: collections = [], isLoading: loadingCollections } = useTeachingCollections();
+  const { data: modelOptions = [] } = useChatbotModels();
+
+  const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
+  const { mutateAsync: remove } = useDeleteTeachingAgentMutation();
+
+  const chatModels = React.useMemo(
+    () => modelOptions.filter((m: string) => m.trim().length > 0 && !isEmbeddingModel(m)),
+    [modelOptions]
+  );
+  const embeddingModels = React.useMemo(
+    () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
+    [modelOptions]
+  );
+
+  const resolveCollectionName = (id: string): string => {
+    const found = collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id);
+    return found?.name ?? id;
+  };
+
+  const handleSave = async (draft: Partial<AgentTeachingAgentRecord>): Promise<void> => {
+    const name = draft.name?.trim();
+    if (!name) {
+      toast("Agent name is required.", { variant: "error" });
+      return;
+    }
+    const llmModel = draft.llmModel?.trim();
+    if (!llmModel) {
+      toast("LLM model is required.", { variant: "error" });
+      return;
+    }
+    const embeddingModel = draft.embeddingModel?.trim();
+    if (!embeddingModel) {
+      toast("Embedding model is required.", { variant: "error" });
+      return;
+    }
+
+    const selectedCollectionIds = Array.isArray(draft.collectionIds) ? draft.collectionIds : [];
+    const mismatchedCollections = selectedCollectionIds
+      .map((id: string) => collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id))
+      .filter((c: AgentTeachingEmbeddingCollectionRecord | undefined): c is AgentTeachingEmbeddingCollectionRecord => Boolean(c))
+      .filter((c: AgentTeachingEmbeddingCollectionRecord) => c.embeddingModel !== embeddingModel);
+    if (mismatchedCollections.length > 0) {
+      toast(
+        `Embedding model mismatch: ${mismatchedCollections
+          .map((c: AgentTeachingEmbeddingCollectionRecord) => c.name)
+          .join(", ")}`,
+        { variant: "error" }
+      );
+      return;
+    }
+
+    try {
+      await upsert({
+        ...(draft.id ? { id: draft.id } : {}),
+        name,
+        description: typeof draft.description === "string" ? draft.description : null,
+        llmModel,
+        embeddingModel,
+        systemPrompt: draft.systemPrompt ?? "",
+        collectionIds: selectedCollectionIds,
+        retrievalTopK: typeof draft.retrievalTopK === "number" ? draft.retrievalTopK : 6,
+        retrievalMinScore:
+          typeof draft.retrievalMinScore === "number" ? draft.retrievalMinScore : 0.15,
+      });
+      toast(draft.id ? "Teaching agent updated." : "Teaching agent created.", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to save teaching agent.", { variant: "error" });
+      throw error;
+    }
+  };
+
+  const handleDelete = async (agent: AgentTeachingAgentRecord): Promise<void> => {
+    try {
+      await remove({ id: agent.id });
+      toast("Teaching agent deleted.", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to delete teaching agent.", { variant: "error" });
+      throw error;
+    }
+  };
+
+  const isLoading = loadingAgents || loadingCollections;
+
+  return (
+    <ItemLibrary<AgentTeachingAgentRecord>
+      title="Teaching Agents"
+      description="Agents that answer using connected embedding collections (RAG)."
+      entityName="Teaching Agent"
+      items={agents}
+      isLoading={isLoading}
+      isSaving={saving}
+      onSave={handleSave}
+      onDelete={handleDelete}
+      backLink={(
+        <Link href="/admin/agentcreator/teaching" className="text-blue-300 hover:text-blue-200">
+          ← Back to teaching
+        </Link>
+      )}
+      buildDefaultItem={() => ({
+        name: "",
+        description: "",
+        llmModel: chatModels[0] ?? "",
+        embeddingModel: embeddingModels[0] ?? "",
+        systemPrompt: "",
+        collectionIds: [],
+        retrievalTopK: 6,
+        retrievalMinScore: 0.15,
+      })}
+      renderItemTags={(agent: AgentTeachingAgentRecord) => [
+        `LLM: ${agent.llmModel || "—"}`,
+        `Embed: ${agent.embeddingModel || "—"}`,
+        `KB: ${(agent.collectionIds ?? []).length}`,
+      ]}
+      renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange) => (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>LLM model</Label>
+              <Select
+                value={draft.llmModel ?? ""}
+                onValueChange={(value: string) => onChange({ llmModel: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select LLM model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chatModels.map((model: string) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="text-[11px] text-gray-500">
+                Model used to answer questions.
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Embedding model</Label>
+              <Select
+                value={draft.embeddingModel ?? ""}
+                onValueChange={(value: string) => onChange({ embeddingModel: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select embedding model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {embeddingModels.map((model: string) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="text-[11px] text-gray-500">
+                Must match the embedding collections you attach.
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>System prompt</Label>
+            <Textarea
+              value={draft.systemPrompt ?? ""}
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ systemPrompt: event.target.value })}
+              placeholder="Optional instructions (tone, scope, rules)..."
+              className="min-h-[120px]"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Retrieval top K</Label>
+              <Input
+                type="number"
+                min={1}
+                max={50}
+                value={String(draft.retrievalTopK ?? 6)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange({ retrievalTopK: Number(event.target.value) })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Min similarity score</Label>
+              <Input
+                type="number"
+                step="0.05"
+                min={-1}
+                max={1}
+                value={String(draft.retrievalMinScore ?? 0.15)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange({ retrievalMinScore: Number(event.target.value) })
+                }
+              />
+              <div className="text-[11px] text-gray-500">
+                Higher = stricter. Lower = more context (and more noise).
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Connected embedding collections</Label>
+            {collections.length === 0 ? (
+              <div className="text-sm text-gray-500">
+                No collections yet. Create one in Embedding Collections first.
+              </div>
+            ) : (
+              <div className="grid gap-2 md:grid-cols-2">
+                {collections.map((collection: AgentTeachingEmbeddingCollectionRecord) => {
+                  const checked = (draft.collectionIds ?? []).includes(collection.id);
+                  const sameModel =
+                    !draft.embeddingModel ||
+                    collection.embeddingModel === draft.embeddingModel;
+                  return (
+                    <label
+                      key={collection.id}
+                      className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
+                        checked ? "border-emerald-500/40 bg-emerald-500/10" : "border-border bg-card/40"
+                      } ${sameModel ? "" : "opacity-60"}`}
+                      title={
+                        sameModel
+                          ? undefined
+                          : `Embedding model mismatch (collection: ${collection.embeddingModel})`
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={checked}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                          const current = Array.isArray(draft.collectionIds) ? draft.collectionIds : [];
+                          const next = event.target.checked
+                            ? Array.from(new Set([...current, collection.id]))
+                            : current.filter((id: string) => id !== collection.id);
+                          onChange({ collectionIds: next });
+                        }}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium text-white">{collection.name}</span>
+                        <span className="block text-[11px] text-gray-400">
+                          {collection.embeddingModel}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {draft.collectionIds && draft.collectionIds.length > 0 && (
+              <div className="text-[11px] text-gray-500">
+                Connected: {draft.collectionIds.map(resolveCollectionName).join(", ")}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    />
+  );
+}

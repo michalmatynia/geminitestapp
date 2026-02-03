@@ -426,6 +426,12 @@ export default function Menu(): React.ReactNode {
         href="/admin/agentcreator"
       >
         <Link
+          href="/admin/agentcreator/teaching"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Teaching
+        </Link>
+        <Link
           href="/admin/agentcreator/personas"
           className="block hover:bg-gray-700 p-2 rounded"
         >

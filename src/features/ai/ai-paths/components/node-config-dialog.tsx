@@ -42,6 +42,7 @@ import { TriggerNodeConfigSection } from "./node-config/dialog/TriggerNodeConfig
 import { UnsupportedNodeConfigNotice } from "./node-config/dialog/UnsupportedNodeConfigNotice";
 import { ValidatorNodeConfigSection } from "./node-config/dialog/ValidatorNodeConfigSection";
 import { ViewerNodeConfigSection } from "./node-config/dialog/ViewerNodeConfigSection";
+import { RegexNodeConfigSection } from "./node-config/dialog/RegexNodeConfigSection";
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -167,6 +168,15 @@ export function NodeConfigDialog({
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
                 handleFetchParserSample={handleFetchParserSample}
                 toast={toast}
+              />
+              <RegexNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                edges={edges}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                {...(onSendToAi && { onSendToAi })}
+                {...(sendingToAi !== undefined && { sendingToAi })}
               />
               <MapperNodeConfigSection
                 selectedNode={selectedNode}

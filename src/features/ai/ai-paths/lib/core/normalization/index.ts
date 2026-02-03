@@ -17,6 +17,8 @@ import {
   POLL_OUTPUT_PORTS,
   PROMPT_INPUT_PORTS,
   PROMPT_OUTPUT_PORTS,
+  REGEX_INPUT_PORTS,
+  REGEX_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
@@ -157,6 +159,29 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             mappings: baseMappings,
             outputMode,
             presetId: parserConfig?.presetId ?? PARSER_PRESETS[0]?.id ?? "custom",
+          },
+        },
+      };
+    }
+    if (node.type === "regex") {
+      const config = node.config?.regex;
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs ?? [], REGEX_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs ?? [], REGEX_OUTPUT_PORTS),
+        config: {
+          ...node.config,
+          regex: {
+            pattern: config?.pattern ?? "",
+            flags: config?.flags ?? "g",
+            matchMode: config?.matchMode ?? "first",
+            groupBy: config?.groupBy ?? "match",
+            outputMode: config?.outputMode ?? "object",
+            includeUnmatched: config?.includeUnmatched ?? true,
+            unmatchedKey: config?.unmatchedKey ?? "__unmatched__",
+            splitLines: config?.splitLines ?? true,
+            sampleText: config?.sampleText ?? "",
+            aiPrompt: config?.aiPrompt ?? "",
           },
         },
       };
@@ -761,6 +786,22 @@ export const getDefaultConfigForType = (
         mappings: createParserMappings(outputs),
         outputMode: "individual",
         presetId: PARSER_PRESETS[0]?.id ?? "custom",
+      },
+    };
+  }
+  if (type === "regex") {
+    return {
+      regex: {
+        pattern: "",
+        flags: "g",
+        matchMode: "first",
+        groupBy: "match",
+        outputMode: "object",
+        includeUnmatched: true,
+        unmatchedKey: "__unmatched__",
+        splitLines: true,
+        sampleText: "",
+        aiPrompt: "",
       },
     };
   }

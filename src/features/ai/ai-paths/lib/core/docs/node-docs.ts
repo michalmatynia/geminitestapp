@@ -140,6 +140,60 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  regex: [
+    {
+      path: "regex.pattern",
+      description: "JavaScript/ECMAScript regex pattern (without / delimiters).",
+      defaultValue: '""',
+    },
+    {
+      path: "regex.flags",
+      description: "Regex flags string (example: g, i, m).",
+      defaultValue: '"g"',
+    },
+    {
+      path: "regex.matchMode",
+      description: "first = one match per input string; all = all matches per input string.",
+      defaultValue: "first",
+    },
+    {
+      path: "regex.groupBy",
+      description:
+        "Which capture becomes the grouping key: match/0 for full match, 1 for first capture, or a named group (/(?<name>...)/).",
+      defaultValue: "match",
+    },
+    {
+      path: "regex.outputMode",
+      description: "grouped output mode: object (Record) or array (list of groups).",
+      defaultValue: "object",
+    },
+    {
+      path: "regex.includeUnmatched",
+      description: "If true, inputs that do not match are emitted under unmatchedKey.",
+      defaultValue: "true",
+    },
+    {
+      path: "regex.unmatchedKey",
+      description: "Group key label for unmatched values.",
+      defaultValue: '"__unmatched__"',
+    },
+    {
+      path: "regex.splitLines",
+      description: "If true, string inputs are split by newline into multiple items.",
+      defaultValue: "true",
+    },
+    {
+      path: "regex.sampleText",
+      description: "Optional sample text used for preview / AI prompt rendering.",
+      defaultValue: '""',
+    },
+    {
+      path: "regex.aiPrompt",
+      description: "Optional AI prompt template used to propose a regex.",
+      defaultValue: '""',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   mapper: [
     {
       path: "mapper.outputs",
@@ -606,6 +660,7 @@ const ALL_NODE_TYPES: NodeType[] = [
   "simulation",
   "context",
   "parser",
+  "regex",
   "mapper",
   "mutator",
   "validator",

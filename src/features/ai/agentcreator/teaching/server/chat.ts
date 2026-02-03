@@ -29,7 +29,7 @@ const buildRagSystemPrompt = (params: {
   );
   if (params.sources.length > 0) {
     lines.push("", "Knowledge Base Sources:");
-    params.sources.forEach((src, index) => {
+    params.sources.forEach((src: AgentTeachingChatSource, _index: number) => {
       const title = src.metadata?.title?.trim() ? ` (${src.metadata?.title?.trim()})` : "";
       const header = `[doc:${src.documentId}]${title} score=${src.score.toFixed(3)}`;
       const body = src.text.trim();
@@ -71,6 +71,7 @@ export async function runTeachingChat(params: {
     collectionIds: agent.collectionIds,
     topK: agent.retrievalTopK ?? 5,
     minScore: agent.retrievalMinScore ?? 0,
+    embeddingModel,
   });
 
   const systemPrompt = buildRagSystemPrompt({
@@ -87,8 +88,8 @@ export async function runTeachingChat(params: {
       messages: [
         { role: "system", content: systemPrompt },
         ...params.messages
-          .filter((m) => m.role !== "system")
-          .map((m) => ({ role: m.role, content: m.content })),
+          .filter((m: ChatMessage) => m.role !== "system")
+          .map((m: ChatMessage) => ({ role: m.role, content: m.content })),
       ],
       options: { temperature: 0.2 },
     }),
@@ -101,4 +102,3 @@ export async function runTeachingChat(params: {
   const message = extractMessageContent(payload).trim();
   return { message, sources };
 }
-

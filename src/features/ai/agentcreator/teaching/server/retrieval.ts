@@ -25,6 +25,7 @@ export async function retrieveTopContext(params: {
   collectionIds: string[];
   topK: number;
   minScore: number;
+  embeddingModel?: string;
   maxDocsPerCollection?: number;
 }): Promise<AgentTeachingChatSource[]> {
   const docs = await listEmbeddingDocumentsForRetrieval({
@@ -32,7 +33,12 @@ export async function retrieveTopContext(params: {
     limitPerCollection: params.maxDocsPerCollection ?? 400,
   });
 
-  const scored = docs
+  const embeddingModel = params.embeddingModel?.trim();
+  const filteredDocs = embeddingModel
+    ? docs.filter((doc) => doc.embeddingModel === embeddingModel)
+    : docs;
+
+  const scored = filteredDocs
     .map((doc) => ({
       documentId: doc.id,
       collectionId: doc.collectionId,
@@ -45,4 +51,3 @@ export async function retrieveTopContext(params: {
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, Math.max(0, Math.min(params.topK, 50)));
 }
-

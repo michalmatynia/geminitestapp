@@ -227,7 +227,7 @@ export function SectionNodeItem({
   return (
     <div className="group/section">
       <div
-        draggable={true}
+        draggable="true"
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -236,55 +236,25 @@ export function SectionNodeItem({
           }
         }}
         onDragStart={(e: React.DragEvent) => {
-          console.log("SectionNodeItem DRAG START:", section.type, section.id, "isFileSection:", isFileSection);
-          // Create a custom drag image to ensure it's visible
-          const target = e.currentTarget as HTMLElement;
-          const rect = target.getBoundingClientRect();
-          console.log("Drag element rect:", rect.width, "x", rect.height);
+          e.stopPropagation();
 
-          // Clone the element for drag image to avoid any CSS issues
-          const clone = target.cloneNode(true) as HTMLElement;
-          clone.style.position = "absolute";
-          clone.style.top = "-9999px";
-          clone.style.left = "-9999px";
-          clone.style.width = `${rect.width}px`;
-          clone.style.opacity = "0.8";
-          clone.style.backgroundColor = "#1e293b";
-          clone.style.borderRadius = "4px";
-          clone.style.pointerEvents = "none";
-          document.body.appendChild(clone);
-          e.dataTransfer.setDragImage(clone, 10, 10);
-
-          // Clean up clone after drag starts
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              if (clone.parentNode) {
-                document.body.removeChild(clone);
-              }
-            }, 0);
-          });
-
+          // Set drag data FIRST - this must happen synchronously
+          e.dataTransfer.setData("text/plain", section.id);
           e.dataTransfer.setData("sectionId", section.id);
           e.dataTransfer.setData("sectionType", section.type);
           e.dataTransfer.setData("sectionZone", section.zone);
           e.dataTransfer.setData("sectionIndex", sectionIndex.toString());
           e.dataTransfer.effectAllowed = "move";
-          setDraggedSectionId(section.id);
-          setDraggedSectionType(section.type);
-          setDraggedSectionIndex(sectionIndex);
-          setDraggedSectionZone(section.zone);
+
+          // IMPORTANT: Defer React state updates to prevent re-render from cancelling drag
+          setTimeout(() => {
+            setDraggedSectionId(section.id);
+            setDraggedSectionType(section.type);
+            setDraggedSectionIndex(sectionIndex);
+            setDraggedSectionZone(section.zone);
+          }, 0);
         }}
-        onDrag={(e: React.DragEvent) => {
-          // This fires continuously during drag - if drag is working, this should log
-          if (e.clientX !== 0 || e.clientY !== 0) {
-            // Only log occasionally to avoid spam
-            if (Math.random() < 0.01) {
-              console.log("DRAGGING:", section.type, "at", e.clientX, e.clientY);
-            }
-          }
-        }}
-        onDragEnd={(e: React.DragEvent) => {
-          console.log("SectionNodeItem DRAG END:", section.type, section.id, "dropEffect:", e.dataTransfer.dropEffect);
+        onDragEnd={() => {
           setDraggedSectionId(null);
           setDraggedSectionType(null);
           setDraggedSectionIndex(null);
@@ -424,8 +394,7 @@ export function SectionNodeItem({
             setDraggedFromParentBlockId(null);
           }
         }}
-        style={{ touchAction: "none", WebkitUserDrag: "element" } as React.CSSProperties}
-        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium transition select-none active:cursor-grabbing ${
+        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium select-none active:cursor-grabbing ${
           isSectionDragOver
             ? "bg-purple-600/30 text-purple-200 ring-1 ring-purple-500/50"
             : isDragOver
@@ -1268,6 +1237,7 @@ function SectionBlockNodeItem({
           }
         }}
         onDragStart={(e: React.DragEvent) => {
+          e.stopPropagation();
           e.dataTransfer.setData("blockId", block.id);
           e.dataTransfer.setData("text/plain", block.id);
           e.dataTransfer.setData("blockType", block.type);
@@ -1275,10 +1245,13 @@ function SectionBlockNodeItem({
           e.dataTransfer.setData("fromColumnId", columnId ?? "");
           e.dataTransfer.setData("fromParentBlockId", "");
           e.dataTransfer.effectAllowed = "move";
-          setDraggedBlockId(block.id);
-          setDraggedFromSectionId(sectionId);
-          setDraggedFromColumnId(columnId);
-          setDraggedFromParentBlockId(null);
+          // Defer state updates to prevent re-render from cancelling drag
+          setTimeout(() => {
+            setDraggedBlockId(block.id);
+            setDraggedFromSectionId(sectionId);
+            setDraggedFromColumnId(columnId);
+            setDraggedFromParentBlockId(null);
+          }, 0);
         }}
         onDragEnd={() => {
           setDraggedBlockId(null);
@@ -1497,6 +1470,7 @@ function BlockNodeItem({
         }
       }}
       onDragStart={(e: React.DragEvent) => {
+        e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
         e.dataTransfer.setData("text/plain", block.id);
         e.dataTransfer.setData("blockType", block.type);
@@ -1504,10 +1478,13 @@ function BlockNodeItem({
         e.dataTransfer.setData("fromColumnId", columnId ?? "");
         e.dataTransfer.setData("fromParentBlockId", parentBlockId ?? "");
         e.dataTransfer.effectAllowed = "move";
-        setDraggedBlockId(block.id);
-        setDraggedFromSectionId(sectionId);
-        if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
-        if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
+        // Defer state updates to prevent re-render from cancelling drag
+        setTimeout(() => {
+          setDraggedBlockId(block.id);
+          setDraggedFromSectionId(sectionId);
+          if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
+          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
+        }, 0);
       }}
       onDragEnd={() => {
         setDraggedBlockId(null);

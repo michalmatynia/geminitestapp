@@ -245,6 +245,28 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handlePromoteBlockToSection = useCallback(
+    (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      fromParentBlockId: string | undefined,
+      toZone: PageZone,
+      toIndex: number
+    ) => {
+      dispatch({
+        type: "CONVERT_BLOCK_TO_SECTION",
+        blockId,
+        fromSectionId,
+        ...(fromColumnId && { fromColumnId }),
+        ...(fromParentBlockId && { fromParentBlockId }),
+        toZone,
+        toIndex,
+      });
+    },
+    [dispatch]
+  );
+
   const handleToggleExpand = useCallback((nodeId: string) => {
     setExpandedIds((prev: Set<string>) => {
       const next = new Set(prev);
@@ -385,6 +407,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 setDraggedSectionZone={setDraggedSectionZone}
                 onDropSectionToColumn={handleDropSectionToColumn}
                 onConvertSectionToBlock={handleConvertSectionToBlock}
+                onPromoteBlockToSection={handlePromoteBlockToSection}
               />
             );
           })
@@ -446,6 +469,7 @@ interface ZoneGroupProps {
   setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
   onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
+  onPromoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
 }
 
 function ZoneGroup({
@@ -496,6 +520,7 @@ function ZoneGroup({
   setDraggedSectionZone,
   onDropSectionToColumn,
   onConvertSectionToBlock,
+  onPromoteBlockToSection,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
 
@@ -562,6 +587,16 @@ function ZoneGroup({
                     draggedSectionIndex={draggedSectionIndex}
                     setDraggedSectionId={setDraggedSectionId}
                     onDropSectionInZone={onDropSectionInZone}
+                    draggedBlockId={draggedBlockId}
+                    draggedBlockType={draggedBlockType}
+                    draggedFromSectionId={draggedFromSectionId}
+                    draggedFromColumnId={draggedFromColumnId}
+                    draggedFromParentBlockId={draggedFromParentBlockId}
+                    setDraggedBlockId={setDraggedBlockId}
+                    setDraggedFromSectionId={setDraggedFromSectionId}
+                    setDraggedFromColumnId={setDraggedFromColumnId}
+                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                    onPromoteBlockToSection={onPromoteBlockToSection}
                   />
                   <SectionNodeItem
                     section={section}
@@ -615,6 +650,16 @@ function ZoneGroup({
                 draggedSectionIndex={draggedSectionIndex}
                 setDraggedSectionId={setDraggedSectionId}
                 onDropSectionInZone={onDropSectionInZone}
+                draggedBlockId={draggedBlockId}
+                draggedBlockType={draggedBlockType}
+                draggedFromSectionId={draggedFromSectionId}
+                draggedFromColumnId={draggedFromColumnId}
+                draggedFromParentBlockId={draggedFromParentBlockId}
+                setDraggedBlockId={setDraggedBlockId}
+                setDraggedFromSectionId={setDraggedFromSectionId}
+                setDraggedFromColumnId={setDraggedFromColumnId}
+                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                onPromoteBlockToSection={onPromoteBlockToSection}
               />
             </div>
           )}
@@ -643,8 +688,11 @@ function ZoneGroup({
 }
 
 // ---------------------------------------------------------------------------
-// Drop target between sections (visible when dragging a section)
+// Drop target between sections (visible when dragging a section or block)
 // ---------------------------------------------------------------------------
+
+// Block types that can be promoted to standalone sections
+const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "ButtonElement"];
 
 interface SectionDropTargetProps {
   zone: PageZone;
@@ -654,6 +702,24 @@ interface SectionDropTargetProps {
   draggedSectionIndex: number | null;
   setDraggedSectionId: (id: string | null) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
+  // Block drag state
+  draggedBlockId: string | null;
+  draggedBlockType: string | null;
+  draggedFromSectionId: string | null;
+  draggedFromColumnId: string | null;
+  draggedFromParentBlockId: string | null;
+  setDraggedBlockId: (id: string | null) => void;
+  setDraggedFromSectionId: (id: string | null) => void;
+  setDraggedFromColumnId: (id: string | null) => void;
+  setDraggedFromParentBlockId: (id: string | null) => void;
+  onPromoteBlockToSection: (
+    blockId: string,
+    fromSectionId: string,
+    fromColumnId: string | undefined,
+    fromParentBlockId: string | undefined,
+    toZone: PageZone,
+    toIndex: number
+  ) => void;
 }
 
 function SectionDropTarget({
@@ -664,9 +730,22 @@ function SectionDropTarget({
   draggedSectionIndex,
   setDraggedSectionId,
   onDropSectionInZone,
+  draggedBlockId,
+  draggedBlockType,
+  draggedFromSectionId,
+  draggedFromColumnId,
+  draggedFromParentBlockId,
+  setDraggedBlockId,
+  setDraggedFromSectionId,
+  setDraggedFromColumnId,
+  setDraggedFromParentBlockId,
+  onPromoteBlockToSection,
 }: SectionDropTargetProps): React.ReactNode {
   const [isOver, setIsOver] = useState(false);
-  const isDragging = Boolean(draggedSectionId);
+  const isDraggingSection = Boolean(draggedSectionId);
+  const isDraggingBlock = Boolean(draggedBlockId);
+  const canPromoteBlock = isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? "");
+  const isDragging = isDraggingSection || canPromoteBlock;
 
   const resolveDragIndex = (rawIndex: string): number | null => {
     if (!rawIndex) return null;
@@ -679,17 +758,24 @@ function SectionDropTarget({
   return (
     <div
       onDragOver={(e: React.DragEvent) => {
-        const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
-        if (!dragSectionId) return;
-        const dragZone =
-          draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
-        const dragIndex =
-          draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
-        const isSamePosition =
-          dragZone === zone &&
-          dragIndex !== null &&
-          (toIndex === dragIndex || toIndex === dragIndex + 1);
-        if (isSamePosition) return;
+        // Handle section drag
+        if (isDraggingSection) {
+          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          if (!dragSectionId) return;
+          const dragZone =
+            draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
+          const dragIndex =
+            draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+          const isSamePosition =
+            dragZone === zone &&
+            dragIndex !== null &&
+            (toIndex === dragIndex || toIndex === dragIndex + 1);
+          if (isSamePosition) return;
+        }
+        // Handle block drag (for promotable blocks)
+        if (canPromoteBlock) {
+          // Accept the drag
+        }
         e.preventDefault();
         e.stopPropagation();
         setIsOver(true);
@@ -702,19 +788,40 @@ function SectionDropTarget({
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
-        const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
-        if (!dragSectionId) return;
-        const dragZone =
-          draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
-        const dragIndex =
-          draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
-        const isSamePosition =
-          dragZone === zone &&
-          dragIndex !== null &&
-          (toIndex === dragIndex || toIndex === dragIndex + 1);
-        if (isSamePosition) return;
-        onDropSectionInZone(dragSectionId, zone, toIndex);
-        setDraggedSectionId(null);
+
+        // Handle section drop
+        if (isDraggingSection) {
+          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          if (!dragSectionId) return;
+          const dragZone =
+            draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
+          const dragIndex =
+            draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+          const isSamePosition =
+            dragZone === zone &&
+            dragIndex !== null &&
+            (toIndex === dragIndex || toIndex === dragIndex + 1);
+          if (isSamePosition) return;
+          onDropSectionInZone(dragSectionId, zone, toIndex);
+          setDraggedSectionId(null);
+          return;
+        }
+
+        // Handle block drop (promote to section)
+        if (canPromoteBlock && draggedBlockId && draggedFromSectionId) {
+          onPromoteBlockToSection(
+            draggedBlockId,
+            draggedFromSectionId,
+            draggedFromColumnId ?? undefined,
+            draggedFromParentBlockId ?? undefined,
+            zone,
+            toIndex
+          );
+          setDraggedBlockId(null);
+          setDraggedFromSectionId(null);
+          setDraggedFromColumnId(null);
+          setDraggedFromParentBlockId(null);
+        }
       }}
       className={`relative overflow-hidden transition-[height] ${
         isDragging ? "h-4" : "h-0"
@@ -723,7 +830,9 @@ function SectionDropTarget({
       <div
         className={`absolute left-2 right-2 top-1/2 -translate-y-1/2 rounded border border-dashed transition ${
           isOver
-            ? "border-purple-500/70 bg-purple-600/30 h-3"
+            ? canPromoteBlock
+              ? "border-emerald-500/70 bg-emerald-600/30 h-3"
+              : "border-purple-500/70 bg-purple-600/30 h-3"
             : "border-transparent bg-transparent h-2"
         }`}
       />

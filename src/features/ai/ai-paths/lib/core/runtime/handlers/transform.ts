@@ -1,14 +1,16 @@
 import {
   cloneValue,
   coerceInput,
+  coerceInputArray,
   getValueAtMappingPath,
   normalizeMappingPath,
   renderTemplate,
+  safeStringify,
   setValueAtMappingPath,
 } from "../../utils";
 import { buildFallbackEntity, resolveContextPayload } from "../utils";
 import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
-import type { RuntimePortValues } from "@/shared/types/ai-paths";
+import type { RegexConfig, RuntimePortValues } from "@/shared/types/ai-paths";
 
 export const handleContext: NodeHandler = async ({
   node,
@@ -238,5 +240,226 @@ export const handleValidator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCo
     context: contextValue,
     valid,
     errors: missing as string[],
+  };
+};
+
+type RegexMatchRecord = {
+  input: string;
+  match: string | null;
+  index: number | null;
+  captures: string[];
+  groups: Record<string, string> | null;
+  key: string;
+};
+
+const normalizeRegexFlags = (flags: string | undefined): string => {
+  if (!flags) return "";
+  const allowed = new Set(["d", "g", "i", "m", "s", "u", "v", "y"]);
+  const seen = new Set<string>();
+  const normalized = Array.from(flags)
+    .filter((ch: string) => allowed.has(ch))
+    .filter((ch: string) => {
+      if (seen.has(ch)) return false;
+      seen.add(ch);
+      return true;
+    });
+  // Stable-ish ordering to avoid churn.
+  const order = ["d", "g", "i", "m", "s", "u", "v", "y"];
+  normalized.sort((a: string, b: string) => order.indexOf(a) - order.indexOf(b));
+  return normalized.join("");
+};
+
+const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
+  const rawValues = coerceInputArray(value);
+  const strings = rawValues.flatMap((item: unknown): string[] => {
+    if (item === undefined || item === null) return [];
+    const asString = typeof item === "string" ? item : safeStringify(item);
+    if (!asString) return [];
+    if (!splitLines) return [asString];
+    return asString
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter(Boolean);
+  });
+  return strings;
+};
+
+const resolveGroupKey = (
+  match: RegExpExecArray,
+  groupBy: string | undefined
+): string | null => {
+  const key = (groupBy ?? "match").trim();
+  if (!key || key === "match" || key === "0") {
+    return match[0] ?? null;
+  }
+  const asIndex = Number(key);
+  if (Number.isInteger(asIndex)) {
+    return match[asIndex] ?? null;
+  }
+  const groups =
+    match.groups && typeof match.groups === "object"
+      ? (match.groups as Record<string, unknown>)
+      : null;
+  const candidate = groups ? groups[key] : undefined;
+  if (typeof candidate === "string") return candidate;
+  if (candidate === undefined || candidate === null) return null;
+  return safeStringify(candidate);
+};
+
+export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+  const regexConfig: RegexConfig = node.config?.regex ?? {
+    pattern: "",
+    flags: "g",
+    matchMode: "first",
+    groupBy: "match",
+    outputMode: "object",
+    includeUnmatched: true,
+    unmatchedKey: "__unmatched__",
+    splitLines: true,
+    sampleText: "",
+    aiPrompt: "",
+  };
+
+  const rawInput = nodeInputs.value ?? nodeInputs.prompt;
+  const splitLines = regexConfig.splitLines ?? true;
+  const items = buildRegexItems(rawInput, splitLines);
+
+  const pattern = (regexConfig.pattern ?? "").trim();
+  const flags = normalizeRegexFlags(regexConfig.flags);
+  const matchMode = regexConfig.matchMode ?? "first";
+  const groupBy = regexConfig.groupBy ?? "match";
+  const includeUnmatched = regexConfig.includeUnmatched ?? true;
+  const unmatchedKey = (regexConfig.unmatchedKey ?? "__unmatched__").trim() || "__unmatched__";
+
+  const textForPrompt =
+    typeof rawInput === "string" ? rawInput : items.join("\n");
+  const aiPromptTemplate = regexConfig.aiPrompt ?? "";
+  const aiPrompt = aiPromptTemplate.trim()
+    ? renderTemplate(
+        aiPromptTemplate,
+        { ...nodeInputs, text: textForPrompt, lines: items } as Record<string, unknown>,
+        textForPrompt
+      )
+    : "";
+
+  if (!pattern) {
+    return {
+      grouped: regexConfig.outputMode === "array" ? [] : {},
+      matches: [],
+      ...(aiPrompt ? { aiPrompt } : {}),
+    };
+  }
+
+  let compiled: RegExp;
+  try {
+    compiled = new RegExp(pattern, flags);
+  } catch {
+    return {
+      grouped: regexConfig.outputMode === "array" ? [] : {},
+      matches: [],
+      ...(aiPrompt ? { aiPrompt } : {}),
+    };
+  }
+
+  const matches: RegexMatchRecord[] = [];
+  const groupedMap = new Map<string, RegexMatchRecord[]>();
+
+  const pushGrouped = (key: string, record: RegexMatchRecord): void => {
+    const current = groupedMap.get(key) ?? [];
+    current.push(record);
+    groupedMap.set(key, current);
+  };
+
+  items.forEach((input: string) => {
+    if (matchMode === "all") {
+      const flagsWithG = compiled.flags.includes("g") ? compiled.flags : `${compiled.flags}g`;
+      const regexAll = new RegExp(compiled.source, flagsWithG);
+      let found = false;
+      let match: RegExpExecArray | null;
+      while ((match = regexAll.exec(input)) !== null) {
+        found = true;
+        const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
+        const groups =
+          match.groups && typeof match.groups === "object"
+            ? (Object.fromEntries(
+                Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
+              ) as Record<string, string>)
+            : null;
+        const record: RegexMatchRecord = {
+          input,
+          match: match[0] ?? null,
+          index: typeof match.index === "number" ? match.index : null,
+          captures: match.slice(1).map((value: string | undefined) => value ?? ""),
+          groups,
+          key,
+        };
+        matches.push(record);
+        pushGrouped(key, record);
+        // Avoid infinite loops on zero-length matches.
+        if (match[0] === "") {
+          regexAll.lastIndex = Math.min(input.length, regexAll.lastIndex + 1);
+        }
+      }
+      if (!found && includeUnmatched) {
+        const record: RegexMatchRecord = {
+          input,
+          match: null,
+          index: null,
+          captures: [],
+          groups: null,
+          key: unmatchedKey,
+        };
+        matches.push(record);
+        pushGrouped(unmatchedKey, record);
+      }
+      return;
+    }
+
+    // matchMode === "first"
+    compiled.lastIndex = 0;
+    const match = compiled.exec(input);
+    if (!match) {
+      if (!includeUnmatched) return;
+      const record: RegexMatchRecord = {
+        input,
+        match: null,
+        index: null,
+        captures: [],
+        groups: null,
+        key: unmatchedKey,
+      };
+      matches.push(record);
+      pushGrouped(unmatchedKey, record);
+      return;
+    }
+    const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
+    const groups =
+      match.groups && typeof match.groups === "object"
+        ? (Object.fromEntries(
+            Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
+          ) as Record<string, string>)
+        : null;
+    const record: RegexMatchRecord = {
+      input,
+      match: match[0] ?? null,
+      index: typeof match.index === "number" ? match.index : null,
+      captures: match.slice(1).map((value: string | undefined) => value ?? ""),
+      groups,
+      key,
+    };
+    matches.push(record);
+    pushGrouped(key, record);
+  });
+
+  const groupedObject = Object.fromEntries(groupedMap.entries());
+  const grouped =
+    regexConfig.outputMode === "array"
+      ? Object.entries(groupedObject).map(([key, items]) => ({ key, items }))
+      : groupedObject;
+
+  return {
+    grouped,
+    matches,
+    ...(aiPrompt ? { aiPrompt } : {}),
   };
 };

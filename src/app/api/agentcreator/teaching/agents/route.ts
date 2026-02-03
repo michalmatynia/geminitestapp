@@ -7,7 +7,6 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import { listTeachingAgents, upsertTeachingAgent } from "@/features/ai/agentcreator/teaching/server/repository";
 
@@ -72,4 +71,3 @@ export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
   { source: "agentcreator.teaching.agents.POST" }
 );
-

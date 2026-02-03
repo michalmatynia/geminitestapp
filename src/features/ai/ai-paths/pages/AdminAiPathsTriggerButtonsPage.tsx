@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -50,15 +50,30 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
   const [orderedRows, setOrderedRows] = useState<AiTriggerButtonRecord[]>([]);
-
-  useEffect(() => {
-    if (triggerButtonsQuery.data) {
-      setOrderedRows(triggerButtonsQuery.data);
-    }
-  }, [triggerButtonsQuery.data]);
-
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+
+  const triggerButtonsQuery = useQuery<AiTriggerButtonRecord[]>({
+    queryKey: ["ai-paths", "trigger-buttons"],
+    queryFn: async () => {
+      const result = await triggerButtonsApi.list();
+      if (!result.ok) return [];
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    staleTime: 10_000,
+  });
+
+  useEffect(() => {
+    // Only update if data has changed to prevent unnecessary re-renders
+    if (triggerButtonsQuery.data) {
+      setOrderedRows(prevOrderedRows => {
+        if (JSON.stringify(prevOrderedRows) === JSON.stringify(triggerButtonsQuery.data)) {
+          return prevOrderedRows;
+        }
+        return triggerButtonsQuery.data;
+      });
+    }
+  }, [triggerButtonsQuery.data]);
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],

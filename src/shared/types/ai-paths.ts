@@ -5,6 +5,7 @@ export type NodeType =
   | "simulation"
   | "context"
   | "parser"
+  | "regex"
   | "mapper"
   | "mutator"
   | "validator"
@@ -182,6 +183,37 @@ export type TemplateConfig = {
   template: string;
 };
 
+export type RegexMatchMode = "first" | "all";
+export type RegexGroupOutputMode = "object" | "array";
+
+export type RegexConfig = {
+  /** JavaScript/ECMAScript regex pattern (without leading/trailing /). */
+  pattern: string;
+  /** Regex flags (example: "gim"). */
+  flags?: string;
+  /** Whether to match the first match per input string or all matches. */
+  matchMode?: RegexMatchMode;
+  /**
+   * Which capture to use as the grouping key.
+   * - "0" / "match" => full match
+   * - "1" => first capture group
+   * - "name" => named capture group (/(?<name>...)/)
+   */
+  groupBy?: string;
+  /** grouped output as object or array of { key, items } */
+  outputMode?: RegexGroupOutputMode;
+  /** Include unmatched input values in the grouped output. */
+  includeUnmatched?: boolean;
+  /** Group key label used for unmatched inputs. */
+  unmatchedKey?: string;
+  /** If true, split string inputs by newline into multiple items. */
+  splitLines?: boolean;
+  /** Optional sample text used by config preview / AI prompt rendering. */
+  sampleText?: string;
+  /** Optional AI prompt template used to propose a regex. */
+  aiPrompt?: string;
+};
+
 export type BundleConfig = {
   includePorts?: string[];
 };
@@ -276,6 +308,7 @@ export type NodeConfig = {
   simulation?: SimulationConfig;
   viewer?: ViewerConfig;
   context?: ContextConfig;
+  regex?: RegexConfig;
   mapper?: MapperConfig;
   mutator?: MutatorConfig;
   validator?: ValidatorConfig;

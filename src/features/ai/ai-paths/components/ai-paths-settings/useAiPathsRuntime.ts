@@ -905,7 +905,10 @@ export function useAiPathsRuntime({
 
     // Find the connected AI Model node
     // For database nodes, prefer aiPrompt port; for prompt nodes, prefer prompt port; but accept any connection to a model
-    const preferredPort = sourceNode.type === "database" ? "aiPrompt" : "prompt";
+    const preferredPort =
+      sourceNode.type === "database" || sourceNode.type === "regex"
+        ? "aiPrompt"
+        : "prompt";
 
     // First try to find edge with preferred port
     let aiEdge = edges.find(
@@ -968,13 +971,19 @@ export function useAiPathsRuntime({
         // For database nodes, store result in queryCallback (both input and output)
         // For prompt nodes, store result in the result input (so it shows in the Result Input field)
         const updatedSourceOutputs =
-          sourceNode.type === "database" ? { ...sourceOutputs, queryCallback: result } : sourceOutputs;
+          sourceNode.type === "database"
+            ? { ...sourceOutputs, queryCallback: result }
+            : sourceNode.type === "regex"
+              ? { ...sourceOutputs, regexCallback: result }
+              : sourceOutputs;
 
         const updatedSourceInputs =
           sourceNode.type === "database"
             ? { ...sourceInputs, queryCallback: result }
             : sourceNode.type === "prompt"
               ? { ...sourceInputs, result }
+              : sourceNode.type === "regex"
+                ? { ...sourceInputs, regexCallback: result }
               : sourceInputs;
 
         return {

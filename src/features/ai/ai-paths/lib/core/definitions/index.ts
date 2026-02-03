@@ -15,6 +15,8 @@ import {
   POLL_OUTPUT_PORTS,
   PROMPT_INPUT_PORTS,
   PROMPT_OUTPUT_PORTS,
+  REGEX_INPUT_PORTS,
+  REGEX_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
@@ -96,6 +98,28 @@ export const palette: NodeDefinition[] = [
     description: "Extract fields into outputs or a single bundle.",
     inputs: ["entityJson", "context"],
     outputs: ["productId", "title", "images", "content_en"],
+  },
+  {
+    type: "regex",
+    title: "Regex Grouper",
+    description: "Group strings with a regex and emit grouped output.",
+    inputs: REGEX_INPUT_PORTS,
+    outputs: REGEX_OUTPUT_PORTS,
+    config: {
+      regex: {
+        pattern: "",
+        flags: "g",
+        matchMode: "first",
+        groupBy: "match",
+        outputMode: "object",
+        includeUnmatched: true,
+        unmatchedKey: "__unmatched__",
+        splitLines: true,
+        sampleText: "",
+        aiPrompt:
+          "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+      },
+    },
   },
   {
     type: "mapper",

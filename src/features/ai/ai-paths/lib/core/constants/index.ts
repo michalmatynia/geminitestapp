@@ -19,6 +19,7 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   "bundle",
   "template",
   "prompt",
+  "regex",
   "mapper",
   "mutator",
   "validator",
@@ -104,6 +105,8 @@ export const DATABASE_INPUT_PORTS = [
   "schema",
   "aiQuery",
 ];
+export const REGEX_INPUT_PORTS = ["value", "prompt"];
+export const REGEX_OUTPUT_PORTS = ["grouped", "matches", "aiPrompt"];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
   provider: "mongodb",
   collection: "products",
@@ -328,6 +331,8 @@ export const PARSER_PATH_OPTIONS = [
 
 export const VIEWER_INPUT_PORTS = [
   "result",
+  "grouped",
+  "matches",
   "analysis",
   "description",
   "description_en",
@@ -426,6 +431,8 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   aiPrompt: ["prompt"],
   schema: ["schema"],
   aiQuery: ["aiQuery", "query", "queryCallback", "value"],
+  grouped: ["grouped", "result", "value", "bundle", "query", "aiQuery", "queryCallback"],
+  matches: ["matches", "result", "value", "bundle"],
 };
 
 export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
@@ -465,6 +472,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   simulation: ["trigger", "notification"],
   parser: [
     "prompt",
+    "regex",
     "database",
     "viewer",
     "notification",
@@ -482,6 +490,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   ],
   mapper: [
     "prompt",
+    "regex",
     "mutator",
     "validator",
     "viewer",
@@ -499,6 +508,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "validator",
     "viewer",
     "prompt",
+    "regex",
     "ai_description",
     "description_updater",
     "bundle",
@@ -511,6 +521,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   validator: [
     "viewer",
     "prompt",
+    "regex",
     "ai_description",
     "description_updater",
     "gate",
@@ -526,6 +537,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   compare: ["gate", "router", "viewer", "bundle", "template", "poll", "database"],
   gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay", "poll"],
   router: ["viewer", "bundle", "template", "prompt", "model", "agent", "delay", "poll", "database"],
+  regex: ["viewer", "bundle", "template", "prompt", "model", "agent", "delay", "poll", "database"],
   delay: ["viewer", "bundle", "template", "prompt", "model", "agent", "validator", "gate", "poll", "database"],
   poll: ["viewer", "notification", "bundle", "template", "prompt", "model", "agent", "delay", "database"],
   http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
@@ -547,6 +559,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   simulation: { border: "border-cyan-500/40", glow: "shadow-cyan-500/20" },
   context: { border: "border-emerald-500/40", glow: "shadow-emerald-500/20" },
   parser: { border: "border-sky-500/40", glow: "shadow-sky-500/20" },
+  regex: { border: "border-cyan-500/40", glow: "shadow-cyan-500/20" },
   mapper: { border: "border-blue-500/40", glow: "shadow-blue-500/20" },
   mutator: { border: "border-teal-500/40", glow: "shadow-teal-500/20" },
   validator: { border: "border-orange-500/40", glow: "shadow-orange-500/20" },

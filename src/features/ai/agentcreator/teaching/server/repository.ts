@@ -42,9 +42,9 @@ const ensureIndexesOnce = (() => {
     try {
       const db = await getMongoDb();
       await Promise.all([
-        db.collection(AGENTS_COLLECTION).createIndex({ updatedAt: -1 }),
-        db.collection(COLLECTIONS_COLLECTION).createIndex({ updatedAt: -1 }),
-        db.collection(DOCUMENTS_COLLECTION).createIndex({ collectionId: 1, updatedAt: -1 }),
+        db.collection<AgentDoc>(AGENTS_COLLECTION).createIndex({ updatedAt: -1 }),
+        db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).createIndex({ updatedAt: -1 }),
+        db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).createIndex({ collectionId: 1, updatedAt: -1 }),
       ]);
     } catch {
       // best-effort; indexing failures should not block the app
@@ -142,7 +142,7 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
 export async function deleteTeachingAgent(agentId: string): Promise<boolean> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const result = await db.collection(AGENTS_COLLECTION).deleteOne({ _id: agentId });
+  const result = await db.collection<AgentDoc>(AGENTS_COLLECTION).deleteOne({ _id: agentId });
   return result.deletedCount > 0;
 }
 
@@ -216,8 +216,8 @@ export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbe
 export async function deleteEmbeddingCollection(collectionId: string): Promise<{ deleted: boolean; deletedDocuments: number }> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const deleteCollection = await db.collection(COLLECTIONS_COLLECTION).deleteOne({ _id: collectionId });
-  const deleteDocs = await db.collection(DOCUMENTS_COLLECTION).deleteMany({ collectionId });
+  const deleteCollection = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).deleteOne({ _id: collectionId });
+  const deleteDocs = await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).deleteMany({ collectionId });
   return { deleted: deleteCollection.deletedCount > 0, deletedDocuments: deleteDocs.deletedCount };
 }
 
@@ -233,12 +233,12 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
-      .project({ embedding: 0 })
+      .project<Omit<DocumentDoc, "embedding">>({ embedding: 0 })
       .toArray(),
-    db.collection(DOCUMENTS_COLLECTION).countDocuments({ collectionId }),
+    db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).countDocuments({ collectionId }),
   ]);
 
-  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, "embedding"> & { embedding?: never }) => ({
+  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc) => ({
     id: doc._id,
     collectionId: doc.collectionId,
     text: doc.text,
@@ -290,7 +290,7 @@ export async function createEmbeddingDocument(params: {
 export async function deleteEmbeddingDocument(documentId: string): Promise<boolean> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const result = await db.collection(DOCUMENTS_COLLECTION).deleteOne({ _id: documentId });
+  const result = await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).deleteOne({ _id: documentId });
   return result.deletedCount > 0;
 }
 

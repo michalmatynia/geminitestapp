@@ -38,6 +38,8 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   queryCallback: ["object", "string"],
   aiQuery: ["object", "string"],
   schema: "object",
+  grouped: "json",
+  matches: "array",
   jobId: "id",
   status: "string",
 };

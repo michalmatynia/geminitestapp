@@ -554,9 +554,7 @@ export function RegexNodeConfigSection({
               placeholder='Example: ^(?<prefix>[A-Z]+)-(?<id>\\d+)$'
             />
             <p className="mt-2 text-[11px] text-gray-500">
-              Pattern is stored without <span className="text-gray-300">/</span> delimiters.
-              You can paste <span className="text-gray-300">/pattern/flags</span> and click{" "}
-              <span className="text-gray-300">Normalize</span>.
+              Pattern is stored without / delimiters. You can paste /pattern/flags and click Normalize.
             </p>
           </div>
           <div className="w-[140px]">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, Checkbox, Label, Button, useToast } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { Loader2 } from "lucide-react";
@@ -13,22 +13,32 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
   const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
 
+  const extractValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const sectionDropValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+
   const [showExtractPlaceholder, setShowExtractPlaceholder] = useState(false);
   const [showSectionDropPlaceholder, setShowSectionDropPlaceholder] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
+  const lastAppliedValuesRef = useRef<{
+    extractValue: string | undefined;
+    sectionDropValue: string | undefined;
+  } | null>(null);
 
   useEffect(() => {
-    if (settingsMap) {
-      const extractValue = settingsMap.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowExtractPlaceholder(extractValue === "true");
+    // Don't key this effect off the Map reference (it may be recreated),
+    // use the primitive values instead to avoid render → effect → setState loops.
+    if (isDirty) return;
 
-      const sectionDropValue = settingsMap.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
-      // Default to true if not set
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowSectionDropPlaceholder(sectionDropValue !== "false");
+    const last = lastAppliedValuesRef.current;
+    if (last && last.extractValue === extractValue && last.sectionDropValue === sectionDropValue) {
+      return;
     }
-  }, [settingsMap]);
+    lastAppliedValuesRef.current = { extractValue, sectionDropValue };
+
+    setShowExtractPlaceholder(extractValue === "true");
+    // Default to true if not set
+    setShowSectionDropPlaceholder(sectionDropValue !== "false");
+  }, [extractValue, sectionDropValue, isDirty]);
 
   const handleSave = async (): Promise<void> => {
     try {

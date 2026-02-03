@@ -28,6 +28,7 @@ type NavItem = {
   id: string;
   label: string;
   href?: string;
+  exact?: boolean;
   icon?: React.ReactNode;
   keywords?: string[];
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
@@ -46,9 +47,10 @@ const normalizeText = (value: string): string =>
 
 const stripQuery = (href: string): string => href.split("?")[0] ?? href;
 
-const isActiveHref = (pathname: string, href: string): boolean => {
+const isActiveHref = (pathname: string, href: string, exact?: boolean): boolean => {
   const baseHref = stripQuery(href);
   if (!baseHref) return false;
+  if (exact) return pathname === baseHref;
   if (pathname === baseHref) return true;
   if (baseHref === "/admin") return pathname === "/admin";
   return pathname.startsWith(`${baseHref}/`);
@@ -93,7 +95,7 @@ const collectGroupIds = (items: NavItem[]): Set<string> => {
 const collectActiveGroupIds = (items: NavItem[], pathname: string): Set<string> => {
   const active = new Set<string>();
   const walk = (node: NavItem): boolean => {
-    const selfActiveRaw = node.href ? isActiveHref(pathname, node.href) : false;
+    const selfActiveRaw = node.href ? isActiveHref(pathname, node.href, node.exact) : false;
     // Special-case: don't auto-open "section folders" that point to /admin itself.
     // Users expect clicking "Admin" (home) to not expand Workspace unless they explicitly open it.
     const selfActive =
@@ -135,7 +137,7 @@ function NavTree({
     <div className={cn(depth === 0 ? "space-y-1.5" : "space-y-1")}>
       {items.map((item: NavItem) => {
         const hasChildren = !!item.children?.length;
-        const active = item.href ? isActiveHref(pathname, item.href) : false;
+        const active = item.href ? isActiveHref(pathname, item.href, item.exact) : false;
         const isOpen = !isCollapsed && hasChildren && (forcedOpenIds.has(item.id) || openIds.has(item.id));
 
         const rowStyle: React.CSSProperties | undefined =
@@ -482,7 +484,7 @@ export default function Menu(): React.ReactNode {
           label: "AI Paths",
           href: "/admin/ai-paths",
           children: [
-            { id: "ai/ai-paths/canvas", label: "Canvas", href: "/admin/ai-paths" },
+            { id: "ai/ai-paths/canvas", label: "Canvas", href: "/admin/ai-paths", exact: true },
             { id: "ai/ai-paths/trigger-buttons", label: "Trigger Buttons", href: "/admin/ai-paths/trigger-buttons" },
           ],
         },
@@ -728,31 +730,31 @@ export default function Menu(): React.ReactNode {
         isCollapsed={isMenuCollapsed}
         openIds={effectiveOpenIds}
         forcedOpenIds={forcedOpenIds}
-        onToggleOpen={(id: string): void => {
-          if (normalizedQuery) return;
-          const isOpen = effectiveOpenIds.has(id);
+	        onToggleOpen={(id: string): void => {
+	          if (normalizedQuery) return;
+	          const isOpen = effectiveOpenIds.has(id);
 
-          if (isOpen) {
-            if (userOpenIds.has(id)) {
-              setUserOpenIds((prev: Set<string>) => {
-                const next = new Set(prev);
-                next.delete(id);
-                return next;
-              });
-              return;
-            }
-            if (autoOpenIds.has(id)) {
-              setClosedAutoIds((prev: Set<string>) => {
-                const next = new Set(prev);
-                next.add(id);
-                return next;
-              });
-            }
-            return;
-          }
+	          if (isOpen) {
+	            // One-click close, even for auto-opened "active route" folders.
+	            setUserOpenIds((prev: Set<string>) => {
+	              if (!prev.has(id)) return prev;
+	              const next = new Set(prev);
+	              next.delete(id);
+	              return next;
+	            });
+	            if (autoOpenIds.has(id)) {
+	              setClosedAutoIds((prev: Set<string>) => {
+	                if (prev.has(id)) return prev;
+	                const next = new Set(prev);
+	                next.add(id);
+	                return next;
+	              });
+	            }
+	            return;
+	          }
 
-          setClosedAutoIds((prev: Set<string>) => {
-            const next = new Set(prev);
+	          setClosedAutoIds((prev: Set<string>) => {
+	            const next = new Set(prev);
             next.delete(id);
             return next;
           });

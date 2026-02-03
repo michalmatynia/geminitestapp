@@ -31,12 +31,22 @@ const triggerButtonDisplaySchema = z.enum(["icon", "icon_label"]);
 const triggerButtonRecordSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  iconId: z.string().nullable(),
-  locations: z.array(triggerButtonLocationSchema),
-  mode: triggerButtonModeSchema,
+  // Older persisted records may miss some fields; keep parsing lenient and normalize on read.
+  iconId: z.string().nullable().optional(),
+  locations: z
+    .preprocess(
+      (value) => (typeof value === "string" ? [value] : value),
+      z.array(triggerButtonLocationSchema)
+    )
+    .optional(),
+  mode: triggerButtonModeSchema.optional(),
   display: triggerButtonDisplaySchema.optional(),
-  createdAt: z.string().min(1),
-  updatedAt: z.string().min(1),
+  createdAt: z
+    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
+    .optional(),
+  updatedAt: z
+    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
+    .optional(),
 });
 
 const createTriggerButtonSchema = z.object({
@@ -140,15 +150,20 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
       const validated = triggerButtonRecordSchema.safeParse(item);
       if (!validated.success) return;
       const data = validated.data;
+      const now = new Date().toISOString();
+      const locations =
+        Array.isArray(data.locations) && data.locations.length > 0
+          ? data.locations
+          : (["product_modal"] as const);
       items.push({
         id: data.id,
         name: data.name,
         iconId: data.iconId ?? null,
-        locations: data.locations,
-        mode: data.mode,
+        locations: [...locations],
+        mode: data.mode ?? "click",
         display: data.display ?? "icon_label",
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
+        createdAt: data.createdAt ?? now,
+        updatedAt: data.updatedAt ?? data.createdAt ?? now,
       });
     });
     return items;

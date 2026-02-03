@@ -25,9 +25,12 @@ export function ComponentTreePanel(): React.ReactNode {
 
   // Get the settings for showing placeholders
   const { data: settingsMap } = useSettingsMap();
-  const showExtractPlaceholder = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY) === "true";
-  // Default to true if not set
-  const showSectionDropPlaceholder = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY) !== "false";
+  const extractPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const sectionDropPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  // Show extract placeholder only when explicitly set to "true"
+  const showExtractPlaceholder = extractPlaceholderValue === "true";
+  // Show section drop placeholder by default (true unless explicitly set to "false")
+  const showSectionDropPlaceholder = sectionDropPlaceholderValue !== "false";
 
   // Drag-and-drop state for blocks
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);

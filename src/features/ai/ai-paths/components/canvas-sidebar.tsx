@@ -76,16 +76,20 @@ export function CanvasSidebar({
           </div>
         ) : (
           <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
-            {[
-              { title: "Triggers", types: ["trigger"], icon: "⚡" },
-              { title: "Simulation", types: ["simulation"], icon: "🧪" },
-              { title: "Context + Parsing", types: ["context", "parser"], icon: "📦" },
-              { title: "Transforms", types: ["mapper", "mutator", "validator"], icon: "🧭" },
-              {
-                title: "Signals + Logic",
-                types: ["constant", "math", "compare", "gate", "router", "delay", "poll"],
-                icon: "🧪",
-              },
+	            {[
+	              { title: "Triggers", types: ["trigger"], icon: "⚡" },
+	              { title: "Simulation", types: ["simulation"], icon: "🧪" },
+	              { title: "Context + Parsing", types: ["context", "parser"], icon: "📦" },
+	              {
+	                title: "Transforms",
+	                types: ["mapper", "mutator", "validator", "regex", "iterator"],
+	                icon: "🧭",
+	              },
+	              {
+	                title: "Signals + Logic",
+	                types: ["constant", "math", "compare", "gate", "router", "delay", "poll"],
+	                icon: "🧪",
+	              },
               { title: "Bundles + Templates", types: ["bundle", "template"], icon: "🧩" },
               { title: "IO + Fetch", types: ["http", "database", "db_schema"], icon: "🌐" },
               {

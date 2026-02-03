@@ -1,12 +1,12 @@
 When I click Generate PAth, the Connector inputs remain empty
  I also need a way of grouping paths.
-Ai paths node movement
 
-* For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
+CMS Inspector Arrow not working
+* I don't see me regex and interator nodes
 
-* My AI Paths Trigger buttons has a dropdown for an Icon Selector, use the same icon selector as Drafter feature (a matrix of icons)
+Admin Menu Favourites
 
-* I need the button to lock the paths but also to activate or deactivate them.
+
 
 
 GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
@@ -36,6 +36,7 @@ Add additional  information to Import Information, like when was the product imp
 
 In note app, If I drag the folder to the edge, it should be moved to root tree
 
+LATER-Massive import capability in Node App
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields
@@ -48,9 +49,14 @@ Deep ANalytics
 
 Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
 
-String  to Array Node,
+* String  to Array Node,
 Iterator Node (will take object list take one send somewhere and wait for the callback confirmation and the move to the next object)
 
+* For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
+
+* My AI Paths Trigger buttons has a dropdown for an Icon Selector, use the same icon selector as Drafter feature (a matrix of icons)
+
+* I need the button to lock the paths but also to activate or deactivate them.
 * When I create a product, when I upload an image and then resort it, the image starts flickering.
 * The image slot menu has become bloated with options, make ti more elegant and clear
 * When exporting Products to Base.com the Images are not getting exported.

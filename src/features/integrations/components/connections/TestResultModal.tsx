@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, AppModal, ModalShell } from "@/shared/ui";
+import { AppModal, ModalShell } from "@/shared/ui";
 import * as React from "react";
 
 type TestResultModalProps = {
@@ -33,12 +33,12 @@ export function TestResultModal({
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
   const footer = (
-          <Button
-            variant="outline"
-            onClick={() => { void navigator.clipboard.writeText(copyText); }}
-            className="border border-white/20 hover:border-white/40"
-          >      Copy
-    </Button>
+    <button
+      onClick={() => { void navigator.clipboard.writeText(copyText); }}
+      className="border border-white/20 hover:border-white/40 px-4 py-2 rounded"
+    >
+      Copy
+    </button>
   );
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -69,18 +69,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     queryKey: ["ai-paths", "trigger-buttons"],
     queryFn: async () => {
       const result = await triggerButtonsApi.list();
-      if (!result.ok) return [];
+      if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },
     staleTime: 10_000,
   });
 
-  // Keep orderedRows in sync with query data using adjustment during render pattern
-  const [lastData, setLastData] = useState<AiTriggerButtonRecord[] | undefined>(triggerButtonsQuery.data);
-  if (triggerButtonsQuery.data !== lastData) {
-    setLastData(triggerButtonsQuery.data);
-    setOrderedRows(triggerButtonsQuery.data ?? []);
-  }
+  // Keep orderedRows in sync with server results (but don't clobber while dragging).
+  useEffect(() => {
+    if (!triggerButtonsQuery.data) return;
+    if (draggingId) return;
+    setOrderedRows(triggerButtonsQuery.data);
+  }, [draggingId, triggerButtonsQuery.data]);
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],
@@ -372,6 +372,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                   <TableRow className="border-border">
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : triggerButtonsQuery.isError ? (
+                  <TableRow className="border-border">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      Failed to load trigger buttons.
                     </TableCell>
                   </TableRow>
                 ) : rows.length ? (

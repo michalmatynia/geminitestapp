@@ -37,8 +37,8 @@ export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
     },
     select: (data: SystemSetting[]): Map<string, string> =>
       new Map(data.map((item) => [item.key, item.value])),
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
+    staleTime: 0,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

@@ -297,42 +297,6 @@ export function ExportTab({
             </div>
           ) : null}
         </div>
-          <p className="mt-1 text-xs text-gray-500">
-            Used for exporting stock quantities to Base.com. Leave blank to skip
-            stock.
-          </p>
-          <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-            <Checkbox
-              id="exportStockFallback"
-              checked={exportStockFallbackEnabled}
-              onCheckedChange={(checked: boolean | "indeterminate"): void =>
-                setExportStockFallbackEnabled(Boolean(checked))
-              }
-              disabled={!exportStockFallbackLoaded}
-              className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
-            />
-            <Label htmlFor="exportStockFallback">
-              Skip stock when Base rejects the warehouse (allow listing)
-            </Label>
-          </div>
-          {allWarehouses.length > 0 &&
-          allWarehouses.length > warehouses.length ? (
-            <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-              <Checkbox
-                id="showAllWarehouses"
-                checked={showAllWarehouses}
-                onCheckedChange={(checked: boolean | "indeterminate"): void =>
-                  setShowAllWarehouses(Boolean(checked))
-                }
-                className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
-              />
-              <Label htmlFor="showAllWarehouses">
-                Show all warehouses (may include ones not assigned to the
-                inventory)
-              </Label>
-            </div>
-          ) : null}
-        </div>
 
         <div className="rounded-md border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">

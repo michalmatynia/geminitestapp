@@ -1,5 +1,5 @@
 "use client";
-import { SharedModal, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog } from "@/shared/ui";
+import { SharedModal, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog, Alert } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -657,7 +657,7 @@ export function ProductListingsModal({
         {loading ? (
           <p className="text-sm text-gray-400">Loading listings...</p>
         ) : combinedError ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             <div className="flex flex-col gap-3">
               <span>{combinedError}</span>
               {isImageExportError(combinedError) && lastExportListingId ? (
@@ -696,7 +696,7 @@ export function ProductListingsModal({
                 </div>
               ) : null}
             </div>
-          </div>
+          </Alert>
         ) : (
           <div className="space-y-3">
             {canStartListing && <StartListingPanel />}

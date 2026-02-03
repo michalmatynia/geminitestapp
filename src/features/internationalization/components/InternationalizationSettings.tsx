@@ -1,4 +1,4 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input, Badge } from "@/shared/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input, Badge, Alert } from "@/shared/ui";
 import { MoreVertical } from "lucide-react";
 
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
@@ -246,8 +246,10 @@ export function InternationalizationSettings({
               Loading languages...
             </div>
           ) : languagesError ? (
-            <div className="mt-4 rounded-md border border-dashed border-red-500/40 p-4 text-center text-sm text-red-200">
-              {languagesError}
+            <div className="mt-4">
+              <Alert variant="error">
+                {languagesError}
+              </Alert>
             </div>
           ) : languages.length === 0 ? (
             <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">

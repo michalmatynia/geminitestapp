@@ -7,6 +7,7 @@ import {
   Label,
   LoadingButton,
   SharedModal,
+  Alert,
 } from "@/shared/ui";
 import { X, Plus } from "lucide-react";
 import type { Asset3DRecord, Asset3DUpdateInput } from "../types";
@@ -242,9 +243,9 @@ export function Asset3DEditModal({
 
           {/* Error */}
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+            <Alert variant="error">
               {error}
-            </div>
+            </Alert>
           )}
         </div>
 

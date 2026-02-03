@@ -1,14 +1,10 @@
-src/features/data-import-export/components/imports/ExportTab.tsx(646,5): error TS1005: ')' expected.
-src/features/data-import-export/components/imports/ExportTab.tsx(647,3): error TS1109: Expression expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(360,7): error TS2657: JSX expressions must have one parent element.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(377,9): error TS1128: Declaration or statement expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(377,11): error TS1109: Expression expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(378,7): error TS1109: Expression expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(378,8): error TS1128: Declaration or statement expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(379,5): error TS1128: Declaration or statement expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(380,3): error TS1109: Expression expected.
-src/features/notesapp/components/editor/MarkdownToolbar.tsx(381,1): error TS1128: Declaration or statement expected.
-src/features/notesapp/components/editor/NoteMetadata.tsx(397,7): error TS2657: JSX expressions must have one parent element.
-src/features/notesapp/components/editor/NoteMetadata.tsx(652,5): error TS1128: Declaration or statement expected.
-src/features/notesapp/components/editor/NoteMetadata.tsx(653,3): error TS1109: Expression expected.
-src/features/notesapp/components/editor/NoteMetadata.tsx(654,1): error TS1128: Declaration or statement expected.
+src/app/api/products/tags/route.ts(70,30): error TS2352: Conversion of type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }[]' to type 'ProductTagDto[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }' is not comparable to type 'ProductTagDto'.
+    Types of property 'createdAt' are incompatible.
+      Type 'Date' is not comparable to type 'string'.
+src/app/api/products/tags/route.ts(121,32): error TS2352: Conversion of type '{ id: `${string}-${string}-${string}-${string}-${string}`; name: string; color: string; catalogId: string; createdAt: Date; updatedAt: Date; }' to type 'ProductTagDto' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'createdAt' are incompatible.
+    Type 'Date' is not comparable to type 'string'.
+src/app/api/products/tags/route.ts(146,30): error TS2352: Conversion of type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }' to type 'ProductTagDto' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'createdAt' are incompatible.
+    Type 'Date' is not comparable to type 'string'.

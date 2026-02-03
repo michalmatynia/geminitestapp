@@ -444,8 +444,10 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
     const product = await productRepository.getProductById(productId);
 
     if (!product) {
-      console.error(`[processDescriptionGeneration] Product not found for ID: "${productId}"`);
-      console.error(`[processDescriptionGeneration] This might be a SKU instead of a product ID`);
+      void ErrorSystem.logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, { 
+        service: "product-ai-queue", 
+        productId 
+      });
       throw notFoundError("Product not found", { productId });
     }
 
@@ -541,7 +543,10 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   const product = await productRepository.getProductById(productId);
 
   if (!product) {
-    console.error(`[processTranslation] Product not found for ID: "${productId}"`);
+    void ErrorSystem.logWarning(`Product not found for ID: "${productId}"`, { 
+      service: "product-ai-queue-translation", 
+      productId 
+    });
     throw notFoundError("Product not found", { productId });
   }
 
@@ -908,7 +913,10 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
   const job = await jobRepository.findJobById(jobId);
 
   if (!job) {
-    console.error(`[processSingleJob] Job ${jobId} not found`);
+    void ErrorSystem.logWarning(`Job ${jobId} not found`, { 
+      service: "product-ai-queue-single", 
+      jobId 
+    });
     throw notFoundError("Job not found", { jobId });
   }
 

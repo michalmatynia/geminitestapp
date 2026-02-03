@@ -154,18 +154,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     setEditorOpen(true);
   };
 
-  const handleEdit = useCallback((record: AiTriggerButtonDto) => {
+  const handleEdit = useCallback((record: AiTriggerButtonDto): void => {
     setDraft(normalizeDraft(record));
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback((id: string) => {
+  const handleDelete = useCallback((id: string): void => {
     if (confirm("Are you sure you want to delete this trigger button?")) {
       deleteMutation.mutate(id);
     }
   }, [deleteMutation]);
 
-  const handleOrderChange = useCallback((orderedIds: string[]) => {
+  const handleOrderChange = useCallback((orderedIds: string[]): void => {
     reorderMutation.mutate(orderedIds);
   }, [reorderMutation]);
 
@@ -194,7 +194,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const saving = createMutation.isPending || updateMutation.isPending;
   const rows: AiTriggerButtonRecord[] = useMemo(() => {
-    return (triggerButtonsQuery.data ?? []).map(btn => ({
+    return (triggerButtonsQuery.data ?? []).map((btn: AiTriggerButtonDto) => ({
       ...btn,
       // In a real app, you might want to fetch path names as well
       pathName: "N/A" 

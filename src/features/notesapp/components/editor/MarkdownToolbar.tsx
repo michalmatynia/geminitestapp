@@ -357,25 +357,4 @@ export function MarkdownToolbar({
     </div>
   );
 }
-      <div className="flex items-center gap-2">
-        <Label className="text-xs text-gray-400">Color</Label>
-        <Input
-          type="color"
-          value={textColor}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTextColor(event.target.value)}
-          className="h-7 w-10 rounded border bg-gray-800"
-        />
-      </div>
-      <Button
-        type="button"
-        onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Apply font and color"
-      >
-        Apply
-      </Button>
-        </>
-      )}
-    </div>
-  );
-}
+

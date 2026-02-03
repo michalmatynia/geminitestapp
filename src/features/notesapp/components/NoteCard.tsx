@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BreadcrumbScroller, Button, CopyButton, Card, CardContent, CardFooter, CardHeader, Tag } from "@/shared/ui";
+import { BreadcrumbScroller, Button, CopyButton, Card, CardContent, CardFooter, CardHeader, Tag, Badge } from "@/shared/ui";
 
 import Image from "next/image";
 import { ChevronRight, Pin, Star } from "lucide-react";
@@ -168,9 +168,9 @@ function NoteCardBase({
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{note.title}</h3>
           {isCodeNote && (
-            <span className="rounded bg-green-600/20 px-1.5 py-0.5 text-[10px] font-medium text-green-400 border border-green-500/30">
+            <Badge variant="success" className="text-[10px] h-4">
               CODE
-            </span>
+            </Badge>
           )}
         </div>
         <div className="flex items-center gap-2">

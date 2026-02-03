@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";

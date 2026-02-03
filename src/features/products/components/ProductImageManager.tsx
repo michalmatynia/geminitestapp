@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Alert,
 } from "@/shared/ui";
 import NextImage from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -431,10 +432,10 @@ export default function ProductImageManager(): React.JSX.Element {
       </div>
 
       {showDebug && (uploadError || debugInfo) && (
-        <div className="mb-3 space-y-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+        <Alert variant="error" className="mb-3 p-3 text-xs">
           {uploadError ? <div>Upload error: {uploadError}</div> : null}
           {debugInfo ? (
-            <div className="space-y-1">
+            <div className="space-y-1 mt-2">
               <div>
                 Debug: {debugInfo.action} — {debugInfo.message}
               </div>
@@ -447,7 +448,7 @@ export default function ProductImageManager(): React.JSX.Element {
               </div>
             </div>
           ) : null}
-        </div>
+        </Alert>
       )}
 
       <div className="grid grid-cols-5 gap-2">

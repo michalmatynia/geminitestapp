@@ -476,10 +476,17 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
           });
         }
       } catch (error) {
-        console.error("[chatbot][chat] Failed to save session messages", {
-          error,
-          requestId: ctx.requestId
-        });
+        try {
+          const { ErrorSystem } = await import("@/features/observability/services/error-system");
+          void ErrorSystem.captureException(error, { 
+            service: "api/chatbot",
+            action: "save_session_messages",
+            sessionId,
+            requestId: ctx.requestId
+          });
+        } catch (logError) {
+          console.error("[chatbot][chat] Failed to save session messages (and logging failed)", error, logError);
+        }
       }
     }
 

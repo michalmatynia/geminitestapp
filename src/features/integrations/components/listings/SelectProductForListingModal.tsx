@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast } from "@/shared/ui";
+import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast, Alert } from "@/shared/ui";
 import { useState } from "react";
 
 import type { ProductWithImages } from "@/features/products";
@@ -194,7 +194,7 @@ export default function SelectProductForListingModal({
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             <div className="flex flex-col gap-3">
               <span>{error}</span>
               {isBaseComIntegration && isImageExportError(error) ? (
@@ -233,7 +233,7 @@ export default function SelectProductForListingModal({
                 </div>
               ) : null}
             </div>
-          </div>
+          </Alert>
         )}
 
         <IntegrationAccountSummary 

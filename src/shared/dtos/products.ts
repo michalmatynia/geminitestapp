@@ -1,4 +1,4 @@
-import { NamedDto, DtoBase } from '../types/base';
+import { NamedDto } from '../types/base';
 
 export interface ProductDto extends NamedDto {
   price: number | null;

@@ -76,14 +76,32 @@ export async function processAgentQueue(): Promise<void> {
     try {
       await runAgentControlLoop(nextRun.id);
     } catch (error: unknown) {
+      // Internal error system log
+      try {
+        const { ErrorSystem } = await import("@/features/observability/services/error-system");
+        void ErrorSystem.captureException(error, { 
+          service: "agent-queue",
+          runId: nextRun.id
+        });
+      } catch (logError) {
+        console.error("[chatbot][agent][queue] Failed to log exception to ErrorSystem", logError);
+      }
       await logAgentFailure(nextRun.id, error);
     }
   } catch (error: unknown) {
     const errorId = randomUUID();
-    if (debugEnabled) {
+    // Log fatal queue error to ErrorSystem
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-queue",
+        errorId
+      });
+    } catch (logError) {
       console.error("[chatbot][agent][queue] Failed to process queue", {
         errorId,
         error,
+        logError
       });
     }
   } finally {

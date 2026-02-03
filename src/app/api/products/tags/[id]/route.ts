@@ -79,8 +79,28 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         .updateOne({ id: params.id }, { $set: updateDoc });
       const updated = await db
         .collection("product_tags")
-        .findOne({ id: params.id });
-      return NextResponse.json(updated as unknown as ProductTag);
+        .findOne({ id: params.id }) as any;
+      
+      if (!updated) {
+        throw notFoundError("Tag not found", { tagId: params.id });
+      }
+
+      const dto: ProductTag = {
+        id: String(updated.id),
+        name: String(updated.name),
+        color: updated.color ?? null,
+        catalogId: String(updated.catalogId),
+        createdAt:
+          updated.createdAt instanceof Date
+            ? updated.createdAt.toISOString()
+            : String(updated.createdAt),
+        updatedAt:
+          updated.updatedAt instanceof Date
+            ? updated.updatedAt.toISOString()
+            : String(updated.updatedAt),
+      };
+
+      return NextResponse.json(dto);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -121,7 +141,16 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       },
     });
 
-    return NextResponse.json(tag as ProductTag);
+    const dto: ProductTag = {
+      id: tag.id,
+      name: tag.name,
+      color: tag.color,
+      catalogId: tag.catalogId,
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
+    };
+
+    return NextResponse.json(dto);
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

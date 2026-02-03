@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
   Badge,
+  Alert,
 } from "@/shared/ui";
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
@@ -238,9 +239,9 @@ export function CatalogModal({
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {error}
-          </div>
+          </Alert>
         )}
 
         <div className="grid gap-4">

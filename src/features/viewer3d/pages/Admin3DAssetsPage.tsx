@@ -7,6 +7,7 @@ import {
   SectionHeader,
   SectionPanel,
   Input,
+  Label,
   ListPanel,
   Table,
   TableBody,

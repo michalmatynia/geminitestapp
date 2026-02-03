@@ -1,0 +1,38 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/[id]/route.ts
+  5:10  error  'randomUUID' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/TriggerButtonListManager.tsx
+   34:83  error  Expected a type annotation              @typescript-eslint/typedef
+   60:41  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   62:46  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   63:51  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   67:43  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   80:45  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   81:42  error  Expected row to have a type annotation  @typescript-eslint/typedef
+  115:26  error  Expected row to have a type annotation  @typescript-eslint/typedef
+  122:26  error  Expected e to have a type annotation    @typescript-eslint/typedef
+  135:37  error  Expected loc to have a type annotation  @typescript-eslint/typedef
+  135:42  error  Expected idx to have a type annotation  @typescript-eslint/typedef
+  148:20  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx
+  197:49  error  Expected btn to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/components/imports/ExportTab.tsx
+  646:4  error  Parsing error: ')' expected
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/editor/NoteMetadata.tsx
+  100:4  error  Parsing error: JSX expressions must have one parent element
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+  232:16  error  'Label' is not defined  react/jsx-no-undef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/dtos/products.ts
+  1:20  error  'DtoBase' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/core/base-types.ts
+  6:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+✖ 19 problems (19 errors, 0 warnings)
+

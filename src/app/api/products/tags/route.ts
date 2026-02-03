@@ -49,11 +49,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       const normalized = tags.map((tag: Record<string, unknown>) => {
         const { _id, ...rest } = tag as unknown as {
           _id?: { toString?: () => string };
+          createdAt?: unknown;
+          updatedAt?: unknown;
         } & Record<string, unknown>;
         const fallbackId = _id?.toString ? _id.toString() : undefined;
         return {
           ...rest,
           id: (rest as { id?: string }).id ?? fallbackId,
+          createdAt: rest.createdAt instanceof Date ? rest.createdAt.toISOString() : rest.createdAt,
+          updatedAt: rest.updatedAt instanceof Date ? rest.updatedAt.toISOString() : rest.updatedAt,
         };
       });
       return NextResponse.json(normalized as ProductTag[]);
@@ -67,7 +71,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       where: { catalogId },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(tags as ProductTag[]);
+    return NextResponse.json(tags.map(tag => ({
+      ...tag,
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
+    })) as ProductTag[]);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -118,7 +126,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         updatedAt: now,
       };
       await db.collection("product_tags").insertOne(tag);
-      return NextResponse.json(tag as ProductTag, { status: 201 });
+      const dto: ProductTag = {
+        id: tag.id,
+        name: tag.name,
+        color: tag.color,
+        catalogId: tag.catalogId,
+        createdAt: tag.createdAt.toISOString(),
+        updatedAt: tag.updatedAt.toISOString(),
+      };
+
+      return NextResponse.json(dto, { status: 201 });
     }
 
     if (!process.env.DATABASE_URL) {
@@ -143,7 +160,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       },
     });
 
-    return NextResponse.json(tag as ProductTag, { status: 201 });
+    const dto: ProductTag = {
+      id: tag.id,
+      name: tag.name,
+      color: tag.color,
+      catalogId: tag.catalogId,
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
+    };
+
+    return NextResponse.json(dto, { status: 201 });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

@@ -1,0 +1,32 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/TriggerButtonListManager.tsx
+   34:83  error  Expected a type annotation              @typescript-eslint/typedef
+   60:41  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   62:46  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   63:51  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   67:43  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   80:45  error  Expected row to have a type annotation  @typescript-eslint/typedef
+   81:42  error  Expected row to have a type annotation  @typescript-eslint/typedef
+  115:26  error  Expected row to have a type annotation  @typescript-eslint/typedef
+  122:26  error  Expected e to have a type annotation    @typescript-eslint/typedef
+  134:20  error  Unknown property 'ity-50",
+' found      react/no-unknown-property
+  135:37  error  Expected loc to have a type annotation  @typescript-eslint/typedef
+  135:42  error  Expected idx to have a type annotation  @typescript-eslint/typedef
+  136:25  error  Unknown property '   ' found            react/no-unknown-property
+  136:35  error  Unknown property '  <GripVe' found      react/no-unknown-property
+  143:21  error  Unknown property 'x} classN' found      react/no-unknown-property
+  148:20  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+  150:41  error  Unknown property 'medium te' found      react/no-unknown-property
+  152:23  error  Unknown property '         ' found      react/no-unknown-property
+  154:58  error  Unknown property 'DUCT_ICON' found      react/no-unknown-property
+  160:21  error  Unknown property 'ame="flex' found      react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx
+  197:49  error  Expected btn to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/core/base-types.ts
+  6:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+✖ 22 problems (22 errors, 0 warnings)
+

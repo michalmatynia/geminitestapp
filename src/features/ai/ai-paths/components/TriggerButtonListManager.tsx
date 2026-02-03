@@ -37,7 +37,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   onDelete,
   onOrderChange,
   isLoading,
-}) => {
+}: TriggerButtonListManagerProps) => {
   const [localRows, setLocalRows] = useState<AiTriggerButtonRecord[]>(data);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -46,25 +46,25 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     setLocalRows(data);
   }, [data]);
 
-  const handleDragStart = useCallback((id: string) => {
+  const handleDragStart = useCallback((id: string): void => {
     setDraggingId(id);
   }, []);
 
-  const handleDragEnter = useCallback((id: string) => {
+  const handleDragEnter = useCallback((id: string): void => {
     setOverId(id);
   }, []);
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = useCallback((): void => {
     if (draggingId && overId) {
       const newRows = [...localRows];
-      const draggedItem = newRows.find((row) => row.id === draggingId);
+      const draggedItem = newRows.find((row: AiTriggerButtonRecord): boolean => row.id === draggingId);
       if (draggedItem) {
-        const filteredRows = newRows.filter((row) => row.id !== draggingId);
-        const overIndex = filteredRows.findIndex((row) => row.id === overId);
+        const filteredRows = newRows.filter((row: AiTriggerButtonRecord): boolean => row.id !== draggingId);
+        const overIndex = filteredRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === overId);
         if (overIndex !== -1) {
           filteredRows.splice(overIndex, 0, draggedItem);
           setLocalRows(filteredRows);
-          onOrderChange(filteredRows.map((row) => row.id));
+          onOrderChange(filteredRows.map((row: AiTriggerButtonRecord): string => row.id));
         }
       }
     }
@@ -72,13 +72,13 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     setOverId(null);
   }, [draggingId, overId, localRows, onOrderChange]);
 
-  const sortedRows = useMemo(() => {
+  const sortedRows = useMemo((): AiTriggerButtonRecord[] => {
     if (!draggingId || !overId) {
       return localRows;
     }
     const newRows = [...localRows];
-    const draggedIndex = newRows.findIndex((row) => row.id === draggingId);
-    const overIndex = newRows.findIndex((row) => row.id === overId);
+    const draggedIndex = newRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === draggingId);
+    const overIndex = newRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === overId);
 
     if (draggedIndex === -1 || overIndex === -1) {
       return localRows;
@@ -112,14 +112,14 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sortedRows.map((row) => (
+        {sortedRows.map((row: AiTriggerButtonRecord) => (
           <TableRow
             key={row.id}
             draggable
-            onDragStart={() => handleDragStart(row.id)}
-            onDragEnter={() => handleDragEnter(row.id)}
+            onDragStart={(): void => handleDragStart(row.id)}
+            onDragEnter={(): void => handleDragEnter(row.id)}
             onDragEnd={handleDragEnd}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e: React.DragEvent): void => e.preventDefault()}
             className={cn(
               "cursor-grab",
               draggingId === row.id && "opacity-50",
@@ -132,7 +132,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
             <TableCell>{row.name}</TableCell>
             <TableCell>
               <div className="flex flex-col gap-1">
-                {row.locations.map((loc, idx) => (
+                {row.locations.map((loc: string, idx: number) => (
                   <span key={idx} className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20">
                     {loc}
                   </span>
@@ -145,7 +145,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               </span>
             </TableCell>
             <TableCell>
-              {(() => {
+              {(() : React.JSX.Element => {
                 const Icon = row.iconId ? PRODUCT_ICON_MAP[row.iconId] : undefined;
                 if (!Icon) return <span className="text-sm">{row.display}</span>;
                 return (
@@ -165,7 +165,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onEdit(row)}
+                onClick={(): void => onEdit(row)}
                 className="text-muted-foreground hover:text-white"
               >
                 Edit
@@ -173,7 +173,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onDelete(row.id)}
+                onClick={(): void => onDelete(row.id)}
                 className="text-destructive hover:text-red-500"
               >
                 <Trash2 className="size-4" />

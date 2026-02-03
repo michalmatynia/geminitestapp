@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 168ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 170ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -15,56 +15,23 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 - Environments: .env
 
   Creating an optimized production build ...
+✓ Compiled successfully in 12.6s
+  Running TypeScript ...
+Failed to compile.
 
-> Build error occurred
-Error: Turbopack build failed with 2 errors:
-./src/shared/providers/BackgroundSyncProvider.tsx:6:1
-Export QueryDevPanel doesn't exist in target module
-[0m [90m 4 |[39m [36mimport[39m { useSystemSync } [36mfrom[39m [32m"@/shared/hooks/sync/useSystemSync"[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m { useSettingsMap } [36mfrom[39m [32m"@/shared/hooks/use-settings"[39m[33m;[39m
-[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { [33mQueryDevPanel[39m } [36mfrom[39m [32m"@/shared/ui"[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 7 |[39m
- [90m 8 |[39m type [33mBackgroundSyncContextValue[39m [33m=[39m {
- [90m 9 |[39m   enabled[33m:[39m boolean[33m;[39m[0m
+./src/features/ai/image-studio/pages/AdminImageStudioPage.tsx:1713:50
+Type error: Argument of type '(s: { suggestion: string; found?: string; comment?: string; }, idx: number) => JSX.Element' is not assignable to parameter of type '(value: PromptValidationSuggestion, index: number, array: PromptValidationSuggestion[]) => Element'.
+  Types of parameters 's' and 'value' are incompatible.
+    Type 'PromptValidationSuggestion' is not assignable to type '{ suggestion: string; found?: string; comment?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'comment' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
 
-The export QueryDevPanel was not found in module [project]/src/shared/ui/index.ts [app-client] (ecmascript).
-Did you mean to import SelectLabel?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-Import traces:
-  App Route:
-    ./src/shared/providers/BackgroundSyncProvider.tsx
-    ./src/app/api/databases/restore/route.ts
-
-  Server Component:
-    ./src/shared/providers/BackgroundSyncProvider.tsx
-    ./src/app/layout.tsx
-
-
-./src/shared/providers/BackgroundSyncProvider.tsx:6:1
-Export QueryDevPanel doesn't exist in target module
-[0m [90m 4 |[39m [36mimport[39m { useSystemSync } [36mfrom[39m [32m"@/shared/hooks/sync/useSystemSync"[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m { useSettingsMap } [36mfrom[39m [32m"@/shared/hooks/use-settings"[39m[33m;[39m
-[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { [33mQueryDevPanel[39m } [36mfrom[39m [32m"@/shared/ui"[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 7 |[39m
- [90m 8 |[39m type [33mBackgroundSyncContextValue[39m [33m=[39m {
- [90m 9 |[39m   enabled[33m:[39m boolean[33m;[39m[0m
-
-The export QueryDevPanel was not found in module [project]/src/shared/ui/index.ts [app-ssr] (ecmascript).
-Did you mean to import SelectLabel?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-Import traces:
-  App Route:
-    ./src/shared/providers/BackgroundSyncProvider.tsx
-    ./src/app/api/databases/restore/route.ts
-
-  Server Component:
-    ./src/shared/providers/BackgroundSyncProvider.tsx
-    ./src/app/layout.tsx
-
-
-    at <unknown> (./src/shared/providers/BackgroundSyncProvider.tsx:6:1)
-    at <unknown> (./src/shared/providers/BackgroundSyncProvider.tsx:6:1)
+[0m [90m 1711 |[39m                       {issue[33m.[39msuggestions[33m.[39mlength [33m>[39m [35m0[39m [33m?[39m (
+ [90m 1712 |[39m                         [33m<[39m[33mul[39m className[33m=[39m[32m"mt-1 list-disc space-y-0.5 pl-5 text-[11px] opacity-90"[39m[33m>[39m
+[31m[1m>[22m[39m[90m 1713 |[39m                           {issue[33m.[39msuggestions[33m.[39mmap((s[33m:[39m { suggestion[33m:[39m string[33m;[39m found[33m?[39m[33m:[39m string[33m;[39m comment[33m?[39m[33m:[39m string }[33m,[39m idx[33m:[39m number) [33m=>[39m (
+ [90m      |[39m                                                  [31m[1m^[22m[39m
+ [90m 1714 |[39m                             [33m<[39m[33mli[39m key[33m=[39m{[32m`${issue.ruleId}-${idx}`[39m}[33m>[39m
+ [90m 1715 |[39m                               {s[33m.[39msuggestion}
+ [90m 1716 |[39m                               {s[33m.[39mfound [33m?[39m [33m<[39m[33mspan[39m className[33m=[39m[32m"ml-1 opacity-80"[39m[33m>[39m(found[33m:[39m {s[33m.[39mfound})[33m<[39m[33m/[39m[33mspan[39m[33m>[39m [33m:[39m [36mnull[39m}[0m
+Next.js build worker exited with code: 1 and signal: null

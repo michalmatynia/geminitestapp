@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { render } from "@/__tests__/test-utils";
 import userEvent from "@testing-library/user-event";
 import RegisterPage from "@/features/auth/pages/public/RegisterPage";
 import { signIn } from "next-auth/react";

@@ -5,8 +5,8 @@
 
  RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
 
- ❯ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests | 18 failed) 28ms
-   × AI Paths Extensive Handlers > handleCompare > should handle various comparison operators 8ms
+ ❯ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests | 18 failed) 29ms
+   × AI Paths Extensive Handlers > handleCompare > should handle various comparison operators 9ms
      → expected false to be true // Object.is equality
    × AI Paths Extensive Handlers > handleGate > should pass when valid is true 2ms
      → expected { context: null, valid: false, …(1) } to match object { Object (context, valid) }
@@ -32,16 +32,16 @@
      → expected { prompt: 'Hello , you are .' } to deeply equal { prompt: 'Hello Bob, you are 40.' }
    × AI Paths Extensive Handlers > handleDatabase > should handle query operation 1ms
      → expected null to deeply equal [ { id: '1', name: 'P1' } ]
-   × AI Paths Extensive Handlers > handleModel > should enqueue AI job 1ms
+   × AI Paths Extensive Handlers > handleModel > should enqueue AI job 0ms
      → expected undefined to match object { jobId: 'job-123', status: 'queued' }
-   × AI Paths Extensive Handlers > handleMath > should perform arithmetic operations 0ms
+   × AI Paths Extensive Handlers > handleMath > should perform arithmetic operations 1ms
      → expected undefined to be 15 // Object.is equality
    × AI Paths Extensive Handlers > handleBundle > should bundle multiple inputs into one object 1ms
      → expected {} to deeply equal { a: 1, c: 3 }
    × AI Paths Extensive Handlers > handleTrigger > should return trigger information 1ms
      → expected { trigger: true, …(5) } to match object { trigger: 'test_event', …(1) }
 (16 matching properties omitted from actual)
-   × AI Paths Extensive Handlers > handleAiDescription > should call generateDescription API 0ms
+   × AI Paths Extensive Handlers > handleAiDescription > should call generateDescription API 1ms
      → expected undefined to be 'AI generated description' // Object.is equality
    × AI Paths Extensive Handlers > handleDbSchema > should fetch and format database schema 1ms
      → expected [] to include 'DATABASE SCHEMA'
@@ -50,7 +50,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > GET /api/produ
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:32:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:166:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -68,7 +68,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > GET /api/produ
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:32:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:189:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -86,7 +86,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:85:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:208:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -104,7 +104,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.createProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:122:3)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:78:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
@@ -115,7 +115,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.createProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:127:5)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:78:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
@@ -126,7 +126,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at Object.createProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:152:5)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:78:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
@@ -137,7 +137,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:85:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -155,7 +155,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > PUT /api/produ
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.updateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:170:3)
     at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:78:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
@@ -166,7 +166,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > PUT /api/produ
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.updateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:175:5)
     at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:78:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
@@ -177,7 +177,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > PUT /api/produ
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:84:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -195,7 +195,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > DELETE /api/pr
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.deleteProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:229:3)
     at DELETE_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:166:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:294:19
@@ -206,7 +206,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > DELETE /api/pr
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:39:7)
     at DELETE_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:172:5)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:294:19
     at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
@@ -231,7 +231,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
-    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:108:7)
     at Object.duplicateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:253:3)
     at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/route.ts:35:21)
     at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:333:19
@@ -245,7 +245,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/handle-api-error.ts:35:5)
 
  ❯ __tests__/api/products/products.test.ts (9 tests | 4 failed) 28ms
-   × Products API > GET /api/products > should return all products when no filters are applied 10ms
+   × Products API > GET /api/products > should return all products when no filters are applied 11ms
      → expected 500 to deeply equal 200
    × Products API > GET /api/products > should filter products by name_en using the search parameter 2ms
      → expected 500 to deeply equal 200
@@ -253,9 +253,9 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
      → expected 500 to deeply equal 200
    × Products API > GET /api/public/products/[id] > should return a single product 1ms
      → expected 500 to deeply equal 200
- ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 560ms
- ❯ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests | 1 failed) 12ms
-   × evaluateGraph > should evaluate a parser node with JSON input 2ms
+ ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 592ms
+ ❯ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests | 1 failed) 13ms
+   × evaluateGraph > should evaluate a parser node with JSON input 3ms
      → expected undefined to deeply equal { title: 'Test Product', price: 99.99 }
  ❯ __tests__/features/products/services/productService.test.ts (14 tests | 2 failed) 18ms
    × productService > createProduct > should successfully create a product from FormData 4ms
@@ -290,8 +290,22 @@ Read more: https://mswjs.io/docs/http/intercepting-requests
 stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ❯ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests | 1 failed) 1304ms
-   × Notes page UI > filters notes by search and tag 735ms
+stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories?notebookId=notebook-1
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories?notebookId=notebook-1
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ❯ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests | 1 failed) 1401ms
+   × Notes page UI > filters notes by search and tag 749ms
      → Unable to find an element with the display value: Filter by Tag....
 
 Ignored nodes: comments, script, style
@@ -407,8 +421,9 @@ Ignored nodes: comments, script, style
                   [36m</button>[39m
                   [36m<button[39m
                     [33mar...
- ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 231ms
- ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 350ms
+   ✓ Notes page UI > creates a new note from the modal 394ms
+ ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 222ms
+ ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 351ms
 stderr | __tests__/features/notesapp/pages/notes-advanced.test.tsx > Notes Advanced UI > switches between grid and list views
 [MSW] Warning: intercepted a request without a matching request handler:
 
@@ -417,63 +432,64 @@ stderr | __tests__/features/notesapp/pages/notes-advanced.test.tsx > Notes Advan
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
- ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 975ms
- ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 11ms
- ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 6ms
- ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 5 failed) 44ms
+ ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 1043ms
+   ✓ Notes Advanced UI > switches between grid and list views 309ms
+ ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 10ms
+ ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 7ms
+ ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 5 failed) 46ms
    × Notes API > returns notes with relations 32ms
      → expected [] to have a length of 1 but got +0
-   × Notes API > filters notes by search scope and flags 1ms
+   × Notes API > filters notes by search scope and flags 2ms
      → expected [] to have a length of 1 but got +0
-   × Notes API > filters notes by tags and categories 2ms
+   × Notes API > filters notes by tags and categories 1ms
      → expected [] to have a length of 1 but got +0
    × Notes API > creates a note with tags and categories 2ms
      → Cannot read properties of undefined (reading 'tag')
-   × Notes API > updates a note with new relations 1ms
+   × Notes API > updates a note with new relations 2ms
      → Cannot read properties of undefined (reading 'tag')
 stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtime - Engine > should exit if run not found
 [chatbot][agent][engine] Run not found { runId: 'run-123' }
 
- ✓ __tests__/features/agent-runtime/services/engine.test.ts (5 tests) 5ms
- ✓ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests) 101ms
+ ✓ __tests__/features/agent-runtime/services/engine.test.ts (5 tests) 6ms
+ ✓ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests) 100ms
  ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 23ms
  ✓ __tests__/features/integrations/services/integration-repository.test.ts (8 tests) 6ms
  ❯ __tests__/features/notesapp/services/note-service.test.ts (11 tests | 2 failed) 13ms
    × NoteService > Relation Syncing > automatically creates bidirectional relations 2ms
-     → expected [] to include 'mock-note-1770137267472-d4x68b5i6'
+     → expected [] to include 'mock-note-1770143798487-8x50u0wqp'
    × NoteService > Categories and Tags > manages category trees 1ms
      → expected undefined to be defined
- ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 11ms
+ ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 17ms
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts (0 test)
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts (0 test)
- ✓ __tests__/features/agent-runtime/services/execution.test.ts (6 tests) 6ms
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 1 failed) 10ms
+ ✓ __tests__/features/agent-runtime/services/execution.test.ts (6 tests) 9ms
+ ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 1 failed) 8ms
    × AiPathRunRepository > should list runs with filters 3ms
      → expected +0 to be 1 // Object.is equality
- ✓ __tests__/features/agent-runtime/services/step-runner.test.ts (4 tests) 6ms
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts (10 tests | 3 failed) 9ms
-   × prismaAsset3DRepository > should list assets3d with filters 3ms
+ ✓ __tests__/features/agent-runtime/services/step-runner.test.ts (4 tests) 7ms
+ ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts (10 tests | 3 failed) 10ms
+   × prismaAsset3DRepository > should list assets3d with filters 4ms
      → expected [] to have a length of 1 but got +0
    × prismaAsset3DRepository > should get distinct categories 1ms
      → expected [] to include 'A'
    × prismaAsset3DRepository > should get all distinct tags 0ms
      → expected [] to include 'X'
- ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 2 failed) 19ms
+ ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 2 failed) 22ms
    × Languages API > POST /api/languages > should create a language with country assignments 4ms
      → expected [] to have a length of 1 but got +0
    × Languages API > PUT /api/languages/[id] > should update language fields and countries 2ms
      → expected [] to have a length of 1 but got +0
- ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 18ms
-   × Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call 6ms
+ ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 21ms
+   × Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call 7ms
      → expected 0 to be greater than 0
    × Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls 3ms
      → expected 8 to deeply equal 4
-   × Countries API > POST /api/countries > should create a country with currencies 1ms
+   × Countries API > POST /api/countries > should create a country with currencies 2ms
      → expected [] to have a length of 1 but got +0
    × Countries API > PUT /api/countries/[id] > should update country currencies 2ms
      → expected [] to have a length of 1 but got +0
- ❯ __tests__/features/ai-paths/lib/core/runtime/engine.test.ts (5 tests | 1 failed) 13ms
-   × AI Paths Runtime Engine > should execute a simple linear graph 8ms
+ ❯ __tests__/features/ai-paths/lib/core/runtime/engine.test.ts (5 tests | 1 failed) 26ms
+   × AI Paths Runtime Engine > should execute a simple linear graph 13ms
      → expected undefined to deeply equal { out: 'mapped' }
 stderr | __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
 In HTML, <div> cannot be a child of <select>.
@@ -500,8 +516,8 @@ This will cause a hydration error.
 <select> cannot contain a nested <div>.
 See this log for the ancestor stack trace.
 
- ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 3 failed) 152ms
-   × SystemLogsPage > renders logs list and metrics 56ms
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 3 failed) 336ms
+   × SystemLogsPage > renders logs list and metrics 145ms
      → Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -836,18 +852,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-rose-500/20 text-rose-300 border-rose-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0merror[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -871,18 +887,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border-blue-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0minfo[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -904,9 +920,9 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
-   × SystemLogsPage > calls clear logs mutation when button is clicked 11ms
+   × SystemLogsPage > calls clear logs mutation when button is clicked 40ms
      → expected "bound " to be called at least once
-   × SystemLogsPage > exports logs to clipboard 9ms
+   × SystemLogsPage > exports logs to clipboard 42ms
      → Unable to find an element with the text: Copy JSON. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -1241,18 +1257,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-rose-500/20 text-rose-300 border-rose-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0merror[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1276,18 +1292,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border-blue-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0minfo[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1309,7 +1325,7 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
- ✓ __tests__/features/cms/services/cms-domain.test.ts (9 tests) 7ms
+ ✓ __tests__/features/cms/services/cms-domain.test.ts (9 tests) 14ms
  ✓ __tests__/features/agent-runtime/services/llm-tools.test.ts (7 tests) 5ms
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > GET > returns specific agent run
 [chatbot][agent][GET] Run loaded { runId: 'test-run-123', status: undefined, durationMs: 0 }
@@ -1320,21 +1336,22 @@ stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [r
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > resumes a stopped agent
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'resume' }
-[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 0 }
+[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 1 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > retries a specific step
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'retry_step' }
 [chatbot][agent][POST] Step retry queued { runId: 'test-run-123', stepId: 'step-1', durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > DELETE > deletes a non-running agent
-[chatbot][agent][DELETE] Deleted { runId: 'test-run-123', durationMs: 1 }
+[chatbot][agent][DELETE] Deleted { runId: 'test-run-123', durationMs: 8 }
 
- ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 16ms
- ✓ __tests__/features/auth/pages/signin-page.test.tsx (5 tests) 458ms
- ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 11ms
- ✓ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests) 414ms
- ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 42ms
- ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 199ms
+ ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 32ms
+ ✓ __tests__/features/auth/pages/signin-page.test.tsx (5 tests) 1091ms
+   ✓ SignInPage > handles successful sign in 326ms
+ ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 42ms
+ ✓ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests) 409ms
+ ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 56ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 245ms
  ✓ __tests__/features/cms/services/repository.test.ts (9 tests) 6ms
  ✓ __tests__/features/agent-runtime/utils/utils.test.ts (15 tests) 12ms
 stdout | __tests__/features/cms/api/api-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return 404 if page not found
@@ -1379,10 +1396,10 @@ System event (fallback): {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '92f32252-d218-4271-bc85-851f7c2304ce',
+  requestId: '51eadcde-c803-4eaa-983f-69585604bd7c',
   statusCode: 404,
   context: {
-    errorId: '2973e7e6-fb88-4853-bdff-a13321885e29',
+    errorId: '04fc0c7f-3014-4442-b644-b2d67502a661',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -1406,8 +1423,8 @@ If you need to partially mock a module, you can use "importOriginal" helper insi
     '})'
 }
 
- ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 18ms
- ✓ __tests__/features/internationalization/api/price-groups.test.ts (5 tests) 14ms
+ ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 21ms
+ ✓ __tests__/features/internationalization/api/price-groups.test.ts (5 tests) 17ms
 stderr | __tests__/features/files/components/FileManager.test.tsx > FileManager Component
 [MSW] Warning: intercepted a request without a matching request handler:
 
@@ -1416,7 +1433,6 @@ stderr | __tests__/features/files/components/FileManager.test.tsx > FileManager 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
- ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 174ms
 stderr | __tests__/features/files/components/FileManager.test.tsx
 [MSW] Warning: intercepted a request without a matching request handler:
 
@@ -1425,15 +1441,16 @@ stderr | __tests__/features/files/components/FileManager.test.tsx
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
- ❯ __tests__/features/notesapp/api/categories.test.ts (5 tests | 3 failed) 24ms
-   × Notes Categories API > lists categories 12ms
+ ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 164ms
+ ❯ __tests__/features/notesapp/api/categories.test.ts (5 tests | 3 failed) 35ms
+   × Notes Categories API > lists categories 20ms
      → expected [] to have a length of 2 but got +0
-   × Notes Categories API > returns a hierarchical category tree 1ms
+   × Notes Categories API > returns a hierarchical category tree 2ms
      → expected [] to have a length of 1 but got +0
    × Notes Categories API > deletes categories recursively with notes 2ms
      → expected [ …(2) ] to have a length of +0 but got 2
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts (4 tests | 2 failed) 11ms
-   × PathRunExecutor > should update node records during execution 3ms
+ ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts (4 tests | 2 failed) 13ms
+   × PathRunExecutor > should update node records during execution 4ms
      → expected { value: 'test' } to deeply equal { value: 'done' }
    × PathRunExecutor > should handle node errors correctly 2ms
      → promise resolved "undefined" instead of rejecting
@@ -1444,27 +1461,27 @@ stderr | __tests__/features/agent-runtime/services/planning.test.ts > Agent Runt
 [chatbot][agent][engine] Planner fallback { runId: undefined, error: 'Planner LLM returned invalid JSON.' }
 
  ✓ __tests__/features/agent-runtime/services/planning.test.ts (4 tests) 6ms
- ✓ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests) 8ms
+ ✓ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests) 6ms
  ❯ __tests__/features/cms/components/ComponentTreePanel.test.tsx (3 tests | 3 failed) 21ms
-   × ComponentTreePanel Component > should render empty when no page is selected 17ms
+   × ComponentTreePanel Component > should render empty when no page is selected 16ms
      → No QueryClient set, use QueryClientProvider to set one
    × ComponentTreePanel Component > should render zones and sections when a page is selected 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × ComponentTreePanel Component > should toggle zone visibility 1ms
      → No QueryClient set, use QueryClientProvider to set one
- ❯ __tests__/features/files/api/files.test.ts (6 tests | 5 failed) 23ms
-   × Files API > GET /api/files > should return all files 10ms
+ ❯ __tests__/features/files/api/files.test.ts (6 tests | 5 failed) 28ms
+   × Files API > GET /api/files > should return all files 11ms
      → expected 500 to be 200 // Object.is equality
-   × Files API > GET /api/files > should filter files by filename 1ms
+   × Files API > GET /api/files > should filter files by filename 2ms
      → expected +0 to be 1 // Object.is equality
    × Files API > GET /api/files > should filter files by product ID 1ms
      → expected +0 to be 1 // Object.is equality
-   × Files API > GET /api/files > should filter files by product name 1ms
+   × Files API > GET /api/files > should filter files by product name 4ms
      → expected +0 to be 1 // Object.is equality
-   × Files API > DELETE /api/files/[id] > should delete a file 2ms
+   × Files API > DELETE /api/files/[id] > should delete a file 3ms
      → expected 404 to be 204 // Object.is equality
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > GET > returns list of agent runs
-[chatbot][agent][GET] Runs loaded { count: 1, durationMs: 1 }
+[chatbot][agent][GET] Runs loaded { count: 1, durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > POST > creates a new agent run
 [chatbot][agent][POST] Request {
@@ -1497,22 +1514,22 @@ stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creat
     loopBackoffMaxMs: 12000
   }
 }
-[chatbot][agent][POST] Queued { runId: 'new-run', status: 'queued', durationMs: 0 }
+[chatbot][agent][POST] Queued { runId: 'new-run', status: 'queued', durationMs: 1 }
 
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > DELETE > deletes terminal runs
 [chatbot][agent][DELETE] Deleted { count: 1, durationMs: 2 }
 
- ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 14ms
- ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 1 failed) 10ms
+ ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 15ms
+ ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 1 failed) 9ms
    × productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite 6ms
      → expected 'SKU2' to be 'SKU1' // Object.is equality
- ✓ __tests__/features/agent-runtime/services/memory.test.ts (5 tests) 6ms
- ✓ __tests__/api/auth/register.test.ts (4 tests) 20ms
+ ✓ __tests__/features/agent-runtime/services/memory.test.ts (5 tests) 5ms
+ ✓ __tests__/api/auth/register.test.ts (4 tests) 16ms
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should list available Ollama models
 [chatbot][models] Loaded {
   count: 2,
   durationMs: 9,
-  requestId: '6fac7fd4-4084-4843-a500-86043d435b16'
+  requestId: 'b011e93d-4f3b-44a3-abc5-89d266eb9e39'
 }
 
 stderr | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return an error when model listing fails
@@ -1521,7 +1538,7 @@ stderr | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   statusText: 'Bad Gateway',
   errorText: 'Provider down',
   durationMs: 2,
-  requestId: '274c2bd8-175b-4267-b70d-eb43e76ac1c0'
+  requestId: 'bd35e978-ec45-4e4c-8404-8805465b8439'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should proxy chat requests to Ollama
@@ -1533,13 +1550,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should p
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '40edd96c-24c6-4108-a067-c94835dd74f2'
+  requestId: 'b4729b40-959d-4428-b382-0321ad8f09b4'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '40edd96c-24c6-4108-a067-c94835dd74f2'
+  requestId: 'b4729b40-959d-4428-b382-0321ad8f09b4'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return a debug errorId when chat proxy fails
@@ -1551,13 +1568,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '3f654f0d-e1af-4215-980d-20599b9ca94b'
+  requestId: 'aa6f1907-3050-43e4-856e-5f014d2e016c'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '3f654f0d-e1af-4215-980d-20599b9ca94b'
+  requestId: 'aa6f1907-3050-43e4-856e-5f014d2e016c'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return a debug errorId on unexpected chat errors
@@ -1569,49 +1586,49 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '39287da1-f1fc-4506-af27-5eaee2f137b8'
+  requestId: 'd69bdc43-33d8-457a-89de-b247377b6a0f'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '39287da1-f1fc-4506-af27-5eaee2f137b8'
+  requestId: 'd69bdc43-33d8-457a-89de-b247377b6a0f'
 }
 
- ❯ __tests__/features/chatbot/api/chatbot.test.ts (6 tests | 1 failed) 34ms
-   × Chatbot API > should return an error when model listing fails 5ms
+ ❯ __tests__/features/chatbot/api/chatbot.test.ts (6 tests | 1 failed) 31ms
+   × Chatbot API > should return an error when model listing fails 4ms
      → expected 200 to be 502 // Object.is equality
- ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 7ms
- ❯ __tests__/features/auth/services/totp.test.ts (8 tests | 4 failed) 14ms
+ ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 5ms
+ ❯ __tests__/features/auth/services/totp.test.ts (8 tests | 4 failed) 15ms
    × TOTP Service > hashes recovery codes consistently 3ms
      → expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
    × TOTP Service > verifyTotpToken > verifies a valid token for the current time window 2ms
      → expected false to be true // Object.is equality
-   × TOTP Service > verifyTotpToken > verifies a valid token within the window 0ms
+   × TOTP Service > verifyTotpToken > verifies a valid token within the window 1ms
      → expected false to be true // Object.is equality
    × TOTP Service > verifyTotpToken > returns false for invalid tokens 0ms
      → vi.mocked(...).mockReturnValueOnce is not a function
- ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 10ms
- ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 161ms
+ ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 18ms
+ ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 134ms
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
 [chatbot][agent][GET] Runs loaded { count: 1, durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent logs for a run
 [chatbot][agent][logs] Loaded {
-  runId: 'mock-chatbotAgentRun-1770137294694-xvnvtygd4',
+  runId: 'mock-chatbotAgentRun-1770143834070-4ye14mryi',
   stepId: null,
   count: 1,
-  durationMs: 0
+  durationMs: 1
 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent audit logs for a run
 [chatbot][agent][audits] Loaded {
-  runId: 'mock-chatbotAgentRun-1770137294695-usiopd55t',
+  runId: 'mock-chatbotAgentRun-1770143834071-8p3plcv8e',
   count: 1,
   durationMs: 0
 }
 
- ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 1 failed) 14ms
+ ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 1 failed) 16ms
    × Agent API > should list agent runs with counts 3ms
      → Cannot read properties of undefined (reading 'browserLogs')
 stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth User Repository > findAuthUserByEmail > finds user via MongoDB
@@ -1621,9 +1638,9 @@ stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth Us
 [AUTH-REPO] Finding user unknown@example.com using mongodb
 [AUTH-REPO] MongoDB user not found
 
- ✓ __tests__/features/auth/services/auth-user-repository.test.ts (5 tests) 51ms
- ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 152ms
- ✓ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests) 395ms
+ ✓ __tests__/features/auth/services/auth-user-repository.test.ts (5 tests) 44ms
+ ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 174ms
+ ✓ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests) 485ms
 stderr | __tests__/features/products/components/products-list.test.tsx > Admin Products List UI > renders product rows
 [MSW] Warning: intercepted a request without a matching request handler:
 
@@ -1635,19 +1652,19 @@ Read more: https://mswjs.io/docs/http/intercepting-requests
 stderr | __tests__/features/products/components/products-list.test.tsx > Admin Products List UI > prompts for SKU before opening the create modal and pre-fills SKU
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 643ms
- ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 22ms
-   × RegisterPage > renders correctly 15ms
+ ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 775ms
+ ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 31ms
+   × RegisterPage > renders correctly 17ms
      → No QueryClient set, use QueryClientProvider to set one
-   × RegisterPage > handles successful registration and signs in 2ms
+   × RegisterPage > handles successful registration and signs in 6ms
      → No QueryClient set, use QueryClientProvider to set one
-   × RegisterPage > shows error message if signup is disabled 1ms
+   × RegisterPage > shows error message if signup is disabled 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × RegisterPage > shows error from registration failure 2ms
      → No QueryClient set, use QueryClientProvider to set one
- ✓ __tests__/features/agent-runtime/planning/utils.test.ts (14 tests) 10ms
- ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 64ms
- ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 233ms
+ ✓ __tests__/features/agent-runtime/planning/utils.test.ts (14 tests) 17ms
+ ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 55ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 239ms
 stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > successfully processes a run
 [aiPathRunQueue] Processing run run-1
 [aiPathRunQueue] Run run-1 completed
@@ -1666,11 +1683,11 @@ stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Qu
 stderr | __tests__/features/cms/components/CmsPageRenderer.test.tsx
 THREE.WARNING: Multiple instances of Three.js being imported.
 
- ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 27ms
- ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 55ms
- ✓ __tests__/features/agent-runtime/services/plan-init.test.ts (3 tests) 6ms
- ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 7ms
- ✓ __tests__/shared/lib/observability/critical-error-notifier.test.ts (4 tests) 5ms
+ ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 28ms
+ ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 67ms
+ ✓ __tests__/features/agent-runtime/services/plan-init.test.ts (3 tests) 10ms
+ ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 6ms
+ ✓ __tests__/shared/lib/observability/critical-error-notifier.test.ts (4 tests) 10ms
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should render with initial asset data
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
@@ -1683,11 +1700,11 @@ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogCont
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should display error message if save fails
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 242ms
+ ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 427ms
 stderr | __tests__/features/cms/components/SectionPicker.test.tsx > SectionPicker Component > should call onSelect when a section type is clicked
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 174ms
+ ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 204ms
 stdout | __tests__/shared/utils/retry.test.ts > Retry Utils > withRetry > retries until success
 System event: {
   level: 'warn',
@@ -1788,13 +1805,13 @@ System event: {
   context: { circuitId: 'test-circuit', failures: 5, resetTimeoutMs: 60000 }
 }
 
- ✓ __tests__/shared/utils/retry.test.ts (5 tests) 18ms
- ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 241ms
- ✓ __tests__/features/files/services/image-file-repository.test.ts (6 tests) 6ms
- ✓ __tests__/features/products/api/pagination.test.ts (4 tests) 15ms
- ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 236ms
+ ✓ __tests__/shared/utils/retry.test.ts (5 tests) 22ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 232ms
+ ✓ __tests__/features/files/services/image-file-repository.test.ts (6 tests) 5ms
+ ✓ __tests__/features/products/api/pagination.test.ts (4 tests) 36ms
+ ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 245ms
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > GET: returns all sessions
-[chatbot][sessions][GET] Listed { count: 1, durationMs: 1 }
+[chatbot][sessions][GET] Listed { count: 1, durationMs: 0 }
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > POST: creates a new session
 [chatbot][sessions][POST] Request { titleProvided: true }
@@ -1802,11 +1819,11 @@ stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessi
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > PATCH: updates a session title
 [chatbot][sessions][PATCH] Request { sessionId: 's1', titleProvided: true }
-[chatbot][sessions][PATCH] Updated { sessionId: 's1', durationMs: 1 }
+[chatbot][sessions][PATCH] Updated { sessionId: 's1', durationMs: 0 }
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > DELETE: deletes a session
 [chatbot][sessions][DELETE] Request { sessionId: 's1' }
-[chatbot][sessions][DELETE] Deleted { sessionId: 's1', durationMs: 0 }
+[chatbot][sessions][DELETE] Deleted { sessionId: 's1', durationMs: 1 }
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > DELETE: returns 404 if session not found
 [chatbot][sessions][DELETE] Request { sessionId: 'missing' }
@@ -1815,15 +1832,25 @@ stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessi
  ❯ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests | 1 failed) 5ms
    × CategoryMappingRepository > lists by connection 1ms
      → Cannot read properties of undefined (reading 'toISOString')
- ✓ __tests__/features/viewer3d/services/asset3dUploader.test.ts (4 tests) 6ms
+ ✓ __tests__/features/viewer3d/services/asset3dUploader.test.ts (4 tests) 8ms
 stderr | __tests__/features/cms/components/FrontendBlockRenderer.test.tsx
 THREE.WARNING: Multiple instances of Three.js being imported.
 
- ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 107ms
- ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 9ms
- ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 114ms
- ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (0 test)
- ✓ __tests__/features/auth/api/register.test.ts (2 tests) 12ms
+ ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 111ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 10ms
+ ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 162ms
+ ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (5 tests | 5 failed) 30ms
+   × DraftCreator Component > should render the form with initial state 19ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × DraftCreator Component > should update name input correctly 2ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × DraftCreator Component > should show validation error if saving without a name 4ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × DraftCreator Component > should toggle active switch 2ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × DraftCreator Component > should render icon buttons 2ms
+     → No QueryClient set, use QueryClientProvider to set one
+ ✓ __tests__/features/auth/api/register.test.ts (2 tests) 13ms
 stdout | __tests__/features/products/services/aiTranslationService.test.ts > aiTranslationService > should successfully translate product data to target languages
 [aiTranslationService] Using model: mocked-value
 [aiTranslationService] Using Ollama at: http://localhost:11434
@@ -1856,23 +1883,29 @@ stdout | __tests__/features/products/services/aiTranslationService.test.ts > aiT
 stderr | __tests__/features/products/services/aiTranslationService.test.ts > aiTranslationService > should throw error if no translations succeeded
 [aiTranslationService] Skipping Polish due to error
 
- ✓ __tests__/features/products/services/aiTranslationService.test.ts (3 tests) 10ms
- ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 17ms
- ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 27ms
- ❯ __tests__/api/products/tags.test.ts (2 tests | 2 failed) 14ms
-   × Product Tags API > GET /api/products/tags > should return tags for a given catalogId 10ms
+ ✓ __tests__/features/products/services/aiTranslationService.test.ts (3 tests) 9ms
+ ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 18ms
+ ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 24ms
+ ❯ __tests__/api/products/tags.test.ts (2 tests | 2 failed) 12ms
+   × Product Tags API > GET /api/products/tags > should return tags for a given catalogId 8ms
      → expected 500 to deeply equal 200
-   × Product Tags API > POST /api/products/tags > should create a new tag 2ms
+   × Product Tags API > POST /api/products/tags > should create a new tag 3ms
      → expected 500 to deeply equal 201
- ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 284ms
- ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (0 test)
- ✓ __tests__/features/notesapp/utils/index.test.ts (9 tests) 23ms
- ✓ __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 42ms
- ✓ __tests__/features/drafter/services/draft-repository-mongo.test.ts (4 tests) 7ms
+ ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests | 3 failed) 21ms
+   × AdminFrontManagePage > renders loading state 17ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × AdminFrontManagePage > renders initial selected option from settings 2ms
+     → No QueryClient set, use QueryClientProvider to set one
+   × AdminFrontManagePage > allows changing selection and saving 1ms
+     → No QueryClient set, use QueryClientProvider to set one
+ ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 252ms
+ ✓ __tests__/features/notesapp/utils/index.test.ts (9 tests) 10ms
+ ✓ __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 12ms
+ ✓ __tests__/features/drafter/services/draft-repository-mongo.test.ts (4 tests) 6ms
  ❯ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests | 5 failed) 4ms
    × ExportTemplateRepository > should create and list export templates 1ms
      → Cannot read properties of undefined (reading 'deleteMany')
-   × ExportTemplateRepository > should filter out forbidden basehost mappings 1ms
+   × ExportTemplateRepository > should filter out forbidden basehost mappings 0ms
      → Cannot read properties of undefined (reading 'deleteMany')
    × ExportTemplateRepository > should update an existing template 0ms
      → Cannot read properties of undefined (reading 'deleteMany')
@@ -1880,16 +1913,16 @@ stderr | __tests__/features/products/services/aiTranslationService.test.ts > aiT
      → Cannot read properties of undefined (reading 'deleteMany')
    × ExportTemplateRepository > should get and set active template id 0ms
      → Cannot read properties of undefined (reading 'deleteMany')
- ✓ __tests__/features/cms/api/cms-themes.test.ts (2 tests) 33ms
- ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 35ms
-   × Notes Tags API > lists tags ordered by name 14ms
+ ✓ __tests__/features/cms/api/cms-themes.test.ts (2 tests) 9ms
+ ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 31ms
+   × Notes Tags API > lists tags ordered by name 18ms
      → Cannot read properties of undefined (reading 'name')
- ✓ __tests__/features/agent-runtime/services/browser-tools.test.ts (2 tests) 5ms
+ ✓ __tests__/features/agent-runtime/services/browser-tools.test.ts (2 tests) 4ms
  ✓ __tests__/features/products/services/prismaProductRepository.test.ts (5 tests) 5ms
- ✓ __tests__/features/observability/services/client-error-logger.test.ts (3 tests) 12ms
- ✓ __tests__/features/drafter/services/draft-repository.test.ts (6 tests) 109ms
- ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 40ms
-   × MediaLibraryPanel Component > should render when open 34ms
+ ✓ __tests__/features/observability/services/client-error-logger.test.ts (3 tests) 9ms
+ ✓ __tests__/features/drafter/services/draft-repository.test.ts (6 tests) 107ms
+ ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 53ms
+   × MediaLibraryPanel Component > should render when open 44ms
      → Unable to find an element by: [data-testid="file-manager"]
 
 Ignored nodes: comments, script, style
@@ -1988,7 +2021,7 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
-   × MediaLibraryPanel Component > should call onSelect when a file is selected 3ms
+   × MediaLibraryPanel Component > should call onSelect when a file is selected 5ms
      → Unable to find an element by: [data-testid="select-file-btn"]
 
 Ignored nodes: comments, script, style
@@ -2087,7 +2120,7 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
- ✓ __tests__/features/playwright/utils/personas.test.ts (7 tests) 9ms
+ ✓ __tests__/features/playwright/utils/personas.test.ts (7 tests) 10ms
 stdout | __tests__/features/products/validations/product.test.ts > product validations > productCreateSchema > should handle empty price correctly
 {
   _errors: [],
@@ -2103,14 +2136,14 @@ r1 fail: {
  ❯ __tests__/features/products/validations/product.test.ts (5 tests | 4 failed) 13ms
    × product validations > productCreateSchema > should handle empty price correctly 3ms
      → expected false to be true // Object.is equality
-   × product validations > productCreateSchema > should handle SKU preprocessing 1ms
+   × product validations > productCreateSchema > should handle SKU preprocessing 0ms
      → expected false to be true // Object.is equality
    × product validations > productCreateSchema > should handle imageLinks preprocessing (CSV/JSON/Array) 1ms
      → expected false to deeply equal [ 'a.jpg', 'b.jpg' ]
    × product validations > productCreateSchema > should handle parameters preprocessing 1ms
      → expected false to deeply equal [ { parameterId: 'p1', value: 'v1' } ]
- ✓ __tests__/features/observability/api/logs/logs.test.ts (3 tests) 10ms
- ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 15ms
+ ✓ __tests__/features/observability/api/logs/logs.test.ts (3 tests) 11ms
+ ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 13ms
 stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /api/products/ai-jobs/enqueue > should enqueue a new job
 [api/products/ai-jobs/enqueue] Received request - productId: prod1, type: description
 [api/products/ai-jobs/enqueue] Job job1 created
@@ -2118,11 +2151,11 @@ stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /ap
 [api/products/ai-jobs/enqueue] Returning response to client
 [api/products/ai-jobs/enqueue] Job job1 processing initiated successfully
 
- ✓ __tests__/api/products/ai-jobs.test.ts (2 tests) 15ms
+ ✓ __tests__/api/products/ai-jobs.test.ts (2 tests) 14ms
  ✓ __tests__/features/agent-runtime/execution/loop-guard.test.ts (5 tests) 3ms
- ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 100ms
- ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 117ms
- ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 23ms
+ ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 75ms
+ ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 110ms
+ ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 24ms
    × AdminLayout > renders children correctly 18ms
      → [vitest] No "SessionProvider" export is defined on the "next-auth/react" mock. Did you forget to return it from "vi.mock"?
 If you need to partially mock a module, you can use "importOriginal" helper inside:
@@ -2139,23 +2172,23 @@ If you need to partially mock a module, you can use "importOriginal" helper insi
      → [vitest] No "SessionProvider" export is defined on the "next-auth/react" mock. Did you forget to return it from "vi.mock"?
 If you need to partially mock a module, you can use "importOriginal" helper inside:
 
- ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 16ms
- ❯ __tests__/features/products/components/product-list-header.test.tsx (4 tests | 4 failed) 22ms
-   × ProductListHeader Component > renders title and buttons 16ms
+ ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 14ms
+ ❯ __tests__/features/products/components/product-list-header.test.tsx (4 tests | 4 failed) 24ms
+   × ProductListHeader Component > renders title and buttons 18ms
      → useToast must be used within a ToastProvider.
    × ProductListHeader Component > calls onCreateProduct when create button is clicked 1ms
      → useToast must be used within a ToastProvider.
    × ProductListHeader Component > renders pagination info correctly 1ms
      → useToast must be used within a ToastProvider.
-   × ProductListHeader Component > calls setPage when Prev/Next buttons are clicked 1ms
+   × ProductListHeader Component > calls setPage when Prev/Next buttons are clicked 2ms
      → useToast must be used within a ToastProvider.
  ✓ __tests__/features/playwright/services/persona-utils.test.ts (8 tests) 14ms
  ✓ __tests__/features/agent-runtime/services/audit.test.ts (5 tests) 8ms
- ❯ __tests__/api/products/categories.test.ts (1 test | 1 failed) 10ms
-   × Product Categories API > GET /api/products/categories/tree > should return categories as a tree 8ms
+ ❯ __tests__/api/products/categories.test.ts (1 test | 1 failed) 14ms
+   × Product Categories API > GET /api/products/categories/tree > should return categories as a tree 12ms
      → expected 500 to deeply equal 200
- ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 98ms
-   × ErrorSystem > captures and logs an Error object 93ms
+ ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 169ms
+   × ErrorSystem > captures and logs an Error object 164ms
      → expected "spy" to be called with arguments: [ …(2) ]
 
 Received: 
@@ -2191,16 +2224,16 @@ Received:
 
 Number of calls: 0
 
- ✓ __tests__/features/agent-runtime/services/finalize.test.ts (1 test) 5ms
- ✓ __tests__/features/internationalization/api/currencies.test.ts (3 tests) 14ms
- ✓ __tests__/features/cms/api/cms.test.ts (4 tests) 21ms
- ✓ __tests__/features/viewer3d/services/validateAsset3d.test.ts (7 tests) 10ms
- ✓ __tests__/features/cms/services/cms-theme-settings.test.ts (3 tests) 4ms
- ✓ __tests__/shared/lib/transient-recovery-settings.test.ts (3 tests) 3ms
- ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 117ms
- ✓ __tests__/features/agent-runtime/services/checkpoint.test.ts (4 tests) 4ms
- ❯ __tests__/features/admin/components/Menu.test.tsx (4 tests | 4 failed) 1077ms
-   × Menu Component > renders main menu categories 43ms
+ ✓ __tests__/features/agent-runtime/services/finalize.test.ts (1 test) 4ms
+ ✓ __tests__/features/internationalization/api/currencies.test.ts (3 tests) 19ms
+ ✓ __tests__/features/cms/api/cms.test.ts (4 tests) 12ms
+ ✓ __tests__/features/viewer3d/services/validateAsset3d.test.ts (7 tests) 9ms
+ ✓ __tests__/features/cms/services/cms-theme-settings.test.ts (3 tests) 5ms
+ ✓ __tests__/shared/lib/transient-recovery-settings.test.ts (3 tests) 4ms
+ ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 126ms
+ ✓ __tests__/features/agent-runtime/services/checkpoint.test.ts (4 tests) 5ms
+ ❯ __tests__/features/admin/components/Menu.test.tsx (4 tests | 4 failed) 1084ms
+   × Menu Component > renders main menu categories 44ms
      → Unable to find an element with the text: Products. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -2644,7 +2677,7 @@ Ignored nodes: comments, script, style
             [36m</div>[39m
             [36m<svg[39m
 ...
-   × Menu Component > contains correctly linked standalone sections 1012ms
+   × Menu Component > contains correctly linked standalone sections 1018ms
      → Unable to find role="link" and name `/Files/i`
 
 Ignored nodes: comments, script, style
@@ -3039,7 +3072,6 @@ Prisma setting fetch failed for ai_generation_output_enabled: TypeError: Cannot 
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 7ms
 stderr | __tests__/features/products/services/aiDescriptionService.test.ts > aiDescriptionService > should handle images by reading from disk (mocked)
 Prisma setting fetch failed for openai_api_key: TypeError: Cannot read properties of undefined (reading 'findUnique')
     at getSettingValue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/aiDescriptionService.ts:60:44)
@@ -3141,8 +3173,9 @@ Prisma setting fetch failed for ai_generation_output_enabled: TypeError: Cannot 
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
+ ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 9ms
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > GET: returns settings by key
-[chatbot][settings][GET] Loaded { key: 'default', found: true, durationMs: 0 }
+[chatbot][settings][GET] Loaded { key: 'default', found: true, durationMs: 1 }
 
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > POST: saves settings using upsert
 [chatbot][settings][POST] Saved { key: 'default', durationMs: 0 }
@@ -3154,24 +3187,24 @@ stderr | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Setti
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
     at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/handle-api-error.ts:35:5)
 
- ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 13ms
- ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 159ms
+ ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 16ms
+ ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 162ms
  ✓ __tests__/features/agent-runtime/utils/core-utils.test.ts (7 tests) 8ms
  ✓ __tests__/api/products/parameters.test.ts (1 test) 7ms
  ✓ __tests__/features/data-import-export/utils/image-retry-presets.test.ts (5 tests) 8ms
  ✓ __tests__/features/database/utils/mongo.test.ts (7 tests) 9ms
- ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 10ms
- ✓ __tests__/features/observability/api/logs/metrics.test.ts (1 test) 7ms
- ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 106ms
- ✓ __tests__/features/foldertree/utils/tree-utils.test.ts (6 tests) 7ms
- ✓ __tests__/features/ai-paths/lib/utils-json.test.ts (7 tests) 8ms
- ✓ __tests__/features/auth/utils/auth-security.test.ts (4 tests) 7ms
- ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 56ms
+ ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 11ms
+ ✓ __tests__/features/observability/api/logs/metrics.test.ts (1 test) 6ms
+ ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 110ms
+ ✓ __tests__/features/foldertree/utils/tree-utils.test.ts (6 tests) 8ms
+ ✓ __tests__/features/ai-paths/lib/utils-json.test.ts (7 tests) 9ms
+ ✓ __tests__/features/auth/utils/auth-security.test.ts (4 tests) 8ms
+ ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 42ms
  ✓ __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts (3 tests) 17ms
  ✓ __tests__/shared/utils/markdown-utils.test.ts (5 tests) 8ms
- ✓ __tests__/features/agent-runtime/services/audit-logging.test.ts (3 tests) 4ms
+ ✓ __tests__/features/agent-runtime/services/audit-logging.test.ts (3 tests) 6ms
  ✓ __tests__/features/agent-runtime/services/memory-context.test.ts (2 tests) 9ms
- ❯ __tests__/features/observability/api/client-errors.test.ts (2 tests | 1 failed) 16ms
+ ❯ __tests__/features/observability/api/client-errors.test.ts (2 tests | 1 failed) 14ms
    × Client Errors API > should handle invalid payload 3ms
      → expected 200 to be 400 // Object.is equality
  ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 8ms
@@ -3181,37 +3214,17 @@ stderr | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Setti
  ✓ __tests__/features/app-embeds/lib/constants.test.ts (5 tests) 8ms
  ✓ __tests__/api/products/migration.test.ts (1 test) 7ms
  ✓ __tests__/api/products/count.test.ts (1 test) 8ms
- ✓ __tests__/features/cms/services/selection.test.ts (2 tests) 8ms
- ✓ __tests__/features/gsap/utils/presets.test.ts (4 tests) 7ms
+ ✓ __tests__/features/cms/services/selection.test.ts (2 tests) 7ms
+ ✓ __tests__/features/gsap/utils/presets.test.ts (4 tests) 8ms
  ✓ __tests__/features/internationalization/lib/internationalizationDefaults.test.ts (3 tests) 8ms
  ✓ __tests__/features/ai-paths/runtime/buildPromptOutput.test.ts (3 tests) 7ms
  ✓ __tests__/features/files/utils/fileUploader.test.ts (2 tests) 2ms
  ✓ __tests__/shared/utils/color-utils.test.ts (3 tests) 7ms
- ✓ __tests__/features/cms/validations/slug.test.ts (2 tests) 7ms
+ ✓ __tests__/features/cms/validations/slug.test.ts (2 tests) 6ms
  ❯ __tests__/features/database/api/databases.test.ts (0 test)
  ❯ __tests__/features/products/api/generate-description.test.ts (0 test)
 
-⎯⎯⎯⎯⎯⎯ Failed Suites 6 ⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx [ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx ]
-Error: Failed to resolve import "../../../../test-utils" from "__tests__/features/admin/pages/AdminFrontManagePage.test.tsx". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/pages/AdminFrontManagePage.test.tsx:37:38
-  35 |  }));
-  36 |  const __vi_import_0__ = await import('react/jsx-dev-runtime')
-  37 |  const __vi_import_1__ = await import('../../../../test-utils')
-     |                                       ^
-  38 |  const __vi_import_2__ = await import('@/features/admin/pages/AdminFrontManagePage')
-  39 |  const __vi_import_3__ = await import('@/shared/hooks/useSettings')
- ❯ TransformPluginContext._formatError ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41
- ❯ TransformPluginContext.error ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16
- ❯ normalizeUrl ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23
- ❯ ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
- ❯ TransformPluginContext.transform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7
- ❯ PluginContainer.transform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18
- ❯ loadAndTransform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/114]⎯
+⎯⎯⎯⎯⎯⎯ Failed Suites 4 ⎯⎯⎯⎯⎯⎯⎯
 
  FAIL  __tests__/features/database/api/databases.test.ts [ __tests__/features/database/api/databases.test.ts ]
  FAIL  __tests__/features/products/api/generate-description.test.ts [ __tests__/features/products/api/generate-description.test.ts ]
@@ -3224,27 +3237,7 @@ ReferenceError: window is not defined
     486|   writable: true,
     487|   value: vi.fn().mockImplementation((query) => ({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/114]⎯
-
- FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx [ __tests__/features/drafter/components/DraftCreator.test.tsx ]
-Error: Failed to resolve import "../../../../test-utils" from "__tests__/features/drafter/components/DraftCreator.test.tsx". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/drafter/components/DraftCreator.test.tsx:13:38
-  11 |  });
-  12 |  const __vi_import_0__ = await import('react/jsx-dev-runtime')
-  13 |  const __vi_import_1__ = await import('../../../../test-utils')
-     |                                       ^
-  14 |  const __vi_import_2__ = await import('@/features/drafter/components/DraftCreator')
-  15 |  
- ❯ TransformPluginContext._formatError ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41
- ❯ TransformPluginContext.error ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16
- ❯ normalizeUrl ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23
- ❯ ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
- ❯ TransformPluginContext.transform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7
- ❯ PluginContainer.transform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18
- ❯ loadAndTransform ../../Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/120]⎯
 
  FAIL  __tests__/features/jobs/workers/chatbotJobQueue.test.ts [ __tests__/features/jobs/workers/chatbotJobQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -3260,7 +3253,7 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:6:16
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:24:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/120]⎯
 
  FAIL  __tests__/features/jobs/workers/productAiQueue.test.ts [ __tests__/features/jobs/workers/productAiQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -3276,9 +3269,9 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:7:16
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:32:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/120]⎯
 
-⎯⎯⎯⎯⎯⎯ Failed Tests 108 ⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Tests 116 ⎯⎯⎯⎯⎯⎯
 
  FAIL  __tests__/api/products/categories.test.ts > Product Categories API > GET /api/products/categories/tree > should return categories as a tree
 AssertionError: expected 500 to deeply equal 200
@@ -3297,7 +3290,7 @@ AssertionError: expected 500 to deeply equal 200
      72|       expect(data).toHaveLength(1);
      73|       expect(data[0].children).toHaveLength(1);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/120]⎯
 
  FAIL  __tests__/api/products/products.test.ts > Products API > GET /api/products > should return all products when no filters are applied
 AssertionError: expected 500 to deeply equal 200
@@ -3316,7 +3309,7 @@ AssertionError: expected 500 to deeply equal 200
     171|       expect(products.length).toEqual(2);
     172|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/120]⎯
 
  FAIL  __tests__/api/products/products.test.ts > Products API > GET /api/products > should filter products by name_en using the search parameter
 AssertionError: expected 500 to deeply equal 200
@@ -3335,7 +3328,7 @@ AssertionError: expected 500 to deeply equal 200
     194|       expect(products.length).toEqual(1);
     195|       expect(products[0]!.name_en).toEqual("Laptop");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/120]⎯
 
  FAIL  __tests__/api/products/products.test.ts > Products API > POST /api/products > should successfully create a product with localized name and description fields
 AssertionError: expected 500 to deeply equal 200
@@ -3354,7 +3347,7 @@ AssertionError: expected 500 to deeply equal 200
     257|       expect(product.name_en).toEqual("New Product (EN)");
     258|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/120]⎯
 
  FAIL  __tests__/api/products/products.test.ts > Products API > GET /api/public/products/[id] > should return a single product
 AssertionError: expected 500 to deeply equal 200
@@ -3373,7 +3366,7 @@ AssertionError: expected 500 to deeply equal 200
     318|       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     319|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/120]⎯
 
  FAIL  __tests__/api/products/tags.test.ts > Product Tags API > GET /api/products/tags > should return tags for a given catalogId
 AssertionError: expected 500 to deeply equal 200
@@ -3392,7 +3385,7 @@ AssertionError: expected 500 to deeply equal 200
      69|       expect(data).toHaveLength(1);
      70|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/120]⎯
 
  FAIL  __tests__/api/products/tags.test.ts > Product Tags API > POST /api/products/tags > should create a new tag
 AssertionError: expected 500 to deeply equal 201
@@ -3411,7 +3404,7 @@ AssertionError: expected 500 to deeply equal 201
      86|     });
      87|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/120]⎯
 
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders the sidebar with Admin logo
@@ -3443,7 +3436,7 @@ vi.mock(import("next-auth/react"), async (importOriginal) => {
  ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
  ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/120]⎯
 
  FAIL  __tests__/features/admin/components/Menu.test.tsx > Menu Component > renders main menu categories
 TestingLibraryElementError: Unable to find an element with the text: Products. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -3605,7 +3598,7 @@ Ignored nodes: comments, script, style
      31|     expect(screen.getByText('Integrations')).toBeInTheDocument();
      32|     expect(screen.getByText('Notes')).toBeInTheDocument();
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/120]⎯
 
  FAIL  __tests__/features/admin/components/Menu.test.tsx > Menu Component > opens collapsible section when clicked
 TestingLibraryElementError: Unable to find an element with the text: Products. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -3767,7 +3760,7 @@ Ignored nodes: comments, script, style
      40|     fireEvent.click(productsTrigger);
      41|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/120]⎯
 
  FAIL  __tests__/features/admin/components/Menu.test.tsx > Menu Component > navigates to create page and collapses menu when Create Page is clicked
 TestingLibraryElementError: Unable to find an element with the text: CMS. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -3929,7 +3922,7 @@ Ignored nodes: comments, script, style
      50|     fireEvent.click(cmsTrigger);
      51|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/120]⎯
 
  FAIL  __tests__/features/admin/components/Menu.test.tsx > Menu Component > contains correctly linked standalone sections
 TestingLibraryElementError: Unable to find role="link" and name `/Files/i`
@@ -4235,7 +4228,30 @@ Ignored nodes: comments, script, style
      63|     expect(filesLink).toHaveAttribute('href', '/admin/files');
      64|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/120]⎯
+
+ FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders loading state
+ FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders initial selected option from settings
+ FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > allows changing selection and saving
+Error: No QueryClient set, use QueryClientProvider to set one
+ ❯ useQueryClient ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:15:11
+ ❯ useBaseQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useBaseQuery.js:30:18
+ ❯ Module.useQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useQuery.js:7:10
+ ❯ Module.useSettingsMap src/shared/hooks/use-settings.ts:31:10
+     29| 
+     30| export function useSettingsMap(): UseQueryResult<Map<string, string>, …
+     31|   return useQuery({
+       |          ^
+     32|     queryKey: ["settings"],
+     33|     queryFn: async (): Promise<SystemSetting[]> => {
+ ❯ AdminFrontManagePage src/features/admin/pages/AdminFrontManagePage.tsx:19:25
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/120]⎯
 
  FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
 TestingLibraryElementError: Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -4572,18 +4588,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-rose-500/20 text-rose-300 border-rose-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0merror[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4607,18 +4623,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border-blue-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0minfo[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4652,7 +4668,7 @@ Ignored nodes: comments, script, style
     113|     expect(screen.getByText('Errors: 1')).toBeInTheDocument();
     114|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/120]⎯
 
  FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > calls clear logs mutation when button is clicked
 AssertionError: expected "bound " to be called at least once
@@ -4664,7 +4680,7 @@ AssertionError: expected "bound " to be called at least once
     144|     expect(mockMutate).toHaveBeenCalled();
     145|     await waitFor(() => {
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/120]⎯
 
  FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > exports logs to clipboard
 TestingLibraryElementError: Unable to find an element with the text: Copy JSON. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -5001,18 +5017,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-rose-500/20 text-rose-300 border-rose-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0merror[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -5036,18 +5052,18 @@ Ignored nodes: comments, script, style
                   [36m<div[39m
                     [33mclass[39m=[32m"flex items-center gap-3"[39m
                   [36m>[39m
-                    [36m<span[39m
-                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border-blue-500/40"[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 gap-1 text-[10px] uppercase tracking-wider"[39m
                     [36m>[39m
                       [36m<span>[39m
                         [0minfo[0m
                       [36m</span>[39m
-                    [36m</span>[39m
+                    [36m</div>[39m
                     [0m                        [0m
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/3/2026, 5:47:54 PM[0m
+                      [0m2/3/2026, 7:36:49 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -5081,19 +5097,7 @@ Ignored nodes: comments, script, style
     161|     fireEvent.click(copyButton);
     162|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/114]⎯
-
- FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
-TypeError: Cannot read properties of undefined (reading 'browserLogs')
- ❯ __tests__/features/agentcreator/api/agent.test.ts:67:33
-     65|     expect(res.status).toBe(200);
-     66|     expect(data.runs).toHaveLength(1);
-     67|     expect(data.runs[0]!._count.browserLogs).toBe(1);
-       |                                 ^
-     68|     expect(data.runs[0]!._count.browserSnapshots).toBe(1);
-     69|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/evaluate-graph.test.ts > evaluateGraph > should evaluate a parser node with JSON input
 AssertionError: expected undefined to deeply equal { title: 'Test Product', price: 99.99 }
@@ -5115,7 +5119,7 @@ undefined
     215|       title: "Test Product",
     216|       price: 99.99,
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleCompare > should handle various comparison operators
 AssertionError: expected false to be true // Object.is equality
@@ -5134,7 +5138,7 @@ AssertionError: expected false to be true // Object.is equality
      90|       }
      91|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleGate > should pass when valid is true
 AssertionError: expected { context: null, valid: false, …(1) } to match object { Object (context, valid) }
@@ -5160,7 +5164,7 @@ AssertionError: expected { context: null, valid: false, …(1) } to match object
     159|         context: { foo: "bar" },
     160|         valid: true,
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleParser > should extract values using JSONPath-like mappings
 AssertionError: expected undefined to deeply equal { Object (product_name, price) }
@@ -5182,7 +5186,7 @@ undefined
     202|         product_name: "Gadget",
     203|         price: 29.99,
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleParser > should use fallbacks for common fields
 AssertionError: expected undefined to deeply equal { title: 'Fallback Name' }
@@ -5203,7 +5207,7 @@ undefined
     235|         title: "Fallback Name",
     236|       });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleParser > should support bundle output mode
 AssertionError: expected undefined to deeply equal { name: 'Gadget', …(1) }
@@ -5227,7 +5231,7 @@ undefined
     270|         name: "Gadget",
     271|         bundle: { name: "Gadget" },
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleMapper > should map values from context
 AssertionError: expected undefined to deeply equal { out1: 'Alice', out2: '1.0.0' }
@@ -5249,7 +5253,7 @@ undefined
     314|         out1: "Alice",
     315|         out2: "1.0.0",
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleMutator > should update a value in context using a template
 AssertionError: expected undefined to match object { user: { score: '20' } }
@@ -5272,7 +5276,7 @@ undefined
     356|         user: { score: "20" },
     357|       });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleValidator > should validate required paths in context
 AssertionError: expected undefined to be false // Object.is equality
@@ -5291,7 +5295,7 @@ undefined
     393|       expect(result.outputs["node-validator"]?.errors).toContain("user…
     394|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleRouter > should route based on truthy match
 AssertionError: expected { valid: false, …(1) } to match object { valid: true, value: 'has content' }
@@ -5314,7 +5318,7 @@ AssertionError: expected { valid: false, …(1) } to match object { valid: true,
     422|         valid: true,
     423|         value: "has content",
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleRouter > should route based on equals match
 AssertionError: expected false to be true // Object.is equality
@@ -5333,7 +5337,7 @@ AssertionError: expected false to be true // Object.is equality
     451|     });
     452|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleTemplate > should render template with inputs
 AssertionError: expected { prompt: 'Hello , you are .' } to deeply equal { prompt: 'Hello Bob, you are 40.' }
@@ -5354,7 +5358,7 @@ AssertionError: expected { prompt: 'Hello , you are .' } to deeply equal { promp
     482|         prompt: "Hello Bob, you are 40.",
     483|       });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleDatabase > should handle query operation
 AssertionError: expected null to deeply equal [ { id: '1', name: 'P1' } ]
@@ -5378,7 +5382,7 @@ null
     576|       expect(api.dbApi.query).toHaveBeenCalledWith(expect.objectContai…
     577|         query: { productId: "p123" },
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleModel > should enqueue AI job
 AssertionError: expected undefined to match object { jobId: 'job-123', status: 'queued' }
@@ -5400,7 +5404,7 @@ undefined
     616|         jobId: "job-123",
     617|         status: "queued",
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleMath > should perform arithmetic operations
 AssertionError: expected undefined to be 15 // Object.is equality
@@ -5419,7 +5423,7 @@ undefined
     659|       }
     660|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleBundle > should bundle multiple inputs into one object
 AssertionError: expected {} to deeply equal { a: 1, c: 3 }
@@ -5441,7 +5445,7 @@ AssertionError: expected {} to deeply equal { a: 1, c: 3 }
     728|     });
     729|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleTrigger > should return trigger information
 AssertionError: expected { trigger: true, …(5) } to match object { trigger: 'test_event', …(1) }
@@ -5466,7 +5470,7 @@ AssertionError: expected { trigger: true, …(5) } to match object { trigger: 't
     757|         trigger: "test_event",
     758|         meta: expect.objectContaining({ trigger: "test_event" }),
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleAiDescription > should call generateDescription API
 AssertionError: expected undefined to be 'AI generated description' // Object.is equality
@@ -5485,7 +5489,7 @@ undefined
     793|       expect(api.aiGenerationApi.generateDescription).toHaveBeenCalled…
     794|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/extensive-handlers.test.ts > AI Paths Extensive Handlers > handleDbSchema > should fetch and format database schema
 AssertionError: expected [] to include 'DATABASE SCHEMA'
@@ -5497,7 +5501,7 @@ AssertionError: expected [] to include 'DATABASE SCHEMA'
     835|       expect(result.outputs["node-schema"]?.schema).toContain("Collect…
     836|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/120]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should update node records during execution
 AssertionError: expected { value: 'test' } to deeply equal { value: 'done' }
@@ -5518,7 +5522,7 @@ AssertionError: expected { value: 'test' } to deeply equal { value: 'done' }
      98|     
      99|     const events = await repo.listRunEvents(run.id);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/120]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should handle node errors correctly
 AssertionError: promise resolved "undefined" instead of rejecting
@@ -5537,7 +5541,7 @@ undefined
     116| 
     117|     const nodes = await repo.listRunNodes(run.id);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/120]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should list runs with filters
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -5556,73 +5560,38 @@ AssertionError: expected +0 to be 1 // Object.is equality
      81|     expect(completed.runs[0]!.pathId).toBe("path-1");
      82| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/120]⎯
 
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
-AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
+ FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
+TypeError: Cannot read properties of undefined (reading 'browserLogs')
+ ❯ __tests__/features/agentcreator/api/agent.test.ts:67:33
+     65|     expect(res.status).toBe(200);
+     66|     expect(data.runs).toHaveLength(1);
+     67|     expect(data.runs[0]!._count.browserLogs).toBe(1);
+       |                                 ^
+     68|     expect(data.runs[0]!._count.browserSnapshots).toBe(1);
+     69|   });
 
-Expected: "mockhash"
-Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/120]⎯
 
- ❯ __tests__/features/auth/services/totp.test.ts:71:19
-     69|     const hash2 = hashRecoveryCode("abcd1234efgh");
-     70|     expect(hash1).toBe(hash2);
-     71|     expect(hash1).toBe("mockhash");
-       |                   ^
-     72|   });
-     73| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/114]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
-AssertionError: expected false to be true // Object.is equality
+ FAIL  __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return an error when model listing fails
+AssertionError: expected 200 to be 502 // Object.is equality
 
 - Expected
 + Received
 
-- true
-+ false
+- 502
++ 200
 
- ❯ __tests__/features/auth/services/totp.test.ts:91:51
-     89| 
-     90|       const validToken = "000000"; 
-     91|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-     92|       vi.useRealTimers();
-     93|     });
+ ❯ __tests__/features/chatbot/api/chatbot.test.ts:47:24
+     45|     const data = (await res.json()) as { error: string; errorId?: stri…
+     46| 
+     47|     expect(res.status).toBe(502);
+       |                        ^
+     48|     expect(data.error).toContain("Failed to load models");
+     49|     expect(data.errorId).toBeDefined();
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/114]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ __tests__/features/auth/services/totp.test.ts:102:51
-    100|       const validToken = "000000"; 
-    101|       // Current token is "000000". Offset +30s also results in "00000…
-    102|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-    103|       vi.useRealTimers();
-    104|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/114]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > returns false for invalid tokens
-TypeError: vi.mocked(...).mockReturnValueOnce is not a function
- ❯ __tests__/features/auth/services/totp.test.ts:111:36
-    109|       
-    110|       // Override mock for this test to return something else
-    111|       vi.mocked(crypto.createHmac).mockReturnValueOnce({
-       |                                    ^
-    112|           update: vi.fn().mockReturnThis(),
-    113|           digest: vi.fn(() => {
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/120]⎯
 
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > renders correctly
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > handles successful registration and signs in
@@ -5646,26 +5615,73 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/120]⎯
 
- FAIL  __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return an error when model listing fails
-AssertionError: expected 200 to be 502 // Object.is equality
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
+AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
+
+Expected: "mockhash"
+Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
+
+ ❯ __tests__/features/auth/services/totp.test.ts:71:19
+     69|     const hash2 = hashRecoveryCode("abcd1234efgh");
+     70|     expect(hash1).toBe(hash2);
+     71|     expect(hash1).toBe("mockhash");
+       |                   ^
+     72|   });
+     73| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/120]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
+AssertionError: expected false to be true // Object.is equality
 
 - Expected
 + Received
 
-- 502
-+ 200
+- true
++ false
 
- ❯ __tests__/features/chatbot/api/chatbot.test.ts:47:24
-     45|     const data = (await res.json()) as { error: string; errorId?: stri…
-     46| 
-     47|     expect(res.status).toBe(502);
-       |                        ^
-     48|     expect(data.error).toContain("Failed to load models");
-     49|     expect(data.errorId).toBeDefined();
+ ❯ __tests__/features/auth/services/totp.test.ts:91:51
+     89| 
+     90|       const validToken = "000000"; 
+     91|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+     92|       vi.useRealTimers();
+     93|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/120]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ __tests__/features/auth/services/totp.test.ts:102:51
+    100|       const validToken = "000000"; 
+    101|       // Current token is "000000". Offset +30s also results in "00000…
+    102|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+    103|       vi.useRealTimers();
+    104|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/120]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > returns false for invalid tokens
+TypeError: vi.mocked(...).mockReturnValueOnce is not a function
+ ❯ __tests__/features/auth/services/totp.test.ts:111:36
+    109|       
+    110|       // Override mock for this test to return something else
+    111|       vi.mocked(crypto.createHmac).mockReturnValueOnce({
+       |                                    ^
+    112|           update: vi.fn().mockReturnThis(),
+    113|           digest: vi.fn(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/120]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme
 AssertionError: expected +0 to be 2 // Object.is equality
@@ -5684,7 +5700,7 @@ AssertionError: expected +0 to be 2 // Object.is equality
     198|       expect(updatedPage.slugs.length).toBe(1);
     199|       expect(updatedPage.slugs[0].slug.slug).toBe("updated-slug");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/120]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page
 AssertionError: expected 500 to be 404 // Object.is equality
@@ -5703,7 +5719,7 @@ AssertionError: expected 500 to be 404 // Object.is equality
     215|     });
     216|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/120]⎯
 
  FAIL  __tests__/features/cms/components/ComponentTreePanel.test.tsx > ComponentTreePanel Component > should render empty when no page is selected
  FAIL  __tests__/features/cms/components/ComponentTreePanel.test.tsx > ComponentTreePanel Component > should render zones and sections when a page is selected
@@ -5726,7 +5742,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/120]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should render when open
 TestingLibraryElementError: Unable to find an element by: [data-testid="file-manager"]
@@ -5839,7 +5855,7 @@ Ignored nodes: comments, script, style
      59|   });
      60| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/120]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should call onSelect when a file is selected
 TestingLibraryElementError: Unable to find an element by: [data-testid="select-file-btn"]
@@ -5952,7 +5968,32 @@ Ignored nodes: comments, script, style
      85|     fireEvent.click(selectBtn);
      86| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/120]⎯
+
+ FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should render the form with initial state
+ FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should update name input correctly
+ FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should show validation error if saving without a name
+ FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should toggle active switch
+ FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should render icon buttons
+Error: No QueryClient set, use QueryClientProvider to set one
+ ❯ useQueryClient ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:15:11
+ ❯ useBaseQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useBaseQuery.js:30:18
+ ❯ Module.useQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useQuery.js:7:10
+ ❯ Module.useCatalogs src/features/products/hooks/useProductMetadata.ts:29:10
+     27| 
+     28| export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
+     29|   return useQuery({
+       |          ^
+     30|     queryKey: productMetadataKeys.catalogs,
+     31|     queryFn: async (): Promise<CatalogRecord[]> => {
+ ❯ DraftCreator src/features/drafter/components/DraftCreator.tsx:25:35
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/120]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should return all files
 AssertionError: expected 500 to be 200 // Object.is equality
@@ -5971,7 +6012,7 @@ AssertionError: expected 500 to be 200 // Object.is equality
      71|       expect(files.length).toBe(2);
      72|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/120]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by filename
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -5990,7 +6031,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
      81|       expect(files[0]!.filename).toBe("test-image1.jpg");
      82|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/120]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product ID
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -6009,7 +6050,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
      91|       expect(files[0]!.filename).toBe("test-image1.jpg");
      92|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/120]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product name
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -6028,7 +6069,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
     101|       expect(files[0]!.filename).toBe("test-image1.jpg");
     102|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/120]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
 AssertionError: expected 404 to be 204 // Object.is equality
@@ -6047,7 +6088,7 @@ AssertionError: expected 404 to be 204 // Object.is equality
     111| 
     112|       const deletedFile = await prisma.imageFile.findUnique({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/120]⎯
 
  FAIL  __tests__/features/integrations/services/category-mapping-repository.test.ts > CategoryMappingRepository > lists by connection
 TypeError: Cannot read properties of undefined (reading 'toISOString')
@@ -6061,7 +6102,7 @@ TypeError: Cannot read properties of undefined (reading 'toISOString')
  ❯ Object.listByConnection src/features/integrations/services/category-mapping-repository.ts:117:53
  ❯ __tests__/features/integrations/services/category-mapping-repository.test.ts:81:20
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/120]⎯
 
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should create and list export templates
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should filter out forbidden basehost mappings
@@ -6077,33 +6118,7 @@ TypeError: Cannot read properties of undefined (reading 'deleteMany')
      17|       where: {
      18|         key: {
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/114]⎯
-
- FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > retries on failure if attempts remaining
-TypeError: getPathRunRepository(...).updateRun is not a function
- ❯ Module.processRun src/features/jobs/workers/aiPathRunQueue.ts:63:38
-     61|       const delayMs = computeBackoffMs(retryCount - 1, run.meta ?? und…
-     62|       const nextRetryAt = new Date(Date.now() + delayMs);
-     63|       await (getPathRunRepository()).updateRun(run.id, {
-       |                                      ^
-     64|         status: "queued",
-     65|         retryCount,
- ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:66:7
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/114]⎯
-
- FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > moves to dead-letter on max retries
-TypeError: getPathRunRepository(...).updateRun is not a function
- ❯ Module.processRun src/features/jobs/workers/aiPathRunQueue.ts:78:38
-     76|       });
-     77|     } else {
-     78|       await (getPathRunRepository()).updateRun(run.id, {
-       |                                      ^
-     79|         status: "dead_lettered",
-     80|         retryCount,
- ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:84:7
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/120]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call
 AssertionError: expected 0 to be greater than 0
@@ -6115,7 +6130,7 @@ AssertionError: expected 0 to be greater than 0
      52|       expect(pl.currencies[0]!.currency.code).toBe("PLN");
      53|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/120]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls
 AssertionError: expected 8 to deeply equal 4
@@ -6134,7 +6149,7 @@ AssertionError: expected 8 to deeply equal 4
      67|       expect(secondCount).toEqual(initialCount);
      68|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/120]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > POST /api/countries > should create a country with currencies
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6153,7 +6168,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     118|       expect(country.currencies[0]!.currencyId).toBe(currency.id);
     119|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/120]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > PUT /api/countries/[id] > should update country currencies
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6172,7 +6187,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     160|       expect(updated.currencies[0]!.currencyId).toBe(currency.id);
     161|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/120]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > POST /api/languages > should create a language with country assignments
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6191,7 +6206,7 @@ AssertionError: expected [] to have a length of 1 but got +0
      88|         expect(language.countries![0]!.countryId).toBe(country.id);
      89|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/120]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > PUT /api/languages/[id] > should update language fields and countries
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6210,7 +6225,33 @@ AssertionError: expected [] to have a length of 1 but got +0
     131|       expect(updated.countries![0]!.countryId).toBe(country.id);
     132|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/120]⎯
+
+ FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > retries on failure if attempts remaining
+TypeError: getPathRunRepository(...).updateRun is not a function
+ ❯ Module.processRun src/features/jobs/workers/aiPathRunQueue.ts:63:38
+     61|       const delayMs = computeBackoffMs(retryCount - 1, run.meta ?? und…
+     62|       const nextRetryAt = new Date(Date.now() + delayMs);
+     63|       await (getPathRunRepository()).updateRun(run.id, {
+       |                                      ^
+     64|         status: "queued",
+     65|         retryCount,
+ ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:66:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/120]⎯
+
+ FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > moves to dead-letter on max retries
+TypeError: getPathRunRepository(...).updateRun is not a function
+ ❯ Module.processRun src/features/jobs/workers/aiPathRunQueue.ts:78:38
+     76|       });
+     77|     } else {
+     78|       await (getPathRunRepository()).updateRun(run.id, {
+       |                                      ^
+     79|         status: "dead_lettered",
+     80|         retryCount,
+ ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:84:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/120]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > lists categories
 AssertionError: expected [] to have a length of 2 but got +0
@@ -6229,7 +6270,7 @@ AssertionError: expected [] to have a length of 2 but got +0
      54|   });
      55| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/120]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > returns a hierarchical category tree
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6248,7 +6289,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     111|     expect(tree[0]!.children).toHaveLength(1);
     112|     expect(tree[0]!.children[0]!.notes).toHaveLength(1);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/120]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > deletes categories recursively with notes
 AssertionError: expected [ …(2) ] to have a length of +0 but got 2
@@ -6267,7 +6308,7 @@ AssertionError: expected [ …(2) ] to have a length of +0 but got 2
     134|   });
     135| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/120]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > returns notes with relations
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6286,7 +6327,7 @@ AssertionError: expected [] to have a length of 1 but got +0
      88|     expect(notes[0]!.tags[0]!.tag.name).toBe("Work");
      89|     expect(notes[0]!.categories[0]!.category.name).toBe("Projects");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/120]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by search scope and flags
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6305,7 +6346,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     105|     expect(notes[0]!.title).toBe("Alpha");
     106|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/120]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by tags and categories
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6324,7 +6365,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     128|     expect(notes[0]!.title).toBe("With relations");
     129|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/120]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > creates a note with tags and categories
 TypeError: Cannot read properties of undefined (reading 'tag')
@@ -6336,7 +6377,7 @@ TypeError: Cannot read properties of undefined (reading 'tag')
     151|     expect(note.categories[0]!.category.name).toBe("Home");
     152|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/120]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > updates a note with new relations
 TypeError: Cannot read properties of undefined (reading 'tag')
@@ -6348,7 +6389,7 @@ TypeError: Cannot read properties of undefined (reading 'tag')
     217|     expect(data.categories[0]!.category.id).toBe(category2.id);
     218|     expect(data.relationsFrom[0]!.targetNote.id).toBe(related.id);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/120]⎯
 
  FAIL  __tests__/features/notesapp/api/tags.test.ts > Notes Tags API > lists tags ordered by name
 TypeError: Cannot read properties of undefined (reading 'name')
@@ -6360,31 +6401,7 @@ TypeError: Cannot read properties of undefined (reading 'name')
      36|     expect(tags[1]!.name).toBe("Beta");
      37|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/114]⎯
-
- FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Relation Syncing > automatically creates bidirectional relations
-AssertionError: expected [] to include 'mock-note-1770137267472-d4x68b5i6'
- ❯ __tests__/features/notesapp/services/note-service.test.ts:126:26
-    124|       const updatedB = await noteService.getById(noteB.id);
-    125|       const bRelations = updatedB?.relationsFrom?.map((r: any) => r.ta…
-    126|       expect(bRelations).toContain(noteA.id);
-       |                          ^
-    127|       
-    128|       // Check population helper
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/114]⎯
-
- FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Categories and Tags > manages category trees
-AssertionError: expected undefined to be defined
- ❯ __tests__/features/notesapp/services/note-service.test.ts:181:28
-    179|       const parentInTree = tree.find(c => c.id === parent.id);
-    180|       
-    181|       expect(parentInTree).toBeDefined();
-       |                            ^
-    182|       expect(parentInTree?.children.some(c => c.id === child.id)).toBe…
-    183|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/120]⎯
 
  FAIL  __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > filters notes by search and tag
 TestingLibraryElementError: Unable to find an element with the display value: Filter by Tag....
@@ -6514,7 +6531,31 @@ Ignored nodes: comments, script, style
     259|       screen.getByRole("option", { name: "Work" })
     260|     );
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/120]⎯
+
+ FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Relation Syncing > automatically creates bidirectional relations
+AssertionError: expected [] to include 'mock-note-1770143798487-8x50u0wqp'
+ ❯ __tests__/features/notesapp/services/note-service.test.ts:126:26
+    124|       const updatedB = await noteService.getById(noteB.id);
+    125|       const bRelations = updatedB?.relationsFrom?.map((r: any) => r.ta…
+    126|       expect(bRelations).toContain(noteA.id);
+       |                          ^
+    127|       
+    128|       // Check population helper
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/120]⎯
+
+ FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Categories and Tags > manages category trees
+AssertionError: expected undefined to be defined
+ ❯ __tests__/features/notesapp/services/note-service.test.ts:181:28
+    179|       const parentInTree = tree.find(c => c.id === parent.id);
+    180|       
+    181|       expect(parentInTree).toBeDefined();
+       |                            ^
+    182|       expect(parentInTree?.children.some(c => c.id === child.id)).toBe…
+    183|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/120]⎯
 
  FAIL  __tests__/features/observability/api/client-errors.test.ts > Client Errors API > should handle invalid payload
 AssertionError: expected 200 to be 400 // Object.is equality
@@ -6533,7 +6574,7 @@ AssertionError: expected 200 to be 400 // Object.is equality
      53|   });
      54| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/120]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs an Error object
 AssertionError: expected "spy" to be called with arguments: [ …(2) ]
@@ -6552,7 +6593,7 @@ Number of calls: 0
      31|       '[test-service] Test exception',
      32|       expect.objectContaining({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/120]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs a string error
 AssertionError: expected "spy" to be called with arguments: [ '[ui] Something went wrong', …(1) ]
@@ -6571,7 +6612,7 @@ Number of calls: 0
      43|       '[ui] Something went wrong',
      44|       expect.objectContaining({ service: 'ui' })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/120]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs warnings and optionally to agent audit
 AssertionError: expected "spy" to be called with arguments: [ '[disk] Low disk space', …(1) ]
@@ -6590,7 +6631,7 @@ Number of calls: 0
      68| 
      69|     const agentContext = { service: 'agent', runId: 'run-123' };
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/120]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs info messages
 AssertionError: expected "spy" to be called with arguments: [ '[unknown] User logged in', …(1) ]
@@ -6609,7 +6650,7 @@ Number of calls: 0
      77|   });
      78| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/120]⎯
 
  FAIL  __tests__/features/products/components/product-list-header.test.tsx > ProductListHeader Component > renders title and buttons
  FAIL  __tests__/features/products/components/product-list-header.test.tsx > ProductListHeader Component > calls onCreateProduct when create button is clicked
@@ -6633,7 +6674,7 @@ Error: useToast must be used within a ToastProvider.
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
  ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/120]⎯
 
  FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite
 AssertionError: expected 'SKU2' to be 'SKU1' // Object.is equality
@@ -6649,7 +6690,7 @@ Received: "SKU2"
      55|       expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe("SKU2…
      56|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/120]⎯
 
  FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should successfully create a product from FormData
 TypeError: Cannot read properties of undefined (reading 'deleteMany')
@@ -6664,7 +6705,7 @@ TypeError: Cannot read properties of undefined (reading 'deleteMany')
  ❯ Object.createProduct src/features/products/services/productService.ts:147:5
  ❯ __tests__/features/products/services/productService.test.ts:93:23
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/120]⎯
 
  FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should link catalogs if provided
 TypeError: Cannot read properties of undefined (reading 'toISOString')
@@ -6681,7 +6722,7 @@ TypeError: Cannot read properties of undefined (reading 'toISOString')
  ❯ Object.createProduct src/features/products/services/productService.ts:144:5
  ❯ __tests__/features/products/services/productService.test.ts:115:23
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/120]⎯
 
  FAIL  __tests__/features/products/validations/product.test.ts > product validations > productCreateSchema > should handle empty price correctly
 AssertionError: expected false to be true // Object.is equality
@@ -6700,7 +6741,7 @@ AssertionError: expected false to be true // Object.is equality
      28|       if (result.success) {
      29|         expect(result.data.price).toBeUndefined();
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/120]⎯
 
  FAIL  __tests__/features/products/validations/product.test.ts > product validations > productCreateSchema > should handle SKU preprocessing
 AssertionError: expected false to be true // Object.is equality
@@ -6719,7 +6760,7 @@ AssertionError: expected false to be true // Object.is equality
      37| 
      38|       const r2 = productCreateSchema.safeParse({ name_en: "P", sku: " …
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/120]⎯
 
  FAIL  __tests__/features/products/validations/product.test.ts > product validations > productCreateSchema > should handle imageLinks preprocessing (CSV/JSON/Array)
 AssertionError: expected false to deeply equal [ 'a.jpg', 'b.jpg' ]
@@ -6741,7 +6782,7 @@ false
      50| 
      51|       // JSON
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[93/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[93/120]⎯
 
  FAIL  __tests__/features/products/validations/product.test.ts > product validations > productCreateSchema > should handle parameters preprocessing
 AssertionError: expected false to deeply equal [ { parameterId: 'p1', value: 'v1' } ]
@@ -6765,7 +6806,7 @@ false
      67|     });
      68|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[94/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[94/120]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should list assets3d with filters
 AssertionError: expected [] to have a length of 1 but got +0
@@ -6784,7 +6825,7 @@ AssertionError: expected [] to have a length of 1 but got +0
      89|     expect(tagged[0]?.name).toBe("Asset 2");
      90|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[95/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[95/120]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get distinct categories
 AssertionError: expected [] to include 'A'
@@ -6796,7 +6837,7 @@ AssertionError: expected [] to include 'A'
     175|     expect(categories).toContain("B");
     176|     expect(categories).toHaveLength(2);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[96/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[96/120]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get all distinct tags
 AssertionError: expected [] to include 'X'
@@ -6808,7 +6849,7 @@ AssertionError: expected [] to include 'X'
     189|     expect(tags).toContain("Y");
     190|     expect(tags).toContain("Z");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[97/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[97/120]⎯
 
  FAIL  __tests__/features/ai-paths/lib/core/runtime/engine.test.ts > AI Paths Runtime Engine > should execute a simple linear graph
 AssertionError: expected undefined to deeply equal { out: 'mapped' }
@@ -6829,10 +6870,10 @@ undefined
      73|   });
      74| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[98/114]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[98/120]⎯
 
  Test Files  42 failed | 121 passed (163)
-      Tests  108 failed | 716 passed (824)
-   Start at  17:47:31
-   Duration  118.75s (transform 2.83s, setup 15.94s, collect 23.30s, tests 11.58s, environment 44.42s, prepare 5.52s)
+      Tests  116 failed | 716 passed (832)
+   Start at  19:36:21
+   Duration  130.52s (transform 3.50s, setup 16.99s, collect 26.88s, tests 13.29s, environment 47.57s, prepare 5.88s)
 

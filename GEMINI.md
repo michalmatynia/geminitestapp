@@ -102,7 +102,7 @@ src/
     admin/
     agent-runtime/
     agentcreator/
-    ai-paths/
+    ai-paths/           # AI Paths core logic and components
     app-embeds/
     auth/
     chatbot/
@@ -122,6 +122,9 @@ src/
     products/
     viewer3d/
   shared/               # Shared UI + utils + types
+
+## AI Paths Documentation
+For a comprehensive overview of the AI Paths feature, including its core concepts, available handlers, and usage, refer to [docs/AI_PATHS.md](docs/AI_PATHS.md).
 ```
 
 ## Feature Test Map

@@ -4,7 +4,7 @@ import { Button } from "./button";
 import { Check, Copy } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import { logClientError } from "@/features/observability";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 type CopyButtonProps = {
   value: string;

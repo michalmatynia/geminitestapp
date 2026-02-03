@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useSystemSync } from "@/shared/hooks/sync/useSystemSync";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { QueryDevPanel } from "@/shared/ui/QueryDevPanel";
 
 type BackgroundSyncContextValue = {
   enabled: boolean;
@@ -73,6 +74,12 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   return (
     <BackgroundSyncContext.Provider value={value}>
       {children}
+      <QueryDevPanel
+        isOnline={isOnline}
+        lastSync={lastSync}
+        enabled={resolvedSettings.queryPanelEnabled}
+        open={resolvedSettings.queryPanelOpen}
+      />
     </BackgroundSyncContext.Provider>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
+import { logClientError } from "@/features/observability";
 
 
 
@@ -25,13 +26,13 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!authUsersQuery.error) return;
-    console.error("Failed to load auth dashboard data:", authUsersQuery.error);
+    logClientError(authUsersQuery.error, { context: { source: "AuthDashboardPage", action: "loadMetrics" } });
     toast("Failed to load auth dashboard data", { variant: "error" });
   }, [authUsersQuery.error, toast]);
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load auth settings:", settingsQuery.error);
+    logClientError(settingsQuery.error, { context: { source: "AuthDashboardPage", action: "loadRoles" } });
     toast("Failed to load auth settings", { variant: "error" });
   }, [settingsQuery.error, toast]);
 

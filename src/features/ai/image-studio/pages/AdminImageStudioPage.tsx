@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Textarea, useToast } from "@/shared/ui";
+import Image from "next/image";
+import { Button, FileUploadButton, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Textarea, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { Folder, Image as ImageIcon, MousePointer2, Pentagon, RefreshCcw, Settings, Upload } from "lucide-react";
 
@@ -10,8 +11,9 @@ import FileManager from "@/features/files/components/FileManager";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
 import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
-import { validateProgrammaticPrompt, type PromptValidationIssue } from "../utils/prompt-validator";
+import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "../utils/prompt-validator";
 import { formatProgrammaticPrompt } from "../utils/prompt-formatter";
+import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from "../utils/param-ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
@@ -111,10 +113,10 @@ function AssetTree({
   const initialExpanded = useMemo(() => new Set(["root"]), [projectId]);
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
 
-  // Reset expanded when projectId changes
-  const prevProjectIdRef = useRef(projectId);
-  if (prevProjectIdRef.current !== projectId) {
-    prevProjectIdRef.current = projectId;
+  // Reset expanded when projectId changes (derived state pattern)
+  const [prevProjectId, setPrevProjectId] = useState(projectId);
+  if (projectId !== prevProjectId) {
+    setPrevProjectId(projectId);
     setExpanded(new Set(["root"]));
   }
 
@@ -144,8 +146,8 @@ function AssetTree({
             onDoubleClick={() => toggle(node.id)}
             title={node.path || "Project root"}
           >
-            <span className="w-4 text-gray-400" onClick={(e) => { e.stopPropagation(); toggle(node.id); }}>
-              {node.children.some((c) => c.type === "folder") || node.children.some((c) => c.type === "file") ? (
+            <span className="w-4 text-gray-400" onClick={(e: React.MouseEvent): void => { e.stopPropagation(); toggle(node.id); }}>
+              {node.children.some((c: TreeNode) => c.type === "folder") || node.children.some((c: TreeNode) => c.type === "file") ? (
                 <span className="inline-flex w-4 justify-center">{isOpen ? "▾" : "▸"}</span>
               ) : (
                 <span className="inline-flex w-4 justify-center">•</span>
@@ -156,7 +158,7 @@ function AssetTree({
           </button>
           {isOpen ? (
             <div>
-              {node.children.map((child) => renderNode(child, depth + 1))}
+              {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
             </div>
           ) : null}
         </div>
@@ -228,7 +230,7 @@ function MaskCanvas({
     ctx.beginPath();
     const first = toPx(points[0]!);
     ctx.moveTo(first.x, first.y);
-    points.slice(1).forEach((p) => {
+    points.slice(1).forEach((p: Point) => {
       const px = toPx(p);
       ctx.lineTo(px.x, px.y);
     });
@@ -238,7 +240,7 @@ function MaskCanvas({
     }
     ctx.stroke();
 
-    points.forEach((p, index) => {
+    points.forEach((p: Point, index: number) => {
       const px = toPx(p);
       ctx.beginPath();
       ctx.arc(px.x, px.y, index === 0 ? 5 : 4, 0, Math.PI * 2);
@@ -270,7 +272,7 @@ function MaskCanvas({
   useEffect(() => {
     const onResize = (): void => syncCanvasSize();
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    return (): void => window.removeEventListener("resize", onResize);
   }, [syncCanvasSize]);
 
   const handleClick = useCallback(
@@ -309,14 +311,18 @@ function MaskCanvas({
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20">
       {src ? (
         <>
-          <img
-            ref={imgRef}
-            src={src}
-            alt="Selected asset"
-            className="max-h-full max-w-full select-none object-contain"
-            onLoad={syncCanvasSize}
-            draggable={false}
-          />
+          <div className="relative h-full w-full">
+            <Image
+              ref={imgRef}
+              src={src}
+              alt="Selected asset"
+              fill
+              className="select-none object-contain"
+              onLoadingComplete={() => syncCanvasSize()}
+              draggable={false}
+              unoptimized
+            />
+          </div>
           <canvas
             ref={canvasRef}
             className={cn(
@@ -366,6 +372,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [paramsState, setParamsState] = useState<Record<string, unknown> | null>(null);
   const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [promptSourceAtExtract, setPromptSourceAtExtract] = useState<string | null>(null);
+  const [paramUiOverrides, setParamUiOverrides] = useState<Record<string, ParamUiControl>>({});
 
   useEffect(() => {
     if (settingsLoaded) return;
@@ -404,6 +411,36 @@ export function AdminImageStudioPage(): React.JSX.Element {
     if (!projectId) return;
     localStorage.setItem("imageStudio.projectId", projectId);
   }, [projectId]);
+
+  useEffect(() => {
+    const key = `imageStudio.paramUiOverrides.${projectId || "default"}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      setParamUiOverrides({});
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setParamUiOverrides({});
+        return;
+      }
+      const next: Record<string, ParamUiControl> = {};
+      Object.entries(parsed as Record<string, unknown>).forEach(([path, value]: [string, unknown]) => {
+        if (!path.trim() || !isParamUiControl(value)) return;
+        if (value === "auto") return;
+        next[path] = value;
+      });
+      setParamUiOverrides(next);
+    } catch {
+      setParamUiOverrides({});
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    const key = `imageStudio.paramUiOverrides.${projectId || "default"}`;
+    localStorage.setItem(key, JSON.stringify(paramUiOverrides));
+  }, [paramUiOverrides, projectId]);
 
   const projectsQuery = useQuery({
     queryKey: ["image-studio", "projects"],
@@ -465,7 +502,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     mutationFn: async (payload: { files: File[]; folder: string }): Promise<void> => {
       if (!projectId) throw new Error("Select or create a project first.");
       const formData = new FormData();
-      payload.files.forEach((file) => formData.append("files", file));
+      payload.files.forEach((file: File) => formData.append("files", file));
       if (payload.folder) {
         formData.set("folder", payload.folder);
       }
@@ -519,7 +556,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const selectedAsset = useMemo(() => {
     if (!selectedAssetId) return null;
-    return assets.find((a) => a.id === selectedAssetId) ?? null;
+    return assets.find((a: ImageFileRecord) => a.id === selectedAssetId) ?? null;
   }, [assets, selectedAssetId]);
 
   useEffect(() => {
@@ -538,17 +575,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
       await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
     },
     [importFromDriveMutation, selectedFolder]
-  );
-
-  const handleUploadInput = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-      const list = event.target.files;
-      if (!list || list.length === 0) return;
-      const files = Array.from(list);
-      await uploadMutation.mutateAsync({ files, folder: selectedFolder });
-      event.target.value = "";
-    },
-    [uploadMutation, selectedFolder]
   );
 
   const applyProgrammaticExtraction = useCallback((sourcePrompt: string, options?: { toast?: boolean }): ExtractParamsResult => {
@@ -604,7 +630,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       const parsed = JSON.parse(raw) as unknown;
       if (parsed === null) {
         setAdvancedOverridesError(null);
-        setStudioSettings((prev) => ({
+        setStudioSettings((prev: ImageStudioSettings) => ({
           ...prev,
           targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, advanced_overrides: null } },
         }));
@@ -615,7 +641,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         return;
       }
       setAdvancedOverridesError(null);
-      setStudioSettings((prev) => ({
+      setStudioSettings((prev: ImageStudioSettings) => ({
         ...prev,
         targetAi: {
           ...prev.targetAi,
@@ -635,7 +661,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return;
     }
     setPromptValidationRulesError(null);
-    setStudioSettings((prev) => ({
+    setStudioSettings((prev: ImageStudioSettings) => ({
       ...prev,
       promptValidation: { ...prev.promptValidation, rules: parsed.rules },
     }));
@@ -671,7 +697,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveSettings" } });
       toast("Failed to save Image Studio settings.", { variant: "error" });
     }
-  }, [advancedOverridesError, studioSettings, toast, updateSetting]);
+  }, [advancedOverridesError, promptValidationRulesError, studioSettings, toast, updateSetting]);
 
   const resetStudioSettings = useCallback((): void => {
     setStudioSettings(defaultImageStudioSettings);
@@ -683,8 +709,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const paramLeaves: ParamLeaf[] = useMemo(() => {
     if (!paramsState) return [];
-    return flattenParams(paramsState).filter((leaf) => Boolean(leaf.path));
+    return flattenParams(paramsState).filter((leaf: ParamLeaf) => Boolean(leaf.path));
   }, [paramsState]);
+
+  useEffect(() => {
+    if (!paramsState) return;
+    const existingPaths = new Set(paramLeaves.map((leaf: ParamLeaf) => leaf.path));
+    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+      const next: Record<string, ParamUiControl> = {};
+      Object.entries(prev).forEach(([path, control]: [string, ParamUiControl]) => {
+        if (!existingPaths.has(path)) return;
+        next[path] = control;
+      });
+      return next;
+    });
+  }, [paramLeaves, paramsState]);
 
   const validationIssues: ParamIssue[] = useMemo(() => {
     if (!paramsState || !paramSpecs) return [];
@@ -693,7 +732,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const issuesByPath = useMemo(() => {
     const map: Record<string, ParamIssue[]> = {};
-    validationIssues.forEach((issue) => {
+    validationIssues.forEach((issue: ParamIssue) => {
       map[issue.path] ??= [];
       map[issue.path]!.push(issue);
     });
@@ -701,8 +740,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [validationIssues]);
 
   const validationSummary = useMemo(() => {
-    const errors = validationIssues.filter((i) => i.severity === "error").length;
-    const warnings = validationIssues.filter((i) => i.severity === "warning").length;
+    const errors = validationIssues.filter((i: ParamIssue) => i.severity === "error").length;
+    const warnings = validationIssues.filter((i: ParamIssue) => i.severity === "warning").length;
     return { errors, warnings };
   }, [validationIssues]);
 
@@ -757,7 +796,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         <FileManager
           mode="select"
           selectionMode="multiple"
-          onSelectFile={(files) => void handleDriveSelection(files)}
+          onSelectFile={(files: ImageFileSelection[]) => void handleDriveSelection(files)}
         />
       </SharedModal>
 
@@ -791,7 +830,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             size="sm"
             className="w-full justify-center"
             onClick={() => {
-              setMaskPoints((prev) => prev.slice(0, -1));
+              setMaskPoints((prev: Point[]) => prev.slice(0, -1));
               setMaskClosed(false);
             }}
             disabled={maskPoints.length === 0}
@@ -832,13 +871,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
             <div className="flex items-center gap-2">
-              <Select value={projectId || "__none__"} onValueChange={(value) => setProjectId(value === "__none__" ? "" : value)}>
+              <Select value={projectId || "__none__"} onValueChange={(value: string) => setProjectId(value === "__none__" ? "" : value)}>
                 <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder={projectsQuery.isLoading ? "Loading..." : "Select project"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">No project</SelectItem>
-                  {(projectsQuery.data ?? []).map((id) => (
+                  {(projectsQuery.data ?? []).map((id: string) => (
                     <SelectItem key={id} value={id}>
                       {id}
                     </SelectItem>
@@ -848,7 +887,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => void projectsQuery.refetch()}
+                onClick={() => { void projectsQuery.refetch(); }}
                 title="Reload projects"
               >
                 <RefreshCcw className="size-4" />
@@ -858,7 +897,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             <div className="flex items-center gap-2">
               <Input
                 value={newProjectId}
-                onChange={(e) => setNewProjectId(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
                 placeholder="New project id (e.g. milkbar-001)"
                 className="h-9"
               />
@@ -886,24 +925,19 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   <Folder className="mr-2 size-4" />
                   Drive
                 </Button>
-                <label
-                  className={cn(
-                    "inline-flex cursor-pointer items-center gap-2",
-                    !projectId && "opacity-50 pointer-events-none"
-                  )}
+                <FileUploadButton
+                  variant="outline"
+                  size="sm"
+                  accept="image/*"
+                  multiple
+                  disabled={!projectId || uploadMutation.isPending}
+                  onFilesSelected={async (files: File[]) => {
+                    await uploadMutation.mutateAsync({ files, folder: selectedFolder });
+                  }}
                 >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => void handleUploadInput(e)}
-                  />
-                  <Button type="button" variant="outline" size="sm" disabled={!projectId || uploadMutation.isPending}>
-                    <Upload className="mr-2 size-4" />
-                    Upload
-                  </Button>
-                </label>
+                  <Upload className="mr-2 size-4" />
+                  Upload
+                </FileUploadButton>
               </div>
             </div>
           </div>
@@ -934,17 +968,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
 
           <div className="flex-1 overflow-hidden">
-            <MaskCanvas
-              src={selectedAsset?.filepath ?? null}
-              tool={tool}
-              points={maskPoints}
-              isClosed={maskClosed}
-              onChange={(nextPoints, nextClosed) => {
-                setMaskPoints(nextPoints);
-                setMaskClosed(nextClosed);
-              }}
-            />
-          </div>
+                      <MaskCanvas
+                        src={selectedAsset?.filepath ?? null}
+                        tool={tool}
+                        points={maskPoints}
+                        isClosed={maskClosed}
+                        onChange={(nextPoints: Point[], nextClosed: boolean) => {
+                          setMaskPoints(nextPoints);
+                          setMaskClosed(nextClosed);
+                        }}
+                      />          </div>
 
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Mask JSON</Label>
@@ -968,7 +1001,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSettingsOpen((prev) => !prev)}
+                onClick={() => setSettingsOpen((prev: boolean) => !prev)}
                 title="Image Studio settings"
               >
                 <Settings className="mr-2 size-4" />
@@ -1047,8 +1080,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Mode</div>
                       <Select
                         value={studioSettings.promptExtraction.mode}
-                        onValueChange={(value) =>
-                          setStudioSettings((prev) => ({
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptExtraction: {
                               ...prev.promptExtraction,
@@ -1071,8 +1104,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Model</div>
                       <Input
                         value={studioSettings.promptExtraction.gpt.model}
-                        onChange={(e) =>
-                          setStudioSettings((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptExtraction: {
                               ...prev.promptExtraction,
@@ -1092,11 +1125,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.promptExtraction.gpt.temperature ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptExtraction: {
                               ...prev.promptExtraction,
@@ -1115,11 +1148,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.promptExtraction.gpt.top_p ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptExtraction: {
                               ...prev.promptExtraction,
@@ -1141,11 +1174,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptExtraction: {
                               ...prev.promptExtraction,
@@ -1171,8 +1204,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <input
                         type="checkbox"
                         checked={studioSettings.promptValidation.enabled}
-                        onChange={(e) =>
-                          setStudioSettings((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
                           }))
@@ -1186,7 +1219,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   </div>
                   <Textarea
                     value={promptValidationRulesText}
-                    onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
                     className="h-40 font-mono text-[11px]"
                     placeholder="JSON array of validator rules"
                   />
@@ -1203,8 +1236,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">API</div>
                       <Select
                         value={studioSettings.targetAi.openai.api}
-                        onValueChange={(value) =>
-                          setStudioSettings((prev) => ({
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === "responses" ? "responses" : "images" } },
                           }))
@@ -1224,8 +1257,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Model</div>
                       <Input
                         value={studioSettings.targetAi.openai.model}
-                        onChange={(e) =>
-                          setStudioSettings((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
                           }))
@@ -1242,11 +1275,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.temperature ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, temperature: next } },
                           }));
@@ -1262,11 +1295,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.top_p ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, top_p: next } },
                           }));
@@ -1285,11 +1318,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.max_output_tokens ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, max_output_tokens: next } },
                           }));
@@ -1304,11 +1337,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.seed ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, seed: next } },
                           }));
@@ -1325,11 +1358,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.presence_penalty ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, presence_penalty: next } },
                           }));
@@ -1345,11 +1378,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Input
                         type="number"
                         value={studioSettings.targetAi.openai.frequency_penalty ?? ""}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const next = raw === "" ? null : Number(raw);
                           if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev) => ({
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, frequency_penalty: next } },
                           }));
@@ -1367,8 +1400,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <input
                         type="checkbox"
                         checked={studioSettings.targetAi.openai.stream}
-                        onChange={(e) =>
-                          setStudioSettings((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, stream: e.target.checked } },
                           }))
@@ -1381,8 +1414,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Tool Choice</div>
                       <Select
                         value={studioSettings.targetAi.openai.tool_choice ?? "__null__"}
-                        onValueChange={(value) =>
-                          setStudioSettings((prev) => ({
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: {
                               ...prev.targetAi,
@@ -1408,8 +1441,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Reasoning Effort</div>
                       <Select
                         value={studioSettings.targetAi.openai.reasoning_effort ?? "__null__"}
-                        onValueChange={(value) =>
-                          setStudioSettings((prev) => ({
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: {
                               ...prev.targetAi,
@@ -1437,8 +1470,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">Response Format</div>
                       <Select
                         value={studioSettings.targetAi.openai.response_format ?? "__null__"}
-                        onValueChange={(value) =>
-                          setStudioSettings((prev) => ({
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: {
                               ...prev.targetAi,
@@ -1467,8 +1500,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] text-gray-500">User (optional)</div>
                       <Input
                         value={studioSettings.targetAi.openai.user ?? ""}
-                        onChange={(e) =>
-                          setStudioSettings((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
                             ...prev,
                             targetAi: {
                               ...prev.targetAi,
@@ -1494,8 +1527,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <div className="text-[11px] text-gray-500">Size</div>
                           <Input
                             value={studioSettings.targetAi.openai.image.size ?? ""}
-                            onChange={(e) =>
-                              setStudioSettings((prev) => ({
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setStudioSettings((prev: ImageStudioSettings) => ({
                                 ...prev,
                                 targetAi: {
                                   ...prev.targetAi,
@@ -1514,8 +1547,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <div className="text-[11px] text-gray-500">Quality</div>
                           <Select
                             value={studioSettings.targetAi.openai.image.quality ?? "__null__"}
-                            onValueChange={(value) =>
-                              setStudioSettings((prev) => ({
+                            onValueChange={(value: string) =>
+                              setStudioSettings((prev: ImageStudioSettings) => ({
                                 ...prev,
                                 targetAi: {
                                   ...prev.targetAi,
@@ -1547,8 +1580,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <div className="text-[11px] text-gray-500">Background</div>
                           <Select
                             value={studioSettings.targetAi.openai.image.background ?? "__null__"}
-                            onValueChange={(value) =>
-                              setStudioSettings((prev) => ({
+                            onValueChange={(value: string) =>
+                              setStudioSettings((prev: ImageStudioSettings) => ({
                                 ...prev,
                                 targetAi: {
                                   ...prev.targetAi,
@@ -1577,8 +1610,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <div className="text-[11px] text-gray-500">Format</div>
                           <Select
                             value={studioSettings.targetAi.openai.image.format ?? "png"}
-                            onValueChange={(value) =>
-                              setStudioSettings((prev) => ({
+                            onValueChange={(value: string) =>
+                              setStudioSettings((prev: ImageStudioSettings) => ({
                                 ...prev,
                                 targetAi: {
                                   ...prev.targetAi,
@@ -1607,11 +1640,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <Input
                             type="number"
                             value={studioSettings.targetAi.openai.image.n ?? ""}
-                            onChange={(e) => {
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               const raw = e.target.value;
                               const next = raw === "" ? null : Number(raw);
                               if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                              setStudioSettings((prev) => ({
+                              setStudioSettings((prev: ImageStudioSettings) => ({
                                 ...prev,
                                 targetAi: {
                                   ...prev.targetAi,
@@ -1638,7 +1671,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     <div className="text-[11px] text-gray-500">Advanced Overrides (JSON)</div>
                     <Textarea
                       value={advancedOverridesText}
-                      onChange={(e) => handleAdvancedOverridesChange(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
                       className="h-28 font-mono text-[11px]"
                       placeholder='e.g. {"metadata":{"project":"milkbar-001"}}'
                     />
@@ -1654,7 +1687,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           <div className="space-y-2">
             <Textarea
               value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptText(e.target.value)}
               className="h-40 font-mono text-[11px]"
               placeholder="Paste your prompt here. It must include `params = { ... }` with JSON-like content (quoted keys/strings)."
             />
@@ -1664,7 +1697,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   Prompt validation:{" "}
                   <span className="text-gray-200">{promptValidationIssues.length} issue(s)</span>
                 </div>
-                {promptValidationIssues.map((issue) => {
+                {promptValidationIssues.map((issue: PromptValidationIssue) => {
                   const tone =
                     issue.severity === "error"
                       ? "border-red-500/30 bg-red-500/10 text-red-200"
@@ -1677,7 +1710,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <div className="text-[11px] opacity-90">{issue.message}</div>
                       {issue.suggestions.length > 0 ? (
                         <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[11px] opacity-90">
-                          {issue.suggestions.map((s, idx) => (
+                          {issue.suggestions.map((s: PromptValidationSuggestion, idx: number) => (
                             <li key={`${issue.ruleId}-${idx}`}>
                               {s.suggestion}
                               {s.found ? <span className="ml-1 opacity-80">(found: {s.found})</span> : null}
@@ -1724,15 +1757,26 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     </div>
                     <div className="text-gray-500">Hints from inline comments are used for enums/ranges.</div>
                   </div>
-                  {paramLeaves.map((leaf) => {
+                  {paramLeaves.map((leaf: ParamLeaf) => {
                     const spec = paramSpecs?.[leaf.path];
                     return (
                       <ParamRow
                         key={leaf.path}
                         leaf={leaf}
+                        uiControl={paramUiOverrides[leaf.path] ?? "auto"}
+                        onUiControlChange={(nextControl: ParamUiControl) => {
+                          setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+                            if (nextControl === "auto") {
+                              if (!(leaf.path in prev)) return prev;
+                              const { [leaf.path]: _removed, ...rest } = prev;
+                              return rest;
+                            }
+                            return { ...prev, [leaf.path]: nextControl };
+                          });
+                        }}
                         {...(spec ? { spec } : {})}
                         issues={issuesByPath[leaf.path] ?? []}
-                        onChange={(nextValue) => {
+                        onChange={(nextValue: unknown) => {
                           if (!paramsState) return;
                           setParamsState(setDeepValue(paramsState, leaf.path, nextValue));
                         }}
@@ -1781,19 +1825,23 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
 function ParamRow({
   leaf,
+  uiControl,
+  onUiControlChange,
   spec,
   issues,
   onChange,
 }: {
   leaf: ParamLeaf;
+  uiControl: ParamUiControl;
+  onUiControlChange: (control: ParamUiControl) => void;
   spec?: ParamSpec;
   issues: ParamIssue[];
   onChange: (value: unknown) => void;
 }): React.JSX.Element {
   const value = leaf.value;
 
-  const errors = issues.filter((i) => i.severity === "error");
-  const warnings = issues.filter((i) => i.severity === "warning");
+  const errors = issues.filter((i: ParamIssue) => i.severity === "error");
+  const warnings = issues.filter((i: ParamIssue) => i.severity === "warning");
   const borderClass =
     errors.length > 0 ? "border-red-500/60" : warnings.length > 0 ? "border-yellow-500/50" : "border-border";
 
@@ -1813,11 +1861,11 @@ function ParamRow({
       ? "json"
       : kind;
 
-  const canSlider =
-    uiKind === "number" &&
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    (spec && spec.min !== undefined && spec.max !== undefined ? Math.abs(spec.max - spec.min) <= 300 : value >= 0 && value <= 1);
+  const recommendation = recommendParamUiControl(value, spec ? { ...spec, kind: uiKind } : undefined);
+  const selectedUiControl = uiControl;
+  const requestedControl = selectedUiControl === "auto" ? recommendation.recommended : selectedUiControl;
+  const autoLabel = `Auto (${paramUiControlLabel(recommendation.recommended)})`;
+  const canSlider = recommendation.canSlider;
 
   return (
     <div className={cn("rounded border bg-card/60 p-2", borderClass)}>
@@ -1825,8 +1873,28 @@ function ParamRow({
         <div className="min-w-0">
           <div className="truncate font-mono text-[11px] text-gray-200">{leaf.path}</div>
         </div>
-        <div className="text-[11px] text-gray-400">
-          {Array.isArray(value) ? "array" : value === null ? "null" : typeof value}
+        <div className="flex items-center gap-2">
+          <div className="text-[11px] text-gray-400">
+            {Array.isArray(value) ? "array" : value === null ? "null" : typeof value}
+          </div>
+          <Select
+            value={selectedUiControl}
+            onValueChange={(next: string) => {
+              if (!isParamUiControl(next)) return;
+              onUiControlChange(next);
+            }}
+          >
+            <SelectTrigger className="h-7 w-[140px] px-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {recommendation.options.map((opt: ParamUiControl) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt === "auto" ? autoLabel : paramUiControlLabel(opt)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -1836,14 +1904,20 @@ function ParamRow({
         </div>
       ) : null}
 
+      {selectedUiControl === "auto" && recommendation.reason ? (
+        <div className="mb-2 text-[11px] text-gray-500">
+          Suggestion: <span className="text-gray-400">{recommendation.reason}</span>
+        </div>
+      ) : null}
+
       {errors.length > 0 || warnings.length > 0 ? (
         <div className="mb-2 space-y-1 text-[11px]">
-          {errors.map((issue) => (
+          {errors.map((issue: ParamIssue) => (
             <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
               {issue.message}
             </div>
           ))}
-          {warnings.map((issue) => (
+          {warnings.map((issue: ParamIssue) => (
             <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
               {issue.message}
             </div>
@@ -1851,42 +1925,77 @@ function ParamRow({
         </div>
       ) : null}
 
-      {uiKind === "boolean" && isBool ? (
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
-          <input
-            type="checkbox"
-            checked={value}
-            onChange={(e) => onChange(e.target.checked)}
-          />
-          <span>{value ? "true" : "false"}</span>
-        </label>
+      {requestedControl !== "json" && uiKind === "boolean" && isBool ? (
+        requestedControl === "buttons" ? (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={value ? "secondary" : "outline"}
+              onClick={() => onChange(true)}
+            >
+              true
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={!value ? "secondary" : "outline"}
+              onClick={() => onChange(false)}
+            >
+              false
+            </Button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
+            <input type="checkbox" checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
+            <span>{value ? "true" : "false"}</span>
+          </label>
+        )
       ) : null}
 
-      {uiKind === "enum" && typeof value === "string" && spec?.enumOptions ? (
-        <Select value={value} onValueChange={(v) => onChange(v)}>
-          <SelectTrigger className="h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {spec.enumOptions.map((opt) => (
-              <SelectItem key={opt} value={opt}>
+      {requestedControl !== "json" && uiKind === "enum" && typeof value === "string" && spec?.enumOptions ? (
+        requestedControl === "buttons" ? (
+          <div className="flex flex-wrap gap-2">
+            {spec.enumOptions.map((opt: string) => (
+              <Button
+                key={opt}
+                type="button"
+                size="sm"
+                variant={opt === value ? "secondary" : "outline"}
+                onClick={() => onChange(opt)}
+              >
                 {opt}
-              </SelectItem>
+              </Button>
             ))}
-          </SelectContent>
-        </Select>
+          </div>
+        ) : requestedControl === "text" ? (
+          <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+        ) : (
+          <Select value={value} onValueChange={(v: string) => onChange(v)}>
+            <SelectTrigger className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {spec.enumOptions.map((opt: string) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
       ) : null}
 
-      {uiKind === "number" && isNumber ? (
+      {requestedControl !== "json" && uiKind === "number" && isNumber ? (
         <div className="space-y-2">
-          {canSlider ? (
+          {requestedControl === "slider" && canSlider ? (
             <input
               type="range"
               min={spec?.min ?? 0}
               max={spec?.max ?? 1}
               step={spec?.step ?? 0.01}
-              value={Math.min(spec?.max ?? value, Math.max(spec?.min ?? value, value))}
-              onChange={(e) => {
+              value={Math.min(spec?.max ?? Number(value), Math.max(spec?.min ?? Number(value), Number(value)))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const next = Number(e.target.value);
                 if (!Number.isFinite(next)) return;
                 onChange(next);
@@ -1897,7 +2006,7 @@ function ParamRow({
           <Input
             type="number"
             value={String(value)}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const next = Number(e.target.value);
               if (!Number.isFinite(next)) return;
               onChange(next);
@@ -1910,18 +2019,18 @@ function ParamRow({
         </div>
       ) : null}
 
-      {uiKind === "rgb" && Array.isArray(value) ? (
+      {requestedControl !== "json" && uiKind === "rgb" && Array.isArray(value) ? (
         <div className="grid grid-cols-3 gap-2">
-          {["R", "G", "B"].map((label, index) => (
+          {["R", "G", "B"].map((label: string, index: number) => (
             <div key={label} className="space-y-1">
               <div className="text-[10px] text-gray-500">{label}</div>
               <Input
                 type="number"
                 value={String(value[index] ?? "")}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const next = Number(e.target.value);
                   if (!Number.isFinite(next)) return;
-                  const nextRgb = [...value] as unknown[];
+                  const nextRgb = [...(value as unknown[])];
                   nextRgb[index] = next;
                   onChange(nextRgb);
                 }}
@@ -1935,18 +2044,18 @@ function ParamRow({
         </div>
       ) : null}
 
-      {uiKind === "tuple2" && Array.isArray(value) ? (
+      {requestedControl !== "json" && uiKind === "tuple2" && Array.isArray(value) ? (
         <div className="grid grid-cols-2 gap-2">
-          {["X", "Y"].map((label, index) => (
+          {["X", "Y"].map((label: string, index: number) => (
             <div key={label} className="space-y-1">
               <div className="text-[10px] text-gray-500">{label}</div>
               <Input
                 type="number"
                 value={String(value[index] ?? "")}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const next = Number(e.target.value);
                   if (!Number.isFinite(next)) return;
-                  const nextTuple = [...value] as unknown[];
+                  const nextTuple = [...(value as unknown[])];
                   nextTuple[index] = next;
                   onChange(nextTuple);
                 }}
@@ -1960,18 +2069,18 @@ function ParamRow({
         </div>
       ) : null}
 
-      {uiKind === "string" && isString ? (
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-8"
-        />
+      {requestedControl !== "json" && uiKind === "string" && isString ? (
+        requestedControl === "textarea" ? (
+          <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className="h-24 font-mono text-[11px]" />
+        ) : (
+          <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+        )
       ) : null}
 
-      {uiKind === "json" ? (
+      {uiKind === "json" || requestedControl === "json" ? (
         <Textarea
           value={safeJsonStringify(value)}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             const raw = e.target.value;
             try {
               onChange(JSON.parse(raw) as unknown);

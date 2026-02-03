@@ -5,6 +5,7 @@ import { useMemo, useState, ChangeEvent } from "react";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 
 
@@ -128,6 +129,7 @@ function DatabaseSettingsForm({
       setDirty(false);
       toast("Database provider saved.", { variant: "success" });
     } catch (error) {
+      logClientError(error, { context: { source: "DatabaseSettingsPage", action: "saveProvider", provider } });
       toast(
         error instanceof Error ? error.message : "Failed to save settings.",
         { variant: "error" }
@@ -144,6 +146,7 @@ function DatabaseSettingsForm({
       setAuthDirty(false);
       toast("Auth data provider saved.", { variant: "success" });
     } catch (error) {
+      logClientError(error, { context: { source: "DatabaseSettingsPage", action: "saveAuthProvider", authProvider } });
       toast(
         error instanceof Error ? error.message : "Failed to save settings.",
         { variant: "error" }
@@ -160,6 +163,7 @@ function DatabaseSettingsForm({
       setProductDirty(false);
       toast("Product data provider saved.", { variant: "success" });
     } catch (error) {
+      logClientError(error, { context: { source: "DatabaseSettingsPage", action: "saveProductProvider", productProvider } });
       toast(
         error instanceof Error ? error.message : "Failed to save settings.",
         { variant: "error" }
@@ -187,6 +191,7 @@ function DatabaseSettingsForm({
       }
       toast("Database sync job queued. Track progress in AI Jobs.", { variant: "success" });
     } catch (error) {
+      logClientError(error, { context: { source: "DatabaseSettingsPage", action: "runSync", direction } });
       toast(
         error instanceof Error ? error.message : "Failed to start database sync.",
         { variant: "error" }

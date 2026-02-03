@@ -1,4 +1,17 @@
 import { Entity } from '../base-types';
+import type { 
+  FileDto, 
+  ImageFileDto, 
+  UploadFileDto, 
+  UpdateFileDto 
+} from '../dtos';
+
+export type { 
+  FileDto, 
+  ImageFileDto, 
+  UploadFileDto, 
+  UpdateFileDto 
+};
 
 export type ImageFileRecord = Entity & {
   filename: string;

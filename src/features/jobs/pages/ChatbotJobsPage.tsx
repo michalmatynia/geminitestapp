@@ -4,11 +4,11 @@ import { Button, SectionHeader, SectionPanel, Input } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useChatbotJobs } from "@/features/jobs/hooks/useJobQueries";
-import { 
+import {
   useChatbotJobMutation, 
   useClearChatbotJobsMutation 
 } from "@/features/jobs/hooks/useJobMutations";
-
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 type ChatbotJob = {
   id: string;
   sessionId: string;
@@ -65,9 +65,8 @@ export default function ChatbotJobsPage(): React.JSX.Element {
   const cancelJob = async (jobId: string): Promise<void> => {
     try {
       await chatbotMutation.mutateAsync({ jobId, action: "cancel" });
-      console.log("Job canceled");
     } catch (error: unknown) {
-      console.error("Failed to cancel job:", error instanceof Error ? error.message : error);
+      logClientError(error, { context: { source: "ChatbotJobsPage", action: "cancelJob", jobId } });
     }
   };
 

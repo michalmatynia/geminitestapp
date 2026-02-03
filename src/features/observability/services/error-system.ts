@@ -1,9 +1,20 @@
+export enum ErrorCategory {
+  SYSTEM = "SYSTEM",
+  USER = "USER",
+  VALIDATION = "VALIDATION",
+  EXTERNAL = "EXTERNAL",
+  AI = "AI",
+  DATABASE = "DATABASE"
+}
+
 export interface ErrorContext {
   service?: string | null | undefined;
   runId?: string | null | undefined; // For agent runs
   jobId?: string | null | undefined; // For background jobs
   productId?: string | null | undefined;
   errorId?: string | null | undefined;
+  category?: ErrorCategory | string | null | undefined;
+  userMessage?: string | null | undefined;
   [key: string]: unknown;
 }
 
@@ -103,5 +114,30 @@ export const ErrorSystem = {
     } catch (importError) {
       console.error(`[ErrorSystem] Failed to import dependencies:`, importError);
     }
+  },
+
+  /**
+   * Generate a structured error report for debugging or display.
+   */
+  generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    
+    return {
+      id: context.errorId || `err_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      category: context.category || ErrorCategory.SYSTEM,
+      message,
+      userMessage: context.userMessage || "An unexpected error occurred. Please try again or contact support.",
+      service: context.service || "unknown",
+      context: {
+        ...context,
+        // Remove sensitive or redundant info
+        errorId: undefined,
+        userMessage: undefined,
+        category: undefined
+      },
+      debug: process.env.NODE_ENV !== "production" ? { stack } : undefined
+    };
   }
 };

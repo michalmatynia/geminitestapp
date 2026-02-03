@@ -19,6 +19,19 @@ export const logger = {
   },
   error: (message: string, ...args: unknown[]): void => {
     console.error(formatMessage("error", message), ...args);
+    // Integration with centralized observability
+    if (typeof window !== "undefined") {
+      void (async (): Promise<void> => {
+        try {
+          // Use string message or first arg as error object
+          const error = args[0] instanceof Error ? args[0] : new Error(message);
+          const { logClientError } = await import("@/shared/utils/observability/client-error-logger");
+          logClientError(error, { context: { source: "shared-logger", message, args } });
+        } catch {
+          // Fallback if logClientError fails or import fails
+        }
+      })();
+    }
   },
   log: (message: string, ...args: unknown[]): void => {
     console.log(formatMessage("log", message), ...args);

@@ -230,7 +230,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
 
 function normalizeParamsObject(rawObjectText: string): string {
   const segments = segmentizeJsLikeText(rawObjectText);
-  const normalized = segments.map((segment) => {
+  const normalized = segments.map((segment: Segment) => {
     if (segment.kind === "code") {
       // Quote simple unquoted keys: { foo: 1 } -> { "foo": 1 }
       return segment.text.replace(/(^|[{\s,])([A-Za-z_][A-Za-z0-9_]*)\s*:/g, "$1\"$2\":");

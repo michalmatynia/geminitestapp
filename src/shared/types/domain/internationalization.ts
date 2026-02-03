@@ -1,4 +1,17 @@
 import { Entity } from '../base-types';
+import type { 
+  LanguageDto, 
+  CountryDto, 
+  CurrencyDto, 
+  TranslationDto 
+} from '../dtos';
+
+export type { 
+  LanguageDto, 
+  CountryDto, 
+  CurrencyDto, 
+  TranslationDto 
+};
 
 export type CurrencyOption = {
   id: string;

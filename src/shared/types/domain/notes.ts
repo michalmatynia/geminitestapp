@@ -1,4 +1,25 @@
 import { Entity } from '../base-types';
+import type {
+  NoteDto,
+  NotebookDto,
+  NoteCategoryDto,
+  NoteTagDto,
+  CreateNoteDto,
+  UpdateNoteDto,
+  CreateNotebookDto,
+  UpdateNotebookDto
+} from '../dtos';
+
+export type {
+  NoteDto,
+  NotebookDto,
+  NoteCategoryDto,
+  NoteTagDto,
+  CreateNoteDto,
+  UpdateNoteDto,
+  CreateNotebookDto,
+  UpdateNotebookDto
+};
 
 export type NotebookRecord = Entity & {
   name: string;

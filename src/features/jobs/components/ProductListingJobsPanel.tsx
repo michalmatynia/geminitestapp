@@ -14,6 +14,7 @@ import {
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
 import { useIntegrationJobs } from "@/features/jobs/hooks/useJobQueries";
 import { useCancelListingMutation } from "@/features/jobs/hooks/useJobMutations";
+import { logClientError } from "@/features/observability";
 import { JobTable, type JobRowData } from "./JobTable";
 
 type ProductListingJobsPanelProps = {
@@ -79,7 +80,7 @@ export default function ProductListingJobsPanel({
     try {
       await cancelMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
-      console.error("Failed to cancel listing:", err);
+      logClientError(err, { context: { source: "ProductListingJobsPanel", action: "cancelListing", productId, listingId } });
     }
   };
 

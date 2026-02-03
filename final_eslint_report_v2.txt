@@ -1,32 +1,73 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/TriggerButtonListManager.tsx
-   34:83  error  Expected a type annotation              @typescript-eslint/typedef
-   60:41  error  Expected row to have a type annotation  @typescript-eslint/typedef
-   62:46  error  Expected row to have a type annotation  @typescript-eslint/typedef
-   63:51  error  Expected row to have a type annotation  @typescript-eslint/typedef
-   67:43  error  Expected row to have a type annotation  @typescript-eslint/typedef
-   80:45  error  Expected row to have a type annotation  @typescript-eslint/typedef
-   81:42  error  Expected row to have a type annotation  @typescript-eslint/typedef
-  115:26  error  Expected row to have a type annotation  @typescript-eslint/typedef
-  122:26  error  Expected e to have a type annotation    @typescript-eslint/typedef
-  134:20  error  Unknown property 'ity-50",
-' found      react/no-unknown-property
-  135:37  error  Expected loc to have a type annotation  @typescript-eslint/typedef
-  135:42  error  Expected idx to have a type annotation  @typescript-eslint/typedef
-  136:25  error  Unknown property '   ' found            react/no-unknown-property
-  136:35  error  Unknown property '  <GripVe' found      react/no-unknown-property
-  143:21  error  Unknown property 'x} classN' found      react/no-unknown-property
-  148:20  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-  150:41  error  Unknown property 'medium te' found      react/no-unknown-property
-  152:23  error  Unknown property '         ' found      react/no-unknown-property
-  154:58  error  Unknown property 'DUCT_ICON' found      react/no-unknown-property
-  160:21  error  Unknown property 'ame="flex' found      react/no-unknown-property
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
+  34:9  warning  The 'promptConfig' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. To fix this, wrap the initialization of 'promptConfig' in its own useMemo() Hook                                           react-hooks/exhaustive-deps
+  37:9  warning  The 'runtimeInputs' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'runtimeInputs' in its own useMemo() Hook  react-hooks/exhaustive-deps
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx
-  197:49  error  Expected btn to have a type annotation  @typescript-eslint/typedef
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+  113:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
+  555:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 560) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/core/base-types.ts
-  6:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-formatter.ts
+  233:36  error  Expected segment to have a type annotation  @typescript-eslint/typedef
+  301:22  error  Expected rule to have a type annotation     @typescript-eslint/typedef
 
-✖ 22 problems (22 errors, 0 warnings)
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-params.ts
+  279:38  error  Expected a type annotation                  @typescript-eslint/typedef
+  395:11  error  Expected segment to have a type annotation  @typescript-eslint/typedef
+  396:14  error  Expected value to have a type annotation    @typescript-eslint/typedef
+  456:18  error  Expected line to have a type annotation     @typescript-eslint/typedef
+  500:43  error  Expected a type annotation                  @typescript-eslint/typedef
+  501:50  error  Expected h to have a type annotation        @typescript-eslint/typedef
+  509:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  514:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  519:48  error  Expected leaf to have a type annotation     @typescript-eslint/typedef
+  522:19  error  Expected leaf to have a type annotation     @typescript-eslint/typedef
+  628:33  error  Expected spec to have a type annotation     @typescript-eslint/typedef
+  687:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  691:39  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  695:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  699:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  710:39  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  714:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
+  718:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-validator.ts
+  29:33  error  Expected sim to have a type annotation   @typescript-eslint/typedef
+  59:27  error  Expected rule to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+  408:29  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  413:67  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  414:65  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  442:24  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  446:69  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  447:44  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'editingUser?.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/BackgroundSyncProvider.tsx
+  6:1  error  '@/shared/ui/QueryDevPanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/user-preferences.ts
+  9:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/copy-button.tsx
+  7:1   error  '@/features/observability' import is restricted from being used by a pattern. Shared layer must not import from features  no-restricted-imports
+  7:32  error  Unexpected path "@/features/observability" imported in restricted zone. Shared layer must not import from features        import/no-restricted-paths
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/status-badge.tsx
+  41:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/logger.ts
+  27:15  error  Unsafe assignment of an `any` value      @typescript-eslint/no-unsafe-assignment
+  27:36  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  28:9   error  Unsafe call of an `any` typed value      @typescript-eslint/no-unsafe-call
+
+✖ 44 problems (38 errors, 6 warnings)
 

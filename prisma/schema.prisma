@@ -56,6 +56,7 @@ model SystemLog {
   id         String   @id @default(cuid())
   level      String   @default("error")
   message    String
+  category   String?
   source     String?
   context    Json?
   stack      String?
@@ -67,6 +68,7 @@ model SystemLog {
   createdAt  DateTime @default(now())
 
   @@index([level])
+  @@index([category])
   @@index([createdAt])
 }
 

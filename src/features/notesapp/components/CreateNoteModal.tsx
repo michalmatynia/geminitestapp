@@ -1,4 +1,4 @@
-import { AppModal, ModalShell, Button } from "@/shared/ui";
+import { Button, SharedModal } from "@/shared/ui";
 import { useRef } from "react";
 
 
@@ -52,24 +52,23 @@ export function CreateNoteModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={isOpen}
-      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
+      onClose={onClose}
       title="Create Note"
+      header={header}
     >
-      <ModalShell title="Create Note" onClose={onClose} header={header}>
-        <NoteForm
-          formRef={formRef}
-          folderTree={folderTree}
-          defaultFolderId={selectedFolderId}
-          availableTags={tags}
-          notebookId={selectedNotebookId}
-          onSuccess={onSuccess}
-          onTagCreated={onTagCreated}
-          folderTheme={folderTheme}
-          onSelectRelatedNote={onSelectRelatedNote}
-        />
-      </ModalShell>
-    </AppModal>
+      <NoteForm
+        formRef={formRef}
+        folderTree={folderTree}
+        defaultFolderId={selectedFolderId}
+        availableTags={tags}
+        notebookId={selectedNotebookId}
+        onSuccess={onSuccess}
+        onTagCreated={onTagCreated}
+        folderTheme={folderTheme}
+        onSelectRelatedNote={onSelectRelatedNote}
+      />
+    </SharedModal>
   );
 }

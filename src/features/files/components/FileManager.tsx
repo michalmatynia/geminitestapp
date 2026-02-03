@@ -553,11 +553,9 @@ export default function FileManager({
         </FilePreviewModal>
       )}
       {previewAsset && (
-        <AppModal
+        <SharedModal
           open={true}
-          onOpenChange={(open: boolean): void => {
-            if (!open) setPreviewAsset(null);
-          }}
+          onClose={(): void => setPreviewAsset(null)}
           title={previewAsset.name ?? previewAsset.filename}
         >
           <div className="space-y-4 text-sm text-gray-200">
@@ -589,7 +587,7 @@ export default function FileManager({
               </pre>
             </div>
           </div>
-        </AppModal>
+        </SharedModal>
       )}
     </div>
   );

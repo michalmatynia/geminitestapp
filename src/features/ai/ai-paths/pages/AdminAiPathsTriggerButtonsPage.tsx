@@ -1,6 +1,4 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -12,10 +10,11 @@ import type {
   AiTriggerButtonDisplay,
   AiTriggerButtonLocation,
   AiTriggerButtonMode,
-  AiTriggerButtonRecord,
-} from "@/shared/types/ai-trigger-buttons";
+  AiTriggerButtonDto,
+} from "@/shared/dtos/ai-trigger-buttons";
 import type { AiNode, PathConfig, PathMeta } from "@/features/ai/ai-paths/lib";
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
+import { TriggerButtonListManager, AiTriggerButtonDto } from "../components/TriggerButtonListManager"; // Import the new component and type
 
 type PathAttachment = { id: string; name: string };
 
@@ -26,6 +25,7 @@ type TriggerButtonDraft = {
   locations: AiTriggerButtonLocation[];
   mode: AiTriggerButtonMode;
   display: AiTriggerButtonDisplay;
+  pathId?: string; // Add pathId to the draft
 };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
@@ -45,13 +45,14 @@ const DISPLAY_OPTIONS: Array<{ value: AiTriggerButtonDisplay; label: string }> =
   { value: "icon", label: "Icon only" },
 ];
 
-const normalizeDraft = (record?: AiTriggerButtonRecord | null): TriggerButtonDraft => ({
+const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft => ({
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? "",
   iconId: record?.iconId ?? null,
   locations: record?.locations ?? ["product_modal"],
   mode: record?.mode ?? "click",
   display: record?.display ?? "icon_label",
+  pathId: record?.pathId ?? undefined,
 });
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
@@ -61,26 +62,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
-  const [orderedRows, setOrderedRows] = useState<AiTriggerButtonRecord[]>([]);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
+  // Removed orderedRows, setOrderedRows, draggingId, overId as they are now managed by TriggerButtonListManager
 
-  const triggerButtonsQuery = useQuery<AiTriggerButtonRecord[]>({
+  const triggerButtonsQuery = useQuery<AiTriggerButtonDto[]>({
     queryKey: ["ai-paths", "trigger-buttons"],
     queryFn: async () => {
       const result = await triggerButtonsApi.list();
       if (!result.ok) throw new Error(result.error);
-      return Array.isArray(result.data) ? result.data : [];
+      const data = Array.isArray(result.data) ? result.data : [];
+      return data;
     },
     staleTime: 10_000,
   });
-
-  // Keep orderedRows in sync with server results (but don't clobber while dragging).
-  useEffect(() => {
-    if (!triggerButtonsQuery.data) return;
-    if (draggingId) return;
-    setOrderedRows(triggerButtonsQuery.data);
-  }, [draggingId, triggerButtonsQuery.data]);
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],
@@ -103,7 +96,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           .filter((config: PathConfig) => typeof config?.id === "string" && config.id.trim().length > 0)
           .map((config: PathConfig) => {
             const id = config.id.trim();
-            const name =
+            const name = config.meta?.name ?? id; // Use pathName from meta or id
+            return { id, name, nodes: config.nodes };
+          });
+      };
               typeof config.name === "string" && config.name.trim().length > 0
                 ? config.name.trim()
                 : `Path ${id.slice(0, 6)}`;
@@ -233,13 +229,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   );
 
   const createMutation = useMutation({
-    mutationFn: async (payload: Omit<TriggerButtonDraft, "id">): Promise<AiTriggerButtonRecord> => {
+    mutationFn: async (payload: Omit<TriggerButtonDraft, "id">): Promise<AiTriggerButtonDto> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
     },
     onSuccess: async (): Promise<void> => {
       await queryClient.invalidateQueries({ queryKey: ["ai-paths", "trigger-buttons"] });
+      setOrderedRows(null);
       toast("Trigger button created.", { variant: "success" });
       setEditorOpen(false);
     },
@@ -249,7 +246,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (payload: TriggerButtonDraft): Promise<AiTriggerButtonRecord> => {
+    mutationFn: async (payload: TriggerButtonDraft): Promise<AiTriggerButtonDto> => {
       if (!payload.id) throw new Error("Missing trigger button id.");
       const result = await triggerButtonsApi.update(payload.id, {
         name: payload.name,
@@ -263,6 +260,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
     onSuccess: async (): Promise<void> => {
       await queryClient.invalidateQueries({ queryKey: ["ai-paths", "trigger-buttons"] });
+      setOrderedRows(null);
       toast("Trigger button updated.", { variant: "success" });
       setEditorOpen(false);
     },
@@ -278,6 +276,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
     onSuccess: async (): Promise<void> => {
       await queryClient.invalidateQueries({ queryKey: ["ai-paths", "trigger-buttons"] });
+      setOrderedRows(null);
       toast("Trigger button deleted.", { variant: "success" });
     },
     onError: (error: unknown): void => {
@@ -286,18 +285,19 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRecord[]> => {
+    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.reorder(orderedIds);
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },
-    onSuccess: (data: AiTriggerButtonRecord[]): void => {
+    onSuccess: (data: AiTriggerButtonDto[]): void => {
       queryClient.setQueryData(["ai-paths", "trigger-buttons"], data);
-      setOrderedRows(data);
+      setOrderedRows(null);
       toast("Trigger button order updated.", { variant: "success" });
     },
     onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Failed to reorder trigger buttons.", { variant: "error" });
+      setOrderedRows(null);
       void triggerButtonsQuery.refetch();
     },
   });
@@ -331,7 +331,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
-  const rows = orderedRows;
+  const rows = orderedRows ?? triggerButtonsQuery.data ?? [];
 
   return (
     <div className="container mx-auto py-10">
@@ -343,6 +343,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 onClick={() => {
+                  setOrderedRows(null);
                   void triggerButtonsQuery.refetch();
                   void pathsQuery.refetch();
                 }}
@@ -368,7 +369,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {triggerButtonsQuery.isLoading ? (
+                {triggerButtonsQuery.isLoading && !orderedRows ? (
                   <TableRow className="border-border">
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       Loading...
@@ -381,7 +382,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                     </TableCell>
                   </TableRow>
                 ) : rows.length ? (
-                  rows.map((row: AiTriggerButtonRecord) => {
+                  rows.map((row: AiTriggerButtonDto) => {
                     const iconId = row.iconId;
                     const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
                     const usedIn = attachmentsByTriggerId.get(row.id) ?? [];
@@ -403,17 +404,16 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                           setOverId(null);
                           setDraggingId(null);
 
-                          setOrderedRows((prev: AiTriggerButtonRecord[]) => {
-                            const fromIndex = prev.findIndex((item: AiTriggerButtonRecord) => item.id === fromId);
-                            const toIndex = prev.findIndex((item: AiTriggerButtonRecord) => item.id === toId);
-                            if (fromIndex === -1 || toIndex === -1) return prev;
-                            const next = prev.slice();
-                            const [moved] = next.splice(fromIndex, 1);
-                            if (!moved) return prev;
-                            next.splice(toIndex, 0, moved);
-                            void reorderMutation.mutateAsync(next.map((item: AiTriggerButtonRecord) => item.id));
-                            return next;
-                          });
+                          const prev = orderedRows ?? triggerButtonsQuery.data ?? [];
+                          const fromIndex = prev.findIndex((item: AiTriggerButtonDto) => item.id === fromId);
+                          const toIndex = prev.findIndex((item: AiTriggerButtonDto) => item.id === toId);
+                          if (fromIndex === -1 || toIndex === -1) return;
+                          const next = prev.slice();
+                          const [moved] = next.splice(fromIndex, 1);
+                          if (!moved) return;
+                          next.splice(toIndex, 0, moved);
+                          setOrderedRows(next);
+                          void reorderMutation.mutateAsync(next.map((item: AiTriggerButtonDto) => item.id));
                         }}
                       >
                         <TableCell className="w-10 text-muted-foreground">

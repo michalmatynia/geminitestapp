@@ -1,20 +1,12 @@
-export type AiTriggerButtonLocation =
-  | "product_modal"
-  | "product_list"
-  | "note_modal"
-  | "note_list";
+import type { AiTriggerButtonDto } from '../dtos/ai-trigger-buttons';
 
-export type AiTriggerButtonMode = "click" | "toggle";
+export type {
+  AiTriggerButtonLocation,
+  AiTriggerButtonMode,
+  AiTriggerButtonDisplay
+} from '../dtos/ai-trigger-buttons';
 
-export type AiTriggerButtonDisplay = "icon" | "icon_label";
-
-export type AiTriggerButtonRecord = {
-  id: string;
-  name: string;
-  iconId: string | null;
-  locations: AiTriggerButtonLocation[];
-  mode: AiTriggerButtonMode;
-  display: AiTriggerButtonDisplay;
-  createdAt: string;
-  updatedAt: string;
-};
+/**
+ * @deprecated Use AiTriggerButtonDto from @/shared/dtos instead
+ */
+export type AiTriggerButtonRecord = AiTriggerButtonDto;

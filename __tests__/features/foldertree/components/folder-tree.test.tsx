@@ -6,6 +6,7 @@ import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FolderTree } from "@/features/foldertree/components/FolderTree";
 import type { CategoryWithChildren } from "@/shared/types/notes";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mocking useToast
 vi.mock("@/shared/ui", async (importOriginal) => {
@@ -17,6 +18,22 @@ vi.mock("@/shared/ui", async (importOriginal) => {
     }),
   };
 });
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+};
 
 const mockFolders: CategoryWithChildren[] = [
   {
@@ -70,7 +87,7 @@ describe("FolderTree Component", () => {
   });
 
   it("renders correctly with top-level folders", () => {
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     expect(screen.getByText("Work")).toBeInTheDocument();
     expect(screen.getByText("Personal")).toBeInTheDocument();
     expect(screen.getByText("All Notes")).toBeInTheDocument();
@@ -78,14 +95,14 @@ describe("FolderTree Component", () => {
 
   it("calls onSelectFolder(null) when 'All Notes' is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     await user.click(screen.getByText("All Notes"));
     expect(defaultProps.onSelectFolder).toHaveBeenCalledWith(null);
   });
 
   it("calls onCreateFolder(null) when the 'Add Folder' button is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     const addBtn = screen.getByLabelText("Add folder");
     await user.click(addBtn);
     expect(defaultProps.onCreateFolder).toHaveBeenCalledWith(null);
@@ -93,7 +110,7 @@ describe("FolderTree Component", () => {
 
   it("expands a folder and shows its children and notes", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     // Initially, subfolders and notes might be hidden depending on default expansion logic.
     // The component has: setExpandedFolderIds(new Set(collectFolderIds(folders)));
@@ -112,7 +129,7 @@ describe("FolderTree Component", () => {
 
   it("calls onSelectFolder when a folder is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     await user.click(screen.getByText("Work"));
     expect(defaultProps.onSelectFolder).toHaveBeenCalledWith("f1");
@@ -120,7 +137,7 @@ describe("FolderTree Component", () => {
 
   it("calls onSelectNote when a note is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     await user.click(screen.getByText("Project A"));
     expect(defaultProps.onSelectNote).toHaveBeenCalledWith("n1");
@@ -128,21 +145,21 @@ describe("FolderTree Component", () => {
 
   it("shows undo button when onUndo is provided", () => {
     const onUndo = vi.fn();
-    render(<FolderTree {...defaultProps} onUndo={onUndo} canUndo={true} />);
+    renderWithProviders(<FolderTree {...defaultProps} onUndo={onUndo} canUndo={true} />);
     expect(screen.getByText("Undo")).toBeInTheDocument();
   });
 
   it("calls onUndo when undo button is clicked", async () => {
     const user = userEvent.setup();
     const onUndo = vi.fn();
-    render(<FolderTree {...defaultProps} onUndo={onUndo} canUndo={true} />);
+    renderWithProviders(<FolderTree {...defaultProps} onUndo={onUndo} canUndo={true} />);
     await user.click(screen.getByText("Undo"));
     expect(onUndo).toHaveBeenCalled();
   });
 
   it("shows history entries when undoHistory is provided", () => {
     const undoHistory = [{ label: "Created folder 'Test'" }];
-    render(<FolderTree {...defaultProps} undoHistory={undoHistory} />);
+    renderWithProviders(<FolderTree {...defaultProps} undoHistory={undoHistory} />);
     
     expect(screen.getByText("History")).toBeInTheDocument();
     // It might be collapsed by default or expanded. 
@@ -152,7 +169,7 @@ describe("FolderTree Component", () => {
 
   it("toggles dropzone visibility", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const uploadBtn = screen.getByLabelText("Show dropzone");
     await user.click(uploadBtn);
@@ -165,7 +182,7 @@ describe("FolderTree Component", () => {
 
   it("calls onDeleteFolder when delete folder button is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const workFolder = screen.getByText("Work").closest(".group");
     const deleteBtn = within(workFolder as HTMLElement).getByTitle("Delete folder and all contents");
@@ -176,7 +193,7 @@ describe("FolderTree Component", () => {
 
   it("enters rename mode for a folder and calls onRenameFolder", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const workFolder = screen.getByText("Work").closest(".group");
     const renameBtn = within(workFolder as HTMLElement).getByTitle("Rename folder");
@@ -191,7 +208,7 @@ describe("FolderTree Component", () => {
 
   it("calls onCreateSubfolder when add subfolder button is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const workFolder = screen.getByText("Work").closest(".group");
     const addSubfolderBtn = within(workFolder as HTMLElement).getByTitle("Add subfolder");
@@ -202,7 +219,7 @@ describe("FolderTree Component", () => {
 
   it("calls onCreateNote when add note button is clicked for a folder", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const workFolder = screen.getByText("Work").closest(".group");
     const addNoteBtn = within(workFolder as HTMLElement).getByTitle("Add note");
@@ -213,7 +230,7 @@ describe("FolderTree Component", () => {
 
   it("calls onDeleteNote when delete note button is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const deleteBtn = screen.getByTitle("Delete note");
     await user.click(deleteBtn);
@@ -223,7 +240,7 @@ describe("FolderTree Component", () => {
 
   it("enters rename mode for a note and calls onRenameNote", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const renameBtn = screen.getByTitle("Rename note");
     await user.click(renameBtn);
@@ -237,7 +254,7 @@ describe("FolderTree Component", () => {
 
   it("calls onDuplicateNote when duplicate note button is clicked", async () => {
     const user = userEvent.setup();
-    render(<FolderTree {...defaultProps} />);
+    renderWithProviders(<FolderTree {...defaultProps} />);
     
     const duplicateBtn = screen.getByTitle("Duplicate note");
     await user.click(duplicateBtn);
@@ -246,7 +263,7 @@ describe("FolderTree Component", () => {
   });
 
   it("simulates dropping a note onto a folder", () => {
-    render(<FolderTree {...defaultProps} draggedNoteId="n2" />);
+    renderWithProviders(<FolderTree {...defaultProps} draggedNoteId="n2" />);
     
     const workFolder = screen.getByText("Work").closest(".group");
     

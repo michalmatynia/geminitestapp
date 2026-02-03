@@ -1,14 +1,11 @@
+import { NamedDto } from '../types/base';
+
 // AI Paths DTOs
-export interface AiPathDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface AiPathDto extends NamedDto {
   nodes: AiNodeDto[];
   edges: AiEdgeDto[];
   config: Record<string, unknown>;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface AiNodeDto {

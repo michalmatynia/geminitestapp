@@ -296,16 +296,12 @@ export default function ProductListingJobsPanel({
         ) : null}
       </ListPanel>
       {selectedListing && (
-        <AppModal
+        <SharedModal
           open={true}
-          onOpenChange={(open: boolean): void => { if (!open) setSelectedListing(null); }}
+          onClose={(): void => setSelectedListing(null)}
           title="Export Job Details"
+          size="lg"
         >
-          <ModalShell
-            title="Export Job Details"
-            onClose={(): void => setSelectedListing(null)}
-            size="lg"
-          >
             <div className="space-y-6 text-sm">
               <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
                 <div>
@@ -567,8 +563,7 @@ export default function ProductListingJobsPanel({
                 </div>
               </div>
             </div>
-          </ModalShell>
-        </AppModal>
+        </SharedModal>
       )}
     </>
   );

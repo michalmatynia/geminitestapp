@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Card, ModalShell, AppModal, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Card, SharedModal, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 
 import {
@@ -275,16 +275,12 @@ export function IntegrationModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={true}
-      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
+      onClose={onClose}
       title={`${activeIntegration.name} Integration`}
+      header={header}
     >
-      <ModalShell
-        title={`${activeIntegration.name} Integration`}
-        onClose={onClose}
-        header={header}
-      >
         <div className="mb-4">
           <p className="text-sm text-gray-400">
             {isBaselinker
@@ -535,8 +531,6 @@ export function IntegrationModal({
               </TabsContent>
             )}
           </Tabs>
-        </ModalShell>
-
         {showTestLogModal && selectedStep && (
           <TestLogModal selectedStep={selectedStep} onClose={onCloseTestLogModal} />
         )}
@@ -579,6 +573,6 @@ export function IntegrationModal({
             Playwright settings saved
           </div>
         )}
-    </AppModal>
+    </SharedModal>
   );
 }

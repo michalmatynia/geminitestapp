@@ -271,12 +271,11 @@ export default function AgentRunsPage(): React.ReactElement {
       </SectionPanel>
 
       {selectedAgentRunId ? (
-        <AppModal
+        <SharedModal
           open={true}
-          onOpenChange={(open: boolean) => !open && closeAgentModal()}
+          onClose={closeAgentModal}
           title="Agent job details"
         >
-          <ModalShell title="Agent job details" onClose={closeAgentModal}>
             <Tabs defaultValue="summary" className="w-full">
             <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -982,8 +981,7 @@ export default function AgentRunsPage(): React.ReactElement {
                   </div>
                 </TabsContent>
               </Tabs>
-            </ModalShell>
-        </AppModal>
+        </SharedModal>
       ) : null}
     </div>
   );

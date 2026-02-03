@@ -16,7 +16,7 @@ vi.mock("@/shared/lib/db/app-db-provider", () => ({
 
 // Define model defaults to prevent "map of undefined" errors
 const MODEL_DEFAULTS: Record<string, any> = {
-  product: { images: [], catalogs: [], categories: [], tags: [] },
+  product: { images: [], catalogs: [], categories: [], tags: [], producers: [] },
   note: { tags: [], categories: [], files: [], relationsFrom: [], relationsTo: [] },
   catalog: { products: [], languages: [], categories: [], tags: [] },
   page: { slugs: [], components: [] },
@@ -24,6 +24,23 @@ const MODEL_DEFAULTS: Record<string, any> = {
   country: { languages: [], currencies: [] },
   category: { notes: [], children: [] },
   imageFile: { products: [] },
+};
+
+const RELATION_MAP: Record<string, Record<string, string>> = {
+  product: {
+    images: "productImage",
+    catalogs: "productCatalog",
+    categories: "productCategoryAssignment",
+    tags: "productTagAssignment",
+    producers: "productProducerAssignment",
+  },
+  note: {
+    tags: "noteTag",
+    categories: "noteCategory",
+    relationsFrom: "noteRelation",
+    relationsTo: "noteRelation",
+    files: "noteFile",
+  },
 };
 
 // Mock Prisma client for all tests with simple in-memory state
@@ -148,11 +165,24 @@ vi.mock("@/shared/lib/db/prisma", () => {
                   return;
               }
 
-              // General case
-              const relatedStoreName = key;
+              // Use RELATION_MAP if available
+              const storeName = RELATION_MAP[modelName]?.[key] || key;
               const fk = modelName + 'Id';
-              if (store.has(relatedStoreName)) {
-                  newItem[key] = getStore(relatedStoreName).filter(relItem => relItem[fk] === item.id);
+
+              if (store.has(storeName)) {
+                  let relatedData = getStore(storeName).filter(relItem => {
+                      if (key === 'relationsFrom') return relItem.sourceNoteId === item.id;
+                      if (key === 'relationsTo') return relItem.targetNoteId === item.id;
+                      return relItem[fk] === item.id;
+                  });
+
+                  // Recursively apply includes to related data
+                  if (include[key].include) {
+                      // This is a bit hacky, but better than nothing
+                      relatedData = relatedData.map(relItem => applyInclude(relItem, include[key].include, storeName));
+                  }
+
+                  newItem[key] = relatedData;
               }
           }
       });
@@ -203,17 +233,25 @@ vi.mock("@/shared/lib/db/prisma", () => {
       return applyInclude(withDefaults, args?.include, name);
     }),
     create: vi.fn().mockImplementation(async (args) => {
+      const data = { ...args?.data };
+      // Strip nested prisma objects to prevent "map of undefined" errors in convert functions
+      Object.keys(data).forEach(key => {
+        if (data[key] && typeof data[key] === 'object' && ('create' in data[key] || 'connect' in data[key] || 'createMany' in data[key] || 'connectOrCreate' in data[key])) {
+          delete data[key];
+        }
+      });
+
       const newItem = {
-        id: args?.data?.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: data.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...(MODEL_DEFAULTS[name] || {}),
-        ...args?.data,
+        ...data,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       
-      // Handle nested connects
+      // Handle nested connects (simplified)
       Object.entries(args?.data || {}).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null && 'connect' in (value as any)) {
+          if (value && typeof value === 'object' && 'connect' in (value as any)) {
               newItem[key + 'Id'] = (value as any).connect.id;
           }
       });
@@ -240,13 +278,11 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       const updateData = { ...args.data };
       Object.entries(updateData).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null) {
+          if (value && typeof value === 'object') {
               if ('connect' in (value as any)) {
                   updateData[key + 'Id'] = (value as any).connect.id;
                   delete updateData[key];
-              } else if ('deleteMany' in (value as any)) {
-                  delete updateData[key];
-              } else if ('create' in (value as any)) {
+              } else if ('deleteMany' in (value as any) || 'create' in (value as any) || 'createMany' in (value as any) || 'connectOrCreate' in (value as any)) {
                   delete updateData[key];
               }
           }

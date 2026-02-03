@@ -1,6 +1,6 @@
 "use client";
 
-import { AppModal, ModalShell } from "@/shared/ui";
+import { SharedModal } from "@/shared/ui";
 import * as React from "react";
 
 type TestResultModalProps = {
@@ -42,16 +42,12 @@ export function TestResultModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={true}
-      onOpenChange={() => {}}
+      onClose={onClose}
       title={success ? "Playwright Test Success" : "Playwright Test Error"}
+      footer={footer}
     >
-      <ModalShell
-        title={success ? "Playwright Test Success" : "Playwright Test Error"}
-        onClose={onClose}
-        footer={footer}
-      >
       <div className="space-y-3">
         {!success && (
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
@@ -84,7 +80,6 @@ export function TestResultModal({
           </pre>
         )}
       </div>
-      </ModalShell>
-    </AppModal>
+    </SharedModal>
   );
 }

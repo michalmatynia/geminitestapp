@@ -143,25 +143,25 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
         <Plus className="size-3.5" />
         Add section
       </Button>
-      <AppModal open={isOpen} onOpenChange={setIsOpen} title="Add a section">
-        <ModalShell
-          title="Add a section"
-          onClose={() => setIsOpen(false)}
-          size="lg"
-          bodyClassName="h-[70vh]"
-          header={
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Add a section</h2>
-              <Button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="min-w-[100px] border border-white/20 hover:border-white/40"
-              >
-                Close
-              </Button>
-            </div>
-          }
-        >
+      <SharedModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Add a section"
+        size="lg"
+        bodyClassName="h-[70vh]"
+        header={
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Add a section</h2>
+            <Button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="min-w-[100px] border border-white/20 hover:border-white/40"
+            >
+              Close
+            </Button>
+          </div>
+        }
+      >
           <div className="space-y-6">
           {primitives.length > 0 && (
             <div>
@@ -286,8 +286,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
           </div>
           )}
           </div>
-        </ModalShell>
-      </AppModal>
+      </SharedModal>
     </>
   );
 }

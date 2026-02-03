@@ -626,9 +626,11 @@ export function ProductListingsModal({
           <AppModal
             open={true}
             onOpenChange={(open: boolean) => !open && onClose()}
-            title={`Integrations - ${productName}`}
           >
-            <ModalShell title={`Integrations - ${productName}`} onClose={onClose}>
+            <ModalShell
+              title={`Integrations - ${productName}`}
+              onClose={onClose}
+            >
               <ConfirmDialog
               open={!!listingToDelete}
               onOpenChange={(open: boolean) => !open && setListingToDelete(null)}

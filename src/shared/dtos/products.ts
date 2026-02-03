@@ -1,26 +1,18 @@
-import type { Entity } from '../types/core/base-types';
+import { NamedDto } from '../types/base';
 
-export interface ProductDto extends Entity {
-  name: string;
-  description: string | null;
+export interface ProductDto extends NamedDto {
   price: number | null;
   published: boolean;
   categoryId: string | null;
   catalogId: string;
-  createdAt: string;
-  updatedAt: string;
   tags: string[];
   images: string[];
 }
 
-export interface ProductCategoryDto extends Entity {
-  name: string;
-  description: string | null;
+export interface ProductCategoryDto extends NamedDto {
   color: string | null;
   parentId: string | null;
   catalogId: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ProductTagDto {

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
 
 // Mock dependencies
-vi.mock("@/features/admin", () => ({
+vi.mock("@/features/admin/context/AdminLayoutContext", () => ({
   useAdminLayout: () => ({
     setIsProgrammaticallyCollapsed: vi.fn(),
   }),

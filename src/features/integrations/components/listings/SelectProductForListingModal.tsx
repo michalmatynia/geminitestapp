@@ -157,7 +157,8 @@ export default function SelectProductForListingModal({
   const loading = loadingIntegrations;
 
   return (
-    <ModalShell
+    <SharedModal
+      open={true}
       title={`List Product to ${selectedIntegration?.name || "Marketplace"}`}
       onClose={onClose}
       size="md"
@@ -288,6 +289,6 @@ export default function SelectProductForListingModal({
           </div>
         )}
       </div>
-    </ModalShell>
+    </SharedModal>
   );
 }

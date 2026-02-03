@@ -34,12 +34,12 @@ export default function SelectIntegrationModal({
   };
 
   return (
-    <AppModal
+    <SharedModal
       open={true}
-      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
+      onClose={onClose}
       title="Select Marketplace / Integration"
+      size="md"
     >
-      <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="md">
         <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
@@ -122,7 +122,6 @@ export default function SelectIntegrationModal({
           </>
         )}
         </div>
-      </ModalShell>
-    </AppModal>
+    </SharedModal>
   );
 }

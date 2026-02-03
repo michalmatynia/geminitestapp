@@ -74,20 +74,19 @@ export function AdminDraftsPage(): React.JSX.Element {
         onCreateNew={handleCreateNew}
       />
 
-      <AppModal
+      <SharedModal
         open={isCreatorOpen}
-        onOpenChange={(open: boolean): void => { if (!open) handleCloseCreator(); }}
+        onClose={handleCloseCreator}
         title={title}
+        header={header}
       >
-        <ModalShell title={title} onClose={handleCloseCreator} header={header}>
           <DraftCreator
             formRef={formRef}
             draftId={editingDraftId}
             onSaveSuccess={handleSaveSuccess}
             onCancel={handleCloseCreator}
           />
-        </ModalShell>
-      </AppModal>
+      </SharedModal>
     </div>
   );
 }

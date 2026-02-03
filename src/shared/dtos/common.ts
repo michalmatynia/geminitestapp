@@ -67,6 +67,7 @@ export * from './notesapp';
 export * from './database';
 export * from './jobs';
 export * from './ai-paths';
+export * from './ai-trigger-buttons';
 export * from './agentcreator';
 export * from './viewer3d';
 export * from './admin';

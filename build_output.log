@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 187ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 172ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -15,14 +15,14 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 - Environments: .env
 
   Creating an optimized production build ...
-✓ Compiled successfully in 23.1s
+✓ Compiled successfully in 13.7s
   Running TypeScript ...
   Collecting page data using 9 workers ...
   Generating static pages using 9 workers (0/196) ...
   Generating static pages using 9 workers (49/196) 
   Generating static pages using 9 workers (98/196) 
   Generating static pages using 9 workers (147/196) 
-✓ Generating static pages using 9 workers (196/196) in 626.2ms
+✓ Generating static pages using 9 workers (196/196) in 626.7ms
   Finalizing page optimization ...
 
 Route (app)

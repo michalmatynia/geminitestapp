@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 
-import { Button, Checkbox, DataTable, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast } from "@/shared/ui";
+import { Button, Checkbox, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast } from "@/shared/ui";
 import { PRODUCT_ICON_MAP, PRODUCT_ICONS } from "@/shared/constants/product-icons";
-import { Settings2, Trash2 } from "lucide-react";
+import { cn } from "@/shared/utils";
+import { GripVertical, Settings2, Trash2 } from "lucide-react";
 import type { AiTriggerButtonLocation, AiTriggerButtonMode, AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 import type { AiNode, PathConfig, PathMeta } from "@/features/ai/ai-paths/lib";
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
@@ -49,6 +49,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
+  const [orderedRows, setOrderedRows] = useState<AiTriggerButtonRecord[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const triggerButtonsQuery = useQuery({
     queryKey: ["ai-paths", "trigger-buttons"],
@@ -59,6 +62,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
     staleTime: 10_000,
   });
+
+  useEffect(() => {
+    // The persisted order is the array order returned by the API/settings value.
+    setOrderedRows(triggerButtonsQuery.data ?? []);
+  }, [triggerButtonsQuery.data]);
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],
@@ -262,106 +270,22 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const columns = useMemo<ColumnDef<AiTriggerButtonRecord>[]>(() => {
-    return [
-      {
-        id: "name",
-        header: "Name",
-        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const iconId = row.original.iconId;
-          const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
-          return (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60">
-                {Icon ? <Icon className="size-4 text-gray-200" /> : <Settings2 className="size-4 text-gray-500" />}
-              </span>
-              <div className="min-w-0">
-                <div className="truncate font-medium text-white">{row.original.name}</div>
-                <div className="truncate text-[11px] text-gray-400">{row.original.id}</div>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        id: "locations",
-        header: "Locations",
-        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
-          <div className="text-xs text-gray-300">
-            {row.original.locations
-              .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o: { value: AiTriggerButtonLocation; label: string }) => o.value === value)?.label ?? value)
-              .join(", ")}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "mode",
-        header: "Mode",
-        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
-          <span className="text-xs text-gray-300">
-            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === row.original.mode)?.label ?? row.original.mode}
-          </span>
-        ),
-      },
-      {
-        id: "paths",
-        header: "Used in Paths",
-        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const usedIn = attachmentsByTriggerId.get(row.original.id) ?? [];
-          if (usedIn.length === 0) {
-            return <span className="text-xs text-gray-500">Not used</span>;
-          }
-          return (
-            <div className="flex flex-wrap gap-1">
-              {usedIn.map((path: PathAttachment) => (
-                <Button
-                  key={path.id}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 text-[11px]"
-                  title={`Open path: ${path.id}`}
-                  onClick={() => void openAiPath(path.id)}
-                >
-                  {path.name}
-                </Button>
-              ))}
-            </div>
-          );
-        },
-      },
-      {
-        id: "actions",
-        header: (): React.ReactNode => "",
-        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setDraft(normalizeDraft(row.original));
-                setEditorOpen(true);
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={(): void => {
-                const ok = confirm(`Delete trigger button \"${row.original.name}\"?`);
-                if (!ok) return;
-                void deleteMutation.mutateAsync(row.original.id);
-              }}
-            >
-              <Trash2 className="mr-1 size-3.5" />
-              Delete
-            </Button>
-          </div>
-        ),
-      },
-    ];
-  }, [attachmentsByTriggerId, deleteMutation, openAiPath]);
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRecord[]> => {
+      const result = await triggerButtonsApi.reorder(orderedIds);
+      if (!result.ok) throw new Error(result.error);
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    onSuccess: (data: AiTriggerButtonRecord[]): void => {
+      queryClient.setQueryData(["ai-paths", "trigger-buttons"], data);
+      setOrderedRows(data);
+      toast("Trigger button order updated.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to reorder trigger buttons.", { variant: "error" });
+      void triggerButtonsQuery.refetch();
+    },
+  });
 
   const openCreate = (): void => {
     setDraft(normalizeDraft(null));
@@ -391,7 +315,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
-  const rows = triggerButtonsQuery.data ?? [];
+  const rows = orderedRows;
 
   return (
     <div className="container mx-auto py-10">
@@ -415,12 +339,176 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         />
 
         <div className="mt-6">
-          <DataTable<AiTriggerButtonRecord>
-            columns={columns}
-            data={rows}
-            getRowId={(row: AiTriggerButtonRecord): string => row.id}
-            isLoading={triggerButtonsQuery.isLoading}
-          />
+          <div className="rounded-md border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border">
+                  <TableHead className="w-10 text-foreground" />
+                  <TableHead className="text-foreground">Name</TableHead>
+                  <TableHead className="text-foreground">Locations</TableHead>
+                  <TableHead className="text-foreground">Mode</TableHead>
+                  <TableHead className="text-foreground">Used in Paths</TableHead>
+                  <TableHead className="text-right text-foreground" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {triggerButtonsQuery.isLoading ? (
+                  <TableRow className="border-border">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : rows.length ? (
+                  rows.map((row: AiTriggerButtonRecord) => {
+                    const iconId = row.iconId;
+                    const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
+                    const usedIn = attachmentsByTriggerId.get(row.id) ?? [];
+                    const isDropTarget = Boolean(draggingId) && overId === row.id && draggingId !== row.id;
+                    return (
+                      <TableRow
+                        key={row.id}
+                        className={cn("border-border", isDropTarget ? "bg-emerald-500/10" : null)}
+                        onDragOver={(event: React.DragEvent<HTMLTableRowElement>): void => {
+                          if (!draggingId) return;
+                          event.preventDefault();
+                          setOverId(row.id);
+                        }}
+                        onDrop={(event: React.DragEvent<HTMLTableRowElement>): void => {
+                          event.preventDefault();
+                          const fromId = event.dataTransfer.getData("text/plain");
+                          const toId = row.id;
+                          if (!fromId || fromId === toId) return;
+                          setOverId(null);
+                          setDraggingId(null);
+
+                          setOrderedRows((prev: AiTriggerButtonRecord[]) => {
+                            const fromIndex = prev.findIndex((item: AiTriggerButtonRecord) => item.id === fromId);
+                            const toIndex = prev.findIndex((item: AiTriggerButtonRecord) => item.id === toId);
+                            if (fromIndex === -1 || toIndex === -1) return prev;
+                            const next = prev.slice();
+                            const [moved] = next.splice(fromIndex, 1);
+                            if (!moved) return prev;
+                            next.splice(toIndex, 0, moved);
+                            void reorderMutation.mutateAsync(next.map((item: AiTriggerButtonRecord) => item.id));
+                            return next;
+                          });
+                        }}
+                      >
+                        <TableCell className="w-10 text-muted-foreground">
+                          <div
+                            className={cn(
+                              "inline-flex items-center justify-center rounded-md p-1 text-gray-500",
+                              reorderMutation.isPending ? "cursor-not-allowed opacity-60" : "cursor-grab active:cursor-grabbing hover:text-gray-300"
+                            )}
+                            draggable={!reorderMutation.isPending}
+                            onDragStart={(event: React.DragEvent<HTMLDivElement>): void => {
+                              if (reorderMutation.isPending) return;
+                              event.dataTransfer.setData("text/plain", row.id);
+                              event.dataTransfer.effectAllowed = "move";
+                              setDraggingId(row.id);
+                              setOverId(row.id);
+                            }}
+                            onDragEnd={(): void => {
+                              setDraggingId(null);
+                              setOverId(null);
+                            }}
+                            title="Drag to reorder"
+                            aria-label="Drag to reorder"
+                          >
+                            <GripVertical className="size-4" />
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60">
+                              {Icon ? <Icon className="size-4 text-gray-200" /> : <Settings2 className="size-4 text-gray-500" />}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="truncate font-medium text-white">{row.name}</div>
+                              <div className="truncate text-[11px] text-gray-400">{row.id}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-muted-foreground">
+                          <div className="text-xs text-gray-300">
+                            {row.locations
+                              .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o: { value: AiTriggerButtonLocation; label: string }) => o.value === value)?.label ?? value)
+                              .join(", ")}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-muted-foreground">
+                          <span className="text-xs text-gray-300">
+                            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === row.mode)?.label ?? row.mode}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="text-muted-foreground">
+                          {usedIn.length === 0 ? (
+                            <span className="text-xs text-gray-500">Not used</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {usedIn.map((path: PathAttachment) => (
+                                <Button
+                                  key={path.id}
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2 text-[11px]"
+                                  title={`Open path: ${path.id}`}
+                                  onClick={() => void openAiPath(path.id)}
+                                >
+                                  {path.name}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="text-right text-muted-foreground">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDraft(normalizeDraft(row));
+                                setEditorOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(): void => {
+                                const ok = confirm(`Delete trigger button \"${row.name}\"?`);
+                                if (!ok) return;
+                                void deleteMutation.mutateAsync(row.id);
+                              }}
+                            >
+                              <Trash2 className="mr-1 size-3.5" />
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow className="border-border">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      No trigger buttons yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="mt-2 text-[11px] text-gray-500">
+            Drag the handle on the left to reorder. The same order is used in modals and lists.
+          </div>
         </div>
       </SectionPanel>
 

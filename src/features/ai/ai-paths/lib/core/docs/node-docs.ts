@@ -630,9 +630,9 @@ const ALL_NODE_TYPES: NodeType[] = [
   "description_updater",
 ];
 
-const definitionByType = new Map(NODE_DEFINITIONS.map((def) => [def.type, def]));
+const definitionByType = new Map(NODE_DEFINITIONS.map((def: (typeof NODE_DEFINITIONS)[number]) => [def.type, def]));
 
-export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type) => {
+export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: NodeType) => {
   const fallbackDefinition =
     type === "description_updater"
       ? {

@@ -261,6 +261,10 @@ export const triggerButtonsApi = {
   async remove(id: string): Promise<ApiResponse<{ ok: true }>> {
     return apiDelete<{ ok: true }>(`/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`);
   },
+
+  async reorder(orderedIds: string[]): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
+    return apiPost<AiTriggerButtonRecord[]>("/api/ai-paths/trigger-buttons/reorder", { orderedIds });
+  },
 };
 
 // ============================================================================

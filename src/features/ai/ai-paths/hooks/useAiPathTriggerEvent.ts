@@ -442,7 +442,7 @@ export function useAiPathTriggerEvent(): {
           triggerEvent: triggerEventId,
           triggerContext,
           deferPoll: false,
-          onNodeFinish: async (payload: { node: AiNode }): Promise<void> => {
+          onNodeFinish: (payload: { node: AiNode }): void => {
             const { node } = payload;
             if (!node || node.type === "simulation") return;
             if (!connected.has(node.id) && !alwaysActiveTypes.has(node.type)) return;
@@ -451,7 +451,7 @@ export function useAiPathTriggerEvent(): {
             }
             reportProgress({ status: "running", progress: completed.size / totalNodes, node });
           },
-          onNodeError: async (payload: { node: AiNode; error: unknown }): Promise<void> => {
+          onNodeError: (payload: { node: AiNode; error: unknown }): void => {
             const { node, error } = payload;
             logger.error("AI Paths trigger node failed", error, { nodeId: node.id, nodeType: node.type });
             reportProgress({ status: "error", progress: completed.size / totalNodes, node });

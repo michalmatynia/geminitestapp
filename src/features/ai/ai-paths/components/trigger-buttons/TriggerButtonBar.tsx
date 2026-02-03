@@ -97,8 +97,7 @@ export function TriggerButtonBar({
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];
     return all
-      .filter((button: AiTriggerButtonRecord) => button.locations.includes(location))
-      .sort((a: AiTriggerButtonRecord, b: AiTriggerButtonRecord) => a.name.localeCompare(b.name));
+      .filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
   }, [triggerButtonsQuery.data, location]);
 
   if (buttons.length === 0) return null;

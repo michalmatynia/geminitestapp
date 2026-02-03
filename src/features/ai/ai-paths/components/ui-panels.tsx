@@ -149,14 +149,14 @@ export function DocsTabPanel({
   const filteredNodeDocs = useMemo(() => {
     const q = nodeQuery.trim().toLowerCase();
     if (!q) return AI_PATHS_NODE_DOCS;
-    return AI_PATHS_NODE_DOCS.filter((doc) => {
+    return AI_PATHS_NODE_DOCS.filter((doc: (typeof AI_PATHS_NODE_DOCS)[number]) => {
       const haystack = [
         doc.title,
         doc.type,
         doc.purpose,
         doc.inputs.join(" "),
         doc.outputs.join(" "),
-        doc.config.map((c) => `${c.path} ${c.description}`).join(" "),
+        doc.config.map((c: { path: string; description: string }) => `${c.path} ${c.description}`).join(" "),
       ]
         .join(" ")
         .toLowerCase();
@@ -391,7 +391,7 @@ export function DocsTabPanel({
         </div>
 
         <div className="mt-4 space-y-3">
-          {filteredNodeDocs.map((doc) => (
+          {filteredNodeDocs.map((doc: (typeof AI_PATHS_NODE_DOCS)[number]) => (
             <details
               key={doc.type}
               className="rounded-md border border-border bg-card/50"
@@ -412,7 +412,7 @@ export function DocsTabPanel({
                     </div>
                     {doc.inputs.length ? (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {doc.inputs.map((port) => (
+                        {doc.inputs.map((port: string) => (
                           <span
                             key={port}
                             className="rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[11px] text-gray-200"
@@ -432,7 +432,7 @@ export function DocsTabPanel({
                     </div>
                     {doc.outputs.length ? (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {doc.outputs.map((port) => (
+                        {doc.outputs.map((port: string) => (
                           <span
                             key={port}
                             className="rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[11px] text-gray-200"
@@ -460,7 +460,7 @@ export function DocsTabPanel({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {doc.config.map((field) => (
+                      {doc.config.map((field: (typeof doc.config)[number]) => (
                         <TableRow key={field.path} className="border-border/50">
                           <TableCell className="text-[11px] text-gray-200">
                             <span className="rounded border border-border/60 bg-card/60 px-2 py-0.5">
@@ -485,7 +485,7 @@ export function DocsTabPanel({
                       Notes
                     </div>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-gray-400">
-                      {doc.notes.map((note) => (
+                      {doc.notes.map((note: string) => (
                         <li key={note}>{note}</li>
                       ))}
                     </ul>

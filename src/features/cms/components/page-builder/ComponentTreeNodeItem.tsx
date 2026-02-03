@@ -714,8 +714,10 @@ function RowNodeItem({
           const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
           const dragId =
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          // Allow drops if we have a block being dragged
-          if (!dragId && !hasBlockPayload) return;
+          // Allow section drops (for convertible sections like ImageElement, TextElement, etc.)
+          const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
+          // Allow drops if we have a block or convertible section being dragged
+          if (!dragId && !hasBlockPayload && !isSectionDrop) return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
@@ -728,9 +730,30 @@ function RowNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
+
+          // Check if this is a section drop (section drag sets "sectionId" in dataTransfer)
+          const draggedSectionIdFromTransfer = e.dataTransfer.getData("sectionId");
+          const draggedSectionTypeFromTransfer = e.dataTransfer.getData("sectionType");
+          const isSectionDrag = Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
+
+          if (isSectionDrag) {
+            const sectionIdToDrop = draggedSectionId || draggedSectionIdFromTransfer;
+            const sectionTypeToDrop = draggedSectionType || draggedSectionTypeFromTransfer;
+            if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? "")) {
+              // Route to first column if available
+              if (firstColumn) {
+                onDropSectionToColumn(sectionIdToDrop, sectionId, firstColumn.id, (firstColumn.blocks ?? []).length);
+              }
+              setDraggedSectionId(null);
+            }
+            return;
+          }
+
+          // Otherwise it's a block drop
           const dragId =
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
           if (!dragId) return;
+
           const fromSection =
             draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
           const fromColumn =
@@ -755,7 +778,6 @@ function RowNodeItem({
             );
           } else {
             // For all other block types, drop directly into the Row
-            // Calculate the drop index (append to end of row children)
             const rowChildren = row.blocks ?? [];
             onDropBlockToRow(
               dragId,
@@ -981,14 +1003,31 @@ function ColumnNodeItem({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    // Check if this is a section drop (section drag sets "sectionId" in dataTransfer)
+    const draggedSectionIdFromTransfer = e.dataTransfer.getData("sectionId");
+    const draggedSectionTypeFromTransfer = e.dataTransfer.getData("sectionType");
+    const isSectionDrag = Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
+
+    if (isSectionDrag) {
+      const sectionIdToDrop = draggedSectionId || draggedSectionIdFromTransfer;
+      const sectionTypeToDrop = draggedSectionType || draggedSectionTypeFromTransfer;
+      if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? "")) {
+        onDropSectionToColumn(sectionIdToDrop, sectionId, column.id, (column.blocks ?? []).length);
+        setDraggedSectionId(null);
+      }
+      return;
+    }
+
+    // Otherwise it's a block drop
     const dragId =
       draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
-          const fromColumn =
-            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-          const fromParent =
-            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+    const fromSection =
+      draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
+    const fromColumn =
+      (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+    const fromParent =
+      (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
     if (dragId) {
       onDropBlockToColumn(
         dragId,
@@ -1003,11 +1042,6 @@ function ColumnNodeItem({
       setDraggedFromSectionId(null);
       setDraggedFromColumnId(null);
       setDraggedFromParentBlockId(null);
-      return;
-    }
-    if (draggedSectionId && draggedSectionId !== sectionId) {
-      onDropSectionToColumn(draggedSectionId, sectionId, column.id, (column.blocks ?? []).length);
-      setDraggedSectionId(null);
     }
   };
 

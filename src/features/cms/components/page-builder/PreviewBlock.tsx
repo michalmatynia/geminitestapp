@@ -327,8 +327,9 @@ export function PreviewSection({
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = resolveNodeLabel(section.type, section.settings["label"]);
-  const inspectorActive = isInspecting && showEditorChrome;
-  const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
+  // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
+  const inspectorActive = isInspecting;
+  const isSectionHovered = isInspecting && showEditorChrome && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
@@ -1897,8 +1898,9 @@ function PreviewBlockItem({
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
     : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
-  const inspectorActive = isInspecting && showEditorChrome;
-  const isHovered = inspectorActive && hoveredNodeId === block.id;
+  // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
+  const inspectorActive = isInspecting;
+  const isHovered = isInspecting && showEditorChrome && hoveredNodeId === block.id;
   const hoverFrameClass = isHovered && !isSelected
     ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
     : "";

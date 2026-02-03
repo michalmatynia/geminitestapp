@@ -1,11 +1,14 @@
+CMS Drop ImageElemnt into Row Column Take it Out , the same for the Block
+Non overflowing images option in CMSBuilder
+
+
 When I click Generate PAth, the Connector inputs remain empty
  I also need a way of grouping paths.
 
-CMS Inspector Arrow not working
+CMS Inspector is not working in the CMS Page Builder not working
 * I don't see me regex and interator nodes
 
 Admin Menu Favourites
-
 
 
 
@@ -13,9 +16,6 @@ GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in
 
  Backgroun Image Layering
 Reordering of Grids,
-Taking blocks from inside Columns Out
-
-Unable to upload image into ImageElement
 
 App manager
 

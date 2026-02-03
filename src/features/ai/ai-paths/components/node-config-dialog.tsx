@@ -43,6 +43,7 @@ import { UnsupportedNodeConfigNotice } from "./node-config/dialog/UnsupportedNod
 import { ValidatorNodeConfigSection } from "./node-config/dialog/ValidatorNodeConfigSection";
 import { ViewerNodeConfigSection } from "./node-config/dialog/ViewerNodeConfigSection";
 import { RegexNodeConfigSection } from "./node-config/dialog/RegexNodeConfigSection";
+import { IteratorNodeConfigSection } from "./node-config/dialog/IteratorNodeConfigSection";
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -177,6 +178,11 @@ export function NodeConfigDialog({
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
                 {...(onSendToAi && { onSendToAi })}
                 {...(sendingToAi !== undefined && { sendingToAi })}
+              />
+              <IteratorNodeConfigSection
+                selectedNode={selectedNode}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
               />
               <MapperNodeConfigSection
                 selectedNode={selectedNode}

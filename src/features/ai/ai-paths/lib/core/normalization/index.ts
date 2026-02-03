@@ -19,6 +19,8 @@ import {
   PROMPT_OUTPUT_PORTS,
   REGEX_INPUT_PORTS,
   REGEX_OUTPUT_PORTS,
+  ITERATOR_INPUT_PORTS,
+  ITERATOR_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
@@ -182,6 +184,21 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             splitLines: config?.splitLines ?? true,
             sampleText: config?.sampleText ?? "",
             aiPrompt: config?.aiPrompt ?? "",
+          },
+        },
+      };
+    }
+    if (node.type === "iterator") {
+      const config = node.config?.iterator;
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs ?? [], ITERATOR_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs ?? [], ITERATOR_OUTPUT_PORTS),
+        config: {
+          ...node.config,
+          iterator: {
+            autoContinue: config?.autoContinue ?? true,
+            maxSteps: config?.maxSteps ?? 50,
           },
         },
       };
@@ -802,6 +819,14 @@ export const getDefaultConfigForType = (
         splitLines: true,
         sampleText: "",
         aiPrompt: "",
+      },
+    };
+  }
+  if (type === "iterator") {
+    return {
+      iterator: {
+        autoContinue: true,
+        maxSteps: 50,
       },
     };
   }

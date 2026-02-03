@@ -593,6 +593,7 @@ function ZoneGroup({
                     draggedFromColumnId={draggedFromColumnId}
                     draggedFromParentBlockId={draggedFromParentBlockId}
                     setDraggedBlockId={setDraggedBlockId}
+                    setDraggedBlockType={setDraggedBlockType}
                     setDraggedFromSectionId={setDraggedFromSectionId}
                     setDraggedFromColumnId={setDraggedFromColumnId}
                     setDraggedFromParentBlockId={setDraggedFromParentBlockId}
@@ -656,6 +657,7 @@ function ZoneGroup({
                 draggedFromColumnId={draggedFromColumnId}
                 draggedFromParentBlockId={draggedFromParentBlockId}
                 setDraggedBlockId={setDraggedBlockId}
+                setDraggedBlockType={setDraggedBlockType}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 setDraggedFromColumnId={setDraggedFromColumnId}
                 setDraggedFromParentBlockId={setDraggedFromParentBlockId}
@@ -709,6 +711,7 @@ interface SectionDropTargetProps {
   draggedFromColumnId: string | null;
   draggedFromParentBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  setDraggedBlockType: (type: string | null) => void;
   setDraggedFromSectionId: (id: string | null) => void;
   setDraggedFromColumnId: (id: string | null) => void;
   setDraggedFromParentBlockId: (id: string | null) => void;
@@ -736,6 +739,7 @@ function SectionDropTarget({
   draggedFromColumnId,
   draggedFromParentBlockId,
   setDraggedBlockId,
+  setDraggedBlockType,
   setDraggedFromSectionId,
   setDraggedFromColumnId,
   setDraggedFromParentBlockId,
@@ -818,24 +822,38 @@ function SectionDropTarget({
             toIndex
           );
           setDraggedBlockId(null);
+          setDraggedBlockType(null);
           setDraggedFromSectionId(null);
           setDraggedFromColumnId(null);
           setDraggedFromParentBlockId(null);
         }
       }}
-      className={`relative overflow-hidden transition-[height] ${
-        isDragging ? "h-4" : "h-0"
+      className={`relative z-10 overflow-hidden transition-[height] ${
+        isDragging ? "h-8" : "h-0"
       }`}
     >
       <div
-        className={`absolute left-2 right-2 top-1/2 -translate-y-1/2 rounded border border-dashed transition ${
+        className={`absolute inset-x-1 top-1/2 -translate-y-1/2 rounded border-2 border-dashed transition flex items-center justify-center ${
           isOver
             ? canPromoteBlock
-              ? "border-emerald-500/70 bg-emerald-600/30 h-3"
-              : "border-purple-500/70 bg-purple-600/30 h-3"
-            : "border-transparent bg-transparent h-2"
+              ? "border-emerald-500 bg-emerald-600/40 h-6"
+              : "border-purple-500 bg-purple-600/40 h-6"
+            : canPromoteBlock
+              ? "border-emerald-500/50 bg-emerald-600/20 h-5"
+              : "border-purple-500/50 bg-purple-600/20 h-5"
         }`}
-      />
+      >
+        {canPromoteBlock && (
+          <span className={`text-[9px] font-medium ${isOver ? "text-emerald-200" : "text-emerald-400"}`}>
+            {isOver ? "Release to extract" : "Drop here to extract"}
+          </span>
+        )}
+        {isDraggingSection && !canPromoteBlock && (
+          <span className={`text-[9px] font-medium ${isOver ? "text-purple-200" : "text-purple-400"}`}>
+            {isOver ? "Release to move" : "Drop here"}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

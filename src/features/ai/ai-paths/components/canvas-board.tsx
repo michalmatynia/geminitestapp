@@ -850,6 +850,33 @@ export function CanvasBoard({
               : pollStatus === "failed" || pollStatus === "timeout"
                 ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
                 : "border-sky-500/60 bg-sky-500/15 text-sky-200";
+          const iteratorOutput =
+            node.type === "iterator"
+              ? (runtimeState.outputs[node.id] as
+                  | { status?: string; index?: number; total?: number; done?: boolean }
+                  | undefined)
+              : undefined;
+          const iteratorStatus = iteratorOutput?.status ?? null;
+          const iteratorIndex =
+            typeof iteratorOutput?.index === "number" ? iteratorOutput.index : null;
+          const iteratorTotal =
+            typeof iteratorOutput?.total === "number" ? iteratorOutput.total : null;
+          const iteratorDone =
+            typeof iteratorOutput?.done === "boolean" ? iteratorOutput.done : null;
+          const iteratorProgressLabel =
+            iteratorIndex !== null && iteratorTotal !== null && iteratorTotal > 0
+              ? `${Math.min(iteratorIndex + 1, iteratorTotal)}/${iteratorTotal}`
+              : iteratorTotal !== null && iteratorTotal === 0
+                ? "0/0"
+                : null;
+          const iteratorStatusClasses =
+            iteratorStatus === "completed" || iteratorDone
+              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
+              : iteratorStatus === "advance_pending"
+                ? "border-amber-400/60 bg-amber-500/15 text-amber-200"
+                : iteratorStatus === "waiting_callback"
+                  ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
+                  : "border-border bg-card/60 text-gray-200";
           const isScheduledTrigger =
             node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
           const isInputPulse = inputPulseNodes.has(node.id);
@@ -1114,6 +1141,19 @@ export function CanvasBoard({
                     {pollStatusLabel}
                   </div>
                 )}
+                {node.type === "iterator" && (iteratorStatus || iteratorProgressLabel) ? (
+                  <div
+                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
+                    title={
+                      iteratorProgressLabel && iteratorStatus
+                        ? `${iteratorProgressLabel} • ${iteratorStatus}`
+                        : iteratorStatus ?? iteratorProgressLabel ?? undefined
+                    }
+                  >
+                    {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
+                    {iteratorStatus ? <span>{iteratorStatus}</span> : null}
+                  </div>
+                ) : null}
                 {node.type === "viewer" && !triggerConnected.has(node.id) && (
                   <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
                     Not wired to a Trigger

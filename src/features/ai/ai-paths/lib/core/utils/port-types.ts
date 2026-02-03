@@ -40,6 +40,10 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   schema: "object",
   grouped: "json",
   matches: "array",
+  callback: "any",
+  index: "number",
+  total: "number",
+  done: "boolean",
   jobId: "id",
   status: "string",
 };

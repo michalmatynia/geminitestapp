@@ -194,6 +194,21 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  iterator: [
+    {
+      path: "iterator.autoContinue",
+      description:
+        "If true, the runtime will automatically attempt to advance to the next item after a callback is received.",
+      defaultValue: "true",
+    },
+    {
+      path: "iterator.maxSteps",
+      description:
+        "Safety cap for automatic continuation steps per run/tick (prevents infinite loops).",
+      defaultValue: "50",
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   mapper: [
     {
       path: "mapper.outputs",
@@ -661,6 +676,7 @@ const ALL_NODE_TYPES: NodeType[] = [
   "context",
   "parser",
   "regex",
+  "iterator",
   "mapper",
   "mutator",
   "validator",

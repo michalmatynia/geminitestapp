@@ -527,6 +527,8 @@ export function SectionNodeItem({
                 onToggleExpand={onToggleExpand}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
+                draggedBlockType={draggedBlockType}
+                setDraggedBlockType={setDraggedBlockType}
                 draggedFromSectionId={draggedFromSectionId}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 draggedFromColumnId={draggedFromColumnId}
@@ -560,6 +562,8 @@ export function SectionNodeItem({
                   onDropBlockToColumn={onDropBlockToColumn}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
                   draggedFromSectionId={draggedFromSectionId}
                   setDraggedFromSectionId={setDraggedFromSectionId}
                   draggedFromColumnId={draggedFromColumnId}
@@ -598,8 +602,14 @@ export function SectionNodeItem({
               onDropBlockToSection={onDropBlockToSection}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
+              draggedBlockType={draggedBlockType}
+              setDraggedBlockType={setDraggedBlockType}
               draggedFromSectionId={draggedFromSectionId}
               setDraggedFromSectionId={setDraggedFromSectionId}
+              draggedFromColumnId={draggedFromColumnId}
+              setDraggedFromColumnId={setDraggedFromColumnId}
+              draggedFromParentBlockId={draggedFromParentBlockId}
+              setDraggedFromParentBlockId={setDraggedFromParentBlockId}
             />
           ))}
         </div>
@@ -839,6 +849,8 @@ function RowNodeItem({
                   onToggleExpand={onToggleExpand}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
                   draggedFromSectionId={draggedFromSectionId}
                   setDraggedFromSectionId={setDraggedFromSectionId}
                   draggedFromColumnId={draggedFromColumnId}
@@ -865,6 +877,8 @@ function RowNodeItem({
                 onDropBlockToColumn={onDropBlockToColumn}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
+                draggedBlockType={draggedBlockType}
+                setDraggedBlockType={setDraggedBlockType}
                 draggedFromSectionId={draggedFromSectionId}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 draggedFromColumnId={draggedFromColumnId}
@@ -900,6 +914,8 @@ interface ColumnNodeItemProps {
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType: string | null;
+  setDraggedBlockType: (type: string | null) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId: string | null;
@@ -928,6 +944,8 @@ function ColumnNodeItem({
   onToggleExpand,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType,
+  setDraggedBlockType,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -1105,6 +1123,8 @@ function ColumnNodeItem({
                   onToggleExpand={onToggleExpand}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
                   draggedFromSectionId={draggedFromSectionId}
                   setDraggedFromSectionId={setDraggedFromSectionId}
                   draggedFromColumnId={draggedFromColumnId}
@@ -1129,6 +1149,8 @@ function ColumnNodeItem({
                   onDropBlockToColumn={onDropBlockToColumn}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
                   draggedFromSectionId={draggedFromSectionId}
                   setDraggedFromSectionId={setDraggedFromSectionId}
                   draggedFromColumnId={draggedFromColumnId}
@@ -1178,6 +1200,8 @@ interface SectionBlockNodeItemProps {
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType: string | null;
+  setDraggedBlockType: (type: string | null) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId: string | null;
@@ -1203,6 +1227,8 @@ function SectionBlockNodeItem({
   onToggleExpand,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType,
+  setDraggedBlockType,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -1248,6 +1274,7 @@ function SectionBlockNodeItem({
           // Defer state updates to prevent re-render from cancelling drag
           setTimeout(() => {
             setDraggedBlockId(block.id);
+            if (setDraggedBlockType) setDraggedBlockType(block.type);
             setDraggedFromSectionId(sectionId);
             setDraggedFromColumnId(columnId);
             setDraggedFromParentBlockId(null);
@@ -1255,6 +1282,7 @@ function SectionBlockNodeItem({
         }}
         onDragEnd={() => {
           setDraggedBlockId(null);
+          if (setDraggedBlockType) setDraggedBlockType(null);
           setDraggedFromSectionId(null);
           setDraggedFromColumnId(null);
           setDraggedFromParentBlockId(null);
@@ -1392,6 +1420,8 @@ function SectionBlockNodeItem({
               onDropBlockToColumn={onDropBlockToColumn}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
+              draggedBlockType={draggedBlockType}
+              setDraggedBlockType={setDraggedBlockType}
               draggedFromSectionId={draggedFromSectionId}
               setDraggedFromSectionId={setDraggedFromSectionId}
               draggedFromColumnId={draggedFromColumnId}
@@ -1423,6 +1453,8 @@ interface BlockNodeItemProps {
   onDropBlockToSection?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType?: string | null;
+  setDraggedBlockType?: (type: string | null) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId?: string | null;
@@ -1444,6 +1476,8 @@ function BlockNodeItem({
   onDropBlockToSection,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType: _draggedBlockType,
+  setDraggedBlockType,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -1481,6 +1515,7 @@ function BlockNodeItem({
         // Defer state updates to prevent re-render from cancelling drag
         setTimeout(() => {
           setDraggedBlockId(block.id);
+          if (setDraggedBlockType) setDraggedBlockType(block.type);
           setDraggedFromSectionId(sectionId);
           if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
@@ -1488,6 +1523,7 @@ function BlockNodeItem({
       }}
       onDragEnd={() => {
         setDraggedBlockId(null);
+        if (setDraggedBlockType) setDraggedBlockType(null);
         setDraggedFromSectionId(null);
         if (setDraggedFromColumnId) setDraggedFromColumnId(null);
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);

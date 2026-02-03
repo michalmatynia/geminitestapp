@@ -17,6 +17,8 @@ import {
   PROMPT_OUTPUT_PORTS,
   REGEX_INPUT_PORTS,
   REGEX_OUTPUT_PORTS,
+  ITERATOR_INPUT_PORTS,
+  ITERATOR_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
@@ -118,6 +120,19 @@ export const palette: NodeDefinition[] = [
         sampleText: "",
         aiPrompt:
           "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+      },
+    },
+  },
+  {
+    type: "iterator",
+    title: "Iterator",
+    description: "Iterate over an array and emit one item at a time (advance on callback).",
+    inputs: ITERATOR_INPUT_PORTS,
+    outputs: ITERATOR_OUTPUT_PORTS,
+    config: {
+      iterator: {
+        autoContinue: true,
+        maxSteps: 50,
       },
     },
   },

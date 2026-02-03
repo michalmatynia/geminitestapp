@@ -96,6 +96,7 @@ export function useAiPathsRuntime({
   const [sendingToAi, setSendingToAi] = useState(false);
 
   const pollInFlightRef = useRef<Set<string>>(new Set());
+  const iteratorContinueInFlightRef = useRef(false);
   const lastTriggerNodeIdRef = useRef<string | null>(null);
   const triggerContextRef = useRef<Record<string, unknown> | null>(null);
   const pendingSimulationContextRef = useRef<Record<string, unknown> | null>(null);
@@ -498,6 +499,66 @@ export function useAiPathsRuntime({
         },
       }));
     }
+
+    // If an Iterator advanced synchronously (e.g. database callbacks), kick off the next step.
+    void (async (): Promise<void> => {
+      if (iteratorContinueInFlightRef.current) return;
+      iteratorContinueInFlightRef.current = true;
+      try {
+        let current = result;
+        const getMaxSteps = (): number => {
+          const candidates = nodes
+            .filter((n: AiNode): boolean => n.type === "iterator")
+            .map((n: AiNode) => n.config?.iterator?.maxSteps)
+            .filter((v: number | undefined): v is number => typeof v === "number" && Number.isFinite(v) && v > 0);
+          return candidates.length > 0 ? Math.min(...candidates) : 50;
+        };
+        const maxSteps = getMaxSteps();
+        for (let step = 0; step < maxSteps; step += 1) {
+          const shouldContinue = nodes.some((n: AiNode): boolean => {
+            if (n.type !== "iterator") return false;
+            if (n.config?.iterator?.autoContinue === false) return false;
+            const status = current.outputs[n.id]?.status;
+            return status === "advance_pending";
+          });
+          if (!shouldContinue) break;
+          const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
+          current = await evaluateGraph({
+            nodes,
+            edges,
+            activePathId,
+            activePathName: pathName,
+            ...(triggerNodeId ? { triggerNodeId } : {}),
+            triggerContext: triggerContextRef.current,
+            deferPoll: true,
+            recordHistory: true,
+            historyLimit: 50,
+            seedOutputs: current.outputs,
+            seedHashes: current.hashes ?? undefined,
+            seedHistory: current.history ?? undefined,
+            fetchEntityByType,
+            reportAiPathsError,
+            toast,
+          });
+          const continuedAt = new Date().toISOString();
+          setRuntimeState(current);
+          setLastRunAt(continuedAt);
+          void persistDebugSnapshot(activePathId ?? null, continuedAt, current);
+          if (activePathId) {
+            setPathConfigs((prev: Record<string, PathConfig>) => ({
+              ...prev,
+              [activePathId]: {
+                ...(prev[activePathId] ?? buildActivePathConfig(continuedAt)),
+                runtimeState: current,
+                lastRunAt: continuedAt,
+              },
+            }));
+          }
+        }
+      } finally {
+        iteratorContinueInFlightRef.current = false;
+      }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, activePathId, pathName, fetchEntityByType, isPathActive, toast]);
 
@@ -613,6 +674,66 @@ export function useAiPathsRuntime({
             },
           }));
         }
+
+        // If the poll completion caused an Iterator to advance, start the next iteration (launch AI jobs).
+        void (async (): Promise<void> => {
+          if (iteratorContinueInFlightRef.current) return;
+          iteratorContinueInFlightRef.current = true;
+          try {
+            let current = downstreamState;
+            const getMaxSteps = (): number => {
+              const candidates = nodes
+                .filter((n: AiNode): boolean => n.type === "iterator")
+                .map((n: AiNode) => n.config?.iterator?.maxSteps)
+                .filter((v: number | undefined): v is number => typeof v === "number" && Number.isFinite(v) && v > 0);
+              return candidates.length > 0 ? Math.min(...candidates) : 50;
+            };
+            const maxSteps = getMaxSteps();
+            for (let step = 0; step < maxSteps; step += 1) {
+              const shouldContinue = nodes.some((n: AiNode): boolean => {
+                if (n.type !== "iterator") return false;
+                if (n.config?.iterator?.autoContinue === false) return false;
+                const status = current.outputs[n.id]?.status;
+                return status === "advance_pending";
+              });
+              if (!shouldContinue) break;
+              const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
+              current = await evaluateGraph({
+                nodes,
+                edges,
+                activePathId,
+                activePathName: pathName,
+                ...(triggerNodeId ? { triggerNodeId } : {}),
+                triggerContext: triggerContextRef.current,
+                deferPoll: true,
+                recordHistory: true,
+                historyLimit: 50,
+                seedOutputs: current.outputs,
+                seedHashes: current.hashes ?? undefined,
+                seedHistory: current.history ?? undefined,
+                fetchEntityByType,
+                reportAiPathsError,
+                toast,
+              });
+              const continuedAt = new Date().toISOString();
+              setRuntimeState(current);
+              setLastRunAt(continuedAt);
+              void persistDebugSnapshot(activePathId ?? null, continuedAt, current);
+              if (activePathId) {
+                setPathConfigs((prev: Record<string, PathConfig>) => ({
+                  ...prev,
+                  [activePathId]: {
+                    ...(prev[activePathId] ?? buildActivePathConfig(continuedAt)),
+                    runtimeState: current,
+                    lastRunAt: continuedAt,
+                  },
+                }));
+              }
+            }
+          } finally {
+            iteratorContinueInFlightRef.current = false;
+          }
+        })();
       } catch (error) {
         reportAiPathsError(
           error,

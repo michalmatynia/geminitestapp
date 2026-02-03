@@ -6,6 +6,7 @@ export type NodeType =
   | "context"
   | "parser"
   | "regex"
+  | "iterator"
   | "mapper"
   | "mutator"
   | "validator"
@@ -214,6 +215,19 @@ export type RegexConfig = {
   aiPrompt?: string;
 };
 
+export type IteratorConfig = {
+  /**
+   * If true, the runtime will attempt to automatically continue to the next item
+   * after it receives a callback for the current one.
+   */
+  autoContinue?: boolean;
+  /**
+   * Safety cap for auto continuation steps per run/tick.
+   * (Client runtime may re-run the graph to advance the iterator.)
+   */
+  maxSteps?: number;
+};
+
 export type BundleConfig = {
   includePorts?: string[];
 };
@@ -309,6 +323,7 @@ export type NodeConfig = {
   viewer?: ViewerConfig;
   context?: ContextConfig;
   regex?: RegexConfig;
+  iterator?: IteratorConfig;
   mapper?: MapperConfig;
   mutator?: MutatorConfig;
   validator?: ValidatorConfig;

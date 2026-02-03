@@ -379,33 +379,41 @@ function findSection(sections: SectionInstance[], nodeId: string): SectionInstan
 function findBlock(
   sections: SectionInstance[],
   nodeId: string
-): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null {
+): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance; parentRow?: BlockInstance } | null {
   const searchBlocks = (
     blocks: BlockInstance[],
     section: SectionInstance,
     parentColumn?: BlockInstance,
-    parentBlock?: BlockInstance
-  ): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null => {
+    parentBlock?: BlockInstance,
+    parentRow?: BlockInstance
+  ): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance; parentRow?: BlockInstance } | null => {
     for (const b of blocks) {
-      if (b.id === nodeId) return { 
-        block: b, 
-        section, 
-        ...(parentColumn && { parentColumn }), 
-        ...(parentBlock && { parentBlock }) 
+      if (b.id === nodeId) return {
+        block: b,
+        section,
+        ...(parentColumn && { parentColumn }),
+        ...(parentBlock && { parentBlock }),
+        ...(parentRow && { parentRow })
       };
       if (!b.blocks || b.blocks.length === 0) continue;
       if (b.type === "Column") {
         for (const cb of b.blocks ?? []) {
-          if (cb.id === nodeId) return { block: cb, section, parentColumn: b };
+          if (cb.id === nodeId) return { block: cb, section, parentColumn: b, ...(parentRow && { parentRow }) };
           if (cb.blocks) {
             for (const eb of cb.blocks) {
-              if (eb.id === nodeId) return { block: eb, section, parentColumn: b, parentBlock: cb };
+              if (eb.id === nodeId) return { block: eb, section, parentColumn: b, parentBlock: cb, ...(parentRow && { parentRow }) };
             }
           }
         }
         continue;
       }
-      const nested = searchBlocks(b.blocks ?? [], section, parentColumn, parentBlock);
+      if (b.type === "Row") {
+        // Search inside Row - pass the Row as parentRow
+        const nested = searchBlocks(b.blocks ?? [], section, parentColumn, parentBlock, b);
+        if (nested) return nested;
+        continue;
+      }
+      const nested = searchBlocks(b.blocks ?? [], section, parentColumn, parentBlock, parentRow);
       if (nested) return nested;
     }
     return null;
@@ -910,12 +918,13 @@ export function basePageBuilderReducer(
     }
 
     case "MOVE_BLOCK_TO_COLUMN": {
-      // Remove block from source (section direct, column, or nested inside a parent block in a column)
+      // Remove block from source (section direct, column, row, or nested inside a parent block)
       const removeFromSource = (
         sections: SectionInstance[],
         fromSectionId: string,
         fromColumnId?: string,
-        fromParentBlockId?: string
+        fromParentBlockId?: string,
+        _fromRowId?: string
       ): { sections: SectionInstance[]; moved: BlockInstance | null } => {
         let moved: BlockInstance | null = null;
         const nextSections = sections.map((s: SectionInstance) => {
@@ -925,10 +934,28 @@ export function basePageBuilderReducer(
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
-          // Remove from section's direct blocks
-          const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
-          if (block) moved = block;
-          return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
+          // Remove from section's direct blocks (could be from a row)
+          const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
+            return blocks.map((b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return null as unknown as BlockInstance;
+              }
+              if (b.type === "Row" && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+                }
+              }
+              if (b.blocks) {
+                return { ...b, blocks: removeFromBlocks(b.blocks) };
+              }
+              return b;
+            }).filter(Boolean);
+          };
+          return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
@@ -941,7 +968,8 @@ export function basePageBuilderReducer(
           state.sections,
           found.section.id,
           found.parentColumn?.id,
-          found.parentBlock?.id
+          found.parentBlock?.id,
+          found.parentRow?.id
         );
       }
       if (!removal.moved) return state;
@@ -1047,9 +1075,28 @@ export function basePageBuilderReducer(
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
-          const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
-          if (block) moved = block;
-          return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
+          // Remove from section's direct blocks (could be from a row)
+          const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
+            return blocks.map((b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return null as unknown as BlockInstance;
+              }
+              if (b.type === "Row" && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+                }
+              }
+              if (b.blocks) {
+                return { ...b, blocks: removeFromBlocks(b.blocks) };
+              }
+              return b;
+            }).filter(Boolean);
+          };
+          return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
@@ -1100,6 +1147,19 @@ export function basePageBuilderReducer(
           );
           if (result.moved) didRemove = true;
           return { ...s, blocks: result.blocks };
+        }
+        // Handle blocks inside a Row (but not in a Column)
+        if (located.parentRow) {
+          const updatedBlocks = s.blocks.map((block: BlockInstance) => {
+            if (block.id !== located.parentRow!.id) return block;
+            const hasBlockInRow = (block.blocks ?? []).some((b: BlockInstance) => b.id === action.blockId);
+            if (hasBlockInRow) didRemove = true;
+            return {
+              ...block,
+              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId)
+            };
+          });
+          return { ...s, blocks: updatedBlocks };
         }
         const hasBlock = s.blocks.some((b: BlockInstance) => b.id === action.blockId);
         if (hasBlock) didRemove = true;

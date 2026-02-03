@@ -496,7 +496,7 @@ const coerceIteratorItems = (value: unknown): unknown[] => {
   return [value];
 };
 
-export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: NodeHandlerContext): RuntimePortValues => {
   const iterableInput = nodeInputs.value;
   const callbackInput = coerceInput(nodeInputs.callback);
 
@@ -507,9 +507,11 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHan
   const prevItemsHash = typeof prevOutputs.itemsHash === "string" ? prevOutputs.itemsHash : "";
   const prevIndex = typeof prevOutputs.index === "number" && Number.isFinite(prevOutputs.index) ? prevOutputs.index : 0;
   const prevLastAckHash = typeof prevOutputs.lastAckHash === "string" ? prevOutputs.lastAckHash : "";
+  const prevAdvanceStamp = typeof prevOutputs.advanceStamp === "string" ? prevOutputs.advanceStamp : "";
 
   let index = prevItemsHash && prevItemsHash === itemsHash ? prevIndex : 0;
   let lastAckHash = prevItemsHash && prevItemsHash === itemsHash ? prevLastAckHash : "";
+  const advanceStamp = prevItemsHash && prevItemsHash === itemsHash ? prevAdvanceStamp : "";
 
   // Clamp to sane bounds.
   if (!Number.isFinite(index) || index < 0) index = 0;
@@ -529,6 +531,7 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHan
       status: "idle",
       itemsHash,
       lastAckHash,
+      advanceStamp: "",
     };
   }
 
@@ -542,6 +545,7 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHan
       status: "completed",
       itemsHash,
       lastAckHash,
+      advanceStamp: "",
     };
   }
 
@@ -557,6 +561,24 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHan
       status: done ? "completed" : "advance_pending",
       itemsHash,
       lastAckHash: callbackHash,
+      // Prevent stepping multiple times in a single evaluateGraph call (engine has inner iterations).
+      advanceStamp: now,
+    };
+  }
+
+  // If we advanced earlier in this evaluateGraph call, hold "advance_pending" until the next call.
+  // This prevents the engine's inner iteration loop from emitting the next item without downstream
+  // nodes being able to re-run (they're tracked via `executed.*` sets per evaluateGraph call).
+  if (prevOutputs.status === "advance_pending" && advanceStamp === now) {
+    return {
+      value: null,
+      index,
+      total,
+      done: false,
+      status: "advance_pending",
+      itemsHash,
+      lastAckHash,
+      advanceStamp,
     };
   }
 
@@ -569,5 +591,6 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs }: NodeHan
     status: "waiting_callback",
     itemsHash,
     lastAckHash,
+    advanceStamp: "",
   };
 };

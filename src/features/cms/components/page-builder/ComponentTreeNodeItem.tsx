@@ -871,6 +871,7 @@ function RowNodeItem({
                 block={child}
                 index={childIndex}
                 sectionId={sectionId}
+                parentBlockId={row.id}
                 selectedNodeId={selectedNodeId}
                 onSelect={onSelect}
                 onDropBlock={() => {}}

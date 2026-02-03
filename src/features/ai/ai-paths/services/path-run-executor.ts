@@ -9,7 +9,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from "@/shared/types/ai-paths";
-import { evaluateGraph, normalizeNodes, sanitizeEdges } from "@/features/ai/ai-paths/lib";
+import { evaluateGraphWithIteratorAutoContinue, normalizeNodes, sanitizeEdges } from "@/features/ai/ai-paths/lib";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { ErrorSystem } from "@/features/observability/services/error-system";
 import { getProductRepository } from "@/features/products/services/product-repository";
@@ -225,7 +225,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
-    const resultState = await evaluateGraph({
+    const resultState = await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
       activePathId: run.pathId ?? null,

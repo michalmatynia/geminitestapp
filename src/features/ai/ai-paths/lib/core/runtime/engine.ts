@@ -749,3 +749,45 @@ export async function evaluateGraph({
     history: recordHistory && history.size ? Object.fromEntries(history) : undefined,
   };
 }
+
+const getIteratorMaxSteps = (nodes: AiNode[]): number => {
+  const candidates = nodes
+    .filter((node: AiNode): boolean => node.type === "iterator")
+    .map((node: AiNode) => node.config?.iterator?.maxSteps)
+    .filter((value: number | undefined): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+  return candidates.length > 0 ? Math.min(...candidates) : 50;
+};
+
+const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolean =>
+  nodes.some((node: AiNode): boolean => {
+    if (node.type !== "iterator") return false;
+    if (node.config?.iterator?.autoContinue === false) return false;
+    const status = state.outputs[node.id]?.status;
+    return status === "advance_pending";
+  });
+
+/**
+ * Iterator nodes are intentionally non-cacheable and "step" only once per evaluateGraph call,
+ * because downstream side-effect nodes (AI/jobs/http/etc) are guarded by `executed.*` sets.
+ *
+ * This helper re-runs evaluateGraph (seeding the previous outputs/hashes/history) until all
+ * iterator nodes have either completed or are waiting for a callback.
+ */
+export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGraphOptions): Promise<RuntimeState> {
+  let current = await evaluateGraph(options);
+  if (!options.nodes.some((node: AiNode): boolean => node.type === "iterator")) {
+    return current;
+  }
+
+  const maxSteps = getIteratorMaxSteps(options.nodes);
+  for (let step = 0; step < maxSteps; step += 1) {
+    if (!hasPendingIteratorAdvance(options.nodes, current)) break;
+    current = await evaluateGraph({
+      ...options,
+      seedOutputs: current.outputs,
+      seedHashes: current.hashes ?? undefined,
+      seedHistory: current.history ?? undefined,
+    });
+  }
+  return current;
+}

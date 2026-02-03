@@ -13,7 +13,7 @@ import type {
   RuntimeState,
 } from "@/shared/types/ai-paths";
 import {
-  evaluateGraph,
+  evaluateGraphWithIteratorAutoContinue,
 } from "@/features/ai/ai-paths/lib/core/runtime/engine";
 import {
   PATH_CONFIG_PREFIX,
@@ -318,7 +318,7 @@ export function useAiPathTrigger(): {
         name: selectedConfig.name,
       });
       const runAt = new Date().toISOString();
-      const runtimeState: RuntimeState = await evaluateGraph({
+      const runtimeState: RuntimeState = await evaluateGraphWithIteratorAutoContinue({
         nodes,
         edges,
         activePathId: selectedConfig.id ?? "path",

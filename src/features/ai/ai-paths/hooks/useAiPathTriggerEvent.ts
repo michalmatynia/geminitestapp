@@ -14,7 +14,7 @@ import type {
   RuntimeState,
 } from "@/shared/types/ai-paths";
 import {
-  evaluateGraph,
+  evaluateGraphWithIteratorAutoContinue,
   normalizeNodes,
   sanitizeEdges,
   createDefaultPathConfig,
@@ -433,7 +433,7 @@ export function useAiPathTriggerEvent(): {
       const runAt = new Date().toISOString();
       let runtimeState: RuntimeState;
       try {
-        runtimeState = await evaluateGraph({
+        runtimeState = await evaluateGraphWithIteratorAutoContinue({
           nodes,
           edges,
           activePathId: selectedConfig.id ?? "path",

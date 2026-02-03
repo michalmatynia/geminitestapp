@@ -1,5 +1,6 @@
 
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render } from "@/__tests__/test-utils";
 import { DraftCreator } from "@/features/drafter/components/DraftCreator";
 import { vi } from "vitest";
 
@@ -62,7 +63,7 @@ describe("DraftCreator Component", () => {
     expect(form).not.toBeNull();
     
     act(() => {
-      fireEvent.submit(form!);
+      fireEvent.submit(form);
     });
     
     expect(onSaveSuccess).not.toHaveBeenCalled();

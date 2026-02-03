@@ -24,3 +24,4 @@ export * from './data-import-export';
 export * from './foldertree';
 export * from './app-embeds';
 export * from './agent-runtime';
+export * from './agent-teaching';

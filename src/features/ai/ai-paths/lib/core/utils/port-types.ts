@@ -38,6 +38,7 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   query: ["object", "string"],
   queryCallback: ["object", "string"],
   aiQuery: ["object", "string"],
+  regexCallback: ["object", "string"],
   schema: "object",
   grouped: "json",
   matches: "array",

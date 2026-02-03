@@ -105,7 +105,7 @@ export const DATABASE_INPUT_PORTS = [
   "schema",
   "aiQuery",
 ];
-export const REGEX_INPUT_PORTS = ["value", "prompt"];
+export const REGEX_INPUT_PORTS = ["value", "prompt", "regexCallback"];
 export const REGEX_OUTPUT_PORTS = ["grouped", "matches", "aiPrompt"];
 export const ITERATOR_INPUT_PORTS = ["value", "callback"];
 export const ITERATOR_OUTPUT_PORTS = ["value", "index", "total", "done", "status"];
@@ -420,7 +420,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   trigger: ["trigger", "value", "result"],
   triggerName: ["triggerName", "value", "result"],
   prompt: ["prompt"],
-  result: ["result", "value", "queryCallback", "aiQuery", "callback"],
+  result: ["result", "value", "queryCallback", "aiQuery", "callback", "regexCallback"],
   sources: ["sources", "value", "result", "bundle"],
   images: ["images", "value", "result"],
   title: ["title", "value", "result", "prompt", "aiPrompt"],
@@ -429,7 +429,18 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   simulation: ["context", "simulation"],
   meta: ["meta", "value", "result"],
   bundle: ["bundle", "context", "value", "result", "callback"],
-  value: ["value", "result", "query", "jobId", "status", "prompt", "aiPrompt", "queryCallback", "callback"],
+  value: [
+    "value",
+    "result",
+    "query",
+    "jobId",
+    "status",
+    "prompt",
+    "aiPrompt",
+    "queryCallback",
+    "callback",
+    "regexCallback",
+  ],
   query: ["query", "value", "result"],
   jobId: ["jobId", "value", "result", "callback"],
   status: ["status", "value", "result", "callback"],

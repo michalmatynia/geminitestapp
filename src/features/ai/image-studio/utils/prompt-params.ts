@@ -276,7 +276,7 @@ export function flattenParams(params: Record<string, unknown>): ParamLeaf[] {
 
   const walk = (value: unknown, prefix: string): void => {
     if (isObjectRecord(value)) {
-      Object.entries(value).forEach(([key, child]) => {
+      Object.entries(value).forEach(([key, child]: [string, unknown]) => {
         const nextPath = prefix ? `${prefix}.${key}` : key;
         walk(child, nextPath);
       });
@@ -453,7 +453,7 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
   let lastKeyPath: string | null = null;
 
   const lines = rawObjectText.split(/\r?\n/);
-  lines.forEach((line) => {
+  lines.forEach((line: string) => {
     const trimmed = line.trim();
     if (!trimmed) return;
 
@@ -497,8 +497,8 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
   });
 
   const normalized: Record<string, string> = {};
-  Object.entries(commentsByPath).forEach(([path, hints]) => {
-    const merged = Array.from(new Set(hints.map((h) => h.trim()).filter(Boolean)));
+  Object.entries(commentsByPath).forEach(([path, hints]: [string, string[]]) => {
+    const merged = Array.from(new Set(hints.map((h: string) => h.trim()).filter(Boolean)));
     if (merged.length > 0) normalized[path] = merged.join(" / ");
   });
   return normalized;
@@ -506,20 +506,20 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
 
 function isRgbArray(value: unknown): value is [number, number, number] {
   if (!Array.isArray(value) || value.length !== 3) return false;
-  return value.every((v) => typeof v === "number" && Number.isFinite(v));
+  return value.every((v: unknown) => typeof v === "number" && Number.isFinite(v));
 }
 
 function isTuple2NumberArray(value: unknown): value is [number, number] {
   if (!Array.isArray(value) || value.length !== 2) return false;
-  return value.every((v) => typeof v === "number" && Number.isFinite(v));
+  return value.every((v: unknown) => typeof v === "number" && Number.isFinite(v));
 }
 
 export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: string): Record<string, ParamSpec> {
   const hints = extractConstraintHintsByPath(rawObjectText);
-  const leaves = flattenParams(params).filter((leaf) => Boolean(leaf.path));
+  const leaves = flattenParams(params).filter((leaf: ParamLeaf) => Boolean(leaf.path));
   const specs: Record<string, ParamSpec> = {};
 
-  leaves.forEach((leaf) => {
+  leaves.forEach((leaf: ParamLeaf) => {
     const path = leaf.path;
     const value = leaf.value;
     const hint = hints[path];
@@ -625,7 +625,7 @@ export function validateParamsAgainstSpecs(
 ): ParamIssue[] {
   const issues: ParamIssue[] = [];
 
-  Object.values(specs).forEach((spec) => {
+  Object.values(specs).forEach((spec: ParamSpec) => {
     const value = getDeepValue(params, spec.path);
     if (value === undefined) {
       issues.push({ path: spec.path, severity: "error", code: "missing", message: "Missing value." });
@@ -684,19 +684,19 @@ export function validateParamsAgainstSpecs(
         issues.push({ path: spec.path, severity: "error", code: "type", message: "Expected [R,G,B] array." });
         return;
       }
-      if (value.some((v) => typeof v !== "number" || !Number.isFinite(v))) {
+      if (value.some((v: unknown) => typeof v !== "number" || !Number.isFinite(v))) {
         issues.push({ path: spec.path, severity: "error", code: "type", message: "RGB must be numeric." });
         return;
       }
-      if (spec.integer && value.some((v) => !Number.isInteger(v))) {
+      if (spec.integer && value.some((v: unknown) => !Number.isInteger(v))) {
         issues.push({ path: spec.path, severity: "error", code: "integer", message: "RGB values must be integers." });
       }
       const min = spec.min;
-      if (min !== undefined && value.some((v) => v < min)) {
+      if (min !== undefined && value.some((v: unknown) => (v as number) < min)) {
         issues.push({ path: spec.path, severity: "error", code: "min", message: `RGB values must be >= ${min}.` });
       }
       const max = spec.max;
-      if (max !== undefined && value.some((v) => v > max)) {
+      if (max !== undefined && value.some((v: unknown) => (v as number) > max)) {
         issues.push({ path: spec.path, severity: "error", code: "max", message: `RGB values must be <= ${max}.` });
       }
       return;
@@ -707,15 +707,15 @@ export function validateParamsAgainstSpecs(
         issues.push({ path: spec.path, severity: "error", code: "type", message: "Expected [x,y] numeric array." });
         return;
       }
-      if (spec.integer && value.some((v) => !Number.isInteger(v))) {
+      if (spec.integer && value.some((v: unknown) => !Number.isInteger(v))) {
         issues.push({ path: spec.path, severity: "error", code: "integer", message: "Values must be integers." });
       }
       const min = spec.min;
-      if (min !== undefined && value.some((v) => v < min)) {
+      if (min !== undefined && value.some((v: unknown) => (v as number) < min)) {
         issues.push({ path: spec.path, severity: "error", code: "min", message: `Values must be >= ${min}.` });
       }
       const max = spec.max;
-      if (max !== undefined && value.some((v) => v > max)) {
+      if (max !== undefined && value.some((v: unknown) => (v as number) > max)) {
         issues.push({ path: spec.path, severity: "error", code: "max", message: `Values must be <= ${max}.` });
       }
       return;

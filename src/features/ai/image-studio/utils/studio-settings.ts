@@ -405,13 +405,13 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
         ? (rawRules as Record<string, unknown>)?.rules
         : null;
     const hadAutofixInStorage = Array.isArray(rawRulesArray)
-      ? rawRulesArray.some((rule) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
+      ? rawRulesArray.some((rule: unknown) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
       : false;
 
     if (hadAutofixInStorage) return result.data;
 
-    const defaultById = new Map(defaultPromptValidationRules.map((rule) => [rule.id, rule]));
-    const mergedRules = result.data.promptValidation.rules.map((rule) => {
+    const defaultById = new Map(defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule]));
+    const mergedRules = result.data.promptValidation.rules.map((rule: PromptValidationRule) => {
       const defaults = defaultById.get(rule.id);
       if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
       const needsAutofix =
@@ -439,12 +439,12 @@ export function parsePromptValidationRules(raw: string): { ok: true; rules: Prom
     const result = z.array(promptValidationRuleSchema).safeParse(parsed);
     if (result.success) {
       const hadAutofix = Array.isArray(parsed)
-        ? parsed.some((rule) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
+        ? parsed.some((rule: unknown) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
         : false;
       if (hadAutofix) return { ok: true, rules: result.data };
 
-      const defaultById = new Map(defaultPromptValidationRules.map((rule) => [rule.id, rule]));
-      const mergedRules = result.data.map((rule) => {
+      const defaultById = new Map(defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule]));
+      const mergedRules = result.data.map((rule: PromptValidationRule) => {
         const defaults = defaultById.get(rule.id);
         if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
         const needsAutofix =

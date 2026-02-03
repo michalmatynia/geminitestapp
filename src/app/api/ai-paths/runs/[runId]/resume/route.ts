@@ -42,7 +42,7 @@ async function POST_handler(
     }
     assertAiPathRunAccess(access, existing);
     const mode = parsed.data?.mode ?? "resume";
-    const run: unknown = resumePathRun(runId, mode);
+    const run: unknown = await resumePathRun(runId, mode);
     startAiPathRunQueue();
     return NextResponse.json({ run });
   } catch (error) {

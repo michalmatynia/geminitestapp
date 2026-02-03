@@ -1,53 +1,33 @@
+import type {
+  AgentTeachingCollectionDto,
+  AgentTeachingDocumentDto,
+  AgentTeachingAgentDto,
+  AgentTeachingChatSourceDto,
+  AgentTeachingDocumentMetadataDto
+} from "../dtos/agent-teaching";
+
+export type {
+  AgentTeachingCollectionDto,
+  AgentTeachingDocumentDto,
+  AgentTeachingAgentDto,
+  AgentTeachingChatSourceDto,
+  AgentTeachingDocumentMetadataDto
+};
+
+/**
+ * Legacy ID type
+ */
 export type AgentTeachingId = string;
 
-export type AgentTeachingEmbeddingCollectionRecord = {
-  id: AgentTeachingId;
-  name: string;
-  description: string | null;
-  embeddingModel: string;
-  createdAt: string;
-  updatedAt: string;
-};
+/**
+ * Record types for the database layer (optional, if we want to keep them separate from DTOs)
+ */
+export interface AgentTeachingEmbeddingCollectionRecord extends AgentTeachingCollectionDto {}
 
-export type AgentTeachingEmbeddingDocumentMetadata = {
-  title?: string | null;
-  source?: string | null;
-  tags?: string[];
-};
+export interface AgentTeachingEmbeddingDocumentListItem extends AgentTeachingDocumentDto {}
 
-// Returned to the UI for listing. (We intentionally omit the full embedding vector.)
-export type AgentTeachingEmbeddingDocumentListItem = {
-  id: AgentTeachingId;
-  collectionId: AgentTeachingId;
-  text: string;
-  metadata: AgentTeachingEmbeddingDocumentMetadata | null;
-  embeddingModel: string;
-  embeddingDimensions: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export interface AgentTeachingAgentRecord extends AgentTeachingAgentDto {}
 
-export type AgentTeachingAgentRecord = {
-  id: AgentTeachingId;
-  name: string;
-  description: string | null;
-  llmModel: string;
-  embeddingModel: string;
-  systemPrompt: string;
-  collectionIds: AgentTeachingId[];
-  temperature: number;
-  maxTokens: number;
-  retrievalTopK: number;
-  retrievalMinScore: number;
-  maxDocsPerCollection: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export interface AgentTeachingChatSource extends AgentTeachingChatSourceDto {}
 
-export type AgentTeachingChatSource = {
-  documentId: AgentTeachingId;
-  collectionId: AgentTeachingId;
-  score: number;
-  text: string;
-  metadata: AgentTeachingEmbeddingDocumentMetadata | null;
-};
+export type AgentTeachingEmbeddingDocumentMetadata = AgentTeachingDocumentMetadataDto;

@@ -298,7 +298,7 @@ function applyAutofixOperation(prompt: string, operation: PromptAutofixOperation
 }
 
 function getRuleById(rules: PromptValidationRule[], id: string): PromptValidationRule | null {
-  return rules.find((rule) => rule.id === id) ?? null;
+  return rules.find((rule: PromptValidationRule) => rule.id === id) ?? null;
 }
 
 export function formatProgrammaticPrompt(prompt: string, settings: PromptValidationSettings): FormatPromptResult {

@@ -1,35 +1,23 @@
 import { Status } from './base-types';
+import type { 
+  AiPathDto, 
+  AiNodeDto, 
+  AiEdgeDto, 
+  AiPathRunDto, 
+  AiPathRunNodeDto,
+  AiNodeTypeDto
+} from "../dtos/ai-paths";
 
-export type NodeType =
-  | "trigger"
-  | "simulation"
-  | "context"
-  | "parser"
-  | "regex"
-  | "iterator"
-  | "mapper"
-  | "mutator"
-  | "validator"
-  | "constant"
-  | "math"
-  | "template"
-  | "bundle"
-  | "gate"
-  | "compare"
-  | "router"
-  | "delay"
-  | "poll"
-  | "http"
-  | "prompt"
-  | "model"
-  | "agent"
-  | "learner_agent"
-  | "database"
-  | "db_schema"
-  | "viewer"
-  | "notification"
-  | "ai_description"
-  | "description_updater";
+export type { 
+  AiPathDto, 
+  AiNodeDto, 
+  AiEdgeDto, 
+  AiPathRunDto, 
+  AiPathRunNodeDto,
+  AiNodeTypeDto
+};
+
+export type NodeType = AiNodeTypeDto;
 
 export type ParserConfig = {
   mappings: Record<string, string>;
@@ -195,43 +183,20 @@ export type RegexMatchMode = "first" | "all";
 export type RegexGroupOutputMode = "object" | "array";
 
 export type RegexConfig = {
-  /** JavaScript/ECMAScript regex pattern (without leading/trailing /). */
   pattern: string;
-  /** Regex flags (example: "gim"). */
   flags?: string;
-  /** Whether to match the first match per input string or all matches. */
   matchMode?: RegexMatchMode;
-  /**
-   * Which capture to use as the grouping key.
-   * - "0" / "match" => full match
-   * - "1" => first capture group
-   * - "name" => named capture group (/(?<name>...)/)
-   */
   groupBy?: string;
-  /** grouped output as object or array of { key, items } */
   outputMode?: RegexGroupOutputMode;
-  /** Include unmatched input values in the grouped output. */
   includeUnmatched?: boolean;
-  /** Group key label used for unmatched inputs. */
   unmatchedKey?: string;
-  /** If true, split string inputs by newline into multiple items. */
   splitLines?: boolean;
-  /** Optional sample text used by config preview / AI prompt rendering. */
   sampleText?: string;
-  /** Optional AI prompt template used to propose a regex. */
   aiPrompt?: string;
 };
 
 export type IteratorConfig = {
-  /**
-   * If true, the runtime will attempt to automatically continue to the next item
-   * after it receives a callback for the current one.
-   */
   autoContinue?: boolean;
-  /**
-   * Safety cap for auto continuation steps per run/tick.
-   * (Client runtime may re-run the graph to advance the iterator.)
-   */
   maxSteps?: number;
 };
 
@@ -407,6 +372,7 @@ export type RuntimeHistoryEntry = {
   inputsFrom?: RuntimeHistoryLink[];
   outputsTo?: RuntimeHistoryLink[];
 };
+
 export type RuntimeState = {
   inputs: Record<string, RuntimePortValues>;
   outputs: Record<string, RuntimePortValues>;
@@ -433,8 +399,6 @@ export type AiPathRunRecord = {
   pathId?: string | null;
   pathName?: string | null;
   status: AiPathRunStatus;
-
-  // ChatbotAgentRun specific fields (optional for AiPathRun)
   prompt?: string | null;
   model?: string | null;
   tools?: string[];
@@ -446,10 +410,9 @@ export type AiPathRunRecord = {
   errorMessage?: string | null;
   memoryKey?: string | null;
   recordingPath?: string | null;
-  planState?: Record<string, unknown> | null; // Changed from Json? to Record<string, unknown> | null
+  planState?: Record<string, unknown> | null;
   activeStepId?: string | null;
   checkpointedAt?: Date | string | null;
-  
   triggerEvent?: string | null;
   triggerNodeId?: string | null;
   triggerContext?: Record<string, unknown> | null;
@@ -462,19 +425,10 @@ export type AiPathRunRecord = {
   maxAttempts?: number | null;
   nextRetryAt?: Date | string | null;
   deadLetteredAt?: Date | string | null;
-
   startedAt?: Date | string | null;
   finishedAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt?: Date | string | null;
-
-  _count?: {
-    auditLogs: number;
-    browserSnapshots: number;
-    browserLogs: number;
-    memoryItems: number;
-    longTermMemory: number;
-  }
 };
 
 export type AiPathRunNodeRecord = {

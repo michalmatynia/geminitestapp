@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
+import { render } from "@/__tests__/test-utils";
 import { ComponentTreePanel } from "@/features/cms/components/page-builder/ComponentTreePanel";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
 import { useCmsPages, useCmsPage } from "@/features/cms/hooks/useCmsQueries";

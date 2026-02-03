@@ -2,11 +2,14 @@
 
 I can't add Slideshow into the column
 
+When I run my model Nodes in AI Paths, II don't see any history entires of Inputs and output in them
+
 * CMS Builder - when I insert an image element into a Grid, Row Or column, I woul like an additional setting to apperar in my ImageElement. The one to attach the Image to a given Grid or Row or Column as Background Image, in that case, the Image becomes a background image of a given element and receives a different set of settings until it's unlocked from the Background image state.
+
 
 * When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
 
-When a block or element has an animation effect applied to is, sllightly change it's icon
+When a block or element has an animation effect applied to is, sllightly change the color of it's icon
 
 When I fire run trigger on Infer, the model is not remembering the history of inputs and outputs
 
@@ -102,6 +105,7 @@ Test If I can Put the Block in and Out the same for the Block
 Non overflowing images option in CMSBuilder
 
 
+My file uploader needs to go throgh runtime, so that I can check the upload progress
 
 When I click Generate PAth, the Connector inputs remain empty
  I also need a way of grouping paths.
@@ -113,7 +117,7 @@ Unify Form component and and complex ZOD vallidators
 
 Admin Menu Favourites
 
-
+Do I have caching issues ? I think I need proper cache management
 
 
 App manager

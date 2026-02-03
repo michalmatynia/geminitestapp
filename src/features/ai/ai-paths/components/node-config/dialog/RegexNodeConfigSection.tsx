@@ -241,13 +241,23 @@ export function RegexNodeConfigSection({
     const callbackValue =
       runtimeState.inputs[selectedNode.id]?.regexCallback ??
       runtimeState.outputs[selectedNode.id]?.regexCallback;
-    if (typeof callbackValue === "string" && callbackValue.trim().length > 0) {
-      if (callbackValue !== lastInjectedResponseRef.current) {
-        lastInjectedResponseRef.current = callbackValue;
-        setPendingAiRegex(callbackValue);
-        toast("AI regex ready for review.", { variant: "success" });
-      }
-    }
+    const resolvedCallbackValue =
+      typeof callbackValue === "string"
+        ? callbackValue
+        : callbackValue !== undefined && callbackValue !== null
+          ? (() => {
+              try {
+                return JSON.stringify(callbackValue, null, 2);
+              } catch {
+                return String(callbackValue);
+              }
+            })()
+          : "";
+    if (resolvedCallbackValue.trim().length === 0) return;
+    if (resolvedCallbackValue === lastInjectedResponseRef.current) return;
+    lastInjectedResponseRef.current = resolvedCallbackValue;
+    setPendingAiRegex(resolvedCallbackValue);
+    toast("AI regex ready for review.", { variant: "success" });
   }, [runtimeState, selectedNode.id, toast]);
 
   const normalizedFlags = normalizeRegexFlags(regexConfig.flags);

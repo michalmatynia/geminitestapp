@@ -26,7 +26,7 @@ function compileRegex(pattern: string, flags: string | undefined): RegExp | null
 function findSuggestions(prompt: string, rule: Pick<PromptValidationRule, "similar">): PromptValidationSuggestion[] {
   const suggestions: PromptValidationSuggestion[] = [];
 
-  (rule.similar ?? []).forEach((sim) => {
+  (rule.similar ?? []).forEach((sim: PromptValidationSimilarPattern) => {
     const re = compileRegex(sim.pattern, sim.flags);
     if (!re) return;
     const match = re.exec(prompt);
@@ -56,7 +56,7 @@ export function validateProgrammaticPrompt(
 
   const issues: PromptValidationIssue[] = [];
 
-  settings.rules.forEach((rule) => {
+  settings.rules.forEach((rule: PromptValidationRule) => {
     if (!rule.enabled) return;
 
     if (rule.kind === "regex") {

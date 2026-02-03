@@ -1,31 +1,58 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, NamedDto } from '../types/base';
+import type { Status } from '../types/common';
 
-// Chatbot DTOs
-export interface ChatbotSessionDto extends DtoBase {
-  userId: string | null;
-  title: string;
-  messageCount: number;
-}
-
-export interface ChatbotMessageDto extends DtoBase {
-  sessionId: string;
-  role: 'user' | 'assistant' | 'system';
+/**
+ * DTO for a single chat message
+ */
+export interface ChatMessageDto {
+  role: "user" | "assistant" | "system";
   content: string;
+  images?: string[];
+  timestamp?: string;
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * DTO for a chat session
+ */
+export interface ChatbotSessionDto extends NamedDto {
+  userId: string | null;
+  messages: ChatMessageDto[];
+  messageCount: number;
+  settings?: ChatbotSessionSettingsDto;
+}
+
+/**
+ * DTO for chat session settings
+ */
+export interface ChatbotSessionSettingsDto {
+  model?: string;
+  webSearchEnabled?: boolean;
+  useGlobalContext?: boolean;
+  useLocalContext?: boolean;
+}
+
+/**
+ * DTO for a chatbot memory item
+ */
 export interface ChatbotMemoryItemDto extends DtoBase {
   key: string;
   value: string;
   type: string;
 }
 
+/**
+ * DTO for a context segment
+ */
 export interface ChatbotContextSegmentDto extends DtoBase {
   content: string;
   type: string;
   priority: number;
 }
 
+/**
+ * DTO for chatbot global settings
+ */
 export interface ChatbotSettingsDto {
   model: string;
   temperature: number;
@@ -33,24 +60,118 @@ export interface ChatbotSettingsDto {
   systemPrompt: string;
   enableMemory: boolean;
   enableContext: boolean;
+  webSearchEnabled: boolean;
+  localContextMode: "override" | "append";
+  searchProvider: string;
+  playwrightPersonaId?: string | null;
+  agentModeEnabled: boolean;
+  agentBrowser: string;
+  runHeadless: boolean;
+  ignoreRobotsTxt: boolean;
+  requireHumanApproval: boolean;
+  // Model specific overrides for sub-tasks
+  memoryValidationModel: string | null;
+  plannerModel: string | null;
+  selfCheckModel: string | null;
+  extractionValidationModel: string | null;
+  toolRouterModel: string | null;
+  loopGuardModel: string | null;
+  approvalGateModel: string | null;
+  memorySummarizationModel: string | null;
+  selectorInferenceModel: string | null;
+  outputNormalizationModel: string | null;
+  // Agent planning settings
+  maxSteps: number;
+  maxStepAttempts: number;
+  maxReplanCalls: number;
+  replanEverySteps: number;
+  maxSelfChecks: number;
+  loopGuardThreshold: number;
+  loopBackoffBaseMs: number;
+  loopBackoffMaxMs: number;
 }
 
+/**
+ * DTO for creating a chat session
+ */
 export interface CreateChatSessionDto {
-  title?: string;
+  title: string;
   userId?: string;
+  settings?: ChatbotSessionSettingsDto;
 }
 
+/**
+ * DTO for updating a chat session
+ */
+export interface UpdateChatSessionDto {
+  title?: string;
+  messages?: ChatMessageDto[];
+  settings?: ChatbotSessionSettingsDto;
+}
+
+/**
+ * DTO for sending a message
+ */
 export interface SendMessageDto {
   sessionId: string;
   content: string;
   role?: 'user' | 'system';
+  images?: string[];
 }
 
-export interface UpdateChatbotSettingsDto {
+/**
+ * DTO for updating chatbot settings
+ */
+export interface UpdateChatbotSettingsDto extends Partial<ChatbotSettingsDto> {}
+
+/**
+ * DTO for chatbot debug state
+ */
+export interface ChatbotDebugStateDto {
+  lastRequest?: Record<string, unknown>;
+  lastResponse?: {
+    ok: boolean;
+    durationMs: number;
+    error?: string;
+    errorId?: string;
+  };
+}
+
+/**
+ * DTO for a chatbot job (AI processing)
+ */
+export interface ChatbotJobDto extends DtoBase {
+  sessionId: string;
+  status: Status;
   model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  systemPrompt?: string;
-  enableMemory?: boolean;
-  enableContext?: boolean;
+  payload: Record<string, unknown>;
+  resultText?: string;
+  errorMessage?: string;
+}
+
+/**
+ * DTO for an agent snapshot
+ */
+export interface AgentSnapshotDto extends DtoBase {
+  url: string;
+  title: string | null;
+  domText: string;
+  screenshotUrl: string | null;
+  mouseX: number | null;
+  mouseY: number | null;
+  viewportWidth: number | null;
+  viewportHeight: number | null;
+}
+
+/**
+ * DTO for an agent plan step
+ */
+export interface AgentPlanStepDto extends DtoBase {
+  title: string;
+  status: Status;
+  snapshotId?: string | null;
+  logCount?: number | null;
+  dependsOn?: string[] | null;
+  phase?: string | null;
+  priority?: number | null;
 }

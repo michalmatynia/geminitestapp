@@ -27,7 +27,7 @@ type SessionModalProps = {
   onClose: () => void;
 };
 
-import { SharedModal } from "@/shared/ui";
+import { SharedModal, Badge } from "@/shared/ui";
 
 export function SessionModal({
   loading,
@@ -71,9 +71,9 @@ export function SessionModal({
                     className="rounded-md border border-border bg-card/60 p-3"
                   >
                     <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-200">
+                      <Badge variant="neutral">
                         {cookie.name || "unknown"}
-                      </span>
+                      </Badge>
                       <span className="text-gray-500">
                         {cookie.domain || "—"}
                       </span>

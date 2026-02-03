@@ -14,6 +14,11 @@ import {
   RadioGroup,
   RadioGroupItem,
   useToast,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
@@ -176,21 +181,24 @@ export function PriceGroupModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="pg-currency">Currency</Label>
-            <select
-              id="pg-currency"
-              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+            <Select
               value={form.currencyId}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, currencyId: e.target.value }))
+              onValueChange={(v) =>
+                setForm((p) => ({ ...p, currencyId: v }))
               }
               disabled={loadingCurrencies}
             >
-              {currencyOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.code} · {opt.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="pg-currency" className="w-full bg-gray-900 border-border text-white">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencyOptions.map((opt) => (
+                  <SelectItem key={opt.id} value={opt.id}>
+                    {opt.code} · {opt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -231,23 +239,25 @@ export function PriceGroupModal({
           <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pg-source">Source Price Group</Label>
-              <select
-                id="pg-source"
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+              <Select
                 value={form.sourceGroupId}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, sourceGroupId: e.target.value }))
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, sourceGroupId: v }))
                 }
               >
-                <option value="">Select source...</option>
-                {priceGroups
-                  .filter((g) => g.id !== priceGroup?.id)
-                  .map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.groupId})
-                    </option>
-                  ))}
-              </select>
+                <SelectTrigger id="pg-source" className="w-full bg-gray-900 border-border text-white">
+                  <SelectValue placeholder="Select source..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {priceGroups
+                    .filter((g) => g.id !== priceGroup?.id)
+                    .map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.name} ({g.groupId})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">

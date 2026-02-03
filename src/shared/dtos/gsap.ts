@@ -1,26 +1,19 @@
+import { NamedDto } from '../types/base';
+
 // GSAP Animation DTOs
-export interface AnimationDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface AnimationDto extends NamedDto {
   config: Record<string, unknown>;
   duration: number;
   easing: string;
   targets: string[];
   properties: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface AnimationTimelineDto {
-  id: string;
-  name: string;
+export interface AnimationTimelineDto extends NamedDto {
   animations: AnimationDto[];
   totalDuration: number;
   repeat: number;
   yoyo: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAnimationDto {

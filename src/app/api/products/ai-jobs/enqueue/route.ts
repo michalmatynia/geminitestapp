@@ -45,11 +45,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         .then((): void => {
           console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
         })
-        .catch((err: unknown) => {
-          console.error(`[api/products/ai-jobs/enqueue] Failed to process job ${job.id}:`, err);
-          if (err instanceof Error) {
-            console.error(`[api/products/ai-jobs/enqueue] Error stack:`, err.stack);
-          }
+        .catch(async (err: unknown) => {
+          const { ErrorSystem } = await import("@/features/observability/services/error-system");
+          void ErrorSystem.captureException(err, { 
+            service: "api/products/ai-jobs/enqueue",
+            jobId: job.id,
+            productId: productId
+          });
         });
     } else {
       // Start the queue worker (for persistent servers)

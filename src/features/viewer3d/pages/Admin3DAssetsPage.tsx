@@ -14,6 +14,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Alert,
 } from "@/shared/ui";
 import {
   Box,
@@ -156,9 +162,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       }
       alerts={
         error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {error}
-          </div>
+          </Alert>
         ) : null
       }
       filters={
@@ -223,19 +229,23 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         <SectionPanel>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm text-muted-foreground">Category</label>
-              <select
-                value={selectedCategory ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              <Label className="mb-2 block text-sm text-muted-foreground">Category</Label>
+              <Select
+                value={selectedCategory ?? "__all__"}
+                onValueChange={(v: string): void => setSelectedCategory(v === "__all__" ? null : v)}
               >
-                <option value="">All categories</option>
-                {categories.map((cat: string) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 w-full border-border bg-background text-sm text-foreground">
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All categories</SelectItem>
+                  {categories.map((cat: string) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

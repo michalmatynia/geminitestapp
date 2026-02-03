@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge } from "@/shared/ui";
+import { Button, SharedModal, Input, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -203,21 +203,24 @@ export default function ProductListingJobsPanel({
       </div>
       <div className="flex items-center gap-2">
         <Label htmlFor="exportJobsPageSize">Rows</Label>
-        <select
-          id="exportJobsPageSize"
-          className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
-          value={pageSize}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-            setPageSize(Number(event.target.value));
+        <Select
+          value={String(pageSize)}
+          onValueChange={(value: string): void => {
+            setPageSize(Number(value));
             setPage(1);
           }}
         >
-          {[10, 25, 50, 100].map((size: number) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="exportJobsPageSize" className="h-8 w-20 border-border bg-gray-900 text-xs text-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-900 border-border text-white">
+            {[10, 25, 50, 100].map((size: number) => (
+              <SelectItem key={size} value={String(size)}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="outline"
           size="sm"

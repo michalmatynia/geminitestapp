@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, ModalShell, Input } from "@/shared/ui";
+import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal, Input } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import {

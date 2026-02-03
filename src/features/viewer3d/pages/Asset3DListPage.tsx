@@ -13,6 +13,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Alert,
 } from "@/shared/ui";
 import {
   Box,
@@ -103,9 +109,9 @@ export function Asset3DListPage(): React.JSX.Element {
       }
       alerts={
         error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {error}
-          </div>
+          </Alert>
         ) : null
       }
       filters={
@@ -122,18 +128,24 @@ export function Asset3DListPage(): React.JSX.Element {
             </div>
 
             {categories.length > 0 && (
-              <select
-                value={selectedCategory ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
-                className="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              >
-                <option value="">All categories</option>
-                {categories.map((cat: string) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div className="w-[180px]">
+                <Select
+                  value={selectedCategory ?? "__all__"}
+                  onValueChange={(v: string): void => setSelectedCategory(v === "__all__" ? null : v)}
+                >
+                  <SelectTrigger className="h-8 border-border bg-background text-sm text-foreground">
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All categories</SelectItem>
+                    {categories.map((cat: string) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {allTags.length > 0 && (

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
-import { AppModal, Button, ModalShell } from "@/shared/ui";
+import { SharedModal, Button } from "@/shared/ui";
 import type { BlockInstance, PageZone, SectionDefinition } from "../../types/page-builder";
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";

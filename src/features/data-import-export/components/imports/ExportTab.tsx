@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Checkbox, Label } from "@/shared/ui";
+import { Button, Input, Checkbox, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import Link from "next/link";
 
 import type {
@@ -146,62 +146,52 @@ export function ExportTab({
             <Label className="text-xs text-gray-400">
               Base connection for inventories/warehouses
             </Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={selectedBaseConnectionId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                setSelectedBaseConnectionId(event.target.value)
-              }
-              disabled={baseConnections.length === 0}
-            >
-              {baseConnections.length === 0 ? (
-                <option value="">No connections loaded</option>
-              ) : (
-                <>
-                  <option value="">Select a connection...</option>
+            <div className="mt-2">
+              <Select
+                value={selectedBaseConnectionId || "__none__"}
+                onValueChange={(v: string): void => setSelectedBaseConnectionId(v === "__none__" ? "" : v)}
+                disabled={baseConnections.length === 0}
+              >
+                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                  <SelectValue placeholder={baseConnections.length === 0 ? "No connections loaded" : "Select a connection..."} />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-border text-white">
+                  <SelectItem value="__none__">Select a connection...</SelectItem>
                   {baseConnections.map(
                     (connection: IntegrationConnectionBasic) => (
-                      <option key={connection.id} value={connection.id}>
+                      <SelectItem key={connection.id} value={connection.id}>
                         {connection.name}
-                      </option>
+                      </SelectItem>
                     ),
                   )}
-                </>
-              )}
-            </select>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Used for loading inventories/warehouses and debug output.
             </p>
           </div>
           <div>
             <Label className="text-xs text-gray-400">Default Inventory</Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={exportInventoryId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                setExportInventoryId(event.target.value)
-              }
-              disabled={inventories.length === 0}
-            >
-              {inventories.length === 0 ? (
-                exportInventoryId ? (
-                  <option value={exportInventoryId}>
-                    Saved inventory ({exportInventoryId})
-                  </option>
-                ) : (
-                  <option value="">No inventories loaded</option>
-                )
-              ) : (
-                <>
-                  <option value="">Select default inventory...</option>
+            <div className="mt-2">
+              <Select
+                value={exportInventoryId || "__none__"}
+                onValueChange={(v: string): void => setExportInventoryId(v === "__none__" ? "" : v)}
+                disabled={inventories.length === 0 && !exportInventoryId}
+              >
+                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                  <SelectValue placeholder={inventories.length === 0 ? (exportInventoryId ? `Saved inventory (${exportInventoryId})` : "No inventories loaded") : "Select default inventory..."} />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-border text-white">
+                  <SelectItem value="__none__">Select default inventory...</SelectItem>
                   {inventories.map((inv: InventoryOption) => (
-                    <option key={inv.id} value={inv.id}>
+                    <SelectItem key={inv.id} value={inv.id}>
                       {inv.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </>
-              )}
-            </select>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Default inventory for product exports
             </p>
@@ -211,29 +201,35 @@ export function ExportTab({
             <Label className="text-xs text-gray-400">
               Default Export Template
             </Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={exportActiveTemplateId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-                const nextId = event.target.value;
-                const selected = exportTemplates.find(
-                  (template: Template) => template.id === nextId,
-                );
-                if (selected) {
-                  applyTemplate(selected, "export");
-                } else {
-                  setExportActiveTemplateId(nextId);
-                }
-              }}
-              disabled={loadingExportTemplates || exportTemplates.length === 0}
-            >
-              <option value="">No template (use defaults)</option>
-              {exportTemplates.map((tpl: Template) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
+            <div className="mt-2">
+              <Select
+                value={exportActiveTemplateId || "__none__"}
+                onValueChange={(nextId: string): void => {
+                  const val = nextId === "__none__" ? "" : nextId;
+                  const selected = exportTemplates.find(
+                    (template: Template) => template.id === val,
+                  );
+                  if (selected) {
+                    applyTemplate(selected, "export");
+                  } else {
+                    setExportActiveTemplateId(val);
+                  }
+                }}
+                disabled={loadingExportTemplates || exportTemplates.length === 0}
+              >
+                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                  <SelectValue placeholder="No template (use defaults)" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-border text-white">
+                  <SelectItem value="__none__">No template (use defaults)</SelectItem>
+                  {exportTemplates.map((tpl: Template) => (
+                    <SelectItem key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Template for field mapping on export
             </p>
@@ -242,31 +238,65 @@ export function ExportTab({
 
         <div>
           <Label className="text-xs text-gray-400">Default Warehouse ID</Label>
-          <select
-            className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-            value={exportWarehouseId}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-              setExportWarehouseId(event.target.value)
-            }
-            disabled={warehouseOptions.length === 0}
-          >
-            {warehouseOptions.length === 0 ? (
-              <option value="">Load warehouses first</option>
-            ) : (
-              <>
-                <option value="">Skip stock export</option>
+          <div className="mt-2">
+            <Select
+              value={exportWarehouseId || "__none__"}
+              onValueChange={(v: string): void => setExportWarehouseId(v === "__none__" ? "" : v)}
+              disabled={warehouseOptions.length === 0}
+            >
+              <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                <SelectValue placeholder={warehouseOptions.length === 0 ? "Load warehouses first" : "Skip stock export"} />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-border text-white">
+                <SelectItem value="__none__">Skip stock export</SelectItem>
                 {warehouseOptions.map((warehouse: WarehouseOption) => (
-                  <option key={warehouse.id} value={warehouse.id}>
+                  <SelectItem key={warehouse.id} value={warehouse.id}>
                     {warehouse.name} ({warehouse.id})
                     {showAllWarehouses &&
                     !inventoryWarehouseIds.has(warehouse.id)
                       ? " (not in inventory)"
                       : ""}
-                  </option>
+                  </SelectItem>
                 ))}
-              </>
-            )}
-          </select>
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Used for exporting stock quantities to Base.com. Leave blank to skip
+            stock.
+          </p>
+          <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+            <Checkbox
+              id="exportStockFallback"
+              checked={exportStockFallbackEnabled}
+              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                setExportStockFallbackEnabled(Boolean(checked))
+              }
+              disabled={!exportStockFallbackLoaded}
+              className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
+            />
+            <Label htmlFor="exportStockFallback">
+              Skip stock when Base rejects the warehouse (allow listing)
+            </Label>
+          </div>
+          {allWarehouses.length > 0 &&
+          allWarehouses.length > warehouses.length ? (
+            <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+              <Checkbox
+                id="showAllWarehouses"
+                checked={showAllWarehouses}
+                onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                  setShowAllWarehouses(Boolean(checked))
+                }
+                className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
+              />
+              <Label htmlFor="showAllWarehouses">
+                Show all warehouses (may include ones not assigned to the
+                inventory)
+              </Label>
+            </div>
+          ) : null}
+        </div>
           <p className="mt-1 text-xs text-gray-500">
             Used for exporting stock quantities to Base.com. Leave blank to skip
             stock.

@@ -1,6 +1,7 @@
-import type { Entity, Status } from '@/shared/types/core/base-types';
+import { DtoBase } from '../types/base';
+import type { Status } from '@/shared/types/core/base-types';
 
-export interface JobDto extends Entity {
+export interface JobDto extends DtoBase {
   type: string;
   status: Status;
   progress: number;

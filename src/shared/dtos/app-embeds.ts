@@ -1,14 +1,11 @@
+import { NamedDto } from '../types/base';
+
 // App Embeds DTOs
-export interface AppEmbedDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface AppEmbedDto extends NamedDto {
   type: 'iframe' | 'widget' | 'script';
   config: Record<string, unknown>;
   embedCode: string;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAppEmbedDto {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Checkbox, Pagination } from "@/shared/ui";
+import { Button, Input, Label, Checkbox, Pagination, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import NextImage from "next/image";
 import type {
   CatalogOption,
@@ -129,24 +129,24 @@ export function ImportTab({
             </Button>
             <div className="flex-1 min-w-[200px]">
               <Label className="text-xs text-gray-400">Inventory</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={inventoryId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setInventoryId(event.target.value)
-                }
-                disabled={inventories.length === 0}
-              >
-                {inventories.length === 0 ? (
-                  <option value="">Load inventories first</option>
-                ) : (
-                  inventories.map((inventory: InventoryOption) => (
-                    <option key={inventory.id} value={inventory.id}>
-                      {inventory.name}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={inventoryId}
+                  onValueChange={setInventoryId}
+                  disabled={inventories.length === 0}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                    <SelectValue placeholder={inventories.length === 0 ? "Load inventories first" : "Select inventory"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-border text-white">
+                    {inventories.map((inventory: InventoryOption) => (
+                      <SelectItem key={inventory.id} value={inventory.id}>
+                        {inventory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button
               type="button"
@@ -161,85 +161,92 @@ export function ImportTab({
             </Button>
             <div className="w-40">
               <Label className="text-xs text-gray-400">Limit</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={limit}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setLimit(event.target.value)
-                }
-              >
-                <option value="1">1</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="all">All</option>
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={limit}
+                  onValueChange={setLimit}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-border text-white">
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={catalogId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setCatalogId(event.target.value)
-                }
-                disabled={loadingCatalogs || catalogs.length === 0}
-              >
-                {catalogs.length === 0 ? (
-                  <option value="">
-                    {loadingCatalogs ? "Loading catalogs..." : "No catalogs"}
-                  </option>
-                ) : (
-                  catalogs.map((catalog: CatalogOption) => (
-                    <option key={catalog.id} value={catalog.id}>
-                      {catalog.name}
-                      {catalog.isDefault ? " (Default)" : ""}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={catalogId || "__none__"}
+                  onValueChange={(v: string): void => setCatalogId(v === "__none__" ? "" : v)}
+                  disabled={loadingCatalogs || catalogs.length === 0}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                    <SelectValue placeholder={loadingCatalogs ? "Loading catalogs..." : "No catalogs"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-border text-white">
+                    <SelectItem value="__none__">— No catalog —</SelectItem>
+                    {catalogs.map((catalog: CatalogOption) => (
+                      <SelectItem key={catalog.id} value={catalog.id}>
+                        {catalog.name}
+                        {catalog.isDefault ? " (Default)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <Label className="text-xs text-gray-400">Import template</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={importTemplateId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setImportTemplateId(event.target.value)
-                }
-                disabled={
-                  loadingImportTemplates || importTemplates.length === 0
-                }
-              >
-                <option value="">No template</option>
-                {importTemplates.map((template: Template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={importTemplateId || "__none__"}
+                  onValueChange={(v: string): void => setImportTemplateId(v === "__none__" ? "" : v)}
+                  disabled={loadingImportTemplates || importTemplates.length === 0}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                    <SelectValue placeholder="No template" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-border text-white">
+                    <SelectItem value="__none__">No template</SelectItem>
+                    {importTemplates.map((template: Template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label className="text-xs text-gray-400">Images</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={imageMode}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setImageMode(
-                    event.target.value === "download" ? "download" : "links",
-                  )
-                }
-              >
-                <option value="links">Import image links</option>
-                <option value="download">Download product images</option>
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={imageMode}
+                  onValueChange={(v: string): void => setImageMode(v as "links" | "download")}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-border text-white">
+                    <SelectItem value="links">Import image links</SelectItem>
+                    <SelectItem value="download">Download product images</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <p className="mt-2 text-xs text-gray-500">
                 Image links keep Base.com URLs. Download stores images in your
                 uploads folder.
@@ -312,30 +319,38 @@ export function ImportTab({
               placeholder="Search SKU..."
               className="h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
-            <select
-              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+            <Select
               value={uniqueOnly ? "unique" : "all"}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                (setUniqueOnly(event.target.value === "unique"), setImportListPage(1))
+              onValueChange={(v: string): void =>
+                (setUniqueOnly(v === "unique"), setImportListPage(1))
               }
             >
-              <option value="unique">Unique only</option>
-              <option value="all">All products</option>
-            </select>
-            <select
-              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+              <SelectTrigger className="h-8 w-32 border-border bg-gray-900 text-xs text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-border text-white">
+                <SelectItem value="unique">Unique only</SelectItem>
+                <SelectItem value="all">All products</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={String(importListPageSize)}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-                const nextSize = Number(event.target.value);
+              onValueChange={(value: string): void => {
+                const nextSize = Number(value);
                 setImportListPageSize(Number.isFinite(nextSize) ? nextSize : 25);
                 setImportListPage(1);
               }}
             >
-              <option value="10">10 / page</option>
-              <option value="25">25 / page</option>
-              <option value="50">50 / page</option>
-              <option value="100">100 / page</option>
-            </select>
+              <SelectTrigger className="h-8 w-32 border-border bg-gray-900 text-xs text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-border text-white">
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="25">25 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+                <SelectItem value="100">100 / page</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               onClick={(): void => {
                 void handleLoadImportList();

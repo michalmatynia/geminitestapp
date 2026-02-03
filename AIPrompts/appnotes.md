@@ -8,6 +8,8 @@ When I click Generate PAth, the Connector inputs remain empty
 CMS Inspector is not working in the CMS Page Builder not working
 * I don't see me regex and interator nodes
 
+Unify Form component and and complex ZOD vallidators
+
 Admin Menu Favourites
 
 Attach itself to Background,  Backgroun Image Layering

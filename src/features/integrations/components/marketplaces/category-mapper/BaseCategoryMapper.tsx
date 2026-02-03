@@ -1,6 +1,4 @@
-"use client";
-
-import { useToast, Button, Label } from "@/shared/ui";
+import { useToast, Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
 
@@ -232,21 +230,25 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
             </div>
           </td>
           <td className="px-4 py-2">
-            <select
-              value={currentMapping ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                handleMappingChange(category.id, e.target.value || null)
+            <Select
+              value={currentMapping ?? "__unmapped__"}
+              onValueChange={(v: string): void =>
+                handleMappingChange(category.id, v === "__unmapped__" ? null : v)
               }
-              className="w-full rounded border bg-gray-800 px-2 py-1 text-sm text-white"
               disabled={internalCategoriesLoading || !selectedCatalogId}
             >
-              <option value="">— Not mapped —</option>
-              {internalCategories.map((ic: ProductCategoryDto) => (
-                <option key={ic.id} value={ic.id}>
-                  {ic.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full bg-gray-800 border-border text-white text-sm h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__unmapped__">— Not mapped —</SelectItem>
+                {internalCategories.map((ic: ProductCategoryDto) => (
+                  <SelectItem key={ic.id} value={ic.id}>
+                    {ic.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </td>
         </tr>
         {hasChildren && isExpanded && (
@@ -305,22 +307,27 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       {/* Catalog Selector */}
       <div className="flex items-center gap-4">
         <Label className="text-sm text-gray-400">Target Catalog:</Label>
-        <select
-          value={selectedCatalogId ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCatalogId(e.target.value || null)}
-          disabled={catalogsLoading}
-          className="rounded border bg-gray-800 px-3 py-2 text-sm text-white"
-        >
-          {catalogsLoading && <option value="">Loading...</option>}
-          {!catalogsLoading && catalogs.length === 0 && (
-            <option value="">No catalogs available</option>
-          )}
-          {catalogs.map((catalog: Catalog) => (
-            <option key={catalog.id} value={catalog.id}>
-              {catalog.name}
-            </option>
-          ))}
-        </select>
+        <div className="w-[200px]">
+          <Select
+            value={selectedCatalogId ?? "__none__"}
+            onValueChange={(v: string): void => setSelectedCatalogId(v === "__none__" ? null : v)}
+            disabled={catalogsLoading}
+          >
+            <SelectTrigger className="bg-gray-800 border-border text-white text-sm h-9">
+              <SelectValue placeholder={catalogsLoading ? "Loading..." : "Select catalog"} />
+            </SelectTrigger>
+            <SelectContent>
+              {!catalogsLoading && catalogs.length === 0 && (
+                <SelectItem value="__none__">No catalogs available</SelectItem>
+              )}
+              {catalogs.map((catalog: Catalog) => (
+                <SelectItem key={catalog.id} value={catalog.id}>
+                  {catalog.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {selectedCatalogId && (
           <span className="text-xs text-gray-500">

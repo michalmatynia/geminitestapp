@@ -1,29 +1,14 @@
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(64,10): error TS6133: 'localRows' is declared but its value is never read.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(64,21): error TS6133: 'setLocalRows' is declared but its value is never read.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(230,74): error TS2552: Cannot find name 'AiTriggerButtonRecord'. Did you mean 'AiTriggerButtonMode'?
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(246,62): error TS2552: Cannot find name 'AiTriggerButtonRecord'. Did you mean 'AiTriggerButtonMode'?
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(283,55): error TS2552: Cannot find name 'AiTriggerButtonRecord'. Did you mean 'AiTriggerButtonMode'?
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(288,23): error TS2552: Cannot find name 'AiTriggerButtonRecord'. Did you mean 'AiTriggerButtonMode'?
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(290,7): error TS2304: Cannot find name 'setOrderedRows'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(295,7): error TS2304: Cannot find name 'setOrderedRows'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(329,16): error TS2304: Cannot find name 'orderedRows'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(379,34): error TS2304: Cannot find name 'AiTriggerButtonRecord'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(402,74): error TS2304: Cannot find name 'AiTriggerButtonRecord'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(403,72): error TS2304: Cannot find name 'AiTriggerButtonRecord'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(412,27): error TS2304: Cannot find name 'setOrderedRows'.
-src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx(413,76): error TS2304: Cannot find name 'AiTriggerButtonRecord'.
-src/features/files/components/FileManager.tsx(2,158): error TS6133: 'AppModal' is declared but its value is never read.
-src/features/files/components/FileManager.tsx(556,10): error TS2304: Cannot find name 'SharedModal'.
-src/features/files/components/FileManager.tsx(590,11): error TS2304: Cannot find name 'SharedModal'.
-src/features/integrations/components/listings/ProductListingsModal.tsx(626,12): error TS2741: Property 'title' is missing in type '{ children: Element; open: true; onOpenChange: (open: boolean) => false | void; }' but required in type 'AppModalProps'.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(3,10): error TS6133: 'AppModal' is declared but its value is never read.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(3,20): error TS6133: 'ModalShell' is declared but its value is never read.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(37,6): error TS2304: Cannot find name 'SharedModal'.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(125,7): error TS2304: Cannot find name 'SharedModal'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(2,162): error TS6133: 'ModalShell' is declared but its value is never read.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(160,6): error TS2304: Cannot find name 'SharedModal'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(292,7): error TS2304: Cannot find name 'SharedModal'.
-src/features/jobs/components/ProductListingJobsPanel.tsx(3,18): error TS6133: 'ModalShell' is declared but its value is never read.
-src/features/jobs/components/ProductListingJobsPanel.tsx(3,37): error TS6133: 'AppModal' is declared but its value is never read.
-src/features/jobs/components/ProductListingJobsPanel.tsx(299,10): error TS2304: Cannot find name 'SharedModal'.
-src/features/jobs/components/ProductListingJobsPanel.tsx(566,11): error TS2304: Cannot find name 'SharedModal'.
+src/features/data-import-export/components/imports/ExportTab.tsx(646,5): error TS1005: ')' expected.
+src/features/data-import-export/components/imports/ExportTab.tsx(647,3): error TS1109: Expression expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(360,7): error TS2657: JSX expressions must have one parent element.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(377,9): error TS1128: Declaration or statement expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(377,11): error TS1109: Expression expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(378,7): error TS1109: Expression expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(378,8): error TS1128: Declaration or statement expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(379,5): error TS1128: Declaration or statement expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(380,3): error TS1109: Expression expected.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(381,1): error TS1128: Declaration or statement expected.
+src/features/notesapp/components/editor/NoteMetadata.tsx(397,7): error TS2657: JSX expressions must have one parent element.
+src/features/notesapp/components/editor/NoteMetadata.tsx(652,5): error TS1128: Declaration or statement expected.
+src/features/notesapp/components/editor/NoteMetadata.tsx(653,3): error TS1109: Expression expected.
+src/features/notesapp/components/editor/NoteMetadata.tsx(654,1): error TS1128: Declaration or statement expected.

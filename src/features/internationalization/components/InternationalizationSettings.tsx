@@ -1,4 +1,4 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input } from "@/shared/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input, Badge } from "@/shared/ui";
 import { MoreVertical } from "lucide-react";
 
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
@@ -90,7 +90,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Currency actions"
                         type="button"
                       >
@@ -177,12 +178,12 @@ export function InternationalizationSettings({
                     <div className="mt-1 flex flex-wrap gap-2">
                       {country.currencies?.length ? (
                         country.currencies.map((entry: { currencyId: string; currency: { code: string } }) => (
-                          <span
+                          <Badge
                             key={entry.currencyId}
-                            className="rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            variant="neutral"
                           >
                             {entry.currency.code}
-                          </span>
+                          </Badge>
                         ))
                       ) : (
                         <span className="text-xs text-gray-500">
@@ -194,7 +195,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Country actions"
                         type="button"
                       >
@@ -273,16 +275,17 @@ export function InternationalizationSettings({
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
                       {language.countries?.length ? (
                         language.countries.map((entry: { countryId: string; country: { name: string; code: string } }) => (
-                          <div
+                          <Badge
                             key={entry.countryId}
-                            className="flex items-center gap-2 rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            variant="neutral"
                             title={entry.country.name}
+                            className="flex items-center gap-2"
                           >
                             <span className="h-3 w-4 overflow-hidden rounded-sm border border">
                               {countryFlagMap[entry.country.code] ?? null}
                             </span>
                             <span>{entry.country.name}</span>
-                          </div>
+                          </Badge>
                         ))
                       ) : (
                         <span>No countries assigned</span>
@@ -292,7 +295,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Language actions"
                         type="button"
                       >

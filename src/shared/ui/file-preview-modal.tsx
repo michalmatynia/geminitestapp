@@ -1,7 +1,6 @@
 "use client";
 
-import { AppModal } from "@/shared/ui";
-import { XIcon } from "lucide-react";
+import { SharedModal } from "@/shared/ui";
 import Image from "next/image";
 
 export interface FilePreviewData {
@@ -29,19 +28,12 @@ export default function FilePreviewModal({
   children,
 }: FilePreviewModalProps) {
   return (
-    <AppModal
+    <SharedModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={file.filename}
+      size="lg"
     >
-      <div className="bg-gray-900 rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-          aria-label="Close modal"
-        >
-          <XIcon className="size-6" />
-        </button>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h2 className="text-2xl font-bold mb-4">{file.filename}</h2>
@@ -103,7 +95,6 @@ export default function FilePreviewModal({
             {children}
           </div>
         </div>
-      </div>
-    </AppModal>
+    </SharedModal>
   );
 }

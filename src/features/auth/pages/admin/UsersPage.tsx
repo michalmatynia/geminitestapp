@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox } from "@/shared/ui";
+import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from "@/shared/ui";
 
 
 
@@ -408,13 +408,13 @@ export default function AuthUsersPage(): React.JSX.Element {
                     <TableCell className="text-gray-300">{user.email ?? "No email"}</TableCell>
                     <TableCell>
                       {user.emailVerified ? (
-                        <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs text-green-200">
+                        <Badge variant="success">
                           Verified
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+                        <Badge variant="warning">
                           Pending
-                        </span>
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className="min-w-[180px]">

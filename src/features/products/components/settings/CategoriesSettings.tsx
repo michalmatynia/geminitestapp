@@ -674,50 +674,62 @@ export function CategoriesSettings({
 
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.catalogId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-                  const nextCatalogId: string = e.target.value;
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    catalogId: nextCatalogId,
-                    parentId:
-                      prev.catalogId !== nextCatalogId ? null : prev.parentId,
-                  }));
-                  setModalCatalogId(nextCatalogId);
-                }}
-              >
-                {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                  <option key={catalog.id} value={catalog.id}>
-                    {catalog.name}
-                    {catalog.isDefault ? " (Default)" : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={formData.catalogId}
+                  onValueChange={(value: string): void => {
+                    const nextCatalogId: string = value;
+                    setFormData((prev: CategoryFormData) => ({
+                      ...prev,
+                      catalogId: nextCatalogId,
+                      parentId:
+                        prev.catalogId !== nextCatalogId ? null : prev.parentId,
+                    }));
+                    setModalCatalogId(nextCatalogId);
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
+                    <SelectValue placeholder="Select catalog" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogs.map((catalog: Catalog): React.JSX.Element => (
+                      <SelectItem key={catalog.id} value={catalog.id}>
+                        {catalog.name}
+                        {catalog.isDefault ? " (Default)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
               <Label className="text-xs text-gray-400">Parent Category</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.parentId ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    parentId: e.target.value ? e.target.value : null,
-                  }))
-                }
-                disabled={modalLoadingCategories}
-              >
-                <option value="">No parent (root)</option>
-                {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
-                  <option key={option.id} value={option.id}>
-                    {"|-- ".repeat(option.level)}
-                    {option.name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={formData.parentId ?? "__root__"}
+                  onValueChange={(value: string): void =>
+                    setFormData((prev: CategoryFormData) => ({
+                      ...prev,
+                      parentId: value === "__root__" ? null : value,
+                    }))
+                  }
+                  disabled={modalLoadingCategories}
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
+                    <SelectValue placeholder="Select parent category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__root__">No parent (root)</SelectItem>
+                    {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {"|-- ".repeat(option.level)}
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               {modalLoadingCategories && (
                 <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
               )}

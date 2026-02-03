@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, useToast } from "@/shared/ui";
+import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast } from "@/shared/ui";
 import { useState } from "react";
 
 import type { ProductWithImages } from "@/features/products";

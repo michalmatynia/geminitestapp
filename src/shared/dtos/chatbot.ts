@@ -1,10 +1,9 @@
+import { DtoBase } from '../types/base';
+
 // Chatbot DTOs
-export interface ChatbotSessionDto {
-  id: string;
+export interface ChatbotSessionDto extends DtoBase {
   userId: string | null;
   title: string;
-  createdAt: string;
-  updatedAt: string;
   messageCount: number;
 }
 
@@ -17,13 +16,10 @@ export interface ChatbotMessageDto {
   metadata?: Record<string, unknown>;
 }
 
-export interface ChatbotMemoryItemDto {
-  id: string;
+export interface ChatbotMemoryItemDto extends DtoBase {
   key: string;
   value: string;
   type: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ChatbotContextSegmentDto {

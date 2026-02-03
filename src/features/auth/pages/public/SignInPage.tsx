@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Input, Label, Alert } from "@/shared/ui";
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -131,14 +131,14 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
           </p>
         </div>
         {message ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {message}
-          </div>
+          </Alert>
         ) : null}
         {errorMessage ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {errorMessage}
-          </div>
+          </Alert>
         ) : null}
         <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">

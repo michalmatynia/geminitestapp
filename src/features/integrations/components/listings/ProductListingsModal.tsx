@@ -1,5 +1,5 @@
 "use client";
-import { AppModal, ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog } from "@/shared/ui";
+import { SharedModal, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -623,14 +623,11 @@ export function ProductListingsModal({
   const loading: boolean = loadingListings;
 
   return (
-          <AppModal
+          <SharedModal
             open={true}
-            onOpenChange={(open: boolean) => !open && onClose()}
+            onClose={onClose}
+            title={`Integrations - ${productName}`}
           >
-            <ModalShell
-              title={`Integrations - ${productName}`}
-              onClose={onClose}
-            >
               <ConfirmDialog
               open={!!listingToDelete}
               onOpenChange={(open: boolean) => !open && setListingToDelete(null)}
@@ -958,8 +955,7 @@ export function ProductListingsModal({
           </div>
         )}
       </div>
-      </ModalShell>
-    </AppModal>
+    </SharedModal>
   );
 }
 

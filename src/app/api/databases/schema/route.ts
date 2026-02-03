@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 type FieldInfo = {
   name: string;
@@ -152,10 +153,9 @@ export async function GET(): Promise<Response> {
       return NextResponse.json(schema);
     }
   } catch (error) {
-    console.error("[api/databases/schema] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch schema", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      source: "databases.schema.GET",
+      fallbackMessage: "Failed to fetch schema",
+    });
   }
 }

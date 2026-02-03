@@ -1,6 +1,6 @@
-import type { Entity } from '@/shared/types/base-types';
+import { DtoBase } from '../types/base';
 
-export interface AuthUserDto extends Entity {
+export interface AuthUserDto extends DtoBase {
   name: string | null;
   email: string | null;
   image: string | null;
@@ -8,7 +8,7 @@ export interface AuthUserDto extends Entity {
   provider: string;
 }
 
-export interface AuthUserAccessDto extends Entity {
+export interface AuthUserAccessDto extends DtoBase {
   userId: string;
   permissions: string[];
   roles: string[];

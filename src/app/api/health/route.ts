@@ -1,9 +1,10 @@
 import { MongoClient } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: NextRequest): Promise<NextResponse | Response> {
+export async function GET(req: NextRequest): Promise<NextResponse | Response> {
   const uri = process.env.MONGODB_URI;
   if (!uri)
     return Response.json(
@@ -18,11 +19,11 @@ export async function GET(_req: NextRequest): Promise<NextResponse | Response> {
     await client.db().command({ ping: 1 });
     return Response.json({ ok: true });
   } catch (e: unknown) {
-    console.error("DB ping failed:", e);
-    return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : "DB error" },
-      { status: 500 },
-    );
+    return createErrorResponse(e, {
+      request: req,
+      source: "api.health",
+      fallbackMessage: "Database ping failed",
+    });
   } finally {
     await client.close().catch(() => {});
   }

@@ -1,8 +1,7 @@
+import { NamedDto } from '../types/base';
+
 // 3D Viewer DTOs
-export interface Asset3dDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface Asset3dDto extends NamedDto {
   fileUrl: string;
   thumbnailUrl: string | null;
   fileSize: number;
@@ -10,25 +9,14 @@ export interface Asset3dDto {
   categoryId: string | null;
   tags: string[];
   metadata: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Asset3dCategoryDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface Asset3dCategoryDto extends NamedDto {
   parentId: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Asset3dTagDto {
-  id: string;
-  name: string;
+export interface Asset3dTagDto extends NamedDto {
   color: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAsset3dDto {

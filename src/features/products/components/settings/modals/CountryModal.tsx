@@ -10,6 +10,11 @@ import {
   SharedModal,
   Checkbox,
   useToast,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 import type {
   CountryOption,
@@ -125,23 +130,26 @@ export function CountryModal({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="country-code">Code</Label>
-          <select
-            id="country-code"
-            className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+          <Select
             value={form.code}
-            onChange={(e) => {
+            onValueChange={(value: string): void => {
               const sel = countryCodeOptions.find(
-                (o) => o.code === e.target.value,
+                (o) => o.code === value,
               );
-              setForm({ code: e.target.value, name: sel?.name ?? "" });
+              setForm({ code: value, name: sel?.name ?? "" });
             }}
           >
-            {countryCodeOptions.map((opt) => (
-              <option key={opt.code} value={opt.code}>
-                {opt.code} · {opt.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
+              <SelectValue placeholder="Select code" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryCodeOptions.map((opt) => (
+                <SelectItem key={opt.code} value={opt.code}>
+                  {opt.code} · {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="country-name">Name</Label>

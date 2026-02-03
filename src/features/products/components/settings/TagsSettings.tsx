@@ -261,23 +261,29 @@ export function TagsSettings({
 
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.catalogId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setFormData((prev: TagFormData) => ({
-                    ...prev,
-                    catalogId: e.target.value,
-                  }))
-                }
-              >
-                {catalogs.map((catalog: Catalog) => (
-                  <option key={catalog.id} value={catalog.id}>
-                    {catalog.name}
-                    {catalog.isDefault ? " (Default)" : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <Select
+                  value={formData.catalogId}
+                  onValueChange={(value: string): void =>
+                    setFormData((prev: TagFormData) => ({
+                      ...prev,
+                      catalogId: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
+                    <SelectValue placeholder="Select catalog" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogs.map((catalog: Catalog) => (
+                      <SelectItem key={catalog.id} value={catalog.id}>
+                        {catalog.name}
+                        {catalog.isDefault ? " (Default)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>

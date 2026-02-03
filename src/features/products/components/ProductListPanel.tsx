@@ -1,7 +1,7 @@
 "use client";
 import { Profiler, ProfilerOnRenderCallback, memo, useMemo } from "react";
 
-import { DataTable, Button, ListPanel } from "@/shared/ui";
+import { DataTable, Button, ListPanel, Alert } from "@/shared/ui";
 import dynamic from "next/dynamic";
 
 
@@ -266,24 +266,27 @@ export const ProductListPanel = memo(function ProductListPanel({
   const alerts = useMemo(() => {
     if (!loadError && !actionError) return null;
     return (
-      <>
+      <div className="flex flex-col gap-2">
         {loadError && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {loadError}
-          </div>
+          </Alert>
         )}
         {actionError && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {actionError}
-            <Button
-              onClick={onDismissActionError}
-              className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-            >
-              Dismiss
-            </Button>
-          </div>
+          <Alert variant="error">
+            <div className="flex items-center justify-between">
+              <span>{actionError}</span>
+              <Button
+                variant="ghost"
+                onClick={onDismissActionError}
+                className="h-auto p-0 text-red-200 hover:text-white bg-transparent hover:bg-transparent"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </Alert>
         )}
-      </>
+      </div>
     );
   }, [actionError, loadError, onDismissActionError]);
 

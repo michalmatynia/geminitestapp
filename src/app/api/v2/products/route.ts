@@ -6,6 +6,7 @@ import type { ApiVersion } from '@/features/products/api/server';
 import { withSecurity } from '@/features/products/security';
 import { CachedProductService } from '@/features/products/performance';
 import { productService } from '@/features/products/server';
+import { ErrorSystem } from "@/features/observability/server";
 
 // Versioned products API handler
 async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {
@@ -23,7 +24,7 @@ async function productsHandler(req: NextRequest, version: ApiVersion): Promise<R
           .toResponse(405);
     }
   } catch (error) {
-    console.error('Products API error:', error);
+    void ErrorSystem.captureException(error, { service: "api-v2/products", version });
     return StandardErrors.serverError()
       .withMeta(version, '/api/products', req.method)
       .toResponse(500);

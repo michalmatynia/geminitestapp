@@ -1,5 +1,5 @@
 "use client";
-import { FilePreviewModal, Button, useToast, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, AppModal } from "@/shared/ui";
+import { FilePreviewModal, Button, useToast, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo } from "react";

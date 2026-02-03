@@ -7,6 +7,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import { runTeachingChat } from "@/features/ai/agentcreator/teaching/server/chat";
 
@@ -35,9 +36,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(result);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    const status = msg.includes("not found") ? 404 : msg.includes("Missing") ? 400 : 500;
-    if (status === 400) {
-      return NextResponse.json({ error: msg }, { status });
+    if (msg.includes("not found")) {
+      return createErrorResponse(notFoundError(msg), { request: req, source: "agentcreator.teaching.chat.POST" });
+    }
+    if (msg.includes("Missing")) {
+      return createErrorResponse(badRequestError(msg), { request: req, source: "agentcreator.teaching.chat.POST" });
     }
     return createErrorResponse(error, {
       request: req,

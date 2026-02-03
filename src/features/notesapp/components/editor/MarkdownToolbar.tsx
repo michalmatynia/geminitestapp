@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { Undo, Redo } from "lucide-react";
 import type { NoteFileRecord } from "@/shared/types/notes";
 
@@ -294,42 +294,69 @@ export function MarkdownToolbar({
       </Button>
       {noteFiles.length > 0 && (
         <div className="relative">
-          <select
+          <Select
             value=""
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-              const slotIndex = parseInt(e.target.value, 10);
+            onValueChange={(value: string): void => {
+              const slotIndex = parseInt(value, 10);
               const file = noteFiles.find((f: NoteFileRecord) => f.slotIndex === slotIndex);
               if (file) {
                 onInsertFileReference(file);
               }
-              e.target.value = "";
             }}
-            className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Insert file reference"
           >
-            <option value="">Insert File</option>
-            {noteFiles.map((file: NoteFileRecord) => (
-              <option key={file.slotIndex} value={file.slotIndex}>
-                Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, "").slice(0, 15)}
-                {file.filename.replace(/^slot-\d+-\d+-/, "").length > 15 ? "..." : ""}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 h-auto" title="Insert file reference">
+              <SelectValue placeholder="Insert File" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-border text-white">
+              {noteFiles.map((file: NoteFileRecord) => (
+                <SelectItem key={file.slotIndex} value={String(file.slotIndex)}>
+                  Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, "").slice(0, 15)}
+                  {file.filename.replace(/^slot-\d+-\d+-/, "").length > 15 ? "..." : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       <div className="ml-2 flex items-center gap-2 border-l border pl-2">
         <Label className="text-xs text-gray-400">Font</Label>
-        <select
+        <Select
           value={fontFamily}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setFontFamily(event.target.value)}
-          className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200"
+          onValueChange={setFontFamily}
         >
-          <option value="inherit">Default</option>
-          <option value="Georgia, serif">Serif</option>
-          <option value="Trebuchet MS, sans-serif">Sans</option>
-          <option value="Courier New, monospace">Mono</option>
-        </select>
+          <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 h-auto">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-800 border-border text-white">
+            <SelectItem value="inherit">Default</SelectItem>
+            <SelectItem value="Georgia, serif">Serif</SelectItem>
+            <SelectItem value="Trebuchet MS, sans-serif">Sans</SelectItem>
+            <SelectItem value="Courier New, monospace">Mono</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+      <div className="flex items-center gap-2">
+        <Label className="text-xs text-gray-400">Color</Label>
+        <Input
+          type="color"
+          value={textColor}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTextColor(event.target.value)}
+          className="h-7 w-10 rounded border bg-gray-800 p-0 border-none"
+        />
+      </div>
+      <Button
+        type="button"
+        onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
+        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 border border-border/40"
+        title="Apply font and color"
+      >
+        Apply
+      </Button>
+        </>
+      )}
+    </div>
+  );
+}
       <div className="flex items-center gap-2">
         <Label className="text-xs text-gray-400">Color</Label>
         <Input

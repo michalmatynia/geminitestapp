@@ -1,6 +1,6 @@
 "use client";
 
-import { AppModal, ModalShell, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Button, Label } from "@/shared/ui";
+import { SharedModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Button, Label } from "@/shared/ui";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 import Link from "next/link";

@@ -1,3 +1,5 @@
+import { NamedDto } from '../types/base';
+
 // Observability DTOs
 export interface MetricDto {
   id: string;
@@ -46,15 +48,10 @@ export interface SpanLogDto {
   fields: Record<string, unknown>;
 }
 
-export interface AlertDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface AlertDto extends NamedDto {
   condition: Record<string, unknown>;
   severity: 'low' | 'medium' | 'high' | 'critical';
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAlertDto {

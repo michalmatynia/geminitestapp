@@ -1,6 +1,6 @@
 "use client";
 
-import { ModalShell, Button, AppModal, SectionHeader } from "@/shared/ui";
+import { SharedModal, Button, SectionHeader } from "@/shared/ui";
 import { useRef, useState } from "react";
 import { DraftList } from "../components/DraftList";
 import { DraftCreator } from "../components/DraftCreator";

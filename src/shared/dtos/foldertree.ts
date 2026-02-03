@@ -1,6 +1,7 @@
+import { DtoBase } from '../types/base';
+
 // Folder Tree DTOs
-export interface FolderTreeNodeDto {
-  id: string;
+export interface FolderTreeNodeDto extends DtoBase {
   name: string;
   type: 'folder' | 'file';
   parentId: string | null;
@@ -8,8 +9,6 @@ export interface FolderTreeNodeDto {
   size: number | null;
   mimeType: string | null;
   children: FolderTreeNodeDto[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateFolderDto {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox } from "@/shared/ui";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
@@ -416,7 +416,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           {/* Path 1 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-xs font-bold text-blue-400">1</span>
+              <Badge variant="info" className="h-6 w-6 justify-center p-0 font-bold">1</Badge>
               <h3 className="text-md font-medium text-white">Signal Path 1: Image Analysis</h3>
             </div>
             
@@ -514,7 +514,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           {/* Path 2 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs font-bold text-purple-400">2</span>
+              <Badge variant="secondary" className="h-6 w-6 justify-center p-0 font-bold border-purple-500/30 bg-purple-500/20 text-purple-400">2</Badge>
               <h3 className="text-md font-medium text-white">Signal Path 2: Description Generation</h3>
             </div>
             

@@ -11,6 +11,12 @@ import {
   Textarea,
   Checkbox,
   useToast,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Badge,
 } from "@/shared/ui";
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
@@ -310,9 +316,9 @@ export function CatalogModal({
                             {lang.name} ({lang.code})
                           </span>
                           {id === defaultLanguageId && (
-                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
+                            <Badge variant="success">
                               Default
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <div className="flex gap-1">
@@ -371,22 +377,25 @@ export function CatalogModal({
                 <Label className="text-xs text-gray-400">
                   Default language
                 </Label>
-                <select
-                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                <Select
                   value={defaultLanguageId}
-                  onChange={(e) => setDefaultLanguageId(e.target.value)}
+                  onValueChange={(v) => setDefaultLanguageId(v)}
                   disabled={selectedLanguageIds.length === 0}
                 >
-                  <option value="">Select default...</option>
-                  {selectedLanguageIds.map((id) => {
-                    const lang = languages.find((l) => l.id === id);
-                    return (
-                      <option key={id} value={id}>
-                        {lang?.name} ({lang?.code})
-                      </option>
-                    );
-                  })}
-                </select>
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
+                    <SelectValue placeholder="Select default language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedLanguageIds.map((id) => {
+                      const lang = languages.find((l) => l.id === id);
+                      return (
+                        <SelectItem key={id} value={id}>
+                          {lang?.name} ({lang?.code})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -441,24 +450,27 @@ export function CatalogModal({
                 <Label className="text-xs text-gray-400">
                   Default price group
                 </Label>
-                <select
-                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                <Select
                   value={catalogDefaultPriceGroupId}
-                  onChange={(e) =>
-                    setCatalogDefaultPriceGroupId(e.target.value)
+                  onValueChange={(v) =>
+                    setCatalogDefaultPriceGroupId(v)
                   }
                   disabled={catalogPriceGroupIds.length === 0}
                 >
-                  <option value="">Select default...</option>
-                  {catalogPriceGroupIds.map((id) => {
-                    const group = priceGroups.find((g) => g.id === id);
-                    return (
-                      <option key={id} value={id}>
-                        {group?.name}
-                      </option>
-                    );
-                  })}
-                </select>
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
+                    <SelectValue placeholder="Select default price group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogPriceGroupIds.map((id) => {
+                      const group = priceGroups.find((g) => g.id === id);
+                      return (
+                        <SelectItem key={id} value={id}>
+                          {group?.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}

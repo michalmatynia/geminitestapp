@@ -5,8 +5,8 @@ import {
   Button,
   Input,
   Label,
-  AppModal,
   LoadingButton,
+  SharedModal,
 } from "@/shared/ui";
 import { X, Plus } from "lucide-react";
 import type { Asset3DRecord, Asset3DUpdateInput } from "../types";
@@ -89,9 +89,9 @@ export function Asset3DEditModal({
   };
 
   return (
-    <AppModal
+    <SharedModal
       open={open}
-      onOpenChange={(o: boolean): void => { if (!o) onClose(); }}
+      onClose={onClose}
       title="Edit 3D Asset"
     >
       <div className="bg-gray-900 rounded-lg shadow-2xl w-[90vw] max-w-lg border border-gray-700">
@@ -262,6 +262,6 @@ export function Asset3DEditModal({
           </LoadingButton>
         </div>
       </div>
-    </AppModal>
+    </SharedModal>
   );
 }

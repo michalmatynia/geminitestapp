@@ -1,13 +1,12 @@
+import { DtoBase } from '../types/base';
+
 // Drafter DTOs
-export interface DraftDto {
-  id: string;
+export interface DraftDto extends DtoBase {
   title: string;
   content: Record<string, unknown>;
   type: string;
   status: 'draft' | 'published' | 'archived';
   authorId: string;
-  createdAt: string;
-  updatedAt: string;
   publishedAt: string | null;
 }
 

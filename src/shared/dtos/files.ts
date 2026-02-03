@@ -1,14 +1,13 @@
+import { DtoBase } from '../types/base';
+
 // Files DTOs
-export interface FileDto {
-  id: string;
+export interface FileDto extends DtoBase {
   filename: string;
   originalName: string;
   mimeType: string;
   size: number;
   path: string;
   url: string;
-  createdAt: string;
-  updatedAt: string;
   metadata?: Record<string, unknown>;
 }
 

@@ -333,7 +333,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         values,
       });
     } catch (cacheError) {
-      console.error("Failed to cache parameters", cacheError);
+      try {
+        const { ErrorSystem } = await import("@/features/observability/services/error-system");
+        void ErrorSystem.captureException(cacheError, { 
+          service: "api/integrations/imports/base/parameters",
+          inventoryId: data.inventoryId,
+          productId: data.productId
+        });
+      } catch (logError) {
+        console.error("Failed to cache parameters (and logging failed)", cacheError, logError);
+      }
     }
 
     return NextResponse.json({ keys, values });

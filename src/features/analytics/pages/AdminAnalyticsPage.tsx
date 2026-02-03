@@ -17,6 +17,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { fetchAnalyticsSummary, type AnalyticsRange } from "../api";
@@ -70,39 +75,47 @@ export default function AdminAnalyticsPage(): React.JSX.Element {
         className="mb-6"
         actions={(
           <>
-            <label className="flex items-center gap-2 text-xs text-gray-400">
-              Scope
-              <select
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Scope</span>
+              <Select
                 value={scope}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setScope(event.target.value as AnalyticsScope | "all")
+                onValueChange={(val: string): void =>
+                  setScope(val as AnalyticsScope | "all")
                 }
-                className="h-9 rounded-md border border-border bg-gray-900/40 px-2 text-sm text-white"
               >
-                {scopes.map((option: { value: AnalyticsScope | "all"; label: string }) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger className="h-9 w-[100px] border-border bg-gray-900/40 text-sm text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {scopes.map((option: { value: AnalyticsScope | "all"; label: string }) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <label className="flex items-center gap-2 text-xs text-gray-400">
-              Range
-              <select
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Range</span>
+              <Select
                 value={range}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setRange(event.target.value as AnalyticsRange)
+                onValueChange={(val: string): void =>
+                  setRange(val as AnalyticsRange)
                 }
-                className="h-9 rounded-md border border-border bg-gray-900/40 px-2 text-sm text-white"
               >
-                {ranges.map((option: { value: AnalyticsRange; label: string }) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger className="h-9 w-[130px] border-border bg-gray-900/40 text-sm text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ranges.map((option: { value: AnalyticsRange; label: string }) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button
               variant="outline"

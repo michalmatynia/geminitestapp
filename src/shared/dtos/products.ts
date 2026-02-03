@@ -1,4 +1,4 @@
-import { NamedDto } from '../types/base';
+import { NamedDto, DtoBase } from '../types/base';
 
 export interface ProductDto extends NamedDto {
   price: number | null;
@@ -15,31 +15,21 @@ export interface ProductCategoryDto extends NamedDto {
   catalogId: string;
 }
 
-export interface ProductTagDto {
-  id: string;
-  name: string;
+export interface ProductTagDto extends NamedDto {
   color: string | null;
   catalogId: string;
 }
 
-export interface CatalogDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface CatalogDto extends NamedDto {
   isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
   languageIds: string[];
   defaultLanguageId: string | null;
   defaultPriceGroupId: string | null;
   priceGroupIds: string[];
 }
 
-export interface PriceGroupDto {
-  id: string;
+export interface PriceGroupDto extends NamedDto {
   groupId: string;
-  name: string;
-  description: string;
   currencyId: string;
   currencyCode: string;
   isDefault: boolean;

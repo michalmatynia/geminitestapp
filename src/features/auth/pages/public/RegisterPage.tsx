@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Input, Label, Alert } from "@/shared/ui";
 import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
@@ -103,14 +103,14 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
           </p>
         </div>
         {error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {error}
-          </div>
+          </Alert>
         ) : null}
         {!allowSignup ? (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+          <Alert variant="warning" className="p-3 text-xs">
             Self-service registration is disabled. Please contact an administrator.
-          </div>
+          </Alert>
         ) : null}
         <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">

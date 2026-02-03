@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Checkbox, SectionPanel } from "@/shared/ui";
+import { Button, Input, Label, Checkbox, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { Dispatch, SetStateAction, ChangeEvent, ReactElement } from "react";
 import type { PlaywrightSettings } from "@/features/playwright/types";
 import { playwrightDeviceOptions } from "@/features/playwright/constants/playwright";
@@ -87,24 +87,28 @@ export function PlaywrightSettingsForm({
           </Label>
           {settings.emulateDevice && (
             <div className="mt-3">
-              <select
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+              <Select
                 value={settings.deviceName}
-                onChange={(e: ChangeEvent<HTMLSelectElement>): void =>
+                onValueChange={(v: string): void =>
                   setSettings((prev: PlaywrightSettings) => ({
                     ...prev,
-                    deviceName: e.target.value,
+                    deviceName: v,
                   }))
                 }
               >
-                {playwrightDeviceOptions.map(
-                  (opt: { label: string; value: string }): ReactElement => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  )
-                )}
-              </select>
+                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
+                  <SelectValue placeholder="Select device" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-border text-white">
+                  {playwrightDeviceOptions.map(
+                    (opt: { label: string; value: string }): ReactElement => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </SectionPanel>

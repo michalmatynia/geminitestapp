@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, Label, Alert } from "@/shared/ui";
+import { Button, Input, Textarea, Label, Alert, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import React from "react";
 
 export interface ApiPreset {
@@ -90,17 +90,23 @@ export function ApiConsole({
                 <div>
                   <Label className="text-xs text-gray-400">Method</Label>
                   {methodType === "select" ? (
-                    <select
-                      className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
-                      value={method}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMethod(e.target.value)}
-                    >
-                      {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m: string) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="mt-2">
+                      <Select
+                        value={method}
+                        onValueChange={setMethod}
+                      >
+                        <SelectTrigger className="w-full border border-border bg-card px-3 py-2 text-sm text-white">
+                          <SelectValue placeholder="Method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m: string) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   ) : (
                     <Input
                       className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"

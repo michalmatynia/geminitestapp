@@ -28,6 +28,7 @@ import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations
 import { decryptSecret } from "@/features/integrations/server";
 import { LogCapture } from "@/features/integrations/server";
 import { parseJsonBody } from "@/features/products/server";
+import { ErrorSystem } from "@/features/observability/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
@@ -74,9 +75,8 @@ const buildImageDiagnosticsLogger = (
   context: Record<string, unknown>
 ): ImageExportDiagnostics => ({
   log: (message, data) => {
-    console.warn("[export-to-base][images]", {
+    void ErrorSystem.logWarning(`[export-to-base][images] ${message}`, {
       ...context,
-      message,
       ...(data ?? {}),
     });
   },
@@ -98,7 +98,7 @@ const logImageDiagnostics = async ({
   context: Record<string, unknown>;
 }) => {
   const urlDiagnostics = collectProductImageDiagnostics(product, imageBaseUrl);
-  console.warn("[export-to-base][images] Image candidates", {
+  void ErrorSystem.logWarning("[export-to-base][images] Image candidates", {
     ...context,
     images: urlDiagnostics,
   });
@@ -113,7 +113,7 @@ const logImageDiagnostics = async ({
       transform: transform ?? null,
     });
   } catch (error) {
-    console.warn("[export-to-base][images] Failed to gather base64 diagnostics", {
+    void ErrorSystem.logWarning("[export-to-base][images] Failed to gather base64 diagnostics", {
       ...context,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -737,7 +737,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       });
 
       if (!exportImagesAsBase64 || !imageTransform) {
-        console.warn("[export-to-base] Image export failed, retrying with base64 + JPEG resize", {
+        void ErrorSystem.logWarning("[export-to-base] Image export failed, retrying with base64 + JPEG resize", {
           ...imageDiagnosticsContext,
           error: result.error,
         });
@@ -795,10 +795,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
 
     if (!result.success) {
-      console.error("[export-to-base] Export failed", {
-        productId,
-        error: result.error,
-      });
       if (listingId) {
         await listingRepo.updateListingStatus(listingId, "failed");
         await listingRepo.appendExportHistory(listingId, {

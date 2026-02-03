@@ -6,6 +6,7 @@ import { Client } from "pg";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { getMongoClient } from "@/shared/lib/db/mongo-client";
+import { ErrorSystem } from "@/features/observability/server";
 
 import {
   pgBackupsDir,
@@ -332,7 +333,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             `DROP DATABASE IF EXISTS "${previewDbName}" WITH (FORCE)`
           );
         } catch (e) {
-          console.error("Failed to drop preview database", e);
+          void ErrorSystem.captureException(e, { service: "api/databases/preview", action: "drop_preview_db" });
         }
         await adminClient.end();
       }

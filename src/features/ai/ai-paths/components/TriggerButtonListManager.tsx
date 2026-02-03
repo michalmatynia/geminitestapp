@@ -13,9 +13,6 @@ import {
 import { GripVertical, Trash2 } from "lucide-react";
 import {
   AiTriggerButtonDto,
-  AiTriggerButtonDisplay,
-  AiTriggerButtonLocation,
-  AiTriggerButtonMode,
 } from "@/shared/dtos/ai-trigger-buttons";
 import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
 import { cn } from "@/shared/utils";
@@ -88,6 +85,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     }
 
     const [reorderedItem] = newRows.splice(draggedIndex, 1);
+    if (!reorderedItem) return localRows;
     newRows.splice(overIndex, 0, reorderedItem);
     return newRows;
   }, [localRows, draggingId, overId]);
@@ -147,14 +145,16 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
               </span>
             </TableCell>
             <TableCell>
-              {row.iconId && PRODUCT_ICON_MAP[row.iconId] ? (
+              {(() => {
+                const Icon = row.iconId ? PRODUCT_ICON_MAP[row.iconId] : undefined;
+                if (!Icon) return <span className="text-sm">{row.display}</span>;
+                return (
                 <span className="flex items-center gap-2">
-                  {React.createElement(PRODUCT_ICON_MAP[row.iconId], { className: "size-4" })}
+                  <Icon className="size-4" />
                   {row.display === "icon_label" && <span className="text-sm">{row.display}</span>}
                 </span>
-              ) : (
-                <span className="text-sm">{row.display}</span>
-              )}
+                );
+              })()}
             </TableCell>
             <TableCell>
               <span className="text-sm text-muted-foreground">

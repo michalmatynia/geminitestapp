@@ -67,10 +67,6 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const preferences = await getUserPreferences(userId);
     return NextResponse.json(preferences);
   } catch (error) {
-    console.error("[user/preferences][GET] Error:", {
-      error,
-      hasMongo: Boolean(process.env.MONGODB_URI),
-    });
     return createErrorResponse(error, {
       source: "user.preferences.GET",
       fallbackMessage: "Failed to fetch preferences",
@@ -144,11 +140,6 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (isAbort) {
       return new NextResponse(null, { status: 204 });
     }
-    console.error("[user/preferences][PATCH] Error:", {
-      error,
-      hasMongo: Boolean(process.env.MONGODB_URI),
-      payload: data,
-    });
     return createErrorResponse(error, {
       request: req,
       source: "user.preferences.PATCH",

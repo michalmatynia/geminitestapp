@@ -1,45 +1,32 @@
+import { DtoBase, NamedDto } from '../types/base';
+
 // Internationalization DTOs
-export interface LanguageDto {
-  id: string;
+export interface LanguageDto extends NamedDto {
   code: string;
-  name: string;
   nativeName: string;
   isDefault: boolean;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CountryDto {
-  id: string;
+export interface CountryDto extends NamedDto {
   code: string;
-  name: string;
   flag: string;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CurrencyDto {
-  id: string;
+export interface CurrencyDto extends NamedDto {
   code: string;
-  name: string;
   symbol: string;
   exchangeRate: number;
   isDefault: boolean;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface TranslationDto {
-  id: string;
+export interface TranslationDto extends DtoBase {
   key: string;
   languageId: string;
   value: string;
   namespace: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateLanguageDto {

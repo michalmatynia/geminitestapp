@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Label, Checkbox, AppModal } from "@/shared/ui";
+import { Button, Label, Checkbox, SharedModal } from "@/shared/ui";
 import { useState } from "react";
 
 
@@ -20,9 +20,9 @@ export const RestoreModal = ({
   const [truncate, setTruncate] = useState(true);
 
   return (
-    <AppModal
+    <SharedModal
       open={true}
-      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
+      onClose={onClose}
       title="Restore Database"
     >
       <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 shadow-lg">
@@ -52,6 +52,6 @@ export const RestoreModal = ({
           </Button>
         </div>
       </div>
-    </AppModal>
+    </SharedModal>
   );
 };

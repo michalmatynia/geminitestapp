@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, ModalShell, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
 import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
 import Link from "next/link";
 import React, { Suspense, useEffect, useRef, useState } from "react";
@@ -478,37 +478,29 @@ function ChatbotContextPageInner(): React.JSX.Element {
         </div>
       </SectionPanel>
       {isModalOpen && modalDraft ? (
-        <AppModal
+        <SharedModal
           open={isModalOpen}
-          onOpenChange={(open: boolean): void => { if (!open) closeModal(); }}
+          onClose={closeModal}
           title={
             contexts.some((item: ContextItem): boolean => item.id === modalDraft.id)
               ? "Edit context"
               : "New context"
           }
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSaveDraft}>
+                Save context
+              </Button>
+            </>
+          }
         >
-          <ModalShell
-            title={
-              contexts.some((item: ContextItem): boolean => item.id === modalDraft.id)
-                ? "Edit context"
-                : "New context"
-            }
-            onClose={closeModal}
-            footer={
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={closeModal}
-                >
-                  Cancel
-                </Button>
-                <Button type="button" onClick={handleSaveDraft}>
-                  Save context
-                </Button>
-              </>
-            }
-          >
             <div className="space-y-4">
               <div>
                 <Label className="mb-2 block text-sm font-medium text-gray-200">
@@ -628,8 +620,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   Active in global context
                 </Label>
             </div>
-          </ModalShell>
-        </AppModal>
+        </SharedModal>
       ) : null}
     </div>
   );

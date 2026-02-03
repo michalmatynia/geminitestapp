@@ -252,7 +252,9 @@ export function withErrorHandling<T extends unknown[]>(
     try {
       return await handler(...args);
     } catch (error: unknown) {
-      console.error('API Error:', error);
+      // NOTE: Keep this module client-bundle-safe (it's re-exported from "@/features/products/api").
+      // Server-side code can do its own centralized logging (ErrorSystem, etc.) at the call site.
+      console.error("API Error:", error);
       
       // Generate request ID for tracking
       const requestId = crypto.randomUUID();

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Label } from "@/shared/ui";
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge } from "@/shared/ui";
 import { PriceGroup } from "@/features/products/types";
 
 
@@ -60,13 +60,13 @@ export function PriceGroupsSettings({
                 <div className="flex items-center gap-2 text-white">
                   <span className="font-semibold">{group.name}</span>
                   {group.isDefault && (
-                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">
+                    <Badge variant="success">
                       Default
-                    </span>
+                    </Badge>
                   )}
-                  <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-300">
+                  <Badge variant="neutral">
                     {group.groupId}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="text-sm text-gray-400">
                   {group.currencyCode} · {group.groupType}
@@ -102,18 +102,24 @@ export function PriceGroupsSettings({
         <p className="mt-1 text-xs text-gray-400">
           Required. Select one of the available price groups.
         </p>
-        <select
-          className="mt-3 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-          value={defaultGroupId}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onDefaultGroupChange(event.target.value)}
-          disabled={priceGroups.length === 0 || defaultGroupSaving}
-        >
-          {priceGroups.map((group: PriceGroup) => (
-            <option key={group.id} value={group.id}>
-              {group.name} ({group.groupId})
-            </option>
-          ))}
-        </select>
+        <div className="mt-3">
+          <Select
+            value={defaultGroupId}
+            onValueChange={onDefaultGroupChange}
+            disabled={priceGroups.length === 0 || defaultGroupSaving}
+          >
+            <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
+              <SelectValue placeholder="Select default price group" />
+            </SelectTrigger>
+            <SelectContent>
+              {priceGroups.map((group: PriceGroup) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.name} ({group.groupId})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {defaultGroupSaving ? (
           <p className="mt-2 text-xs text-gray-500">Saving default...</p>
         ) : null}

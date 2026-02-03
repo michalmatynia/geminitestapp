@@ -5,6 +5,11 @@ import {
   Label,
   SharedModal,
   useToast,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
@@ -103,20 +108,23 @@ export function CurrencyModal({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="currency-code">Code</Label>
-          <select
-            id="currency-code"
-            className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+          <Select
             value={form.code}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-              setForm((p: typeof form) => ({ ...p, code: e.target.value }));
+            onValueChange={(value: string): void => {
+              setForm((p: typeof form) => ({ ...p, code: value }));
             }}
           >
-            {["PLN", "EUR", "USD", "GBP", "SEK"].map((code: string) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
+              <SelectValue placeholder="Select code" />
+            </SelectTrigger>
+            <SelectContent>
+              {["PLN", "EUR", "USD", "GBP", "SEK"].map((code: string) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="currency-name">Name</Label>

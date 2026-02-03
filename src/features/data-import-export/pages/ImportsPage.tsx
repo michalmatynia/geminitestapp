@@ -10,6 +10,11 @@ import {
   Label,
   SectionHeader,
   SectionPanel,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Trash2 } from "lucide-react";
@@ -91,7 +96,7 @@ export default function ImportsPage(): React.JSX.Element {
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const [templateScope, setTemplateScope] = useState<"import" | "export">("import");
-  const [importListPage, setImportListPage] = useState(1);
+  const [importListPagePage, setImportListPage] = useState(1);
   const [importListPageSize, setImportListPageSize] = useState(25);
   const [importListEnabled, setImportListEnabled] = useState(false);
   
@@ -330,7 +335,7 @@ export default function ImportsPage(): React.JSX.Element {
     {
       limit,
       uniqueOnly,
-      page: importListPage,
+      page: importListPagePage,
       pageSize: importListPageSize,
       searchName: importNameSearch,
       searchSku: importSkuSearch,
@@ -610,7 +615,7 @@ export default function ImportsPage(): React.JSX.Element {
             setImportNameSearch={setImportNameSearch}
             importSkuSearch={importSkuSearch}
             setImportSkuSearch={setImportSkuSearch}
-            importListPage={importListPage}
+            importListPage={importListPagePage}
             setImportListPage={setImportListPage}
             importListPageSize={importListPageSize}
             setImportListPageSize={setImportListPageSize}
@@ -709,10 +714,22 @@ export default function ImportsPage(): React.JSX.Element {
                       {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
                          <div key={i} className="flex gap-2 items-center">
                             <Input value={m.sourceKey} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })} placeholder="Source" className="flex-1" />
-                            <select className="bg-gray-900 border border-border p-2 rounded text-sm flex-1" value={m.targetField} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateMapping(i, { targetField: e.target.value })}>
-                               <option value="">Target Field</option>
-                               {PRODUCT_FIELDS.map((f: { value: string; label: string }) => <option key={f.value} value={f.value}>{f.label}</option>)}
-                            </select>
+                            <div className="flex-1">
+                              <Select
+                                value={m.targetField}
+                                onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
+                              >
+                                <SelectTrigger className="bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white">
+                                  <SelectValue placeholder="Target Field" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-border text-white">
+                                  <SelectItem value="__none__">Target Field</SelectItem>
+                                  {PRODUCT_FIELDS.map((f: { value: string; label: string }) => (
+                                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <Button variant="ghost" size="icon" onClick={() => removeMappingRow(i)}><Trash2 className="size-4" /></Button>
                          </div>
                       ))}

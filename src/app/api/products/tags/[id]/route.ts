@@ -18,6 +18,15 @@ const productTagUpdateSchema = z.object({
   catalogId: z.string().min(1).optional(),
 });
 
+interface MongoTag {
+  id: string;
+  name: string;
+  color?: string | null;
+  catalogId: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 /**
  * PUT /api/products/tags/[id]
  * Updates a product tag.
@@ -79,7 +88,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         .updateOne({ id: params.id }, { $set: updateDoc });
       const updated = await db
         .collection("product_tags")
-        .findOne({ id: params.id }) as any;
+        .findOne({ id: params.id }) as unknown as MongoTag | null;
       
       if (!updated) {
         throw notFoundError("Tag not found", { tagId: params.id });

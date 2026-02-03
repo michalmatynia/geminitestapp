@@ -32,6 +32,7 @@ const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: "/admin/chatbot", permissions: ["chatbot.manage"] },
   { prefix: "/admin/agentcreator", permissions: ["chatbot.manage"] },
   { prefix: "/admin/ai-paths", permissions: ["ai_paths.manage"] },
+  { prefix: "/admin/image-studio", permissions: ["ai_paths.manage"] },
   { prefix: "/admin/integrations", permissions: ["settings.manage"] },
   { prefix: "/admin/system", permissions: ["settings.manage"] },
   { prefix: "/admin/settings", permissions: ["settings.manage"] },

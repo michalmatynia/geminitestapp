@@ -490,6 +490,12 @@ export default function Menu(): React.ReactNode {
           ],
         },
         {
+          id: "ai/image-studio",
+          label: "Image Studio",
+          href: "/admin/image-studio",
+          keywords: ["images", "mask", "polygon", "relight", "studio"],
+        },
+        {
           id: "ai/agent-creator",
           label: "Agent Creator",
           href: "/admin/agentcreator",

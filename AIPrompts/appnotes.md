@@ -1,5 +1,13 @@
+result does not enter the prompt node
+
+Address the draggable resortable list component from categories, make it a unifying component also for Trigger buttons
+Create a Category Modal should save on Enter keystroke
+I don't need a cancel Buttons in my Category List
+
+
 Test If I can Put the Block in and Out the same for the Block
 Non overflowing images option in CMSBuilder
+
 
 
 When I click Generate PAth, the Connector inputs remain empty

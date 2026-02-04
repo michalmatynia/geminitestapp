@@ -33,7 +33,6 @@ import {
   Lasso,
   Maximize2,
   Minimize2,
-  Minus,
   MousePointer2,
   Pentagon,
   Plus,
@@ -162,20 +161,6 @@ function normalizePublicPath(value: string | null | undefined): string | null {
     normalized = normalized.slice(uploadsIndex);
   }
   if (!normalized.startsWith("/")) normalized = `/${normalized}`;
-  return normalized;
-}
-
-function normalizeStudioFilepath(projectId: string, filepath: string | null | undefined): string | null {
-  const normalized = normalizePublicPath(filepath);
-  if (!normalized) return null;
-  if (normalized.startsWith(STUDIO_UPLOAD_PREFIX)) return normalized;
-
-  const safeProjectId = sanitizeStudioProjectId(projectId);
-  const uploadsPrefix = `/uploads/${safeProjectId}/`;
-  if (safeProjectId && normalized.startsWith(uploadsPrefix)) {
-    return normalized.replace(uploadsPrefix, `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`);
-  }
-
   return normalized;
 }
 
@@ -1195,6 +1180,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         setProjectId("");
         setSelectedFolder("");
         setSelectedSlotId(null);
+        setCompositeAssetIds([]);
       }
       toast("Project deleted.", { variant: "success" });
     },
@@ -1461,6 +1447,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
             folderPath: variables.folder || null,
           }))
         );
+        if (slotsCreated.length > 0) {
+          setSelectedSlotId(slotsCreated[0]!.id);
+        }
         await Promise.all(
           slotsCreated.map(async (slot: ImageStudioSlotRecord, index: number) => {
             const fileRecord = data.uploaded[index];
@@ -1555,6 +1544,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
             folderPath: selectedFolder || null,
           }))
         );
+        if (slots.length > 0) {
+          setSelectedSlotId(slots[0]!.id);
+        }
         await Promise.all(
           slots.map(async (slot: ImageStudioSlotRecord, index: number) => {
             const file = data.uploaded[index];
@@ -2048,7 +2040,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const handleGenerateMask = useCallback(async (mode: "threshold" | "edges" | "ai-bbox" | "ai-polygon"): Promise<void> => {
     if (!selectedSlotImageSrc) {
-      toast("Select an image first.", { variant: "error" });
+      toast("Select a slot image first.", { variant: "error" });
       return;
     }
     setMaskGenLoading(true);
@@ -2101,6 +2093,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         id: selectedSlot.id,
         data: {
           imageUrl: url,
+          imageFileId: null,
           imageBase64: dataUrl ?? undefined,
         },
       });
@@ -2124,6 +2117,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       await updateSlotMutation.mutateAsync({
         id: selectedSlot.id,
         data: {
+          imageFileId: null,
           imageBase64: value,
         },
       });
@@ -2148,6 +2142,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
           screenshotFileId: null,
         },
       });
+      setSlotImageUrlDraft("");
+      setSlotBase64Draft("");
       toast("Slot media cleared.", { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to clear slot.", { variant: "error" });
@@ -2379,13 +2375,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [promptText, studioSettings.promptExtraction.mode, studioSettings.promptValidation]);
 
   const runPayload = useMemo(() => {
+    const safeProjectId = sanitizeStudioProjectId(projectId);
+    const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
     const referenceAssets = compositeAssets
       .map((slot: ImageStudioSlotRecord) => {
         const filepath =
           normalizePublicPath(slot.imageFile?.filepath ?? null) ??
           normalizePublicPath(slot.imageUrl ?? null) ??
           normalizePublicPath(slot.screenshotFile?.filepath ?? null);
-        if (!filepath) return null;
+        if (!filepath || !filepath.startsWith(prefix)) return null;
         return { id: slot.imageFileId ?? slot.id, filepath };
       })
       .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
@@ -2407,13 +2405,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
       const prompt = (generatedPrompt || promptText || "").trim();
       if (!prompt) throw new Error("Prompt is required.");
 
+      const safeProjectId = sanitizeStudioProjectId(projectId);
+      const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
       const referenceAssets = compositeAssets
         .map((slot: ImageStudioSlotRecord) => {
           const filepath =
             normalizePublicPath(slot.imageFile?.filepath ?? null) ??
             normalizePublicPath(slot.imageUrl ?? null) ??
             normalizePublicPath(slot.screenshotFile?.filepath ?? null);
-          if (!filepath) return null;
+          if (!filepath || !filepath.startsWith(prefix)) return null;
           return { id: slot.imageFileId ?? slot.id, filepath };
         })
         .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
@@ -3735,6 +3735,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                         data: { asset3dId: value || null },
                       });
                     }}
+                    disabled={slotUpdateBusy}
                   />
                   <FileUploadButton
                     variant="outline"
@@ -3864,7 +3865,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   <Button
                     type="button"
                     variant={previewMode === "image" ? "secondary" : "ghost"}
-                    size="xs"
+                    size="sm"
                     onClick={() => setPreviewMode("image")}
                   >
                     Image
@@ -3872,7 +3873,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   <Button
                     type="button"
                     variant={previewMode === "3d" ? "secondary" : "ghost"}
-                    size="xs"
+                    size="sm"
                     onClick={() => setPreviewMode("3d")}
                   >
                     3D
@@ -3938,7 +3939,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
             <div className="h-full overflow-hidden">
               {previewMode === "3d" && selectedSlot?.asset3dId ? (
                 <div className="relative h-full w-full overflow-hidden rounded border border-border bg-black/20">
-                  <Viewer3D assetId={selectedSlot.asset3dId} captureRef={captureRef} enableControls />
+                  <Viewer3D
+                    modelUrl={`/api/assets3d/${selectedSlot.asset3dId}/file`}
+                    allowUserControls
+                    captureRef={captureRef}
+                    className="h-full w-full"
+                  />
                 </div>
               ) : (
                 <MaskCanvas

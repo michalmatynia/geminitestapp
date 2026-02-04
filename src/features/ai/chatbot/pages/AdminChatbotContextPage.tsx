@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger } from "@/shared/ui";
+import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from "@/shared/ui";
 import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
 import Link from "next/link";
 import React, { Suspense, useEffect, useRef, useState } from "react";
@@ -206,7 +206,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
     closeModal();
   };
 
-  const handlePdfUpload = async (file: File, helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+  const handlePdfUpload = async (file: File, helpers?: FileUploadHelpers): Promise<void> => {
     setUploading(true);
     try {
       const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(
@@ -308,7 +308,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
               <FileUploadTrigger
                 accept="application/pdf"
                 disabled={loading || saving || uploading}
-                onFilesSelected={async (files: File[], helpers) => {
+                onFilesSelected={async (files: File[], helpers: FileUploadHelpers) => {
                   const file = files[0];
                   if (!file) return;
                   await handlePdfUpload(file, helpers);

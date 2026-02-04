@@ -276,29 +276,6 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
 }
 
 // Camera auto-framing
-function CameraController({ autoFit }: { autoFit?: boolean }): null {
-  const { camera, scene } = useThree();
-
-  useEffect(() => {
-    if (autoFit) {
-      const box = new THREE.Box3().setFromObject(scene);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-      let distance = maxDim / (2 * Math.tan(fov / 2));
-      distance *= 1.5; // Add some padding
-
-      camera.position.set(center.x + distance * 0.5, center.y + distance * 0.3, center.z + distance);
-      camera.lookAt(center);
-      camera.updateProjectionMatrix();
-    }
-  }, [autoFit, camera, scene]);
-
-  return null;
-}
-
 export type LightingPreset = "studio" | "outdoor" | "dramatic" | "soft";
 export type EnvironmentPreset = "studio" | "sunset" | "dawn" | "night" | "warehouse" | "forest" | "apartment" | "city" | "park" | "lobby";
 
@@ -484,6 +461,31 @@ export function Viewer3D({
     ditheringIntensity,
   ]);
 
+  const modelNode = (
+    <Model3DErrorBoundary {...(onError && { onError })}>
+      <AutoRotateGroup enabled={!allowUserControls && autoRotate} speed={autoRotateSpeed}>
+        <Model3D
+          url={modelUrl}
+          {...(onLoad && { onLoad })}
+          {...(onError && { onError })}
+          castShadow={enableShadows}
+          receiveShadow={enableShadows}
+          {...(modelPosition && { position: modelPosition })}
+          {...(modelRotation && { rotation: modelRotation })}
+          {...(modelScale && { scale: modelScale })}
+        />
+      </AutoRotateGroup>
+    </Model3DErrorBoundary>
+  );
+
+  const framedModel = autoFit
+    ? (
+      <Bounds fit clip observe margin={1.2}>
+        {modelNode}
+      </Bounds>
+    )
+    : modelNode;
+
   return (
     <div className={className}>
       <Canvas
@@ -518,40 +520,12 @@ export function Viewer3D({
               azimuth={[-Math.PI / 4, Math.PI / 4]}
             >
               <Center>
-                <Bounds fit clip observe margin={1.2}>
-                  <Model3DErrorBoundary {...(onError && { onError })}>
-                    <Model3D
-                      url={modelUrl}
-                      {...(onLoad && { onLoad })}
-                      {...(onError && { onError })}
-                      castShadow={enableShadows}
-                      receiveShadow={enableShadows}
-                      {...(modelPosition && { position: modelPosition })}
-                      {...(modelRotation && { rotation: modelRotation })}
-                      {...(modelScale && { scale: modelScale })}
-                    />
-                  </Model3DErrorBoundary>
-                </Bounds>
+                {framedModel}
               </Center>
             </PresentationControls>
           ) : (
             <Center>
-              <Bounds fit clip observe margin={1.2}>
-                <Model3DErrorBoundary {...(onError && { onError })}>
-                  <AutoRotateGroup enabled={!allowUserControls && autoRotate} speed={autoRotateSpeed}>
-                    <Model3D
-                      url={modelUrl}
-                      {...(onLoad && { onLoad })}
-                      {...(onError && { onError })}
-                      castShadow={enableShadows}
-                      receiveShadow={enableShadows}
-                      {...(modelPosition && { position: modelPosition })}
-                      {...(modelRotation && { rotation: modelRotation })}
-                      {...(modelScale && { scale: modelScale })}
-                    />
-                  </AutoRotateGroup>
-                </Model3DErrorBoundary>
-              </Bounds>
+              {framedModel}
             </Center>
           )}
 
@@ -586,8 +560,6 @@ export function Viewer3D({
             maxPolarAngle={Math.PI}
           />
         )}
-
-        <CameraController autoFit={autoFit} />
 
         {/* Post-processing */}
         {hasPostProcessing && effects.length > 0 && (

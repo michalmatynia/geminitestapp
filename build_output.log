@@ -1,17 +1,19 @@
-
-> libapp2@0.1.0 build
-> prisma generate && next build
-
-Loaded Prisma config from prisma.config.ts.
-
-Prisma schema loaded from prisma/schema.prisma.
-
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 374ms
-
-Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-
-
 ▲ Next.js 16.1.6 (Turbopack)
 - Environments: .env
 
   Creating an optimized production build ...
+✓ Compiled successfully in 14.0s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/image-studio/projects/[projectId]/slots/route.ts:33:15
+Type error: Expected 2-3 arguments, but got 1.
+
+[0m [90m 31 |[39m   imageFileId[33m:[39m z[33m.[39mstring()[33m.[39mtrim()[33m.[39moptional()[33m,[39m
+ [90m 32 |[39m   asset3dId[33m:[39m z[33m.[39mstring()[33m.[39mtrim()[33m.[39moptional()[33m,[39m
+[31m[1m>[22m[39m[90m 33 |[39m   metadata[33m:[39m z[33m.[39mrecord(z[33m.[39many())[33m.[39moptional()[33m,[39m
+ [90m    |[39m               [31m[1m^[22m[39m
+ [90m 34 |[39m })[33m;[39m
+ [90m 35 |[39m
+ [90m 36 |[39m [36mconst[39m createSchema [33m=[39m z[33m.[39mobject({[0m
+Next.js build worker exited with code: 1 and signal: null

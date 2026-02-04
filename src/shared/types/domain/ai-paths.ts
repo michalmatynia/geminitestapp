@@ -186,21 +186,21 @@ export type RegexMode = "group" | "extract" | "extract_json";
 
 export type RegexConfig = {
   pattern: string;
-  flags?: string;
-  mode?: RegexMode;
-  matchMode?: RegexMatchMode;
-  groupBy?: string;
-  outputMode?: RegexGroupOutputMode;
-  includeUnmatched?: boolean;
-  unmatchedKey?: string;
-  splitLines?: boolean;
-  sampleText?: string;
-  aiPrompt?: string;
-  aiAutoRun?: boolean;
-  activeVariant?: "manual" | "ai";
-  manual?: { pattern: string; flags?: string; groupBy?: string };
-  aiProposal?: { pattern: string; flags?: string; groupBy?: string };
-  aiProposals?: Array<{ pattern: string; flags?: string; groupBy?: string; createdAt: string }>;
+  flags?: string | undefined;
+  mode?: RegexMode | undefined;
+  matchMode?: RegexMatchMode | undefined;
+  groupBy?: string | undefined;
+  outputMode?: RegexGroupOutputMode | undefined;
+  includeUnmatched?: boolean | undefined;
+  unmatchedKey?: string | undefined;
+  splitLines?: boolean | undefined;
+  sampleText?: string | undefined;
+  aiPrompt?: string | undefined;
+  aiAutoRun?: boolean | undefined;
+  activeVariant?: ("manual" | "ai") | undefined;
+  manual?: { pattern: string; flags?: string | undefined; groupBy?: string | undefined } | undefined;
+  aiProposal?: { pattern: string; flags?: string | undefined; groupBy?: string | undefined } | undefined;
+  aiProposals?: Array<{ pattern: string; flags?: string | undefined; groupBy?: string | undefined; createdAt: string }> | undefined;
 };
 
 export type IteratorConfig = {

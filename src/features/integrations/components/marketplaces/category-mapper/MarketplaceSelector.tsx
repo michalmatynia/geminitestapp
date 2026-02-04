@@ -2,22 +2,7 @@
 
 import { Button } from "@/shared/ui";
 import { Store } from "lucide-react";
-
-type Integration = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type Connection = {
-  id: string;
-  integrationId: string;
-  name: string;
-};
-
-type IntegrationWithConnections = Integration & {
-  connections: Connection[];
-};
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/shared/types";
 
 type MarketplaceSelectorProps = {
   integrations: IntegrationWithConnections[];
@@ -76,7 +61,7 @@ export function MarketplaceSelector({
             {integration.connections.length === 0 ? (
               <p className="text-xs text-gray-600">No connections</p>
             ) : (
-              integration.connections.map((connection: Connection) => (
+              integration.connections.map((connection: IntegrationConnectionBasic) => (
                 <Button
                   key={connection.id}
                   onClick={(): void => onSelectConnection(connection.id)}

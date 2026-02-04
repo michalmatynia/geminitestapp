@@ -30,12 +30,17 @@ export function ImagePickerField({
   const uploadMutation = useUploadCmsMedia();
   const { toast } = useToast();
 
-  const handleFileUpload = async (files: File[]): Promise<void> => {
+  const handleFileUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void; setProgress: (value: number) => void }): Promise<void> => {
     const file = files[0];
     if (!file) return;
 
     try {
-      const result = await uploadMutation.mutateAsync(file);
+      const result = await uploadMutation.mutateAsync({
+        file,
+        onProgress: (loaded: number, total?: number) => {
+          helpers?.reportProgress(loaded, total);
+        },
+      });
       if (result.filepath) {
         onChange(result.filepath);
         toast("Image uploaded successfully.", { variant: "success" });
@@ -81,7 +86,7 @@ export function ImagePickerField({
           className="text-xs"
           accept="image/*"
           disabled={disabled || isUploading}
-          onFilesSelected={(files: File[]) => handleFileUpload(files)}
+          onFilesSelected={(files: File[], helpers) => handleFileUpload(files, helpers)}
         >
           <Upload className="mr-1.5 size-3" />
           {value ? "Replace" : "Upload"}

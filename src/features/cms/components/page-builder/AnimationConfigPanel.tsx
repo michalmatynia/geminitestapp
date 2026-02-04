@@ -2,11 +2,24 @@
 
 import React, { useCallback } from "react";
 import {
+  AlignLeft,
+  Hand,
+  Heading as HeadingIcon,
+  ImageIcon,
+  LayoutGrid,
+  Layers,
+  MousePointer2,
+  MousePointerClick,
+  RotateCw,
+  Square,
+} from "lucide-react";
+import {
   Button,
   Checkbox,
   Label,
   Input,
   Textarea,
+  Tooltip,
   UnifiedSelect,
   SectionPanel,
   RadioGroup,
@@ -143,14 +156,33 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const magnetAxisValue = config.magnetAxis ?? DEFAULT_ANIMATION_CONFIG.magnetAxis ?? "x,y";
   const magnetReturnValue = config.magnetReturn ?? DEFAULT_ANIMATION_CONFIG.magnetReturn ?? 0.35;
 
-  const quickSelectors = [
-    { label: "Self", value: "" },
-    { label: "Children", value: ":scope > *" },
-    { label: "Headings", value: "h1, h2, h3, h4, h5, h6" },
-    { label: "Text", value: "p, li" },
-    { label: "Buttons", value: "button, a" },
-    { label: "Images", value: "img" },
+  const quickSelectors: Array<{ label: string; value: string; icon: React.ElementType }> = [
+    { label: "Self", value: "", icon: Square },
+    { label: "Children", value: ":scope > *", icon: LayoutGrid },
+    { label: "Headings", value: "h1, h2, h3, h4, h5, h6", icon: HeadingIcon },
+    { label: "Text", value: "p, li", icon: AlignLeft },
+    { label: "Buttons", value: "button, a", icon: MousePointerClick },
+    { label: "Images", value: "img", icon: ImageIcon },
   ];
+
+  const nodeTargetOptions: Array<{ value: "self" | "children" | "descendants"; label: string; icon: React.ElementType }> = [
+    { value: "self", label: "Animate me", icon: Square },
+    { value: "children", label: "Animate children (stagger)", icon: LayoutGrid },
+    { value: "descendants", label: "Animate all descendants", icon: Layers },
+  ];
+
+  const observerTypeIcons: Record<string, React.ReactNode> = {
+    "wheel,touch": (
+      <span className="flex items-center gap-0.5">
+        <RotateCw className="size-3.5" />
+        <Hand className="size-3.5" />
+      </span>
+    ),
+    "wheel": <RotateCw className="size-3.5" />,
+    "touch": <Hand className="size-3.5" />,
+    "pointer": <MousePointer2 className="size-3.5" />,
+    "wheel,touch,pointer": <Layers className="size-3.5" />,
+  };
 
   const parallaxAxisOptions: { label: string; value: ParallaxAxis }[] = [
     { label: "Vertical (Y)", value: "y" },
@@ -968,34 +1000,25 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Node animation
             </Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={resolvedNodeTarget === "self" ? "secondary" : "outline"}
-                onClick={(): void => handleNodeTargetChange("self")}
-                className="h-8 text-[11px]"
-              >
-                Animate me
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={resolvedNodeTarget === "children" ? "secondary" : "outline"}
-                onClick={(): void => handleNodeTargetChange("children")}
-                className="h-8 text-[11px]"
-              >
-                Animate children (stagger)
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={resolvedNodeTarget === "descendants" ? "secondary" : "outline"}
-                onClick={(): void => handleNodeTargetChange("descendants")}
-                className="h-8 text-[11px]"
-              >
-                Animate all descendants
-              </Button>
+            <div className="grid grid-cols-3 gap-2 place-items-center">
+              {nodeTargetOptions.map((option) => {
+                const Icon = option.icon;
+                const isActive = resolvedNodeTarget === option.value;
+                return (
+                  <Tooltip key={option.value} content={option.label}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isActive ? "secondary" : "outline"}
+                      onClick={(): void => handleNodeTargetChange(option.value)}
+                      className="h-8 w-10 p-0"
+                      aria-label={option.label}
+                    >
+                      <Icon className="size-4" />
+                    </Button>
+                  </Tooltip>
+                );
+              })}
             </div>
             <p className="text-[10px] text-gray-500">
               Use "Animate me" for element nodes. Use "Animate children" for folder nodes to stagger direct children.
@@ -1019,18 +1042,24 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               className="text-sm"
             />
             <div className="flex flex-wrap gap-1.5">
-              {quickSelectors.map((option: { label: string; value: string }) => (
-                <Button
-                  key={option.label}
-                  type="button"
-                  size="sm"
-                  variant={selectorValue === option.value ? "secondary" : "outline"}
-                  onClick={(): void => handleQuickSelector(option.value)}
-                  className="h-7 px-2 text-[10px]"
-                >
-                  {option.label}
-                </Button>
-              ))}
+              {quickSelectors.map((option) => {
+                const Icon = option.icon;
+                const isActive = selectorValue === option.value;
+                return (
+                  <Tooltip key={option.label} content={option.label}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isActive ? "secondary" : "outline"}
+                      onClick={(): void => handleQuickSelector(option.value)}
+                      className="h-7 w-9 p-0"
+                      aria-label={option.label}
+                    >
+                      <Icon className="size-3.5" />
+                    </Button>
+                  </Tooltip>
+                );
+              })}
             </div>
             <p className="text-[10px] text-gray-500">
               Leave empty to animate the wrapper element. Use <span className="text-gray-400">:scope &gt; *</span> for direct children.
@@ -2057,22 +2086,24 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                   />
                   <div className="flex flex-wrap gap-1.5">
                     {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
-                      <Button
-                        key={option.label}
-                        type="button"
-                        size="sm"
-                        variant={observerTypeValue.includes(option.value) ? "secondary" : "outline"}
-                        onClick={(): void => {
-                          const types = observerTypeValue.split(",").map((t: string) => t.trim()).filter(Boolean);
-                          const next = types.includes(option.value)
-                            ? types.filter((t: string) => t !== option.value)
-                            : [...types, option.value];
-                          onChange({ ...config, observerType: next.join(",") as ObserverType });
-                        }}
-                        className="h-7 px-2 text-[10px]"
-                      >
-                        {option.label}
-                      </Button>
+                      <Tooltip key={option.label} content={option.label}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={observerTypeValue.includes(option.value) ? "secondary" : "outline"}
+                          onClick={(): void => {
+                            const types = observerTypeValue.split(",").map((t: string) => t.trim()).filter(Boolean);
+                            const next = types.includes(option.value)
+                              ? types.filter((t: string) => t !== option.value)
+                              : [...types, option.value];
+                            onChange({ ...config, observerType: next.join(",") as ObserverType });
+                          }}
+                          className="h-7 w-9 p-0"
+                          aria-label={option.label}
+                        >
+                          {observerTypeIcons[option.value] ?? <MousePointer2 className="size-3.5" />}
+                        </Button>
+                      </Tooltip>
                     ))}
                   </div>
                 </div>

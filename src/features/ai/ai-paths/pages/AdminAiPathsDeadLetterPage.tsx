@@ -9,19 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   SectionHeader,
   SectionPanel,
   Table,
@@ -31,6 +19,7 @@ import {
   TableHeader,
   TableRow,
   useToast,
+  ConfirmDialog,
 } from "@/shared/ui";
 import { runsApi } from "@/features/ai/ai-paths/lib";
 import type {
@@ -553,18 +542,16 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             >
               Clear selection
             </Button>
-            <Select
+            <UnifiedSelect
               value={requeueMode}
               onValueChange={(value: string) => setRequeueMode(value as "resume" | "replay")}
-            >
-              <SelectTrigger className="h-8 w-[160px] border-border bg-card/70 text-xs text-white">
-                <SelectValue placeholder="Requeue mode" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900 text-white">
-                <SelectItem value="resume">Resume (continue)</SelectItem>
-                <SelectItem value="replay">Replay (from start)</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "resume", label: "Resume (continue)" },
+                { value: "replay", label: "Replay (from start)" },
+              ]}
+              placeholder="Requeue mode"
+              triggerClassName="h-8 w-[160px] border-border bg-card/70 text-xs text-white"
+            />
             <Button
               variant="outline"
               size="sm"
@@ -982,27 +969,16 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <AlertDialog open={showRetryFailedConfirm} onOpenChange={setShowRetryFailedConfirm}>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Retry failed nodes?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will requeue all failed or blocked nodes for this run. Any node retries
-                      will reset their status to pending and enqueue the run.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={retryFailedPending}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => { void handleRetryFailedNodes(); }}
-                      className="bg-amber-500 text-white hover:bg-amber-600"
-                      disabled={retryFailedPending}
-                    >
-                      {retryFailedPending ? "Retrying..." : "Retry failed nodes"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <ConfirmDialog
+                open={showRetryFailedConfirm}
+                onOpenChange={setShowRetryFailedConfirm}
+                onConfirm={() => { void handleRetryFailedNodes(); }}
+                title="Retry failed nodes?"
+                description="This will requeue all failed or blocked nodes for this run. Any node retries will reset their status to pending and enqueue the run."
+                confirmText="Retry failed nodes"
+                variant="success"
+                loading={retryFailedPending}
+              />
 
               <div className="rounded-md border border-border/70 bg-black/20">
                 <div className="flex items-center justify-between px-4 pt-4 text-xs text-gray-400">

@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, UnifiedSelect, SharedModal, useToast, Alert } from "@/shared/ui";
+import { Button, Label, UnifiedSelect, SharedModal, useToast, Alert, ImageRetryDropdown } from "@/shared/ui";
 import { useState } from "react";
 
 import type { ProductWithImages } from "@/features/products";
@@ -199,34 +199,11 @@ export default function SelectProductForListingModal({
               <span>{error}</span>
               {isBaseComIntegration && isImageExportError(error) ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
-                        disabled={exportMutation.isPending || createListingMutation.isPending}
-                      >
-                        Retry image export
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-card border-border">
-                      {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                        <DropdownMenuItem
-                          key={preset.id}
-                          onSelect={(): void => { void handleImageRetry(preset); }}
-                          className="text-gray-200 focus:bg-gray-800/70"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm">{preset.label}</span>
-                            <span className="text-xs text-gray-400">
-                              {preset.description}
-                            </span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ImageRetryDropdown
+                    presets={imageRetryPresets}
+                    onRetry={(preset) => void handleImageRetry(preset)}
+                    disabled={exportMutation.isPending || createListingMutation.isPending}
+                  />
                   <span className="text-xs text-red-200/80">
                     Applies JPEG resize/compression and retries automatically.
                   </span>

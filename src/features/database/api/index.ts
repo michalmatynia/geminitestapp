@@ -73,17 +73,18 @@ export const restoreDatabaseBackup = async (
 
 export const uploadDatabaseBackup = async (
   dbType: DatabaseType,
-  file: File
+  file: File,
+  onProgress?: (loaded: number, total?: number) => void
 ): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("type", dbType);
-  const res = await fetch("/api/databases/upload", {
-    method: "POST",
-    body: formData,
+  const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
+  const result = await uploadWithProgress<DatabaseBackupResponse>("/api/databases/upload", {
+    formData,
+    onProgress,
   });
-  const payload = await safeJson<DatabaseBackupResponse>(res);
-  return { ok: res.ok, payload };
+  return { ok: result.ok, payload: result.data };
 };
 
 export const deleteDatabaseBackup = async (

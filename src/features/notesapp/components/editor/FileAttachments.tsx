@@ -16,7 +16,7 @@ interface FileAttachmentsProps {
   uploadingSlots: Set<number>;
   getNextAvailableSlot: () => number | null;
   onFileUpload: (slotIndex: number, file: File) => Promise<void>;
-  onMultiFileUpload: (files: FileList | File[]) => Promise<void>;
+  onMultiFileUpload: (files: FileList | File[], helpers?: { setProgress: (value: number) => void }) => Promise<void>;
   onFileDelete: (slotIndex: number) => Promise<void>;
   onInsertFileReference: (file: NoteFileRecord) => void;
   formatFileSize: (bytes: number) => string;
@@ -79,7 +79,7 @@ export function FileAttachments({
                   <FileUploadTrigger
                     multiple
                     asChild
-                    onFilesSelected={(files: File[]) => onMultiFileUpload(files)}
+                    onFilesSelected={(files: File[], helpers) => onMultiFileUpload(files, helpers)}
                   >
                     <span className="flex h-full w-full flex-col items-center justify-center">
                       <Upload size={14} />

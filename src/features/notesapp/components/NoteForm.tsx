@@ -419,7 +419,11 @@ export function NoteForm({
     });
   };
 
-  const handleFileUpload = async (slotIndex: number, file: File): Promise<void> => {
+  const handleFileUpload = async (
+    slotIndex: number,
+    file: File,
+    helpers?: { reportProgress: (loaded: number, total?: number) => void }
+  ): Promise<void> => {
     if (!note?.id) {
       toast("Please save the note first before uploading files");
       return;
@@ -433,7 +437,11 @@ export function NoteForm({
     addUploadingSlot(slotIndex);
 
     try {
-      const newFile = await createFileMutation.mutateAsync({ slotIndex, file });
+      const newFile = await createFileMutation.mutateAsync({
+        slotIndex,
+        file,
+        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
+      });
       setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
       toast("File uploaded successfully");
     } catch (error: unknown) {
@@ -458,15 +466,26 @@ export function NoteForm({
     }
   };
 
-  const handleMultiFileUpload = async (files: FileList | File[]): Promise<void> => {
+  const handleMultiFileUpload = async (
+    files: FileList | File[],
+    helpers?: { setProgress: (value: number) => void }
+  ): Promise<void> => {
     const queue: File[] = Array.from(files);
-    for (const file of queue) {
+    for (let index = 0; index < queue.length; index += 1) {
+      const file = queue[index]!;
       const nextSlot: number | null = getNextAvailableSlot();
       if (nextSlot === null) {
         toast("All file slots are full. Delete a file to upload more.");
         return;
       }
-      await handleFileUpload(nextSlot, file);
+      await handleFileUpload(nextSlot, file, {
+        reportProgress: (loaded: number, total?: number) => {
+          if (!helpers || !total) return;
+          const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+          const combined = Math.round(((index + pct / 100) / queue.length) * 100);
+          helpers.setProgress(combined);
+        },
+      });
     }
   };
 

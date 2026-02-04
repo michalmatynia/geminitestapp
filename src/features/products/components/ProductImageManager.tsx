@@ -20,6 +20,7 @@ import { useProductFormContext } from "@/features/products/context/ProductFormCo
 import { PlusIcon, XIcon, GripVertical, MoreVertical } from "lucide-react";
 import { DebugInfo, ProductImageSlot } from "@/features/products/types/products-ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from "@/shared/utils/drag-drop";
 
 const EXTERNAL_IMAGE_BASE_URL_KEY = "product_images_external_base_url";
 type SlotViewMode = "upload" | "link" | "base64" | "external";
@@ -50,6 +51,7 @@ export default function ProductImageManager(): React.JSX.Element {
   );
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
   const [externalBaseInput, setExternalBaseInput] = useState(externalBaseSetting);
+  const currentSlotIndexRef = React.useRef<number | null>(null);
 
   useEffect(() => {
     setExternalBaseInput(externalBaseSetting);
@@ -279,8 +281,7 @@ export default function ProductImageManager(): React.JSX.Element {
     setDraggedIndex(index);
     setIsReordering(true);
     setImagesReordering(true);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(index));
+    setDragData(e.dataTransfer, {}, { text: String(index), effectAllowed: "move" });
   };
 
   const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>): void => {
@@ -321,8 +322,9 @@ export default function ProductImageManager(): React.JSX.Element {
     e.preventDefault();
     setDragOverIndex(null);
 
-    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
-    if (isNaN(fromIndex)) return;
+    const rawIndex = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.TEXT]);
+    const fromIndex = parseDragIndex(rawIndex);
+    if (fromIndex === null) return;
 
     if (fromIndex !== toIndex) {
       swapImageSlots(fromIndex, toIndex);

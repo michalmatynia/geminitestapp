@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
 import { uploadFile } from "@/features/files/utils/fileUploader";
-import { createFileUploadEvent, getImageFileRepository } from "@/features/files/server";
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import { getImageFileRepository } from "@/features/files/server";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -59,7 +58,7 @@ function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
     ...formData.getAll("files"),
     ...formData.getAll("files[]"),
     ...formData.getAll("file"),
-  ];
+  ] as unknown[];
 
   return candidates.filter((value): value is UploadedFileLike => isFileLike(value));
 }
@@ -200,18 +199,7 @@ async function POST_handler(
     const formData = await req.formData();
     const folder = formData.get("folder");
     const files = extractUploadedFiles(formData);
-    const requestId = req.headers.get("x-request-id") ?? undefined;
-
     if (files.length === 0) {
-      void createFileUploadEvent({
-        status: "error",
-        category: "studio",
-        projectId,
-        folder: typeof folder === "string" ? folder : null,
-        source: "image-studio.upload",
-        errorMessage: "No files provided",
-        requestId,
-      }).catch(() => {});
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
@@ -230,38 +218,9 @@ async function POST_handler(
           filenameOverride: fileName,
         });
         uploaded.push(record);
-        void createFileUploadEvent({
-          status: "success",
-          category: "studio",
-          projectId,
-          folder: typeof folder === "string" ? folder : null,
-          filename: record.filename ?? fileName,
-          filepath: record.filepath ?? null,
-          mimetype: record.mimetype ?? (file as File).type ?? null,
-          size: typeof record.size === "number" ? record.size : (file as File).size,
-          source: "image-studio.upload",
-          requestId,
-        }).catch(() => {});
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed";
         failures.push({ filename: fileName, error: message });
-        void createFileUploadEvent({
-          status: "error",
-          category: "studio",
-          projectId,
-          folder: typeof folder === "string" ? folder : null,
-          filename: fileName,
-          mimetype: (file as File).type ?? null,
-          size: (file as File).size,
-          source: "image-studio.upload",
-          errorMessage: message,
-          requestId,
-        }).catch(() => {});
-        void ErrorSystem.captureException(error, {
-          service: "image-studio.upload",
-          projectId,
-          filename: fileName,
-        });
       }
     }
 

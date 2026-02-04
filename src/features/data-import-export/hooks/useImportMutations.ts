@@ -2,19 +2,24 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 
-export function useCsvImportMutation(): UseMutationResult<unknown, Error, File> {
+export function useCsvImportMutation(): UseMutationResult<
+  unknown,
+  Error,
+  { file: File; onProgress?: (loaded: number, total?: number) => void }
+> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File): Promise<unknown> => {
+    mutationFn: async ({ file, onProgress }): Promise<unknown> => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/import", {
-        method: "POST",
-        body: formData,
+      const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
+      const result = await uploadWithProgress<unknown>("/api/import", {
+        formData,
+        onProgress,
       });
-      if (!res.ok) throw new Error("Failed to import CSV");
-      return res.json();
+      if (!result.ok) throw new Error("Failed to import CSV");
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate products as they might have been added/updated

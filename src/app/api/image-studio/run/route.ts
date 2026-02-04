@@ -49,6 +49,14 @@ const runSchema = z.object({
     filepath: z.string().min(1),
     id: z.string().optional(),
   }),
+  referenceAssets: z
+    .array(
+      z.object({
+        filepath: z.string().min(1),
+        id: z.string().optional(),
+      })
+    )
+    .optional(),
   prompt: z.string().min(1),
   mask: maskSchema.nullable().optional(),
   studioSettings: z.unknown().optional(),
@@ -225,10 +233,42 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         ? await buildMaskBuffer({ imagePath: diskPath, polygons, invert, feather })
         : null;
 
+    const referenceAssets = parsed.data.referenceAssets ?? [];
+    const referencePaths: string[] = [];
+    const seenPaths = new Set<string>();
+
+    for (const ref of referenceAssets) {
+      const refPath = ref.filepath;
+      if (!refPath) continue;
+      if (refPath === assetPath) continue;
+      if (seenPaths.has(refPath)) continue;
+      if (!refPath.startsWith(`/uploads/studio/${projectId}/`)) {
+        throw badRequestError("Reference asset must belong to the current project.");
+      }
+      const refDiskPath = resolveAssetPath(refPath);
+      ensureWithinProject(refDiskPath, projectId);
+      await fs.stat(refDiskPath).catch(() => {
+        throw badRequestError("Reference asset file not found.");
+      });
+      seenPaths.add(refPath);
+      referencePaths.push(refDiskPath);
+    }
+
+    const maxImages = 16;
+    if (referencePaths.length + 1 > maxImages) {
+      throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
+    }
+
+    const modelName = (settings.targetAi.openai.model ?? "").toLowerCase();
+    if (modelName.includes("dall-e-2") && referencePaths.length > 0) {
+      throw badRequestError("Multiple input images are only supported for GPT image models.");
+    }
+
+    const inputImages = [createReadStream(diskPath), ...referencePaths.map((ref) => createReadStream(ref))];
     const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
       model: settings.targetAi.openai.model,
       prompt: parsed.data.prompt,
-      image: createReadStream(diskPath),
+      image: inputImages.length === 1 ? inputImages[0] : inputImages,
       output_format: format,
       response_format: "b64_json",
     };

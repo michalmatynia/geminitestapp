@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton } from "@/shared/ui";
+import { DataTable, Button, useToast, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton } from "@/shared/ui";
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
@@ -145,12 +145,16 @@ export default function DatabasesPage(): React.JSX.Element {
     }
   };
 
-  const handleUpload = async (files: File[]): Promise<void> => {
+  const handleUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     const file = files[0];
     if (!file) return;
 
     try {
-      const result = await uploadBackup.mutateAsync({ dbType: activeTab, file });
+      const result = await uploadBackup.mutateAsync({
+        dbType: activeTab,
+        file,
+        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
+      });
       if (result.ok) {
         toast("Backup uploaded successfully.", { variant: "success" });
       } else {
@@ -229,7 +233,7 @@ export default function DatabasesPage(): React.JSX.Element {
               Create Backup
             </Button>
             <FileUploadButton
-              onFilesSelected={(files: File[]) => handleUpload(files)}
+              onFilesSelected={(files: File[], helpers) => handleUpload(files, helpers)}
               accept={activeTab === "postgresql" ? ".dump" : ".archive"}
             >
               Upload Backup

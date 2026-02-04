@@ -16,6 +16,7 @@ import {
   validateConnection,
 } from "@/features/ai/ai-paths/lib";
 import { ToastFn } from "@/shared/types/ai-paths-runtime";
+import { DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils/drag-drop";
 
 type UseAiPathsCanvasInteractionsArgs = {
   nodes: AiNode[];
@@ -600,10 +601,12 @@ export function useAiPathsCanvasInteractions({
       notifyLocked();
       return;
     }
-    event.dataTransfer.effectAllowed = "copy";
     const payload = JSON.stringify(node);
-    event.dataTransfer.setData("application/x-ai-node", payload);
-    event.dataTransfer.setData("text/plain", payload);
+    setDragData(
+      event.dataTransfer,
+      { [DRAG_KEYS.AI_NODE]: payload },
+      { text: payload, effectAllowed: "copy" }
+    );
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
@@ -617,8 +620,8 @@ export function useAiPathsCanvasInteractions({
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
     const types = Array.from(event.dataTransfer.types ?? []);
-    const nodeData = event.dataTransfer.getData("application/x-ai-node");
-    const textData = event.dataTransfer.getData("text/plain");
+    const nodeData = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
+    const textData = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.TEXT]);
     const raw = nodeData || textData;
     if (!raw) return;
     if (!nodeData) {
@@ -626,7 +629,7 @@ export function useAiPathsCanvasInteractions({
       if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
         return;
       }
-      if (!types.includes("text/plain")) {
+      if (!types.includes(DRAG_KEYS.TEXT)) {
         return;
       }
     }

@@ -435,25 +435,43 @@ export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResul
   });
 };
 
-export const useCreateNoteFileMutation = (noteId?: string): UseMutationResult<NoteFileRecord, Error, { slotIndex: number; file: File }> => {
+export const useCreateNoteFileMutation = (
+  noteId?: string
+): UseMutationResult<
+  NoteFileRecord,
+  Error,
+  { slotIndex: number; file: File; onProgress?: (loaded: number, total?: number) => void }
+> => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ slotIndex, file }: { slotIndex: number; file: File }): Promise<NoteFileRecord> => {
+    mutationFn: async ({
+      slotIndex,
+      file,
+      onProgress,
+    }: {
+      slotIndex: number;
+      file: File;
+      onProgress?: (loaded: number, total?: number) => void;
+    }): Promise<NoteFileRecord> => {
       if (!noteId) throw new Error("Note ID is required for file upload");
       const formData = new FormData();
       formData.append("file", file);
       formData.append("slotIndex", slotIndex.toString());
 
-      const response = await fetch(`/api/notes/${noteId}/files`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) {
-        const error = (await response.json()) as { error?: string };
+      const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
+      const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
+        `/api/notes/${noteId}/files`,
+        {
+          formData,
+          onProgress,
+        }
+      );
+      if (!result.ok) {
+        const error = result.data as { error?: string };
         throw new Error(error.error || "Failed to upload note file");
       }
-      return response.json() as Promise<NoteFileRecord>;
+      return result.data as NoteFileRecord;
     },
     onSuccess: () => {
       if (noteId) {

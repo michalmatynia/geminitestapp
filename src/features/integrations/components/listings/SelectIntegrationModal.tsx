@@ -1,8 +1,7 @@
 "use client";
 
-import { SharedModal, UnifiedSelect, Button, Label, SectionPanel } from "@/shared/ui";
+import { SharedModal, Button, SectionPanel, IntegrationSelector } from "@/shared/ui";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 import Link from "next/link";
 
 export type SelectIntegrationModalProps = {
@@ -19,13 +18,9 @@ export default function SelectIntegrationModal({
     loading,
     selectedIntegrationId,
     selectedConnectionId,
-    selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useIntegrationSelection();
-
-  // Note: We don't auto-select the integration on initial load
-  // The user should manually select the integration, and then we auto-select the connection
 
   const handleContinue = (): void => {
     if (selectedIntegrationId && selectedConnectionId) {
@@ -54,41 +49,13 @@ export default function SelectIntegrationModal({
           </SectionPanel>
         ) : (
           <>
-            <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-300">
-                Integration
-              </Label>
-              <UnifiedSelect
-                value={selectedIntegrationId}
-                onValueChange={(value: string): void => setSelectedIntegrationId(value)}
-                options={integrations
-                  .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                  .map((integration: IntegrationWithConnections) => ({
-                    value: integration.id,
-                    label: integration.name
-                  }))}
-                placeholder="Select an integration..."
-              />
-            </div>
-
-            {selectedIntegration && selectedIntegration.connections.length > 0 && (
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-300">
-                  Account / Connection
-                </Label>
-                <UnifiedSelect
-                  value={selectedConnectionId}
-                  onValueChange={(value: string): void => setSelectedConnectionId(value)}
-                  options={selectedIntegration.connections
-                    .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                    .map((connection: IntegrationConnectionBasic) => ({
-                      value: connection.id,
-                      label: connection.name
-                    }))}
-                  placeholder="Select an account..."
-                />
-              </div>
-            )}
+            <IntegrationSelector
+              integrations={integrations}
+              selectedIntegrationId={selectedIntegrationId}
+              onIntegrationChange={setSelectedIntegrationId}
+              selectedConnectionId={selectedConnectionId}
+              onConnectionChange={setSelectedConnectionId}
+            />
 
             <div className="flex justify-end gap-3 pt-4">
               <Button

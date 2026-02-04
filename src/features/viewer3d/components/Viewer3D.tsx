@@ -373,6 +373,29 @@ export interface Viewer3DProps {
   modelRotation?: [number, number, number];
   /** Model scale (number or [x, y, z]) */
   modelScale?: number | [number, number, number];
+  /** Provide capture ref to grab screenshots from the WebGL canvas */
+  captureRef?: React.MutableRefObject<(() => string | null) | null>;
+}
+
+function ScreenshotCapture({
+  captureRef,
+}: {
+  captureRef: React.MutableRefObject<(() => string | null) | null>;
+}): React.JSX.Element | null {
+  const { gl } = useThree();
+  useEffect(() => {
+    captureRef.current = () => {
+      try {
+        return gl.domElement.toDataURL("image/png");
+      } catch {
+        return null;
+      }
+    };
+    return (): void => {
+      if (captureRef.current) captureRef.current = null;
+    };
+  }, [captureRef, gl]);
+  return null;
 }
 
 export function Viewer3D({
@@ -411,6 +434,7 @@ export function Viewer3D({
   modelPosition,
   modelRotation,
   modelScale,
+  captureRef,
 }: Viewer3DProps): React.JSX.Element {
   const hasPostProcessing =
     enableDithering ||
@@ -474,6 +498,7 @@ export function Viewer3D({
         }}
         dpr={[1, 2]} // Responsive pixel ratio
       >
+        {captureRef ? <ScreenshotCapture captureRef={captureRef} /> : null}
         {/* eslint-disable react/no-unknown-property */}
         <color attach="background" args={[backgroundColor]} />
         {/* eslint-enable react/no-unknown-property */}

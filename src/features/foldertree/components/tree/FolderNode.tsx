@@ -1,12 +1,16 @@
 "use client";
 
-import { useToast, Button, Input } from "@/shared/ui";
+import { useToast, Input } from "@/shared/ui";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Folder, FolderOpen, ChevronRight, ChevronDown, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
+import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
 
 import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderNodeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { NoteItem } from "./NoteItem";
+import { TreeRow } from "./TreeRow";
+import { TreeCaret } from "./TreeCaret";
+import { TreeActionButton, TreeActionSlot } from "./TreeActions";
+import { getFolderDragId, getNoteDragId, hasDragType, setFolderDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
 
 
 import type { NoteRecord } from "@/shared/types/notes";
@@ -154,7 +158,10 @@ export const FolderNode = React.memo(function FolderNode({
   return (
     <div
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!draggedNoteId) return;
+        const hasNotePayload =
+          Boolean(draggedNoteId) ||
+          hasDragType(e.dataTransfer, [DRAG_KEYS.NOTE_ID, DRAG_KEYS.TEXT]);
+        if (!hasNotePayload) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(true);
@@ -163,15 +170,16 @@ export const FolderNode = React.memo(function FolderNode({
         setIsDragOver(false);
       }}
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!draggedNoteId) return;
+        const noteId = getNoteDragId(e.dataTransfer, draggedNoteId);
+        if (!noteId) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
-        if (draggedNoteId === folder.id) {
+        if (noteId === folder.id) {
           toast("Can't link a note to itself", { variant: "info" });
           return;
         }
-        onRelateNotes(draggedNoteId, folder.id);
+        onRelateNotes(noteId, folder.id);
       }}
     >
       {showReorderZones && (
@@ -185,12 +193,17 @@ export const FolderNode = React.memo(function FolderNode({
           style={{ marginLeft: `${level * 16 + 8}px` }}
         />
       )}
-      <div
+      <TreeRow
         draggable
+        tone="primary"
+        selected={isSelected}
+        dragOver={isDragOver && canDropHere}
+        dragOverClassName="bg-green-600 text-white"
+        depth={level}
+        className="cursor-pointer active:cursor-grabbing gap-1"
         onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
           e.stopPropagation();
-          e.dataTransfer.setData("folderId", folder.id);
-          e.dataTransfer.effectAllowed = "move";
+          setFolderDragData(e.dataTransfer, folder.id);
           onDragStartProp(folder.id);
           const target = e.currentTarget as HTMLElement;
           target.style.opacity = "0.5";
@@ -201,14 +214,6 @@ export const FolderNode = React.memo(function FolderNode({
           setReorderHover(null);
           onDragEndProp();
         }}
-        className={`group relative flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-          isSelected
-            ? "bg-blue-600 text-white"
-            : isDragOver && canDropHere
-            ? "bg-green-600 text-white"
-            : "text-gray-300 hover:bg-muted/50"
-        }`}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
         onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
           e.preventDefault();
           e.stopPropagation();
@@ -236,12 +241,8 @@ export const FolderNode = React.memo(function FolderNode({
           setIsDragOver(false);
           setReorderHover(null);
 
-          const noteId =
-            e.dataTransfer.getData("noteId") ||
-            e.dataTransfer.getData("text/plain") ||
-            draggedNoteId ||
-            "";
-          const folderId = e.dataTransfer.getData("folderId") || draggedFolderId || "";
+          const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || "";
+          const folderId = getFolderDragId(e.dataTransfer, draggedFolderId) || "";
 
           if (noteId) {
             if (noteId === folder.id) {
@@ -272,21 +273,15 @@ export const FolderNode = React.memo(function FolderNode({
         {reorderHover === "below" && (
           <div className="absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90" />
         )}
-        {hasChildren || hasNotes ? (
-          <Button
-            onClick={(): void => onToggleExpand(folder.id)}
-            className="p-0.5 hover:bg-gray-700 rounded"
-            aria-label={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-4" />
-            ) : (
-              <ChevronRight className="size-4" />
-            )}
-          </Button>
-        ) : (
-          <div className="w-5" />
-        )}
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={hasChildren || hasNotes}
+          ariaLabel={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
+          onToggle={(): void => onToggleExpand(folder.id)}
+          iconClassName="size-4"
+          buttonClassName="hover:bg-gray-700"
+          placeholderClassName="w-5"
+        />
 
         <div
           onClick={(): void => { if (!isRenaming) onSelect(folder.id); }}
@@ -316,50 +311,54 @@ export const FolderNode = React.memo(function FolderNode({
         </div>
 
         {!isRenaming && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-            <Button
+          <TreeActionSlot show="hover" isVisible={isSelected}>
+            <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onCreateNote(folder.id);
               }}
-              className="p-1 hover:bg-gray-700 rounded"
+              size="sm"
+              tone="muted"
               title="Add note"
             >
               <FilePlus className="size-3" />
-            </Button>
-            <Button
+            </TreeActionButton>
+            <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onCreateSubfolder(folder.id);
               }}
-              className="p-1 hover:bg-gray-700 rounded"
+              size="sm"
+              tone="muted"
               title="Add subfolder"
             >
               <FolderPlus className="size-3" />
-            </Button>
-            <Button
+            </TreeActionButton>
+            <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onStartRename(folder.id);
               }}
-              className="p-1 hover:bg-gray-700 rounded"
+              size="sm"
+              tone="muted"
               title="Rename folder"
             >
               <Edit2 className="size-3" />
-            </Button>
-            <Button
+            </TreeActionButton>
+            <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onDelete(folder.id);
               }}
-              className="p-1 hover:bg-red-600 rounded"
+              size="sm"
+              tone="danger"
               title="Delete folder and all contents"
             >
               <Trash2 className="size-3" />
-            </Button>
-          </div>
+            </TreeActionButton>
+          </TreeActionSlot>
         )}
-      </div>
+      </TreeRow>
       {showReorderZones && (
         <div
           onDragOver={handleReorderDragOver("below")}

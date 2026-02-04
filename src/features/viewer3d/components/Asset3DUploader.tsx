@@ -75,20 +75,24 @@ export function Asset3DUploader({
     setTags(tags.filter((t: string) => t !== tag));
   };
 
-  const handleUpload = async (): Promise<void> => {
+  const handleUpload = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     if (!file) return;
 
     setIsUploading(true);
     setError(null);
 
     try {
-      const uploaded = await uploadAsset3DFile(file, {
-        ...(name.trim() && { name: name.trim() }),
-        ...(description.trim() && { description: description.trim() }),
-        ...(category.trim() && { category: category.trim() }),
-        ...(tags.length > 0 && { tags }),
-        isPublic,
-      });
+      const uploaded = await uploadAsset3DFile(
+        file,
+        {
+          ...(name.trim() && { name: name.trim() }),
+          ...(description.trim() && { description: description.trim() }),
+          ...(category.trim() && { category: category.trim() }),
+          ...(tags.length > 0 && { tags }),
+          isPublic,
+        },
+        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      );
       onUpload(uploaded);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, SearchInput, UnifiedSelect } from "@/shared/ui";
+import { Button, SearchInput, UnifiedSelect, MultiSelect } from "@/shared/ui";
 
 import { X, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
 import type { NotesFiltersProps } from "@/features/notesapp/types/notes-ui";
@@ -48,27 +48,14 @@ export function NotesFilters({
         </div>
 
         <div className="mt-2 flex gap-2 items-center">
-          <div className="relative">
-            <UnifiedSelect
-              value=""
-              onValueChange={(val: string) => {
-                if (val && !filterTagIds.includes(val)) {
-                  setFilterTagIds([...filterTagIds, val]);
-                }
-              }}
-              options={[
-                { value: "", label: "Filter by Tag...", disabled: true },
-                ...tags
-                  .filter((t: TagRecord) => !filterTagIds.includes(t.id))
-                  .map((tag: TagRecord) => ({
-                    value: tag.id,
-                    label: tag.name,
-                  })),
-              ]}
-              triggerClassName="h-8 w-40 text-xs bg-gray-800 border-border text-gray-300"
-              placeholder="Filter by Tag..."
-            />
-          </div>
+          <MultiSelect
+            options={tags.map((t: TagRecord) => ({ value: t.id, label: t.name }))}
+            selected={filterTagIds}
+            onChange={setFilterTagIds}
+            placeholder="Filter by Tag..."
+            searchPlaceholder="Search tags..."
+            className="w-48"
+          />
           {filterTagIds.map((tagId: string) => {
             const tag = tags.find((t: TagRecord) => t.id === tagId);
             if (!tag) return null;

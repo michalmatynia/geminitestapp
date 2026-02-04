@@ -318,21 +318,26 @@ export function useDeleteTheme(): UseMutationResult<string, Error, string> {
   });
 }
 
-export function useUploadCmsMedia(): UseMutationResult<ImageFileRecord, Error, File> {
+export function useUploadCmsMedia(): UseMutationResult<
+  ImageFileRecord,
+  Error,
+  { file: File; onProgress?: (loaded: number, total?: number) => void }
+> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, onProgress }) => {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/cms/media", {
-        method: "POST",
-        body: formData,
+      const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
+      const result = await uploadWithProgress<ImageFileRecord>("/api/cms/media", {
+        formData,
+        onProgress,
       });
-      if (!res.ok) {
-        const data = (await res.json().catch((): Record<string, unknown> => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Upload failed");
+      if (!result.ok) {
+        const data = result.data as { error?: string };
+        throw new Error(data?.error ?? "Upload failed");
       }
-      return (await res.json()) as ImageFileRecord;
+      return result.data as ImageFileRecord;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["files"] });

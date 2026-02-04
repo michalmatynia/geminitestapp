@@ -5,6 +5,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 
 import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { createFileUploadEvent } from "@/features/files/services/file-upload-events";
 import { noteService } from "@/features/notesapp/server";
 import type { NoteFileRecord } from "@/shared/types/notes";
 import { ErrorSystem } from "@/features/observability/server";
@@ -138,9 +139,33 @@ export async function uploadFile(
       size: file.size,
     };
     const imageFile = await imageFileRepository.createImageFile(recordInput);
+    void createFileUploadEvent({
+      status: "success",
+      category: options?.category ?? null,
+      projectId: options?.projectId ?? null,
+      folder: options?.folder ?? null,
+      filename,
+      filepath: recordInput.filepath,
+      mimetype: recordInput.mimetype,
+      size: recordInput.size,
+      source: "fileUploader.uploadFile",
+    }).catch(() => {});
 
     return imageFile;
   } catch (error) {
+    void createFileUploadEvent({
+      status: "error",
+      category: options?.category ?? null,
+      projectId: options?.projectId ?? null,
+      folder: options?.folder ?? null,
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type,
+      size: file.size,
+      source: "fileUploader.uploadFile",
+      errorMessage: error instanceof Error ? error.message : "Upload failed",
+      meta: options?.allowOrphanRecord ? { orphanRecord: true } : null,
+    }).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: "fileUploader",
       action: "uploadFile",
@@ -189,9 +214,30 @@ export async function uploadNoteFile(
       mimetype: file.type,
       size: file.size,
     });
+    void createFileUploadEvent({
+      status: "success",
+      category: "notes",
+      projectId: noteId,
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type,
+      size: file.size,
+      source: "fileUploader.uploadNoteFile",
+    }).catch(() => {});
 
     return noteFile;
   } catch (error) {
+    void createFileUploadEvent({
+      status: "error",
+      category: "notes",
+      projectId: noteId,
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type,
+      size: file.size,
+      source: "fileUploader.uploadNoteFile",
+      errorMessage: error instanceof Error ? error.message : "Upload failed",
+    }).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: "fileUploader",
       action: "uploadNoteFile",

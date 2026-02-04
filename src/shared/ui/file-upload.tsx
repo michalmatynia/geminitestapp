@@ -9,39 +9,126 @@ import { Button, type ButtonProps } from "./button";
 export type FileUploadButtonProps = Omit<ButtonProps, "type" | "onClick"> & {
   accept?: string;
   multiple?: boolean;
-  onFilesSelected: (files: File[]) => void | Promise<void>;
+  enableDrop?: boolean;
+  enablePaste?: boolean;
+  showProgress?: boolean;
+  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
   onError?: (error: unknown) => void;
 };
 
+export type FileUploadHelpers = {
+  setProgress: (value: number) => void;
+  reportProgress: (loaded: number, total?: number) => void;
+};
+
+const normalizeFiles = (files: File[], multiple?: boolean): File[] =>
+  multiple ? files : files.slice(0, 1);
+
+const extractFilesFromDataTransfer = (dataTransfer: DataTransfer | null): File[] => {
+  if (!dataTransfer) return [];
+  if (dataTransfer.files && dataTransfer.files.length > 0) {
+    return Array.from(dataTransfer.files);
+  }
+  const items = Array.from(dataTransfer.items || []);
+  return items
+    .filter((item: DataTransferItem) => item.kind === "file")
+    .map((item: DataTransferItem) => item.getAsFile())
+    .filter((file: File | null): file is File => Boolean(file));
+};
+
+const extractFilesFromClipboard = (clipboardData: DataTransfer | null): File[] => {
+  if (!clipboardData) return [];
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    return Array.from(clipboardData.files);
+  }
+  const items = Array.from(clipboardData.items || []);
+  return items
+    .filter((item: DataTransferItem) => item.kind === "file")
+    .map((item: DataTransferItem) => item.getAsFile())
+    .filter((file: File | null): file is File => Boolean(file));
+};
+
+const composeEventHandler =
+  <E extends React.SyntheticEvent>(
+    theirHandler: ((event: E) => void) | undefined,
+    ourHandler: (event: E) => void
+  ) =>
+  (event: E): void => {
+    theirHandler?.(event);
+    if (!event.defaultPrevented) {
+      ourHandler(event);
+    }
+  };
+
 export function FileUploadButton({
   accept,
-  multiple,
+  multiple = true,
+  enableDrop = true,
+  enablePaste = true,
+  showProgress = true,
   onFilesSelected,
   onError,
   children,
   ...buttonProps
 }: FileUploadButtonProps): React.JSX.Element {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
 
-  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const list = event.target.files;
-    event.target.value = "";
-    if (!list || list.length === 0) return;
-    const files = Array.from(list);
-
+  const handleSelectedFiles = async (files: File[]): Promise<void> => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setProgress(0);
+    const helpers: FileUploadHelpers = {
+      setProgress: (value: number): void => {
+        const next = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+        setProgress(next);
+      },
+      reportProgress: (loaded: number, total?: number): void => {
+        if (!total || total <= 0) return;
+        const next = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+        setProgress(next);
+      },
+    };
     try {
-      await onFilesSelected(files);
+      await onFilesSelected(normalizeFiles(files, multiple), helpers);
+      helpers.setProgress(100);
     } catch (error) {
       if (onError) {
         onError(error);
       } else {
         console.error("FileUploadButton: upload failed", error);
       }
+    } finally {
+      setIsUploading(false);
     }
   };
 
+  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const list = event.target.files;
+    event.target.value = "";
+    if (!list || list.length === 0) return;
+    await handleSelectedFiles(Array.from(list));
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLButtonElement>): Promise<void> => {
+    if (!enableDrop || buttonProps.disabled) return;
+    event.preventDefault();
+    const files = extractFilesFromDataTransfer(event.dataTransfer);
+    if (files.length === 0) return;
+    await handleSelectedFiles(files);
+  };
+
+  const handlePaste = async (event: React.ClipboardEvent<HTMLButtonElement>): Promise<void> => {
+    if (!enablePaste || buttonProps.disabled) return;
+    const files = extractFilesFromClipboard(event.clipboardData);
+    if (files.length === 0) return;
+    event.preventDefault();
+    await handleSelectedFiles(files);
+  };
+
   return (
-    <>
+    <span className="inline-flex flex-col gap-1">
       <Input
         ref={inputRef}
         type="file"
@@ -57,10 +144,35 @@ export function FileUploadButton({
         type="button"
         {...buttonProps}
         onClick={() => inputRef.current?.click()}
+        onDragOver={composeEventHandler(
+          buttonProps.onDragOver,
+          (event: React.DragEvent<HTMLButtonElement>): void => {
+            if (!enableDrop || buttonProps.disabled) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "copy";
+          }
+        )}
+        onDrop={composeEventHandler(buttonProps.onDrop, (event: React.DragEvent<HTMLButtonElement>): void => {
+          void handleDrop(event);
+        })}
+        onPaste={composeEventHandler(buttonProps.onPaste, (event: React.ClipboardEvent<HTMLButtonElement>): void => {
+          void handlePaste(event);
+        })}
       >
         {children}
       </Button>
-    </>
+      {showProgress && isUploading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-1 w-full overflow-hidden rounded bg-slate-800/60">
+            <span
+              className="block h-full rounded bg-blue-500/70 transition-[width] duration-150"
+              style={{ width: `${Math.max(2, progress)}%` }}
+            />
+          </span>
+          <span className="text-[10px] text-gray-400 tabular-nums">{Math.round(progress)}%</span>
+        </span>
+      ) : null}
+    </span>
   );
 }
 
@@ -70,43 +182,86 @@ export type FileUploadTriggerProps = {
   disabled?: boolean;
   asChild?: boolean;
   className?: string;
-  onFilesSelected: (files: File[]) => void | Promise<void>;
+  enableDrop?: boolean;
+  enablePaste?: boolean;
+  showProgress?: boolean;
+  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
   onError?: (error: unknown) => void;
   children: React.ReactNode;
 };
 
 export function FileUploadTrigger({
   accept,
-  multiple,
+  multiple = true,
   disabled,
   asChild,
   className,
+  enableDrop = true,
+  enablePaste = true,
+  showProgress = true,
   onFilesSelected,
   onError,
   children,
 }: FileUploadTriggerProps): React.JSX.Element {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const Comp = asChild ? Slot : "span";
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
 
-  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const list = event.target.files;
-    event.target.value = "";
-    if (!list || list.length === 0) return;
-    const files = Array.from(list);
-
+  const handleSelectedFiles = async (files: File[]): Promise<void> => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setProgress(0);
+    const helpers: FileUploadHelpers = {
+      setProgress: (value: number): void => {
+        const next = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+        setProgress(next);
+      },
+      reportProgress: (loaded: number, total?: number): void => {
+        if (!total || total <= 0) return;
+        const next = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+        setProgress(next);
+      },
+    };
     try {
-      await onFilesSelected(files);
+      await onFilesSelected(normalizeFiles(files, multiple), helpers);
+      helpers.setProgress(100);
     } catch (error) {
       if (onError) {
         onError(error);
       } else {
         console.error("FileUploadTrigger: upload failed", error);
       }
+    } finally {
+      setIsUploading(false);
     }
   };
 
+  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const list = event.target.files;
+    event.target.value = "";
+    if (!list || list.length === 0) return;
+    await handleSelectedFiles(Array.from(list));
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLElement>): Promise<void> => {
+    if (!enableDrop || disabled) return;
+    event.preventDefault();
+    const files = extractFilesFromDataTransfer(event.dataTransfer);
+    if (files.length === 0) return;
+    await handleSelectedFiles(files);
+  };
+
+  const handlePaste = async (event: React.ClipboardEvent<HTMLElement>): Promise<void> => {
+    if (!enablePaste || disabled) return;
+    const files = extractFilesFromClipboard(event.clipboardData);
+    if (files.length === 0) return;
+    event.preventDefault();
+    await handleSelectedFiles(files);
+  };
+
   return (
-    <>
+    <span className="inline-flex flex-col gap-1">
       <Input
         ref={inputRef}
         type="file"
@@ -133,9 +288,31 @@ export function FileUploadTrigger({
             inputRef.current?.click();
           }
         }}
+        onDragOver={(event: React.DragEvent<HTMLElement>): void => {
+          if (!enableDrop || disabled) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(event: React.DragEvent<HTMLElement>): void => {
+          void handleDrop(event);
+        }}
+        onPaste={(event: React.ClipboardEvent<HTMLElement>): void => {
+          void handlePaste(event);
+        }}
       >
         {children}
       </Comp>
-    </>
+      {showProgress && isUploading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-1 w-full overflow-hidden rounded bg-slate-800/60">
+            <span
+              className="block h-full rounded bg-blue-500/70 transition-[width] duration-150"
+              style={{ width: `${Math.max(2, progress)}%` }}
+            />
+          </span>
+          <span className="text-[10px] text-gray-400 tabular-nums">{Math.round(progress)}%</span>
+        </span>
+      ) : null}
+    </span>
   );
 }

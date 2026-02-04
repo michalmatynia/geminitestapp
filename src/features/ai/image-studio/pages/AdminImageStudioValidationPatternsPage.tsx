@@ -453,7 +453,6 @@ export function AdminImageStudioValidationPatternsPage({
               Export learned
             </Button>
             <FileUploadButton
-              type="button"
               variant="outline"
               accept="application/json"
               onFilesSelected={(files: File[]) => {
@@ -465,7 +464,6 @@ export function AdminImageStudioValidationPatternsPage({
               Import JSON
             </FileUploadButton>
             <FileUploadButton
-              type="button"
               variant="outline"
               accept="application/json"
               onFilesSelected={(files: File[]) => {

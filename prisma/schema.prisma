@@ -115,6 +115,8 @@ model ImageFile {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   products  ProductImage[] // Relation to the join table
+  imageStudioSlotImages      ImageStudioSlot[] @relation("ImageStudioSlotImage")
+  imageStudioSlotScreenshots ImageStudioSlot[] @relation("ImageStudioSlotScreenshot")
 }
 
 enum CurrencyCode {
@@ -1158,6 +1160,31 @@ model Asset3D {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  imageStudioSlots ImageStudioSlot[]
+
   @@index([category])
   @@index([isPublic])
+}
+
+model ImageStudioSlot {
+  id               String   @id @default(cuid())
+  projectId        String
+  name             String
+  folderPath       String   @default("")
+  position         Int?
+  imageFileId      String?
+  imageUrl         String?
+  imageBase64      String?
+  asset3dId        String?
+  screenshotFileId String?
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  imageFile      ImageFile? @relation("ImageStudioSlotImage", fields: [imageFileId], references: [id], onDelete: SetNull)
+  screenshotFile ImageFile? @relation("ImageStudioSlotScreenshot", fields: [screenshotFileId], references: [id], onDelete: SetNull)
+  asset3d        Asset3D?   @relation(fields: [asset3dId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([folderPath])
 }

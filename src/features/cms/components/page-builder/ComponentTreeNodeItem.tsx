@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  ChevronRight,
-  ChevronDown,
   Heading,
   AlignLeft,
   MousePointerClick,
@@ -35,6 +33,11 @@ import {
   Frame,
   type LucideIcon,
 } from "lucide-react";
+import { TreeRow } from "@/features/foldertree/components/tree/TreeRow";
+import { TreeCaret } from "@/features/foldertree/components/tree/TreeCaret";
+import { TreeActionButton, TreeActionSlot } from "@/features/foldertree/components/tree/TreeActions";
+import { readBlockDragData, readSectionDragData, setBlockDragData, setSectionDragData } from "../../utils/page-builder-dnd";
+import { DRAG_KEYS, hasDragType } from "@/shared/utils/drag-drop";
 import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
 import { BlockPicker } from "./BlockPicker";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
@@ -244,7 +247,8 @@ export function SectionNodeItem({
 
   return (
     <div className="group/section">
-      <div
+      <TreeRow
+        tone="none"
         draggable="true"
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
@@ -257,12 +261,12 @@ export function SectionNodeItem({
           e.stopPropagation();
 
           // Set drag data FIRST - this must happen synchronously
-          e.dataTransfer.setData("text/plain", section.id);
-          e.dataTransfer.setData("sectionId", section.id);
-          e.dataTransfer.setData("sectionType", section.type);
-          e.dataTransfer.setData("sectionZone", section.zone);
-          e.dataTransfer.setData("sectionIndex", sectionIndex.toString());
-          e.dataTransfer.effectAllowed = "move";
+          setSectionDragData(e.dataTransfer, {
+            id: section.id,
+            type: section.type,
+            zone: section.zone,
+            index: sectionIndex,
+          });
 
           // IMPORTANT: Defer React state updates to prevent re-render from cancelling drag
           setTimeout(() => {
@@ -281,16 +285,17 @@ export function SectionNodeItem({
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          const sectionDrag = readSectionDragData(e.dataTransfer, {
+            id: draggedSectionId,
+            zone: draggedSectionZone,
+            index: draggedSectionIndex,
+          });
+          const dragSectionId = sectionDrag.id;
           if (dragSectionId && dragSectionId !== section.id) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const nextDrop = resolveSectionDropPosition(e.clientY, rect);
-            const dragZone =
-              draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
-            const dragIndexRaw = e.dataTransfer.getData("sectionIndex");
-            const parsedIndex = dragIndexRaw ? Number.parseInt(dragIndexRaw, 10) : NaN;
-            const dragIndex =
-              draggedSectionIndex ?? (Number.isNaN(parsedIndex) ? null : parsedIndex);
+            const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
+            const dragIndex = sectionDrag.index;
             if (
               nextDrop &&
               dragZone === section.zone &&
@@ -326,9 +331,14 @@ export function SectionNodeItem({
           setIsSectionDragOver(false);
           const dropPosition = sectionDropPosition;
           setSectionDropPosition(null);
-          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
-          const dragSectionType =
-            draggedSectionType || e.dataTransfer.getData("sectionType") || null;
+          const sectionDrag = readSectionDragData(e.dataTransfer, {
+            id: draggedSectionId,
+            type: draggedSectionType,
+            zone: draggedSectionZone,
+            index: draggedSectionIndex,
+          });
+          const dragSectionId = sectionDrag.id;
+          const dragSectionType = sectionDrag.type;
           if (dragSectionId && dragSectionId !== section.id) {
             if (dragSectionType === "TextElement" && targetAllowsTextElement) {
               onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
@@ -359,14 +369,18 @@ export function SectionNodeItem({
             setDraggedSectionIndex(null);
             setDraggedSectionZone(null);
           } else if (draggedBlockId && !isFileSection) {
-            const fromSection =
-              draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || "";
+            const blockDrag = readBlockDragData(e.dataTransfer, {
+              id: draggedBlockId,
+              type: draggedBlockType,
+              fromSectionId: draggedFromSectionId,
+              fromColumnId: draggedFromColumnId,
+              fromParentBlockId: draggedFromParentBlockId,
+            });
+            const fromSection = blockDrag.fromSectionId ?? "";
             if (!fromSection) return;
-            const fromColumn =
-              (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-            const fromParent =
-              (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
-            const blockType = e.dataTransfer.getData("blockType") || "";
+            const fromColumn = blockDrag.fromColumnId;
+            const fromParent = blockDrag.fromParentBlockId;
+            const blockType = blockDrag.type ?? "";
             const isImageElement = blockType === "ImageElement";
             if (section.type === "Grid") {
               if (isImageElement) {
@@ -425,32 +439,13 @@ export function SectionNodeItem({
         }`}
       >
         <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/section:opacity-100 pointer-events-none" />
-        {canToggle ? (
-          <div
-            role="button"
-            tabIndex={-1}
-            className="shrink-0"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onToggleExpand(section.id);
-            }}
-            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.stopPropagation();
-                onToggleExpand(section.id);
-              }
-            }}
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-3.5" />
-            ) : (
-              <ChevronRight className="size-3.5" />
-            )}
-          </div>
-        ) : (
-          <span className="block size-3.5 shrink-0 pointer-events-none" />
-        )}
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={canToggle}
+          ariaLabel={isExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
+          onToggle={canToggle ? (): void => onToggleExpand(section.id) : undefined}
+          placeholderClassName="block size-3.5 shrink-0 pointer-events-none"
+        />
         <Icon className="size-4 shrink-0 pointer-events-none" />
         <span className="flex-1 truncate text-left pointer-events-none">
           {resolveNodeLabel(section.type, section.settings["label"])}
@@ -461,33 +456,37 @@ export function SectionNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
         )}
-        <div className={`flex items-center gap-0.5 transition pointer-events-none ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}>
-          <button
-            type="button"
+        <TreeActionSlot
+          show="hover"
+          isVisible={isSelected}
+          align="inline"
+          className="gap-0.5 pointer-events-none"
+        >
+          <TreeActionButton
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onToggleSectionVisibility(section.id, !isHidden);
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10 pointer-events-auto"
+            className="pointer-events-auto"
             title={isHidden ? "Show section" : "Hide section"}
           >
             {isHidden ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-          </button>
-          <button
-            type="button"
+          </TreeActionButton>
+          <TreeActionButton
+            tone="danger"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onRemoveSection(section.id);
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 pointer-events-auto"
+            className="pointer-events-auto"
             title="Delete section"
           >
             <Trash2 className="size-3" />
-          </button>
-        </div>
-      </div>
+          </TreeActionButton>
+        </TreeActionSlot>
+      </TreeRow>
 
 
       {isExpanded && section.type === "Grid" && (
@@ -613,8 +612,12 @@ export function SectionNodeItem({
         <div
           className={`ml-4 border-l pl-1 ${isContentDragOver ? "border-emerald-500 bg-emerald-600/10" : "border-border/30"}`}
           onDragOver={(e: React.DragEvent) => {
-            const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
-            const dragId = draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const blockDrag = readBlockDragData(e.dataTransfer, {
+              id: draggedBlockId,
+              type: draggedBlockType,
+            });
+            const dragId = blockDrag.id;
             if (!dragId && !hasBlockPayload) return;
             e.preventDefault();
             e.stopPropagation();
@@ -628,12 +631,19 @@ export function SectionNodeItem({
             e.preventDefault();
             e.stopPropagation();
             setIsContentDragOver(false);
-            const dragId = draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+            const blockDrag = readBlockDragData(e.dataTransfer, {
+              id: draggedBlockId,
+              type: draggedBlockType,
+              fromSectionId: draggedFromSectionId,
+              fromColumnId: draggedFromColumnId,
+              fromParentBlockId: draggedFromParentBlockId,
+            });
+            const dragId = blockDrag.id;
             if (!dragId) return;
-            const fromSection = draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || "";
+            const fromSection = blockDrag.fromSectionId ?? "";
             if (!fromSection) return;
-            const fromColumn = (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-            const fromParent = (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+            const fromColumn = blockDrag.fromColumnId;
+            const fromParent = blockDrag.fromParentBlockId;
             if (fromColumn || fromParent) {
               onDropBlockToSection(dragId, fromSection, fromColumn || undefined, section.id, section.blocks.length, fromParent || undefined);
             } else {
@@ -770,7 +780,8 @@ function SlideshowFrameNodeItem({
 
   return (
     <div className="group/frame">
-      <div
+      <TreeRow
+        tone="none"
         role="button"
         tabIndex={0}
         draggable
@@ -783,13 +794,13 @@ function SlideshowFrameNodeItem({
         }}
         onDragStart={(e: React.DragEvent) => {
           e.stopPropagation();
-          e.dataTransfer.setData("blockId", frame.id);
-          e.dataTransfer.setData("text/plain", frame.id);
-          e.dataTransfer.setData("blockType", frame.type);
-          e.dataTransfer.setData("fromSectionId", sectionId);
-          e.dataTransfer.setData("fromColumnId", "");
-          e.dataTransfer.setData("fromParentBlockId", "");
-          e.dataTransfer.effectAllowed = "move";
+          setBlockDragData(e.dataTransfer, {
+            id: frame.id,
+            type: frame.type,
+            fromSectionId: sectionId,
+            fromColumnId: "",
+            fromParentBlockId: "",
+          });
           setTimeout(() => {
             setDraggedBlockId(frame.id);
             if (setDraggedBlockType) setDraggedBlockType(frame.type);
@@ -806,10 +817,15 @@ function SlideshowFrameNodeItem({
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
-          const dragType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
-          const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+          });
+          const dragType = blockDrag.type ?? "";
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
           const isFrameDrag = dragType === "SlideshowFrame";
-          const isBlockDrop = isFrameDrag && ((draggedBlockId && draggedBlockId !== frame.id) || hasBlockPayload);
+          const isBlockDrop =
+            isFrameDrag && ((blockDrag.id && blockDrag.id !== frame.id) || hasBlockPayload);
           if (!isBlockDrop) return;
           e.preventDefault();
           e.stopPropagation();
@@ -823,12 +839,15 @@ function SlideshowFrameNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          const dragType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+            fromSectionId: draggedFromSectionId,
+          });
+          const dragType = blockDrag.type ?? "";
           if (dragType !== "SlideshowFrame") return;
-          const dragId =
-            draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
+          const dragId = blockDrag.id;
+          const fromSection = blockDrag.fromSectionId ?? sectionId;
           if (!dragId || dragId === frame.id) return;
           onDropBlock(dragId, fromSection, sectionId, index);
           setDraggedBlockId(null);
@@ -847,51 +866,39 @@ function SlideshowFrameNodeItem({
         }`}
       >
         <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/frame:opacity-100" />
-        <div
-          role="button"
-          tabIndex={-1}
-          draggable={false}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onToggleExpand(frame.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onToggleExpand(frame.id);
-            }
-          }}
-          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-          className="shrink-0"
-        >
-          {isExpanded ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
-        </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse frame" : "Expand frame"}
+          onToggle={(): void => onToggleExpand(frame.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
         <Icon className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{blockLabel}</span>
-        <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-          <ColumnBlockPicker
-            onSelect={(elemType: string) => onAddElementToSectionBlock(sectionId, frame.id, elemType)}
-            allowedBlockTypes={frameAllowedTypes}
-          />
-        </div>
+        <TreeActionSlot show="always" align="inline">
+          <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
+            <ColumnBlockPicker
+              onSelect={(elemType: string) => onAddElementToSectionBlock(sectionId, frame.id, elemType)}
+              allowedBlockTypes={frameAllowedTypes}
+            />
+          </div>
+        </TreeActionSlot>
         {onRemoveBlock && !isDragOver && (
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onRemoveBlock(sectionId, frame.id);
-            }}
-            className="p-0.5 rounded opacity-0 group-hover/frame:opacity-100 hover:bg-red-500/20 hover:text-red-300 text-gray-500 transition-opacity"
-            title="Remove frame"
-          >
-            <Trash2 className="size-3" />
-          </button>
+          <TreeActionSlot show="hover" align="inline">
+            <TreeActionButton
+              tone="danger"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onRemoveBlock(sectionId, frame.id);
+              }}
+              title="Remove frame"
+            >
+              <Trash2 className="size-3" />
+            </TreeActionButton>
+          </TreeActionSlot>
         )}
-      </div>
+      </TreeRow>
 
       {isExpanded && (
         <div className="ml-5 border-l border-border/30 pl-1">
@@ -1010,7 +1017,8 @@ function RowNodeItem({
 
   return (
     <div>
-      <div
+      <TreeRow
+        tone="none"
         role="button"
         tabIndex={0}
         onClick={(e: React.MouseEvent) => {
@@ -1025,9 +1033,12 @@ function RowNodeItem({
           }
         }}
         onDragOver={(e: React.DragEvent) => {
-          const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
-          const dragId =
-            draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+          });
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+          const dragId = blockDrag.id;
           // Allow section drops (for convertible sections like ImageElement, TextElement, etc.)
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
           // Allow drops if we have a block or convertible section being dragged
@@ -1046,8 +1057,12 @@ function RowNodeItem({
           setIsDragOver(false);
 
           // Check if this is a section drop (section drag sets "sectionId" in dataTransfer)
-          const draggedSectionIdFromTransfer = e.dataTransfer.getData("sectionId");
-          const draggedSectionTypeFromTransfer = e.dataTransfer.getData("sectionType");
+          const sectionDrag = readSectionDragData(e.dataTransfer, {
+            id: draggedSectionId,
+            type: draggedSectionType,
+          });
+          const draggedSectionIdFromTransfer = sectionDrag.id;
+          const draggedSectionTypeFromTransfer = sectionDrag.type;
           const isSectionDrag = Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
 
           if (isSectionDrag) {
@@ -1064,20 +1079,23 @@ function RowNodeItem({
           }
 
           // Otherwise it's a block drop
-          const dragId =
-            draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+            fromSectionId: draggedFromSectionId,
+            fromColumnId: draggedFromColumnId,
+            fromParentBlockId: draggedFromParentBlockId,
+          });
+          const dragId = blockDrag.id;
           if (!dragId) return;
 
-          const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
-          const fromColumn =
-            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-          const fromParent =
-            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+          const fromSection = blockDrag.fromSectionId ?? sectionId;
+          const fromColumn = blockDrag.fromColumnId;
+          const fromParent = blockDrag.fromParentBlockId;
           if (!fromSection) return;
 
           // Get the block type being dragged
-          const blockType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
+          const blockType = blockDrag.type ?? "";
 
           // If it's a Column type, route to first column (existing behavior)
           if (blockType === "Column" && firstColumn) {
@@ -1118,50 +1136,41 @@ function RowNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <div
-          role="button"
-          tabIndex={-1}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onToggleExpand(row.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onToggleExpand(row.id);
-            }
-          }}
-          className="shrink-0"
-        >
-          {isExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-        </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse row" : "Expand row"}
+          onToggle={(): void => onToggleExpand(row.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
         <GripVertical className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{rowLabel}</span>
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onAddColumnToRow(sectionId, row.id);
-          }}
-          className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10"
-          title="Add column"
-        >
-          <Plus className="size-3" />
-        </button>
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (!canRemoveRow) return;
-            onRemoveGridRow(sectionId, row.id);
-          }}
-          disabled={!canRemoveRow}
-          className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-          title={canRemoveRow ? "Remove row" : "At least one row is required"}
-        >
-          <Trash2 className="size-3" />
-        </button>
-      </div>
+        <TreeActionSlot show="always" align="inline">
+          <TreeActionButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onAddColumnToRow(sectionId, row.id);
+            }}
+            title="Add column"
+          >
+            <Plus className="size-3" />
+          </TreeActionButton>
+          <TreeActionButton
+            tone="danger"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              if (!canRemoveRow) return;
+              onRemoveGridRow(sectionId, row.id);
+            }}
+            disabled={!canRemoveRow}
+            className="disabled:cursor-not-allowed disabled:opacity-40"
+            title={canRemoveRow ? "Remove row" : "At least one row is required"}
+          >
+            <Trash2 className="size-3" />
+          </TreeActionButton>
+        </TreeActionSlot>
+      </TreeRow>
 
       {isExpanded && (row.blocks ?? []).length > 0 && (
         <div className="ml-4 border-l border-border/30 pl-1">
@@ -1307,9 +1316,12 @@ function ColumnNodeItem({
   const columnLabel = resolveNodeLabel(`Column ${columnIndex + 1}`, column.settings["label"]);
 
   const handleColumnDragOver = (e: React.DragEvent): void => {
-    const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
-    const dragId =
-      draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+    const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+    const blockDrag = readBlockDragData(e.dataTransfer, {
+      id: draggedBlockId,
+      type: draggedBlockType,
+    });
+    const dragId = blockDrag.id;
     const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
     if (!dragId && !hasBlockPayload && !isSectionDrop) return;
     e.preventDefault();
@@ -1323,8 +1335,12 @@ function ColumnNodeItem({
     setIsDragOver(false);
 
     // Check if this is a section drop (section drag sets "sectionId" in dataTransfer)
-    const draggedSectionIdFromTransfer = e.dataTransfer.getData("sectionId");
-    const draggedSectionTypeFromTransfer = e.dataTransfer.getData("sectionType");
+    const sectionDrag = readSectionDragData(e.dataTransfer, {
+      id: draggedSectionId,
+      type: draggedSectionType,
+    });
+    const draggedSectionIdFromTransfer = sectionDrag.id;
+    const draggedSectionTypeFromTransfer = sectionDrag.type;
     const isSectionDrag = Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
 
     if (isSectionDrag) {
@@ -1338,14 +1354,17 @@ function ColumnNodeItem({
     }
 
     // Otherwise it's a block drop
-    const dragId =
-      draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-    const fromSection =
-      draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
-    const fromColumn =
-      (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-    const fromParent =
-      (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+    const blockDrag = readBlockDragData(e.dataTransfer, {
+      id: draggedBlockId,
+      type: draggedBlockType,
+      fromSectionId: draggedFromSectionId,
+      fromColumnId: draggedFromColumnId,
+      fromParentBlockId: draggedFromParentBlockId,
+    });
+    const dragId = blockDrag.id;
+    const fromSection = blockDrag.fromSectionId ?? sectionId;
+    const fromColumn = blockDrag.fromColumnId;
+    const fromParent = blockDrag.fromParentBlockId;
     if (dragId) {
       onDropBlockToColumn(
         dragId,
@@ -1378,7 +1397,8 @@ function ColumnNodeItem({
       onDrop={handleColumnDrop}
       className={`${isDragOver ? "rounded ring-1 ring-emerald-500/30" : ""}`}
     >
-      <div
+      <TreeRow
+        tone="none"
         role="button"
         tabIndex={0}
         onClick={(e: React.MouseEvent) => {
@@ -1406,49 +1426,38 @@ function ColumnNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <div
-          role="button"
-          tabIndex={-1}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onToggleExpand(column.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onToggleExpand(column.id);
-            }
-          }}
-          className="shrink-0"
-        >
-          {isExpanded ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
-        </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse column" : "Expand column"}
+          onToggle={(): void => onToggleExpand(column.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
         <Columns className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{columnLabel}</span>
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (!canRemove) return;
-            onRemoveColumnFromRow(sectionId, column.id, rowId);
-          }}
-          disabled={!canRemove}
-          className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-          title={canRemove ? "Remove column" : "At least one column is required"}
-        >
-          <Minus className="size-3" />
-        </button>
-        <ColumnBlockPicker
-          onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
-        />
-      </div>
+        <TreeActionSlot show="always" align="inline">
+          <TreeActionButton
+            tone="danger"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              if (!canRemove) return;
+              onRemoveColumnFromRow(sectionId, column.id, rowId);
+            }}
+            disabled={!canRemove}
+            className="disabled:cursor-not-allowed disabled:opacity-40"
+            title={canRemove ? "Remove column" : "At least one column is required"}
+          >
+            <Minus className="size-3" />
+          </TreeActionButton>
+          <ColumnBlockPicker
+            onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
+          />
+        </TreeActionSlot>
+      </TreeRow>
 
       {isExpanded && (
         <div
@@ -1609,7 +1618,8 @@ function SectionBlockNodeItem({
 
   return (
     <div className="group/sblock">
-      <div
+      <TreeRow
+        tone="none"
         role="button"
         tabIndex={0}
         draggable
@@ -1622,13 +1632,13 @@ function SectionBlockNodeItem({
         }}
         onDragStart={(e: React.DragEvent) => {
           e.stopPropagation();
-          e.dataTransfer.setData("blockId", block.id);
-          e.dataTransfer.setData("text/plain", block.id);
-          e.dataTransfer.setData("blockType", block.type);
-          e.dataTransfer.setData("fromSectionId", sectionId);
-          e.dataTransfer.setData("fromColumnId", columnId ?? "");
-          e.dataTransfer.setData("fromParentBlockId", "");
-          e.dataTransfer.effectAllowed = "move";
+          setBlockDragData(e.dataTransfer, {
+            id: block.id,
+            type: block.type,
+            fromSectionId: sectionId,
+            fromColumnId: columnId ?? "",
+            fromParentBlockId: "",
+          });
           // Defer state updates to prevent re-render from cancelling drag
           setTimeout(() => {
             setDraggedBlockId(block.id);
@@ -1647,7 +1657,7 @@ function SectionBlockNodeItem({
         }}
         onDragOver={(e: React.DragEvent) => {
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
-          const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
           const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
           if (isTextAtom) {
             if (!isBlockDrop) return;
@@ -1666,17 +1676,20 @@ function SectionBlockNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          const dragId =
-            draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
-          const fromColumn =
-            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-          const fromParent =
-            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+            fromSectionId: draggedFromSectionId,
+            fromColumnId: draggedFromColumnId,
+            fromParentBlockId: draggedFromParentBlockId,
+          });
+          const dragId = blockDrag.id;
+          const fromSection = blockDrag.fromSectionId ?? sectionId;
+          const fromColumn = blockDrag.fromColumnId;
+          const fromParent = blockDrag.fromParentBlockId;
           if (isTextAtom) {
             if (!dragId || dragId === block.id) return;
-            const draggedType = e.dataTransfer.getData("blockType") || "";
+            const draggedType = blockDrag.type ?? "";
             const shouldNest = draggedType === "TextAtomLetter";
             onDropBlockToColumn(
               dragId,
@@ -1725,56 +1738,44 @@ function SectionBlockNodeItem({
         }`}
       >
         <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/sblock:opacity-100" />
-        <div
-          role="button"
-          tabIndex={-1}
-          draggable={false}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onToggleExpand(block.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onToggleExpand(block.id);
-            }
-          }}
-          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-          className="shrink-0"
-        >
-          {isExpanded ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
-        </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse block" : "Expand block"}
+          onToggle={(): void => onToggleExpand(block.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
         <Icon className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{blockLabel}</span>
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
         {!isTextAtom && (
-          <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-            <ColumnBlockPicker
-              onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
-            />
-          </div>
+          <TreeActionSlot show="always" align="inline">
+            <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
+              <ColumnBlockPicker
+                onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+              />
+            </div>
+          </TreeActionSlot>
         )}
         {/* Delete button for section-type blocks */}
         {onRemoveBlock && !isDragOver && (
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onRemoveBlock(sectionId, block.id, columnId);
-            }}
-            className="p-0.5 rounded opacity-0 group-hover/sblock:opacity-100 hover:bg-red-500/20 hover:text-red-300 text-gray-500 transition-opacity"
-            title="Remove block"
-          >
-            <Trash2 className="size-3" />
-          </button>
+          <TreeActionSlot show="hover" align="inline">
+            <TreeActionButton
+              tone="danger"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onRemoveBlock(sectionId, block.id, columnId);
+              }}
+              title="Remove block"
+            >
+              <Trash2 className="size-3" />
+            </TreeActionButton>
+          </TreeActionSlot>
         )}
-      </div>
+      </TreeRow>
 
       {isExpanded && hasChildren && (
         <div className="ml-5 border-l border-border/30 pl-1">
@@ -1875,7 +1876,8 @@ function BlockNodeItem({
   const canDrag = !disableDrag && !isBackgroundMode;
 
   return (
-    <div
+    <TreeRow
+      tone="none"
       role="button"
       tabIndex={0}
       draggable={canDrag}
@@ -1889,13 +1891,13 @@ function BlockNodeItem({
       onDragStart={(e: React.DragEvent) => {
         if (!canDrag) return;
         e.stopPropagation();
-        e.dataTransfer.setData("blockId", block.id);
-        e.dataTransfer.setData("text/plain", block.id);
-        e.dataTransfer.setData("blockType", block.type);
-        e.dataTransfer.setData("fromSectionId", sectionId);
-        e.dataTransfer.setData("fromColumnId", columnId ?? "");
-        e.dataTransfer.setData("fromParentBlockId", parentBlockId ?? "");
-        e.dataTransfer.effectAllowed = "move";
+        setBlockDragData(e.dataTransfer, {
+          id: block.id,
+          type: block.type,
+          fromSectionId: sectionId,
+          fromColumnId: columnId ?? "",
+          fromParentBlockId: parentBlockId ?? "",
+        });
         // Defer state updates to prevent re-render from cancelling drag
         setTimeout(() => {
           setDraggedBlockId(block.id);
@@ -1915,9 +1917,12 @@ function BlockNodeItem({
       }}
       onDragOver={(e: React.DragEvent) => {
         if (disableDrag) return;
-        const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
-        const dragId =
-          draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+        const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+        const blockDrag = readBlockDragData(e.dataTransfer, {
+          id: draggedBlockId,
+          type: _draggedBlockType,
+        });
+        const dragId = blockDrag.id;
         if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id) return;
         e.preventDefault();
         e.stopPropagation();
@@ -1933,15 +1938,18 @@ function BlockNodeItem({
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
-        const dragId =
-          draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+        const blockDrag = readBlockDragData(e.dataTransfer, {
+          id: draggedBlockId,
+          type: _draggedBlockType,
+          fromSectionId: draggedFromSectionId,
+          fromColumnId: draggedFromColumnId,
+          fromParentBlockId: draggedFromParentBlockId,
+        });
+        const dragId = blockDrag.id;
         if (!dragId || dragId === block.id) return;
-        const fromSection =
-          draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
-        const fromColumn =
-          (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
-        const fromParent =
-          (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+        const fromSection = blockDrag.fromSectionId ?? sectionId;
+        const fromColumn = blockDrag.fromColumnId;
+        const fromParent = blockDrag.fromParentBlockId;
         if (columnId && onDropBlockToColumn) {
           onDropBlockToColumn(
             dragId,
@@ -2010,18 +2018,19 @@ function BlockNodeItem({
       )}
       {/* Delete button - visible on hover when selected or always visible on hover */}
       {onRemoveBlock && !isDragOver && !isBackgroundMode && (
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
-          }}
-          className="ml-auto p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300 text-gray-500 transition-opacity"
-          title="Remove block"
-        >
-          <Trash2 className="size-3" />
-        </button>
+        <TreeActionSlot show="hover" align="end">
+          <TreeActionButton
+            tone="danger"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
+            }}
+            title="Remove block"
+          >
+            <Trash2 className="size-3" />
+          </TreeActionButton>
+        </TreeActionSlot>
       )}
-    </div>
+    </TreeRow>
   );
 }

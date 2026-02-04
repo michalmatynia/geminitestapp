@@ -206,10 +206,13 @@ function ChatbotContextPageInner(): React.JSX.Element {
     closeModal();
   };
 
-  const handlePdfUpload = async (file: File): Promise<void> => {
+  const handlePdfUpload = async (file: File, helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     setUploading(true);
     try {
-      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(file);
+      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(
+        file,
+        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      );
       if (data.segments.length === 0) {
         toast("No text found in PDF.", { variant: "info" });
         return;
@@ -305,10 +308,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
               <FileUploadTrigger
                 accept="application/pdf"
                 disabled={loading || saving || uploading}
-                onFilesSelected={async (files: File[]) => {
+                onFilesSelected={async (files: File[], helpers) => {
                   const file = files[0];
                   if (!file) return;
-                  await handlePdfUpload(file);
+                  await handlePdfUpload(file, helpers);
                 }}
                 asChild
               >

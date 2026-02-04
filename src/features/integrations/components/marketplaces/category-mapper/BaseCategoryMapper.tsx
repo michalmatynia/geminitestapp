@@ -1,4 +1,4 @@
-import { useToast, Button, Label, UnifiedSelect } from "@/shared/ui";
+import { useToast, Button, Label, UnifiedSelect, SectionHeader } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -258,45 +258,39 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">
-            Base.com Categories
-          </h2>
-          <p className="text-sm text-gray-400">
-            Connection: {connectionName}
-          </p>
-        </div>
+      <SectionHeader
+        title="Base.com Categories"
+        description={`Connection: ${connectionName}`}
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={(): void => { void handleFetchFromBase(); }}
+              disabled={fetchMutation.isPending}
+              className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
+            >
+              {fetchMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {fetchMutation.isPending ? "Fetching..." : "Fetch Categories"}
+            </Button>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={(): void => { void handleFetchFromBase(); }}
-            disabled={fetchMutation.isPending}
-            className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {fetchMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {fetchMutation.isPending ? "Fetching..." : "Fetch Categories"}
-          </Button>
-
-          <Button
-            onClick={(): void => { void handleSave(); }}
-            disabled={saveMutation.isPending || pendingMappings.size === 0}
-            className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-          >
-            {saveMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {saveMutation.isPending ? "Saving..." : `Save (${pendingMappings.size})`}
-          </Button>
-        </div>
-      </div>
+            <Button
+              onClick={(): void => { void handleSave(); }}
+              disabled={saveMutation.isPending || pendingMappings.size === 0}
+              className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {saveMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saveMutation.isPending ? "Saving..." : `Save (${pendingMappings.size})`}
+            </Button>
+          </div>
+        }
+      />
 
       {/* Catalog Selector */}
       <div className="flex items-center gap-4">

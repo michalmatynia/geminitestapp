@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, UnifiedSelect, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog } from "@/shared/ui";
+import { Button, Input, UnifiedSelect, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, FiltersContainer } from "@/shared/ui";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
@@ -373,73 +373,82 @@ export default function SystemLogsPage(): React.JSX.Element {
           </>
         }
         filters={
-          <SectionPanel>
-            <div className="grid gap-4 md:grid-cols-4">
+          <FiltersContainer
+            gridClassName="md:grid-cols-4"
+            onReset={() => {
+              setLevel("all");
+              setQuery("");
+              setSource("");
+              setFromDate("");
+              setToDate("");
+              setPage(1);
+            }}
+            hasActiveFilters={Boolean(level !== "all" || query || source || fromDate || toDate)}
+          >
+            <div>
+              <Label className="text-xs text-gray-400">Level</Label>
+              <UnifiedSelect
+                value={level}
+                onValueChange={(value: string): void => {
+                  setLevel(value as SystemLogLevel | "all");
+                  setPage(1);
+                }}
+                options={levelOptions}
+                placeholder="All levels"
+                triggerClassName="mt-2"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-400">Search</Label>
+              <Input
+                className="mt-2"
+                placeholder="Message or source"
+                value={query}
+                onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+                  setQuery(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-400">Source</Label>
+              <Input
+                className="mt-2"
+                placeholder="api/products, auth, etc."
+                value={source}
+                onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+                  setSource(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs text-gray-400">Level</Label>
-                <UnifiedSelect
-                  value={level}
-                  onValueChange={(value: string): void => {
-                    setLevel(value as SystemLogLevel | "all");
-                    setPage(1);
-                  }}
-                  options={levelOptions}
-                  placeholder="All levels"
-                  triggerClassName="mt-2"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Search</Label>
+                <Label className="text-xs text-gray-400">From</Label>
                 <Input
                   className="mt-2"
-                  placeholder="Message or source"
-                  value={query}
+                  type="date"
+                  value={fromDate}
                   onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                    setQuery(event.target.value);
+                    setFromDate(event.target.value);
                     setPage(1);
                   }}
                 />
               </div>
               <div>
-                <Label className="text-xs text-gray-400">Source</Label>
+                <Label className="text-xs text-gray-400">To</Label>
                 <Input
                   className="mt-2"
-                  placeholder="api/products, auth, etc."
-                  value={source}
+                  type="date"
+                  value={toDate}
                   onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                    setSource(event.target.value);
+                    setToDate(event.target.value);
                     setPage(1);
                   }}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-400">From</Label>
-                  <Input
-                    className="mt-2"
-                    type="date"
-                    value={fromDate}
-                    onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                      setFromDate(event.target.value);
-                      setPage(1);
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400">To</Label>
-                  <Input
-                    className="mt-2"
-                    type="date"
-                    value={toDate}
-                    onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                      setToDate(event.target.value);
-                      setPage(1);
-                    }}
-                  />
-                </div>
               </div>
             </div>
-          </SectionPanel>
+          </FiltersContainer>
         }
       >
         <div className="space-y-6">

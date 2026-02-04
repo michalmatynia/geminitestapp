@@ -25,6 +25,7 @@ import {
   Trash2,
   FolderPlus,
 } from "lucide-react";
+import { DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils/drag-drop";
 
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from "@/features/products/types";
 import { useSaveCategoryMutation, useDeleteCategoryMutation } from "@/features/products/hooks/useProductSettingsQueries";
@@ -108,8 +109,7 @@ function CategoryNode({
         draggable
         onDragStart={(e: React.DragEvent): void => {
           e.stopPropagation();
-          e.dataTransfer.setData("categoryId", category.id);
-          e.dataTransfer.effectAllowed = "move";
+          setDragData(e.dataTransfer, { [DRAG_KEYS.CATEGORY_ID]: category.id }, { effectAllowed: "move" });
           onDragStart(category.id);
           const target: HTMLElement = e.currentTarget as HTMLElement;
           target.style.opacity = "0.5";
@@ -134,7 +134,7 @@ function CategoryNode({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          const droppedId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
+          const droppedId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? "") || "";
           if (droppedId && canDropHere) {
             onDrop(droppedId, category.id);
           }
@@ -409,7 +409,7 @@ export function CategoriesSettings({
 
   const handleRootDrop = (e: React.DragEvent): void => {
     e.preventDefault();
-    const catId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
+    const catId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? "") || "";
     if (catId) {
       void handleDrop(catId, null);
     }

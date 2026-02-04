@@ -2,7 +2,7 @@
 
 import React from "react";
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from "@/shared/ui";
-import { cn } from "@/shared/utils";
+import { cn, setNoteDragData } from "@/shared/utils";
 
 import Image from "next/image";
 import { ChevronRight, Pin, Star } from "lucide-react";
@@ -127,9 +127,7 @@ function NoteCardBase({
       onDragStart={
         enableDrag
           ? (e: React.DragEvent): void => {
-              e.dataTransfer.setData("noteId", note.id);
-              e.dataTransfer.setData("text/plain", note.id);
-              e.dataTransfer.effectAllowed = "linkMove";
+              setNoteDragData(e.dataTransfer, note.id);
               const target = e.currentTarget as HTMLElement;
               target.style.opacity = "0.5";
               onDragStart(note.id);

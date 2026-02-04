@@ -8,6 +8,7 @@ import {
   FileUploadButton,
   Input,
   Label,
+  MultiSelect,
   SectionPanel,
   Select,
   SelectContent,
@@ -21,9 +22,10 @@ import {
   Tooltip,
   useToast,
 } from "@/shared/ui";
-import { cn } from "@/shared/utils";
+import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
 import {
   Brush,
+  Camera,
   Check,
   Circle,
   Folder,
@@ -31,8 +33,10 @@ import {
   Lasso,
   Maximize2,
   Minimize2,
+  Minus,
   MousePointer2,
   Pentagon,
+  Plus,
   RectangleHorizontal,
   RefreshCcw,
   RotateCcw,
@@ -41,21 +45,27 @@ import {
   Unlink,
   Upload,
   Wand2,
+  X,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import FileManager from "@/features/files/components/FileManager";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
+import type { Asset3DRecord } from "@/features/viewer3d/types";
+import { Viewer3D } from "@/features/viewer3d/components/Viewer3D";
+import { Asset3DPickerField } from "@/features/cms/components/page-builder/shared-fields";
+import { uploadAsset3DFile } from "@/features/viewer3d/api";
 import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
 import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
 import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "../utils/prompt-validator";
 import { formatProgrammaticPrompt } from "../utils/prompt-formatter";
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from "../utils/param-ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { serializeSetting } from "@/shared/utils/settings-json";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings, type PromptValidationRule } from "../utils/studio-settings";
+import { expandFolderPath, normalizeFolderPaths } from "../utils/studio-tree";
 import { AdminImageStudioValidationPatternsPage } from "./AdminImageStudioValidationPatternsPage";
 
 type ToolMode = "select" | "polygon" | "lasso" | "rect" | "ellipse" | "brush";
@@ -73,7 +83,7 @@ type MaskShape = {
 };
 
 type StudioProjectsResponse = { projects: string[] };
-type StudioAssetsResponse = { assets: ImageFileRecord[]; folders?: string[] };
+type StudioSlotsResponse = { slots: ImageStudioSlotRecord[] };
 type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
 type StudioUploadResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filename: string; error: string }> };
 type StudioRunResponse = { outputs: ImageFileRecord[] };
@@ -114,6 +124,7 @@ function clamp01(value: number): number {
 }
 
 const STUDIO_UPLOAD_PREFIX = "/uploads/studio/";
+const SLOT_TREE_KEY_PREFIX = "image_studio_slot_tree_";
 
 function sanitizeStudioProjectId(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
@@ -168,14 +179,56 @@ function normalizeStudioFilepath(projectId: string, filepath: string | null | un
   return normalized;
 }
 
-function normalizeStudioAssets(projectId: string, assets: ImageFileRecord[]): ImageFileRecord[] {
-  if (!assets.length) return assets;
-  const safeProjectId = sanitizeStudioProjectId(projectId);
-  return assets.map((asset: ImageFileRecord) => {
-    const normalized = normalizeStudioFilepath(safeProjectId, asset.filepath);
-    if (!normalized || normalized === asset.filepath) return asset;
-    return { ...asset, filepath: normalized };
+type ImageStudioSlotRecord = {
+  id: string;
+  projectId: string;
+  name: string | null;
+  folderPath: string | null;
+  position?: number | null;
+  imageFileId?: string | null;
+  imageUrl?: string | null;
+  imageBase64?: string | null;
+  asset3dId?: string | null;
+  screenshotFileId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  imageFile?: ImageFileRecord | null;
+  screenshotFile?: ImageFileRecord | null;
+  asset3d?: Asset3DRecord | null;
+};
+
+function parseSlotFoldersSetting(raw: string | null | undefined): string[] {
+  const parsed = parseJsonSetting(raw);
+  if (!parsed || typeof parsed !== "object") return [];
+  const folders = Array.isArray((parsed as { folders?: unknown }).folders)
+    ? ((parsed as { folders?: unknown[] }).folders ?? [])
+    : [];
+  return normalizeFolderPaths(folders.filter((folder: unknown) => typeof folder === "string") as string[]);
+}
+
+function serializeSlotFoldersSetting(folders: string[]): string {
+  return serializeSetting({ version: 1, folders: normalizeFolderPaths(folders) });
+}
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
   });
+}
+
+async function fetchBase64FromUrl(url: string): Promise<string> {
+  const res = await fetch("/api/image-studio/slots/base64", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+  const data = (await res.json().catch(() => null)) as { dataUrl?: string; error?: string } | null;
+  if (!res.ok || !data?.dataUrl) {
+    throw new Error(data?.error || "Failed to load base64");
+  }
+  return data.dataUrl;
 }
 
 async function loadImageElement(src: string): Promise<HTMLImageElement> {
@@ -274,9 +327,7 @@ async function computeBboxFromEdges(src: string): Promise<{ x: number; y: number
   };
 }
 
-function buildAssetTree(projectId: string, assets: ImageFileRecord[], folders: string[]): TreeNode {
-  const safeProjectId = sanitizeStudioProjectId(projectId);
-  const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
+function buildSlotTree(projectId: string, slots: ImageStudioSlotRecord[], folders: string[]): TreeNode {
   const root: TreeNode = { id: "root", name: projectId || "Project", type: "folder", path: "", children: [] };
 
   const ensureFolder = (parent: TreeNode, folderName: string, folderPath: string): TreeNode => {
@@ -291,7 +342,8 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[], folders: s
     return node;
   };
 
-  folders.forEach((folderPath: string) => {
+  const normalizedFolders = normalizeFolderPaths(folders);
+  normalizedFolders.forEach((folderPath: string) => {
     const normalized = folderPath.replace(/\\/g, "/").replace(/^\/+/, "");
     if (!normalized) return;
     const parts = normalized.split("/").filter(Boolean);
@@ -304,26 +356,20 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[], folders: s
     }
   });
 
-  assets.forEach((asset: ImageFileRecord) => {
-    const normalizedPath = normalizeStudioFilepath(safeProjectId, asset.filepath);
-    if (!normalizedPath || !normalizedPath.startsWith(prefix)) return;
-    const relative = normalizedPath.slice(prefix.length).replace(/^\/+/, "");
-    const parts = relative.split("/").filter(Boolean);
-    if (parts.length === 0) return;
-
+  slots.forEach((slot: ImageStudioSlotRecord) => {
+    const folderPath = (slot.folderPath ?? "").replace(/\\/g, "/").replace(/^\/+/, "");
+    const parts = folderPath ? [...folderPath.split("/"), slot.name || slot.id] : [slot.name || slot.id];
     let cursor = root;
     for (let index = 0; index < parts.length; index += 1) {
       const part = parts[index]!;
       const isLast = index === parts.length - 1;
-
       if (isLast) {
-        const normalizedAsset = normalizedPath === asset.filepath ? asset : { ...asset, filepath: normalizedPath };
         cursor.children.push({
-          id: `file:${asset.id}`,
+          id: `slot:${slot.id}`,
           name: part,
           type: "file",
           path: parts.slice(0, -1).join("/"),
-          asset: normalizedAsset,
+          slot,
           children: [],
         });
         cursor.children.sort((a: TreeNode, b: TreeNode) => {
@@ -345,36 +391,46 @@ type TreeNode = {
   name: string;
   type: "folder" | "file";
   path: string; // folder path (relative inside project) for folders; parent folder path for files
-  asset?: ImageFileRecord;
+  slot?: ImageStudioSlotRecord;
   children: TreeNode[];
 };
 
-function AssetTree({
+function SlotTree({
   projectId,
-  assets,
+  slots,
   folders,
   selectedFolder,
-  selectedAssetId,
+  selectedSlotId,
   onSelectFolder,
-  onSelectAsset,
+  onSelectSlot,
+  onMoveSlot,
+  onMoveFolder,
 }: {
   projectId: string;
-  assets: ImageFileRecord[];
+  slots: ImageStudioSlotRecord[];
   folders: string[];
   selectedFolder: string;
-  selectedAssetId: string | null;
+  selectedSlotId: string | null;
   onSelectFolder: (folder: string) => void;
-  onSelectAsset: (asset: ImageFileRecord) => void;
+  onSelectSlot: (slot: ImageStudioSlotRecord) => void;
+  onMoveSlot: (slot: ImageStudioSlotRecord, targetFolder: string) => void;
+  onMoveFolder: (folderPath: string, targetFolder: string) => void;
 }): React.JSX.Element {
-  const tree = useMemo(() => buildAssetTree(projectId, assets, folders), [projectId, assets, folders]);
+  const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const initialExpanded = useMemo(() => new Set(["root"]), []);
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
+  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
 
   // Reset expanded when projectId changes (derived state pattern)
   const [prevProjectId, setPrevProjectId] = useState(projectId);
   if (projectId !== prevProjectId) {
     setPrevProjectId(projectId);
     setExpanded(new Set(["root"]));
+    setDragOverPath(null);
+    setDraggedSlotId(null);
+    setDraggedFolderPath(null);
   }
 
   const toggle = useCallback((id: string): void => {
@@ -390,18 +446,54 @@ function AssetTree({
     if (node.type === "folder") {
       const isOpen = expanded.has(node.id);
       const isSelected = node.path === selectedFolder;
+      const isDragOver = dragOverPath === node.path;
       return (
         <div key={node.id}>
           <button
             type="button"
             className={cn(
               "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs",
-              isSelected ? "bg-muted text-white" : "text-gray-200 hover:bg-muted/60"
+              isSelected ? "bg-muted text-white" : "text-gray-200 hover:bg-muted/60",
+              isDragOver && "ring-1 ring-emerald-400/70"
             )}
             style={{ paddingLeft: 8 + depth * 10 }}
             onClick={() => onSelectFolder(node.path)}
             onDoubleClick={() => toggle(node.id)}
             title={node.path || "Project root"}
+            draggable
+            onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
+              setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: node.path }, { effectAllowed: "move" });
+              setDraggedFolderPath(node.path);
+            }}
+            onDragEnd={() => {
+              setDraggedFolderPath(null);
+              setDragOverPath(null);
+            }}
+            onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
+              if (!draggedSlotId && !draggedFolderPath) return;
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOverPath(node.path);
+              e.dataTransfer.dropEffect = "move";
+            }}
+            onDragLeave={() => {
+              if (dragOverPath === node.path) setDragOverPath(null);
+            }}
+            onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
+              e.preventDefault();
+              e.stopPropagation();
+              const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+              const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
+              setDragOverPath(null);
+              if (slotId) {
+                const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
+                if (slot) onMoveSlot(slot, node.path);
+                return;
+              }
+              if (folderPath) {
+                onMoveFolder(folderPath, node.path);
+              }
+            }}
           >
             <span className="w-4 text-gray-400" onClick={(e: React.MouseEvent): void => { e.stopPropagation(); toggle(node.id); }}>
               {node.children.some((c: TreeNode) => c.type === "folder") || node.children.some((c: TreeNode) => c.type === "file") ? (
@@ -422,9 +514,9 @@ function AssetTree({
       );
     }
 
-    const asset = node.asset;
-    if (!asset) return null;
-    const isSelected = asset.id === selectedAssetId;
+    const slot = node.slot;
+    if (!slot) return null;
+    const isSelected = slot.id === selectedSlotId;
     return (
       <button
         key={node.id}
@@ -434,20 +526,53 @@ function AssetTree({
           isSelected ? "bg-muted text-white" : "text-gray-200 hover:bg-muted/60"
         )}
         style={{ paddingLeft: 18 + depth * 10 }}
-        onClick={() => onSelectAsset(asset)}
-        title={asset.filepath}
+        onClick={() => onSelectSlot(slot)}
+        title={slot.name || slot.id}
+        draggable
+        onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
+          setDragData(e.dataTransfer, { [DRAG_KEYS.ASSET_ID]: slot.id }, { effectAllowed: "move" });
+          setDraggedSlotId(slot.id);
+        }}
+        onDragEnd={() => {
+          setDraggedSlotId(null);
+          setDragOverPath(null);
+        }}
       >
         <ImageIcon className="size-4 text-gray-400" />
-        <span className="truncate">{asset.filename || node.name}</span>
+        <span className="truncate">{slot.name || node.name}</span>
       </button>
     );
   };
 
   return (
-    <div className="h-full overflow-auto rounded border border-border bg-card/40 p-2">
+    <div
+      className="h-full overflow-auto rounded border border-border bg-card/40 p-2"
+      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+        if (!draggedSlotId && !draggedFolderPath) return;
+        e.preventDefault();
+        setDragOverPath("");
+      }}
+      onDragLeave={() => {
+        if (dragOverPath === "") setDragOverPath(null);
+      }}
+      onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
+        e.preventDefault();
+        const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+        const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
+        setDragOverPath(null);
+        if (slotId) {
+          const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
+          if (slot) onMoveSlot(slot, "");
+          return;
+        }
+        if (folderPath) {
+          onMoveFolder(folderPath, "");
+        }
+      }}
+    >
       {tree.children.length === 0 ? (
         <div className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">
-          No folders yet. Upload to the root, or upload with a folder name to create one.
+          No folders yet. Create a folder or add slots here.
         </div>
       ) : (
         renderNode(tree, 0)
@@ -856,7 +981,7 @@ function MaskCanvas({
             <Image
               ref={imgRef}
               src={src}
-              alt="Selected asset"
+              alt="Selected slot"
               fill
               className="select-none object-contain"
               onLoadingComplete={() => syncCanvasSize()}
@@ -877,7 +1002,7 @@ function MaskCanvas({
           />
         </>
       ) : (
-        <div className="text-sm text-gray-400">Select an image asset to preview.</div>
+        <div className="text-sm text-gray-400">Select an image slot to preview.</div>
       )}
     </div>
   );
@@ -911,9 +1036,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [projectId, setProjectId] = useState<string>("");
   const [newProjectId, setNewProjectId] = useState<string>("");
   const [selectedFolder, setSelectedFolder] = useState<string>("");
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
+  const [virtualFolders, setVirtualFolders] = useState<string[]>([]);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
+  const [slotImageUrlDraft, setSlotImageUrlDraft] = useState<string>("");
+  const [slotBase64Draft, setSlotBase64Draft] = useState<string>("");
+  const [slotUpdateBusy, setSlotUpdateBusy] = useState<boolean>(false);
   const hasManualProjectSelectionRef = useRef<boolean>(false);
   const [moveTargetFolder, setMoveTargetFolder] = useState<string>("");
 
@@ -941,6 +1071,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [uiSuggestMode, setUiSuggestMode] = useState<"heuristic" | "ai" | "both">("heuristic");
   const [uiSuggestMinConfidence, setUiSuggestMinConfidence] = useState<number>(0.5);
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+  const [previewMode, setPreviewMode] = useState<"image" | "3d">("image");
+  const captureRef = useRef<(() => string | null) | null>(null);
   const [maskGenLoading, setMaskGenLoading] = useState<boolean>(false);
   const [_maskGenOpen, setMaskGenOpen] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
@@ -1062,7 +1194,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       if (projectId === deletedId) {
         setProjectId("");
         setSelectedFolder("");
-        setSelectedAssetId(null);
+        setSelectedSlotId(null);
       }
       toast("Project deleted.", { variant: "success" });
     },
@@ -1074,7 +1206,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const handleDeleteProject = useCallback(
     async (id: string): Promise<void> => {
       if (!id) return;
-      const confirmed = window.confirm(`Delete project "${id}" and all its assets? This cannot be undone.`);
+      const confirmed = window.confirm(`Delete project "${id}" and all its slots? This cannot be undone.`);
       if (!confirmed) return;
       setPendingDeleteId(id);
       try {
@@ -1086,34 +1218,228 @@ export function AdminImageStudioPage(): React.JSX.Element {
     [deleteProjectMutation]
   );
 
-  const assetsQuery = useQuery({
-    queryKey: ["image-studio", "assets", projectId],
+  const treeKey = useMemo(
+    () => (projectId ? `${SLOT_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null),
+    [projectId]
+  );
+
+  const slotsQuery = useQuery({
+    queryKey: ["image-studio", "slots", projectId],
     enabled: Boolean(projectId),
-    queryFn: async (): Promise<StudioAssetsResponse> => {
+    queryFn: async (): Promise<StudioSlotsResponse> => {
       try {
-        const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`);
-        if (!res.ok) throw new Error("Failed to load assets");
-        const data = (await res.json()) as StudioAssetsResponse;
+        const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
+        if (!res.ok) throw new Error("Failed to load slots");
+        const data = (await res.json()) as StudioSlotsResponse;
         return {
-          assets: Array.isArray(data.assets) ? data.assets : [],
-          folders: Array.isArray(data.folders) ? data.folders : [],
+          slots: Array.isArray(data.slots) ? data.slots : [],
         };
       } catch (error) {
-        logClientError(error, { context: { source: "AdminImageStudioPage", action: "loadAssets", projectId } });
+        logClientError(error, { context: { source: "AdminImageStudioPage", action: "loadSlots", projectId } });
         throw error;
       }
     },
     staleTime: 5_000,
   });
 
+  useEffect(() => {
+    if (!projectId || !treeKey) {
+      setVirtualFolders([]);
+      return;
+    }
+    if (!settingsQuery.data) return;
+    if (virtualFolders.length > 0) return;
+
+    const storedFolders = parseSlotFoldersSetting(settingsQuery.data.get(treeKey));
+    if (storedFolders.length > 0) {
+      setVirtualFolders(storedFolders);
+      return;
+    }
+
+    const derived = normalizeFolderPaths(
+      (slotsQuery.data?.slots ?? [])
+        .map((slot: ImageStudioSlotRecord) => slot.folderPath || "")
+        .filter(Boolean)
+    );
+    setVirtualFolders(derived);
+    if (derived.length > 0) {
+      updateSetting
+        .mutateAsync({
+          key: treeKey,
+          value: serializeSlotFoldersSetting(derived),
+        })
+        .catch((error: unknown) => {
+          logClientError(error, { context: { source: "AdminImageStudioPage", action: "seedSlotsTree" } });
+        });
+    }
+  }, [projectId, settingsQuery.data, slotsQuery.data, treeKey, updateSetting, virtualFolders.length]);
+
+  const persistFolders = useCallback(
+    async (nextFolders: string[]): Promise<void> => {
+      if (!treeKey) return;
+      await updateSetting.mutateAsync({
+        key: treeKey,
+        value: serializeSlotFoldersSetting(nextFolders),
+      });
+    },
+    [treeKey, updateSetting]
+  );
+
+  const createSlots = useCallback(
+    async (slots: Array<Partial<ImageStudioSlotRecord>>): Promise<ImageStudioSlotRecord[]> => {
+      if (!projectId) throw new Error("Select or create a project first.");
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slots }),
+      });
+      const data = (await res.json().catch(() => null)) as StudioSlotsResponse | { error?: string } | null;
+      if (!res.ok) {
+        throw new Error((data && "error" in data && data.error) || "Failed to create slot");
+      }
+      const created = (data && "slots" in data ? data.slots : []) ?? [];
+      queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+        const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+        const byId = new Map<string, ImageStudioSlotRecord>();
+        current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
+        created.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
+        return { slots: Array.from(byId.values()) };
+      });
+      return created;
+    },
+    [projectId, queryClient]
+  );
+
+  const updateSlotMutation = useMutation({
+    mutationFn: async (payload: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
+      const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(payload.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload.data),
+      });
+      const data = (await res.json().catch(() => null)) as ImageStudioSlotRecord | { error?: string } | null;
+      if (!res.ok || !data || "error" in data) {
+        throw new Error((data && "error" in data && data.error) || "Failed to update slot");
+      }
+      return data as ImageStudioSlotRecord;
+    },
+    onSuccess: (slot: ImageStudioSlotRecord): void => {
+      queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+        const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+        const byId = new Map<string, ImageStudioSlotRecord>();
+        current.forEach((item: ImageStudioSlotRecord) => byId.set(item.id, item));
+        byId.set(slot.id, slot);
+        return { slots: Array.from(byId.values()) };
+      });
+    },
+  });
+
+  const deleteSlotMutation = useMutation({
+    mutationFn: async (slotId: string): Promise<void> => {
+      const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Failed to delete slot");
+      }
+    },
+    onSuccess: async (_: void, slotId: string): Promise<void> => {
+      queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+        const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+        return { slots: current.filter((slot: ImageStudioSlotRecord) => slot.id !== slotId) };
+      });
+      if (selectedSlotId === slotId) {
+        setSelectedSlotId(null);
+      }
+      toast("Slot deleted.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to delete slot.", { variant: "error" });
+    },
+  });
+
+  const moveSlotMutation = useMutation({
+    mutationFn: async (payload: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
+      const nextFolder = payload.targetFolder;
+      return updateSlotMutation.mutateAsync({
+        id: payload.slot.id,
+        data: { folderPath: nextFolder || null },
+      });
+    },
+    onSuccess: async (): Promise<void> => {
+      toast("Slot moved.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to move slot.", { variant: "error" });
+    },
+  });
+
+  const handleMoveFolder = useCallback(
+    async (folderPath: string, targetFolder: string): Promise<void> => {
+      if (!folderPath) return;
+      if (folderPath === targetFolder) return;
+      const normalizedSource = normalizeFolderPaths([folderPath])[0] ?? "";
+      const normalizedTarget = normalizeFolderPaths([targetFolder])[0] ?? "";
+      if (normalizedTarget && (normalizedTarget === normalizedSource || normalizedTarget.startsWith(`${normalizedSource}/`))) {
+        toast("Can't move a folder into itself.", { variant: "error" });
+        return;
+      }
+      const baseName = normalizedSource.split("/").pop() ?? "";
+      const newPath = normalizedTarget ? `${normalizedTarget}/${baseName}` : baseName;
+      if (!newPath) return;
+      if (virtualFolders.includes(newPath)) {
+        toast("A folder with that name already exists in the target location.", { variant: "error" });
+        return;
+      }
+
+      const nextFolders = normalizeFolderPaths(
+        virtualFolders.map((path: string) => {
+          if (path === normalizedSource) return newPath;
+          if (path.startsWith(`${normalizedSource}/`)) {
+            return `${newPath}${path.slice(normalizedSource.length)}`;
+          }
+          return path;
+        })
+      );
+
+      setVirtualFolders(nextFolders);
+      if (selectedFolder === normalizedSource || selectedFolder.startsWith(`${normalizedSource}/`)) {
+        const updated = selectedFolder.replace(normalizedSource, newPath);
+        setSelectedFolder(updated);
+      }
+      if (moveTargetFolder === normalizedSource || moveTargetFolder.startsWith(`${normalizedSource}/`)) {
+        const updated = moveTargetFolder.replace(normalizedSource, newPath);
+        setMoveTargetFolder(updated);
+      }
+
+      const slots = slotsQuery.data?.slots ?? [];
+      const updates = slots
+        .filter((slot: ImageStudioSlotRecord) => {
+          const path = slot.folderPath ?? "";
+          return path === normalizedSource || path.startsWith(`${normalizedSource}/`);
+        })
+        .map((slot: ImageStudioSlotRecord) => {
+          const path = slot.folderPath ?? "";
+          const updatedPath = path === normalizedSource ? newPath : `${newPath}${path.slice(normalizedSource.length)}`;
+          return updateSlotMutation.mutateAsync({ id: slot.id, data: { folderPath: updatedPath } });
+        });
+
+      try {
+        await Promise.all(updates);
+        await persistFolders(nextFolders);
+        toast("Folder moved.", { variant: "success" });
+      } catch (error) {
+        logClientError(error, { context: { source: "AdminImageStudioPage", action: "moveFolder" } });
+        toast("Failed to move folder.", { variant: "error" });
+      }
+    },
+    [moveTargetFolder, persistFolders, selectedFolder, slotsQuery.data, toast, updateSlotMutation, virtualFolders]
+  );
+
   const uploadMutation = useMutation({
     mutationFn: async (payload: { files: File[]; folder: string }): Promise<StudioUploadResponse> => {
       if (!projectId) throw new Error("Select or create a project first.");
       const formData = new FormData();
       payload.files.forEach((file: File) => formData.append("files", file));
-      if (payload.folder) {
-        formData.set("folder", payload.folder);
-      }
       const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, {
         method: "POST",
         body: formData,
@@ -1125,22 +1451,39 @@ export function AdminImageStudioPage(): React.JSX.Element {
       }
       return (data ?? { uploaded: [], failures: [] }) as StudioUploadResponse;
     },
-    onSuccess: async (data: StudioUploadResponse): Promise<void> => {
+    onSuccess: async (data: StudioUploadResponse, variables): Promise<void> => {
       if (data.uploaded?.length) {
-        queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
-          const current = Array.isArray(prev?.assets) ? prev?.assets ?? [] : [];
-          const byId = new Map<string, ImageFileRecord>();
-          current.forEach((asset: ImageFileRecord) => byId.set(asset.id, asset));
-          data.uploaded.forEach((asset: ImageFileRecord) => {
-            if (!byId.has(asset.id)) byId.set(asset.id, asset);
-          });
-          return {
-            assets: Array.from(byId.values()),
-            folders: prev?.folders ?? [],
-          };
-        });
+        const fileByName = new Map<string, File>();
+        variables.files.forEach((file: File) => fileByName.set(file.name, file));
+        const slotsCreated = await createSlots(
+          data.uploaded.map((file: ImageFileRecord) => ({
+            name: file.filename ?? "Slot",
+            folderPath: variables.folder || null,
+          }))
+        );
+        await Promise.all(
+          slotsCreated.map(async (slot: ImageStudioSlotRecord, index: number) => {
+            const fileRecord = data.uploaded[index];
+            if (!fileRecord) return;
+            const sourceFile = fileByName.get(fileRecord.filename ?? "") ?? variables.files[index];
+            const dataUrl = sourceFile ? await fileToDataUrl(sourceFile) : null;
+            await updateSlotMutation.mutateAsync({
+              id: slot.id,
+              data: {
+                imageFileId: fileRecord.id,
+                imageUrl: normalizePublicPath(fileRecord.filepath),
+                imageBase64: dataUrl ?? undefined,
+              },
+            });
+          })
+        );
+        if (variables.folder) {
+          const nextFolders = normalizeFolderPaths([...virtualFolders, ...expandFolderPath(variables.folder)]);
+          setVirtualFolders(nextFolders);
+          void persistFolders(nextFolders);
+        }
       }
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "slots", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
       if (data.failures?.length) {
         toast(`Uploaded ${data.uploaded.length} file(s). ${data.failures.length} failed.`, { variant: "info" });
@@ -1156,23 +1499,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const createFolderMutation = useMutation({
     mutationFn: async (folder: string): Promise<string> => {
       if (!projectId) throw new Error("Select or create a project first.");
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/folders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folder }),
-      });
-      const data = (await res.json().catch(() => null)) as { folder?: string; error?: string } | null;
-      if (!res.ok) throw new Error(data?.error || "Failed to create folder");
-      if (!data?.folder) throw new Error("Invalid response");
-      return data.folder;
+      if (!treeKey) throw new Error("Project tree not ready.");
+      const expanded = expandFolderPath(folder);
+      if (expanded.length === 0) throw new Error("Folder name is required.");
+      const nextFolders = normalizeFolderPaths([...virtualFolders, ...expanded]);
+      await persistFolders(nextFolders);
+      return expanded[expanded.length - 1] ?? "";
     },
     onSuccess: async (folder: string): Promise<void> => {
-      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
-        const current = prev ?? { assets: [], folders: [] };
-        const nextFolders = Array.from(new Set([...(current.folders ?? []), folder])).sort((a: string, b: string) => a.localeCompare(b));
-        return { ...current, folders: nextFolders };
-      });
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      setVirtualFolders((prev: string[]) => normalizeFolderPaths([...prev, ...expandFolderPath(folder)]));
       setSelectedFolder(folder);
       setNewFolderName("");
       toast("Folder created.", { variant: "success" });
@@ -1182,52 +1517,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
-  const deleteAssetMutation = useMutation({
-    mutationFn: async (asset: ImageFileRecord): Promise<void> => {
-      if (!projectId) throw new Error("Select or create a project first.");
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: asset.id, filepath: asset.filepath }),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Failed to delete asset");
-      }
-    },
-    onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
-      setSelectedAssetId(null);
-      toast("Asset deleted.", { variant: "success" });
-    },
-    onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to delete asset.", { variant: "error" });
-    },
-  });
-
-  const moveAssetMutation = useMutation({
-    mutationFn: async (payload: { asset: ImageFileRecord; targetFolder: string }): Promise<void> => {
-      if (!projectId) throw new Error("Select or create a project first.");
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/move`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: payload.asset.id, filepath: payload.asset.filepath, targetFolder: payload.targetFolder }),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Failed to move asset");
-      }
-    },
-    onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
-      toast("Asset moved.", { variant: "success" });
-    },
-    onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to move asset.", { variant: "error" });
-    },
-  });
 
   const importFromDriveMutation = useMutation({
     mutationFn: async (payload: { files: ImageFileSelection[]; folder: string }): Promise<StudioImportResponse> => {
@@ -1259,25 +1548,29 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return (data ?? { uploaded: [], failures: [] }) as StudioImportResponse;
     },
     onSuccess: async (data: StudioImportResponse): Promise<void> => {
-      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
-        const current = Array.isArray(prev?.assets) ? prev?.assets ?? [] : [];
-        if (!data.uploaded.length) {
-          return prev ?? { assets: current, folders: [] };
-        }
-        const byId = new Map<string, ImageFileRecord>();
-        current.forEach((asset: ImageFileRecord) => {
-          if (asset && asset.id) byId.set(asset.id, asset);
-        });
-        data.uploaded.forEach((asset: ImageFileRecord) => {
-          if (!asset || !asset.id) return;
-          byId.set(asset.id, asset);
-        });
-        return {
-          assets: Array.from(byId.values()),
-          folders: Array.isArray(prev?.folders) ? prev?.folders : [],
-        };
-      });
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      if (data.uploaded.length) {
+        const slots = await createSlots(
+          data.uploaded.map((file: ImageFileRecord) => ({
+            name: file.filename ?? "Slot",
+            folderPath: selectedFolder || null,
+          }))
+        );
+        await Promise.all(
+          slots.map(async (slot: ImageStudioSlotRecord, index: number) => {
+            const file = data.uploaded[index];
+            if (!file) return;
+            const dataUrl = await fetchBase64FromUrl(file.filepath).catch(() => null);
+            await updateSlotMutation.mutateAsync({
+              id: slot.id,
+              data: {
+                imageFileId: file.id,
+                imageUrl: normalizePublicPath(file.filepath),
+                imageBase64: dataUrl ?? undefined,
+              },
+            });
+          })
+        );
+      }
       if (!data.uploaded.length) {
         const failure = data.failures?.[0];
         toast(
@@ -1297,33 +1590,30 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
-  const assets = useMemo(
-    () => normalizeStudioAssets(projectId, assetsQuery.data?.assets ?? []),
-    [projectId, assetsQuery.data?.assets]
-  );
-  const folders = useMemo(
-    () => (assetsQuery.data?.folders ?? []),
-    [assetsQuery.data?.folders]
-  );
+  const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
+  const folders = useMemo(() => virtualFolders, [virtualFolders]);
   const folderOptions = useMemo(() => {
     const unique = new Set<string>(["", ...folders.filter(Boolean)]);
     return Array.from(unique).sort((a: string, b: string) => a.localeCompare(b));
   }, [folders]);
+  const maxSlotsReached = useMemo(() => slots.length >= 100, [slots.length]);
 
-  const getAssetFolder = useCallback(
-    (asset: ImageFileRecord | null): string => {
-      if (!asset || !projectId) return "";
-      const safeProjectId = sanitizeStudioProjectId(projectId);
-      const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
-      const normalized = normalizeStudioFilepath(safeProjectId, asset.filepath);
-      if (!normalized || !normalized.startsWith(prefix)) return "";
-      const relative = normalized.slice(prefix.length).replace(/^\/+/, "");
-      const parts = relative.split("/").filter(Boolean);
-      if (parts.length <= 1) return "";
-      return parts.slice(0, -1).join("/");
-    },
-    [projectId]
-  );
+  const handleCreateSlot = useCallback(async (): Promise<void> => {
+    if (!projectId) return;
+    if (maxSlotsReached) {
+      toast("You have reached the 100 slot limit.", { variant: "error" });
+      return;
+    }
+    const created = await createSlots([
+      {
+        name: `Slot ${slots.length + 1}`,
+        folderPath: selectedFolder || null,
+      },
+    ]);
+    if (created.length > 0) {
+      setSelectedSlotId(created[0]!.id);
+    }
+  }, [createSlots, maxSlotsReached, projectId, selectedFolder, slots.length, toast]);
 
   const filteredProjects = useMemo((): string[] => {
     const list = projectsQuery.data ?? [];
@@ -1332,23 +1622,94 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return list.filter((id: string) => id.toLowerCase().includes(term));
   }, [projectSearch, projectsQuery.data]);
 
-  const selectedAsset = useMemo(() => {
-    if (!selectedAssetId) return null;
-    return assets.find((a: ImageFileRecord) => a.id === selectedAssetId) ?? null;
-  }, [assets, selectedAssetId]);
+  const selectedSlot = useMemo(() => {
+    if (!selectedSlotId) return null;
+    return slots.find((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId) ?? null;
+  }, [slots, selectedSlotId]);
+
+  const selectedSlotImageSrc = useMemo(() => {
+    if (!selectedSlot) return null;
+    if (selectedSlot.imageBase64) return selectedSlot.imageBase64;
+    const fromUrl = normalizePublicPath(selectedSlot.imageUrl);
+    if (fromUrl) return fromUrl;
+    const fromFile = normalizePublicPath(selectedSlot.imageFile?.filepath ?? null);
+    if (fromFile) return fromFile;
+    const fromScreenshot = normalizePublicPath(selectedSlot.screenshotFile?.filepath ?? null);
+    if (fromScreenshot) return fromScreenshot;
+    return null;
+  }, [selectedSlot]);
+
+  const selectedSlotRunAsset = useMemo(() => {
+    if (!selectedSlot || !projectId) return null;
+    const filepath =
+      normalizePublicPath(selectedSlot.imageFile?.filepath ?? null) ??
+      normalizePublicPath(selectedSlot.imageUrl ?? null) ??
+      normalizePublicPath(selectedSlot.screenshotFile?.filepath ?? null);
+    if (!filepath) return null;
+    const safeProjectId = sanitizeStudioProjectId(projectId);
+    if (!filepath.startsWith(`${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`)) return null;
+    return { id: selectedSlot.imageFileId ?? undefined, filepath };
+  }, [projectId, selectedSlot]);
 
   useEffect(() => {
-    const currentFolder = getAssetFolder(selectedAsset);
+    setSlotImageUrlDraft(selectedSlot?.imageUrl ?? "");
+    setSlotBase64Draft(selectedSlot?.imageBase64 ?? "");
+  }, [selectedSlot?.id]);
+
+  const compositeAssetOptions = useMemo(() => {
+    const options = slots.map((slot: ImageStudioSlotRecord) => {
+      const folder = slot.folderPath ?? "";
+      const name = slot.name || slot.id;
+      const label = folder ? `${folder}/${name}` : name;
+      return {
+        value: slot.id,
+        label,
+        disabled: slot.id === selectedSlotId,
+      };
+    });
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [slots, selectedSlotId]);
+
+  const compositeAssets = useMemo(() => {
+    if (compositeAssetIds.length === 0) return [];
+    const byId = new Map(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot]));
+    return compositeAssetIds
+      .map((id: string) => byId.get(id))
+      .filter((slot: ImageStudioSlotRecord | undefined): slot is ImageStudioSlotRecord => Boolean(slot));
+  }, [slots, compositeAssetIds]);
+
+  useEffect(() => {
+    if (!projectId) {
+      setCompositeAssetIds([]);
+      return;
+    }
+    const validIds = new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id));
+    setCompositeAssetIds((prev) => {
+      const next = prev.filter((id) => validIds.has(id) && id !== selectedSlotId);
+      return next.length === prev.length ? prev : next;
+    });
+  }, [projectId, selectedSlotId, slots]);
+
+  useEffect(() => {
+    const currentFolder = selectedSlot?.folderPath ?? "";
     setMoveTargetFolder(currentFolder);
-  }, [getAssetFolder, selectedAsset]);
+  }, [selectedSlot]);
+
+  useEffect(() => {
+    if (selectedSlot?.asset3dId && !selectedSlotImageSrc) {
+      setPreviewMode("3d");
+      return;
+    }
+    setPreviewMode("image");
+  }, [selectedSlot?.asset3dId, selectedSlotImageSrc]);
 
   useEffect(() => {
     setMaskShapes([]);
     setActiveMaskId(null);
-  }, [selectedAssetId]);
+  }, [selectedSlotId]);
 
-  const handleSelectAsset = useCallback((asset: ImageFileRecord): void => {
-    setSelectedAssetId(asset.id);
+  const handleSelectSlot = useCallback((slot: ImageStudioSlotRecord): void => {
+    setSelectedSlotId(slot.id);
   }, []);
 
   const handleDriveSelection = useCallback(
@@ -1686,7 +2047,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, []);
 
   const handleGenerateMask = useCallback(async (mode: "threshold" | "edges" | "ai-bbox" | "ai-polygon"): Promise<void> => {
-    if (!selectedAsset?.filepath) {
+    if (!selectedSlotImageSrc) {
       toast("Select an image first.", { variant: "error" });
       return;
     }
@@ -1695,14 +2056,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
       let bbox: { x: number; y: number; w: number; h: number } | null = null;
       let polygon: Point[] | null = null;
       if (mode === "threshold") {
-        bbox = await computeBboxFromThreshold(selectedAsset.filepath);
+        bbox = await computeBboxFromThreshold(selectedSlotImageSrc);
       } else if (mode === "edges") {
-        bbox = await computeBboxFromEdges(selectedAsset.filepath);
+        bbox = await computeBboxFromEdges(selectedSlotImageSrc);
       } else {
         const res = await fetch("/api/image-studio/mask/ai", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagePath: selectedAsset.filepath, mode: mode === "ai-polygon" ? "polygon" : "bbox" }),
+          body: JSON.stringify({ imagePath: selectedSlotImageSrc, mode: mode === "ai-polygon" ? "polygon" : "bbox" }),
         });
         const data = (await res.json().catch(() => null)) as { bbox?: { x: number; y: number; w: number; h: number }; polygon?: Point[]; error?: string } | null;
         if (!res.ok) throw new Error(data?.error || "AI mask generation failed.");
@@ -1724,7 +2085,137 @@ export function AdminImageStudioPage(): React.JSX.Element {
     } finally {
       setMaskGenLoading(false);
     }
-  }, [addMaskFromBbox, addMaskFromPolygon, selectedAsset?.filepath, toast]);
+  }, [addMaskFromBbox, addMaskFromPolygon, selectedSlotImageSrc, toast]);
+
+  const handleApplyImageUrl = useCallback(async (): Promise<void> => {
+    if (!selectedSlot) return;
+    const url = slotImageUrlDraft.trim();
+    if (!url) {
+      toast("Enter an image URL first.", { variant: "error" });
+      return;
+    }
+    setSlotUpdateBusy(true);
+    try {
+      const dataUrl = await fetchBase64FromUrl(url).catch(() => null);
+      await updateSlotMutation.mutateAsync({
+        id: selectedSlot.id,
+        data: {
+          imageUrl: url,
+          imageBase64: dataUrl ?? undefined,
+        },
+      });
+      toast("Slot image updated.", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to update slot image.", { variant: "error" });
+    } finally {
+      setSlotUpdateBusy(false);
+    }
+  }, [selectedSlot, slotImageUrlDraft, toast, updateSlotMutation]);
+
+  const handleApplyBase64 = useCallback(async (): Promise<void> => {
+    if (!selectedSlot) return;
+    const value = slotBase64Draft.trim();
+    if (!value) {
+      toast("Paste a base64 data URL first.", { variant: "error" });
+      return;
+    }
+    setSlotUpdateBusy(true);
+    try {
+      await updateSlotMutation.mutateAsync({
+        id: selectedSlot.id,
+        data: {
+          imageBase64: value,
+        },
+      });
+      toast("Slot base64 updated.", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to update slot base64.", { variant: "error" });
+    } finally {
+      setSlotUpdateBusy(false);
+    }
+  }, [selectedSlot, slotBase64Draft, toast, updateSlotMutation]);
+
+  const handleClearSlotMedia = useCallback(async (): Promise<void> => {
+    if (!selectedSlot) return;
+    setSlotUpdateBusy(true);
+    try {
+      await updateSlotMutation.mutateAsync({
+        id: selectedSlot.id,
+        data: {
+          imageUrl: null,
+          imageBase64: null,
+          imageFileId: null,
+          screenshotFileId: null,
+        },
+      });
+      toast("Slot media cleared.", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to clear slot.", { variant: "error" });
+    } finally {
+      setSlotUpdateBusy(false);
+    }
+  }, [selectedSlot, toast, updateSlotMutation]);
+
+  const handleUpload3DAsset = useCallback(
+    async (files: File[]): Promise<void> => {
+      if (!selectedSlot) return;
+      const file = files[0];
+      if (!file) return;
+      setSlotUpdateBusy(true);
+      try {
+        const uploaded = await uploadAsset3DFile(file, undefined, () => {});
+        await updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: { asset3dId: uploaded.id },
+        });
+        toast("3D asset attached.", { variant: "success" });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : "Failed to upload 3D asset.", { variant: "error" });
+      } finally {
+        setSlotUpdateBusy(false);
+      }
+    },
+    [selectedSlot, toast, updateSlotMutation]
+  );
+
+  const handleCaptureScreenshot = useCallback(async (): Promise<void> => {
+    if (!selectedSlot) {
+      toast("Select a slot first.", { variant: "error" });
+      return;
+    }
+    if (!selectedSlot.asset3dId) {
+      toast("No 3D asset attached to this slot.", { variant: "error" });
+      return;
+    }
+    const capture = captureRef.current;
+    if (!capture) {
+      toast("3D preview not ready yet.", { variant: "error" });
+      return;
+    }
+    const dataUrl = capture();
+    if (!dataUrl) {
+      toast("Failed to capture screenshot.", { variant: "error" });
+      return;
+    }
+    const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(selectedSlot.id)}/screenshot`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dataUrl }),
+    });
+    const data = (await res.json().catch(() => null)) as ImageStudioSlotRecord | { error?: string } | null;
+    if (!res.ok || !data || "error" in data) {
+      toast((data && "error" in data && data.error) || "Failed to save screenshot.", { variant: "error" });
+      return;
+    }
+    queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+      const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+      const byId = new Map<string, ImageStudioSlotRecord>();
+      current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
+      byId.set(data.id, data as ImageStudioSlotRecord);
+      return { slots: Array.from(byId.values()) };
+    });
+    toast("Screenshot saved to slot.", { variant: "success" });
+  }, [projectId, queryClient, selectedSlot, toast]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -1888,26 +2379,49 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [promptText, studioSettings.promptExtraction.mode, studioSettings.promptValidation]);
 
   const runPayload = useMemo(() => {
+    const referenceAssets = compositeAssets
+      .map((slot: ImageStudioSlotRecord) => {
+        const filepath =
+          normalizePublicPath(slot.imageFile?.filepath ?? null) ??
+          normalizePublicPath(slot.imageUrl ?? null) ??
+          normalizePublicPath(slot.screenshotFile?.filepath ?? null);
+        if (!filepath) return null;
+        return { id: slot.imageFileId ?? slot.id, filepath };
+      })
+      .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
     return {
       projectId: projectId || null,
-      asset: selectedAsset ? { id: selectedAsset.id, filepath: selectedAsset.filepath } : null,
+      asset: selectedSlotRunAsset ?? null,
+      referenceAssets,
       mask: maskPolygons.length > 0 ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather } : null,
       prompt: generatedPrompt || promptText || null,
       extractedParams: paramsState,
       studioSettings,
     };
-  }, [projectId, selectedAsset, maskPolygons, maskInvert, maskFeather, generatedPrompt, promptText, paramsState, studioSettings]);
+  }, [projectId, selectedSlotRunAsset, compositeAssets, maskPolygons, maskInvert, maskFeather, generatedPrompt, promptText, paramsState, studioSettings]);
 
   const runMutation = useMutation({
     mutationFn: async (): Promise<StudioRunResponse> => {
       if (!projectId) throw new Error("Select a project first.");
-      if (!selectedAsset) throw new Error("Select an image asset first.");
+      if (!selectedSlotRunAsset) throw new Error("Select an image slot with an uploaded asset first.");
       const prompt = (generatedPrompt || promptText || "").trim();
       if (!prompt) throw new Error("Prompt is required.");
 
+      const referenceAssets = compositeAssets
+        .map((slot: ImageStudioSlotRecord) => {
+          const filepath =
+            normalizePublicPath(slot.imageFile?.filepath ?? null) ??
+            normalizePublicPath(slot.imageUrl ?? null) ??
+            normalizePublicPath(slot.screenshotFile?.filepath ?? null);
+          if (!filepath) return null;
+          return { id: slot.imageFileId ?? slot.id, filepath };
+        })
+        .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
+
       const payload = {
         projectId,
-        asset: { id: selectedAsset.id, filepath: selectedAsset.filepath },
+        asset: selectedSlotRunAsset,
+        referenceAssets,
         mask: maskPolygons.length > 0
           ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather }
           : null,
@@ -1928,22 +2442,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return (data ?? { outputs: [] }) as StudioRunResponse;
     },
     onSuccess: async (data: StudioRunResponse): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "slots", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
       const outputs = data.outputs ?? [];
       if (outputs.length > 0) {
         const output = outputs[0]!;
-        setSelectedAssetId(output.id);
-        const safeProjectId = sanitizeStudioProjectId(projectId);
-        const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
-        const normalizedOutputPath = normalizeStudioFilepath(safeProjectId, output.filepath);
-        const relative =
-          normalizedOutputPath && normalizedOutputPath.startsWith(prefix)
-            ? normalizedOutputPath.slice(prefix.length)
-            : "";
-        const parts = relative.split("/").filter(Boolean);
-        if (parts.length > 1) {
-          setSelectedFolder(parts.slice(0, -1).join("/"));
+        const created = await createSlots([
+          {
+            name: output.filename ?? "Output",
+            folderPath: selectedFolder || null,
+            imageFileId: output.id,
+            imageUrl: normalizePublicPath(output.filepath),
+          },
+        ]);
+        if (created.length > 0) {
+          setSelectedSlotId(created[0]!.id);
         }
       }
       toast(`Run complete. ${outputs.length} image(s) added.`, { variant: "success" });
@@ -2994,7 +3507,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             isFocusMode ? "grid-cols-[0px_1fr_0px] gap-0" : "grid-cols-[300px_1fr_420px] gap-4"
           )}
         >
-          {/* Project + Assets */}
+          {/* Project + Slots */}
         <SectionPanel
           className={cn(
             "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
@@ -3004,7 +3517,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           aria-hidden={isFocusMode}
         >
           <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-gray-400">Project & Assets</div>
+            <div className="text-xs text-gray-400">Project & Slots</div>
             <Button
               variant="outline"
               size="sm"
@@ -3078,6 +3591,17 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => void handleCreateSlot()}
+                  disabled={!projectId || maxSlotsReached}
+                  title={maxSlotsReached ? "Max 100 slots per project" : "Create a new slot"}
+                >
+                  <Plus className="mr-2 size-4" />
+                  New slot
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setDriveImportOpen(true)}
                   disabled={!projectId || importFromDriveMutation.isPending}
                   title="Import existing images from Drive"
@@ -3117,9 +3641,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 Create folder
               </Button>
             </div>
-            {selectedAsset ? (
+            {selectedSlot ? (
               <div className="space-y-2">
-                <div className="text-[11px] text-gray-400">Selected asset actions</div>
+                <div className="text-[11px] text-gray-400">Selected slot actions</div>
                 <div className="grid grid-cols-[1fr_auto] gap-2">
                   <Select
                     value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
@@ -3143,43 +3667,181 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     size="sm"
                     variant="outline"
                     disabled={
-                      moveAssetMutation.isPending ||
-                      getAssetFolder(selectedAsset) === moveTargetFolder
+                      moveSlotMutation.isPending ||
+                      (selectedSlot.folderPath ?? "") === moveTargetFolder
                     }
                     onClick={() => {
-                      void moveAssetMutation.mutateAsync({ asset: selectedAsset, targetFolder: moveTargetFolder });
+                      void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
                     }}
                   >
                     Move
                   </Button>
                 </div>
+
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="text-[11px] text-gray-400">Slot image</div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={slotImageUrlDraft}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
+                      placeholder="Paste image URL"
+                      className="h-8"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void handleApplyImageUrl()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Use URL
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={slotBase64Draft}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
+                    placeholder="Paste base64 data URL"
+                    className="min-h-[80px] text-xs"
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void handleApplyBase64()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Use Base64
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void handleClearSlotMedia()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="text-[11px] text-gray-400">3D asset</div>
+                  <Asset3DPickerField
+                    value={selectedSlot.asset3dId ?? ""}
+                    onChange={(value) => {
+                      void updateSlotMutation.mutateAsync({
+                        id: selectedSlot.id,
+                        data: { asset3dId: value || null },
+                      });
+                    }}
+                  />
+                  <FileUploadButton
+                    variant="outline"
+                    size="sm"
+                    accept=".glb,.gltf,model/gltf-binary"
+                    disabled={slotUpdateBusy}
+                    onFilesSelected={async (files: File[]) => {
+                      await handleUpload3DAsset(files);
+                    }}
+                  >
+                    <Upload className="mr-2 size-4" />
+                    Upload 3D
+                  </FileUploadButton>
+                </div>
+
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] text-gray-400">Composite sources</div>
+                    {compositeAssetIds.length > 0 ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[10px]"
+                        onClick={() => setCompositeAssetIds([])}
+                      >
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                  <MultiSelect
+                    options={compositeAssetOptions}
+                    selected={compositeAssetIds}
+                    onChange={(values: string[]) => {
+                      const next = values.filter((id) => id !== selectedSlotId);
+                      setCompositeAssetIds(next);
+                    }}
+                    placeholder="Add slots for compositing"
+                    searchPlaceholder="Search slots..."
+                    disabled={!projectId || compositeAssetOptions.length === 0}
+                    className="text-xs"
+                  />
+                  {compositeAssets.length > 0 ? (
+                    <div className="space-y-1">
+                      {compositeAssets.map((slot: ImageStudioSlotRecord) => {
+                        const folder = slot.folderPath ?? "";
+                        const name = slot.name || slot.id;
+                        const label = folder ? `${folder}/${name}` : name;
+                        return (
+                          <div
+                            key={slot.id}
+                            className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
+                          >
+                            <span className="truncate text-gray-300">{label}</span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() =>
+                                setCompositeAssetIds((prev) => prev.filter((id) => id !== slot.id))
+                              }
+                            >
+                              <X className="size-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-gray-500">Optional. Send up to 16 images total (including base).</div>
+                  )}
+                </div>
+
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   className="w-full text-red-300 hover:text-red-200"
-                  disabled={deleteAssetMutation.isPending}
+                  disabled={deleteSlotMutation.isPending}
                   onClick={() => {
-                    const confirmed = window.confirm(`Delete "${selectedAsset.filename}"? This cannot be undone.`);
+                    const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
                     if (!confirmed) return;
-                    void deleteAssetMutation.mutateAsync(selectedAsset);
+                    void deleteSlotMutation.mutateAsync(selectedSlot.id);
                   }}
                 >
-                  Delete asset
+                  Delete slot
                 </Button>
               </div>
             ) : null}
           </div>
 
           <div className="flex-1 overflow-hidden">
-            <AssetTree
+            <SlotTree
               projectId={projectId}
-              assets={assets}
+              slots={slots}
               folders={folders}
               selectedFolder={selectedFolder}
-              selectedAssetId={selectedAssetId}
+              selectedSlotId={selectedSlotId}
               onSelectFolder={setSelectedFolder}
-              onSelectAsset={handleSelectAsset}
+              onSelectSlot={handleSelectSlot}
+              onMoveSlot={(slot: ImageStudioSlotRecord, target: string) => {
+                void moveSlotMutation.mutateAsync({ slot, targetFolder: target });
+              }}
+              onMoveFolder={(folderPath: string, targetFolder: string) => {
+                void handleMoveFolder(folderPath, targetFolder);
+              }}
             />
           </div>
         </SectionPanel>
@@ -3190,12 +3852,43 @@ export function AdminImageStudioPage(): React.JSX.Element {
             <div className="min-w-0">
               <div className="text-xs text-gray-400">Preview</div>
               {!isFocusMode ? (
-                <div className="truncate text-sm text-gray-100">{selectedAsset?.filename || "—"}</div>
+                <div className="truncate text-sm text-gray-100">{selectedSlot?.name || "—"}</div>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
               {!isFocusMode ? (
                 <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
+              ) : null}
+              {selectedSlot?.asset3dId ? (
+                <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
+                  <Button
+                    type="button"
+                    variant={previewMode === "image" ? "secondary" : "ghost"}
+                    size="xs"
+                    onClick={() => setPreviewMode("image")}
+                  >
+                    Image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={previewMode === "3d" ? "secondary" : "ghost"}
+                    size="xs"
+                    onClick={() => setPreviewMode("3d")}
+                  >
+                    3D
+                  </Button>
+                </div>
+              ) : null}
+              {previewMode === "3d" && selectedSlot?.asset3dId ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleCaptureScreenshot()}
+                >
+                  <Camera className="mr-2 size-4" />
+                  Screenshot
+                </Button>
               ) : null}
               <Button
                 variant="outline"
@@ -3235,7 +3928,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               variant="outline"
               size="sm"
               onClick={() => void handleGenerateMask(maskGenMode)}
-              disabled={maskGenLoading}
+              disabled={maskGenLoading || !selectedSlotImageSrc}
             >
               {maskGenLoading ? "Generating..." : "Generate"}
             </Button>
@@ -3243,19 +3936,25 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
           <div className="relative flex-1">
             <div className="h-full overflow-hidden">
-              <MaskCanvas
-                src={selectedAsset?.filepath ?? null}
-                tool={tool}
-                shapes={maskShapes}
-                activeShapeId={activeMaskId}
-                selectedPointIndex={selectedPointIndex}
-                onSelectShape={setActiveMaskId}
-                onSelectPoint={setSelectedPointIndex}
-                onChange={(nextShapes: MaskShape[]) => {
-                  setMaskShapes(nextShapes);
-                }}
-                brushRadius={brushRadius}
-              />
+              {previewMode === "3d" && selectedSlot?.asset3dId ? (
+                <div className="relative h-full w-full overflow-hidden rounded border border-border bg-black/20">
+                  <Viewer3D assetId={selectedSlot.asset3dId} captureRef={captureRef} enableControls />
+                </div>
+              ) : (
+                <MaskCanvas
+                  src={selectedSlotImageSrc}
+                  tool={tool}
+                  shapes={maskShapes}
+                  activeShapeId={activeMaskId}
+                  selectedPointIndex={selectedPointIndex}
+                  onSelectShape={setActiveMaskId}
+                  onSelectPoint={setSelectedPointIndex}
+                  onChange={(nextShapes: MaskShape[]) => {
+                    setMaskShapes(nextShapes);
+                  }}
+                  brushRadius={brushRadius}
+                />
+              )}
             </div>
             <SectionPanel
               className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 shadow-lg"
@@ -3815,7 +4514,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 size="sm"
                 onClick={() => void runMutation.mutateAsync()}
-                disabled={runMutation.isPending || !projectId || !selectedAsset || !(generatedPrompt || promptText).trim()}
+                disabled={runMutation.isPending || !projectId || !selectedSlotRunAsset || !(generatedPrompt || promptText).trim()}
               >
                 {runMutation.isPending ? "Running..." : "Run edit"}
               </Button>
@@ -3934,7 +4633,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     Project: <span className="text-gray-100">{projectId}</span>
                   </div>
                   <div className="text-xs text-gray-400">
-                    Assets loaded: <span className="text-gray-200">{assets.length}</span>
+                    Slots loaded: <span className="text-gray-200">{slots.length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleTabChange("studio")}>

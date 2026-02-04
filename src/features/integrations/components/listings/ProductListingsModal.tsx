@@ -14,6 +14,8 @@ import {
   ConfirmDialog,
   Alert,
   SectionPanel,
+  IntegrationSelector,
+  ImageRetryDropdown,
 } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
@@ -249,41 +251,13 @@ export function ProductListingsModal({
         </SectionPanel>
       ) : (
         <div className="space-y-4">
-          <div className="text-left">
-            <Label className="mb-2 block text-xs font-medium text-gray-300">
-              Integration
-            </Label>
-            <UnifiedSelect
-              value={selectedIntegrationId}
-              onValueChange={setSelectedIntegrationId}
-              options={integrations
-                .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                .map((integration: IntegrationWithConnections) => ({
-                  value: integration.id,
-                  label: integration.name
-                }))}
-              placeholder="Select an integration..."
-            />
-          </div>
-
-          {selectedIntegration && selectedIntegration.connections.length > 0 && (
-            <div className="text-left">
-              <Label className="mb-2 block text-xs font-medium text-gray-300">
-                Account / Connection
-              </Label>
-              <UnifiedSelect
-                value={selectedConnectionId}
-                onValueChange={setSelectedConnectionId}
-                options={selectedIntegration.connections
-                  .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                  .map((connection: IntegrationConnectionBasic) => ({
-                    value: connection.id,
-                    label: connection.name
-                  }))}
-                placeholder="Select an account..."
-              />
-            </div>
-          )}
+          <IntegrationSelector
+            integrations={integrations}
+            selectedIntegrationId={selectedIntegrationId}
+            onIntegrationChange={setSelectedIntegrationId}
+            selectedConnectionId={selectedConnectionId}
+            onConnectionChange={setSelectedConnectionId}
+          />
 
           <div className="flex justify-center">
             <Button
@@ -674,34 +648,11 @@ export function ProductListingsModal({
               <span>{combinedError}</span>
               {isImageExportError(combinedError) && lastExportListingId ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
-                        disabled={Boolean(exportingListing)}
-                      >
-                        Retry image export
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-card border-border">
-                      {imageRetryPresets.map((preset: ImageRetryPreset): React.JSX.Element => (
-                        <DropdownMenuItem
-                          key={preset.id}
-                          onSelect={(): void => { void handleImageRetry(preset); }}
-                          className="text-gray-200 focus:bg-gray-800/70"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm">{preset.label}</span>
-                            <span className="text-xs text-gray-400">
-                              {preset.description}
-                            </span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ImageRetryDropdown
+                    presets={imageRetryPresets}
+                    onRetry={(preset) => void handleImageRetry(preset)}
+                    disabled={Boolean(exportingListing)}
+                  />
                   <span className="text-xs text-red-200/80">
                     Applies JPEG resize/compression and retries automatically.
                   </span>

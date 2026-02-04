@@ -20,6 +20,10 @@ export * from "./textarea";
 export * from "./toast";
 export * from "./tooltip";
 export * from "./file-upload";
+export * from "./multi-select";
+export * from "./integration-selector";
+export * from "./image-retry-dropdown";
+export * from "./filters-container";
 
 export * from "./badge";
 export * from "./data-table";

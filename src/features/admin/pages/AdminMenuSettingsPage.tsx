@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from "lucide-react";
 
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from "@/shared/ui";
-import { cn } from "@/shared/utils";
+import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
 import {
   ADMIN_MENU_COLOR_MAP,
@@ -680,7 +680,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                       }}
                       onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
                         event.preventDefault();
-                        const raw = event.dataTransfer.getData("application/x-admin-menu-path") || event.dataTransfer.getData("text/plain");
+                        const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.ADMIN_MENU_PATH, DRAG_KEYS.TEXT]);
                         let dragged: number[] | null = draggedPath;
                         if (raw) {
                           try {
@@ -717,9 +717,12 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                           className="grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200"
                           draggable
                           onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
-                            event.dataTransfer.setData("application/x-admin-menu-path", JSON.stringify(path));
-                            event.dataTransfer.setData("text/plain", JSON.stringify(path));
-                            event.dataTransfer.effectAllowed = "move";
+                            const payload = JSON.stringify(path);
+                            setDragData(
+                              event.dataTransfer,
+                              { [DRAG_KEYS.ADMIN_MENU_PATH]: payload },
+                              { text: payload, effectAllowed: "move" }
+                            );
                             setDraggedPath(path);
                           }}
                           onDragEnd={(): void => {

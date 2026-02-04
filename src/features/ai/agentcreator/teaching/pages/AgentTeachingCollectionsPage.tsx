@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from "@/shared/ui";
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from "@/shared/ui";
 import { Pencil, Trash2 } from "lucide-react";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { buildModelProfile } from "@/features/ai/chatbot/utils";
@@ -243,21 +243,12 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
           </div>
           <div className="space-y-2">
             <Label>Embedding model</Label>
-            <Select
+            <UnifiedSelect
               value={draft.embeddingModel ?? ""}
               onValueChange={(value: string): void => setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, embeddingModel: value }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select embedding model" />
-              </SelectTrigger>
-              <SelectContent>
-                {embeddingModels.map((model: string) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
+              placeholder="Select embedding model"
+            />
             <div className="text-[11px] text-gray-500">
               This model will be used to embed documents added to this collection.
             </div>

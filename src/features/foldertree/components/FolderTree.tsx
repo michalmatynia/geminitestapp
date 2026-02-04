@@ -9,6 +9,8 @@ import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { FolderNode } from "./tree/FolderNode";
 import { parseMultipleFolders, countMultipleFolders } from "@/features/foldertree/utils/folderImporter";
+import { FolderTreePanel } from "@/features/foldertree/components/FolderTreePanel";
+import { getFolderDragId, getNoteDragId } from "@/shared/utils/drag-drop";
 
 import { useImportFolderMutation } from "@/features/foldertree/hooks/useFolderMutations";
 
@@ -274,8 +276,9 @@ function FolderTreeBase({
   );
 
   return (
-    <div
-      className="flex h-full flex-col bg-gray-900 border-r border-border"
+    <FolderTreePanel
+      className="bg-gray-900 border-r border-border"
+      bodyClassName="flex min-h-0 flex-1 flex-col"
       onDragEnterCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
@@ -319,149 +322,147 @@ function FolderTreeBase({
         }
         onRelateNotes(draggedNoteId, targetId);
       }}
-    >
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-white">Folders</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={(): void => setShowDropzone(!showDropzone)}
-              size="sm"
-              variant="outline"
-              className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
-                showDropzone ? "bg-blue-600/20 text-blue-400" : "text-gray-300"
-              }`}
-              aria-label={showDropzone ? "Hide dropzone" : "Show dropzone"}
-            >
-              <Upload className="size-4" />
-            </Button>
-            <Button
-              onClick={(): void => onCreateFolder(null)}
-              size="sm"
-              className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
-              aria-label="Add folder"
-            >
-              <Plus className="size-4" />
-            </Button>
-            {onUndo && (
+      header={(
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-white">Folders</h2>
+            <div className="flex items-center gap-2">
               <Button
-                onClick={(): void => onUndo()}
+                onClick={(): void => setShowDropzone(!showDropzone)}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
-                disabled={!canUndo}
+                className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
+                  showDropzone ? "bg-blue-600/20 text-blue-400" : "text-gray-300"
+                }`}
+                aria-label={showDropzone ? "Hide dropzone" : "Show dropzone"}
               >
-                Undo
+                <Upload className="size-4" />
               </Button>
-            )}
-            <Button
-              onClick={handleToggleSelectedCollapse}
-              size="sm"
-              variant="outline"
-              className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
-              disabled={!selectedFolderId}
-              aria-label={isSelectedSubtreeExpanded ? "Collapse folder" : "Expand folder"}
-            >
-              {isSelectedSubtreeExpanded ? (
-                <ChevronDown className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )}
-            </Button>
-            {onToggleCollapse && (
               <Button
-                onClick={(): void => onToggleCollapse()}
+                onClick={(): void => onCreateFolder(null)}
+                size="sm"
+                className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
+                aria-label="Add folder"
+              >
+                <Plus className="size-4" />
+              </Button>
+              {onUndo && (
+                <Button
+                  onClick={(): void => onUndo()}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
+                  disabled={!canUndo}
+                >
+                  Undo
+                </Button>
+              )}
+              <Button
+                onClick={handleToggleSelectedCollapse}
                 size="sm"
                 variant="outline"
                 className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
-                aria-label="Collapse folder tree"
+                disabled={!selectedFolderId}
+                aria-label={isSelectedSubtreeExpanded ? "Collapse folder" : "Expand folder"}
               >
-                <ChevronLeft className="size-4" />
+                {isSelectedSubtreeExpanded ? (
+                  <ChevronDown className="size-4" />
+                ) : (
+                  <ChevronRight className="size-4" />
+                )}
               </Button>
-            )}
+              {onToggleCollapse && (
+                <Button
+                  onClick={(): void => onToggleCollapse()}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
+                  aria-label="Collapse folder tree"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-        <Button
-          onClick={(): void => onSelectFolder(null)}
-          onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            setIsAllNotesDragOver(true);
-          }}
-          onDragLeave={(): void => {
-            setIsAllNotesDragOver(false);
-          }}
-          onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            setIsAllNotesDragOver(false);
-            const noteId =
-              e.dataTransfer.getData("noteId") ||
-              e.dataTransfer.getData("text/plain") ||
-              draggedNoteId ||
-              "";
-            const folderId = e.dataTransfer.getData("folderId");
-            if (noteId) {
-              onDropNote(noteId, null);
-            } else if (folderId) {
-              onDropFolder(folderId, null);
-            } else {
-              toast("Nothing to drop here", { variant: "info" });
-            }
-          }}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
-            selectedFolderId === null && !selectedNoteId
-              ? "bg-blue-600 text-white"
-              : isAllNotesDragOver
-              ? "bg-green-600 text-white"
-              : "text-gray-300 hover:bg-muted/50"
-          } justify-start text-left`}
-        >
-          <Folder className="size-4" />
-          <span>All Notes</span>
-        </Button>
-        {onToggleFavorites && (
           <Button
-            onClick={(): void => onToggleFavorites()}
-            className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
-              isFavoritesActive
-                ? "bg-yellow-500/20 text-yellow-200"
+            onClick={(): void => onSelectFolder(null)}
+            onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
+              e.preventDefault();
+              setIsAllNotesDragOver(true);
+            }}
+            onDragLeave={(): void => {
+              setIsAllNotesDragOver(false);
+            }}
+            onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
+              e.preventDefault();
+              setIsAllNotesDragOver(false);
+              const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || "";
+              const folderId = getFolderDragId(e.dataTransfer);
+              if (noteId) {
+                onDropNote(noteId, null);
+              } else if (folderId) {
+                onDropFolder(folderId, null);
+              } else {
+                toast("Nothing to drop here", { variant: "info" });
+              }
+            }}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
+              selectedFolderId === null && !selectedNoteId
+                ? "bg-blue-600 text-white"
+                : isAllNotesDragOver
+                ? "bg-green-600 text-white"
                 : "text-gray-300 hover:bg-muted/50"
             } justify-start text-left`}
           >
-            <Star className="size-4" />
-            <span>Favorites</span>
+            <Folder className="size-4" />
+            <span>All Notes</span>
           </Button>
-        )}
-        {undoHistory && undoHistory.length > 0 && (
-          <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
+          {onToggleFavorites && (
             <Button
-              onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
-              className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+              onClick={(): void => onToggleFavorites()}
+              className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
+                isFavoritesActive
+                  ? "bg-yellow-500/20 text-yellow-200"
+                  : "text-gray-300 hover:bg-muted/50"
+              } justify-start text-left`}
             >
-              <span>History</span>
-              {isHistoryExpanded ? (
-                <ChevronDown className="size-3" />
-              ) : (
-                <ChevronRight className="size-3" />
-              )}
+              <Star className="size-4" />
+              <span>Favorites</span>
             </Button>
-            {isHistoryExpanded && (
-              <div className="space-y-1">
-                {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
-                  <Button
-                    key={`${entry.label}-${index}`}
-                    type="button"
-                    onClick={(): void => onUndoAtIndex?.(index)}
-                    className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
-                  >
-                    <span className="truncate">{entry.label}</span>
-                    <span className="text-[10px] text-gray-500">Undo</span>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+          {undoHistory && undoHistory.length > 0 && (
+            <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
+              <Button
+                onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
+                className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+              >
+                <span>History</span>
+                {isHistoryExpanded ? (
+                  <ChevronDown className="size-3" />
+                ) : (
+                  <ChevronRight className="size-3" />
+                )}
+              </Button>
+              {isHistoryExpanded && (
+                <div className="space-y-1">
+                  {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
+                    <Button
+                      key={`${entry.label}-${index}`}
+                      type="button"
+                      onClick={(): void => onUndoAtIndex?.(index)}
+                      className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
+                    >
+                      <span className="truncate">{entry.label}</span>
+                      <span className="text-[10px] text-gray-500">Undo</span>
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    >
 
       {showDropzone && (
         <div
@@ -501,7 +502,7 @@ function FolderTreeBase({
           <div className="space-y-0.5">{folderNodes}</div>
         )}
       </div>
-    </div>
+    </FolderTreePanel>
   );
 }
 

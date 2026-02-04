@@ -54,11 +54,11 @@ export function useRestoreBackupMutation(): UseMutationResult<
 export function useUploadBackupMutation(): UseMutationResult<
   { ok: boolean; payload: DatabaseBackupResponse },
   Error,
-  { dbType: DatabaseType; file: File }
+  { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ dbType, file }) => uploadDatabaseBackup(dbType, file),
+    mutationFn: ({ dbType, file, onProgress }) => uploadDatabaseBackup(dbType, file, onProgress),
     onSuccess: (_, { dbType }) => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", dbType] });
     },

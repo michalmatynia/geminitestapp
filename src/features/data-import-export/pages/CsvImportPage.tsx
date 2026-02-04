@@ -13,14 +13,17 @@ const CSVImportPage = (): React.JSX.Element => {
     setFile(files[0] || null);
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     if (!file) {
       toast("Please select a file", { variant: "error" });
       return;
     }
 
     try {
-      await importMutation.mutateAsync(file);
+      await importMutation.mutateAsync({
+        file,
+        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
+      });
       toast("Import successful", { variant: "success" });
       setFile(null);
     } catch (error) {

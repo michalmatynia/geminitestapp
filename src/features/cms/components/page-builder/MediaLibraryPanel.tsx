@@ -39,13 +39,23 @@ export function MediaLibraryPanel({
     }
   };
 
-  const handleUpload = async (files: File[]): Promise<void> => {
+  const handleUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void; setProgress: (value: number) => void }): Promise<void> => {
     if (!files || files.length === 0) return;
 
     try {
       const uploaded: ImageFileRecord[] = [];
-      for (const file of files) {
-        const result = await uploadMutation.mutateAsync(file);
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index]!;
+        const result = await uploadMutation.mutateAsync({
+          file,
+          onProgress: (loaded: number, total?: number) => {
+            if (!helpers) return;
+            if (!total) return;
+            const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+            const combined = Math.round(((index + pct / 100) / files.length) * 100);
+            helpers.setProgress(combined);
+          },
+        });
         uploaded.push(result);
       }
       
@@ -85,7 +95,7 @@ export function MediaLibraryPanel({
             accept="image/*"
             multiple
             disabled={uploadMutation.isPending}
-            onFilesSelected={(files: File[]) => handleUpload(files)}
+            onFilesSelected={(files: File[], helpers) => handleUpload(files, helpers)}
           >
             <Upload className="mr-2 size-4" />
             {uploadMutation.isPending ? "Uploading..." : "Upload images"}

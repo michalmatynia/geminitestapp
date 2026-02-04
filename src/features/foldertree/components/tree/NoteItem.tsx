@@ -1,10 +1,13 @@
 "use client";
 
-import { useToast, Button, Input } from "@/shared/ui";
+import { useToast, Input } from "@/shared/ui";
 import React, { useState, useRef, useEffect } from "react";
 import { FileText, Edit2, Copy, Trash2, FilePlus } from "lucide-react";
 
 import type { NoteItemProps } from "@/features/foldertree/types/folder-tree-ui";
+import { getNoteDragId, hasDragType, setNoteDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
+import { TreeRow } from "./TreeRow";
+import { TreeActionButton, TreeActionSlot } from "./TreeActions";
 
 
 export const NoteItem = React.memo(function NoteItem({
@@ -30,10 +33,7 @@ export const NoteItem = React.memo(function NoteItem({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const getDraggedNoteId = (event: React.DragEvent): string =>
-    event.dataTransfer.getData("noteId") ||
-    event.dataTransfer.getData("text/plain") ||
-    draggedNoteId ||
-    "";
+    getNoteDragId(event.dataTransfer, draggedNoteId) || "";
 
   // Focus input when entering rename mode
   useEffect(() => {
@@ -68,15 +68,21 @@ export const NoteItem = React.memo(function NoteItem({
   };
 
   return (
-    <div
+    <TreeRow
+      tone="primary"
+      selected={isSelected}
+      dragOver={isDragOver}
+      dragOverClassName="bg-emerald-600 text-white"
+      depth={level + 1}
+      baseIndent={28}
+      indent={16}
+      className="cursor-pointer active:cursor-grabbing text-sm"
       draggable={!isRenaming}
       data-note-id={note.id}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        const types = Array.from(e.dataTransfer.types);
         const isNoteDrag =
-          types.includes("noteId") ||
-          types.includes("text/plain") ||
-          Boolean(draggedNoteId);
+          Boolean(draggedNoteId) ||
+          hasDragType(e.dataTransfer, [DRAG_KEYS.NOTE_ID, DRAG_KEYS.TEXT]);
         if (!isNoteDrag) return;
         e.preventDefault();
         e.stopPropagation();
@@ -105,9 +111,7 @@ export const NoteItem = React.memo(function NoteItem({
           return;
         }
         e.stopPropagation();
-        e.dataTransfer.setData("noteId", note.id);
-        e.dataTransfer.setData("text/plain", note.id);
-        e.dataTransfer.effectAllowed = "linkMove";
+        setNoteDragData(e.dataTransfer, note.id);
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.5";
         setDraggedNoteId(note.id);
@@ -123,14 +127,6 @@ export const NoteItem = React.memo(function NoteItem({
           onSelectNote(note.id);
         }
       }}
-      className={`group flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-        isSelected
-          ? "bg-blue-600 text-white"
-          : isDragOver
-          ? "bg-emerald-600 text-white"
-          : "text-gray-300 hover:bg-muted/50 hover:text-white"
-      }`}
-      style={{ paddingLeft: `${(level + 1) * 16 + 28}px` }}
     >
       <FileText className={`size-4 flex-shrink-0 ${isSelected ? "text-white" : "text-gray-500 group-hover:text-gray-300"}`} />
       {isRenaming ? (
@@ -155,49 +151,53 @@ export const NoteItem = React.memo(function NoteItem({
         </span>
       )}
       {!isRenaming && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-          <Button
+        <TreeActionSlot show="hover" isVisible={isSelected}>
+          <TreeActionButton
             onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onCreateNote(folderId);
             }}
-            className="p-1 hover:bg-gray-700 rounded"
+            size="sm"
+            tone="muted"
             title="Add note"
           >
             <FilePlus className="size-3" />
-          </Button>
-          <Button
+          </TreeActionButton>
+          <TreeActionButton
             onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onStartRename(note.id);
             }}
-            className="p-1 hover:bg-gray-700 rounded"
+            size="sm"
+            tone="muted"
             title="Rename note"
           >
             <Edit2 className="size-3" />
-          </Button>
-          <Button
+          </TreeActionButton>
+          <TreeActionButton
             onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onDuplicateNote(note.id);
             }}
-            className="p-1 hover:bg-gray-700 rounded"
+            size="sm"
+            tone="muted"
             title="Duplicate note"
           >
             <Copy className="size-3" />
-          </Button>
-          <Button
+          </TreeActionButton>
+          <TreeActionButton
             onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onDeleteNote(note.id);
             }}
-            className="p-1 hover:bg-red-600 rounded"
+            size="sm"
+            tone="danger"
             title="Delete note"
           >
             <Trash2 className="size-3" />
-          </Button>
-        </div>
+          </TreeActionButton>
+        </TreeActionSlot>
       )}
-    </div>
+    </TreeRow>
   );
 });

@@ -347,7 +347,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
                 />
               </div>
               <div className="text-[11px] text-gray-500">
-                Stores config only; AI extraction endpoint is next.
+                Used by the AI extract button in Image Studio.
               </div>
             </div>
           </div>

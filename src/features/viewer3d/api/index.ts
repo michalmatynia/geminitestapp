@@ -34,7 +34,8 @@ export async function fetchAsset3DById(id: string): Promise<Asset3DRecord> {
 
 export async function uploadAsset3DFile(
   file: File,
-  data?: { name?: string; description?: string; category?: string; tags?: string[]; isPublic?: boolean }
+  data?: { name?: string; description?: string; category?: string; tags?: string[]; isPublic?: boolean },
+  onProgress?: (loaded: number, total?: number) => void
 ): Promise<Asset3DRecord> {
   const formData = new FormData();
   formData.append("file", file);
@@ -44,17 +45,18 @@ export async function uploadAsset3DFile(
   if (data?.tags && data.tags.length > 0) formData.append("tags", data.tags.join(","));
   if (data?.isPublic !== undefined) formData.append("isPublic", String(data.isPublic));
 
-  const response = await fetch(API_BASE, {
-    method: "POST",
-    body: formData,
+  const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
+  const result = await uploadWithProgress<Asset3DRecord>(API_BASE, {
+    formData,
+    onProgress,
   });
 
-  if (!response.ok) {
-    const result = (await response.json()) as { error?: string };
-    throw new Error(result.error ?? "Failed to upload 3D asset");
+  if (!result.ok) {
+    const data = result.data as { error?: string };
+    throw new Error(data?.error ?? "Failed to upload 3D asset");
   }
 
-  return response.json() as Promise<Asset3DRecord>;
+  return result.data as Asset3DRecord;
 }
 
 export async function updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord> {

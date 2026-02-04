@@ -122,9 +122,10 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           ? mapperConfig.outputs
           : node.outputs.length > 0
             ? node.outputs
-            : ["value"];
+            : ["value", "result"];
       return {
         ...node,
+        inputs: ensureUniquePorts(node.inputs ?? [], ["context", "result"]),
         outputs,
         config: {
           ...node.config,

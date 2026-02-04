@@ -226,6 +226,7 @@ export function SectionNodeItem({
   const Icon: LucideIcon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSectionDragOver, setIsSectionDragOver] = useState(false);
+  const [isContentDragOver, setIsContentDragOver] = useState(false);
   const [sectionDropPosition, setSectionDropPosition] = useState<"above" | "below" | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
@@ -609,7 +610,41 @@ export function SectionNodeItem({
       )}
 
       {isExpanded && section.type !== "Grid" && !isFileSection && (
-        <div className="ml-4 border-l border-border/30 pl-1">
+        <div
+          className={`ml-4 border-l pl-1 ${isContentDragOver ? "border-emerald-500 bg-emerald-600/10" : "border-border/30"}`}
+          onDragOver={(e: React.DragEvent) => {
+            const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
+            const dragId = draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+            if (!dragId && !hasBlockPayload) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsContentDragOver(true);
+          }}
+          onDragLeave={(e: React.DragEvent) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsContentDragOver(false);
+          }}
+          onDrop={(e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsContentDragOver(false);
+            const dragId = draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+            if (!dragId) return;
+            const fromSection = draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || "";
+            if (!fromSection) return;
+            const fromColumn = (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+            const fromParent = (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+            if (fromColumn || fromParent) {
+              onDropBlockToSection(dragId, fromSection, fromColumn || undefined, section.id, section.blocks.length, fromParent || undefined);
+            } else {
+              onDropBlock(dragId, fromSection, section.id, section.blocks.length);
+            }
+            setDraggedBlockId(null);
+            setDraggedFromSectionId(null);
+            setDraggedFromColumnId(null);
+            setDraggedFromParentBlockId(null);
+          }}
+        >
           {hasBlocks ? (
             section.blocks.map((block: BlockInstance, index: number) => (
               isSlideshowSection && block.type === "SlideshowFrame" ? (
@@ -661,7 +696,7 @@ export function SectionNodeItem({
               )
             ))
           ) : (
-            <div className="py-2 text-xs text-gray-500">No blocks yet.</div>
+            <div className="py-2 text-xs text-gray-500">No blocks yet. Drag blocks here or use the + button below.</div>
           )}
           <div className="mt-1">
             <BlockPicker

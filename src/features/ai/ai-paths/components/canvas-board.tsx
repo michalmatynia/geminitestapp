@@ -253,7 +253,9 @@ export function CanvasBoard({
     const treatArrayAsHistory =
       Array.isArray(rawValue) &&
       !expectedTypes.includes("array") &&
-      !expectedTypes.includes("image");
+      !expectedTypes.includes("image") &&
+      !expectedTypes.includes("any") &&
+      !expectedTypes.includes("json");
     const history = treatArrayAsHistory ? (rawValue as unknown[]) : null;
     const value = history ? history[history.length - 1] : rawValue;
     const actualType = value !== undefined ? getValueTypeLabel(value) : null;

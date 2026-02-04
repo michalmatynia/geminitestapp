@@ -144,8 +144,8 @@ export const palette: NodeDefinition[] = [
     type: "mapper",
     title: "JSON Mapper",
     description: "Map context to custom outputs.",
-    inputs: ["context"],
-    outputs: ["value"],
+    inputs: ["context", "result"],
+    outputs: ["value", "result"],
   },
   {
     type: "mutator",

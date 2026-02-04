@@ -164,7 +164,7 @@ export const handleParser: NodeHandler = ({
 };
 
 export const handleMapper: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs.context ?? nodeInputs.result) as
     | Record<string, unknown>
     | undefined;
   if (!contextValue) {

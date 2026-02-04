@@ -244,6 +244,7 @@ export function ProductFormProvider({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedNoteIds(Array.isArray(product?.noteIds) ? product.noteIds : []);
   }, [product?.id, product?.noteIds]);
 
@@ -276,6 +277,7 @@ export function ProductFormProvider({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setParameterValues(normalizeParameterValues(product?.parameters ?? draft?.parameters ?? []));
   }, [product?.id, draft?.id, product?.parameters, draft?.parameters]);
 
@@ -287,7 +289,7 @@ export function ProductFormProvider({
     };
   }, []);
 
-  const onSubmit = async (data: ProductFormData): Promise<void> => {
+  const onSubmit = useCallback(async (data: ProductFormData): Promise<void> => {
     const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
     const hasTempImages = imageSlots.some((slot: ProductImageSlot | null): boolean => {
       if (!slot) return false;
@@ -418,14 +420,19 @@ export function ProductFormProvider({
         setUploadError("An unknown error occurred");
       }
     }
-  };
+  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, router]);
+
+  const submitHandler = useCallback(
+    (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),
+    [methods, onSubmit]
+  );
 
   return (
     <FormProvider {...methods}>
       <ProductFormContext.Provider
         value={{
           register,
-          handleSubmit: methods.handleSubmit(onSubmit),
+          handleSubmit: submitHandler,
           errors,
           setValue,
           getValues,

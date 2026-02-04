@@ -2,13 +2,11 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
-
-import prisma from "@/shared/lib/db/prisma";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { deleteImageStudioSlot, updateImageStudioSlot } from "@/features/ai/image-studio/server/slot-repository";
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, "/").trim();
@@ -29,7 +27,7 @@ const patchSchema = z.object({
   imageFileId: z.string().trim().optional().nullable(),
   asset3dId: z.string().trim().optional().nullable(),
   screenshotFileId: z.string().trim().optional().nullable(),
-  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+  metadata: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 async function PATCH_handler(
@@ -58,25 +56,11 @@ async function PATCH_handler(
       ...(parsed.data.metadata !== undefined ? { metadata: parsed.data.metadata ?? null } : {}),
     };
 
-    const updated = await prisma.imageStudioSlot.update({
-      where: { id: slotId },
-      data: data as Prisma.ImageStudioSlotUpdateInput,
-      include: {
-        imageFile: true,
-        screenshotFile: true,
-        asset3d: true,
-      },
-    });
+    const updated = await updateImageStudioSlot(slotId, data);
+    if (!updated) throw notFoundError("Slot not found");
 
     return NextResponse.json({ slot: updated });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("Record to update not found")) {
-      return createErrorResponse(notFoundError("Slot not found"), {
-        request: req,
-        source: "image-studio.slots.[slotId].PATCH",
-        fallbackMessage: "Slot not found",
-      });
-    }
     return createErrorResponse(error, {
       request: req,
       source: "image-studio.slots.[slotId].PATCH",
@@ -95,10 +79,8 @@ async function DELETE_handler(
     const slotId = params.slotId?.trim() ?? "";
     if (!slotId) throw badRequestError("Slot id is required");
 
-    const existing = await prisma.imageStudioSlot.findUnique({ where: { id: slotId } });
-    if (!existing) throw notFoundError("Slot not found");
-
-    await prisma.imageStudioSlot.delete({ where: { id: slotId } });
+    const deleted = await deleteImageStudioSlot(slotId);
+    if (!deleted) throw notFoundError("Slot not found");
     return NextResponse.json({ ok: true });
   } catch (error) {
     return createErrorResponse(error, {

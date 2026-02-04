@@ -60,7 +60,7 @@ const runSchema = z.object({
     .optional(),
   prompt: z.string().min(1),
   mask: maskSchema.nullable().optional(),
-  studioSettings: z.record(z.string(), z.unknown()).optional(),
+  studioSettings: z.record(z.string(), z.any()).optional(),
 });
 
 const sanitizeProjectId = (value: string): string =>

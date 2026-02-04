@@ -5,12 +5,12 @@ import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
 
-import prisma from "@/shared/lib/db/prisma";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { getImageFileRepository } from "@/features/files/server";
+import { getImageStudioSlotById, updateImageStudioSlot } from "@/features/ai/image-studio/server/slot-repository";
 
 const payloadSchema = z.object({
   dataUrl: z.string().trim().min(1),
@@ -54,7 +54,7 @@ async function POST_handler(
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const slot = await prisma.imageStudioSlot.findUnique({ where: { id: slotId } });
+    const slot = await getImageStudioSlotById(slotId);
     if (!slot) throw notFoundError("Slot not found");
 
     const parsedData = parseDataUrl(parsed.data.dataUrl);
@@ -80,14 +80,11 @@ async function POST_handler(
       size: parsedData.buffer.length,
     });
 
-    const updated = await prisma.imageStudioSlot.update({
-      where: { id: slotId },
-      data: {
-        screenshotFileId: imageFile.id,
-        ...(slot.asset3dId && !slot.imageBase64 ? { imageBase64: parsed.data.dataUrl } : {}),
-      },
-      include: { imageFile: true, screenshotFile: true, asset3d: true },
+    const updated = await updateImageStudioSlot(slotId, {
+      screenshotFileId: imageFile.id,
+      ...(slot.asset3dId && !slot.imageBase64 ? { imageBase64: parsed.data.dataUrl } : {}),
     });
+    if (!updated) throw notFoundError("Slot not found");
 
     return NextResponse.json({ slot: updated, screenshot: imageFile });
   } catch (error) {

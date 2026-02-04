@@ -20,10 +20,10 @@ export interface SettingsOfflineHookResult {
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
   const settingsQuery: UseQueryResult<SettingRecord[], Error> = useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", "light"],
     queryFn: async (): Promise<SettingRecord[]> => {
       try {
-        return await fetchSettingsCached();
+        return await fetchSettingsCached({ scope: "light" });
       } catch (error) {
         throw error instanceof Error
           ? error
@@ -46,7 +46,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
       return (await res.json()) as SettingRecord;
     },
     {
-      queryKey: ["settings"],
+      queryKey: ["settings", "light"],
       optimisticUpdate: (oldData: SettingRecord[] | undefined, { key, value }: { key: string; value: string }): SettingRecord[] => {
         if (!Array.isArray(oldData)) return oldData || [];
         const updated = oldData.map((item: SettingRecord) => 

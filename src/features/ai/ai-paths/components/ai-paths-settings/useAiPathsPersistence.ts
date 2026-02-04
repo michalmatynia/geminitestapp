@@ -199,9 +199,9 @@ export function useAiPathsPersistence({
     },
   });
   const settingsQuery = useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", "heavy"],
     queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
-      return await fetchSettingsCached();
+      return await fetchSettingsCached({ scope: "heavy" });
     },
     enabled: false,
   });

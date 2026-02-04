@@ -45,7 +45,7 @@ const payloadSchema = z.object({
   params: z.array(
     z.object({
       path: z.string().trim().min(1),
-      value: z.record(z.string(), z.unknown()),
+      value: z.object({}).passthrough(),
       spec: paramSpecSchema.nullable().optional(),
     })
   ),

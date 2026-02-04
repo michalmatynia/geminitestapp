@@ -12,6 +12,22 @@ import { badRequestError, conflictError, internalError } from "@/shared/errors/a
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
+const shouldLogTiming = () => process.env.DEBUG_API_TIMING === "true";
+
+const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
+  const parts = Object.entries(entries)
+    .filter(([, value]) => typeof value === "number" && Number.isFinite(value) && value >= 0)
+    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
+  return parts.join(", ");
+};
+
+const attachTimingHeaders = (response: Response, entries: Record<string, number | null | undefined>): void => {
+  const value = buildServerTiming(entries);
+  if (value) {
+    response.headers.set("Server-Timing", value);
+  }
+};
+
 const productCategoryCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().nullable().optional(),
@@ -27,6 +43,8 @@ const productCategoryCreateSchema = z.object({
  * - catalogId: Filter by catalog (required)
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const timings: Record<string, number | null | undefined> = {};
+  const requestStart = performance.now();
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");
@@ -35,18 +53,22 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       throw badRequestError("catalogId query parameter is required");
     }
 
+    const providerStart = performance.now();
     const provider = await getProductDataProvider();
+    timings.provider = performance.now() - providerStart;
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw internalError("MongoDB is not configured.");
       }
+      const mongoStart = performance.now();
       const db = await getMongoDb();
       const categories = await db
         .collection("product_categories")
         .find({ catalogId })
         .sort({ name: 1 })
         .toArray();
+      timings.mongo = performance.now() - mongoStart;
       const normalized = categories.map((cat: Record<string, unknown>) => {
         const { _id, ...rest } = cat as unknown as {
           _id?: { toString?: () => string };
@@ -57,18 +79,32 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           id: (rest as { id?: string }).id ?? fallbackId,
         };
       });
-      return NextResponse.json(normalized);
+      timings.total = performance.now() - requestStart;
+      if (shouldLogTiming()) {
+        console.log("[timing] products.categories.GET", timings);
+      }
+      const response = NextResponse.json(normalized);
+      attachTimingHeaders(response, timings);
+      return response;
     }
 
     if (!process.env.DATABASE_URL) {
       throw badRequestError("Product categories require the Postgres product store.");
     }
 
+    const prismaStart = performance.now();
     const categories = await prisma.productCategory.findMany({
       where: { catalogId },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(categories);
+    timings.prisma = performance.now() - prismaStart;
+    timings.total = performance.now() - requestStart;
+    if (shouldLogTiming()) {
+      console.log("[timing] products.categories.GET", timings);
+    }
+    const response = NextResponse.json(categories);
+    attachTimingHeaders(response, timings);
+    return response;
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

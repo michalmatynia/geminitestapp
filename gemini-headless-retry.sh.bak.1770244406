@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Prevent accidental sourcing (which could mess with your shell)
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  echo "Do not source this script. Run it: ./${BASH_SOURCE[0]##*/}"
+  return 1 2>/dev/null || exit 1
+fi
+
+PROJECT_DIR="$HOME/Desktop/NPM/2026/Gemini new Pull/geminitestapp"
+cd "$PROJECT_DIR"
+
+# GEMINI_CMD can be:
+#   gemini
+#   /full/path/to/gemini
+#   npx -y @google/gemini-cli
+GEMINI_CMD="${GEMINI_CMD:-gemini}"
+
+APPROVAL_MODE="${APPROVAL_MODE:-yolo}"
+MAX_RETRIES="${MAX_RETRIES:-50}"
+SLEEP_SECONDS="${SLEEP_SECONDS:-10}"
+MODEL="${MODEL:-}" # optional
+
+# Prompt can be passed as args or stdin
+if [[ $# -gt 0 ]]; then
+  PROMPT="$*"
+else
+  PROMPT="$(cat)"
+fi
+
+run_once() {
+  # Run through a login shell so:
+  # - GEMINI_CMD with spaces works (e.g. "npx -y ...")
+  # - nvm/node/npx PATH is available
+  if [[ -n "$MODEL" ]]; then
+    bash -lc "$GEMINI_CMD -p $(printf '%q' "$PROMPT") --output-format json --approval-mode $(printf '%q' "$APPROVAL_MODE") -m $(printf '%q' "$MODEL")"
+  else
+    bash -lc "$GEMINI_CMD -p $(printf '%q' "$PROMPT") --output-format json --approval-mode $(printf '%q' "$APPROVAL_MODE")"
+  fi
+}
+
+extract_json() {
+  # Robustly find the *last* valid JSON object in the output
+  python3 - <<'PY'
+import sys, json
+s = sys.stdin.read()
+# scan from the end for a JSON object start
+starts = [i for i,ch in enumerate(s) if ch == '{']
+for i in reversed(starts):
+  chunk = s[i:].strip()
+  try:
+    obj = json.loads(chunk)
+    print(json.dumps(obj))
+    sys.exit(0)
+  except Exception:
+    pass
+print("__NOJSON__")
+PY
+}
+
+for ((i=1; i<=MAX_RETRIES; i++)); do
+  echo "[gemini] Attempt $i/$MAX_RETRIES..."
+
+  OUT="$(run_once 2>&1 || true)"
+  J="$(printf "%s" "$OUT" | extract_json)"
+
+  # Handle non-JSON flows (auth UI, high demand UI, etc.)
+  if [[ "$J" == "__NOJSON__" ]]; then
+    # Auth completed but CLI requests restart
+    if echo "$OUT" | grep -qi "Gemini CLI needs to be restarted"; then
+      echo "[gemini] Auth completed; CLI requested restart. Retrying immediately..."
+      sleep 1
+      continue
+    fi
+
+    # High demand dialog
+    if echo "$OUT" | grep -qi "We are currently experiencing high demand"; then
+      echo "[gemini] High demand detected (non-JSON). Sleeping ${SLEEP_SECONDS}s..."
+      sleep "$SLEEP_SECONDS"
+      continue
+    fi
+
+    echo "[gemini] Non-JSON output (cannot parse JSON):"
+    echo "$OUT"
+    exit 2
+  fi
+
+  # If JSON contains an error, check for high demand
+  ERR_MSG="$(python3 - <<'PY' "$J"
+import json,sys
+j=json.loads(sys.argv[1])
+err=j.get("error") or {}
+print((err.get("message") or "").strip())
+PY
+)"
+
+  if [[ -n "$ERR_MSG" ]] && echo "$ERR_MSG" | grep -qi "high demand"; then
+    echo "[gemini] High demand detected (JSON error). Sleeping ${SLEEP_SECONDS}s..."
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
+
+  # Print response (if present) and exit success
+  python3 - <<'PY' "$J"
+import json,sys
+j=json.loads(sys.argv[1])
+resp = (j.get("response") or "").rstrip()
+if resp:
+  print(resp)
+else:
+  # If there's no response but no error, still show the JSON for debugging
+  print(json.dumps(j, indent=2))
+PY
+  exit 0
+done
+
+echo "[gemini] Max retries reached ($MAX_RETRIES). Exiting."
+exit 1

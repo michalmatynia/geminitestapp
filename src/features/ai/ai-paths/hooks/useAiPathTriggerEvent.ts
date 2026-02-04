@@ -101,7 +101,7 @@ const loadPathConfigsFromSettings = async (
     const data =
       settingsData ??
       ((await (async (): Promise<Array<{ key: string; value: string }> | null> => {
-        return await fetchSettingsCached();
+        return await fetchSettingsCached({ scope: "heavy" });
       })()) ?? []);
     if (!data.length) return { configs: {}, settingsPathOrder: [] };
     const map = new Map<string, string>(
@@ -321,9 +321,9 @@ export function useAiPathTriggerEvent(): {
         let settingsData: Array<{ key: string; value: string }> | null = null;
         try {
           settingsData = await queryClient.fetchQuery({
-            queryKey: ["settings"],
+            queryKey: ["settings", "heavy"],
             queryFn: async () => {
-              return await fetchSettingsCached();
+              return await fetchSettingsCached({ scope: "heavy" });
             },
             staleTime: AI_PATHS_SETTINGS_STALE_MS,
           });

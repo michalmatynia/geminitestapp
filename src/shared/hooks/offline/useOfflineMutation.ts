@@ -118,7 +118,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
         ? options.extraInvalidateKeys(variables)
         : options.extraInvalidateKeys;
     },
-    [options.extraInvalidateKeys]
+    [options.extraInvalidateKeys, options]
   );
 
   return useMutation({
@@ -135,7 +135,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
           invalidateKeys: extraKeys,
           onProcessed: (): void => {
             if (options.processedMessage) {
-              toast(options.processedMessage as string, { variant: "success" });
+              toast(options.processedMessage, { variant: "success" });
             }
             options.onProcessed?.(variables);
           },

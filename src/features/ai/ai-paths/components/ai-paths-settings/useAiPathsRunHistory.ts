@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type Query } from "@tanstack/react-query";
 import {
   runsApi,
   type AiPathRunEventRecord,
@@ -251,8 +251,10 @@ export function useAiPathsRunHistory({
       return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };
     },
     enabled: Boolean(activePathId),
-    refetchInterval: (data: unknown): number | false => {
-      const d: { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined = data as
+    refetchInterval: (
+      query: Query<unknown, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }>
+    ): number | false => {
+      const d = query.state.data as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }
         | undefined;
       if (!d || !d.ok) return false;

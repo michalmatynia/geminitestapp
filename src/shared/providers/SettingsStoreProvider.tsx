@@ -32,7 +32,7 @@ export function SettingsStoreProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const settingsQuery = useSettingsMap({ scope: "light" });
 
   const value = useMemo<SettingsStoreValue>(() => {
     const map = settingsQuery.data ?? new Map<string, string>();
@@ -41,22 +41,16 @@ export function SettingsStoreProvider({
       isLoading: settingsQuery.isLoading,
       isFetching: settingsQuery.isFetching,
       error: settingsQuery.error ?? null,
-      get: (key: string) => map.get(key),
-      getBoolean: (key: string, fallback: boolean = false) =>
+      get: (key: string): string | undefined => map.get(key),
+      getBoolean: (key: string, fallback: boolean = false): boolean =>
         parseBoolean(map.get(key), fallback),
-      getNumber: (key: string, fallback?: number) =>
+      getNumber: (key: string, fallback?: number): number | undefined =>
         parseNumber(map.get(key), fallback),
-      refetch: () => {
+      refetch: (): void => {
         void settingsQuery.refetch();
       },
     };
-  }, [
-    settingsQuery.data,
-    settingsQuery.isLoading,
-    settingsQuery.isFetching,
-    settingsQuery.error,
-    settingsQuery.refetch,
-  ]);
+  }, [settingsQuery]);
 
   return (
     <SettingsStoreContext.Provider value={value}>

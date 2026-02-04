@@ -1,4 +1,0 @@
-src/proxy.ts(14,34): error TS2344: Type 'AppRouteHandlerFn | null' does not satisfy the constraint '(...args: any) => any'.
-  Type 'null' is not assignable to type '(...args: any) => any'.
-src/proxy.ts(16,83): error TS2344: Type 'AppRouteHandlerFn | null' does not satisfy the constraint '(...args: any) => any'.
-  Type 'null' is not assignable to type '(...args: any) => any'.

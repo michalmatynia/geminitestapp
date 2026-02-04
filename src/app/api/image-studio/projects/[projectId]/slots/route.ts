@@ -2,13 +2,15 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
-
-import prisma from "@/shared/lib/db/prisma";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
+import {
+  countImageStudioSlots,
+  createImageStudioSlots,
+  listImageStudioSlots,
+} from "@/features/ai/image-studio/server/slot-repository";
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
@@ -48,33 +50,7 @@ async function GET_handler(
     const projectId = sanitizeProjectId(params.projectId);
     if (!projectId) throw badRequestError("Project id is required");
 
-    let slots: unknown[] = [];
-    try {
-      slots = await prisma.imageStudioSlot.findMany({
-        where: { projectId },
-        orderBy: { createdAt: "desc" },
-        include: {
-          imageFile: true,
-          screenshotFile: true,
-          asset3d: true,
-        },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        const code = error.code;
-        if (code === "P2021" || code === "P2022") {
-          return NextResponse.json(
-            {
-              slots: [],
-              warning: "Image studio slots store is not available yet.",
-              code,
-            },
-            { status: 200 }
-          );
-        }
-      }
-      throw error;
-    }
+    const slots = await listImageStudioSlots(projectId);
 
     return NextResponse.json({ slots });
   } catch (error) {
@@ -102,24 +78,7 @@ async function POST_handler(
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    let existingCount = 0;
-    try {
-      existingCount = await prisma.imageStudioSlot.count({ where: { projectId } });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        const code = error.code;
-        if (code === "P2021" || code === "P2022") {
-          return NextResponse.json(
-            {
-              error: "Image studio slots store is not available yet.",
-              code,
-            },
-            { status: 503 }
-          );
-        }
-      }
-      throw error;
-    }
+    const existingCount = await countImageStudioSlots(projectId);
     const incomingSlots = parsed.data.slots ?? [];
     const count = parsed.data.count ?? incomingSlots.length;
     const maxCreate = Math.max(0, Math.min(100 - existingCount, count));
@@ -148,38 +107,10 @@ async function POST_handler(
         imageBase64: slot.imageBase64?.trim() || null,
         imageFileId: slot.imageFileId?.trim() || null,
         asset3dId: slot.asset3dId?.trim() || null,
-        metadata: (slot.metadata as Prisma.JsonValue) ?? null,
+        metadata: slot.metadata ?? null,
       }));
 
-    let created: Prisma.ImageStudioSlotCreateInput[] | unknown[] = [];
-    try {
-      created = await prisma.$transaction(
-        slotsToCreate.map((slot) =>
-          prisma.imageStudioSlot.create({
-            data: slot as Prisma.ImageStudioSlotCreateInput,
-            include: {
-              imageFile: true,
-              screenshotFile: true,
-              asset3d: true,
-            },
-          })
-        )
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        const code = error.code;
-        if (code === "P2021" || code === "P2022") {
-          return NextResponse.json(
-            {
-              error: "Image studio slots store is not available yet.",
-              code,
-            },
-            { status: 503 }
-          );
-        }
-      }
-      throw error;
-    }
+    const created = await createImageStudioSlots(projectId, slotsToCreate);
 
     return NextResponse.json({ slots: created }, { status: 201 });
   } catch (error) {

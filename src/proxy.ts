@@ -2,18 +2,21 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/features/auth/server";
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from "@/shared/lib/security/csrf";
 
-const baseProxy = (request: NextRequest) => {
+const baseProxy = (request: NextRequest): NextResponse => {
   const response = NextResponse.next();
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
   ensureCsrfCookie(response, existing);
   return response;
 };
 
-const handler = typeof auth === "function" ? (auth as any)(baseProxy) : null;
+type NextRequestHandler = (
+  request: NextRequest,
+  context: Record<string, unknown>,
+) => Promise<Response> | Response;
 
-type HandlerContext = typeof handler extends (...args: any[]) => any
-  ? Parameters<typeof handler>[1]
-  : any;
+const handler: NextRequestHandler | null = typeof auth === "function" ? (auth as unknown as NextRequestHandler) : null;
+
+type HandlerContext = Parameters<NextRequestHandler>[1];
 
 export function proxy(
   request: NextRequest,
@@ -23,7 +26,7 @@ export function proxy(
   if (!handler || typeof handler !== "function") {
     return baseProxy(request);
   }
-  return handler(request, resolvedContext) as Promise<Response> | Response;
+  return handler(request, resolvedContext);
 }
 
 export default proxy;

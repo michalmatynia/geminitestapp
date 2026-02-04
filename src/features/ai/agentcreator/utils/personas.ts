@@ -59,7 +59,7 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
 };
 
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
-  const data = await fetchSettingsCached();
+  const data = await fetchSettingsCached({ scope: "heavy" });
   const map = new Map(
     data.map((item: { key: string; value: string }) => [item.key, item.value])
   );

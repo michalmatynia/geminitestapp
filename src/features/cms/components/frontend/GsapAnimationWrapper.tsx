@@ -285,7 +285,8 @@ export function GsapAnimationWrapper({
         if (!targets.length) return;
         const ease = buildEase(mergedConfig, CustomEase);
         const stagger = buildStagger(mergedConfig, targets.length);
-        const scrollTrigger = ScrollTrigger
+        const canUseScrollTrigger = Boolean(ScrollTrigger);
+        const scrollTrigger = canUseScrollTrigger
           ? buildScrollTrigger(mergedConfig, root, targets.length)
           : undefined;
         const baseVars: GSAPTweenVars = {
@@ -319,7 +320,7 @@ export function GsapAnimationWrapper({
           }
         }
 
-        if (hasParallaxConfig) {
+        if (hasParallaxConfig && canUseScrollTrigger) {
           const parallaxSelector = (mergedConfig.parallaxSelector ?? "").trim();
           const parallaxTargets = buildTargets(root, parallaxSelector || mergedConfig.selector);
           if (parallaxTargets.length > 0) {

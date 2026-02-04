@@ -42,18 +42,18 @@ export function UrlGuardProvider(): null {
     if (normalizedPath) {
       const nextUrl = `${normalizedPath}${window.location.search}${window.location.hash}`;
       window.history.replaceState(null, "", nextUrl);
-      // eslint-disable-next-line no-console
+       
       console.warn("[url-guard] normalized path", {
         from: window.location.pathname,
         to: normalizedPath,
       });
     }
 
-    const wrap = (original: (url: string, ...rest: unknown[]) => void) => {
-      return (url: string, ...rest: unknown[]) => {
+    const wrap = (original: (url: string, ...rest: unknown[]) => void): ((url: string, ...rest: unknown[]) => void) => {
+      return (url: string, ...rest: unknown[]): void => {
         const next = normalizeNavigationUrl(url, host);
         if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
-          // eslint-disable-next-line no-console
+           
           console.warn("[url-guard] blocked invalid navigation", { url, normalized: next, stack: new Error().stack });
         }
         return original(next, ...rest);
@@ -72,12 +72,12 @@ export function UrlGuardProvider(): null {
     const wrapHistory = (
       original: (data: unknown, title: string, url?: string | URL | null) => void,
       label: string
-    ) => {
-      return (data: unknown, title: string, url?: string | URL | null) => {
+    ): ((data: unknown, title: string, url?: string | URL | null) => void) => {
+      return (data: unknown, title: string, url?: string | URL | null): void => {
         if (typeof url === "string") {
           const next = normalizeNavigationUrl(url, host);
           if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
-            // eslint-disable-next-line no-console
+             
             console.warn(`[url-guard] ${label} invalid`, { url, normalized: next, stack: new Error().stack });
           }
           return original.call(window.history, data, title, next);
@@ -95,23 +95,23 @@ export function UrlGuardProvider(): null {
       // Ignore history patch failures.
     }
 
-    const onClick = (event: MouseEvent) => {
+    const onClick = (event: MouseEvent): void => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      const anchor = target.closest("a") as HTMLAnchorElement | null;
+      const anchor = target.closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href");
       if (!href) return;
       const normalized = normalizeNavigationUrl(href, host);
       if (normalized !== href) {
-        // eslint-disable-next-line no-console
+         
         console.warn("[url-guard] normalized anchor", { href, normalized, stack: new Error().stack });
         anchor.setAttribute("href", normalized);
       }
     };
     window.addEventListener("click", onClick, true);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("click", onClick, true);
     };
   }, []);

@@ -81,6 +81,8 @@ export type SettingRecord = {
   value: string;
 };
 
+export type SettingsScope = "all" | "light" | "heavy";
+
 export type AgentEnqueuePayload = {
   prompt: string;
   model?: string;
@@ -230,8 +232,10 @@ export const dbApi = {
 // ============================================================================
 
 export const settingsApi = {
-  async list(): Promise<ApiResponse<SettingRecord[]>> {
-    return apiFetch<SettingRecord[]>("/api/settings");
+  async list(options?: { scope?: SettingsScope }): Promise<ApiResponse<SettingRecord[]>> {
+    const scope = options?.scope;
+    const query = scope ? `?scope=${encodeURIComponent(scope)}` : "";
+    return apiFetch<SettingRecord[]>(`/api/settings${query}`);
   },
 };
 

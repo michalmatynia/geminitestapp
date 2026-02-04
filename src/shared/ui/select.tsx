@@ -28,7 +28,9 @@ const getNodeText = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === "boolean") return ""
   if (typeof node === "string" || typeof node === "number") return String(node)
   if (Array.isArray(node)) return node.map(getNodeText).join("")
-  if (React.isValidElement(node)) return getNodeText((node.props as any).children)
+  if (React.isValidElement(node) && node.props && typeof node.props === "object" && "children" in node.props) {
+    return getNodeText(node.props.children as React.ReactNode)
+  }
   return ""
 }
 
@@ -40,25 +42,29 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
     if (!node) return
     React.Children.forEach(node, (child) => {
       if (!React.isValidElement(child)) return
-      const props = child.props as any
-      if (child.type === SelectValue && props?.placeholder) {
-        placeholder = String(props.placeholder)
+      
+      const props = child.props as Record<string, unknown>
+      
+      if (child.type === SelectValue && typeof props?.placeholder === "string") {
+        placeholder = props.placeholder
       }
       if (child.type === SelectContent || child.type === SelectGroup) {
-        walk(props.children)
+        walk(props.children as React.ReactNode)
         return
       }
       if (child.type === SelectItem) {
-        const value = typeof props.value === "string" ? props.value : String(props.value ?? "")
+        const value = typeof props.value === "string" ? props.value : (typeof props.value === "number" ? String(props.value) : "")
         if (!value) return
         options.push({
           value,
-          label: getNodeText(props.children),
+          label: getNodeText(props.children as React.ReactNode),
           disabled: Boolean(props.disabled),
         })
         return
       }
-      walk(props.children)
+      if (props.children) {
+        walk(props.children as React.ReactNode)
+      }
     })
   }
 
@@ -68,14 +74,26 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
 
 const Select: React.FC<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
-> = ({ value, defaultValue, onValueChange, disabled, children, ...props }) => {
+> = (allProps) => {
+  const { value, defaultValue, onValueChange: onValueChangeProp, disabled, children, ...props } = allProps
   const useNativeSelect = useNativeSelectMode()
+  
+  const { options, placeholder } = React.useMemo(() => 
+    useNativeSelect ? extractNativeOptions(children) : { options: [], placeholder: undefined },
+    [children, useNativeSelect]
+  )
+
+  const handleValueChange = React.useMemo(() => {
+    if (typeof onValueChangeProp !== "function") return undefined
+    return (val: string) => onValueChangeProp(val)
+  }, [onValueChangeProp])
+
   if (!useNativeSelect) {
     return (
       <SelectPrimitive.Root
         {...(value !== undefined ? { value } : {})}
         {...(defaultValue !== undefined ? { defaultValue } : {})}
-        {...(onValueChange !== undefined ? { onValueChange } : {})}
+        {...(handleValueChange !== undefined ? { onValueChange: handleValueChange } : {})}
         {...(disabled !== undefined ? { disabled } : {})}
         {...props}
       >
@@ -84,14 +102,13 @@ const Select: React.FC<
     )
   }
 
-  const { options, placeholder } = extractNativeOptions(children)
   const normalizedValue = typeof value === "string" ? value : typeof defaultValue === "string" ? defaultValue : ""
 
   return (
     <NativeSelectContext.Provider
       value={{
         value: normalizedValue,
-        onValueChange,
+        onValueChange: handleValueChange,
         disabled: disabled !== undefined ? Boolean(disabled) : undefined,
         options,
         placeholder,
@@ -119,6 +136,8 @@ const SelectTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, ...props }, ref) => {
   const useNativeSelect = useNativeSelectMode()
+  const context = React.useContext(NativeSelectContext)
+
   if (!useNativeSelect) {
     return (
       <SelectPrimitive.Trigger
@@ -137,7 +156,6 @@ const SelectTrigger = React.forwardRef<
     )
   }
 
-  const context = React.useContext(NativeSelectContext)
   if (!context) {
     return (
       <select

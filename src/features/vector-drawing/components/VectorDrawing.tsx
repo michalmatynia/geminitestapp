@@ -39,7 +39,7 @@ export type VectorDrawingProps = {
 const buildOutput = (shapes: VectorShape[]): VectorDrawingOutput => ({
   shapes,
   path: vectorShapesToPath(shapes),
-  points: shapes.map((shape) => ({ shapeId: shape.id, points: shape.points })),
+  points: shapes.map((shape: VectorShape) => ({ shapeId: shape.id, points: shape.points })),
 });
 
 export function VectorDrawing({
@@ -90,18 +90,18 @@ export function VectorDrawing({
   const output = useMemo(() => buildOutput(shapes), [shapes]);
 
   const handleSmooth = useCallback((): void => {
-    handleChange(shapes.map((shape) => smoothShape(shape, 1)));
+    handleChange(shapes.map((shape: VectorShape) => smoothShape(shape, 1)));
   }, [handleChange, shapes]);
 
   const handleSimplify = useCallback((): void => {
-    handleChange(shapes.map((shape) => simplifyShape(shape, 0.0025)));
+    handleChange(shapes.map((shape: VectorShape) => simplifyShape(shape, 0.0025)));
   }, [handleChange, shapes]);
 
   const resolvedBrushRadius = brushRadius ?? 6;
   const resolvedImageSrc = imageSrc ?? null;
   const resolvedActiveShapeId = activeShapeId ?? null;
   const resolvedSelectedPointIndex = selectedPointIndex ?? null;
-  const handleSelectShape = onSelectShape ?? (() => {});
+  const handleSelectShape = onSelectShape ?? ((): void => {});
 
   return (
     <div className={className}>

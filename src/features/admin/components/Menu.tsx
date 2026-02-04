@@ -1011,7 +1011,7 @@ export default function Menu(): React.ReactNode {
       seen.add(id);
     });
     return items;
-  }, [favoriteIds, navWithColors]);
+  }, [favoriteIds, baseNavWithColors]);
 
   const navWithFavorites = useMemo((): NavItem[] => {
     if (favoriteItems.length === 0) return navWithColors;
@@ -1085,7 +1085,7 @@ export default function Menu(): React.ReactNode {
   }, [allGroupIds, autoOpenIds, isAnyFolderOpen, normalizedQuery]);
 
   if (!mounted) {
-    return <nav className="flex flex-col space-y-2" aria-hidden="true" />;
+    return <nav className="flex flex-col space-y-2" aria-hidden="true"></nav>;
   }
 
   return (

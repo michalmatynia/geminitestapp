@@ -115,12 +115,12 @@ export function useUpdateProductMutation(): UseMutationResult<ProductWithImages 
     },
     {
       queryKey: ["products"],
-      extraInvalidateKeys: (variables) => [["products", variables.id]],
+      extraInvalidateKeys: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => [["products", variables.id]],
       queuedMessage: "Product update queued in runtime queue.",
       processedMessage: "Queued product update completed.",
       errorMessage: "Failed to update product",
-      onQueued: (variables) => addQueuedProductId(variables.id),
-      onProcessed: (variables) => removeQueuedProductId(variables.id),
+      onQueued: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => addQueuedProductId(variables.id),
+      onProcessed: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => removeQueuedProductId(variables.id),
     }
   );
 }
@@ -134,8 +134,8 @@ export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | n
       queuedMessage: "Product deletion queued in runtime queue.",
       processedMessage: "Queued product deletion completed.",
       errorMessage: "Failed to delete product",
-      onQueued: (id) => addQueuedProductId(id),
-      onProcessed: (id) => removeQueuedProductId(id),
+      onQueued: (id: string) => addQueuedProductId(id),
+      onProcessed: (id: string) => removeQueuedProductId(id),
     }
   );
 }
@@ -155,8 +155,8 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: bo
       queuedMessage: "Product deletion queued in runtime queue.",
       processedMessage: "Queued product deletion completed.",
       errorMessage: "Failed to delete some products",
-      onQueued: (ids) => ids.forEach((id) => addQueuedProductId(id)),
-      onProcessed: (ids) => ids.forEach((id) => removeQueuedProductId(id)),
+      onQueued: (ids: string[]) => ids.forEach((id: string) => addQueuedProductId(id)),
+      onProcessed: (ids: string[]) => ids.forEach((id: string) => removeQueuedProductId(id)),
     }
   );
 }

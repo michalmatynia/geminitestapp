@@ -339,32 +339,34 @@ export default function FileManager({
           {folderFilterEnabled && (
             <div className="flex flex-wrap gap-2">
               {folderOptions.map((folder: string) => (
-                <button
+                <Button
                   key={folder}
                   type="button"
+                  variant="ghost"
                   onClick={(): void => setLocalFolderFilter(folder)}
-                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition ${
+                  className={`h-auto rounded-full border px-3 py-1 text-[11px] font-medium transition hover:bg-blue-500/20 ${
                     folderFilter === folder
                       ? "border-blue-500 bg-blue-500/10 text-blue-300"
                       : "border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60"
                   }`}
                 >
                   {folder === "all" ? "All folders" : folder}
-                </button>
+                </Button>
               ))}
             </div>
           )}
           {enableTagSearch && tagOptions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tagOptions.slice(0, 20).map((tag: string) => (
-                <button
+                <Button
                   key={tag}
                   type="button"
+                  variant="ghost"
                   onClick={(): void => setTagSearch(tag)}
-                  className="rounded-full border border-border/40 bg-gray-900/40 px-2.5 py-0.5 text-[10px] text-gray-400 hover:border-border/60"
+                  className="h-auto rounded-full border border-border/40 bg-gray-900/40 px-2.5 py-0.5 text-[10px] text-gray-400 hover:border-border/60 hover:bg-gray-800/60"
                 >
                   #{tag}
-                </button>
+                </Button>
               ))}
             </div>
           )}

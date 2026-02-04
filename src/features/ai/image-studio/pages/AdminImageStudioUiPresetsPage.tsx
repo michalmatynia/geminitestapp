@@ -4,19 +4,19 @@ import { useCallback, useMemo } from "react";
 import Link from "next/link";
 
 import { Button, Label, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
-import { useUpdateSetting } from "@/shared/hooks/use-settings";
-import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from "../utils/ui-presets";
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
+  const heavySettings = useSettingsMap({ scope: "heavy" });
   const updateSetting = useUpdateSetting();
 
-  const presetsRaw = settingsStore.get(IMAGE_STUDIO_UI_PRESETS_KEY);
-  const activeRaw = settingsStore.get(IMAGE_STUDIO_UI_ACTIVE_KEY);
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const presetsRaw = heavyMap.get(IMAGE_STUDIO_UI_PRESETS_KEY);
+  const activeRaw = heavyMap.get(IMAGE_STUDIO_UI_ACTIVE_KEY);
 
   const presets = useMemo(() => {
     return parseImageStudioUiPresets(presetsRaw);

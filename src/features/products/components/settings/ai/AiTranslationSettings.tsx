@@ -3,7 +3,7 @@
 import { Button, Label, UnifiedSelect, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { logClientError } from "@/features/observability";
-import { fetchSettingsCached, invalidateSettingsCache } from "@/shared/api/settings-client";
+import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from "@/shared/api/settings-client";
 
 const STATIC_TRANSLATION_MODELS = [
   { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
@@ -22,7 +22,7 @@ export function AiTranslationSettings(): React.JSX.Element {
     const loadData = async (): Promise<void> => {
       try {
         const data = await fetchSettingsCached();
-        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
+        const settingsMap = new Map(data.map((item: SettingRecord) => [item.key, item.value]));
 
         setTranslationModel(settingsMap.get("ai_translation_model") || "gpt-4o");
 
@@ -30,7 +30,7 @@ export function AiTranslationSettings(): React.JSX.Element {
         if (chatbotRes.ok) {
           const data = await chatbotRes.json() as { models?: string[] };
           if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map((name: string) => ({ value: name, label: name, description: "Ollama" })));
+            setOllamaModels(data.models.map((name: string): { value: string; label: string; description: string } => ({ value: name, label: name, description: "Ollama" })));
           }
         }
       } catch (error) {

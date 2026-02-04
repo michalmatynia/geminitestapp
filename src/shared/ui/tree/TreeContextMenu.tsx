@@ -38,11 +38,8 @@ export function TreeContextMenu({
     [items]
   );
 
-  if (!hasItems) {
-    return <>{children}</>;
-  }
-
   useEffect((): void => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -76,7 +73,7 @@ export function TreeContextMenu({
     };
   }, [open]);
 
-  useEffect((): void => {
+  React.useLayoutEffect((): void => {
     if (!open || !menuRef.current) return;
     const menu = menuRef.current;
     const rect = menu.getBoundingClientRect();
@@ -95,7 +92,11 @@ export function TreeContextMenu({
     if (nextX !== position.x || nextY !== position.y) {
       setPosition({ x: nextX, y: nextY });
     }
-  }, [open, align, sideOffset, position]);
+  }, [open, align, sideOffset, position.x, position.y]);
+
+  if (!hasItems) {
+    return <>{children}</>;
+  }
 
   const menu = open && mounted ? createPortal(
     <div

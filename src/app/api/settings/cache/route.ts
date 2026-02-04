@@ -4,7 +4,7 @@ import { getSettingsCacheStats, isSettingsCacheDebugEnabled } from "@/shared/lib
 
 export const runtime = "nodejs";
 
-export async function GET(): Promise<Response> {
+export function GET() {
   if (!isSettingsCacheDebugEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

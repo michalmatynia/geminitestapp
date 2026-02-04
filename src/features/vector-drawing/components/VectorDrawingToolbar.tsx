@@ -89,7 +89,7 @@ export function VectorDrawingToolbar({
         className
       )}
     >
-      {toolOptions.map((option) => (
+      {toolOptions.map((option: ToolOption) => (
         <Tooltip key={option.key} content={option.label}>
           <Button
             type="button"

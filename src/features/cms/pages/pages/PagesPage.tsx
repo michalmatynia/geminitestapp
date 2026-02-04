@@ -107,18 +107,19 @@ export default function PagesPage(): React.ReactNode {
       >
         <div className="mb-4 flex flex-wrap gap-2">
           {STATUS_FILTERS.map((filter: StatusFilterOption) => (
-            <button
+            <Button
               key={filter.value}
               type="button"
+              variant="ghost"
               onClick={() => setStatusFilter(filter.value)}
-              className={`rounded-md border px-3 py-1 text-xs font-medium transition ${
+              className={`h-auto rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-blue-500/20 ${
                 statusFilter === filter.value
                   ? "border-blue-500 bg-blue-500/10 text-blue-300"
                   : "border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60"
               }`}
             >
               {filter.label}
-            </button>
+            </Button>
           ))}
         </div>
         <ul>

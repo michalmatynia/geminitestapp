@@ -12,16 +12,21 @@ import type { SystemSetting } from "@/shared/types/settings";
 import {
   fetchSettingsCached,
   invalidateSettingsCache,
+  type SettingsScope,
 } from "@/shared/api/settings-client";
 
 export type { SystemSetting };
 
-export function useSettings(): UseQueryResult<SystemSetting[], Error> {
+const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
+  new Map(data.map((item) => [item.key, item.value]));
+
+export function useSettings(options?: { scope?: SettingsScope }): UseQueryResult<SystemSetting[], Error> {
+  const scope = options?.scope ?? "light";
   return useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", scope],
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
-        return (await fetchSettingsCached()) as SystemSetting[];
+        return (await fetchSettingsCached({ scope })) as SystemSetting[];
       } catch (error) {
         console.warn("[settings] Failed to fetch settings", error);
         return [];
@@ -35,19 +40,19 @@ export function useSettings(): UseQueryResult<SystemSetting[], Error> {
   });
 }
 
-export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
+export function useSettingsMap(options?: { scope?: SettingsScope }): UseQueryResult<Map<string, string>, Error> {
+  const scope = options?.scope ?? "light";
   return useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", scope],
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
-        return (await fetchSettingsCached()) as SystemSetting[];
+        return (await fetchSettingsCached({ scope })) as SystemSetting[];
       } catch (error) {
         console.warn("[settings] Failed to fetch settings", error);
         return [];
       }
     },
-    select: (data: SystemSetting[]): Map<string, string> =>
-      new Map(data.map((item) => [item.key, item.value])),
+    select: selectSettingsMap,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -81,7 +86,9 @@ export function useUpdateSetting(): UseMutationResult<
       return (await res.json()) as SystemSetting;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["settings"] });
+      void queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "settings",
+      });
     },
   });
 }
@@ -113,7 +120,9 @@ export function useUpdateSettingsBulk(): UseMutationResult<
       return responses;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["settings"] });
+      void queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "settings",
+      });
     },
   });
 }

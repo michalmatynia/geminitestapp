@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult, type Query } from "@tanstack/react-query";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductJob } from "@/shared/types/listing-jobs";
 
@@ -30,11 +30,11 @@ export function useProductAiJobs(scope: string = "all"): UseQueryResult<{ jobs: 
       if (!res.ok) throw new Error("Failed to load product AI jobs");
       return (await res.json()) as { jobs: ProductAiJob[] };
     },
-    refetchInterval: (query) => {
-      const data = query.state.data as { jobs?: ProductAiJob[] } | undefined;
+    refetchInterval: (query: Query<{ jobs: ProductAiJob[] }, Error>): number | false => {
+      const data = query.state.data;
       if (!data || !Array.isArray(data.jobs)) return 5000;
-      const hasActive = data.jobs.some((job) => job.status === "pending" || job.status === "running");
-      const hasScheduled = data.jobs.some((job) => hasScheduledMarker(job.payload));
+      const hasActive = data.jobs.some((job: ProductAiJob) => job.status === "pending" || job.status === "running");
+      const hasScheduled = data.jobs.some((job: ProductAiJob) => hasScheduledMarker(job.payload));
       return hasActive || hasScheduled ? 5000 : false;
     },
     refetchIntervalInBackground: true,
@@ -45,11 +45,11 @@ const hasScheduledMarker = (payload: unknown): boolean => {
   if (!payload || typeof payload !== "object") return false;
   const record = payload as Record<string, unknown>;
   const keys = ["runAt", "scheduledAt", "scheduleAt", "nextRunAt", "schedule", "scheduled", "cron"];
-  if (keys.some((key) => record[key])) return true;
+  if (keys.some((key: string) => record[key])) return true;
   const context = record.context;
   if (context && typeof context === "object") {
     const ctx = context as Record<string, unknown>;
-    if (keys.some((key) => ctx[key])) return true;
+    if (keys.some((key: string) => ctx[key])) return true;
   }
   return false;
 };

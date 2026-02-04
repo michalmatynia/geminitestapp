@@ -31,16 +31,20 @@ import {
   type VectorShape,
   type VectorToolMode,
 } from "@/features/vector-drawing";
-import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
+import { cn, DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from "@/shared/utils";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import {
   Camera,
+  BookOpen,
   Folder,
+  Grid3X3,
   Image as ImageIcon,
   Maximize2,
   Minimize2,
   Plus,
+  Repeat2,
   RefreshCcw,
+  Settings2,
   Sparkles,
   Upload,
   Wand2,
@@ -60,7 +64,7 @@ import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "@/fe
 import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "@/features/prompt-engine/prompt-validator";
 import { formatProgrammaticPrompt } from "@/features/prompt-engine/prompt-formatter";
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from "../utils/param-ui";
-import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings } from "../utils/studio-settings";
@@ -116,6 +120,7 @@ function clamp01(value: number): number {
 
 const STUDIO_UPLOAD_PREFIX = "/uploads/studio/";
 const SLOT_TREE_KEY_PREFIX = "image_studio_slot_tree_";
+const PARAM_UI_STATE_KEY_PREFIX = "image_studio_param_ui_state_";
 
 function sanitizeStudioProjectId(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
@@ -399,8 +404,9 @@ function SlotTree({
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["root"]));
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
-  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+  const [_draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
+  const [_draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+  const rootOpen = expanded.has("root");
 
   const toggle = useCallback((id: string): void => {
     setExpanded((prev: Set<string>) => {
@@ -444,7 +450,7 @@ function SlotTree({
             >
               <button
                 type="button"
-                className="w-full text-left"
+                className="w-full text-left cursor-grab active:cursor-grabbing"
                 onClick={() => onSelectFolder(node.path)}
                 onDoubleClick={() => toggle(node.id)}
                 title={node.path || "Project root"}
@@ -458,7 +464,7 @@ function SlotTree({
                   setDragOverPath(null);
                 }}
                 onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-                  if (!draggedSlotId && !draggedFolderPath) return;
+                  if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
                   e.preventDefault();
                   e.stopPropagation();
                   setDragOverPath(node.path);
@@ -471,7 +477,8 @@ function SlotTree({
                   e.preventDefault();
                   e.stopPropagation();
                   const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
-                  const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
+                  const folderPath =
+                    getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
                   setDragOverPath(null);
                   if (slotId) {
                     const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
@@ -497,11 +504,11 @@ function SlotTree({
               </button>
             </TreeRow>
           </TreeContextMenu>
-          {isOpen ? (
-            <div>
-              {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
-            </div>
-          ) : null}
+      {isOpen ? (
+        <div>
+          {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
+        </div>
+      ) : null}
         </div>
       );
     }
@@ -511,6 +518,7 @@ function SlotTree({
     const isSelected = slot.id === selectedSlotId;
     return (
       <TreeContextMenu
+        key={node.id}
         items={[
           { id: "select-slot", label: "Select slot", onSelect: () => onSelectSlot(slot) },
           ...(slot.folderPath
@@ -534,12 +542,12 @@ function SlotTree({
           selected={isSelected}
           className="text-xs"
         >
-          <button
-            type="button"
-            className="w-full text-left"
-            onClick={() => onSelectSlot(slot)}
-            title={slot.name || slot.id}
-            draggable
+            <button
+              type="button"
+              className="w-full text-left cursor-grab active:cursor-grabbing"
+              onClick={() => onSelectSlot(slot)}
+              title={slot.name || slot.id}
+              draggable
             onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
               setDragData(e.dataTransfer, { [DRAG_KEYS.ASSET_ID]: slot.id }, { effectAllowed: "move" });
               setDraggedSlotId(slot.id);
@@ -560,8 +568,8 @@ function SlotTree({
   return (
     <div
       className="h-full overflow-auto rounded border border-border bg-card/40 p-2"
-      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!draggedSlotId && !draggedFolderPath) return;
+        onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+        if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
         e.preventDefault();
         setDragOverPath("");
       }}
@@ -571,7 +579,8 @@ function SlotTree({
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
         const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
-        const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
+        const folderPath =
+          getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
         setDragOverPath(null);
         if (slotId) {
           const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
@@ -583,13 +592,86 @@ function SlotTree({
         }
       }}
     >
+      <TreeRow
+        asChild
+        depth={0}
+        baseIndent={8}
+        indent={10}
+        tone="subtle"
+        selected={selectedFolder === ""}
+        dragOver={dragOverPath === ""}
+        className="text-xs"
+      >
+        <button
+          type="button"
+          className="w-full text-left cursor-grab active:cursor-grabbing"
+          onClick={() => onSelectFolder("")}
+          onDoubleClick={() => toggle("root")}
+          title={projectId || "Project root"}
+          draggable
+          onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
+            setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: "" }, { effectAllowed: "move" });
+            setDraggedFolderPath("");
+          }}
+          onDragEnd={() => {
+            setDraggedFolderPath(null);
+            setDragOverPath(null);
+          }}
+          onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
+            if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOverPath("");
+            e.dataTransfer.dropEffect = "move";
+          }}
+          onDragLeave={() => {
+            if (dragOverPath === "") setDragOverPath(null);
+          }}
+          onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+            const folderPath =
+              getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
+            setDragOverPath(null);
+            if (slotId) {
+              const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
+              if (slot) onMoveSlot(slot, "");
+              return;
+            }
+            if (folderPath !== null) {
+              onMoveFolder(folderPath, "");
+            }
+          }}
+        >
+          <TreeCaret
+            isOpen={rootOpen}
+            hasChildren={tree.children.length > 0}
+            ariaLabel={rootOpen ? "Collapse root" : "Expand root"}
+            onToggle={() => toggle("root")}
+            className="text-gray-400"
+            buttonClassName="hover:bg-gray-700"
+            placeholderClassName="w-4"
+          />
+          <Folder className="size-4 text-gray-400" />
+          <span className="truncate">{projectId || "Project"}</span>
+        </button>
+      </TreeRow>
+      {dragOverPath === "" ? (
+        <div className="ml-7 mt-1 rounded border border-dashed border-emerald-500/60 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200">
+          Drop to move here
+        </div>
+      ) : null}
+
       {tree.children.length === 0 ? (
         <div className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">
           No folders yet. Create a folder or add slots here.
         </div>
-      ) : (
-        renderNode(tree, 0)
-      )}
+      ) : rootOpen ? (
+        <div>
+          {tree.children.map((child: TreeNode) => renderNode(child, 1))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -603,6 +685,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const searchParams = useSearchParams();
 
   const settingsStore = useSettingsStore();
+  const heavySettings = useSettingsMap({ scope: "heavy" });
   const updateSetting = useUpdateSetting();
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
@@ -623,13 +706,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [newProjectId, setNewProjectId] = useState<string>("");
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
   const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
   const [virtualFolders, setVirtualFolders] = useState<string[]>([]);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
+  const [slotCreateOpen, setSlotCreateOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [slotImageUrlDraft, setSlotImageUrlDraft] = useState<string>("");
   const [slotBase64Draft, setSlotBase64Draft] = useState<string>("");
   const [slotUpdateBusy, setSlotUpdateBusy] = useState<boolean>(false);
+  const [slotInlineEditOpen, setSlotInlineEditOpen] = useState<boolean>(false);
   const hasManualProjectSelectionRef = useRef<boolean>(false);
   const [moveTargetFolder, setMoveTargetFolder] = useState<string>("");
 
@@ -647,6 +733,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [promptSourceAtExtract, setPromptSourceAtExtract] = useState<string | null>(null);
   const [paramUiOverrides, setParamUiOverrides] = useState<Record<string, ParamUiControl>>({});
+  const [_paramFlipMap, setParamFlipMap] = useState<Record<string, boolean>>({});
   const [learnOpen, setLearnOpen] = useState<boolean>(false);
   const [learnLoading, setLearnLoading] = useState<boolean>(false);
   const [learnCandidates, setLearnCandidates] = useState<PromptValidationRule[]>([]);
@@ -663,8 +750,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [_maskGenOpen, setMaskGenOpen] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
 
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
   const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
-  const studioSettingsRaw = settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const openaiModelFallback = settingsStore.get("openai_model");
   const promptEngineSettings = useMemo(
     () => parsePromptEngineSettings(promptEngineRaw),
@@ -674,7 +762,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   useEffect(() => {
     if (settingsLoaded) return;
-    if (settingsStore.isLoading) return;
+    if (settingsStore.isLoading || heavySettings.isLoading) return;
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
     const promptEngineStored = parsePromptEngineSettings(promptEngineRaw);
@@ -698,7 +786,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
-  }, [settingsLoaded, settingsStore.isLoading, studioSettingsRaw, promptEngineRaw, openaiModelFallback]);
+  }, [settingsLoaded, settingsStore.isLoading, heavySettings.isLoading, studioSettingsRaw, promptEngineRaw, openaiModelFallback]);
 
   useEffect(() => {
     const nextTab = normalizeStudioTab(searchParams?.get("tab"));
@@ -771,7 +859,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       toast("Project created.", { variant: "success" });
     },
     onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to create project.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to create project.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -795,7 +884,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       toast("Project deleted.", { variant: "success" });
     },
     onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to delete project.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete project.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -818,7 +908,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
     () => (projectId ? `${SLOT_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null),
     [projectId]
   );
-  const treeSettingsRaw = treeKey ? settingsStore.get(treeKey) : undefined;
+  const paramUiKey = useMemo(
+    () => (projectId ? `${PARAM_UI_STATE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null),
+    [projectId]
+  );
+  const treeSettingsRaw = treeKey ? heavyMap.get(treeKey) : undefined;
+  const paramUiRaw = paramUiKey ? heavyMap.get(paramUiKey) : undefined;
 
   const slotsQuery = useQuery({
     queryKey: ["image-studio", "slots", projectId],
@@ -885,6 +980,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
     }
   }, [projectId, settingsStore.isLoading, treeSettingsRaw, slotsQuery.data, treeKey, updateSetting, virtualFolders.length]);
 
+  useEffect(() => {
+    if (!projectId || !paramUiKey) {
+      setParamFlipMap({});
+      return;
+    }
+    if (settingsStore.isLoading || heavySettings.isLoading) return;
+    const parsed = parseJsonSetting<Record<string, boolean>>(paramUiRaw);
+    setParamFlipMap(parsed ?? {});
+  }, [projectId, paramUiKey, paramUiRaw, settingsStore.isLoading, heavySettings.isLoading]);
+
   const persistFolders = useCallback(
     async (nextFolders: string[]): Promise<void> => {
       if (!treeKey) return;
@@ -896,10 +1001,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
     [treeKey, updateSetting]
   );
 
+  const _persistParamFlipMap: (nextMap: Record<string, boolean>) => Promise<void> = useCallback(
+    async (nextMap: Record<string, boolean>): Promise<void> => {
+      if (!paramUiKey) return;
+      await updateSetting.mutateAsync({
+        key: paramUiKey,
+        value: serializeSetting(nextMap),
+      });
+    },
+    [paramUiKey, updateSetting]
+  );
+
   const createSlots = useCallback(
     async (slots: Array<Partial<ImageStudioSlotRecord>>): Promise<ImageStudioSlotRecord[]> => {
       if (!projectId) throw new Error("Select or create a project first.");
-      const payloadSlots = slots.map((slot) => ({
+      const payloadSlots = slots.map((slot: Partial<ImageStudioSlotRecord>) => ({
         name: typeof slot.name === "string" ? slot.name : undefined,
         folderPath: typeof slot.folderPath === "string" ? slot.folderPath : undefined,
         imageUrl: typeof slot.imageUrl === "string" ? slot.imageUrl : undefined,
@@ -962,16 +1078,20 @@ export function AdminImageStudioPage(): React.JSX.Element {
         throw new Error(data?.error || "Failed to delete slot");
       }
     },
-          onSuccess: (_: void, slotId: string): void => {
-            queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
-              const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
-              return { slots: current.filter((slot: ImageStudioSlotRecord) => slot.id !== slotId) };
-            });
-            if (selectedSlotId === slotId) {
-              setSelectedSlotId(null);
-            }
-            toast("Slot deleted.", { variant: "success" });
-          },    onError: (error: unknown): void => {
+    onSuccess: (_: void, slotId: string): void => {
+      queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+        const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+        return { slots: current.filter((slot: ImageStudioSlotRecord) => slot.id !== slotId) };
+      });
+      if (selectedSlotId === slotId) {
+        setSelectedSlotId(null);
+      }
+      if (workingSlotId === slotId) {
+        setWorkingSlotId(null);
+      }
+      toast("Slot deleted.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Failed to delete slot.", { variant: "error" });
     },
   });
@@ -987,7 +1107,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
           onSuccess: (): void => {
             toast("Slot moved.", { variant: "success" });
           },    onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to move slot.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to move slot.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -1112,7 +1233,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       }
     },
     onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Upload failed.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Upload failed.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -1132,7 +1254,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
             setNewFolderName("");
             toast("Folder created.", { variant: "success" });
           },    onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Failed to create folder.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to create folder.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -1208,7 +1331,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       }
     },
     onError: (error: unknown): void => {
-      toast(error instanceof Error ? error.message : "Import failed.", { variant: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Import failed.";
+      toast(errorMessage, { variant: "error" });
     },
   });
 
@@ -1248,39 +1372,64 @@ export function AdminImageStudioPage(): React.JSX.Element {
     if (!selectedSlotId) return null;
     return slots.find((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId) ?? null;
   }, [slots, selectedSlotId]);
+  const workingSlot = useMemo(() => {
+    if (!workingSlotId) return null;
+    return slots.find((slot: ImageStudioSlotRecord) => slot.id === workingSlotId) ?? null;
+  }, [slots, workingSlotId]);
+  useEffect(() => {
+    setSlotInlineEditOpen(false);
+  }, [selectedSlotId]);
+  useEffect(() => {
+    if (!workingSlotId) return;
+    const stillExists = slots.some((slot: ImageStudioSlotRecord) => slot.id === workingSlotId);
+    if (!stillExists) {
+      setWorkingSlotId(null);
+    }
+  }, [slots, workingSlotId]);
+  const isImageSlot = useMemo(
+    () =>
+      Boolean(
+        selectedSlot?.imageFileId ||
+          selectedSlot?.imageUrl ||
+          selectedSlot?.imageBase64 ||
+          selectedSlot?.screenshotFileId
+      ),
+    [selectedSlot?.imageBase64, selectedSlot?.imageFileId, selectedSlot?.imageUrl, selectedSlot?.screenshotFileId]
+  );
 
-  const selectedSlotImageSrc = useMemo(() => {
-    if (!selectedSlot) return null;
-    if (selectedSlot.imageBase64) return selectedSlot.imageBase64;
-    const fromUrl = normalizePublicPath(selectedSlot.imageUrl);
+  const workingSlotImageSrc = useMemo(() => {
+    if (!workingSlot) return null;
+    if (workingSlot.imageBase64) return workingSlot.imageBase64;
+    const fromUrl = normalizePublicPath(workingSlot.imageUrl);
     if (fromUrl) return fromUrl;
-    const fromFile = normalizePublicPath(selectedSlot.imageFile?.filepath ?? null);
+    const fromFile = normalizePublicPath(workingSlot.imageFile?.filepath ?? null);
     if (fromFile) return fromFile;
-    const fromScreenshot = normalizePublicPath(selectedSlot.screenshotFile?.filepath ?? null);
+    const fromScreenshot = normalizePublicPath(workingSlot.screenshotFile?.filepath ?? null);
     if (fromScreenshot) return fromScreenshot;
     return null;
-  }, [selectedSlot]);
+  }, [workingSlot]);
 
-  const selectedSlotRunAsset = useMemo(() => {
-    if (!selectedSlot || !projectId) return null;
+  const workingSlotRunAsset = useMemo(() => {
+    if (!workingSlot || !projectId) return null;
     const filepath =
-      normalizePublicPath(selectedSlot.imageFile?.filepath ?? null) ??
-      normalizePublicPath(selectedSlot.imageUrl ?? null) ??
-      normalizePublicPath(selectedSlot.screenshotFile?.filepath ?? null);
+      normalizePublicPath(workingSlot.imageFile?.filepath ?? null) ??
+      normalizePublicPath(workingSlot.imageUrl ?? null) ??
+      normalizePublicPath(workingSlot.screenshotFile?.filepath ?? null);
     if (!filepath) return null;
     const safeProjectId = sanitizeStudioProjectId(projectId);
     if (!filepath.startsWith(`${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`)) return null;
-    return { id: selectedSlot.imageFileId ?? undefined, filepath };
-  }, [projectId, selectedSlot]);
+    return { id: workingSlot.imageFileId ?? undefined, filepath };
+  }, [projectId, workingSlot]);
 
       useEffect(() => {
         const nextUrl = selectedSlot?.imageUrl ?? "";
         const nextBase64 = selectedSlot?.imageBase64 ?? "";
-        setSlotImageUrlDraft((prev) => (prev === nextUrl ? prev : nextUrl));
-        setSlotBase64Draft((prev) => (prev === nextBase64 ? prev : nextBase64));
+        setSlotImageUrlDraft((prev: string) => (prev === nextUrl ? prev : nextUrl));
+        setSlotBase64Draft((prev: string) => (prev === nextBase64 ? prev : nextBase64));
       }, [selectedSlot?.id, selectedSlot?.imageUrl, selectedSlot?.imageBase64]);
   
       const compositeAssetOptions = useMemo(() => {
+        const baseId = workingSlotId ?? selectedSlotId;
         const options = slots.map((slot: ImageStudioSlotRecord) => {
           const folder = slot.folderPath ?? "";
           const name = slot.name || slot.id;
@@ -1288,11 +1437,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
           return {
             value: slot.id,
             label,
-            disabled: slot.id === selectedSlotId,
+            disabled: slot.id === baseId,
           };
         });
         return options.sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
-      }, [slots, selectedSlotId]);
+      }, [slots, selectedSlotId, workingSlotId]);
   
       const compositeAssets = useMemo(() => {
         if (compositeAssetIds.length === 0) return [];
@@ -1309,24 +1458,25 @@ export function AdminImageStudioPage(): React.JSX.Element {
         }
         const validIds = new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id));
         setCompositeAssetIds((prev: string[]) => {
-          const next = prev.filter((id: string) => validIds.has(id) && id !== selectedSlotId);
+          const baseId = workingSlotId ?? selectedSlotId;
+          const next = prev.filter((id: string) => validIds.has(id) && id !== baseId);
           return next.length === prev.length ? prev : next;
         });
-      }, [projectId, selectedSlotId, slots]);
+      }, [projectId, selectedSlotId, slots, workingSlotId]);
   useEffect(() => {
     const currentFolder = selectedSlot?.folderPath ?? "";
-    setMoveTargetFolder((prev) => (prev === currentFolder ? prev : currentFolder));
+    setMoveTargetFolder((prev: string) => (prev === currentFolder ? prev : currentFolder));
   }, [selectedSlot?.folderPath]);
 
   useEffect(() => {
-    const nextMode = selectedSlot?.asset3dId && !selectedSlotImageSrc ? "3d" : "image";
-    setPreviewMode((prev) => (prev === nextMode ? prev : nextMode));
-  }, [selectedSlot?.asset3dId, selectedSlotImageSrc]);
+    const nextMode = workingSlot?.asset3dId && !workingSlotImageSrc ? "3d" : "image";
+    setPreviewMode((prev: "image" | "3d") => (prev === nextMode ? prev : nextMode));
+  }, [workingSlot?.asset3dId, workingSlotImageSrc]);
 
   useEffect(() => {
     setMaskShapes([]);
     setActiveMaskId(null);
-  }, [selectedSlotId]);
+  }, [workingSlotId]);
 
   const handleSelectSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     setSelectedSlotId(slot.id);
@@ -1396,7 +1546,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
 
   useEffect(() => {
-    setUiSuggestMode((prev) => (prev === studioSettings.uiExtractor.mode ? prev : studioSettings.uiExtractor.mode));
+    setUiSuggestMode((prev: "heuristic" | "ai" | "both") => (prev === studioSettings.uiExtractor.mode ? prev : studioSettings.uiExtractor.mode));
   }, [studioSettings.uiExtractor.mode]);
 
   const buildRuleKey = useCallback((rule: PromptValidationRule, fallback: number): string =>
@@ -1521,6 +1671,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return next;
     });
   }, [paramLeaves, paramsState]);
+
+  useEffect(() => {
+    if (!paramsState) return;
+    const existingPaths = new Set(paramLeaves.map((leaf: ParamLeaf) => leaf.path));
+    setParamFlipMap((prev: Record<string, boolean>) => {
+      const next: Record<string, boolean> = {};
+      Object.entries(prev).forEach(([path, flipped]: [string, boolean]) => {
+        if (!existingPaths.has(path)) return;
+        next[path] = flipped;
+      });
+      if (Object.keys(next).length === Object.keys(prev).length) return prev;
+      void _persistParamFlipMap(next);
+      return next;
+    });
+  }, [paramLeaves, paramsState, _persistParamFlipMap]);
 
   const buildHeuristicSuggestions = useCallback((): UiSuggestion[] => {
     if (!paramsState) return [];
@@ -1665,8 +1830,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, []);
 
   const handleGenerateMask = useCallback(async (mode: "threshold" | "edges" | "ai-bbox" | "ai-polygon"): Promise<void> => {
-    if (!selectedSlotImageSrc) {
-      toast("Select a slot image first.", { variant: "error" });
+    if (!workingSlotImageSrc) {
+      toast("Load a slot into preview first.", { variant: "error" });
       return;
     }
     setMaskGenLoading(true);
@@ -1674,14 +1839,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
       let bbox: { x: number; y: number; w: number; h: number } | null = null;
       let polygon: Point[] | null = null;
       if (mode === "threshold") {
-        bbox = await computeBboxFromThreshold(selectedSlotImageSrc);
+        bbox = await computeBboxFromThreshold(workingSlotImageSrc);
       } else if (mode === "edges") {
-        bbox = await computeBboxFromEdges(selectedSlotImageSrc);
+        bbox = await computeBboxFromEdges(workingSlotImageSrc);
       } else {
         const res = await fetch("/api/image-studio/mask/ai", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagePath: selectedSlotImageSrc, mode: mode === "ai-polygon" ? "polygon" : "bbox" }),
+          body: JSON.stringify({ imagePath: workingSlotImageSrc, mode: mode === "ai-polygon" ? "polygon" : "bbox" }),
         });
         const data = (await res.json().catch(() => null)) as { bbox?: { x: number; y: number; w: number; h: number }; polygon?: Point[]; error?: string } | null;
         if (!res.ok) throw new Error(data?.error || "AI mask generation failed.");
@@ -1703,7 +1868,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     } finally {
       setMaskGenLoading(false);
     }
-  }, [addMaskFromBbox, addMaskFromPolygon, selectedSlotImageSrc, toast]);
+  }, [addMaskFromBbox, addMaskFromPolygon, workingSlotImageSrc, toast]);
 
   const handleApplyImageUrl = useCallback(async (): Promise<void> => {
     if (!selectedSlot) return;
@@ -1801,11 +1966,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
 
   const handleCaptureScreenshot = useCallback(async (): Promise<void> => {
-    if (!selectedSlot) {
-      toast("Select a slot first.", { variant: "error" });
+    if (!workingSlot) {
+      toast("Load a slot into preview first.", { variant: "error" });
       return;
     }
-    if (!selectedSlot.asset3dId) {
+    if (!workingSlot.asset3dId) {
       toast("No 3D asset attached to this slot.", { variant: "error" });
       return;
     }
@@ -1819,25 +1984,26 @@ export function AdminImageStudioPage(): React.JSX.Element {
       toast("Failed to capture screenshot.", { variant: "error" });
       return;
     }
-    const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(selectedSlot.id)}/screenshot`, {
+    const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dataUrl }),
     });
     const data = (await res.json().catch(() => null)) as ImageStudioSlotRecord | { error?: string } | null;
-          if (!res.ok || !data || "error" in data) {
-            toast((data && "error" in data && data.error) || "Failed to save screenshot.", { variant: "error" });
-            return;
-          }
-          const savedSlot = data as ImageStudioSlotRecord;
-          queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
-            const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
-            const byId = new Map<string, ImageStudioSlotRecord>();
-            current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
-            byId.set(savedSlot.id, savedSlot);
-            return { slots: Array.from(byId.values()) };
-          });    toast("Screenshot saved to slot.", { variant: "success" });
-  }, [projectId, queryClient, selectedSlot, toast]);
+    if (!res.ok || !data || "error" in data) {
+      toast((data && "error" in data && data.error) || "Failed to save screenshot.", { variant: "error" });
+      return;
+    }
+    const savedSlot = data as ImageStudioSlotRecord;
+    queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+      const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+      const byId = new Map<string, ImageStudioSlotRecord>();
+      current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
+      byId.set(savedSlot.id, savedSlot);
+      return { slots: Array.from(byId.values()) };
+    });
+    toast("Screenshot saved to slot.", { variant: "success" });
+  }, [projectId, queryClient, toast, workingSlot]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -1930,8 +2096,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const handleRefreshSettings = useCallback((): void => {
     setSettingsLoaded(false);
-    settingsStore.refetch();
-  }, [settingsStore]);
+    void settingsStore.refetch();
+    void heavySettings.refetch();
+  }, [settingsStore, heavySettings]);
 
   const validationIssues: ParamIssue[] = useMemo(() => {
     if (!paramsState || !paramSpecs) return [];
@@ -2018,23 +2185,24 @@ export function AdminImageStudioPage(): React.JSX.Element {
         if (!filepath || !filepath.startsWith(prefix)) return null;
         return { id: slot.imageFileId ?? slot.id, filepath };
       })
-                .filter(
-                  (entry: { id: string; filepath: string } | null): entry is { id: string; filepath: string } => Boolean(entry)
-                );    return {
+      .filter(
+        (entry: { id: string; filepath: string } | null): entry is { id: string; filepath: string } => Boolean(entry)
+      );
+    return {
       projectId: projectId || null,
-      asset: selectedSlotRunAsset ?? null,
+      asset: workingSlotRunAsset ?? null,
       referenceAssets,
       mask: maskPolygons.length > 0 ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather } : null,
       prompt: generatedPrompt || promptText || null,
       extractedParams: paramsState,
       studioSettings,
     };
-  }, [projectId, selectedSlotRunAsset, compositeAssets, maskPolygons, maskInvert, maskFeather, generatedPrompt, promptText, paramsState, studioSettings]);
+  }, [projectId, workingSlotRunAsset, compositeAssets, maskPolygons, maskInvert, maskFeather, generatedPrompt, promptText, paramsState, studioSettings]);
 
   const runMutation = useMutation({
     mutationFn: async (): Promise<StudioRunResponse> => {
       if (!projectId) throw new Error("Select a project first.");
-      if (!selectedSlotRunAsset) throw new Error("Select an image slot with an uploaded asset first.");
+      if (!workingSlotRunAsset) throw new Error("Load an image slot into preview first.");
       const prompt = (generatedPrompt || promptText || "").trim();
       if (!prompt) throw new Error("Prompt is required.");
 
@@ -2053,7 +2221,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
       const payload = {
         projectId,
-        asset: selectedSlotRunAsset,
+        asset: workingSlotRunAsset,
         referenceAssets,
         mask: maskPolygons.length > 0
           ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather }
@@ -2840,7 +3008,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   return (
     <div className="container mx-auto max-w-none flex min-h-[calc(100vh-5rem)] flex-col gap-4 py-6">
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex min-h-0 flex-1 flex-col gap-4">
+      <Tabs
+        id="image-studio-tabs"
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="flex min-h-0 flex-1 flex-col gap-4"
+      >
         <TabsContent value="studio" className="mt-0 flex min-h-0 flex-1 flex-col gap-4">
 
       <SharedModal
@@ -2854,6 +3027,61 @@ export function AdminImageStudioPage(): React.JSX.Element {
           selectionMode="multiple"
           onSelectFile={(files: ImageFileSelection[]) => void handleDriveSelection(files)}
         />
+      </SharedModal>
+
+      <SharedModal
+        open={slotCreateOpen}
+        onClose={() => setSlotCreateOpen(false)}
+        title="New slot"
+        size="md"
+      >
+        <div className="space-y-4 text-sm text-gray-200">
+          <div className="text-[11px] text-gray-400">
+            Folder: <span className="text-gray-200">{selectedFolder || "(root)"}</span>
+          </div>
+          <div className="grid gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSlotCreateOpen(false);
+                void handleCreateSlot();
+              }}
+              disabled={!projectId || maxSlotsReached}
+            >
+              <Plus className="mr-2 size-4" />
+              Create empty slot
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSlotCreateOpen(false);
+                setDriveImportOpen(true);
+              }}
+              disabled={!projectId || importFromDriveMutation.isPending}
+            >
+              <Folder className="mr-2 size-4" />
+              Import from Drive
+            </Button>
+            <FileUploadButton
+              variant="outline"
+              accept="image/*"
+              multiple
+              disabled={!projectId || uploadMutation.isPending}
+              onFilesSelected={async (files: File[]) => {
+                setSlotCreateOpen(false);
+                await uploadMutation.mutateAsync({ files, folder: selectedFolder });
+              }}
+            >
+              <Upload className="mr-2 size-4" />
+              Upload images
+            </FileUploadButton>
+          </div>
+          {maxSlotsReached ? (
+            <div className="text-[11px] text-amber-200">Max 100 slots per project.</div>
+          ) : null}
+        </div>
       </SharedModal>
 
       <SharedModal
@@ -3156,13 +3384,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
         <div
           className={cn(
             "grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out",
-            isFocusMode ? "grid-cols-[0px_1fr_0px] gap-0" : "grid-cols-[300px_1fr_420px] gap-4"
+            isFocusMode ? "grid-cols-[0px_1fr_420px] gap-4" : "grid-cols-[300px_1fr_420px] gap-4"
           )}
         >
           {/* Project + Slots */}
         <SectionPanel
           className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0",
+            "order-1 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0",
             isFocusMode && "pointer-events-none opacity-0 -translate-x-2"
           )}
           variant="subtle"
@@ -3246,37 +3474,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleCreateSlot()}
+                  onClick={() => setSlotCreateOpen(true)}
                   disabled={!projectId || maxSlotsReached}
                   title={maxSlotsReached ? "Max 100 slots per project" : "Create a new slot"}
                 >
                   <Plus className="mr-2 size-4" />
                   New slot
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDriveImportOpen(true)}
-                  disabled={!projectId || importFromDriveMutation.isPending}
-                  title="Import existing images from Drive"
-                >
-                  <Folder className="mr-2 size-4" />
-                  Drive
-                </Button>
-                <FileUploadButton
-                  variant="outline"
-                  size="sm"
-                  accept="image/*"
-                  multiple
-                  disabled={!projectId || uploadMutation.isPending}
-                  onFilesSelected={async (files: File[]) => {
-                    await uploadMutation.mutateAsync({ files, folder: selectedFolder });
-                  }}
-                >
-                  <Upload className="mr-2 size-4" />
-                  Upload
-                </FileUploadButton>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -3298,186 +3502,252 @@ export function AdminImageStudioPage(): React.JSX.Element {
             </div>
             {selectedSlot ? (
               <div className="space-y-2">
-                <div className="text-[11px] text-gray-400">Selected slot actions</div>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <Select
-                    value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
-                    onValueChange={(value: string) => {
-                      setMoveTargetFolder(value === "__root__" ? "" : value);
-                    }}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Move to folder" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {folderOptions.map((folder: string) => (
-                        <SelectItem key={folder || "__root__"} value={folder || "__root__"}>
-                          {folder || "(root)"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      title="New slot"
+                      onClick={() => setSlotCreateOpen(true)}
+                      disabled={!projectId || maxSlotsReached}
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      title="Import from Drive"
+                      onClick={() => setDriveImportOpen(true)}
+                      disabled={!projectId || importFromDriveMutation.isPending}
+                    >
+                      <Folder className="size-4" />
+                    </Button>
+                    <FileUploadButton
+                      variant="outline"
+                      size="icon"
+                      title="Upload images"
+                      accept="image/*"
+                      multiple
+                      disabled={!projectId || uploadMutation.isPending}
+                      onFilesSelected={async (files: File[]) => {
+                        await uploadMutation.mutateAsync({ files, folder: selectedFolder });
+                      }}
+                    >
+                      <Upload className="size-4" />
+                    </FileUploadButton>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={workingSlotId === selectedSlot.id ? "secondary" : "outline"}
+                      onClick={() => setWorkingSlotId(selectedSlot.id)}
+                    >
+                      {workingSlotId === selectedSlot.id ? "Loaded" : "Load to preview"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={slotInlineEditOpen ? "secondary" : "outline"}
+                      onClick={() => setSlotInlineEditOpen((prev: boolean) => !prev)}
+                    >
+                      {slotInlineEditOpen ? "Close edit" : "Edit"}
+                    </Button>
+                  </div>
+                </div>
+                {slotInlineEditOpen ? (
+                  <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <Select
+                      value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
+                      onValueChange={(value: string) => {
+                        setMoveTargetFolder(value === "__root__" ? "" : value);
+                      }}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Move to folder" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {folderOptions.map((folder: string) => (
+                          <SelectItem key={folder || "__root__"} value={folder || "__root__"}>
+                            {folder || "(root)"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        moveSlotMutation.isPending ||
+                        (selectedSlot.folderPath ?? "") === moveTargetFolder
+                      }
+                      onClick={() => {
+                        void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
+                      }}
+                    >
+                      Move
+                    </Button>
+                  </div>
+                ) : null}
+
+                {slotInlineEditOpen && !isImageSlot ? (
+                  <>
+                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                      <div className="text-[11px] text-gray-400">Slot image</div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={slotImageUrlDraft}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
+                          placeholder="Paste image URL"
+                          className="h-8"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void handleApplyImageUrl()}
+                          disabled={slotUpdateBusy}
+                        >
+                          Use URL
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={slotBase64Draft}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
+                        placeholder="Paste base64 data URL"
+                        className="min-h-[80px] text-xs"
+                      />
+                      <div className="flex items-center justify-between gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void handleApplyBase64()}
+                          disabled={slotUpdateBusy}
+                        >
+                          Use Base64
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => void handleClearSlotMedia()}
+                          disabled={slotUpdateBusy}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                      <div className="text-[11px] text-gray-400">3D asset</div>
+                      <Asset3DPickerField
+                        value={selectedSlot.asset3dId ?? ""}
+                        onChange={(value: string) => {
+                          void updateSlotMutation.mutateAsync({
+                            id: selectedSlot.id,
+                            data: { asset3dId: value || null },
+                          });
+                        }}
+                        disabled={slotUpdateBusy}
+                      />
+                      <FileUploadButton
+                        variant="outline"
+                        size="sm"
+                        accept=".glb,.gltf,model/gltf-binary"
+                        disabled={slotUpdateBusy}
+                        onFilesSelected={async (files: File[]) => {
+                          await handleUpload3DAsset(files);
+                        }}
+                      >
+                        <Upload className="mr-2 size-4" />
+                        Upload 3D
+                      </FileUploadButton>
+                    </div>
+
+                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] text-gray-400">Composite sources</div>
+                        {compositeAssetIds.length > 0 ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-[10px]"
+                            onClick={() => setCompositeAssetIds([])}
+                          >
+                            Clear
+                          </Button>
+                        ) : null}
+                      </div>
+                      <MultiSelect
+                        options={compositeAssetOptions}
+                        selected={compositeAssetIds}
+                                        onChange={(values: string[]) => {
+                                          const baseId = workingSlotId ?? selectedSlotId;
+                                          const next = values.filter((id: string) => id !== baseId);
+                                          setCompositeAssetIds(next);
+                                        }}
+                        placeholder="Add slots for compositing"
+                        searchPlaceholder="Search slots..."
+                        disabled={!projectId || compositeAssetOptions.length === 0}
+                        className="text-xs"
+                      />
+                      {compositeAssets.length > 0 ? (
+                        <div className="space-y-1">
+                          {compositeAssets.map((slot: ImageStudioSlotRecord) => {
+                            const folder = slot.folderPath ?? "";
+                            const name = slot.name || slot.id;
+                            const label = folder ? `${folder}/${name}` : name;
+                            return (
+                              <div
+                                key={slot.id}
+                                className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
+                              >
+                                <span className="truncate text-gray-300">{label}</span>
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() =>
+                                    setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
+                                  }
+                                >
+                                  <X className="size-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-gray-500">
+                          Optional. Send up to 16 images total (including base).
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : null}
+
+                {slotInlineEditOpen ? (
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    disabled={
-                      moveSlotMutation.isPending ||
-                      (selectedSlot.folderPath ?? "") === moveTargetFolder
-                    }
+                    className="w-full text-red-300 hover:text-red-200"
+                    disabled={deleteSlotMutation.isPending}
                     onClick={() => {
-                      void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
+                      const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
+                      if (!confirmed) return;
+                      void deleteSlotMutation.mutateAsync(selectedSlot.id);
                     }}
                   >
-                    Move
+                    Delete slot
                   </Button>
-                </div>
-
-                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                  <div className="text-[11px] text-gray-400">Slot image</div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={slotImageUrlDraft}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
-                      placeholder="Paste image URL"
-                      className="h-8"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleApplyImageUrl()}
-                      disabled={slotUpdateBusy}
-                    >
-                      Use URL
-                    </Button>
-                  </div>
-                  <Textarea
-                    value={slotBase64Draft}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
-                    placeholder="Paste base64 data URL"
-                    className="min-h-[80px] text-xs"
-                  />
-                  <div className="flex items-center justify-between gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleApplyBase64()}
-                      disabled={slotUpdateBusy}
-                    >
-                      Use Base64
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void handleClearSlotMedia()}
-                      disabled={slotUpdateBusy}
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                  <div className="text-[11px] text-gray-400">3D asset</div>
-                                      <Asset3DPickerField
-                                        value={selectedSlot.asset3dId ?? ""}
-                                        onChange={(value: string) => {
-                                          void updateSlotMutation.mutateAsync({
-                                            id: selectedSlot.id,
-                                            data: { asset3dId: value || null },
-                                          });
-                                        }}
-                                        disabled={slotUpdateBusy}
-                                      />
-                                      <FileUploadButton
-                                        variant="outline"
-                                        size="sm"
-                                        accept=".glb,.gltf,model/gltf-binary"
-                                        disabled={slotUpdateBusy}
-                                        onFilesSelected={async (files: File[]) => {
-                                          await handleUpload3DAsset(files);
-                                        }}
-                                      >
-                                        <Upload className="mr-2 size-4" />
-                                        Upload 3D
-                                      </FileUploadButton>
-                                    </div>
-                  
-                                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="text-[11px] text-gray-400">Composite sources</div>
-                                        {compositeAssetIds.length > 0 ? (
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 px-2 text-[10px]"
-                                            onClick={() => setCompositeAssetIds([])}
-                                          >
-                                            Clear
-                                          </Button>
-                                        ) : null}
-                                      </div>
-                                      <MultiSelect
-                                        options={compositeAssetOptions}
-                                        selected={compositeAssetIds}
-                                        onChange={(values: string[]) => {
-                                          const next = values.filter((id: string) => id !== selectedSlotId);
-                                          setCompositeAssetIds(next);
-                                        }}
-                                        placeholder="Add slots for compositing"
-                                        searchPlaceholder="Search slots..."
-                                        disabled={!projectId || compositeAssetOptions.length === 0}
-                                        className="text-xs"
-                                      />
-                                      {compositeAssets.length > 0 ? (
-                                        <div className="space-y-1">
-                                          {compositeAssets.map((slot: ImageStudioSlotRecord) => {
-                                            const folder = slot.folderPath ?? "";
-                                            const name = slot.name || slot.id;
-                                            const label = folder ? `${folder}/${name}` : name;
-                                            return (
-                                              <div
-                                                key={slot.id}
-                                                className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
-                                              >
-                                                <span className="truncate text-gray-300">{label}</span>
-                                                <Button
-                                                  type="button"
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  className="h-6 w-6"
-                                                  onClick={() =>
-                                                    setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
-                                                  }
-                                                >
-                                                  <X className="size-3" />
-                                                </Button>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      ) : (                    <div className="text-[10px] text-gray-500">Optional. Send up to 16 images total (including base).</div>
-                  )}
-                </div>
-
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-red-300 hover:text-red-200"
-                  disabled={deleteSlotMutation.isPending}
-                  onClick={() => {
-                    const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
-                    if (!confirmed) return;
-                    void deleteSlotMutation.mutateAsync(selectedSlot.id);
-                  }}
-                >
-                  Delete slot
-                </Button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -3502,18 +3772,17 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
           </div>
         </SectionPanel>
-
         {/* Preview */}
-        <SectionPanel className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
+        <SectionPanel className="order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
           <PanelHeader
             title="Preview"
-            {...(!isFocusMode ? { subtitle: selectedSlot?.name || "—" } : {})}
+            {...(!isFocusMode ? { subtitle: workingSlot?.name || "—" } : {})}
             actions={(
               <div className="flex items-center gap-2">
                 {!isFocusMode ? (
                   <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
                 ) : null}
-                {selectedSlot?.asset3dId ? (
+                {workingSlot?.asset3dId ? (
                   <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
                     <Button
                       type="button"
@@ -3533,7 +3802,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     </Button>
                   </div>
                 ) : null}
-                {previewMode === "3d" && selectedSlot?.asset3dId ? (
+                {previewMode === "3d" && workingSlot?.asset3dId ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -3584,7 +3853,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               variant="outline"
               size="sm"
               onClick={() => void handleGenerateMask(maskGenMode)}
-              disabled={maskGenLoading || !selectedSlotImageSrc}
+              disabled={maskGenLoading || !workingSlotImageSrc}
             >
               {maskGenLoading ? "Generating..." : "Generate"}
             </Button>
@@ -3592,10 +3861,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
           <div className="relative flex-1">
             <div className="h-full overflow-hidden">
-              {previewMode === "3d" && selectedSlot?.asset3dId ? (
+              {previewMode === "3d" && workingSlot?.asset3dId ? (
                 <div className="relative h-full w-full overflow-hidden rounded border border-border bg-black/20">
                   <Viewer3D
-                    modelUrl={`/api/assets3d/${selectedSlot.asset3dId}/file`}
+                    modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
                     allowUserControls
                     captureRef={captureRef}
                     className="h-full w-full"
@@ -3603,7 +3872,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 </div>
               ) : (
                 <VectorDrawingCanvas
-                  src={selectedSlotImageSrc}
+                  src={workingSlotImageSrc ?? ""}
                   tool={tool}
                   shapes={maskShapes}
                   activeShapeId={activeMaskId}
@@ -3888,19 +4157,18 @@ export function AdminImageStudioPage(): React.JSX.Element {
         {/* Prompt + Params */}
         <SectionPanel
           className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0",
-            isFocusMode && "pointer-events-none opacity-0 translate-x-2"
+            "order-3 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0"
           )}
           variant="subtle"
-          aria-hidden={isFocusMode}
         >
           <PanelHeader
-            title="Prompt & Params"
+            title=""
             actions={(
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="AI extract"
                   onClick={() => {
                     if (!promptText.trim()) return;
                     if (studioSettings.promptExtraction.mode === "programmatic") {
@@ -3914,44 +4182,43 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   }}
                   disabled={!promptText.trim()}
                 >
-                  AI extract
+                  <Sparkles className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="Auto format"
                   onClick={autoFormatPrompt}
                   disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== "programmatic"}
-                  title="Apply automatic formatting fixes (best effort)"
                 >
-                  Auto format
+                  <Wand2 className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="Suggest UI"
                   onClick={() => void handleSuggestUi()}
                   disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
-                  title="Suggest UI controls for extracted parameters"
                 >
-                  <Wand2 className="mr-2 size-4" />
-                  Suggest UI
+                  <Grid3X3 className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="Learn patterns"
                   onClick={() => void handleLearnPatterns()}
                   disabled={!promptText.trim() || !canManagePatterns || learnLoading}
-                  title="Learn validation patterns from the prompt"
                 >
-                  <Sparkles className="mr-2 size-4" />
-                  Learn patterns
+                  <BookOpen className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="Extract params"
                   onClick={runProgrammaticExtraction}
                   disabled={!promptText.trim()}
                 >
-                  Extract params
+                  <Settings2 className="size-4" />
                 </Button>
               </div>
             )}
@@ -4038,6 +4305,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
                         key={leaf.path}
                         leaf={leaf}
                         uiControl={paramUiOverrides[leaf.path] ?? "auto"}
+                        flipped={Boolean(_paramFlipMap[leaf.path])}
+                        onFlip={() => {
+                          const next = !_paramFlipMap[leaf.path];
+                          setParamFlipMap((prev: Record<string, boolean>) => {
+                            const updated = { ...prev, [leaf.path]: next };
+                            void _persistParamFlipMap(updated);
+                            return updated;
+                          });
+                        }}
                         onUiControlChange={(nextControl: ParamUiControl) => {
                           setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
                             if (nextControl === "auto") {
@@ -4082,7 +4358,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 size="sm"
                 onClick={() => void runMutation.mutateAsync()}
-                disabled={runMutation.isPending || !projectId || !selectedSlotRunAsset || !(generatedPrompt || promptText).trim()}
+                disabled={runMutation.isPending || !projectId || !workingSlotRunAsset || !(generatedPrompt || promptText).trim()}
               >
                 {runMutation.isPending ? "Running..." : "Run edit"}
               </Button>
@@ -4102,6 +4378,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
           </div>
         </SectionPanel>
+
         </div>
 
       </div>
@@ -4252,6 +4529,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
 function ParamRow({
   leaf,
   uiControl,
+  flipped,
+  onFlip,
   onUiControlChange,
   spec,
   issues,
@@ -4259,6 +4538,8 @@ function ParamRow({
 }: {
   leaf: ParamLeaf;
   uiControl: ParamUiControl;
+  flipped: boolean;
+  onFlip: () => void;
   onUiControlChange: (control: ParamUiControl) => void;
   spec?: ParamSpec;
   issues: ParamIssue[];
@@ -4303,220 +4584,239 @@ function ParamRow({
           <div className="text-[11px] text-gray-400">
             {Array.isArray(value) ? "array" : value === null ? "null" : typeof value}
           </div>
-          <Select
-            value={selectedUiControl}
-            onValueChange={(next: string) => {
-              if (!isParamUiControl(next)) return;
-              onUiControlChange(next);
-            }}
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            title={flipped ? "Show value" : "Edit selector"}
+            onClick={onFlip}
           >
-            <SelectTrigger className="h-7 w-[140px] px-2">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {recommendation.options.map((opt: ParamUiControl) => (
-                <SelectItem key={opt} value={opt}>
-                  {opt === "auto" ? autoLabel : paramUiControlLabel(opt)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Repeat2 className="size-4" />
+          </Button>
         </div>
       </div>
 
-      {spec?.hint ? (
-        <div className="mb-2 text-[11px] text-gray-500">
-          Hint: <span className="text-gray-400">{spec.hint}</span>
-        </div>
-      ) : null}
-
-      {selectedUiControl === "auto" && recommendation.reason ? (
-        <div className="mb-2 text-[11px] text-gray-500">
-          Suggestion: <span className="text-gray-400">{recommendation.reason}</span>
-        </div>
-      ) : null}
-
-      {errors.length > 0 || warnings.length > 0 ? (
-        <div className="mb-2 space-y-1 text-[11px]">
-          {errors.map((issue: ParamIssue) => (
-            <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
-              {issue.message}
-            </div>
-          ))}
-          {warnings.map((issue: ParamIssue) => (
-            <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
-              {issue.message}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {requestedControl !== "json" && uiKind === "boolean" && isBool ? (
-        requestedControl === "buttons" ? (
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={value ? "secondary" : "outline"}
-              onClick={() => onChange(true)}
-            >
-              true
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={!value ? "secondary" : "outline"}
-              onClick={() => onChange(false)}
-            >
-              false
-            </Button>
-          </div>
-        ) : (
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
-            <input type="checkbox" checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
-            <span>{value ? "true" : "false"}</span>
-          </label>
-        )
-      ) : null}
-
-      {requestedControl !== "json" && uiKind === "enum" && typeof value === "string" && spec?.enumOptions ? (
-        requestedControl === "buttons" ? (
-          <div className="flex flex-wrap gap-2">
-            {spec.enumOptions.map((opt: string) => (
-              <Button
-                key={opt}
-                type="button"
-                size="sm"
-                variant={opt === value ? "secondary" : "outline"}
-                onClick={() => onChange(opt)}
-              >
-                {opt}
-              </Button>
-            ))}
-          </div>
-        ) : requestedControl === "text" ? (
-          <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
-        ) : (
-          <Select value={value} onValueChange={(v: string) => onChange(v)}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {spec.enumOptions.map((opt: string) => (
-                <SelectItem key={opt} value={opt}>
-                  {opt}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-      ) : null}
-
-      {requestedControl !== "json" && uiKind === "number" && isNumber ? (
+      {flipped ? (
         <div className="space-y-2">
-          {requestedControl === "slider" && canSlider ? (
-            <input
-              type="range"
-              min={spec?.min ?? 0}
-              max={spec?.max ?? 1}
-              step={spec?.step ?? 0.01}
-              value={Math.min(spec?.max ?? Number(value), Math.max(spec?.min ?? Number(value), Number(value)))}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const next = Number(e.target.value);
-                if (!Number.isFinite(next)) return;
-                onChange(next);
+          <div className="flex items-center gap-2">
+            <div className="text-[11px] text-gray-400">Selector</div>
+            <Select
+              value={selectedUiControl}
+              onValueChange={(next: string) => {
+                if (!isParamUiControl(next)) return;
+                onUiControlChange(next);
               }}
-              className="w-full"
-            />
-          ) : null}
-          <Input
-            type="number"
-            value={String(value)}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const next = Number(e.target.value);
-              if (!Number.isFinite(next)) return;
-              onChange(next);
-            }}
-            min={spec?.min}
-            max={spec?.max}
-            step={spec?.step}
-            className="h-8"
-          />
-        </div>
-      ) : null}
+            >
+              <SelectTrigger className="h-7 w-[140px] px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {recommendation.options.map((opt: ParamUiControl) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt === "auto" ? autoLabel : paramUiControlLabel(opt)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {requestedControl !== "json" && uiKind === "rgb" && Array.isArray(value) ? (
-        <div className="grid grid-cols-3 gap-2">
-          {["R", "G", "B"].map((label: string, index: number) => (
-            <div key={label} className="space-y-1">
-              <div className="text-[10px] text-gray-500">{label}</div>
-              <Input
-                type="number"
-                value={String(value[index] ?? "")}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const next = Number(e.target.value);
-                  if (!Number.isFinite(next)) return;
-                  const nextRgb = [...(value as unknown[])];
-                  nextRgb[index] = next;
-                  onChange(nextRgb);
-                }}
-                min={spec?.min ?? 0}
-                max={spec?.max ?? 255}
-                step={spec?.step ?? 1}
-                className="h-8"
-              />
+          {spec?.hint ? (
+            <div className="text-[11px] text-gray-500">
+              Hint: <span className="text-gray-400">{spec.hint}</span>
             </div>
-          ))}
-        </div>
-      ) : null}
+          ) : null}
 
-      {requestedControl !== "json" && uiKind === "tuple2" && Array.isArray(value) ? (
-        <div className="grid grid-cols-2 gap-2">
-          {["X", "Y"].map((label: string, index: number) => (
-            <div key={label} className="space-y-1">
-              <div className="text-[10px] text-gray-500">{label}</div>
+          {selectedUiControl === "auto" && recommendation.reason ? (
+            <div className="text-[11px] text-gray-500">
+              Suggestion: <span className="text-gray-400">{recommendation.reason}</span>
+            </div>
+          ) : null}
+
+          {errors.length > 0 || warnings.length > 0 ? (
+            <div className="space-y-1 text-[11px]">
+              {errors.map((issue: ParamIssue) => (
+                <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
+                  {issue.message}
+                </div>
+              ))}
+              {warnings.map((issue: ParamIssue) => (
+                <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
+                  {issue.message}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          {requestedControl !== "json" && uiKind === "boolean" && isBool ? (
+            requestedControl === "buttons" ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={value ? "secondary" : "outline"}
+                  onClick={() => onChange(true)}
+                >
+                  true
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!value ? "secondary" : "outline"}
+                  onClick={() => onChange(false)}
+                >
+                  false
+                </Button>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
+                <input type="checkbox" checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
+                <span>{value ? "true" : "false"}</span>
+              </label>
+            )
+          ) : null}
+
+          {requestedControl !== "json" && uiKind === "enum" && typeof value === "string" && spec?.enumOptions ? (
+            requestedControl === "buttons" ? (
+              <div className="flex flex-wrap gap-2">
+                {spec.enumOptions.map((opt: string) => (
+                  <Button
+                    key={opt}
+                    type="button"
+                    size="sm"
+                    variant={opt === value ? "secondary" : "outline"}
+                    onClick={() => onChange(opt)}
+                  >
+                    {opt}
+                  </Button>
+                ))}
+              </div>
+            ) : requestedControl === "text" ? (
+              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+            ) : (
+              <Select value={value} onValueChange={(v: string) => onChange(v)}>
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {spec.enumOptions.map((opt: string) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )
+          ) : null}
+
+          {requestedControl !== "json" && uiKind === "number" && isNumber ? (
+            <div className="space-y-2">
+              {requestedControl === "slider" && canSlider ? (
+                <input
+                  type="range"
+                  min={spec?.min ?? 0}
+                  max={spec?.max ?? 1}
+                  step={spec?.step ?? 0.01}
+                  value={Math.min(spec?.max ?? Number(value), Math.max(spec?.min ?? Number(value), Number(value)))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const next = Number(e.target.value);
+                    if (!Number.isFinite(next)) return;
+                    onChange(next);
+                  }}
+                  className="w-full"
+                />
+              ) : null}
               <Input
                 type="number"
-                value={String(value[index] ?? "")}
+                value={String(value)}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const next = Number(e.target.value);
                   if (!Number.isFinite(next)) return;
-                  const nextTuple = [...(value as unknown[])];
-                  nextTuple[index] = next;
-                  onChange(nextTuple);
+                  onChange(next);
                 }}
                 min={spec?.min}
                 max={spec?.max}
-                step={spec?.step ?? 1}
+                step={spec?.step}
                 className="h-8"
               />
             </div>
-          ))}
-        </div>
-      ) : null}
+          ) : null}
 
-      {requestedControl !== "json" && uiKind === "string" && isString ? (
-        requestedControl === "textarea" ? (
-          <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className="h-24 font-mono text-[11px]" />
-        ) : (
-          <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
-        )
-      ) : null}
+          {requestedControl !== "json" && uiKind === "rgb" && Array.isArray(value) ? (
+            <div className="grid grid-cols-3 gap-2">
+              {["R", "G", "B"].map((label: string, index: number) => (
+                <div key={label} className="space-y-1">
+                  <div className="text-[10px] text-gray-500">{label}</div>
+                  <Input
+                    type="number"
+                    value={String(value[index] ?? "")}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const next = Number(e.target.value);
+                      if (!Number.isFinite(next)) return;
+                      const nextRgb = [...(value as unknown[])];
+                      nextRgb[index] = next;
+                      onChange(nextRgb);
+                    }}
+                    min={spec?.min ?? 0}
+                    max={spec?.max ?? 255}
+                    step={spec?.step ?? 1}
+                    className="h-8"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
 
-      {uiKind === "json" || requestedControl === "json" ? (
-        <Textarea
-          value={safeJsonStringify(value)}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            const raw = e.target.value;
-            try {
-              onChange(JSON.parse(raw) as unknown);
-            } catch {
-              onChange(raw);
-            }
-          }}
-          className="h-24 font-mono text-[11px]"
-        />
-      ) : null}
+          {requestedControl !== "json" && uiKind === "tuple2" && Array.isArray(value) ? (
+            <div className="grid grid-cols-2 gap-2">
+              {["X", "Y"].map((label: string, index: number) => (
+                <div key={label} className="space-y-1">
+                  <div className="text-[10px] text-gray-500">{label}</div>
+                  <Input
+                    type="number"
+                    value={String(value[index] ?? "")}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const next = Number(e.target.value);
+                      if (!Number.isFinite(next)) return;
+                      const nextTuple = [...(value as unknown[])];
+                      nextTuple[index] = next;
+                      onChange(nextTuple);
+                    }}
+                    min={spec?.min}
+                    max={spec?.max}
+                    step={spec?.step ?? 1}
+                    className="h-8"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {requestedControl !== "json" && uiKind === "string" && isString ? (
+            requestedControl === "textarea" ? (
+              <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className="h-24 font-mono text-[11px]" />
+            ) : (
+              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+            )
+          ) : null}
+
+          {uiKind === "json" || requestedControl === "json" ? (
+            <Textarea
+              value={safeJsonStringify(value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                const raw = e.target.value;
+                try {
+                  onChange(JSON.parse(raw) as unknown);
+                } catch {
+                  onChange(raw);
+                }
+              }}
+              className="h-24 font-mono text-[11px]"
+            />
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

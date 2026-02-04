@@ -404,7 +404,7 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
               })
               .optional()
               .default(defaultImageStudioSettings.targetAi.openai.image),
-            advanced_overrides: z.record(z.string(), z.unknown()).nullable().optional().default(null),
+            advanced_overrides: z.record(z.string(), z.any()).nullable().optional().default(null),
           })
           .optional()
           .default(defaultImageStudioSettings.targetAi.openai),

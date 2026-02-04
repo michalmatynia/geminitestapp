@@ -207,9 +207,9 @@ export function useAiPathTrigger(): {
       if (!configs || Object.keys(configs).length === 0) {
         try {
           const data = await queryClient.fetchQuery({
-            queryKey: ["settings"],
+            queryKey: ["settings", "heavy"],
             queryFn: async () => {
-              return await fetchSettingsCached();
+              return await fetchSettingsCached({ scope: "heavy" });
             },
             staleTime: AI_PATHS_SETTINGS_STALE_MS,
           });

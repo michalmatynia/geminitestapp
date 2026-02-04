@@ -33,7 +33,7 @@ interface DataTableProps<TData> {
 }
 
 declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
+  interface TableMeta<_TData> {
     queryClient?: QueryClient;
   }
 }

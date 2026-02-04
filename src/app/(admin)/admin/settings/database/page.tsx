@@ -54,6 +54,13 @@ const productProviderOptions = [
 
 type ProductProviderValue = (typeof productProviderOptions)[number]["value"];
 
+type SettingsBackfillResult = {
+  matched: number;
+  modified: number;
+  remaining: number;
+  sampleIds?: string[];
+};
+
 export default function DatabaseSettingsPage() {
   const settingsQuery = useSettingsMap();
 
@@ -94,6 +101,9 @@ function DatabaseSettingsForm({
   const [productProvider, setProductProvider] = useState<ProductProviderValue>(initialProductProvider);
   const [productDirty, setProductDirty] = useState(false);
   const [syncing, setSyncing] = useState<"mongo_to_prisma" | "prisma_to_mongo" | null>(null);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillLimit, setBackfillLimit] = useState(500);
+  const [backfillResult, setBackfillResult] = useState<SettingsBackfillResult | null>(null);
   const updateSetting = useUpdateSetting();
   const settingsQuery = useSettingsMap(); // Re-fetch or pass as prop if needed for other things, but here it seems only used for initial value. 
   // Wait, the original code used settingsQuery.isPending in the button disabled state.
@@ -198,6 +208,35 @@ function DatabaseSettingsForm({
       );
     } finally {
       setSyncing(null);
+    }
+  };
+
+  const runSettingsBackfill = async (dryRun: boolean): Promise<void> => {
+    setBackfillLoading(true);
+    try {
+      const res = await fetch("/api/settings/migrate/backfill-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dryRun, limit: backfillLimit }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || "Failed to backfill settings keys.");
+      }
+      const payload = (await res.json()) as SettingsBackfillResult;
+      setBackfillResult(payload);
+      toast(
+        dryRun ? "Backfill dry run complete." : "Backfill completed.",
+        { variant: "success" }
+      );
+    } catch (error) {
+      logClientError(error, { context: { source: "DatabaseSettingsPage", action: "runSettingsBackfill", dryRun } });
+      toast(
+        error instanceof Error ? error.message : "Failed to run backfill.",
+        { variant: "error" }
+      );
+    } finally {
+      setBackfillLoading(false);
     }
   };
 
@@ -351,6 +390,72 @@ function DatabaseSettingsForm({
             Changing product provider does not migrate data. Run the Database Sync tool
             before switching if you need data in both stores.
           </div>
+        </div>
+
+        <div className="mt-8 border-t border-gray-800 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Settings Key Backfill</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Backfills missing MongoDB settings keys when only a string _id exists.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={backfillLoading}
+                onClick={() => void runSettingsBackfill(true)}
+                className="border-gray-700 text-gray-200 hover:bg-gray-900"
+              >
+                {backfillLoading ? "Running..." : "Dry Run"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={backfillLoading}
+                onClick={() => void runSettingsBackfill(false)}
+                className="border-emerald-400/60 text-emerald-100 hover:bg-emerald-500/20"
+              >
+                {backfillLoading ? "Running..." : "Run Backfill"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 max-w-xs space-y-2">
+            <Label className="text-sm font-medium text-gray-200" htmlFor="settings-backfill-limit">
+              Batch size
+            </Label>
+            <input
+              id="settings-backfill-limit"
+              type="number"
+              min={1}
+              max={5000}
+              value={backfillLimit}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const next = Number.parseInt(event.target.value, 10);
+                setBackfillLimit(Number.isFinite(next) ? Math.min(Math.max(next, 1), 5000) : 500);
+              }}
+              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+              disabled={backfillLoading}
+            />
+            <p className="text-xs text-gray-400">
+              Updates up to this many missing keys per run.
+            </p>
+          </div>
+
+          {backfillResult && (
+            <div className="mt-4 rounded-md border border-slate-700/60 bg-slate-900/40 p-3 text-xs text-slate-200">
+              <div>Matched: {backfillResult.matched}</div>
+              <div>Modified: {backfillResult.modified}</div>
+              <div>Remaining: {backfillResult.remaining}</div>
+              {backfillResult.sampleIds && backfillResult.sampleIds.length > 0 && (
+                <div className="mt-2 text-slate-300">
+                  Sample ids: {backfillResult.sampleIds.join(", ")}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-6 rounded-md border border-red-500/30 bg-red-500/10 p-4">

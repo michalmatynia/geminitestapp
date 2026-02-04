@@ -1,0 +1,144 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/user/preferences/route.ts
+  27:53  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts
+  254:23  error  Expected query to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+  1623:7  error  Unexpected `await` of a non-Promise (non-"Thenable") value                                                                                                          @typescript-eslint/await-thenable
+  2056:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioSettingsPage.tsx
+  100:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+  180:7  error  Unexpected `await` of a non-Promise (non-"Thenable") value                                                                                                          @typescript-eslint/await-thenable
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/server/slot-repository.ts
+   34:15  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+   35:20  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+   36:13  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+  111:17  error  Expected doc to have a type annotation                  @typescript-eslint/typedef
+  136:20  error  Expected doc to have a type annotation                  @typescript-eslint/typedef
+  161:55  error  Expected slot to have a type annotation                 @typescript-eslint/typedef
+  179:20  error  Expected doc to have a type annotation                  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  218:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/hooks/useJobQueries.ts
+  33:23  error  Expected query to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/settings/ai/AiTranslationSettings.tsx
+  25:47  error  Expected item to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/context/ProductFormContext.tsx
+  428:46  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/context/ProductFormContext.tsx:428:46
+  426 |         value={{
+  427 |           register,
+> 428 |           handleSubmit: methods.handleSubmit(onSubmit),
+      |                                              ^^^^^^^^ Passing a ref to a function may read its value during render
+  429 |           errors,
+  430 |           setValue,
+  431 |           getValues,  react-hooks/refs
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductData.ts
+  118:29  error  Expected variables to have a type annotation  @typescript-eslint/typedef
+  122:18  error  Expected variables to have a type annotation  @typescript-eslint/typedef
+  123:21  error  Expected variables to have a type annotation  @typescript-eslint/typedef
+  137:18  error  Expected id to have a type annotation         @typescript-eslint/typedef
+  138:21  error  Expected id to have a type annotation         @typescript-eslint/typedef
+  158:18  error  Expected ids to have a type annotation        @typescript-eslint/typedef
+  158:39  error  Expected id to have a type annotation         @typescript-eslint/typedef
+  159:21  error  Expected ids to have a type annotation        @typescript-eslint/typedef
+  159:42  error  Expected id to have a type annotation         @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/vector-drawing/components/VectorDrawing.tsx
+   42:23  error  Expected shape to have a type annotation  @typescript-eslint/typedef
+   93:30  error  Expected shape to have a type annotation  @typescript-eslint/typedef
+   97:30  error  Expected shape to have a type annotation  @typescript-eslint/typedef
+  104:50  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/vector-drawing/components/VectorDrawingToolbar.tsx
+  92:25  error  Expected option to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/offline/useOfflineMutation.ts
+  115:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `options`, but the source dependencies were [options.extraInvalidateKeys]. Inferred less specific property than source.
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/offline/useOfflineMutation.ts:115:5
+  113 |   const { toast } = useToast();
+  114 |   const resolveExtraKeys = useCallback(
+> 115 |     (variables: TVariables): readonly (readonly unknown[])[] => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 116 |       if (!options.extraInvalidateKeys) return [];
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 117 |       return typeof options.extraInvalidateKeys === "function"
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 118 |         ? options.extraInvalidateKeys(variables)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 119 |         : options.extraInvalidateKeys;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 120 |     },
+      | ^^^^^^ Could not preserve existing manual memoization
+  121 |     [options.extraInvalidateKeys]
+  122 |   );
+  123 |  react-hooks/preserve-manual-memoization
+  121:5  warning  React Hook useCallback has a missing dependency: 'options'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/settings-cache.ts
+  48:35  error  Expected a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/SettingsStoreProvider.tsx
+  37:45  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `settingsQuery`, but the source dependencies were [settingsQuery.data, settingsQuery.isLoading, settingsQuery.isFetching, settingsQuery.error, settingsQuery.refetch]. Inferred less specific property than source.
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/SettingsStoreProvider.tsx:37:45
+  35 |   const settingsQuery = useSettingsMap({ scope: "light" });
+  36 |
+> 37 |   const value = useMemo<SettingsStoreValue>(() => {
+     |                                             ^^^^^^^
+> 38 |     const map = settingsQuery.data ?? new Map<string, string>();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |     return {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 52 |     };
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |   }, [
+     | ^^^^ Could not preserve existing manual memoization
+  54 |     settingsQuery.data,
+  55 |     settingsQuery.isLoading,
+  56 |     settingsQuery.isFetching,  react-hooks/preserve-manual-memoization
+  44:7   error    Missing return type on function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/explicit-function-return-type
+  45:7   error    Missing return type on function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/explicit-function-return-type
+  47:7   error    Missing return type on function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/explicit-function-return-type
+  49:7   error    Missing return type on function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/explicit-function-return-type
+  53:6   warning  React Hook useMemo has a missing dependency: 'settingsQuery'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/UrlGuardProvider.tsx
+   53:48  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+   76:72  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+   98:41  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  114:15  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/select.tsx
+  77:29  error  A method that is not declared with `this: void` may cause unintentional scoping of `this` when separated from its object.
+Consider using an arrow function or explicitly `.bind()`ing the method to avoid calling the method with an unintended `this` value. 
+If a function does not access `this`, it can be annotated with `this: void`  @typescript-eslint/unbound-method
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/tree/TreeContextMenu.tsx
+  45:3  error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+  49:3  error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+  79:3  error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+
+✖ 49 problems (46 errors, 3 warnings)
+

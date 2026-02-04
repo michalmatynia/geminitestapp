@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { RefreshCcw } from "lucide-react";
 
@@ -19,7 +19,7 @@ import {
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
@@ -40,6 +40,7 @@ import {
 export function AdminImageStudioSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const heavySettings = useSettingsMap({ scope: "heavy" });
   const updateSetting = useUpdateSetting();
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
@@ -60,11 +61,15 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     () => parsePromptEngineSettings(promptEngineRaw),
     [promptEngineRaw]
   );
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
 
-  if (settingsStore.map && settingsStore.map !== prevSettingsData && !settingsLoaded) {
-    setPrevSettingsData(settingsStore.map);
-    
-    const stored = parseImageStudioSettings(settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY));
+  useEffect(() => {
+    if (!heavySettings.data || settingsLoaded) return;
+    if (heavySettings.data === prevSettingsData) return;
+
+    setPrevSettingsData(heavySettings.data);
+
+    const stored = parseImageStudioSettings(heavySettings.data.get(IMAGE_STUDIO_SETTINGS_KEY));
     const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
     const openaiModelFallback = settingsStore.get("openai_model");
 
@@ -87,12 +92,13 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
-  }
+  }, [heavySettings.data, prevSettingsData, settingsLoaded, settingsStore]);
 
   const handleRefresh = useCallback((): void => {
     setSettingsLoaded(false);
-    settingsStore.refetch();
-  }, [settingsStore]);
+    void settingsStore.refetch();
+    void heavySettings.refetch();
+  }, [settingsStore, heavySettings]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -184,7 +190,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     setPromptValidationRulesError(null);
   }, []);
 
-  const studioSettingsRaw = settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
 
   const settingsSource = useMemo(() => {
     return studioSettingsRaw ? "saved settings" : "defaults";

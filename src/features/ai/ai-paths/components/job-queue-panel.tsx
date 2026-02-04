@@ -15,7 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 import { runsApi } from "@/features/ai/ai-paths/lib";
-import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -136,7 +136,8 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
-  const settingsStore = useSettingsStore();
+  const heavySettings = useSettingsMap({ scope: "heavy" });
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
@@ -220,7 +221,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const queueStatus = queueStatusQuery.data?.status;
   const [queueHistory, setQueueHistory] = React.useState<QueueHistoryEntry[]>([]);
   const [showMetricsPanel, setShowMetricsPanel] = React.useState(false);
-  const lagThresholdRaw = settingsStore.get(QUEUE_LAG_THRESHOLD_KEY);
+  const lagThresholdRaw = heavyMap.get(QUEUE_LAG_THRESHOLD_KEY);
   const lagThresholdMs = React.useMemo(() => {
     const raw = lagThresholdRaw;
     const parsed = raw ? Number(raw) : Number.NaN;

@@ -329,7 +329,7 @@ export function useUploadCmsMedia(): UseMutationResult<
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ file, onProgress }) => {
+    mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (loaded: number, total?: number) => void }): Promise<ImageFileRecord> => {
       const formData = new FormData();
       formData.append("file", file);
       const { uploadWithProgress } = await import("@/shared/utils/upload-with-progress");
@@ -341,7 +341,7 @@ export function useUploadCmsMedia(): UseMutationResult<
         const data = result.data as { error?: string };
         throw new Error(data?.error ?? "Upload failed");
       }
-      return result.data as ImageFileRecord;
+      return result.data;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["files"] });

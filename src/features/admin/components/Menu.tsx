@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SearchInput, Tooltip } from "@/shared/ui";
+import { Button, SearchInput, Tooltip, TreeHeader } from "@/shared/ui";
 import Link from "next/link";
 import {
   PackageIcon,
@@ -630,6 +630,15 @@ export const buildAdminNav = (handlers: {
         ],
       },
       {
+        id: "ai/prompt-engine",
+        label: "Global Prompt Engine",
+        href: "/admin/prompt-engine",
+        keywords: ["validation", "extractor", "formatter", "prompt rules"],
+        children: [
+          { id: "ai/prompt-engine/validation", label: "Global Validation Patterns", href: "/admin/prompt-engine/validation" },
+        ],
+      },
+      {
         id: "ai/image-studio",
         label: "Image Studio",
         href: "/admin/image-studio",
@@ -639,7 +648,7 @@ export const buildAdminNav = (handlers: {
           { id: "ai/image-studio/projects", label: "Projects", href: "/admin/image-studio?tab=projects" },
           { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio?tab=settings" },
           { id: "ai/image-studio/ui-presets", label: "UI Presets", href: "/admin/image-studio/ui-presets" },
-          { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio?tab=validation" },
+          { id: "ai/image-studio/validation-patterns", label: "Global Validation Patterns", href: "/admin/prompt-engine/validation" },
         ],
       },
       {
@@ -739,6 +748,7 @@ export const buildAdminNav = (handlers: {
         href: "/admin/settings",
         children: [
           { id: "system/settings/overview", label: "Overview", href: "/admin/settings" },
+          { id: "system/settings/brain", label: "Brain", href: "/admin/settings/brain" },
           { id: "system/settings/ai", label: "AI API Settings", href: "/admin/settings/ai" },
           { id: "system/settings/typography", label: "Typography", href: "/admin/settings/typography" },
           { id: "system/settings/notifications", label: "Notifications", href: "/admin/settings/notifications" },
@@ -1004,15 +1014,9 @@ export default function Menu(): React.ReactNode {
   return (
     <nav className={cn("flex flex-col gap-3", isMenuCollapsed ? "items-stretch" : "")}>
       {!isMenuCollapsed ? (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <SearchInput
-              value={query}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-              placeholder="Search admin pages…"
-              className="h-9 bg-gray-900/40"
-              onClear={() => setQuery("")}
-            />
+        <TreeHeader
+          title="Navigation"
+          actions={(
             <Button
               variant="outline"
               size="sm"
@@ -1023,13 +1027,23 @@ export default function Menu(): React.ReactNode {
             >
               {isAnyFolderOpen ? "Collapse all" : "Expand all"}
             </Button>
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <SearchInput
+              value={query}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+              placeholder="Search admin pages…"
+              className="h-9 bg-gray-900/40"
+              onClear={() => setQuery("")}
+            />
           </div>
           {normalizedQuery ? (
             <div className="text-[11px] text-gray-500">
               Filtering menu: <span className="text-gray-300">{query.trim()}</span>
             </div>
           ) : null}
-        </div>
+        </TreeHeader>
       ) : (
         <Tooltip content={isAnyFolderOpen ? "Collapse all folders" : "Expand all folders"} side="right">
           <div>

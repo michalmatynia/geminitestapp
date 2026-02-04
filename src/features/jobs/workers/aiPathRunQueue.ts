@@ -149,13 +149,13 @@ const pollQueue = async (): Promise<void> => {
     if (Date.now() - lastMetricsLogAt >= METRICS_LOG_INTERVAL_MS) {
       lastMetricsLogAt = Date.now();
       void getAiPathRunQueueStatus()
-        .then((status) =>
+        .then((status: Record<string, unknown>) =>
           ErrorSystem.logInfo("Queue metrics snapshot", {
             service: "ai-paths-queue",
             ...status,
           })
         )
-        .catch((error) => {
+        .catch((error: unknown) => {
           void ErrorSystem.logWarning("Failed to log queue metrics", {
             service: "ai-paths-queue",
             error,
@@ -211,13 +211,13 @@ export const getAiPathRunQueueStatus = async (): Promise<{
   const now = Date.now();
   const windowStart = now - THROUGHPUT_WINDOW_MS;
   const recentCompletions = completedRuns.filter((ts: number) => ts >= windowStart);
-  const runtimeWindow = runtimeSamples.filter((sample) => sample.ts >= windowStart);
-  const runtimeValues = runtimeWindow.map((sample) => sample.ms);
+  const runtimeWindow = runtimeSamples.filter((sample: { ts: number; ms: number }) => sample.ts >= windowStart);
+  const runtimeValues = runtimeWindow.map((sample: { ts: number; ms: number }) => sample.ms);
   const averageRuntime =
     runtimeValues.length > 0
-      ? Math.round(runtimeValues.reduce((sum, value) => sum + value, 0) / runtimeValues.length)
+      ? Math.round(runtimeValues.reduce((sum: number, value: number) => sum + value, 0) / runtimeValues.length)
       : null;
-  const sortedRuntimes = runtimeValues.length > 0 ? [...runtimeValues].sort((a, b) => a - b) : [];
+  const sortedRuntimes = runtimeValues.length > 0 ? [...runtimeValues].sort((a: number, b: number) => a - b) : [];
   const pickPercentile = (values: number[], percentile: number): number | null => {
     if (!values.length) return null;
     const rank = Math.ceil((percentile / 100) * values.length) - 1;

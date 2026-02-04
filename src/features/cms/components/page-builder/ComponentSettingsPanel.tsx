@@ -15,7 +15,7 @@ import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
 import { CssAnimationConfigPanel } from "./CssAnimationConfigPanel";
 import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
-import type { CustomCssAiConfig } from "@/features/cms/types/custom-css-ai";
+import type { CustomCssAiConfig, CustomCssAiProvider } from "@/features/cms/types/custom-css-ai";
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from "@/features/cms/types/custom-css-ai";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
@@ -33,6 +33,7 @@ import {
 } from "@/features/cms/utils/event-effects";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/useAgentTeaching";
+import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import type { ChatMessage } from "@/shared/types/chatbot";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
@@ -243,7 +244,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return Array.from(new Set(fromApi));
   }, [modelsQuery.data]);
   const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
     [teachingAgentsQuery.data]
   );
   const providerOptions = useMemo(
@@ -271,7 +272,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       if (json.length <= limit) return json;
       return `${json.slice(0, limit)}\n...truncated...`;
     } catch {
-      const fallback = String(value ?? "");
+      const fallback = typeof value === "object" && value !== null ? "[complex object]" : String(value ?? "");
       if (limit == null) return fallback;
       return fallback.length <= limit ? fallback : `${fallback.slice(0, limit)}...`;
     }
@@ -671,13 +672,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const cssDiffLines = useMemo(() => {
     if (!cssDiff) return [];
-    return cssAiDiffOnly ? cssDiff.lines.filter((line) => line.type !== "same") : cssDiff.lines;
+    return cssAiDiffOnly ? cssDiff.lines.filter((line: { type: "add" | "remove" | "same"; text: string }) => line.type !== "same") : cssDiff.lines;
   }, [cssDiff, cssAiDiffOnly]);
 
   const cssDiffStats = useMemo(() => {
     if (!cssDiff) return { added: 0, removed: 0, same: 0 };
     return cssDiff.lines.reduce(
-      (acc, line) => {
+      (acc: { added: number; removed: number; same: number }, line: { type: "add" | "remove" | "same"; text: string }) => {
         if (line.type === "add") acc.added += 1;
         else if (line.type === "remove") acc.removed += 1;
         else acc.same += 1;
@@ -778,8 +779,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
       let doneSignal = false;
 
       const processEvent = (raw: string): void => {
-        const lines = raw.split("\n").map((line) => line.trim());
-        const dataLine = lines.find((line) => line.startsWith("data:"));
+        const lines = raw.split("\n").map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith("data:"));
         if (!dataLine) return;
         try {
           const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
@@ -1146,13 +1147,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const contentAiAllowedKeys = useMemo((): string[] => {
     if (selectedSection && sectionDef) {
-      return prependManagementFields(sectionDef.settingsSchema ?? []).map((field) => field.key);
+      return prependManagementFields(sectionDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
     }
     if (selectedColumn && columnDef) {
-      return prependManagementFields(columnDef.settingsSchema ?? []).map((field) => field.key);
+      return prependManagementFields(columnDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
     }
     if (selectedBlock && blockDef) {
-      return prependManagementFields(blockDef.settingsSchema ?? []).map((field) => field.key);
+      return prependManagementFields(blockDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
     }
     return [];
   }, [selectedSection, selectedColumn, selectedBlock, sectionDef, columnDef, blockDef]);
@@ -1185,7 +1186,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       const allowed = new Set(contentAiAllowedKeys);
       const filtered =
         allowed.size > 0
-          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>((acc, [key, value]) => {
+          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>((acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
               if (allowed.has(key)) acc[key] = value;
               return acc;
             }, {})
@@ -1879,7 +1880,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           {/* ---- CSS Animation tab ---- */}
           <TabsContent value="cssAnimation" className="flex-1 overflow-y-auto p-4 mt-0">
             <CssAnimationConfigPanel
-              value={currentCssAnimationConfig}
+              value={currentCssAnimationConfig ?? {}}
               onChange={handleCssAnimationChange}
             />
           </TabsContent>
@@ -2032,7 +2033,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <UnifiedSelect
                       value={customCssAiConfig.provider ?? "model"}
                       onValueChange={(value: string): void =>
-                        handleCustomCssAiChange({ provider: value as CustomCssAiConfig["provider"] })
+                        handleCustomCssAiChange({ provider: value as CustomCssAiProvider })
                       }
                       options={providerOptions}
                       placeholder="Select provider"
@@ -2122,7 +2123,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={(): void => setContextPreviewNonce((prev) => prev + 1)}
+                          onClick={(): void => setContextPreviewNonce((prev: number) => prev + 1)}
                         >
                           Refresh
                         </Button>
@@ -2130,7 +2131,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={(): void => setContextPreviewOpen((prev) => !prev)}
+                          onClick={(): void => setContextPreviewOpen((prev: boolean) => !prev)}
                         >
                           {contextPreviewOpen ? "Hide" : "Show"}
                         </Button>
@@ -2274,14 +2275,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            onClick={(): void => setCssAiDiffOnly((prev) => !prev)}
+                            onClick={(): void => setCssAiDiffOnly((prev: boolean) => !prev)}
                           >
                             {cssAiDiffOnly ? "Changes only" : "Show all"}
                           </Button>
                         </div>
                         <div className="mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]">
                           {cssDiffLines.length > 0 ? (
-                            cssDiffLines.map((line, index) => {
+                            cssDiffLines.map((line: { type: "add" | "remove" | "same"; text: string }, index: number) => {
                               const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
                               const colorClass =
                                 line.type === "add"

@@ -142,7 +142,7 @@ function Model3D({
     url,
     true,
     true,
-    (loader) => {
+    (loader: { manager: THREE.LoadingManager }) => {
       loader.manager.setURLModifier((resourceUrl: string) => {
         if (resourceUrl.startsWith("blob:")) {
           replacedTextureRef.current = true;

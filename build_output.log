@@ -1,20 +1,33 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 204ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
 ▲ Next.js 16.1.6 (Turbopack)
 - Environments: .env
 
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
   Creating an optimized production build ...
-✓ Compiled successfully in 28.3s
+✓ Compiled successfully in 22.7s
   Running TypeScript ...
 Failed to compile.
 
-./src/features/cms/components/page-builder/AnimationConfigPanel.tsx:1485:67
-Type error: Argument of type 'string' is not assignable to parameter of type '"children" | "self" | "descendants"'.
+./src/shared/ui/data-table.tsx:37:13
+Type error: All declarations of 'TableMeta' must have identical type parameters.
 
-[0m [90m 1483 |[39m                       size[33m=[39m[32m"sm"[39m
- [90m 1484 |[39m                       variant[33m=[39m{isActive [33m?[39m [32m"secondary"[39m [33m:[39m [32m"outline"[39m}
-[31m[1m>[22m[39m[90m 1485 |[39m                       onClick[33m=[39m{()[33m:[39m [36mvoid[39m [33m=>[39m handleNodeTargetChange(option[33m.[39mvalue)}
- [90m      |[39m                                                                   [31m[1m^[22m[39m
- [90m 1486 |[39m                       className[33m=[39m[32m"h-8 w-10 p-0"[39m
- [90m 1487 |[39m                       aria[33m-[39mlabel[33m=[39m{option[33m.[39mlabel}
- [90m 1488 |[39m                     [33m>[39m[0m
+[0m [90m 35 |[39m
+ [90m 36 |[39m declare module [32m"@tanstack/react-table"[39m {
+[31m[1m>[22m[39m[90m 37 |[39m   [36minterface[39m [33mTableMeta[39m[33m<[39m_TData [36mextends[39m [33mRowData[39m[33m>[39m {
+ [90m    |[39m             [31m[1m^[22m[39m
+ [90m 38 |[39m     queryClient[33m?[39m[33m:[39m [33mQueryClient[39m[33m;[39m
+ [90m 39 |[39m   }
+ [90m 40 |[39m }[0m
 Next.js build worker exited with code: 1 and signal: null

@@ -274,7 +274,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
       model: settings.targetAi.openai.model,
       prompt: parsed.data.prompt,
-      image: imagePayload as any,
+      image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming["image"],
       output_format: format,
       response_format: "b64_json",
     };

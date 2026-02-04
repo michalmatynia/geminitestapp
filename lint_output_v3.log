@@ -1,0 +1,293 @@
+
+> libapp2@0.1.0 lint
+> eslint .
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/run/route.ts
+  62:40  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/route.ts
+  32:34  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/ui-extractor/route.ts
+  47:35  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/user/preferences/route.ts
+  32:52  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+   401:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx:401:5
+  399 |
+  400 |   useEffect(() => {
+> 401 |     setExpanded(new Set(["root"]));
+      |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  402 |     setDragOverPath(null);
+  403 |     setDraggedSlotId(null);
+  404 |     setDraggedFolderPath(null);  react-hooks/set-state-in-effect
+  1847:15  error  Expected error to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/typedef
+  2230:29  error  Expected error to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  407:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/AnimationConfigPanel.tsx
+  1476:39  error  Expected option to have a type annotation  @typescript-eslint/typedef
+  1495:16  error  Unknown property '}
+       ' found         react/no-unknown-property
+  1499:18  error  Unknown property ' === "cus' found         react/no-unknown-property
+  1506:16  error  Unknown property ' Target s' found         react/no-unknown-property
+  1516:18  error  Unknown property 'sm"
+     ' found         react/no-unknown-property
+  1517:36  error  Expected option to have a type annotation  @typescript-eslint/typedef
+  1536:16  error  Unknown property '}
+       ' found         react/no-unknown-property
+  1537:69  error  Unknown property 'mate the ' found         react/no-unknown-property
+  1542:16  error  Unknown property '    {/* D' found         react/no-unknown-property
+  1558:16  error  Unknown property '       {/' found         react/no-unknown-property
+  1574:16  error  Unknown property '      {/*' found         react/no-unknown-property
+  1594:16  error  Unknown property '     {/* ' found         react/no-unknown-property
+  1603:20  error  Unknown property '1"
+      ' found         react/no-unknown-property
+  1609:20  error  Unknown property '         ' found         react/no-unknown-property
+  1620:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  1634:24  error  Unknown property 'ponse") &' found         react/no-unknown-property
+  1651:24  error  Unknown property 'omino") &' found         react/no-unknown-property
+  1668:24  error  Unknown property 'sponse" &' found         react/no-unknown-property
+  1687:24  error  Unknown property 'ipple") &' found         react/no-unknown-property
+  1704:24  error  Unknown property ' "wave" &' found         react/no-unknown-property
+  1720:22  error  Unknown property '         ' found         react/no-unknown-property
+  1721:26  error  Unknown property 'er gap-4"' found         react/no-unknown-property
+  1725:26  error  Unknown property '  </label' found         react/no-unknown-property
+  1729:26  error  Unknown property '  </label' found         react/no-unknown-property
+  1736:24  error  Unknown property 'opValue &' found         react/no-unknown-property
+  1737:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  1751:26  error  Unknown property '    </div' found         react/no-unknown-property
+  1768:20  error  Unknown property '         ' found         react/no-unknown-property
+  1769:38  error  Unknown property '         ' found         react/no-unknown-property
+  1777:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  1790:22  error  Unknown property '         ' found         react/no-unknown-property
+  1791:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  1802:24  error  Unknown property '      </d' found         react/no-unknown-property
+  1816:24  error  Unknown property 'reveal" &' found         react/no-unknown-property
+  1830:26  error  Unknown property '        <' found         react/no-unknown-property
+  1831:28  error  Unknown property 'cols-2">
+' found         react/no-unknown-property
+  1845:30  error  Unknown property '</div>
+  ' found         react/no-unknown-property
+  1855:26  error  Unknown property '   </div>' found         react/no-unknown-property
+  1856:30  error  Unknown property 'ls-2">
+  ' found         react/no-unknown-property
+  1860:28  error  Unknown property '</label>
+' found         react/no-unknown-property
+  1878:20  error  Unknown property '         ' found         react/no-unknown-property
+  1887:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  1900:22  error  Unknown property '         ' found         react/no-unknown-property
+  1901:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  1912:26  error  Unknown property '   </div>' found         react/no-unknown-property
+  1918:22  error  Unknown property '       </' found         react/no-unknown-property
+  1929:22  error  Unknown property '       </' found         react/no-unknown-property
+  1930:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  1945:24  error  Unknown property '     </di' found         react/no-unknown-property
+  1961:22  error  Unknown property '       </' found         react/no-unknown-property
+  1962:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  1973:24  error  Unknown property '      </d' found         react/no-unknown-property
+  1986:22  error  Unknown property '       </' found         react/no-unknown-property
+  1987:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  1998:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2010:22  error  Unknown property '       </' found         react/no-unknown-property
+  2011:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2025:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2041:22  error  Unknown property '       </' found         react/no-unknown-property
+  2042:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2056:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2072:22  error  Unknown property '       </' found         react/no-unknown-property
+  2073:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2087:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2103:22  error  Unknown property '       </' found         react/no-unknown-property
+  2104:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2118:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2134:24  error  Unknown property 'rement" &' found         react/no-unknown-property
+  2151:24  error  Unknown property 'layers" &' found         react/no-unknown-property
+  2152:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  2166:26  error  Unknown property '    </div' found         react/no-unknown-property
+  2184:24  error  Unknown property 'random" &' found         react/no-unknown-property
+  2200:20  error  Unknown property '         ' found         react/no-unknown-property
+  2201:45  error  Unknown property '         ' found         react/no-unknown-property
+  2209:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  2218:22  error  Unknown property '         ' found         react/no-unknown-property
+  2222:24  error  Unknown property '    </Lab' found         react/no-unknown-property
+  2253:22  error  Unknown property '       </' found         react/no-unknown-property
+  2254:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2266:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2280:22  error  Unknown property '       </' found         react/no-unknown-property
+  2281:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  2285:26  error  Unknown property '  </label' found         react/no-unknown-property
+  2292:24  error  Unknown property 'teValue &' found         react/no-unknown-property
+  2308:22  error  Unknown property '         ' found         react/no-unknown-property
+  2309:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  2314:26  error  Unknown property 'Value && ' found         react/no-unknown-property
+  2339:18  error  Unknown property '         ' found         react/no-unknown-property
+  2340:22  error  Unknown property 'e="space-' found         react/no-unknown-property
+  2346:24  error  Unknown property '         ' found         react/no-unknown-property
+  2355:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2357:26  error  Unknown property 'th</Label' found         react/no-unknown-property
+  2382:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2383:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  2395:26  error  Unknown property '    </div' found         react/no-unknown-property
+  2411:22  error  Unknown property '         ' found         react/no-unknown-property
+  2417:24  error  Unknown property '         ' found         react/no-unknown-property
+  2426:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2428:26  error  Unknown property 'th</Label' found         react/no-unknown-property
+  2474:24  error  Unknown property 'Lines") &' found         react/no-unknown-property
+  2491:24  error  Unknown property 'ramble" &' found         react/no-unknown-property
+  2505:26  error  Unknown property '        <' found         react/no-unknown-property
+  2519:28  error  Unknown property '  </div>
+' found         react/no-unknown-property
+  2527:24  error  Unknown property 'ountUp" &' found         react/no-unknown-property
+  2528:26  error  Unknown property 'd-cols-2"' found         react/no-unknown-property
+  2539:26  error  Unknown property '    </div' found         react/no-unknown-property
+  2550:26  error  Unknown property '    </div' found         react/no-unknown-property
+  2575:18  error  Unknown property '         ' found         react/no-unknown-property
+  2576:20  error  Unknown property 'ame="spac' found         react/no-unknown-property
+  2584:24  error  Unknown property ' "none" &' found         react/no-unknown-property
+  2607:20  error  Unknown property '         ' found         react/no-unknown-property
+  2615:24  error  Unknown property ' "none" &' found         react/no-unknown-property
+  2638:20  error  Unknown property '         ' found         react/no-unknown-property
+  2639:22  error  Unknown property '-3 space-' found         react/no-unknown-property
+  2661:20  error  Unknown property '         ' found         react/no-unknown-property
+  2662:22  error  Unknown property '-3 space-' found         react/no-unknown-property
+  2663:22  error  Unknown property '">Shadow<' found         react/no-unknown-property
+  2664:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2665:26  error  Unknown property 'pace-y-3"' found         react/no-unknown-property
+  2666:26  error  Unknown property 'From</div' found         react/no-unknown-property
+  2719:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2720:26  error  Unknown property 'pace-y-3"' found         react/no-unknown-property
+  2721:26  error  Unknown property '">To</div' found         react/no-unknown-property
+  2777:20  error  Unknown property '         ' found         react/no-unknown-property
+  2778:22  error  Unknown property '-3 space-' found         react/no-unknown-property
+  2806:22  error  Unknown property '         ' found         react/no-unknown-property
+  2807:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2819:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2838:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  2846:20  error  Unknown property 'nabledVal' found         react/no-unknown-property
+  2847:22  error  Unknown property 'e="space-' found         react/no-unknown-property
+  2856:22  error  Unknown property '       </' found         react/no-unknown-property
+  2866:22  error  Unknown property '       </' found         react/no-unknown-property
+  2867:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2879:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2893:22  error  Unknown property '       </' found         react/no-unknown-property
+  2894:26  error  Unknown property 'er gap-4"' found         react/no-unknown-property
+  2898:26  error  Unknown property '  </label' found         react/no-unknown-property
+  2905:24  error  Unknown property 'elValue &' found         react/no-unknown-property
+  2906:26  error  Unknown property 'order/40"' found         react/no-unknown-property
+  2915:28  error  Unknown property '  </div>
+' found         react/no-unknown-property
+  2927:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  2935:20  error  Unknown property 'nabledVal' found         react/no-unknown-property
+  2936:22  error  Unknown property 'e="space-' found         react/no-unknown-property
+  2944:24  error  Unknown property '         ' found         react/no-unknown-property
+  2968:22  error  Unknown property '       </' found         react/no-unknown-property
+  2969:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  2977:24  error  Unknown property '      </d' found         react/no-unknown-property
+  2996:18  error  Unknown property 'sName="sp' found         react/no-unknown-property
+  3004:20  error  Unknown property 'nabledVal' found         react/no-unknown-property
+  3005:22  error  Unknown property 'e="space-' found         react/no-unknown-property
+  3006:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  3018:24  error  Unknown property '      </d' found         react/no-unknown-property
+  3032:22  error  Unknown property '       </' found         react/no-unknown-property
+  3033:24  error  Unknown property 'rid-cols-' found         react/no-unknown-property
+  3041:24  error  Unknown property '      </d' found         react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx
+   228:15  error    Missing return type on function                                                                                                                   @typescript-eslint/explicit-function-return-type
+   246:49  error    Expected agent to have a type annotation                                                                                                          @typescript-eslint/typedef
+   274:31  error    'value ?? ""' will use Object's default stringification format ('[object Object]') when stringified                                               @typescript-eslint/no-base-to-string
+   674:50  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   680:8   error    Expected acc to have a type annotation                                                                                                            @typescript-eslint/typedef
+   680:13  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   693:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   698:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   781:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   782:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   841:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  1149:76  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1152:75  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1155:74  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1188:76  error    Expected acc to have a type annotation                                                                                                            @typescript-eslint/typedef
+  1188:81  error    Expected a type annotation                                                                                                                        @typescript-eslint/typedef
+  1198:24  error    Expected a type annotation                                                                                                                        @typescript-eslint/typedef
+  1272:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  1273:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  1320:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2125:72  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2133:71  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2277:68  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2284:47  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2284:53  error    Expected index to have a type annotation                                                                                                          @typescript-eslint/typedef
+  2518:49  error    Expected agent to have a type annotation                                                                                                          @typescript-eslint/typedef
+  2642:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                      react-hooks/rules-of-hooks
+  2651:23  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2677:27  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2680:10  error    Expected template to have a type annotation                                                                                                       @typescript-eslint/typedef
+  2688:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2705:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2722:32  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2767:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2768:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2815:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2838:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2881:23  error    Expected item to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2890:12  error    Expected tpl to have a type annotation                                                                                                            @typescript-eslint/typedef
+  2915:30  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/PageBuilderLayout.tsx
+  77:13  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+  83:66  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ThemeSettingsPanel.tsx
+   151:18   error    This assertion is unnecessary since it does not change the type of the expression                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unnecessary-type-assertion
+   160:38   error    Expected a type annotation                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/typedef
+   162:18   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+   162:23   error    Unsafe member access [key] on an `any` value                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+   463:49   error    Expected agent to have a type annotation                                                                                                                                                                                                                                                                                                                               @typescript-eslint/typedef
+   614:13   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+   615:13   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+   615:37   error    Unsafe member access .section on an `any` value                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+   615:67   error    Unsafe member access .section on an `any` value                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+   619:18   error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+   622:42   error    Unsafe member access .action on an `any` value                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+   626:60   error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+   828:87   error    Expected key to have a type annotation                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/typedef
+   892:44   error    Expected line to have a type annotation                                                                                                                                                                                                                                                                                                                                @typescript-eslint/typedef
+   893:38   error    Expected line to have a type annotation                                                                                                                                                                                                                                                                                                                                @typescript-eslint/typedef
+   942:11   warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility                                                                                                                                                                                                                       no-restricted-syntax
+  1325:125  error    Expected key to have a type annotation                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/typedef
+  2101:5    warning  React Hook useCallback has missing dependencies: 'agentOptions', 'handleCancelSchemeAi', 'handleGenerateScheme', 'modelOptions', 'schemeAiAgentId', 'schemeAiError', 'schemeAiLoading', 'schemeAiModelId', 'schemeAiOutput', 'schemeAiPreview', 'schemeAiPrompt', 'schemeAiProvider', and 'schemeProviderOptions'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/foldertree/components/FolderTreePanel.tsx
+  1:1  error  '@/shared/ui/FolderTreePanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/foldertree/components/tree/TreeActions.tsx
+  1:1  error  '@/shared/ui/tree/TreeActions' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/foldertree/components/tree/TreeCaret.tsx
+  1:1  error  '@/shared/ui/tree/TreeCaret' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/foldertree/components/tree/TreeRow.tsx
+  1:1  error  '@/shared/ui/tree/TreeRow' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/Viewer3D.tsx
+  147:7   error  Unsafe call of a type that could not be resolved                 @typescript-eslint/no-unsafe-call
+  147:14  error  Unsafe member access .manager on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+
+✖ 230 problems (218 errors, 12 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

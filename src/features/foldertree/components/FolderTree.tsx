@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, useToast } from "@/shared/ui";
+import { Button, TreeHeader, useToast } from "@/shared/ui";
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -9,7 +9,7 @@ import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { FolderNode } from "./tree/FolderNode";
 import { parseMultipleFolders, countMultipleFolders } from "@/features/foldertree/utils/folderImporter";
-import { FolderTreePanel } from "@/features/foldertree/components/FolderTreePanel";
+import { FolderTreePanel } from "@/shared/ui";
 import { getFolderDragId, getNoteDragId } from "@/shared/utils/drag-drop";
 
 import { useImportFolderMutation } from "@/features/foldertree/hooks/useFolderMutations";
@@ -323,10 +323,10 @@ function FolderTreeBase({
         onRelateNotes(draggedNoteId, targetId);
       }}
       header={(
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">Folders</h2>
-            <div className="flex items-center gap-2">
+        <TreeHeader
+          title="Folders"
+          actions={(
+            <>
               <Button
                 onClick={(): void => setShowDropzone(!showDropzone)}
                 size="sm"
@@ -382,8 +382,9 @@ function FolderTreeBase({
                   <ChevronLeft className="size-4" />
                 </Button>
               )}
-            </div>
-          </div>
+            </>
+          )}
+        >
           <Button
             onClick={(): void => onSelectFolder(null)}
             onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
@@ -460,7 +461,7 @@ function FolderTreeBase({
               )}
             </div>
           )}
-        </div>
+        </TreeHeader>
       )}
     >
 

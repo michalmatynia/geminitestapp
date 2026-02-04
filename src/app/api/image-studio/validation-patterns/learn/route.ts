@@ -12,11 +12,11 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, configurationError } from "@/shared/errors/app-error";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import {
-  IMAGE_STUDIO_SETTINGS_KEY,
-  parseImageStudioSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
   parsePromptValidationRules,
   type PromptValidationRule,
-} from "@/features/ai/image-studio/utils/studio-settings";
+} from "@/features/prompt-engine";
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -47,8 +47,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const model = (await getSettingValue("openai_model"))?.trim() || "gpt-4o-mini";
-    const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
-    const settings = parseImageStudioSettings(settingsRaw);
+    const settingsRaw = await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY);
+    const settings = parsePromptEngineSettings(settingsRaw);
     const existingRules = [
       ...settings.promptValidation.rules,
       ...(settings.promptValidation.learnedRules ?? []),

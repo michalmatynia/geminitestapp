@@ -26,7 +26,7 @@ const InsightCard = ({ insight }: { insight: AiInsightRecord }): React.JSX.Eleme
     <div className="mt-2 text-sm text-white">{insight.summary}</div>
     {insight.warnings.length > 0 ? (
       <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-        {insight.warnings.map((warning, index) => (
+        {insight.warnings.map((warning: string, index: number) => (
           <li key={`${insight.id}-warn-${index}`}>{warning}</li>
         ))}
       </ul>
@@ -134,7 +134,7 @@ export default function AdminAiInsightsPage(): React.JSX.Element {
             ) : (analyticsQuery.data?.insights?.length ?? 0) === 0 ? (
               <div className="text-xs text-gray-500">No insights yet.</div>
             ) : (
-              analyticsQuery.data?.insights.map((insight) => (
+              analyticsQuery.data?.insights.map((insight: AiInsightRecord) => (
                 <InsightCard key={insight.id} insight={insight} />
               ))
             )}
@@ -164,7 +164,7 @@ export default function AdminAiInsightsPage(): React.JSX.Element {
             ) : (logsQuery.data?.insights?.length ?? 0) === 0 ? (
               <div className="text-xs text-gray-500">No insights yet.</div>
             ) : (
-              logsQuery.data?.insights.map((insight) => (
+              logsQuery.data?.insights.map((insight: AiInsightRecord) => (
                 <InsightCard key={insight.id} insight={insight} />
               ))
             )}

@@ -6,6 +6,7 @@ import {
   BellIcon,
   SparklesIcon,
   ArrowRightIcon,
+  Brain,
   Database,
   Radar,
   Activity,

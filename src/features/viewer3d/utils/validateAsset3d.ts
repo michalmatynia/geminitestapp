@@ -17,10 +17,10 @@ const hasExternalGltfResources = async (file: File): Promise<boolean> => {
     const buffers = data.buffers ?? [];
     const images = data.images ?? [];
     const uris = [
-      ...buffers.map((item) => item.uri).filter((uri): uri is string => Boolean(uri)),
-      ...images.map((item) => item.uri).filter((uri): uri is string => Boolean(uri)),
+      ...buffers.map((item: { uri?: string }) => item.uri).filter((uri: string | undefined): uri is string => Boolean(uri)),
+      ...images.map((item: { uri?: string }) => item.uri).filter((uri: string | undefined): uri is string => Boolean(uri)),
     ];
-    return uris.some((uri) => !uri.startsWith("data:"));
+    return uris.some((uri: string) => !uri.startsWith("data:"));
   } catch {
     return false;
   }

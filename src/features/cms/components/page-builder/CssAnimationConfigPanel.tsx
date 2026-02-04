@@ -11,6 +11,9 @@ import {
   DEFAULT_CSS_ANIMATION_CONFIG,
   type CssAnimationConfig,
   type CssAnimationTrigger,
+  type CssAnimationEffect,
+  type CssAnimationDirection,
+  type CssAnimationFillMode,
 } from "@/features/cms/types/css-animations";
 
 interface CssAnimationConfigPanelProps {
@@ -49,7 +52,7 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
 
   const handleEffectChange = useCallback(
     (value: string): void => {
-      onChange({ ...config, effect: value });
+      onChange({ ...config, effect: value as CssAnimationEffect });
     },
     [config, onChange]
   );
@@ -114,14 +117,14 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
 
   const handleDirectionChange = useCallback(
     (value: string): void => {
-      onChange({ ...config, direction: value });
+      onChange({ ...config, direction: value as CssAnimationDirection });
     },
     [config, onChange]
   );
 
   const handleFillModeChange = useCallback(
     (value: string): void => {
-      onChange({ ...config, fillMode: value });
+      onChange({ ...config, fillMode: value as CssAnimationFillMode });
     },
     [config, onChange]
   );

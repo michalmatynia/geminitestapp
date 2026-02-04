@@ -56,7 +56,7 @@ export async function uploadAsset3DFile(
     throw new Error(data?.error ?? "Failed to upload 3D asset");
   }
 
-  return result.data as Asset3DRecord;
+  return result.data;
 }
 
 export async function updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord> {

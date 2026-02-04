@@ -9,7 +9,7 @@ import { SectionNodeItem } from "./ComponentTreeNodeItem";
 import { SectionPicker } from "./SectionPicker";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from "./settings/PageBuilderSettingsPage";
-import { FolderTreePanel } from "@/features/foldertree/components/FolderTreePanel";
+import { FolderTreePanel, TreeHeader } from "@/shared/ui";
 import { readSectionDragData } from "../../utils/page-builder-dnd";
 
 const ZONE_LABELS: Record<PageZone, string> = {
@@ -411,8 +411,19 @@ export function ComponentTreePanel(): React.ReactNode {
     { header: [], template: [], footer: [] }
   );
 
+  const sectionCount = state.sections.length;
+
   return (
-    <FolderTreePanel className="flex-1 min-h-0" bodyClassName="flex-1 min-h-0 overflow-y-auto">
+    <FolderTreePanel
+      className="flex-1 min-h-0"
+      bodyClassName="flex-1 min-h-0 overflow-y-auto"
+      header={(
+        <TreeHeader
+          title="Structure"
+          subtitle={state.currentPage ? `${sectionCount} sections` : "No page loaded"}
+        />
+      )}
+    >
       {!state.currentPage ? (
         <div className="p-4" />
       ) : (

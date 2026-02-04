@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Heading,
   AlignLeft,
@@ -33,9 +33,7 @@ import {
   Frame,
   type LucideIcon,
 } from "lucide-react";
-import { TreeRow } from "@/features/foldertree/components/tree/TreeRow";
-import { TreeCaret } from "@/features/foldertree/components/tree/TreeCaret";
-import { TreeActionButton, TreeActionSlot } from "@/features/foldertree/components/tree/TreeActions";
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu } from "@/shared/ui";
 import { readBlockDragData, readSectionDragData, setBlockDragData, setSectionDragData } from "../../utils/page-builder-dnd";
 import { DRAG_KEYS, hasDragType } from "@/shared/utils/drag-drop";
 import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
@@ -233,6 +231,25 @@ export function SectionNodeItem({
   const [sectionDropPosition, setSectionDropPosition] = useState<"above" | "below" | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
+  const sectionMenuItems = useMemo(
+    () => [
+      {
+        id: "toggle-visibility",
+        label: isHidden ? "Show section" : "Hide section",
+        icon: isHidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />,
+        onSelect: () => onToggleSectionVisibility(section.id, !isHidden),
+      },
+      { id: "separator-1", separator: true },
+      {
+        id: "delete-section",
+        label: "Delete section",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        onSelect: () => onRemoveSection(section.id),
+      },
+    ],
+    [isHidden, onToggleSectionVisibility, onRemoveSection, section.id]
+  );
   const gridRows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
   const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
   const gridLayerEntries = section.blocks.flatMap((block: BlockInstance, index: number) =>
@@ -247,7 +264,8 @@ export function SectionNodeItem({
 
   return (
     <div className="group/section">
-      <TreeRow
+      <TreeContextMenu items={sectionMenuItems}>
+        <TreeRow
         tone="none"
         draggable="true"
         onClick={() => onSelect(section.id)}
@@ -486,7 +504,8 @@ export function SectionNodeItem({
             <Trash2 className="size-3" />
           </TreeActionButton>
         </TreeActionSlot>
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
 
 
       {isExpanded && section.type === "Grid" && (
@@ -777,10 +796,26 @@ function SlideshowFrameNodeItem({
   const isDragging = draggedBlockId === frame.id;
   const blockLabel = resolveBlockLabel(frame, "Frame");
   const frameAllowedTypes = getBlockDefinition("SlideshowFrame")?.allowedBlockTypes ?? [];
+  const frameMenuItems = useMemo(
+    () => [
+      {
+        id: "remove-frame",
+        label: "Remove frame",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        disabled: !onRemoveBlock,
+        onSelect: () => {
+          if (onRemoveBlock) onRemoveBlock(sectionId, frame.id);
+        },
+      },
+    ],
+    [onRemoveBlock, sectionId, frame.id]
+  );
 
   return (
     <div className="group/frame">
-      <TreeRow
+      <TreeContextMenu items={frameMenuItems}>
+        <TreeRow
         tone="none"
         role="button"
         tabIndex={0}
@@ -898,7 +933,8 @@ function SlideshowFrameNodeItem({
             </TreeActionButton>
           </TreeActionSlot>
         )}
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
 
       {isExpanded && (
         <div className="ml-5 border-l border-border/30 pl-1">
@@ -1014,10 +1050,33 @@ function RowNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const firstColumn = columns[0] ?? null;
   const rowLabel = resolveNodeLabel(`Row ${rowIndex + 1}`, row.settings["label"]);
+  const rowMenuItems = useMemo(
+    () => [
+      {
+        id: "add-column",
+        label: "Add column",
+        icon: <Columns className="size-3.5" />,
+        onSelect: () => onAddColumnToRow(sectionId, row.id),
+      },
+      { id: "separator-1", separator: true },
+      {
+        id: "remove-row",
+        label: "Remove row",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        disabled: !canRemoveRow,
+        onSelect: () => {
+          if (canRemoveRow) onRemoveGridRow(sectionId, row.id);
+        },
+      },
+    ],
+    [canRemoveRow, onAddColumnToRow, onRemoveGridRow, row.id, sectionId]
+  );
 
   return (
     <div>
-      <TreeRow
+      <TreeContextMenu items={rowMenuItems}>
+        <TreeRow
         tone="none"
         role="button"
         tabIndex={0}
@@ -1170,7 +1229,8 @@ function RowNodeItem({
             <Trash2 className="size-3" />
           </TreeActionButton>
         </TreeActionSlot>
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
 
       {isExpanded && (row.blocks ?? []).length > 0 && (
         <div className="ml-4 border-l border-border/30 pl-1">
@@ -1314,6 +1374,21 @@ function ColumnNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
   const columnLabel = resolveNodeLabel(`Column ${columnIndex + 1}`, column.settings["label"]);
+  const columnMenuItems = useMemo(
+    () => [
+      {
+        id: "remove-column",
+        label: "Remove column",
+        icon: <Minus className="size-3.5" />,
+        tone: "danger",
+        disabled: !canRemove,
+        onSelect: () => {
+          if (canRemove) onRemoveColumnFromRow(sectionId, column.id, rowId);
+        },
+      },
+    ],
+    [canRemove, onRemoveColumnFromRow, sectionId, column.id, rowId]
+  );
 
   const handleColumnDragOver = (e: React.DragEvent): void => {
     const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
@@ -1397,7 +1472,8 @@ function ColumnNodeItem({
       onDrop={handleColumnDrop}
       className={`${isDragOver ? "rounded ring-1 ring-emerald-500/30" : ""}`}
     >
-      <TreeRow
+      <TreeContextMenu items={columnMenuItems}>
+        <TreeRow
         tone="none"
         role="button"
         tabIndex={0}
@@ -1457,7 +1533,8 @@ function ColumnNodeItem({
             onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
           />
         </TreeActionSlot>
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
 
       {isExpanded && (
         <div
@@ -1615,10 +1692,26 @@ function SectionBlockNodeItem({
   const isDragging = draggedBlockId === block.id;
   const isTextAtom = block.type === "TextAtom";
   const blockLabel = resolveBlockLabel(block, block.type);
+  const sectionBlockMenuItems = useMemo(
+    () => [
+      {
+        id: "remove-block",
+        label: "Remove block",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        disabled: !onRemoveBlock,
+        onSelect: () => {
+          if (onRemoveBlock) onRemoveBlock(sectionId, block.id, columnId);
+        },
+      },
+    ],
+    [onRemoveBlock, sectionId, block.id, columnId]
+  );
 
   return (
     <div className="group/sblock">
-      <TreeRow
+      <TreeContextMenu items={sectionBlockMenuItems}>
+        <TreeRow
         tone="none"
         role="button"
         tabIndex={0}
@@ -1775,7 +1868,8 @@ function SectionBlockNodeItem({
             </TreeActionButton>
           </TreeActionSlot>
         )}
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
 
       {isExpanded && hasChildren && (
         <div className="ml-5 border-l border-border/30 pl-1">
@@ -1874,131 +1968,147 @@ function BlockNodeItem({
     (block.settings?.["backgroundTarget"] as string || "none") !== "none";
   const backgroundTarget = (block.settings?.["backgroundTarget"] as string) || "none";
   const canDrag = !disableDrag && !isBackgroundMode;
+  const blockMenuItems = useMemo(
+    () => [
+      {
+        id: "remove-block",
+        label: "Remove block",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        disabled: !onRemoveBlock || isBackgroundMode,
+        onSelect: () => {
+          if (onRemoveBlock && !isBackgroundMode) onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
+        },
+      },
+    ],
+    [onRemoveBlock, isBackgroundMode, sectionId, block.id, columnId, parentBlockId]
+  );
 
   return (
-    <TreeRow
-      tone="none"
-      role="button"
-      tabIndex={0}
-      draggable={canDrag}
-      onClick={() => onSelect(block.id)}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
+    <TreeContextMenu items={blockMenuItems}>
+      <TreeRow
+        tone="none"
+        role="button"
+        tabIndex={0}
+        draggable={canDrag}
+        onClick={() => onSelect(block.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(block.id);
+          }
+        }}
+        onDragStart={(e: React.DragEvent) => {
+          if (!canDrag) return;
+          e.stopPropagation();
+          setBlockDragData(e.dataTransfer, {
+            id: block.id,
+            type: block.type,
+            fromSectionId: sectionId,
+            fromColumnId: columnId ?? "",
+            fromParentBlockId: parentBlockId ?? "",
+          });
+          // Defer state updates to prevent re-render from cancelling drag
+          setTimeout(() => {
+            setDraggedBlockId(block.id);
+            if (setDraggedBlockType) setDraggedBlockType(block.type);
+            setDraggedFromSectionId(sectionId);
+            if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
+            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
+          }, 0);
+        }}
+        onDragEnd={() => {
+          if (!canDrag) return;
+          setDraggedBlockId(null);
+          if (setDraggedBlockType) setDraggedBlockType(null);
+          setDraggedFromSectionId(null);
+          if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+        }}
+        onDragOver={(e: React.DragEvent) => {
+          if (disableDrag) return;
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
+          });
+          const dragId = blockDrag.id;
+          if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id) return;
           e.preventDefault();
-          onSelect(block.id);
-        }
-      }}
-      onDragStart={(e: React.DragEvent) => {
-        if (!canDrag) return;
-        e.stopPropagation();
-        setBlockDragData(e.dataTransfer, {
-          id: block.id,
-          type: block.type,
-          fromSectionId: sectionId,
-          fromColumnId: columnId ?? "",
-          fromParentBlockId: parentBlockId ?? "",
-        });
-        // Defer state updates to prevent re-render from cancelling drag
-        setTimeout(() => {
-          setDraggedBlockId(block.id);
-          if (setDraggedBlockType) setDraggedBlockType(block.type);
-          setDraggedFromSectionId(sectionId);
-          if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
-          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
-        }, 0);
-      }}
-      onDragEnd={() => {
-        if (!canDrag) return;
-        setDraggedBlockId(null);
-        if (setDraggedBlockType) setDraggedBlockType(null);
-        setDraggedFromSectionId(null);
-        if (setDraggedFromColumnId) setDraggedFromColumnId(null);
-        if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
-      }}
-      onDragOver={(e: React.DragEvent) => {
-        if (disableDrag) return;
-        const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
-        const blockDrag = readBlockDragData(e.dataTransfer, {
-          id: draggedBlockId,
-          ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
-        });
-        const dragId = blockDrag.id;
-        if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(true);
-      }}
-      onDragLeave={(e: React.DragEvent) => {
-        if (disableDrag) return;
-        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-        setIsDragOver(false);
-      }}
-      onDrop={(e: React.DragEvent) => {
-        if (disableDrag) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(false);
-        const blockDrag = readBlockDragData(e.dataTransfer, {
-          id: draggedBlockId,
-          ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
-          fromSectionId: draggedFromSectionId,
-          ...(draggedFromColumnId !== undefined ? { fromColumnId: draggedFromColumnId } : {}),
-          ...(draggedFromParentBlockId !== undefined ? { fromParentBlockId: draggedFromParentBlockId } : {}),
-        });
-        const dragId = blockDrag.id;
-        if (!dragId || dragId === block.id) return;
-        const fromSection = blockDrag.fromSectionId ?? sectionId;
-        const fromColumn = blockDrag.fromColumnId;
-        const fromParent = blockDrag.fromParentBlockId;
-        if (columnId && onDropBlockToColumn) {
-          onDropBlockToColumn(
-            dragId,
-            fromSection,
-            fromColumn || undefined,
-            sectionId,
-            columnId,
-            index,
-            fromParent || undefined,
-            parentBlockId
-          );
+          e.stopPropagation();
+          setIsDragOver(true);
+        }}
+        onDragLeave={(e: React.DragEvent) => {
+          if (disableDrag) return;
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+        }}
+        onDrop={(e: React.DragEvent) => {
+          if (disableDrag) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
+            fromSectionId: draggedFromSectionId,
+            ...(draggedFromColumnId !== undefined ? { fromColumnId: draggedFromColumnId } : {}),
+            ...(draggedFromParentBlockId !== undefined ? { fromParentBlockId: draggedFromParentBlockId } : {}),
+          });
+          const dragId = blockDrag.id;
+          if (!dragId || dragId === block.id) return;
+          const fromSection = blockDrag.fromSectionId ?? sectionId;
+          const fromColumn = blockDrag.fromColumnId;
+          const fromParent = blockDrag.fromParentBlockId;
+          if (columnId && onDropBlockToColumn) {
+            onDropBlockToColumn(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              columnId,
+              index,
+              fromParent || undefined,
+              parentBlockId
+            );
+            setDraggedBlockId(null);
+            setDraggedFromSectionId(null);
+            if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+            return;
+          }
+          if (!fromSection) return;
+          if ((fromColumn || fromParent) && onDropBlockToSection) {
+            onDropBlockToSection(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              index,
+              fromParent || undefined
+            );
+          } else {
+            onDropBlock(dragId, fromSection, sectionId, index);
+          }
           setDraggedBlockId(null);
           setDraggedFromSectionId(null);
           if (setDraggedFromColumnId) setDraggedFromColumnId(null);
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
-          return;
-        }
-        if (!fromSection) return;
-        if ((fromColumn || fromParent) && onDropBlockToSection) {
-          onDropBlockToSection(
-            dragId,
-            fromSection,
-            fromColumn || undefined,
-            sectionId,
-            index,
-            fromParent || undefined
-          );
-        } else {
-          onDropBlock(dragId, fromSection, sectionId, index);
-        }
-        setDraggedBlockId(null);
-        setDraggedFromSectionId(null);
-        if (setDraggedFromColumnId) setDraggedFromColumnId(null);
-        if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
-      }}
-      className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-        isBackgroundMode ? "cursor-not-allowed" : canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
-      } ${
-        isDragOver
-          ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
-          : isSelected
-          ? "bg-blue-600/80 text-white"
-          : isDragging
-          ? "opacity-40 text-gray-400"
-          : isBackgroundMode
-          ? "text-gray-500 hover:bg-muted/20"
-          : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
-      }`}
-    >
+        }}
+        className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
+          isBackgroundMode ? "cursor-not-allowed" : canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+        } ${
+          isDragOver
+            ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
+            : isSelected
+            ? "bg-blue-600/80 text-white"
+            : isDragging
+            ? "opacity-40 text-gray-400"
+            : isBackgroundMode
+            ? "text-gray-500 hover:bg-muted/20"
+            : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
+        }`}
+      >
       {isBackgroundMode ? (
         <span title={`Locked as ${backgroundTarget} background`}>
           <Lock className="size-3 shrink-0 text-amber-500" />
@@ -2031,6 +2141,7 @@ function BlockNodeItem({
           </TreeActionButton>
         </TreeActionSlot>
       )}
-    </TreeRow>
+      </TreeRow>
+    </TreeContextMenu>
   );
 }

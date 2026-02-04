@@ -21,6 +21,7 @@ import {
   FileUploadTrigger,
   useToast,
 } from "@/shared/ui";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
 import type { ColorScheme, ColorSchemeColors, ThemeSettings } from "@/features/cms/types/theme-settings";
@@ -37,6 +38,7 @@ import {
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/useAgentTeaching";
 import type { ChatMessage } from "@/shared/types/chatbot";
+import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from "@/features/ai/brain";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -133,7 +135,7 @@ const normalizeAiString = (value: unknown): string | undefined => {
   return trimmed.length ? trimmed : undefined;
 };
 
-const parseColorSchemePayload = (payload: unknown): { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null => {
+const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
   if (!payload || typeof payload !== "object") return null;
   const raw = payload as Record<string, unknown>;
   const name =
@@ -149,13 +151,13 @@ const parseColorSchemePayload = (payload: unknown): { name?: string | undefined;
   if (!colorsSource || typeof colorsSource !== "object") return null;
 
   const colors = colorsSource as Record<string, unknown>;
-      const parsedRaw = {
-        background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg) ?? null,
-        surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card) ?? null,
-        text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground) ?? null,
-        accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary) ?? null,
-        border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline) ?? null,
-      };
+  const parsedRaw = {
+    background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
+    surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
+    text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground),
+    accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary),
+    border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
+  };
   const parsed: Partial<ColorSchemeColors> = {};
   Object.entries(parsedRaw).forEach(([key, val]) => {
     if (val !== undefined) {
@@ -164,7 +166,7 @@ const parseColorSchemePayload = (payload: unknown): { name?: string | undefined;
   });
 
   if (!Object.values(parsed).some(Boolean) && !name) return null;
-  return { name, colors: parsed };
+  return { ...(name ? { name } : {}), colors: parsed };
 };
 
 const applySavedThemePreset = (
@@ -438,6 +440,16 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
   const { theme, setTheme, update } = useThemeSettings();
   const { toast } = useToast();
+  const settingsQuery = useSettingsMap();
+  const brainSettings = useMemo(
+    () => parseBrainSettings(settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY)),
+    [settingsQuery.data]
+  );
+  const brainAssignment = useMemo(
+    () => resolveBrainAssignment(brainSettings, "cms_builder"),
+    [brainSettings]
+  );
+  const brainAppliedRef = useRef<boolean>(false);
   const [schemeView, setSchemeView] = useState<"list" | "edit">("list");
   const [editingSchemeId, setEditingSchemeId] = useState<string | null>(null);
   const [newSchemeName, setNewSchemeName] = useState("");
@@ -773,7 +785,9 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     return `${resolved}\n\nTheme context:\n${schemeContext}`;
   }, [schemeAiPrompt, schemeContext]);
 
-  const parseSchemeFromText = useCallback((text: string): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
+  const parseSchemeFromText = useCallback<
+    (text: string) => { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null
+  >((text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return null;
     const jsonBlock = extractJsonBlock(trimmed);
@@ -799,25 +813,28 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       return undefined;
     };
 
-    const colors: Partial<ColorSchemeColors> = {
-      background: pickFromText(["background", "bg"]),
-      surface: pickFromText(["surface", "card", "layer"]),
-      text: pickFromText(["text", "foreground"]),
-      accent: pickFromText(["accent", "primary"]),
-      border: pickFromText(["border", "outline"]),
-    };
-    const name = pickFromText(["name", "scheme", "title"]);
-
-    if (!Object.values(colors).some(Boolean) && !name) return null;
-    return { name, colors };
-  }, []);
-
+          const colors: Partial<ColorSchemeColors> = {};
+          const background = pickFromText(["background", "bg"]);
+          if (background !== undefined) colors.background = background;
+          const surface = pickFromText(["surface", "card", "layer"]);
+          if (surface !== undefined) colors.surface = surface;
+          const parsedText = pickFromText(["text", "foreground"]);
+          if (parsedText !== undefined) colors.text = parsedText;
+          const accent = pickFromText(["accent", "primary"]);
+          if (accent !== undefined) colors.accent = accent;
+          const border = pickFromText(["border", "outline"]);
+          if (border !== undefined) colors.border = border;
+          const name = pickFromText(["name", "scheme", "title"]);
+    
+          if (!Object.values(colors).some(Boolean) && name === undefined) return null;
+          return { ...(name !== undefined ? { name } : {}), colors };
+        }, []);
   const schemeAiPreview = useMemo(
     () => (schemeAiOutput ? parseSchemeFromText(schemeAiOutput) : null),
     [schemeAiOutput, parseSchemeFromText]
   );
 
-  const applySchemeFromAi = useCallback((parsed: { name?: string; colors: Partial<ColorSchemeColors> }): void => {
+  const applySchemeFromAi = useCallback((parsed: { name?: string | undefined; colors: Partial<ColorSchemeColors> }): void => {
     setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => {
       const next = { ...prev };
       (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach((key) => {
@@ -2159,3 +2176,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     </div>
   );
 }
+  useEffect(() => {
+    if (!settingsQuery.isSuccess) return;
+    if (brainAppliedRef.current) return;
+    brainAppliedRef.current = true;
+    if (!brainAssignment.enabled) return;
+    setSchemeAiProvider(brainAssignment.provider);
+    if (brainAssignment.provider === "model" && brainAssignment.modelId) {
+      setSchemeAiModelId(brainAssignment.modelId);
+    }
+    if (brainAssignment.provider === "agent" && brainAssignment.agentId) {
+      setSchemeAiAgentId(brainAssignment.agentId);
+    }
+  }, [brainAssignment, settingsQuery.isSuccess]);

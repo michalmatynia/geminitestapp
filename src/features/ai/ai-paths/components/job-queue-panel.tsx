@@ -25,6 +25,13 @@ import { RunHistoryEntries } from "./RunHistoryEntries";
 import { buildHistoryNodeOptions } from "./run-history-utils";
 import { safeJsonStringify } from "./AiPathsSettingsUtils";
 
+type QueueHistoryEntry = {
+  ts: number;
+  queued: number;
+  lagMs: number | null;
+  throughput: number | null;
+};
+
 type JobQueuePanelProps = {
   activePathId?: string | null;
 };
@@ -211,7 +218,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = runsQuery.data?.runs ?? [];
   const queueStatus = queueStatusQuery.data?.status;
-  const [queueHistory, setQueueHistory] = React.useState<Array<{ ts: number; queued: number; lagMs: number | null; throughput: number | null }>>([]);
+  const [queueHistory, setQueueHistory] = React.useState<QueueHistoryEntry[]>([]);
   const [showMetricsPanel, setShowMetricsPanel] = React.useState(false);
   const lagThresholdMs = React.useMemo(() => {
     const raw = settingsMapQuery.data?.get(QUEUE_LAG_THRESHOLD_KEY);
@@ -221,7 +228,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
 
   React.useEffect(() => {
     if (!queueStatus) return;
-    setQueueHistory((prev: Array<{ ts: number; queued: number; lagMs: number | null; throughput: number | null }>) => {
+    setQueueHistory((prev: QueueHistoryEntry[]) => {
       const next = [
         ...prev,
         {
@@ -233,7 +240,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
       ];
       return next.slice(-120);
     });
-  }, [queueStatus?.queuedCount]);
+  }, [queueStatus]);
 
   React.useEffect(() => {
     const sources = streamSourcesRef.current;
@@ -567,8 +574,8 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
               {queueHistory.length === 0 ? (
                 <div className="text-[10px] text-gray-500">No samples</div>
               ) : (
-                queueHistory.slice(-30).map((entry: { ts: number; queued: number }, index: number) => {
-                  const max = Math.max(1, ...queueHistory.slice(-30).map((item) => item.queued));
+                queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
+                  const max = Math.max(1, ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued));
                   const height = Math.max(8, Math.round((entry.queued / max) * 100));
                   return (
                     <div
@@ -631,8 +638,8 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                 {queueHistory.length === 0 ? (
                   <div className="text-[10px] text-gray-500">No samples</div>
                 ) : (
-                  queueHistory.map((entry, index) => {
-                    const max = Math.max(1, ...queueHistory.map((item) => item.queued));
+                  queueHistory.map((entry: QueueHistoryEntry, index: number) => {
+                    const max = Math.max(1, ...queueHistory.map((item: QueueHistoryEntry) => item.queued));
                     const height = Math.max(6, Math.round((entry.queued / max) * 100));
                     return (
                       <div

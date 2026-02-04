@@ -9,7 +9,7 @@ export function useCsvImportMutation(): UseMutationResult<
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ file, onProgress }): Promise<unknown> => {
+    mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (loaded: number, total?: number) => void }): Promise<unknown> => {
       const formData = new FormData();
       formData.append("file", file);
 

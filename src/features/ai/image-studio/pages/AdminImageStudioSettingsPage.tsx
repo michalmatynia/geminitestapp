@@ -27,9 +27,14 @@ import {
   defaultImageStudioSettings,
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
-  parsePromptValidationRules,
   type ImageStudioSettings,
 } from "../utils/studio-settings";
+import {
+  defaultPromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+  parsePromptValidationRules,
+} from "@/features/prompt-engine/settings";
 
 export function AdminImageStudioSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -43,16 +48,22 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
   const [promptValidationRulesText, setPromptValidationRulesText] = useState<string>(
-    JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2)
+    JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
   );
   const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
 
   // Derived state for settings initialization
   const [prevSettingsData, setPrevSettingsData] = useState<unknown>(null);
+  const promptEngineSettings = useMemo(
+    () => parsePromptEngineSettings(settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY)),
+    [settingsQuery.data]
+  );
+
   if (settingsQuery.data && settingsQuery.data !== prevSettingsData && !settingsLoaded) {
     setPrevSettingsData(settingsQuery.data);
     
     const stored = parseImageStudioSettings(settingsQuery.data.get(IMAGE_STUDIO_SETTINGS_KEY));
+    const promptEngineStored = parsePromptEngineSettings(settingsQuery.data.get(PROMPT_ENGINE_SETTINGS_KEY));
     const openaiModelFallback = settingsQuery.data.get("openai_model");
 
     const hydrated: ImageStudioSettings =
@@ -71,7 +82,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
-    setPromptValidationRulesText(JSON.stringify(hydrated.promptValidation.rules, null, 2));
+    setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
   }
@@ -118,10 +129,6 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
       return;
     }
     setPromptValidationRulesError(null);
-    setStudioSettings((prev: ImageStudioSettings) => ({
-      ...prev,
-      promptValidation: { ...prev.promptValidation, rules: parsed.rules },
-    }));
   }, []);
 
   const saveStudioSettings = useCallback(async (): Promise<void> => {
@@ -149,18 +156,29 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
         key: IMAGE_STUDIO_SETTINGS_KEY,
         value: serializeSetting(studioSettings),
       });
+      const parsedRules = parsePromptValidationRules(promptValidationRulesText);
+      if (!parsedRules.ok) {
+        throw new Error(parsedRules.error);
+      }
+      await updateSetting.mutateAsync({
+        key: PROMPT_ENGINE_SETTINGS_KEY,
+        value: serializeSetting({
+          ...promptEngineSettings,
+          promptValidation: { ...promptEngineSettings.promptValidation, rules: parsedRules.rules },
+        }),
+      });
       toast("Image Studio settings saved.", { variant: "success" });
     } catch (error) {
       logClientError(error, { context: { source: "AdminImageStudioSettingsPage", action: "saveSettings" } });
       toast("Failed to save Image Studio settings.", { variant: "error" });
     }
-  }, [advancedOverridesError, promptValidationRulesError, studioSettings, toast, updateSetting]);
+  }, [advancedOverridesError, promptValidationRulesError, studioSettings, promptValidationRulesText, promptEngineSettings, toast, updateSetting]);
 
   const resetStudioSettings = useCallback((): void => {
     setStudioSettings(defaultImageStudioSettings);
     setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
     setAdvancedOverridesError(null);
-    setPromptValidationRulesText(JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2));
+    setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
   }, []);
 
@@ -181,7 +199,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
               <Link href="/admin/image-studio">Back to Studio</Link>
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/admin/image-studio?tab=validation">Validation Patterns</Link>
+              <Link href="/admin/prompt-engine/validation">Global Validation Patterns</Link>
             </Button>
             <Button
               type="button"

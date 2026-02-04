@@ -3,13 +3,14 @@ import "server-only";
 import OpenAI from "openai";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import type { AiInsightRecord, AiInsightSource, AiInsightStatus, AiInsightType } from "@/shared/types/ai-insights";
-import type { AnalyticsSummaryDto } from "@/shared/types";
+import type { AnalyticsEventDto, AnalyticsSummaryDto } from "@/shared/types";
 import { ErrorSystem } from "@/features/observability/server";
 import { listAnalyticsEvents, getAnalyticsSummary } from "@/features/analytics/server";
 import { listSystemLogs, getSystemLogMetrics } from "@/features/observability/server";
 import { SystemLogRecord } from "@/shared/types/system-logs";
 import { getSettingValue } from "@/features/products/services/aiDescriptionService";
 import { runTeachingChat } from "@/features/ai/agentcreator/teaching/server/chat";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 import { AI_INSIGHTS_SETTINGS_KEYS } from "./settings";
 import { appendAiInsight, appendAiInsightNotification, setAiInsightsMeta } from "./repository";
 
@@ -20,14 +21,14 @@ const parseBooleanSetting = (value: string | null | undefined, fallback: boolean
   return value === "true" || value === "1";
 };
 
-const parseNumberSetting = (value: string | null | undefined, fallback: number, min = 1): number => {
+const parseNumberSetting = (value: string | null | undefined, fallback: number, min: number = 1): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < min) return fallback;
   return parsed;
 };
 
-const sanitizeEvents = (events: AnalyticsSummaryDto["recent"] | undefined) =>
-  (events ?? []).map((event) => ({
+const sanitizeEvents = (events: AnalyticsSummaryDto["recent"] | undefined): Record<string, unknown>[] =>
+  (events ?? []).map((event: AnalyticsEventDto) => ({
     id: event.id,
     ts: event.ts,
     type: event.type,
@@ -39,8 +40,8 @@ const sanitizeEvents = (events: AnalyticsSummaryDto["recent"] | undefined) =>
     meta: event.meta ?? null,
   }));
 
-const sanitizeLogs = (logs: SystemLogRecord[]) =>
-  logs.map((log) => ({
+const sanitizeLogs = (logs: SystemLogRecord[]): Record<string, unknown>[] =>
+  logs.map((log: SystemLogRecord) => ({
     id: log.id,
     level: log.level,
     message: log.message,
@@ -49,7 +50,7 @@ const sanitizeLogs = (logs: SystemLogRecord[]) =>
     path: log.path ?? null,
     method: log.method ?? null,
     statusCode: log.statusCode ?? null,
-    context: log.context ? { fingerprint: (log.context as any)?.fingerprint } : null,
+    context: log.context ? { fingerprint: (log.context as { fingerprint?: unknown }).fingerprint } : null,
   }));
 
 const getClient = (
@@ -89,10 +90,10 @@ const runAnthropicChat = async (params: {
   apiKey: string;
   messages: ChatMessage[];
 }): Promise<string> => {
-  const system = params.messages.find((message) => message.role === "system")?.content ?? "";
+  const system = params.messages.find((message: ChatMessage) => message.role === "system")?.content ?? "";
   const conversation = params.messages
-    .filter((message) => message.role !== "system")
-    .map((message) => ({ role: message.role, content: message.content }));
+    .filter((message: ChatMessage) => message.role !== "system")
+    .map((message: ChatMessage) => ({ role: message.role, content: message.content }));
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -115,7 +116,7 @@ const runAnthropicChat = async (params: {
   const data = (await res.json()) as {
     content?: Array<{ text?: string }>;
   };
-  const text = data.content?.map((part) => part.text ?? "").join("").trim();
+  const text = data.content?.map((part: { text?: string }) => part.text ?? "").join("").trim();
   return text ?? "";
 };
 
@@ -124,15 +125,15 @@ const runGeminiChat = async (params: {
   apiKey: string;
   messages: ChatMessage[];
 }): Promise<string> => {
-  const system = params.messages.find((message) => message.role === "system")?.content ?? "";
-  const userMessages = params.messages.filter((message) => message.role === "user");
-  const assistantMessages = params.messages.filter((message) => message.role === "assistant");
+  const system = params.messages.find((message: ChatMessage) => message.role === "system")?.content ?? "";
+  const userMessages = params.messages.filter((message: ChatMessage) => message.role === "user");
+  const assistantMessages = params.messages.filter((message: ChatMessage) => message.role === "assistant");
   const contents = [
-    ...userMessages.map((message) => ({
+    ...userMessages.map((message: ChatMessage) => ({
       role: "user",
       parts: [{ text: message.content }],
     })),
-    ...assistantMessages.map((message) => ({
+    ...assistantMessages.map((message: ChatMessage) => ({
       role: "model",
       parts: [{ text: message.content }],
     })),
@@ -159,7 +160,7 @@ const runGeminiChat = async (params: {
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  const text = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
+  const text = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("").trim();
   return text ?? "";
 };
 
@@ -185,7 +186,7 @@ const parseInsightPayload = (raw: string): {
       warnings?: string[];
       recommendations?: string[];
     };
-    const status = (parsed.status ?? "warning") as AiInsightStatus;
+    const status = parsed.status ?? "warning";
     return {
       status,
       summary: typeof parsed.summary === "string" ? parsed.summary : clean,
@@ -234,7 +235,7 @@ const runInsightModel = async (params: {
     }
     const response = await runTeachingChat({
       agentId,
-      messages: params.messages.map((message) => ({
+      messages: params.messages.map((message: ChatMessage) => ({
         role: message.role,
         content: message.content,
       })),
@@ -270,8 +271,8 @@ const runInsightModel = async (params: {
   const { openai } = getClient(modelId, apiKey);
   const response = await openai.chat.completions.create({
     model: modelId,
-    messages: params.messages.map((message) => ({
-      role: message.role as "system" | "user" | "assistant",
+    messages: params.messages.map((message: ChatMessage) => ({
+      role: message.role,
       content: message.content,
     })),
   });
@@ -358,9 +359,13 @@ export const generateLogsInsight = async (params: {
   source: AiInsightSource;
   windowHours?: number;
 }): Promise<AiInsightRecord> => {
-  const provider = ((await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsProvider)) || "model") as "model" | "agent";
-  const modelId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel);
-  const agentId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId);
+  const brainAssignment = await getBrainAssignmentForFeature("system_logs");
+  if (!brainAssignment.enabled) {
+    throw new Error("AI Brain is disabled for System Logs.");
+  }
+  const provider = brainAssignment.provider;
+  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
   const windowHours = params.windowHours ?? 24;
   const to = new Date();
   const from = new Date(to.getTime() - windowHours * 60 * 60 * 1000);
@@ -439,12 +444,13 @@ export const generateLogInterpretation = async (params: {
     createdAt?: string | null;
   };
 }): Promise<AiInsightRecord> => {
-  const provider =
-    ((await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsProvider)) || "model") as
-      | "model"
-      | "agent";
-  const modelId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel);
-  const agentId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId);
+  const brainAssignment = await getBrainAssignmentForFeature("error_logs");
+  if (!brainAssignment.enabled) {
+    throw new Error("AI Brain is disabled for Error Logs.");
+  }
+  const provider = brainAssignment.provider;
+  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
 
   const payload = {
     log: {

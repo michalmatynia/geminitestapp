@@ -1,7 +1,7 @@
 "use client";
 
-import { useToast, Input } from "@/shared/ui";
-import React, { useState, useRef, useEffect } from "react";
+import { useToast, Input, TreeContextMenu } from "@/shared/ui";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { FileText, Edit2, Copy, Trash2, FilePlus } from "lucide-react";
 
 import type { NoteItemProps } from "@/features/foldertree/types/folder-tree-ui";
@@ -31,6 +31,16 @@ export const NoteItem = React.memo(function NoteItem({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(note.title);
   const [isDragOver, setIsDragOver] = useState(false);
+  const contextMenuItems = useMemo(
+    () => [
+      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: () => onCreateNote(folderId) },
+      { id: "duplicate", label: "Duplicate", icon: <Copy className="size-3.5" />, onSelect: () => onDuplicateNote(note.id) },
+      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: () => onStartRename(note.id) },
+      { id: "separator-1", separator: true },
+      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: () => onDeleteNote(note.id) },
+    ],
+    [folderId, note.id, onCreateNote, onDuplicateNote, onStartRename, onDeleteNote]
+  );
 
   const getDraggedNoteId = (event: React.DragEvent): string =>
     getNoteDragId(event.dataTransfer, draggedNoteId) || "";
@@ -68,16 +78,17 @@ export const NoteItem = React.memo(function NoteItem({
   };
 
   return (
-    <TreeRow
-      tone="primary"
-      selected={isSelected}
-      dragOver={isDragOver}
-      dragOverClassName="bg-emerald-600 text-white"
-      depth={level + 1}
-      baseIndent={28}
-      indent={16}
-      className="cursor-pointer active:cursor-grabbing text-sm"
-      draggable={!isRenaming}
+    <TreeContextMenu items={contextMenuItems}>
+      <TreeRow
+        tone="primary"
+        selected={isSelected}
+        dragOver={isDragOver}
+        dragOverClassName="bg-emerald-600 text-white"
+        depth={level + 1}
+        baseIndent={28}
+        indent={16}
+        className="cursor-pointer active:cursor-grabbing text-sm"
+        draggable={!isRenaming}
       data-note-id={note.id}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         const isNoteDrag =
@@ -127,7 +138,7 @@ export const NoteItem = React.memo(function NoteItem({
           onSelectNote(note.id);
         }
       }}
-    >
+      >
       <FileText className={`size-4 flex-shrink-0 ${isSelected ? "text-white" : "text-gray-500 group-hover:text-gray-300"}`} />
       {isRenaming ? (
         <Input
@@ -198,6 +209,7 @@ export const NoteItem = React.memo(function NoteItem({
           </TreeActionButton>
         </TreeActionSlot>
       )}
-    </TreeRow>
+      </TreeRow>
+    </TreeContextMenu>
   );
 });

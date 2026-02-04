@@ -78,7 +78,7 @@ export default function AdminAnalyticsPage(): React.JSX.Element {
       }
       return data?.insight ?? null;
     },
-    onSuccess: (insight) => {
+    onSuccess: (insight: AiInsightRecord | null) => {
       if (insight) {
         toast("AI analytics insight generated.", { variant: "success" });
         void insightsQuery.refetch();
@@ -202,7 +202,7 @@ export default function AdminAnalyticsPage(): React.JSX.Element {
           <p className="mt-3 text-xs text-gray-500">No insights yet.</p>
         ) : (
           <div className="mt-3 space-y-3">
-            {insightsQuery.data?.insights.map((insight) => (
+            {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
               <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] uppercase text-gray-500">
@@ -223,7 +223,7 @@ export default function AdminAnalyticsPage(): React.JSX.Element {
                 <div className="mt-2 text-sm text-white">{insight.summary}</div>
                 {insight.warnings.length > 0 ? (
                   <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                    {insight.warnings.map((warning, index) => (
+                    {insight.warnings.map((warning: string, index: number) => (
                       <li key={`${insight.id}-warn-${index}`}>{warning}</li>
                     ))}
                   </ul>

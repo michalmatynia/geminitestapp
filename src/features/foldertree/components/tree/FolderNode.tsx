@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast, Input } from "@/shared/ui";
+import { useToast, Input, TreeContextMenu } from "@/shared/ui";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
 
@@ -58,6 +58,16 @@ export const FolderNode = React.memo(function FolderNode({
   const isExpanded = expandedFolderIds.has(folder.id);
   const isSelected = selectedFolderId === folder.id && !selectedNoteId;
   const isRenaming = renamingFolderId === folder.id;
+  const contextMenuItems = useMemo(
+    () => [
+      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: () => onCreateNote(folder.id) },
+      { id: "new-folder", label: "New folder", icon: <FolderPlus className="size-3.5" />, onSelect: () => onCreateSubfolder(folder.id) },
+      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: () => onStartRename(folder.id) },
+      { id: "separator-1", separator: true },
+      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: () => onDelete(folder.id) },
+    ],
+    [folder.id, onCreateNote, onCreateSubfolder, onStartRename, onDelete]
+  );
 
   // Focus input when entering rename mode
   useEffect(() => {
@@ -193,80 +203,81 @@ export const FolderNode = React.memo(function FolderNode({
           style={{ marginLeft: `${level * 16 + 8}px` }}
         />
       )}
-      <TreeRow
-        draggable
-        tone="primary"
-        selected={isSelected}
-        dragOver={isDragOver && canDropHere}
-        dragOverClassName="bg-green-600 text-white"
-        depth={level}
-        className="cursor-pointer active:cursor-grabbing gap-1"
-        onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.stopPropagation();
-          setFolderDragData(e.dataTransfer, folder.id);
-          onDragStartProp(folder.id);
-          const target = e.currentTarget as HTMLElement;
-          target.style.opacity = "0.5";
-        }}
-        onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
-          const target = e.currentTarget as HTMLElement;
-          target.style.opacity = "1";
-          setReorderHover(null);
-          onDragEndProp();
-        }}
-        onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (draggedFolderId) {
-            if (!canDropHere) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const position = resolveReorderPosition(e.clientY, rect);
-            setReorderHover(position === "before" ? "above" : position === "after" ? "below" : null);
-            setIsDragOver(!position);
-            e.dataTransfer.dropEffect = "move";
-            return;
-          }
-          if (canDropHere) setIsDragOver(true);
-        }}
-        onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.stopPropagation();
-          setIsDragOver(false);
-          if (draggedFolderId) {
+      <TreeContextMenu items={contextMenuItems}>
+        <TreeRow
+          draggable
+          tone="primary"
+          selected={isSelected}
+          dragOver={isDragOver && canDropHere}
+          dragOverClassName="bg-green-600 text-white"
+          depth={level}
+          className="cursor-pointer active:cursor-grabbing gap-1"
+          onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.stopPropagation();
+            setFolderDragData(e.dataTransfer, folder.id);
+            onDragStartProp(folder.id);
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = "0.5";
+          }}
+          onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = "1";
             setReorderHover(null);
-          }
-        }}
-        onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          setReorderHover(null);
+            onDragEndProp();
+          }}
+          onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (draggedFolderId) {
+              if (!canDropHere) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const position = resolveReorderPosition(e.clientY, rect);
+              setReorderHover(position === "before" ? "above" : position === "after" ? "below" : null);
+              setIsDragOver(!position);
+              e.dataTransfer.dropEffect = "move";
+              return;
+            }
+            if (canDropHere) setIsDragOver(true);
+          }}
+          onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.stopPropagation();
+            setIsDragOver(false);
+            if (draggedFolderId) {
+              setReorderHover(null);
+            }
+          }}
+          onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            setReorderHover(null);
 
-          const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || "";
-          const folderId = getFolderDragId(e.dataTransfer, draggedFolderId) || "";
+            const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || "";
+            const folderId = getFolderDragId(e.dataTransfer, draggedFolderId) || "";
 
-          if (noteId) {
-            if (noteId === folder.id) {
-              toast("Can't link a note to itself", { variant: "info" });
-              return;
+            if (noteId) {
+              if (noteId === folder.id) {
+                toast("Can't link a note to itself", { variant: "info" });
+                return;
+              }
+              onDropNote(noteId, folder.id);
+            } else if (folderId) {
+              if (!canDropHere) {
+                toast("Can't move a folder into itself", { variant: "info" });
+                return;
+              }
+              const rect = e.currentTarget.getBoundingClientRect();
+              const position = resolveReorderPosition(e.clientY, rect);
+              if (position && onReorderFolder) {
+                onReorderFolder(folderId, folder.id, position);
+                return;
+              }
+              onDropFolder(folderId, folder.id);
+            } else {
+              toast("Nothing to drop here", { variant: "info" });
             }
-            onDropNote(noteId, folder.id);
-          } else if (folderId) {
-            if (!canDropHere) {
-              toast("Can't move a folder into itself", { variant: "info" });
-              return;
-            }
-            const rect = e.currentTarget.getBoundingClientRect();
-            const position = resolveReorderPosition(e.clientY, rect);
-            if (position && onReorderFolder) {
-              onReorderFolder(folderId, folder.id, position);
-              return;
-            }
-            onDropFolder(folderId, folder.id);
-          } else {
-            toast("Nothing to drop here", { variant: "info" });
-          }
-        }}
-      >
+          }}
+        >
         {reorderHover === "above" && (
           <div className="absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90" />
         )}
@@ -358,7 +369,8 @@ export const FolderNode = React.memo(function FolderNode({
             </TreeActionButton>
           </TreeActionSlot>
         )}
-      </TreeRow>
+        </TreeRow>
+      </TreeContextMenu>
       {showReorderZones && (
         <div
           onDragOver={handleReorderDragOver("below")}

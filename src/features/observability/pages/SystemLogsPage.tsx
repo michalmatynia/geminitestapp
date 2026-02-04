@@ -129,7 +129,7 @@ export default function SystemLogsPage(): React.JSX.Element {
       }
       return data?.insight ?? null;
     },
-    onSuccess: (insight) => {
+    onSuccess: (insight: AiInsightRecord | null) => {
       if (insight) {
         toast("AI log insight generated.", { variant: "success" });
         void insightsQuery.refetch();
@@ -153,11 +153,13 @@ export default function SystemLogsPage(): React.JSX.Element {
       }
       return data?.insight ?? null;
     },
-    onSuccess: (insight) => {
+    onSuccess: (insight: AiInsightRecord | null) => {
       if (!insight) return;
+      const logId = insight.context?.logId;
+      const key = typeof logId === "string" ? logId : insight.id;
       setLogInterpretations((prev: Record<string, AiInsightRecord>) => ({
         ...prev,
-        [String(insight.context?.logId ?? insight.id)]: insight,
+        [key]: insight,
       }));
       toast("AI interpretation added.", { variant: "success" });
     },
@@ -604,7 +606,7 @@ export default function SystemLogsPage(): React.JSX.Element {
               <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
             ) : (
               <div className="mt-3 space-y-3">
-                {insightsQuery.data?.insights.map((insight) => (
+                {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
                   <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] uppercase text-gray-500">
@@ -625,7 +627,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     <div className="mt-2 text-sm text-white">{insight.summary}</div>
                     {insight.warnings.length > 0 ? (
                       <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                        {insight.warnings.map((warning, index) => (
+                        {insight.warnings.map((warning: string, index: number) => (
                           <li key={`${insight.id}-warn-${index}`}>{warning}</li>
                         ))}
                       </ul>
@@ -714,7 +716,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                             </div>
                             {logInterpretations[log.id]?.warnings?.length ? (
                               <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                                {logInterpretations[log.id]?.warnings?.map((warning, index) => (
+                                {logInterpretations[log.id]?.warnings?.map((warning: string, index: number) => (
                                   <li key={`${log.id}-ai-${index}`}>{warning}</li>
                                 ))}
                               </ul>

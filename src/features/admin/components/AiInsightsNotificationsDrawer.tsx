@@ -89,7 +89,7 @@ export function AiInsightsNotificationsDrawer({
             <div className="text-xs text-gray-500">No AI warnings yet.</div>
           ) : (
             <div className="space-y-3 pb-16">
-              {notifications.map((notification) => (
+              {notifications.map((notification: AiInsightNotification) => (
                 <div
                   key={notification.id}
                   className="rounded-md border border-border/60 bg-gray-900/50 p-3 text-xs text-gray-300"
@@ -113,7 +113,7 @@ export function AiInsightsNotificationsDrawer({
                   <div className="mt-2 text-sm text-white">{notification.summary}</div>
                   {notification.warnings.length > 0 ? (
                     <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                      {notification.warnings.map((warning, index) => (
+                      {notification.warnings.map((warning: string, index: number) => (
                         <li key={`${notification.id}-warn-${index}`}>{warning}</li>
                       ))}
                     </ul>

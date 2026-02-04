@@ -41,13 +41,13 @@ export function UnifiedSelect({
   ariaLabel,
 }: UnifiedSelectProps): React.JSX.Element {
   const normalizedOptions = options.filter((option) => option.value && option.value.trim() !== "");
-  const hasValue = normalizedOptions.some((option) => option.value === value);
-  const safeValue = hasValue ? value : undefined;
+  const hasValue = value !== undefined && normalizedOptions.some((option) => option.value === value);
+  const safeValue = hasValue ? value : "";
 
   return (
     <div className={cn("w-full", className)}>
       <Select
-        value={safeValue}
+        {...(safeValue ? { value: safeValue } : {})}
         onValueChange={onValueChange}
         disabled={disabled}
       >

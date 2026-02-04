@@ -1473,7 +1473,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               Node animation
             </Label>
             <div className="grid grid-cols-3 gap-2 place-items-center">
-              {nodeTargetOptions.map((option: { value: string; label: string; icon: React.ElementType }) => {
+              {nodeTargetOptions.map((option: (typeof nodeTargetOptions)[number]) => {
                 const Icon = option.icon;
                 const isActive = resolvedNodeTarget === option.value;
                 return (
@@ -1514,7 +1514,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               className="text-sm"
             />
             <div className="flex flex-wrap gap-1.5">
-              {quickSelectors.map((option: { value: string; label: string; icon: React.ElementType }) => {
+              {quickSelectors.map((option: (typeof quickSelectors)[number]) => {
                 const Icon = option.icon;
                 const isActive = selectorValue === option.value;
                 return (
@@ -1527,7 +1527,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                       className="h-7 w-9 p-0"
                       aria-label={option.label}
                     >
-                      <Icon className="size-3.5" />
+                      {React.createElement(Icon as React.ComponentType<{ className?: string }>, { className: "size-3.5" })}
                     </Button>
                   </Tooltip>
                 );

@@ -18,6 +18,9 @@ import {
   Tabs,
   TabsContent,
   Textarea,
+  TreeCaret,
+  TreeContextMenu,
+  TreeRow,
   useToast,
   VectorCanvas,
   VectorToolbar,
@@ -48,15 +51,16 @@ import type { Asset3DRecord } from "@/features/viewer3d/types";
 import { Viewer3D } from "@/features/viewer3d/components/Viewer3D";
 import { Asset3DPickerField } from "@/features/cms/components/page-builder/shared-fields";
 import { uploadAsset3DFile } from "@/features/viewer3d/api";
-import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
-import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
-import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "../utils/prompt-validator";
-import { formatProgrammaticPrompt } from "../utils/prompt-formatter";
+import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "@/features/prompt-engine/prompt-params";
+import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "@/features/prompt-engine/prompt-params";
+import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "@/features/prompt-engine/prompt-validator";
+import { formatProgrammaticPrompt } from "@/features/prompt-engine/prompt-formatter";
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from "../utils/param-ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
-import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings, type PromptValidationRule } from "../utils/studio-settings";
+import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings } from "../utils/studio-settings";
+import { defaultPromptEngineSettings, PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, parsePromptValidationRules, type PromptValidationRule } from "@/features/prompt-engine/settings";
 import { expandFolderPath, normalizeFolderPaths } from "../utils/studio-tree";
 import { AdminImageStudioValidationPatternsPage } from "./AdminImageStudioValidationPatternsPage";
 
@@ -389,23 +393,20 @@ function SlotTree({
   onMoveFolder: (folderPath: string, targetFolder: string) => void;
 }): React.JSX.Element {
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
-  const initialExpanded = useMemo(() => new Set(["root"]), []);
-  const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
-              const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-              const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
-              const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
-          
-              // Reset state when projectId changes (derived state pattern during render)
-              const [prevProjectId, setPrevProjectId] = useState(projectId);
-              if (projectId !== prevProjectId) {
-                setPrevProjectId(projectId);
-                setExpanded(new Set(["root"]));
-                setDragOverPath(null);
-                setDraggedSlotId(null);
-                      setDraggedFolderPath(null);
-                    }
-                
-                    const toggle = useCallback((id: string): void => {    setExpanded((prev: Set<string>) => {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["root"]));
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
+  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExpanded(new Set(["root"]));
+    setDragOverPath(null);
+    setDraggedSlotId(null);
+    setDraggedFolderPath(null);
+  }, [projectId]);
+
+  const toggle = useCallback((id: string): void => {
+    setExpanded((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -420,62 +421,85 @@ function SlotTree({
       const isDragOver = dragOverPath === node.path;
       return (
         <div key={node.id}>
-          <button
-            type="button"
-            className={cn(
-              "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs",
-              isSelected ? "bg-muted text-white" : "text-gray-200 hover:bg-muted/60",
-              isDragOver && "ring-1 ring-emerald-400/70"
-            )}
-            style={{ paddingLeft: 8 + depth * 10 }}
-            onClick={() => onSelectFolder(node.path)}
-            onDoubleClick={() => toggle(node.id)}
-            title={node.path || "Project root"}
-            draggable
-            onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
-              setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: node.path }, { effectAllowed: "move" });
-              setDraggedFolderPath(node.path);
-            }}
-            onDragEnd={() => {
-              setDraggedFolderPath(null);
-              setDragOverPath(null);
-            }}
-            onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-              if (!draggedSlotId && !draggedFolderPath) return;
-              e.preventDefault();
-              e.stopPropagation();
-              setDragOverPath(node.path);
-              e.dataTransfer.dropEffect = "move";
-            }}
-            onDragLeave={() => {
-              if (dragOverPath === node.path) setDragOverPath(null);
-            }}
-            onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
-              e.preventDefault();
-              e.stopPropagation();
-              const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
-              const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
-              setDragOverPath(null);
-              if (slotId) {
-                const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-                if (slot) onMoveSlot(slot, node.path);
-                return;
-              }
-              if (folderPath) {
-                onMoveFolder(folderPath, node.path);
-              }
-            }}
+          <TreeContextMenu
+            items={[
+              { id: "select-folder", label: "Select folder", onSelect: () => onSelectFolder(node.path) },
+              ...(node.path
+                ? [
+                    {
+                      id: "move-folder-root",
+                      label: "Move to root",
+                      onSelect: () => onMoveFolder(node.path, ""),
+                    },
+                  ]
+                : []),
+            ]}
           >
-            <span className="w-4 text-gray-400" onClick={(e: React.MouseEvent): void => { e.stopPropagation(); toggle(node.id); }}>
-              {node.children.some((c: TreeNode) => c.type === "folder") || node.children.some((c: TreeNode) => c.type === "file") ? (
-                <span className="inline-flex w-4 justify-center">{isOpen ? "▾" : "▸"}</span>
-              ) : (
-                <span className="inline-flex w-4 justify-center">•</span>
-              )}
-            </span>
-            <Folder className="size-4 text-gray-400" />
-            <span className="truncate">{node.name}</span>
-          </button>
+            <TreeRow
+              asChild
+              depth={depth}
+              baseIndent={8}
+              indent={10}
+              tone="subtle"
+              selected={isSelected}
+              dragOver={isDragOver}
+              className="text-xs"
+            >
+              <button
+                type="button"
+                className="w-full text-left"
+                onClick={() => onSelectFolder(node.path)}
+                onDoubleClick={() => toggle(node.id)}
+                title={node.path || "Project root"}
+                draggable
+                onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
+                  setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: node.path }, { effectAllowed: "move" });
+                  setDraggedFolderPath(node.path);
+                }}
+                onDragEnd={() => {
+                  setDraggedFolderPath(null);
+                  setDragOverPath(null);
+                }}
+                onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
+                  if (!draggedSlotId && !draggedFolderPath) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverPath(node.path);
+                  e.dataTransfer.dropEffect = "move";
+                }}
+                onDragLeave={() => {
+                  if (dragOverPath === node.path) setDragOverPath(null);
+                }}
+                onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+                  const folderPath = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]);
+                  setDragOverPath(null);
+                  if (slotId) {
+                    const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
+                    if (slot) onMoveSlot(slot, node.path);
+                    return;
+                  }
+                  if (folderPath) {
+                    onMoveFolder(folderPath, node.path);
+                  }
+                }}
+              >
+                <TreeCaret
+                  isOpen={isOpen}
+                  hasChildren={node.children.length > 0}
+                  ariaLabel={isOpen ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                  onToggle={() => toggle(node.id)}
+                  className="text-gray-400"
+                  buttonClassName="hover:bg-gray-700"
+                  placeholderClassName="w-4"
+                />
+                <Folder className="size-4 text-gray-400" />
+                <span className="truncate">{node.name}</span>
+              </button>
+            </TreeRow>
+          </TreeContextMenu>
           {isOpen ? (
             <div>
               {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
@@ -489,29 +513,50 @@ function SlotTree({
     if (!slot) return null;
     const isSelected = slot.id === selectedSlotId;
     return (
-      <button
-        key={node.id}
-        type="button"
-        className={cn(
-          "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs",
-          isSelected ? "bg-muted text-white" : "text-gray-200 hover:bg-muted/60"
-        )}
-        style={{ paddingLeft: 18 + depth * 10 }}
-        onClick={() => onSelectSlot(slot)}
-        title={slot.name || slot.id}
-        draggable
-        onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
-          setDragData(e.dataTransfer, { [DRAG_KEYS.ASSET_ID]: slot.id }, { effectAllowed: "move" });
-          setDraggedSlotId(slot.id);
-        }}
-        onDragEnd={() => {
-          setDraggedSlotId(null);
-          setDragOverPath(null);
-        }}
+      <TreeContextMenu
+        items={[
+          { id: "select-slot", label: "Select slot", onSelect: () => onSelectSlot(slot) },
+          ...(slot.folderPath
+            ? [
+                {
+                  id: "move-slot-root",
+                  label: "Move to root",
+                  onSelect: () => onMoveSlot(slot, ""),
+                },
+              ]
+            : []),
+        ]}
       >
-        <ImageIcon className="size-4 text-gray-400" />
-        <span className="truncate">{slot.name || node.name}</span>
-      </button>
+        <TreeRow
+          key={node.id}
+          asChild
+          depth={depth}
+          baseIndent={18}
+          indent={10}
+          tone="subtle"
+          selected={isSelected}
+          className="text-xs"
+        >
+          <button
+            type="button"
+            className="w-full text-left"
+            onClick={() => onSelectSlot(slot)}
+            title={slot.name || slot.id}
+            draggable
+            onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
+              setDragData(e.dataTransfer, { [DRAG_KEYS.ASSET_ID]: slot.id }, { effectAllowed: "move" });
+              setDraggedSlotId(slot.id);
+            }}
+            onDragEnd={() => {
+              setDraggedSlotId(null);
+              setDragOverPath(null);
+            }}
+          >
+            <ImageIcon className="size-4 text-gray-400" />
+            <span className="truncate">{slot.name || node.name}</span>
+          </button>
+        </TreeRow>
+      </TreeContextMenu>
     );
   };
 
@@ -569,7 +614,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
   const [promptValidationRulesText, setPromptValidationRulesText] = useState<string>(
-    JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2)
+    JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
   );
   const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
 
@@ -621,11 +666,18 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [_maskGenOpen, setMaskGenOpen] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
 
+  const promptEngineSettings = useMemo(
+    () => parsePromptEngineSettings(settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY)),
+    [settingsQuery.data]
+  );
+  const promptValidationSettings = promptEngineSettings.promptValidation;
+
   useEffect(() => {
     if (settingsLoaded) return;
     if (!settingsQuery.data) return;
 
     const stored = parseImageStudioSettings(settingsQuery.data.get(IMAGE_STUDIO_SETTINGS_KEY));
+    const promptEngineStored = parsePromptEngineSettings(settingsQuery.data.get(PROMPT_ENGINE_SETTINGS_KEY));
     const openaiModelFallback = settingsQuery.data.get("openai_model");
 
     const hydrated: ImageStudioSettings =
@@ -644,7 +696,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
-    setPromptValidationRulesText(JSON.stringify(hydrated.promptValidation.rules, null, 2));
+    setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
   }, [settingsLoaded, settingsQuery.data]);
@@ -794,7 +846,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: (failureCount, error) => {
+    retry: (failureCount: number, error: unknown) => {
       const status = (error as Error & { status?: number }).status;
       if (status === 429) return false;
       return failureCount < 2;
@@ -1308,7 +1360,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const autoFormatPrompt = useCallback((): void => {
     if (!promptText.trim()) return;
-    const formatted = formatProgrammaticPrompt(promptText, studioSettings.promptValidation);
+    const formatted = formatProgrammaticPrompt(promptText, promptValidationSettings);
     if (!formatted.changed) {
       toast("No formatting changes to apply.", { variant: "info" });
       return;
@@ -1329,7 +1381,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       `Auto-formatted (${formatted.applied.length} fix(es)). Issues: ${formatted.issuesBefore} → ${formatted.issuesAfter}. Extraction still failing: ${extraction.error}`,
       { variant: "error" }
     );
-  }, [applyProgrammaticExtraction, promptText, studioSettings.promptValidation, toast]);
+  }, [applyProgrammaticExtraction, promptText, promptValidationSettings, toast]);
 
   const canManagePatterns = Boolean(
     session?.user?.isElevated || session?.user?.permissions?.includes("ai_paths.manage")
@@ -1397,8 +1449,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return;
     }
 
-    const existingRules = studioSettings.promptValidation.rules;
-    const existingLearned = studioSettings.promptValidation.learnedRules ?? [];
+    const existingRules = promptValidationSettings.rules;
+    const existingLearned = promptValidationSettings.learnedRules ?? [];
     const existingIds = new Set([...existingRules, ...existingLearned].map((rule: PromptValidationRule) => rule.id));
     const existingSignatures = new Set(
       [...existingRules, ...existingLearned].map((rule: PromptValidationRule) => ruleSignature(rule))
@@ -1421,20 +1473,19 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return;
     }
 
-    const updatedSettings: ImageStudioSettings = {
-      ...studioSettings,
+    const updatedSettings = {
+      ...promptEngineSettings,
       promptValidation: {
-        ...studioSettings.promptValidation,
+        ...promptValidationSettings,
         learnedRules: [...existingLearned, ...nextLearned],
       },
     };
 
     try {
       await updateSetting.mutateAsync({
-        key: IMAGE_STUDIO_SETTINGS_KEY,
+        key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(updatedSettings),
       });
-      setStudioSettings(updatedSettings);
       toast(`Added ${nextLearned.length} learned pattern(s).`, { variant: "success" });
       setLearnOpen(false);
       setLearnCandidates([]);
@@ -1443,7 +1494,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveLearnedPatterns" } });
       toast("Failed to save learned patterns.", { variant: "error" });
     }
-  }, [buildRuleKey, learnCandidates, learnSelection, ruleSignature, studioSettings, toast, updateSetting]);
+  }, [buildRuleKey, learnCandidates, learnSelection, ruleSignature, promptEngineSettings, promptValidationSettings, toast, updateSetting]);
 
   const paramLeaves: ParamLeaf[] = useMemo(() => {
     if (!paramsState) return [];
@@ -1817,11 +1868,17 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return;
     }
     setPromptValidationRulesError(null);
-    setStudioSettings((prev: ImageStudioSettings) => ({
-      ...prev,
-      promptValidation: { ...prev.promptValidation, rules: parsed.rules },
-    }));
-  }, []);
+    const nextSettings = {
+      ...promptEngineSettings,
+      promptValidation: { ...promptValidationSettings, rules: parsed.rules },
+    };
+    void updateSetting.mutateAsync({
+      key: PROMPT_ENGINE_SETTINGS_KEY,
+      value: serializeSetting(nextSettings),
+    }).catch((error) => {
+      logClientError(error, { context: { source: "AdminImageStudioPage", action: "savePromptValidationRules" } });
+    });
+  }, [promptEngineSettings, promptValidationSettings, updateSetting]);
 
   const saveStudioSettings = useCallback(async (): Promise<void> => {
     if (advancedOverridesError) {
@@ -1859,7 +1916,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setStudioSettings(defaultImageStudioSettings);
     setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
     setAdvancedOverridesError(null);
-    setPromptValidationRulesText(JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2));
+    setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
   }, []);
 
@@ -1938,8 +1995,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const promptValidationIssues: PromptValidationIssue[] = useMemo(() => {
     if (studioSettings.promptExtraction.mode !== "programmatic") return [];
-    return validateProgrammaticPrompt(promptText, studioSettings.promptValidation);
-  }, [promptText, studioSettings.promptExtraction.mode, studioSettings.promptValidation]);
+    return validateProgrammaticPrompt(promptText, promptValidationSettings);
+  }, [promptText, studioSettings.promptExtraction.mode, promptValidationSettings]);
 
   const runPayload = useMemo(() => {
     const safeProjectId = sanitizeStudioProjectId(projectId);
@@ -2192,13 +2249,20 @@ export function AdminImageStudioPage(): React.JSX.Element {
             <label className="flex items-center gap-2 text-xs text-gray-200">
               <input
                 type="checkbox"
-                checked={studioSettings.promptValidation.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStudioSettings((prev: ImageStudioSettings) => ({
-                    ...prev,
-                    promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
-                  }))
-                }
+                checked={promptValidationSettings.enabled}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const nextSettings = {
+                    ...promptEngineSettings,
+                    promptValidation: { ...promptValidationSettings, enabled: e.target.checked },
+                  };
+                  void updateSetting.mutateAsync({
+                    key: PROMPT_ENGINE_SETTINGS_KEY,
+                    value: serializeSetting(nextSettings),
+                  }).catch((error) => {
+                    logClientError(error, { context: { source: "AdminImageStudioPage", action: "togglePromptValidation" } });
+                    toast("Failed to update prompt validator.", { variant: "error" });
+                  });
+                }}
               />
               Enabled
             </label>

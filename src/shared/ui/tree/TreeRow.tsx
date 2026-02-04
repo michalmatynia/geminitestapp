@@ -72,4 +72,3 @@ export function TreeRow({
 
   return <Comp className={mergedClassName} style={mergedStyle} {...props} />;
 }
-

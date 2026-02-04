@@ -3,15 +3,8 @@
 > eslint .
 
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/projects/[projectId]/slots/route.ts
-  115:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
-  115:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  121:11  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
-  121:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/run/route.ts
-   62:40  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
-  274:7   error    Unsafe assignment of an error typed value                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  62:40  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/slots/[slotId]/route.ts
   32:34  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
@@ -25,152 +18,152 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
   407:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
-    4:53  error    'AnimationEasing' is defined but never used. Allowed unused vars must match /^_/u                                      @typescript-eslint/no-unused-vars
-   30:4   error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
-   30:4   error    'any' overrides all other types in this union type                                                                     @typescript-eslint/no-redundant-type-constituents
-  100:51  error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
-  100:51  error    'any' overrides all other types in this union type                                                                     @typescript-eslint/no-redundant-type-constituents
-  149:6   warning  React Hook useMemo has an unnecessary dependency: 'configSignature'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
-  172:15  error    Unsafe assignment of an `any` value                                                                                    @typescript-eslint/no-unsafe-assignment
-  174:25  error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
-  178:27  error    Unsafe assignment of an `any` value                                                                                    @typescript-eslint/no-unsafe-assignment
-  183:28  error    Unsafe argument of type `any` assigned to a parameter of type `TweenVars`                                              @typescript-eslint/no-unsafe-argument
-  187:15  error    Unsafe assignment of an `any` value                                                                                    @typescript-eslint/no-unsafe-assignment
-  189:28  error    Unsafe argument of type `any` assigned to a parameter of type `TweenVars`                                              @typescript-eslint/no-unsafe-argument
-  194:28  error    Unsafe argument of type `any` assigned to a parameter of type `TweenVars`                                              @typescript-eslint/no-unsafe-argument
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/generator.ts
+   23:81  error  Expected a type annotation                                                         @typescript-eslint/typedef
+   29:76  error  Missing return type on function                                                    @typescript-eslint/explicit-function-return-type
+   30:23  error  Expected event to have a type annotation                                           @typescript-eslint/typedef
+   42:48  error  Missing return type on function                                                    @typescript-eslint/explicit-function-return-type
+   43:13  error  Expected log to have a type annotation                                             @typescript-eslint/typedef
+   52:30  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+   52:59  error  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+   52:65  error  Unsafe member access .fingerprint on an `any` value                                @typescript-eslint/no-unsafe-member-access
+   92:40  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+   94:14  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+   95:11  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  118:35  error  Expected part to have a type annotation                                            @typescript-eslint/typedef
+  127:40  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  128:48  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  129:53  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  131:26  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  135:31  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  162:59  error  Expected part to have a type annotation                                            @typescript-eslint/typedef
+  188:20  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  237:38  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  273:36  error  Expected message to have a type annotation                                         @typescript-eslint/typedef
+  274:13  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/pages/AdminAiInsightsPage.tsx
+   29:32  error  Expected warning to have a type annotation  @typescript-eslint/typedef
+   29:41  error  Expected index to have a type annotation    @typescript-eslint/typedef
+  137:50  error  Expected insight to have a type annotation  @typescript-eslint/typedef
+  167:45  error  Expected insight to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/analytics/pages/AdminAnalyticsPage.tsx
+   81:17  error  Expected insight to have a type annotation  @typescript-eslint/typedef
+  205:48  error  Expected insight to have a type annotation  @typescript-eslint/typedef
+  226:44  error  Expected warning to have a type annotation  @typescript-eslint/typedef
+  226:53  error  Expected index to have a type annotation    @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/AnimationConfigPanel.tsx
-   349:9   warning  The 'motionPathShapesValue' logical expression could make the dependencies of useCallback Hook (at line 790) change on every render. To fix this, wrap the initialization of 'motionPathShapesValue' in its own useMemo() Hook  react-hooks/exhaustive-deps
-   355:9   warning  The 'svgDrawShapesValue' logical expression could make the dependencies of useCallback Hook (at line 907) change on every render. To fix this, wrap the initialization of 'svgDrawShapesValue' in its own useMemo() Hook        react-hooks/exhaustive-deps
-   359:9   warning  The 'svgMorphShapesValue' logical expression could make the dependencies of useCallback Hook (at line 943) change on every render. To fix this, wrap the initialization of 'svgMorphShapesValue' in its own useMemo() Hook      react-hooks/exhaustive-deps
-   786:17  error    Expected a type annotation                                                                                                                                                                                                      @typescript-eslint/typedef
-   903:17  error    Expected a type annotation                                                                                                                                                                                                      @typescript-eslint/typedef
-   939:17  error    Expected a type annotation                                                                                                                                                                                                      @typescript-eslint/typedef
-  1364:39  error    Expected option to have a type annotation                                                                                                                                                                                       @typescript-eslint/typedef
+  1476:39  error  Expected option to have a type annotation  @typescript-eslint/typedef
+  1517:36  error  Expected option to have a type annotation  @typescript-eslint/typedef
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/MediaLibraryPanel.tsx
-  103:14  error  Unknown property ' classNam' found  react/no-unknown-property
-  106:14  error  Unknown property ' classNam' found  react/no-unknown-property
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx
+   228:15  error    Missing return type on function                                                                                                                   @typescript-eslint/explicit-function-return-type
+   246:49  error    Expected agent to have a type annotation                                                                                                          @typescript-eslint/typedef
+   274:31  error    'value ?? ""' will use Object's default stringification format ('[object Object]') when stringified                                               @typescript-eslint/no-base-to-string
+   674:50  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   680:8   error    Expected acc to have a type annotation                                                                                                            @typescript-eslint/typedef
+   680:13  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   693:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   698:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   781:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   782:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+   841:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  1149:76  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1152:75  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1155:74  error    Expected field to have a type annotation                                                                                                          @typescript-eslint/typedef
+  1188:76  error    Expected acc to have a type annotation                                                                                                            @typescript-eslint/typedef
+  1188:81  error    Expected a type annotation                                                                                                                        @typescript-eslint/typedef
+  1198:24  error    Expected a type annotation                                                                                                                        @typescript-eslint/typedef
+  1272:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  1273:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  1320:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2125:72  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2133:71  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2277:68  error    Expected prev to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2284:47  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2284:53  error    Expected index to have a type annotation                                                                                                          @typescript-eslint/typedef
+  2518:49  error    Expected agent to have a type annotation                                                                                                          @typescript-eslint/typedef
+  2642:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                      react-hooks/rules-of-hooks
+  2651:23  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2677:27  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2680:10  error    Expected template to have a type annotation                                                                                                       @typescript-eslint/typedef
+  2688:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2705:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2722:32  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2767:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2768:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2815:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2838:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2881:23  error    Expected item to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2890:12  error    Expected tpl to have a type annotation                                                                                                            @typescript-eslint/typedef
+  2915:30  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/VectorOverlay.tsx
-  31:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/PageBuilderLayout.tsx
+  77:13  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+  83:66  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
 
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/VectorOverlay.tsx:31:5
-  29 |
-  30 |   useEffect(() => {
-> 31 |     setShapes(request.initialShapes ?? []);
-     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
-  32 |     setActiveShapeId(request.initialShapes?.[0]?.id ?? null);
-  33 |     setSelectedPointIndex(null);
-  34 |     setTool("select");  react-hooks/set-state-in-effect
-  53:16  error  Expected prev to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/typedef
-  54:17  error  Expected shape to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/typedef
-  62:16  error  Expected prev to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/typedef
-  63:17  error  Expected shape to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/typedef
-  71:16  error  Expected prev to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/typedef
-  72:17  error  Expected shape to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/shared-fields.tsx
-  159:10  error  Unknown property '.data ?? ' found  react/no-unknown-property
-  165:12  error  Unknown property '}/file` :' found  react/no-unknown-property
-  187:17  error  Unknown property 'alse}
-   ' found  react/no-unknown-property
-  190:12  error  Unknown property '         ' found  react/no-unknown-property
-  228:14  error  Unknown property '"")}
-    ' found  react/no-unknown-property
-  229:16  error  Unknown property ' asset
-  ' found  react/no-unknown-property
-  246:20  error  Unknown property 's" },
-   ' found  react/no-unknown-property
-  257:20  error  Unknown property 'ly(Boolea' found  react/no-unknown-property
-  258:20  error  Unknown property '       </' found  react/no-unknown-property
-  263:23  error  Unknown property '"mt' found        react/no-unknown-property
-  264:23  error  Unknown property '    ' found       react/no-unknown-property
-  265:23  error  Unknown property ' => {
-   ' found  react/no-unknown-property
-  271:23  error  Unknown property '       ' found    react/no-unknown-property
-  285:16  error  Unknown property '   }}
-   ' found  react/no-unknown-property
-  286:18  error  Unknown property '         ' found  react/no-unknown-property
-  288:22  error  Unknown property '         ' found  react/no-unknown-property
-  290:22  error  Unknown property ' <div cla' found  react/no-unknown-property
-  292:22  error  Unknown property '"text-xs ' found  react/no-unknown-property
-  295:28  error  Unknown property '         ' found  react/no-unknown-property
-  296:30  error  Unknown property 'Asset3DRe' found  react/no-unknown-property
-  297:32  error  Unknown property 'l key={as' found  react/no-unknown-property
-  298:32  error  Unknown property 'ify-betwe' found  react/no-unknown-property
-  303:30  error  Unknown property 'ry ? `${a' found  react/no-unknown-property
-  330:20  error  Unknown property '         ' found  react/no-unknown-property
-  332:22  error  Unknown property '      )}
-' found  react/no-unknown-property
-  354:22  error  Unknown property '{false}
- ' found  react/no-unknown-property
-  380:10  error  Unknown property 'et={previ' found  react/no-unknown-property
-  386:12  error  Unknown property '  return ' found  react/no-unknown-property
-  387:16  error  Unknown property 'Name)}>
- ' found  react/no-unknown-property
-  392:13  error  Unknown property 've f' found       react/no-unknown-property
-  393:13  error  Unknown property 'ursor' found      react/no-unknown-property
-  394:13  error  Unknown property 'er overf' found   react/no-unknown-property
-  395:13  error  Unknown property 'city-50"
-' found  react/no-unknown-property
-  396:13  error  Unknown property 'alue={va' found   react/no-unknown-property
-  399:13  error  Unknown property 'angeEvent' found  react/no-unknown-property
-  400:13  error  Unknown property 'ange(' found      react/no-unknown-property
-  427:10  error  Unknown property 'bel,
-  va' found  react/no-unknown-property
-  433:12  error  Unknown property '  return ' found  react/no-unknown-property
-  444:26  error  Unknown property 'ange={(e:' found  react/no-unknown-property
-  463:10  error  Unknown property ',
-  max,
-' found  react/no-unknown-property
-  464:12  error  Unknown property '{ min: nu' found  react/no-unknown-property
-  476:9   error  Unknown property 'r te' found       react/no-unknown-property
-  477:9   error  Unknown property '   ' found        react/no-unknown-property
-  478:9   error  Unknown property '   ' found        react/no-unknown-property
-  479:9   error  Unknown property '    ' found       react/no-unknown-property
-  480:9   error  Unknown property 'span ' found      react/no-unknown-property
-  481:9   error  Unknown property '] text-g' found   react/no-unknown-property
-  482:9   error  Unknown property '       ty' found  react/no-unknown-property
-  483:9   error  Unknown property 'eValue}
-' found   react/no-unknown-property
-  499:10  error  Unknown property 'el,
-  val' found  react/no-unknown-property
-  531:12  error  Unknown property 'd,
-  onCh' found  react/no-unknown-property
-  537:13  error  Unknown property 'allowed o' found  react/no-unknown-property
-  551:10  error  Unknown property '>
-    </l' found  react/no-unknown-property
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ThemeSettingsPanel.tsx
+   151:18   error    This assertion is unnecessary since it does not change the type of the expression                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unnecessary-type-assertion
+   160:38   error    Expected a type annotation                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/typedef
+   162:18   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+   162:23   error    Unsafe member access [key] on an `any` value                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+   463:49   error    Expected agent to have a type annotation                                                                                                                                                                                                                                                                                                                               @typescript-eslint/typedef
+   614:13   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+   615:13   error    Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+   615:37   error    Unsafe member access .section on an `any` value                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+   615:67   error    Unsafe member access .section on an `any` value                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+   619:18   error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+   622:42   error    Unsafe member access .action on an `any` value                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+   626:60   error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+   828:87   error    Expected key to have a type annotation                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/typedef
+   892:44   error    Expected line to have a type annotation                                                                                                                                                                                                                                                                                                                                @typescript-eslint/typedef
+   893:38   error    Expected line to have a type annotation                                                                                                                                                                                                                                                                                                                                @typescript-eslint/typedef
+   942:11   warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility                                                                                                                                                                                                                       no-restricted-syntax
+  1325:125  error    Expected key to have a type annotation                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/typedef
+  2101:5    warning  React Hook useCallback has missing dependencies: 'agentOptions', 'handleCancelSchemeAi', 'handleGenerateScheme', 'modelOptions', 'schemeAiAgentId', 'schemeAiError', 'schemeAiLoading', 'schemeAiModelId', 'schemeAiOutput', 'schemeAiPreview', 'schemeAiPrompt', 'schemeAiProvider', and 'schemeProviderOptions'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/hooks/useCmsQueries.ts
-  328:24  error  Expected a type annotation                                                         @typescript-eslint/typedef
-  340:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  332:24  error  Expected a type annotation                                                         @typescript-eslint/typedef
+  344:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/hooks/useImportMutations.ts
   12:24  error  Expected a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/workers/aiPathRunQueue.ts
+  152:16  error  Expected status to have a type annotation  @typescript-eslint/typedef
+  158:17  error  Expected error to have a type annotation   @typescript-eslint/typedef
+  214:48  error  Expected sample to have a type annotation  @typescript-eslint/typedef
+  215:44  error  Expected sample to have a type annotation  @typescript-eslint/typedef
+  218:42  error  Expected sum to have a type annotation     @typescript-eslint/typedef
+  218:47  error  Expected value to have a type annotation   @typescript-eslint/typedef
+  220:78  error  Expected a to have a type annotation       @typescript-eslint/typedef
+  220:81  error  Expected b to have a type annotation       @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+  132:17  error  Expected insight to have a type annotation                                                                                    @typescript-eslint/typedef
+  156:17  error  Expected insight to have a type annotation                                                                                    @typescript-eslint/typedef
+  160:17  error  'insight.context?.logId ?? insight.id' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  607:52  error  Expected insight to have a type annotation                                                                                    @typescript-eslint/typedef
+  628:48  error  Expected warning to have a type annotation                                                                                    @typescript-eslint/typedef
+  628:57  error  Expected index to have a type annotation                                                                                      @typescript-eslint/typedef
+  717:77  error  Expected warning to have a type annotation                                                                                    @typescript-eslint/typedef
+  717:86  error  Expected index to have a type annotation                                                                                      @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/api/index.ts
   59:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/Viewer3D.tsx
-  364:29  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  145:6  error  Expected loader to have a type annotation  @typescript-eslint/typedef
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/offline-support.ts
-  17:20  error  Expected query to have a type annotation                                           @typescript-eslint/typedef
-  18:17  error  Expected query to have a type annotation                                           @typescript-eslint/typedef
-  20:54  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/utils/validateAsset3d.ts
+  20:23  error  Expected item to have a type annotation  @typescript-eslint/typedef
+  20:50  error  Expected uri to have a type annotation   @typescript-eslint/typedef
+  21:22  error  Expected item to have a type annotation  @typescript-eslint/typedef
+  21:49  error  Expected uri to have a type annotation   @typescript-eslint/typedef
+  23:23  error  Expected uri to have a type annotation   @typescript-eslint/typedef
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/vector-canvas.tsx
-   66:11  error  'cxSvg' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  668:26  error  Unknown property 'bg-border' found                                                react/no-unknown-property
-
-✖ 102 problems (93 errors, 9 warnings)
-  3 errors and 0 warnings potentially fixable with the `--fix` option.
+✖ 123 problems (111 errors, 12 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
 

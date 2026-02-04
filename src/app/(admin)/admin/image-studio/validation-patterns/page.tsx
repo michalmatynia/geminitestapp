@@ -1,6 +1,5 @@
-import { JSX } from "react";
-import ClientPage from "./ClientPage";
+import { redirect } from "next/navigation";
 
-export default function Page(): JSX.Element {
-  return <ClientPage />;
+export default function Page(): never {
+  redirect("/admin/image-studio?tab=validation");
 }

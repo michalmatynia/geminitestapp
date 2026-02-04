@@ -40,6 +40,13 @@ export type NavItem = {
   sectionColor?: string;
 };
 
+export type AdminMenuCustomNode = {
+  id: string;
+  label?: string;
+  href?: string;
+  children?: AdminMenuCustomNode[];
+};
+
 export type AdminMenuColorOption = {
   value: string;
   label: string;
@@ -72,6 +79,8 @@ export type FlattenedNavItem = {
   item: NavItem;
 };
 
+export type AdminNavLeaf = FlattenedNavItem;
+
 export const flattenAdminNav = (items: NavItem[], parents: string[] = []): FlattenedNavItem[] => {
   const entries: FlattenedNavItem[] = [];
   items.forEach((item: NavItem) => {
@@ -95,6 +104,98 @@ export const flattenAdminNav = (items: NavItem[], parents: string[] = []): Flatt
 
 export const getAdminMenuSections = (items: NavItem[]): Array<{ id: string; label: string }> =>
   items.map((item: NavItem) => ({ id: item.id, label: item.label }));
+
+export const normalizeAdminMenuCustomNav = (value: unknown): AdminMenuCustomNode[] => {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const walk = (nodes: unknown[]): AdminMenuCustomNode[] => {
+    const result: AdminMenuCustomNode[] = [];
+    nodes.forEach((entry: unknown) => {
+      if (!entry || typeof entry !== "object") return;
+      const rawId = (entry as { id?: unknown }).id;
+      if (typeof rawId !== "string" || rawId.trim().length === 0) return;
+      const id = rawId.trim();
+      if (seen.has(id)) return;
+      seen.add(id);
+      const node: AdminMenuCustomNode = { id };
+      const rawLabel = (entry as { label?: unknown }).label;
+      if (typeof rawLabel === "string" && rawLabel.trim().length > 0) {
+        node.label = rawLabel;
+      }
+      const rawHref = (entry as { href?: unknown }).href;
+      if (typeof rawHref === "string" && rawHref.trim().length > 0) {
+        node.href = rawHref;
+      }
+      const rawChildren = (entry as { children?: unknown }).children;
+      if (Array.isArray(rawChildren)) {
+        const children = walk(rawChildren);
+        node.children = children;
+      }
+      result.push(node);
+    });
+    return result;
+  };
+  return walk(value);
+};
+
+export const adminNavToCustomNav = (items: NavItem[]): AdminMenuCustomNode[] =>
+  items.map((item: NavItem) => ({
+    id: item.id,
+    label: item.label,
+    ...(item.href ? { href: item.href } : {}),
+    ...(item.children && item.children.length > 0
+      ? { children: adminNavToCustomNav(item.children) }
+      : {}),
+  }));
+
+const indexAdminNav = (items: NavItem[], map = new Map<string, NavItem>()): Map<string, NavItem> => {
+  items.forEach((item: NavItem) => {
+    map.set(item.id, item);
+    if (item.children && item.children.length > 0) {
+      indexAdminNav(item.children, map);
+    }
+  });
+  return map;
+};
+
+const mapCustomNavToAdminNav = (
+  items: AdminMenuCustomNode[],
+  baseMap: Map<string, NavItem>
+): NavItem[] => {
+  const result: NavItem[] = [];
+  items.forEach((node: AdminMenuCustomNode) => {
+    const base = baseMap.get(node.id);
+    const label = node.label ?? base?.label ?? "Untitled";
+    if (!label) return;
+    const href = node.href ?? base?.href;
+    const children = Array.isArray(node.children)
+      ? mapCustomNavToAdminNav(node.children, baseMap)
+      : base?.children;
+    const next: NavItem = {
+      id: node.id,
+      label,
+      ...(href ? { href } : {}),
+      ...(base?.exact ? { exact: base.exact } : {}),
+      ...(base?.icon ? { icon: base.icon } : {}),
+      ...(base?.keywords ? { keywords: base.keywords } : {}),
+      ...(base?.onClick ? { onClick: base.onClick } : {}),
+      ...(base?.action ? { action: base.action } : {}),
+      ...(children && children.length > 0 ? { children } : {}),
+    };
+    result.push(next);
+  });
+  return result;
+};
+
+export const buildAdminMenuFromCustomNav = (
+  customNav: AdminMenuCustomNode[],
+  baseNav: NavItem[]
+): NavItem[] => {
+  if (!customNav || customNav.length === 0) return baseNav;
+  const baseMap = indexAdminNav(baseNav);
+  const mapped = mapCustomNavToAdminNav(customNav, baseMap);
+  return mapped.length > 0 ? mapped : baseNav;
+};
 
 const OPEN_KEY = "adminMenuOpenIds.v2";
 
@@ -530,8 +631,10 @@ export const buildAdminNav = (handlers: {
         href: "/admin/image-studio",
         keywords: ["images", "mask", "polygon", "relight", "studio"],
         children: [
-          { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio/settings" },
-          { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio/validation-patterns" },
+          { id: "ai/image-studio/studio", label: "Studio", href: "/admin/image-studio" },
+          { id: "ai/image-studio/projects", label: "Projects", href: "/admin/image-studio?tab=projects" },
+          { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio?tab=settings" },
+          { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio?tab=validation" },
         ],
       },
       {
@@ -766,10 +869,20 @@ export default function Menu(): React.ReactNode {
     [preferences]
   );
   const sectionColors = preferences?.adminMenuSectionColors ?? {};
+  const customEnabled = Boolean(preferences?.adminMenuCustomEnabled);
+  const customNav = useMemo(
+    () => normalizeAdminMenuCustomNav(preferences?.adminMenuCustomNav),
+    [preferences?.adminMenuCustomNav]
+  );
 
-  const nav = useMemo(
+  const baseNav = useMemo(
     () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),
     [handleCreatePageClick, handleOpenChat]
+  );
+
+  const nav = useMemo(
+    () => (customEnabled ? buildAdminMenuFromCustomNav(customNav, baseNav) : baseNav),
+    [baseNav, customEnabled, customNav]
   );
 
   const navWithColors = useMemo(

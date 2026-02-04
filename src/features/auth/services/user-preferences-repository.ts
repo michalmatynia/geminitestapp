@@ -31,6 +31,8 @@ export type UserPreferencesData = {
   adminMenuCollapsed?: boolean | null;
   adminMenuFavorites?: string[] | null;
   adminMenuSectionColors?: Record<string, string> | null;
+  adminMenuCustomEnabled?: boolean | null;
+  adminMenuCustomNav?: JsonValue | null;
   cmsLastPageId?: string | null;
   cmsActiveDomainId?: string | null;
   cmsThemeOpenSections?: string[] | null;
@@ -55,6 +57,8 @@ export type UserPreferences = {
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
+  adminMenuCustomEnabled: boolean | null;
+  adminMenuCustomNav: JsonValue | null;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
@@ -81,6 +85,8 @@ type UserPreferencesDocument = {
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[] | null;
   adminMenuSectionColors: Record<string, string> | null;
+  adminMenuCustomEnabled: boolean | null;
+  adminMenuCustomNav: JsonValue | null;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
@@ -109,6 +115,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
+  adminMenuCustomEnabled: doc.adminMenuCustomEnabled ?? false,
+  adminMenuCustomNav: doc.adminMenuCustomNav ?? [],
   cmsLastPageId: doc.cmsLastPageId ?? null,
   cmsActiveDomainId: doc.cmsActiveDomainId ?? null,
   cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
@@ -134,6 +142,8 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
   adminMenuCollapsed: false,
   adminMenuFavorites: [],
   adminMenuSectionColors: {},
+  adminMenuCustomEnabled: false,
+  adminMenuCustomNav: [],
   cmsLastPageId: null,
   cmsActiveDomainId: null,
   cmsThemeOpenSections: [],

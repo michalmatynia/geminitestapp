@@ -57,6 +57,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   Slideshow: GalleryHorizontal,
   Newsletter: Mail,
   ContactForm: Send,
+  Model3DElement: Box,
 };
 
 const BLOCK_ICONS: Record<string, LucideIcon> = {
@@ -83,10 +84,13 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   Carousel: GalleryHorizontal,
   CarouselFrame: Frame,
   SlideshowFrame: Frame,
+  Model3D: Box,
+  Model3DElement: Box,
+  Slideshow: GalleryHorizontal,
 };
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"];
-const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
+const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement", "Model3DElement", "Slideshow"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {
   if (typeof value === "string") {

@@ -28,6 +28,8 @@ const updatePreferencesSchema = z.object({
   adminMenuCollapsed: z.boolean().optional().nullable(),
   adminMenuFavorites: z.array(z.string()).optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
+  adminMenuCustomEnabled: z.boolean().optional().nullable(),
+  adminMenuCustomNav: z.array(z.unknown()).optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
   cmsActiveDomainId: z.string().optional().nullable(),
   cmsThemeOpenSections: z.array(z.string()).optional().nullable(),
@@ -60,6 +62,8 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         adminMenuCollapsed: false,
         adminMenuFavorites: [],
         adminMenuSectionColors: {},
+        adminMenuCustomEnabled: false,
+        adminMenuCustomNav: [],
         cmsLastPageId: null,
         cmsActiveDomainId: null,
         cmsThemeOpenSections: [],
@@ -118,6 +122,8 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
     if (parsed.adminMenuFavorites !== undefined) partial.adminMenuFavorites = parsed.adminMenuFavorites ?? [];
     if (parsed.adminMenuSectionColors !== undefined) partial.adminMenuSectionColors = parsed.adminMenuSectionColors ?? {};
+    if (parsed.adminMenuCustomEnabled !== undefined) partial.adminMenuCustomEnabled = parsed.adminMenuCustomEnabled;
+    if (parsed.adminMenuCustomNav !== undefined) partial.adminMenuCustomNav = parsed.adminMenuCustomNav ?? [];
     if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
     if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
     if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];

@@ -131,7 +131,15 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
   return parts.filter(Boolean).join(" ").toLowerCase();
 };
 
-export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
+type AdminImageStudioValidationPatternsPageProps = {
+  embedded?: boolean;
+  onSaved?: () => void;
+};
+
+export function AdminImageStudioValidationPatternsPage({
+  embedded = false,
+  onSaved,
+}: AdminImageStudioValidationPatternsPageProps): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
@@ -419,11 +427,12 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
       setIsDirty(false);
       setLearnedDirty(false);
       toast("Validation patterns saved.", { variant: "success" });
+      onSaved?.();
     } catch (error) {
       logClientError(error, { context: { source: "AdminImageStudioValidationPatternsPage", action: "saveRules" } });
       toast("Failed to save rules.", { variant: "error" });
     }
-  }, [drafts, learnedDrafts, rawSettings, toast, updateSetting]);
+  }, [drafts, learnedDrafts, onSaved, rawSettings, toast, updateSetting]);
 
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {
@@ -442,9 +451,11 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
         description="Browse Prompt Validator rules (patterns, similar matches, and autofix operations)."
         actions={
           <>
-            <Button type="button" variant="outline" asChild>
-              <Link href="/admin/image-studio">Back to Studio</Link>
-            </Button>
+            {!embedded ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href="/admin/image-studio">Back to Studio</Link>
+              </Button>
+            ) : null}
             <Button type="button" variant="outline" onClick={handleExport}>
               Export JSON
             </Button>

@@ -229,6 +229,7 @@ function Model3DBlock({ settings }: { settings: Record<string, unknown> }): Reac
         enableVignette={enableVignette}
         autoFit={autoFit}
         presentationMode={presentationMode}
+        allowUserControls={false}
         modelPosition={position}
         modelRotation={rotation}
         modelScale={scale}

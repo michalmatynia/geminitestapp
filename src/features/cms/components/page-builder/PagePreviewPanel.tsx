@@ -405,8 +405,8 @@ export function PagePreviewPanel(): React.ReactNode {
     marginBottom,
     marginLeft,
   };
-  const faithfulDesktopPreview = !state.inspectorSettings.showEditorChrome && state.previewMode === "desktop";
-  const shouldScaleCanvas = faithfulDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
+  const isDesktopPreview = state.previewMode === "desktop";
+  const shouldScaleCanvas = isDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
   const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
     ? {
         width: `${canvasWidth}px`,
@@ -422,7 +422,7 @@ export function PagePreviewPanel(): React.ReactNode {
     : {};
 
   useEffect((): (() => void) | void => {
-    if (!faithfulDesktopPreview) return undefined;
+    if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
       "[data-cms-canvas-viewport='true']"
     ) as HTMLDivElement | null;
@@ -446,10 +446,10 @@ export function PagePreviewPanel(): React.ReactNode {
       observer.disconnect();
       window.removeEventListener("resize", updateScale);
     };
-  }, [faithfulDesktopPreview]);
+  }, [isDesktopPreview]);
 
   useEffect((): (() => void) | void => {
-    if (!faithfulDesktopPreview) return undefined;
+    if (!isDesktopPreview) return undefined;
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
 
@@ -465,7 +465,7 @@ export function PagePreviewPanel(): React.ReactNode {
     return (): void => {
       observer.disconnect();
     };
-  }, [faithfulDesktopPreview, canvasScale, state.sections, previewWidthClass]);
+  }, [isDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col bg-gray-950">

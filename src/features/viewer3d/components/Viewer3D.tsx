@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
   Center,
@@ -105,6 +105,23 @@ interface Model3DProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number | [number, number, number];
+}
+
+function AutoRotateGroup({
+  enabled,
+  speed,
+  children,
+}: {
+  enabled: boolean;
+  speed: number;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (!enabled || !ref.current) return;
+    ref.current.rotation.y += delta * speed * 0.6;
+  });
+  return <group ref={ref}>{children}</group>;
 }
 
 function Model3D({
@@ -348,6 +365,8 @@ export interface Viewer3DProps {
   enableAntiAliasing?: boolean;
   /** Use presentation controls (drag to rotate) */
   presentationMode?: boolean;
+  /** Allow user interaction (orbit/pan/zoom) */
+  allowUserControls?: boolean;
   /** Model position [x, y, z] */
   modelPosition?: [number, number, number];
   /** Model rotation [x, y, z] in radians */
@@ -388,6 +407,7 @@ export function Viewer3D({
   autoFit = true,
   enableAntiAliasing = true,
   presentationMode = false,
+  allowUserControls = true,
   modelPosition,
   modelRotation,
   modelScale,
@@ -465,7 +485,7 @@ export function Viewer3D({
         <Environment preset={environment} background={false} />
 
         <Suspense fallback={<Loader />}>
-          {presentationMode ? (
+          {presentationMode && allowUserControls ? (
             <PresentationControls
               global
               rotation={[0, 0, 0]}
@@ -493,16 +513,18 @@ export function Viewer3D({
             <Center>
               <Bounds fit clip observe margin={1.2}>
                 <Model3DErrorBoundary {...(onError && { onError })}>
-                  <Model3D
-                    url={modelUrl}
-                    {...(onLoad && { onLoad })}
-                    {...(onError && { onError })}
-                    castShadow={enableShadows}
-                    receiveShadow={enableShadows}
-                    {...(modelPosition && { position: modelPosition })}
-                    {...(modelRotation && { rotation: modelRotation })}
-                    {...(modelScale && { scale: modelScale })}
-                  />
+                  <AutoRotateGroup enabled={!allowUserControls && autoRotate} speed={autoRotateSpeed}>
+                    <Model3D
+                      url={modelUrl}
+                      {...(onLoad && { onLoad })}
+                      {...(onError && { onError })}
+                      castShadow={enableShadows}
+                      receiveShadow={enableShadows}
+                      {...(modelPosition && { position: modelPosition })}
+                      {...(modelRotation && { rotation: modelRotation })}
+                      {...(modelScale && { scale: modelScale })}
+                    />
+                  </AutoRotateGroup>
                 </Model3DErrorBoundary>
               </Bounds>
             </Center>
@@ -524,17 +546,18 @@ export function Viewer3D({
         </Suspense>
 
         {/* Camera Controls */}
-        {!presentationMode && (
+        {!presentationMode && allowUserControls && (
           <OrbitControls
             autoRotate={autoRotate}
             autoRotateSpeed={autoRotateSpeed}
-            enablePan={true}
-            enableZoom={true}
-            enableDamping={true}
-            dampingFactor={0.05}
-            minDistance={0.5}
-            maxDistance={100}
-            minPolarAngle={0}
+            enablePan={allowUserControls}
+            enableZoom={allowUserControls}
+            enableRotate={allowUserControls}
+              enableDamping={true}
+              dampingFactor={0.05}
+              minDistance={0.5}
+              maxDistance={100}
+              minPolarAngle={0}
             maxPolarAngle={Math.PI}
           />
         )}

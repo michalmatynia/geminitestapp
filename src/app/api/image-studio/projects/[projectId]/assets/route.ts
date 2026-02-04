@@ -98,6 +98,25 @@ async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRec
   return results;
 }
 
+async function listStudioFoldersFromDisk(projectId: string): Promise<string[]> {
+  const projectDir = path.join(projectsRoot, projectId);
+  const folders: string[] = [];
+  const stack: Array<{ diskDir: string; relDir: string }> = [{ diskDir: projectDir, relDir: "" }];
+
+  while (stack.length > 0) {
+    const { diskDir, relDir } = stack.pop()!;
+    const entries = await fs.readdir(diskDir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const relPath = relDir ? `${relDir}/${entry.name}` : entry.name;
+      folders.push(relPath);
+      stack.push({ diskDir: path.join(diskDir, entry.name), relDir: relPath });
+    }
+  }
+
+  return folders.sort((a, b) => a.localeCompare(b));
+}
+
 async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -125,10 +144,16 @@ async function GET_handler(
     }
 
     let diskAssets: ImageFileRecord[] = [];
+    let diskFolders: string[] = [];
     try {
       diskAssets = await listStudioAssetsFromDisk(projectId);
     } catch {
       diskAssets = [];
+    }
+    try {
+      diskFolders = await listStudioFoldersFromDisk(projectId);
+    } catch {
+      diskFolders = [];
     }
 
     const byFilepath = new Map<string, ImageFileRecord>();
@@ -145,7 +170,7 @@ async function GET_handler(
 
     const result = Array.from(byFilepath.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-    return NextResponse.json({ assets: result });
+    return NextResponse.json({ assets: result, folders: diskFolders });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

@@ -375,7 +375,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       targetDeleted: deleted.count,
       targetInserted: created.count,
       warnings: [
-        "Mongo-only user preference fields (adminMenuCollapsed, cms*) are not stored in Prisma.",
+        "Mongo-only user preference fields (adminMenuCollapsed, adminMenuFavorites, adminMenuSectionColors, adminMenuCustomEnabled, adminMenuCustomNav, cms*) are not stored in Prisma.",
       ],
     };
   });
@@ -1738,7 +1738,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
       targetInserted: docs.length,
-      warnings: ["Mongo-only user preference fields (adminMenuCollapsed, adminMenuFavorites, adminMenuSectionColors, cms*) are not restored from Prisma."],
+      warnings: ["Mongo-only user preference fields (adminMenuCollapsed, adminMenuFavorites, adminMenuSectionColors, adminMenuCustomEnabled, adminMenuCustomNav, cms*) are not restored from Prisma."],
     };
   });
 

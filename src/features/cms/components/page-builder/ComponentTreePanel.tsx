@@ -775,7 +775,7 @@ function ZoneGroup({
 // ---------------------------------------------------------------------------
 
 // Block types that can be promoted to standalone sections
-const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "ButtonElement"];
+const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "ButtonElement", "Block", "TextAtom", "Model3DElement", "Slideshow"];
 
 interface SectionDropTargetProps {
   zone: PageZone;

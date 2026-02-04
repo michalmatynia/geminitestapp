@@ -83,6 +83,8 @@ export interface UserPreferencesDto extends DtoBase {
   adminMenuCollapsed: boolean;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
+  adminMenuCustomEnabled: boolean;
+  adminMenuCustomNav: JsonValue | null;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
@@ -105,6 +107,8 @@ export interface UpdateUserPreferencesDto {
   adminMenuCollapsed?: boolean;
   adminMenuFavorites?: string[];
   adminMenuSectionColors?: Record<string, string>;
+  adminMenuCustomEnabled?: boolean;
+  adminMenuCustomNav?: JsonValue | null;
   cmsLastPageId?: string | null;
   cmsActiveDomainId?: string | null;
   cmsThemeOpenSections?: string[];

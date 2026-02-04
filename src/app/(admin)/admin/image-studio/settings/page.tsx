@@ -1,6 +1,5 @@
-import { JSX } from "react";
-import { AdminImageStudioSettingsPage } from "@/features/ai/image-studio";
+import { redirect } from "next/navigation";
 
-export default function Page(): JSX.Element {
-  return <AdminImageStudioSettingsPage />;
+export default function Page(): never {
+  redirect("/admin/image-studio?tab=settings");
 }

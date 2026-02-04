@@ -8,7 +8,6 @@ import {
   FileUploadButton,
   Input,
   Label,
-  SectionHeader,
   SectionPanel,
   Select,
   SelectContent,
@@ -18,13 +17,11 @@ import {
   SharedModal,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   Textarea,
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { Folder, Image as ImageIcon, Maximize2, Minimize2, MousePointer2, Pentagon, RefreshCcw, Settings, Sparkles, Upload, Wand2 } from "lucide-react";
+import { Folder, Image as ImageIcon, Maximize2, Minimize2, MousePointer2, Pentagon, RefreshCcw, Sparkles, Upload, Wand2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -39,6 +36,7 @@ import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings, type PromptValidationRule } from "../utils/studio-settings";
+import { AdminImageStudioValidationPatternsPage } from "./AdminImageStudioValidationPatternsPage";
 
 type ToolMode = "select" | "polygon" | "lasso" | "rect" | "ellipse" | "brush";
 type StudioTab = "studio" | "projects" | "settings" | "validation";
@@ -55,7 +53,7 @@ type MaskShape = {
 };
 
 type StudioProjectsResponse = { projects: string[] };
-type StudioAssetsResponse = { assets: ImageFileRecord[] };
+type StudioAssetsResponse = { assets: ImageFileRecord[]; folders?: string[] };
 type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
 type StudioRunResponse = { outputs: ImageFileRecord[] };
 type UiSuggestion = {
@@ -255,7 +253,7 @@ async function computeBboxFromEdges(src: string): Promise<{ x: number; y: number
   };
 }
 
-function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode {
+function buildAssetTree(projectId: string, assets: ImageFileRecord[], folders: string[]): TreeNode {
   const safeProjectId = sanitizeStudioProjectId(projectId);
   const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
   const root: TreeNode = { id: "root", name: projectId || "Project", type: "folder", path: "", children: [] };
@@ -271,6 +269,19 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode 
     });
     return node;
   };
+
+  folders.forEach((folderPath: string) => {
+    const normalized = folderPath.replace(/\\/g, "/").replace(/^\/+/, "");
+    if (!normalized) return;
+    const parts = normalized.split("/").filter(Boolean);
+    if (parts.length === 0) return;
+    let cursor = root;
+    for (let index = 0; index < parts.length; index += 1) {
+      const part = parts[index]!;
+      const nextFolderPath = parts.slice(0, index + 1).join("/");
+      cursor = ensureFolder(cursor, part, nextFolderPath);
+    }
+  });
 
   assets.forEach((asset: ImageFileRecord) => {
     const normalizedPath = normalizeStudioFilepath(safeProjectId, asset.filepath);
@@ -320,6 +331,7 @@ type TreeNode = {
 function AssetTree({
   projectId,
   assets,
+  folders,
   selectedFolder,
   selectedAssetId,
   onSelectFolder,
@@ -327,12 +339,13 @@ function AssetTree({
 }: {
   projectId: string;
   assets: ImageFileRecord[];
+  folders: string[];
   selectedFolder: string;
   selectedAssetId: string | null;
   onSelectFolder: (folder: string) => void;
   onSelectAsset: (asset: ImageFileRecord) => void;
 }): React.JSX.Element {
-  const tree = useMemo(() => buildAssetTree(projectId, assets), [projectId, assets]);
+  const tree = useMemo(() => buildAssetTree(projectId, assets, folders), [projectId, assets, folders]);
   const initialExpanded = useMemo(() => new Set(["root"]), [projectId]);
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
 
@@ -411,7 +424,13 @@ function AssetTree({
 
   return (
     <div className="h-full overflow-auto rounded border border-border bg-card/40 p-2">
-      {renderNode(tree, 0)}
+      {tree.children.length === 0 ? (
+        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">
+          No folders yet. Upload to the root, or upload with a folder name to create one.
+        </div>
+      ) : (
+        renderNode(tree, 0)
+      )}
     </div>
   );
 }
@@ -559,10 +578,88 @@ function MaskCanvas({
     return null;
   };
 
+  const hitTestSegment = (
+    event: React.MouseEvent<HTMLCanvasElement>
+  ): { shapeId: string; insertIndex: number; point: Point } | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const maxDist = 8;
+
+    const pointToSegment = (ax: number, ay: number, bx: number, by: number): number => {
+      const abx = bx - ax;
+      const aby = by - ay;
+      const apx = x - ax;
+      const apy = y - ay;
+      const abLenSq = abx * abx + aby * aby;
+      if (abLenSq === 0) return Math.hypot(x - ax, y - ay);
+      const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abLenSq));
+      const px = ax + abx * t;
+      const py = ay + aby * t;
+      return Math.hypot(x - px, y - py);
+    };
+
+    for (const shape of shapes) {
+      if (!shape.visible) continue;
+      if (!(shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush")) continue;
+      if (shape.points.length < 2) continue;
+      const pts = shape.points;
+      for (let idx = 0; idx < pts.length - 1; idx += 1) {
+        const a = pts[idx]!;
+        const b = pts[idx + 1]!;
+        const ax = a.x * rect.width;
+        const ay = a.y * rect.height;
+        const bx = b.x * rect.width;
+        const by = b.y * rect.height;
+        if (pointToSegment(ax, ay, bx, by) <= maxDist) {
+          return {
+            shapeId: shape.id,
+            insertIndex: idx + 1,
+            point: { x: x / rect.width, y: y / rect.height },
+          };
+        }
+      }
+      if (shape.closed && shape.points.length >= 3) {
+        const a = pts[pts.length - 1]!;
+        const b = pts[0]!;
+        const ax = a.x * rect.width;
+        const ay = a.y * rect.height;
+        const bx = b.x * rect.width;
+        const by = b.y * rect.height;
+        if (pointToSegment(ax, ay, bx, by) <= maxDist) {
+          return {
+            shapeId: shape.id,
+            insertIndex: pts.length,
+            point: { x: x / rect.width, y: y / rect.height },
+          };
+        }
+      }
+    }
+    return null;
+  };
+
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
       if (!src) return;
       if (tool === "select") {
+        if (event.shiftKey) {
+          const hitSegment = hitTestSegment(event);
+          if (hitSegment) {
+            onSelectShape(hitSegment.shapeId);
+            onChange(
+              shapes.map((shape) => {
+                if (shape.id !== hitSegment.shapeId) return shape;
+                const nextPoints = [...shape.points];
+                nextPoints.splice(hitSegment.insertIndex, 0, hitSegment.point);
+                return { ...shape, points: nextPoints };
+              })
+            );
+            onSelectPoint?.(hitSegment.insertIndex);
+            return;
+          }
+        }
         const hit = hitTestPoint(event);
         if (hit) {
           dragRef.current = hit;
@@ -648,6 +745,27 @@ function MaskCanvas({
     },
     [activeShapeId, onChange, onSelectPoint, onSelectShape, shapes, src, tool]
   );
+
+  useEffect(() => {
+    if (!activeShapeId || selectedPointIndex === null) return;
+    const handleKey = (event: KeyboardEvent): void => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        onChange(
+          shapes.map((shape) => {
+            if (shape.id !== activeShapeId) return shape;
+            const nextPoints = shape.points.filter((_, idx) => idx !== selectedPointIndex);
+            return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
+          })
+        );
+        onSelectPoint?.(null);
+      } else if (event.key === "Escape") {
+        onSelectPoint?.(null);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [activeShapeId, onChange, onSelectPoint, selectedPointIndex, shapes]);
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
@@ -774,6 +892,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
+  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [moveTargetFolder, setMoveTargetFolder] = useState<string>("");
 
   const [tool, setTool] = useState<ToolMode>("select");
   const [maskShapes, setMaskShapes] = useState<MaskShape[]>([]);
@@ -832,7 +952,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   useEffect(() => {
     const nextTab = normalizeStudioTab(searchParams?.get("tab"));
-    setActiveTab(nextTab);
+    setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
   }, [searchParams]);
 
   const handleTabChange = useCallback(
@@ -971,12 +1091,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const assetsQuery = useQuery({
     queryKey: ["image-studio", "assets", projectId],
     enabled: Boolean(projectId),
-    queryFn: async (): Promise<ImageFileRecord[]> => {
+    queryFn: async (): Promise<StudioAssetsResponse> => {
       try {
         const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`);
         if (!res.ok) throw new Error("Failed to load assets");
         const data = (await res.json()) as StudioAssetsResponse;
-        return Array.isArray(data.assets) ? data.assets : [];
+        return {
+          assets: Array.isArray(data.assets) ? data.assets : [],
+          folders: Array.isArray(data.folders) ? data.folders : [],
+        };
       } catch (error) {
         logClientError(error, { context: { source: "AdminImageStudioPage", action: "loadAssets", projectId } });
         throw error;
@@ -1012,6 +1135,82 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
+  const createFolderMutation = useMutation({
+    mutationFn: async (folder: string): Promise<string> => {
+      if (!projectId) throw new Error("Select or create a project first.");
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/folders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder }),
+      });
+      const data = (await res.json().catch(() => null)) as { folder?: string; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || "Failed to create folder");
+      if (!data?.folder) throw new Error("Invalid response");
+      return data.folder;
+    },
+    onSuccess: async (folder: string): Promise<void> => {
+      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
+        const current = prev ?? { assets: [], folders: [] };
+        const nextFolders = Array.from(new Set([...(current.folders ?? []), folder])).sort((a, b) => a.localeCompare(b));
+        return { ...current, folders: nextFolders };
+      });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      setSelectedFolder(folder);
+      setNewFolderName("");
+      toast("Folder created.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to create folder.", { variant: "error" });
+    },
+  });
+
+  const deleteAssetMutation = useMutation({
+    mutationFn: async (asset: ImageFileRecord): Promise<void> => {
+      if (!projectId) throw new Error("Select or create a project first.");
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: asset.id, filepath: asset.filepath }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Failed to delete asset");
+      }
+    },
+    onSuccess: async (): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
+      setSelectedAssetId(null);
+      toast("Asset deleted.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to delete asset.", { variant: "error" });
+    },
+  });
+
+  const moveAssetMutation = useMutation({
+    mutationFn: async (payload: { asset: ImageFileRecord; targetFolder: string }): Promise<void> => {
+      if (!projectId) throw new Error("Select or create a project first.");
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: payload.asset.id, filepath: payload.asset.filepath, targetFolder: payload.targetFolder }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Failed to move asset");
+      }
+    },
+    onSuccess: async (): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
+      toast("Asset moved.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to move asset.", { variant: "error" });
+    },
+  });
+
   const importFromDriveMutation = useMutation({
     mutationFn: async (payload: { files: ImageFileSelection[]; folder: string }): Promise<StudioImportResponse> => {
       if (!projectId) throw new Error("Select or create a project first.");
@@ -1042,9 +1241,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return (data ?? { uploaded: [], failures: [] }) as StudioImportResponse;
     },
     onSuccess: async (data: StudioImportResponse): Promise<void> => {
-      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: ImageFileRecord[] | undefined) => {
-        const current = Array.isArray(prev) ? prev : [];
-        if (!data.uploaded.length) return current;
+      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
+        const current = Array.isArray(prev?.assets) ? prev?.assets ?? [] : [];
+        if (!data.uploaded.length) {
+          return prev ?? { assets: current, folders: [] };
+        }
         const byId = new Map<string, ImageFileRecord>();
         current.forEach((asset) => {
           if (asset && asset.id) byId.set(asset.id, asset);
@@ -1053,7 +1254,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
           if (!asset || !asset.id) return;
           byId.set(asset.id, asset);
         });
-        return Array.from(byId.values());
+        return {
+          assets: Array.from(byId.values()),
+          folders: Array.isArray(prev?.folders) ? prev?.folders : [],
+        };
       });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
       if (!data.uploaded.length) {
@@ -1076,8 +1280,31 @@ export function AdminImageStudioPage(): React.JSX.Element {
   });
 
   const assets = useMemo(
-    () => normalizeStudioAssets(projectId, assetsQuery.data ?? []),
-    [projectId, assetsQuery.data]
+    () => normalizeStudioAssets(projectId, assetsQuery.data?.assets ?? []),
+    [projectId, assetsQuery.data?.assets]
+  );
+  const folders = useMemo(
+    () => (assetsQuery.data?.folders ?? []),
+    [assetsQuery.data?.folders]
+  );
+  const folderOptions = useMemo(() => {
+    const unique = new Set<string>(["", ...folders.filter(Boolean)]);
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [folders]);
+
+  const getAssetFolder = useCallback(
+    (asset: ImageFileRecord | null): string => {
+      if (!asset || !projectId) return "";
+      const safeProjectId = sanitizeStudioProjectId(projectId);
+      const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
+      const normalized = normalizeStudioFilepath(safeProjectId, asset.filepath);
+      if (!normalized || !normalized.startsWith(prefix)) return "";
+      const relative = normalized.slice(prefix.length).replace(/^\/+/, "");
+      const parts = relative.split("/").filter(Boolean);
+      if (parts.length <= 1) return "";
+      return parts.slice(0, -1).join("/");
+    },
+    [projectId]
   );
 
   const filteredProjects = useMemo((): string[] => {
@@ -1091,6 +1318,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
     if (!selectedAssetId) return null;
     return assets.find((a: ImageFileRecord) => a.id === selectedAssetId) ?? null;
   }, [assets, selectedAssetId]);
+
+  useEffect(() => {
+    const currentFolder = getAssetFolder(selectedAsset);
+    setMoveTargetFolder(currentFolder);
+  }, [getAssetFolder, selectedAsset]);
 
   useEffect(() => {
     setMaskShapes([]);
@@ -1561,6 +1793,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setPromptValidationRulesText(JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
   }, []);
+
+  const handleRefreshSettings = useCallback((): void => {
+    setSettingsLoaded(false);
+    void settingsQuery.refetch();
+  }, [settingsQuery]);
 
   const validationIssues: ParamIssue[] = useMemo(() => {
     if (!paramsState || !paramSpecs) return [];
@@ -2421,30 +2658,27 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   return (
     <div className="container mx-auto max-w-none space-y-6 py-10">
-      <SectionHeader
-        title="AI Image Studio (MVP)"
-        description="Project-scoped asset browser + polygon mask + prompt params extraction."
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
-              }}
-            >
-              <RefreshCcw className="mr-2 size-4" />
-              Refresh
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsFocusMode((prev: boolean) => !prev)}
-            >
-              {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
-              {isFocusMode ? "Edit" : "Show"}
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => {
+            void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
+          }}
+        >
+          <RefreshCcw className="mr-2 size-4" />
+          Refresh
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+        >
+          {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+          {isFocusMode ? "Edit" : "Show"}
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <TabsContent value="studio">
 
       <SharedModal
         open={driveImportOpen}
@@ -2899,6 +3133,30 @@ export function AdminImageStudioPage(): React.JSX.Element {
             size="sm"
             className="w-full justify-center"
             onClick={() => {
+              if (!activeMaskId) return;
+              setMaskShapes((prev: MaskShape[]) =>
+                prev.map((shape) => {
+                  if (shape.id !== activeMaskId) return shape;
+                  if (!shape.closed) return shape;
+                  if (shape.points.length < 3) return { ...shape, closed: false };
+                  if (selectedPointIndex === null) return { ...shape, closed: false };
+                  const pts = shape.points;
+                  const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
+                  return { ...shape, points: rotated, closed: false };
+                })
+              );
+            }}
+            disabled={!activeMaskId}
+            title="Detach polygon (open at selected point)"
+          >
+            Detach
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => {
               setMaskShapes([]);
               setActiveMaskId(null);
             }}
@@ -2990,12 +3248,82 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 </FileUploadButton>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <Input
+                value={newFolderName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewFolderName(e.target.value)}
+                placeholder="New folder (e.g. banners/home)"
+                className="h-8"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!projectId || !newFolderName.trim() || createFolderMutation.isPending}
+                onClick={() => void createFolderMutation.mutateAsync(newFolderName)}
+              >
+                Create folder
+              </Button>
+            </div>
+            {selectedAsset ? (
+              <div className="space-y-2">
+                <div className="text-[11px] text-gray-400">Selected asset actions</div>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <Select
+                    value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
+                    onValueChange={(value: string) => {
+                      setMoveTargetFolder(value === "__root__" ? "" : value);
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="Move to folder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {folderOptions.map((folder: string) => (
+                        <SelectItem key={folder || "__root__"} value={folder || "__root__"}>
+                          {folder || "(root)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      moveAssetMutation.isPending ||
+                      getAssetFolder(selectedAsset) === moveTargetFolder
+                    }
+                    onClick={() => {
+                      void moveAssetMutation.mutateAsync({ asset: selectedAsset, targetFolder: moveTargetFolder });
+                    }}
+                  >
+                    Move
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-red-300 hover:text-red-200"
+                  disabled={deleteAssetMutation.isPending}
+                  onClick={() => {
+                    const confirmed = window.confirm(`Delete "${selectedAsset.filename}"? This cannot be undone.`);
+                    if (!confirmed) return;
+                    void deleteAssetMutation.mutateAsync(selectedAsset);
+                  }}
+                >
+                  Delete asset
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex-1 overflow-hidden">
             <AssetTree
               projectId={projectId}
               assets={assets}
+              folders={folders}
               selectedFolder={selectedFolder}
               selectedAssetId={selectedAssetId}
               onSelectFolder={setSelectedFolder}
@@ -3006,19 +3334,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
         {/* Preview */}
         <SectionPanel className="relative flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
-          {isFocusMode ? (
-            <div className="absolute right-3 top-3 z-20">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFocusMode(false)}
-                className="text-gray-300 hover:text-white"
-              >
-                <Minimize2 className="mr-2 size-4" />
-                Edit
-              </Button>
-            </div>
-          ) : (
+          {!isFocusMode ? (
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-xs text-gray-400">Preview</div>
@@ -3028,7 +3344,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 Masks: {maskShapes.length}
               </div>
             </div>
-          )}
+          ) : null}
 
           <div className="flex-1 overflow-hidden">
             <MaskCanvas
@@ -3047,7 +3363,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
 
           {!isFocusMode ? (
-            <>
+            <div className="shrink-0 h-64 overflow-y-auto pr-1 space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-xs text-gray-400">Mask Layers</Label>
@@ -3262,7 +3578,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   placeholder="Draw a polygon mask to populate this."
                 />
               </div>
-            </>
+            </div>
           ) : null}
         </SectionPanel>
 
@@ -3480,6 +3796,154 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
         </SectionPanel>
       </div>
+        </TabsContent>
+
+        <TabsContent value="projects">
+          <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+            <SectionPanel variant="subtle" className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm text-gray-200">Projects</div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { void projectsQuery.refetch(); }}
+                  title="Reload projects"
+                >
+                  <RefreshCcw className={cn("mr-2 size-4", projectsQuery.isFetching ? "animate-spin" : "")} />
+                  Refresh
+                </Button>
+              </div>
+
+              <Input
+                value={projectSearch}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
+                placeholder="Search projects..."
+                className="h-9"
+              />
+
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newProjectId}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
+                  placeholder="New project id (e.g. milkbar-001)"
+                  className="h-9"
+                />
+                <Button
+                  onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
+                  disabled={!newProjectId.trim() || createProjectMutation.isPending}
+                >
+                  Create
+                </Button>
+              </div>
+
+              <div className="text-[11px] text-gray-400">
+                {projectsQuery.isLoading ? "Loading projects..." : `${filteredProjects.length} project(s)`}
+              </div>
+
+              <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
+                {filteredProjects.length === 0 ? (
+                  <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                    No projects found.
+                  </div>
+                ) : (
+                  filteredProjects.map((id: string) => (
+                    <div
+                      key={id}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded border border-border bg-card/40 p-2",
+                        id === projectId && "border-emerald-500/40 bg-emerald-500/10"
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm text-gray-100">{id}</div>
+                        {id === projectId ? (
+                          <div className="text-[10px] text-emerald-200">Active</div>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProjectId(id)}
+                          disabled={id === projectId}
+                        >
+                          Select
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-rose-500/30 text-rose-200 hover:bg-rose-500/10"
+                          onClick={() => void handleDeleteProject(id)}
+                          disabled={pendingDeleteId === id || deleteProjectMutation.isPending}
+                        >
+                          {pendingDeleteId === id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </SectionPanel>
+
+            <SectionPanel variant="subtle" className="space-y-4">
+              <div className="text-sm text-gray-200">Active project</div>
+              {projectId ? (
+                <div className="space-y-3 text-sm text-gray-300">
+                  <div>
+                    Project: <span className="text-gray-100">{projectId}</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    Assets loaded: <span className="text-gray-200">{assets.length}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleTabChange("studio")}>
+                      Open Studio
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProjectId("")}
+                      disabled={!projectId}
+                    >
+                      Clear selection
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                  No project selected yet.
+                </div>
+              )}
+            </SectionPanel>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm text-gray-200">Studio Settings</div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshSettings}
+                disabled={settingsQuery.isFetching}
+                title="Reload settings"
+              >
+                <RefreshCcw className={cn("mr-2 size-4", settingsQuery.isFetching ? "animate-spin" : "")} />
+                Refresh
+              </Button>
+            </div>
+            {settingsPanel}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="validation">
+          <AdminImageStudioValidationPatternsPage
+            embedded
+            onSaved={handleRefreshSettings}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -30,6 +30,7 @@ import {
   SelectField,
   TextField,
   ImagePickerField,
+  Asset3DPickerField,
 } from "./shared-fields";
 
 const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
@@ -211,6 +212,15 @@ export function SettingsFieldRenderer({
             })}
           </div>
         </>
+      )}
+
+      {field.type === "asset3d" && (
+        <Asset3DPickerField
+          label={field.label}
+          value={(value as string) ?? ""}
+          onChange={handleChange}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "radio" && (

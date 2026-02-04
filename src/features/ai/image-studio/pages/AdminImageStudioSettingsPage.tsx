@@ -181,7 +181,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
               <Link href="/admin/image-studio">Back to Studio</Link>
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/admin/image-studio/validation-patterns">Validation Patterns</Link>
+              <Link href="/admin/image-studio?tab=validation">Validation Patterns</Link>
             </Button>
             <Button
               type="button"

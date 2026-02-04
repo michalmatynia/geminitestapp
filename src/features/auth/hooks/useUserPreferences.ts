@@ -1,9 +1,19 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
 export interface UserPreferences {
   adminMenuCollapsed?: boolean | null;
   adminMenuFavorites?: string[] | null;
   adminMenuSectionColors?: Record<string, string> | null;
+  adminMenuCustomEnabled?: boolean | null;
+  adminMenuCustomNav?: JsonValue | null;
 }
 
 const USER_PREFERENCES_STALE_MS = 10_000;

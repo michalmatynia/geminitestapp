@@ -1165,6 +1165,8 @@ export function basePageBuilderReducer(
         ImageElement: "ImageElement",
         Button: "ButtonElement",
         Block: "Block",
+        Model3DElement: "Model3DElement",
+        Slideshow: "Slideshow",
       };
       const sectionType = blockTypeToSectionType[located.block.type];
       if (!sectionType) return state;
@@ -1276,7 +1278,7 @@ export function basePageBuilderReducer(
     }
 
     case "MOVE_SECTION_TO_COLUMN": {
-      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement", "Model3DElement", "Slideshow"];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;

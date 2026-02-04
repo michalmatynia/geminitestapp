@@ -111,7 +111,7 @@ export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement",
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "Block", "Button", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon"];
 
 // Content blocks that can be placed inside a SlideshowFrame
-export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "Image", "Heading", "Text", "TextElement", "TextAtom", "Button", "AppEmbed"];
+export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "Image", "Heading", "Text", "TextElement", "TextAtom", "Block", "Button", "AppEmbed"];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
   Row: {
@@ -321,6 +321,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     type: "Block",
     label: "Block",
     icon: "Box",
+    allowedBlockTypes: BLOCK_SECTION_ALLOWED_BLOCK_TYPES,
     defaultSettings: {
       colorScheme: "none",
       paddingTop: 24,
@@ -1494,7 +1495,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["SlideshowFrame", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["SlideshowFrame", "Block", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       transition: "fade",
       transitionDuration: 700,
@@ -2109,7 +2110,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["SlideshowFrame", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["SlideshowFrame", "Block", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: { ...BLOCK_DEFINITIONS.Slideshow!.defaultSettings },
     settingsSchema: [...BLOCK_DEFINITIONS.Slideshow!.settingsSchema, ...sectionStyleFields()],
   },

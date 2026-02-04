@@ -7,12 +7,21 @@ import fs from "fs/promises";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 
 const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
+const projectsRootResolved = path.resolve(projectsRoot);
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+
+const resolveProjectDir = (candidate: string): string | null => {
+  if (!candidate) return null;
+  if (candidate.includes("/") || candidate.includes("\\")) return null;
+  const resolved = path.resolve(projectsRootResolved, candidate);
+  if (!resolved.startsWith(`${projectsRootResolved}${path.sep}`)) return null;
+  return resolved;
+};
 
 async function DELETE_handler(
   req: NextRequest,
@@ -20,13 +29,27 @@ async function DELETE_handler(
   params: { projectId: string }
 ): Promise<Response> {
   try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
+    const rawProjectId = params.projectId?.trim() ?? "";
+    if (!rawProjectId) throw badRequestError("Project id is required");
+    const candidates = Array.from(
+      new Set([rawProjectId, sanitizeProjectId(rawProjectId)].filter(Boolean))
+    );
 
-    const projectDir = path.join(projectsRoot, projectId);
-    await fs.rm(projectDir, { recursive: true, force: true });
+    let deleted = false;
+    for (const candidate of candidates) {
+      const projectDir = resolveProjectDir(candidate);
+      if (!projectDir) continue;
+      const stats = await fs.stat(projectDir).catch(() => null);
+      if (!stats?.isDirectory()) continue;
+      await fs.rm(projectDir, { recursive: true, force: true });
+      deleted = true;
+    }
 
-    return NextResponse.json({ projectId, deleted: true });
+    if (!deleted) {
+      throw notFoundError("Project not found", { projectId: rawProjectId });
+    }
+
+    return NextResponse.json({ projectId: rawProjectId, deleted: true });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

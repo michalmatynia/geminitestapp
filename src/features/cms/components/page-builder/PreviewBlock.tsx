@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useId, useCallback } from "react";
+import React, { useEffect, useRef, useState, useId, useCallback, useMemo, memo } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
 import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -8,6 +8,7 @@ import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
+import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
 import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
@@ -86,6 +87,20 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
 const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
 
 const getSpacingValue = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+const toNumber = (value: unknown, fallback: number): number =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback;
+
+const toBoolean = (value: unknown, fallback: boolean): boolean => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
+  }
+  return fallback;
+};
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
 const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean => {
   const mt = getSpacingValue(settings["marginTop"]);
@@ -206,6 +221,98 @@ const InspectorTooltip = ({
     </div>
   );
 };
+
+// Memoized 3D viewer wrapper to prevent re-renders when parent selection state changes
+interface MemoizedViewer3DProps {
+  modelUrl: string;
+  height: number;
+  backgroundColor: string;
+  autoRotate: boolean;
+  autoRotateSpeed: number;
+  environment: EnvironmentPreset;
+  lighting: LightingPreset;
+  lightIntensity: number;
+  enableShadows: boolean;
+  enableBloom: boolean;
+  bloomIntensity: number;
+  exposure: number;
+  showGround: boolean;
+  enableContactShadows: boolean;
+  enableVignette: boolean;
+  autoFit: boolean;
+  presentationMode: boolean;
+  positionX: number;
+  positionY: number;
+  positionZ: number;
+  rotationX: number;
+  rotationY: number;
+  rotationZ: number;
+  scale: number;
+}
+
+const MemoizedViewer3D = memo(function MemoizedViewer3D({
+  modelUrl,
+  height,
+  backgroundColor,
+  autoRotate,
+  autoRotateSpeed,
+  environment,
+  lighting,
+  lightIntensity,
+  enableShadows,
+  enableBloom,
+  bloomIntensity,
+  exposure,
+  showGround,
+  enableContactShadows,
+  enableVignette,
+  autoFit,
+  presentationMode,
+  positionX,
+  positionY,
+  positionZ,
+  rotationX,
+  rotationY,
+  rotationZ,
+  scale,
+}: MemoizedViewer3DProps): React.ReactElement {
+  const position = useMemo<[number, number, number]>(
+    () => [positionX, positionY, positionZ],
+    [positionX, positionY, positionZ]
+  );
+  const rotation = useMemo<[number, number, number]>(
+    () => [toRadians(rotationX), toRadians(rotationY), toRadians(rotationZ)],
+    [rotationX, rotationY, rotationZ]
+  );
+
+  return (
+    <div style={{ height: `${Math.max(120, height)}px` }} className="w-full">
+      <Viewer3D
+        modelUrl={modelUrl}
+        backgroundColor={backgroundColor}
+        autoRotate={autoRotate}
+        autoRotateSpeed={autoRotateSpeed}
+        environment={environment}
+        lighting={lighting}
+        lightIntensity={lightIntensity}
+        enableShadows={enableShadows}
+        enableBloom={enableBloom}
+        bloomIntensity={bloomIntensity}
+        exposure={exposure}
+        showGround={showGround}
+        enableContactShadows={enableContactShadows}
+        enableVignette={enableVignette}
+        autoFit={autoFit}
+        presentationMode={presentationMode}
+        allowUserControls={false}
+        modelPosition={position}
+        modelRotation={rotation}
+        modelScale={scale}
+        className="h-full w-full"
+      />
+    </div>
+  );
+});
 
 const InspectorHover = ({
   enabled,
@@ -1354,6 +1461,54 @@ export function PreviewSection({
       return null;
     }
 
+    if (hasAsset) {
+      const modelUrl = `/api/assets3d/${assetId}/file`;
+
+      return (
+        wrapInspector(
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleSelect}
+            onKeyDown={(e: React.KeyboardEvent): void => {
+              if (e.key === "Enter" || e.key === " ") handleSelect();
+            }}
+            style={getSectionStyles(section.settings, colorSchemes)}
+            className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+          >
+            {renderSectionActions()}
+            {divider}
+            <MemoizedViewer3D
+              modelUrl={modelUrl}
+              height={height}
+              backgroundColor={(section.settings["backgroundColor"] as string) || "#111827"}
+              autoRotate={toBoolean(section.settings["autoRotate"], true)}
+              autoRotateSpeed={toNumber(section.settings["autoRotateSpeed"], 2)}
+              environment={(section.settings["environment"] as EnvironmentPreset) || "studio"}
+              lighting={(section.settings["lighting"] as LightingPreset) || "studio"}
+              lightIntensity={toNumber(section.settings["lightIntensity"], 1)}
+              enableShadows={toBoolean(section.settings["enableShadows"], true)}
+              enableBloom={toBoolean(section.settings["enableBloom"], false)}
+              bloomIntensity={toNumber(section.settings["bloomIntensity"], 0.5)}
+              exposure={toNumber(section.settings["exposure"], 1)}
+              showGround={toBoolean(section.settings["showGround"], false)}
+              enableContactShadows={toBoolean(section.settings["enableContactShadows"], true)}
+              enableVignette={toBoolean(section.settings["enableVignette"], false)}
+              autoFit={toBoolean(section.settings["autoFit"], true)}
+              presentationMode={toBoolean(section.settings["presentationMode"], false)}
+              positionX={toNumber(section.settings["positionX"], 0)}
+              positionY={toNumber(section.settings["positionY"], 0)}
+              positionZ={toNumber(section.settings["positionZ"], 0)}
+              rotationX={toNumber(section.settings["rotationX"], 0)}
+              rotationY={toNumber(section.settings["rotationY"], 0)}
+              rotationZ={toNumber(section.settings["rotationZ"], 0)}
+              scale={toNumber(section.settings["scale"], 1)}
+            />
+          </div>
+        )
+      );
+    }
+
     return (
       wrapInspector(
         <div
@@ -1372,7 +1527,7 @@ export function PreviewSection({
             className="flex items-center justify-center rounded border border-dashed border-border/40 bg-gray-900/40 text-xs text-gray-400"
             style={{ height: `${Math.max(120, height)}px` }}
           >
-            {hasAsset ? `3D model: ${assetId}` : "No 3D asset selected"}
+            No 3D asset selected
           </div>
         </div>
       )
@@ -2607,10 +2762,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             baseClasses,
-            `rounded border p-1 ${
+            `rounded ${
               isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                ? `ring-2 ring-blue-500 ${selectedSoftBg}`
+                : "ring-1 ring-border/30 hover:ring-border/50"
             }`
           )}
         >
@@ -2649,6 +2804,80 @@ function PreviewBlockItem({
     const assetId = (block.settings["assetId"] as string) || "";
     const height = getSpacingValue(block.settings["height"]) || 360;
     const hasAsset = assetId.trim().length > 0;
+    if (hasAsset) {
+      const backgroundColor = (block.settings["backgroundColor"] as string) || "#111827";
+      const autoRotate = toBoolean(block.settings["autoRotate"], true);
+      const autoRotateSpeed = toNumber(block.settings["autoRotateSpeed"], 2);
+      const environment = (block.settings["environment"] as EnvironmentPreset) || "studio";
+      const lighting = (block.settings["lighting"] as LightingPreset) || "studio";
+      const lightIntensity = toNumber(block.settings["lightIntensity"], 1);
+      const enableShadows = toBoolean(block.settings["enableShadows"], true);
+      const enableBloom = toBoolean(block.settings["enableBloom"], false);
+      const bloomIntensity = toNumber(block.settings["bloomIntensity"], 0.5);
+      const exposure = toNumber(block.settings["exposure"], 1);
+      const showGround = toBoolean(block.settings["showGround"], false);
+      const enableContactShadows = toBoolean(block.settings["enableContactShadows"], true);
+      const enableVignette = toBoolean(block.settings["enableVignette"], false);
+      const autoFit = toBoolean(block.settings["autoFit"], true);
+      const presentationMode = toBoolean(block.settings["presentationMode"], false);
+      const position = [
+        toNumber(block.settings["positionX"], 0),
+        toNumber(block.settings["positionY"], 0),
+        toNumber(block.settings["positionZ"], 0),
+      ] as [number, number, number];
+      const rotation = [
+        toRadians(toNumber(block.settings["rotationX"], 0)),
+        toRadians(toNumber(block.settings["rotationY"], 0)),
+        toRadians(toNumber(block.settings["rotationZ"], 0)),
+      ] as [number, number, number];
+      const scale = toNumber(block.settings["scale"], 1);
+      const modelUrl = `/api/assets3d/${assetId}/file`;
+
+      return (
+        wrapBlock(
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleSelect}
+            onKeyDown={handleKeyDown}
+            className={buildContainerClass(
+              `w-full ${contained ? "max-w-full" : ""}`,
+              `rounded border ${
+                isSelected
+                  ? `${selectedBorderClass} ${selectedSoftBg}`
+                  : "border-border/30 bg-gray-800/20 hover:border-border/50"
+              }`
+            )}
+            style={{ height: `${Math.max(120, height)}px` }}
+          >
+            <Viewer3D
+              modelUrl={modelUrl}
+              backgroundColor={backgroundColor}
+              autoRotate={autoRotate}
+              autoRotateSpeed={autoRotateSpeed}
+              environment={environment}
+              lighting={lighting}
+              lightIntensity={lightIntensity}
+              enableShadows={enableShadows}
+              enableBloom={enableBloom}
+              bloomIntensity={bloomIntensity}
+              exposure={exposure}
+              showGround={showGround}
+              enableContactShadows={enableContactShadows}
+              enableVignette={enableVignette}
+              autoFit={autoFit}
+              presentationMode={presentationMode}
+              allowUserControls={false}
+              modelPosition={position}
+              modelRotation={rotation}
+              modelScale={scale}
+              className="h-full w-full"
+            />
+          </div>
+        )
+      );
+    }
+
     return (
       wrapBlock(
         <div
@@ -2667,7 +2896,7 @@ function PreviewBlockItem({
           style={{ height: `${Math.max(120, height)}px` }}
         >
           <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-            {hasAsset ? `3D model: ${assetId}` : "No 3D asset selected"}
+            No 3D asset selected
           </div>
         </div>
       )

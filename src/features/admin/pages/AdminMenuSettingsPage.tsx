@@ -2,17 +2,139 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Star } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Star, Trash2 } from "lucide-react";
 
-import { Button, Checkbox, Label, SearchInput, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
-import { ADMIN_MENU_COLOR_MAP, ADMIN_MENU_COLORS, buildAdminNav, flattenAdminNav, getAdminMenuSections } from "@/features/admin/components/Menu";
+import {
+  ADMIN_MENU_COLOR_MAP,
+  ADMIN_MENU_COLORS,
+  AdminMenuCustomNode,
+  AdminNavLeaf,
+  buildAdminMenuFromCustomNav,
+  buildAdminNav,
+  adminNavToCustomNav,
+  flattenAdminNav,
+  getAdminMenuSections,
+  normalizeAdminMenuCustomNav,
+  type NavItem,
+} from "@/features/admin/components/Menu";
 
 const normalize = (value: string): string =>
   value.toLowerCase().replace(/[_/\\-]+/g, " ").replace(/\s+/g, " ").trim();
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
+
+type AdminNavNodeEntry = {
+  id: string;
+  label: string;
+  href?: string;
+  parents: string[];
+  item: NavItem;
+};
+
+type FlattenedCustomNode = {
+  node: AdminMenuCustomNode;
+  path: number[];
+  depth: number;
+  index: number;
+  siblingCount: number;
+};
+
+const createCustomId = (): string =>
+  `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const createCustomNode = (kind: "link" | "group"): AdminMenuCustomNode => ({
+  id: createCustomId(),
+  label: kind === "group" ? "New Group" : "New Link",
+  ...(kind === "link" ? { href: "/admin" } : {}),
+  ...(kind === "group" ? { children: [] } : {}),
+});
+
+const cloneCustomNav = (items: AdminMenuCustomNode[]): AdminMenuCustomNode[] => {
+  if (typeof globalThis.structuredClone === "function") {
+    return globalThis.structuredClone(items);
+  }
+  return JSON.parse(JSON.stringify(items)) as AdminMenuCustomNode[];
+};
+
+const flattenCustomNav = (
+  items: AdminMenuCustomNode[],
+  depth = 0,
+  pathPrefix: number[] = []
+): FlattenedCustomNode[] => {
+  const entries: FlattenedCustomNode[] = [];
+  items.forEach((node: AdminMenuCustomNode, index: number) => {
+    const path = [...pathPrefix, index];
+    entries.push({ node, path, depth, index, siblingCount: items.length });
+    if (node.children && node.children.length > 0) {
+      entries.push(...flattenCustomNav(node.children, depth + 1, path));
+    }
+  });
+  return entries;
+};
+
+const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNavNodeEntry[] => {
+  const entries: AdminNavNodeEntry[] = [];
+  items.forEach((item: NavItem) => {
+    entries.push({ id: item.id, label: item.label, href: item.href, parents, item });
+    if (item.children && item.children.length > 0) {
+      entries.push(...flattenAdminNavNodes(item.children, [...parents, item.label]));
+    }
+  });
+  return entries;
+};
+
+const collectCustomIds = (items: AdminMenuCustomNode[], ids = new Set<string>()): Set<string> => {
+  items.forEach((node: AdminMenuCustomNode) => {
+    ids.add(node.id);
+    if (node.children && node.children.length > 0) {
+      collectCustomIds(node.children, ids);
+    }
+  });
+  return ids;
+};
+
+const getNodeAtPath = (items: AdminMenuCustomNode[], path: number[]): AdminMenuCustomNode | null => {
+  let current: AdminMenuCustomNode | null = null;
+  let cursor: AdminMenuCustomNode[] = items;
+  for (const index of path) {
+    current = cursor[index] ?? null;
+    if (!current) return null;
+    cursor = current.children ?? [];
+  }
+  return current;
+};
+
+const getParentAtPath = (
+  items: AdminMenuCustomNode[],
+  path: number[]
+): { parent: AdminMenuCustomNode[]; index: number } | null => {
+  if (path.length === 0) return null;
+  const parentPath = path.slice(0, -1);
+  const parentNode = parentPath.length ? getNodeAtPath(items, parentPath) : null;
+  const parent = parentPath.length ? parentNode?.children ?? null : items;
+  if (!parent) return null;
+  return { parent, index: path[path.length - 1] };
+};
+
+const stripUsedIds = (
+  node: AdminMenuCustomNode,
+  usedIds: Set<string>
+): AdminMenuCustomNode | null => {
+  if (usedIds.has(node.id)) return null;
+  usedIds.add(node.id);
+  const children = node.children
+    ? node.children
+        .map((child) => stripUsedIds(child, usedIds))
+        .filter((child): child is AdminMenuCustomNode => Boolean(child))
+    : undefined;
+  return {
+    ...node,
+    ...(children ? { children } : {}),
+  };
+};
 
 export function AdminMenuSettingsPage(): React.JSX.Element {
   const { data: preferences } = useUserPreferences();
@@ -22,6 +144,32 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [sectionColors, setSectionColors] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
+  const [customEnabled, setCustomEnabled] = useState(false);
+  const [customNav, setCustomNav] = useState<AdminMenuCustomNode[]>([]);
+  const [libraryQuery, setLibraryQuery] = useState("");
+
+  const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
+    event.preventDefault();
+  }, []);
+
+  const baseNav = useMemo(
+    () =>
+      buildAdminNav({
+        onOpenChat: noopClick,
+        onCreatePageClick: () => {},
+      }),
+    [noopClick]
+  );
+
+  const defaultCustomNav = useMemo(() => adminNavToCustomNav(baseNav), [baseNav]);
+  const normalizedPreferenceCustomNav = useMemo(() => {
+    const normalized = normalizeAdminMenuCustomNav(preferences?.adminMenuCustomNav);
+    return normalized.length > 0 ? normalized : defaultCustomNav;
+  }, [defaultCustomNav, preferences?.adminMenuCustomNav]);
+  const normalizedCustomNav = useMemo(() => {
+    const normalized = normalizeAdminMenuCustomNav(customNav);
+    return normalized.length > 0 ? normalized : defaultCustomNav;
+  }, [customNav, defaultCustomNav]);
 
   // Derived state for initialization
   const [prevPrefs, setPrevPrefs] = useState<unknown>(null);
@@ -33,45 +181,67 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         ? (preferences.adminMenuSectionColors as Record<string, string>)
         : {}
     );
+    setCustomEnabled(Boolean(preferences.adminMenuCustomEnabled));
+    setCustomNav(normalizedPreferenceCustomNav);
   }
 
-  const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
-    event.preventDefault();
-  }, []);
-
-  const nav = useMemo(
-    () =>
-      buildAdminNav({
-        onOpenChat: noopClick,
-        onCreatePageClick: () => {},
-      }),
-    [noopClick]
+  const menuNav = useMemo(
+    () => (customEnabled ? buildAdminMenuFromCustomNav(normalizedCustomNav, baseNav) : baseNav),
+    [baseNav, customEnabled, normalizedCustomNav]
   );
 
-  const sections = useMemo(() => getAdminMenuSections(nav), [nav]);
-  const flattened = useMemo(() => flattenAdminNav(nav), [nav]);
+  const sections = useMemo(() => getAdminMenuSections(menuNav), [menuNav]);
+  const flattened = useMemo(() => flattenAdminNav(menuNav), [menuNav]);
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
   const favoritesList = useMemo(
-    () => favorites.map((id: string) => flattened.find((item: import("@/features/admin/components/Menu").AdminNavLeaf) => item.id === id)).filter(Boolean),
+    () => favorites.map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id)).filter(Boolean),
     [favorites, flattened]
   );
 
   const filteredItems = useMemo(() => {
     const normalized = normalize(query);
-    const items = flattened.filter((item: import("@/features/admin/components/Menu").AdminNavLeaf) =>
+    const items = flattened.filter((item: AdminNavLeaf) =>
       normalize([item.label, item.href ?? "", ...(item.keywords ?? []), ...item.parents].join(" "))
         .includes(normalized)
     );
-    return items.sort((a: import("@/features/admin/components/Menu").AdminNavLeaf, b: import("@/features/admin/components/Menu").AdminNavLeaf) => a.label.localeCompare(b.label));
+    return items.sort((a: AdminNavLeaf, b: AdminNavLeaf) => a.label.localeCompare(b.label));
   }, [flattened, query]);
+
+  const flattenedCustomNav = useMemo(() => flattenCustomNav(customNav), [customNav]);
+  const libraryItems = useMemo(() => flattenAdminNavNodes(baseNav), [baseNav]);
+  const libraryItemMap = useMemo(
+    () => new Map(libraryItems.map((item: AdminNavNodeEntry) => [item.id, item])),
+    [libraryItems]
+  );
+  const customIds = useMemo(() => collectCustomIds(customNav), [customNav]);
+  const filteredLibraryItems = useMemo(() => {
+    const normalized = normalize(libraryQuery);
+    const items = libraryItems.filter((item: AdminNavNodeEntry) =>
+      normalize([item.label, item.href ?? "", ...item.parents].join(" ")).includes(normalized)
+    );
+    return items.sort((a: AdminNavNodeEntry, b: AdminNavNodeEntry) => a.label.localeCompare(b.label));
+  }, [libraryItems, libraryQuery]);
+
+  const defaultPayload = useMemo(
+    () =>
+      JSON.stringify({
+        favorites: [],
+        sectionColors: {},
+        customEnabled: false,
+        customNav: defaultCustomNav,
+      }),
+    [defaultCustomNav]
+  );
 
   const baseline = useMemo(
     () =>
       JSON.stringify({
         favorites: Array.isArray(preferences?.adminMenuFavorites) ? preferences?.adminMenuFavorites : [],
         sectionColors: preferences?.adminMenuSectionColors ?? {},
+        customEnabled: Boolean(preferences?.adminMenuCustomEnabled),
+        customNav: normalizedPreferenceCustomNav,
       }),
-    [preferences]
+    [normalizedPreferenceCustomNav, preferences?.adminMenuCustomEnabled, preferences?.adminMenuFavorites, preferences?.adminMenuSectionColors]
   );
 
   const currentPayload = useMemo(
@@ -79,11 +249,14 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       JSON.stringify({
         favorites,
         sectionColors,
+        customEnabled,
+        customNav: normalizedCustomNav,
       }),
-    [favorites, sectionColors]
+    [customEnabled, favorites, normalizedCustomNav, sectionColors]
   );
 
   const isDirty = baseline !== currentPayload;
+  const isDefaultState = currentPayload === defaultPayload;
 
   const handleToggleFavorite = (id: string, checked: boolean): void => {
     setFavorites((prev: string[]) => {
@@ -121,12 +294,125 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     });
   };
 
+  const updateCustomLabel = (path: number[], value: string): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info || !info.parent[info.index]) return prev;
+      info.parent[info.index].label = value;
+      return next;
+    });
+  };
+
+  const updateCustomHref = (path: number[], value: string): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info || !info.parent[info.index]) return prev;
+      if (value.trim().length === 0) {
+        delete info.parent[info.index].href;
+      } else {
+        info.parent[info.index].href = value;
+      }
+      return next;
+    });
+  };
+
+  const addCustomNodeAt = (kind: "link" | "group", parentPath?: number[]): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const node = createCustomNode(kind);
+      if (!parentPath || parentPath.length === 0) {
+        next.push(node);
+        return next;
+      }
+      const parentNode = getNodeAtPath(next, parentPath);
+      if (!parentNode) return prev;
+      if (!parentNode.children) parentNode.children = [];
+      parentNode.children.push(node);
+      return next;
+    });
+  };
+
+  const addBuiltInNode = (entry: AdminNavNodeEntry): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const usedIds = collectCustomIds(next);
+      const [node] = adminNavToCustomNav([entry.item]);
+      if (!node) return prev;
+      const cleaned = stripUsedIds(node, usedIds);
+      if (!cleaned) return prev;
+      next.push(cleaned);
+      return next;
+    });
+  };
+
+  const removeCustomNode = (path: number[]): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info) return prev;
+      info.parent.splice(info.index, 1);
+      return next;
+    });
+  };
+
+  const moveCustomNode = (path: number[], direction: "up" | "down"): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info) return prev;
+      const targetIndex = direction === "up" ? info.index - 1 : info.index + 1;
+      if (targetIndex < 0 || targetIndex >= info.parent.length) return prev;
+      const [node] = info.parent.splice(info.index, 1);
+      if (!node) return prev;
+      info.parent.splice(targetIndex, 0, node);
+      return next;
+    });
+  };
+
+  const indentCustomNode = (path: number[]): void => {
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info || info.index === 0) return prev;
+      const [node] = info.parent.splice(info.index, 1);
+      const newParent = info.parent[info.index - 1];
+      if (!newParent || !node) return prev;
+      if (!newParent.children) newParent.children = [];
+      newParent.children.push(node);
+      return next;
+    });
+  };
+
+  const outdentCustomNode = (path: number[]): void => {
+    if (path.length < 2) return;
+    setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const info = getParentAtPath(next, path);
+      if (!info) return prev;
+      const parentPath = path.slice(0, -1);
+      const parentInfo = getParentAtPath(next, parentPath);
+      if (!parentInfo) return prev;
+      const [node] = info.parent.splice(info.index, 1);
+      if (!node) return prev;
+      parentInfo.parent.splice(parentInfo.index + 1, 0, node);
+      return next;
+    });
+  };
+
   const handleSave = async (): Promise<void> => {
     try {
-      const validFavorites = favorites.filter((id: string) => flattened.some((item: import("@/features/admin/components/Menu").AdminNavLeaf) => item.id === id));
+      const validFavorites = favorites.filter((id: string) => flattened.some((item: AdminNavLeaf) => item.id === id));
+      const sectionIds = new Set(sections.map((section) => section.id));
+      const validSectionColors = Object.fromEntries(
+        Object.entries(sectionColors).filter(([sectionId]) => sectionIds.has(sectionId))
+      );
       await updatePreferences.mutateAsync({
         adminMenuFavorites: validFavorites,
-        adminMenuSectionColors: sectionColors,
+        adminMenuSectionColors: validSectionColors,
+        adminMenuCustomEnabled: customEnabled,
+        adminMenuCustomNav: normalizedCustomNav,
       });
       toast("Admin menu settings saved.", { variant: "success" });
     } catch (error) {
@@ -137,13 +423,15 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const handleReset = (): void => {
     setFavorites([]);
     setSectionColors({});
+    setCustomEnabled(false);
+    setCustomNav(defaultCustomNav);
   };
 
   return (
     <div className="container mx-auto py-10">
       <SectionHeader
         title="Admin Menu"
-        description="Pin favorites and add section color accents."
+        description="Pin favorites, color sections, and build a custom menu layout."
         eyebrow={(
           <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
             ← Back to settings
@@ -169,7 +457,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               </p>
             ) : (
               <div className="space-y-2">
-                {favoritesList.map((entry: import("@/features/admin/components/Menu").AdminNavLeaf | undefined, index: number) => (
+                {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
                   <div key={entry?.id} className="flex items-center justify-between rounded-md border border-border/60 bg-card/40 px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm text-white">{entry?.label}</div>
@@ -226,7 +514,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               onClear={() => setQuery("")}
             />
             <div className="mt-3 max-h-72 space-y-2 overflow-auto pr-2">
-              {filteredItems.map((item: import("@/features/admin/components/Menu").AdminNavLeaf) => (
+              {filteredItems.map((item: AdminNavLeaf) => (
                 <label
                   key={item.id}
                   className={cn(
@@ -296,13 +584,205 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         </SectionPanel>
       </div>
 
+      <SectionPanel className="mt-6 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Menu Builder</h2>
+            <p className="mt-1 text-xs text-gray-400">Create hierarchies, reorder items, and add custom links.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-gray-400">Use custom layout</Label>
+            <Switch checked={customEnabled} onCheckedChange={(checked) => setCustomEnabled(Boolean(checked))} />
+          </div>
+        </div>
+
+        {!customEnabled ? (
+          <div className="mt-3 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400">
+            Custom layout is disabled. Enable it to apply this menu structure.
+          </div>
+        ) : null}
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button type="button" size="sm" onClick={() => addCustomNodeAt("link")}>
+            <Plus className="mr-2 size-4" />
+            Add link
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => addCustomNodeAt("group")}>
+            <Plus className="mr-2 size-4" />
+            Add group
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => setCustomNav(defaultCustomNav)}>
+            Restore default layout
+          </Button>
+        </div>
+
+        <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">Layout</h3>
+            {flattenedCustomNav.length === 0 ? (
+              <p className="mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
+                No items yet. Add links or groups to start building your menu.
+              </p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {flattenedCustomNav.map((entry: FlattenedCustomNode) => {
+                  const { node, path, depth, index, siblingCount } = entry;
+                  const baseEntry = libraryItemMap.get(node.id);
+                  const isBuiltIn = Boolean(baseEntry);
+                  const labelValue = node.label ?? baseEntry?.label ?? "Untitled";
+                  const hrefValue = node.href ?? baseEntry?.href ?? "";
+                  const canMoveUp = index > 0;
+                  const canMoveDown = index < siblingCount - 1;
+                  const canIndent = index > 0;
+                  const canOutdent = path.length > 1;
+                  return (
+                    <div
+                      key={node.id}
+                      className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2"
+                    >
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" style={{ paddingLeft: depth * 16 }}>
+                        <div className="min-w-[160px] flex-1">
+                          <Input
+                            value={labelValue}
+                            onChange={(event) => updateCustomLabel(path, event.target.value)}
+                            placeholder="Label"
+                            className="h-8 bg-gray-900/40 text-xs"
+                            disabled={isBuiltIn}
+                          />
+                        </div>
+                        <div className="min-w-[180px] flex-1">
+                          <Input
+                            value={hrefValue}
+                            onChange={(event) => updateCustomHref(path, event.target.value)}
+                            placeholder="/admin/..."
+                            className="h-8 bg-gray-900/40 text-xs"
+                            disabled={isBuiltIn}
+                          />
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+                            isBuiltIn ? "border-blue-500/40 text-blue-200" : "border-emerald-500/40 text-emerald-200"
+                          )}
+                        >
+                          {isBuiltIn ? "Built-in" : "Custom"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          disabled={!canMoveUp}
+                          onClick={() => moveCustomNode(path, "up")}
+                          title="Move up"
+                        >
+                          <ArrowUp className="size-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          disabled={!canMoveDown}
+                          onClick={() => moveCustomNode(path, "down")}
+                          title="Move down"
+                        >
+                          <ArrowDown className="size-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          disabled={!canIndent}
+                          onClick={() => indentCustomNode(path)}
+                          title="Indent"
+                        >
+                          <ChevronRight className="size-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          disabled={!canOutdent}
+                          onClick={() => outdentCustomNode(path)}
+                          title="Outdent"
+                        >
+                          <ChevronLeft className="size-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-200 hover:text-red-100"
+                          onClick={() => removeCustomNode(path)}
+                          title="Remove"
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">Add built-in items</h3>
+            <SearchInput
+              value={libraryQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLibraryQuery(event.target.value)}
+              placeholder="Search built-in menu…"
+              className="mt-2 h-9 bg-gray-900/40"
+              onClear={() => setLibraryQuery("")}
+            />
+            <div className="mt-3 max-h-80 space-y-2 overflow-auto pr-2">
+              {filteredLibraryItems.length === 0 ? (
+                <p className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
+                  No matching menu items.
+                </p>
+              ) : (
+                filteredLibraryItems.map((entry: AdminNavNodeEntry) => {
+                  const isAdded = customIds.has(entry.id);
+                  return (
+                    <div key={entry.id} className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm text-white">{entry.label}</div>
+                        {entry.parents.length ? (
+                          <div className="truncate text-[11px] text-gray-500">{entry.parents.join(" / ")}</div>
+                        ) : null}
+                        <div className="truncate text-[11px] text-gray-600">{entry.href ?? "Group"}</div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-[11px]"
+                        disabled={isAdded}
+                        onClick={() => addBuiltInNode(entry)}
+                      >
+                        {isAdded ? "Added" : "Add"}
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </SectionPanel>
+
       <div className="mt-6 flex flex-wrap gap-2">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleReset}
-          disabled={!favorites.length && Object.keys(sectionColors).length === 0}
+          disabled={isDefaultState}
         >
           Reset
         </Button>

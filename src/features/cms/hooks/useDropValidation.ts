@@ -14,7 +14,7 @@ export interface DropValidationResult {
 }
 
 // Block types that can be nested inside other blocks (container blocks)
-const CONTAINER_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom"]);
+const CONTAINER_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "CarouselFrame", "Slideshow", "SlideshowFrame"]);
 
 // Section types that can be converted to blocks
 const CONVERTIBLE_SECTION_TYPES = new Set([
@@ -26,6 +26,8 @@ const CONVERTIBLE_SECTION_TYPES = new Set([
   "ImageElement",
   "TextAtom",
   "ButtonElement",
+  "Model3DElement",
+  "Slideshow",
 ]);
 
 /**

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo } from "react";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
@@ -29,12 +30,14 @@ type CmsDomainSelectionResult = {
 export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): CmsDomainSelectionResult {
   const { initialDomainId = null, persist = true } = options;
   const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
     () =>
       normalizeCmsDomainSettings(
-        parseJsonSetting(settingsQuery.data?.get(CMS_DOMAIN_SETTINGS_KEY), null)
+        parseJsonSetting(domainSettingsRaw, null)
       ),
-    [settingsQuery.data]
+    [domainSettingsRaw]
   );
   const zoningEnabled = domainSettings.zoningEnabled;
   const domainsQuery = useCmsDomains();

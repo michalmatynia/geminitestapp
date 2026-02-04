@@ -2,7 +2,8 @@
 
 import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import { useState, useEffect } from "react";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import { logClientError } from "@/features/observability";
@@ -79,7 +80,9 @@ export function AiDescriptionSettings(): React.JSX.Element {
   const [queuing, setQueuing] = useState(false);
 
   // Use TanStack Query hooks
-  const { data: settingsMap, isLoading: settingsLoading } = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const settingsMap = settingsStore.map;
+  const settingsLoading = settingsStore.isLoading;
   const { mutateAsync: updateSettingMutateAsync } = useUpdateSetting();
 
   useEffect(() => {

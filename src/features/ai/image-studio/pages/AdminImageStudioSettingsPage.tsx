@@ -19,7 +19,8 @@ import {
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 
@@ -38,7 +39,7 @@ import {
 
 export function AdminImageStudioSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
@@ -54,17 +55,18 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
 
   // Derived state for settings initialization
   const [prevSettingsData, setPrevSettingsData] = useState<unknown>(null);
+  const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
   const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY)),
-    [settingsQuery.data]
+    () => parsePromptEngineSettings(promptEngineRaw),
+    [promptEngineRaw]
   );
 
-  if (settingsQuery.data && settingsQuery.data !== prevSettingsData && !settingsLoaded) {
-    setPrevSettingsData(settingsQuery.data);
+  if (settingsStore.map && settingsStore.map !== prevSettingsData && !settingsLoaded) {
+    setPrevSettingsData(settingsStore.map);
     
-    const stored = parseImageStudioSettings(settingsQuery.data.get(IMAGE_STUDIO_SETTINGS_KEY));
-    const promptEngineStored = parsePromptEngineSettings(settingsQuery.data.get(PROMPT_ENGINE_SETTINGS_KEY));
-    const openaiModelFallback = settingsQuery.data.get("openai_model");
+    const stored = parseImageStudioSettings(settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY));
+    const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
+    const openaiModelFallback = settingsStore.get("openai_model");
 
     const hydrated: ImageStudioSettings =
       openaiModelFallback && stored.targetAi.openai.model === defaultImageStudioSettings.targetAi.openai.model
@@ -87,10 +89,10 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     setSettingsLoaded(true);
   }
 
-  const handleRefresh = useCallback(async (): Promise<void> => {
+  const handleRefresh = useCallback((): void => {
     setSettingsLoaded(false);
-    await settingsQuery.refetch();
-  }, [settingsQuery]);
+    settingsStore.refetch();
+  }, [settingsStore]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -182,10 +184,11 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     setPromptValidationRulesError(null);
   }, []);
 
+  const studioSettingsRaw = settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY);
+
   const settingsSource = useMemo(() => {
-    const raw = settingsQuery.data?.get(IMAGE_STUDIO_SETTINGS_KEY);
-    return raw ? "saved settings" : "defaults";
-  }, [settingsQuery.data]);
+    return studioSettingsRaw ? "saved settings" : "defaults";
+  }, [studioSettingsRaw]);
 
   return (
     <div className="space-y-4">
@@ -205,10 +208,10 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
               type="button"
               variant="outline"
               onClick={() => void handleRefresh()}
-              disabled={settingsQuery.isFetching}
+              disabled={settingsStore.isFetching}
               title="Reload settings"
             >
-              <RefreshCcw className={cn("mr-2 size-4", settingsQuery.isFetching ? "animate-spin" : "")} />
+              <RefreshCcw className={cn("mr-2 size-4", settingsStore.isFetching ? "animate-spin" : "")} />
               Refresh
             </Button>
           </>
@@ -241,7 +244,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
           Source: {settingsSource}
         </div>
 
-        {settingsQuery.isLoading && !settingsLoaded ? (
+        {settingsStore.isLoading && !settingsLoaded ? (
           <div className="mt-2 text-xs text-gray-500">Loading settings…</div>
         ) : null}
 

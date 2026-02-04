@@ -12,7 +12,7 @@ import {
   CheckIcon,
   XIcon,
 } from "lucide-react";
-import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { ICON_LIBRARY_MAP } from "@/features/icons";
 import { ConfirmDialog } from "@/shared/ui";
 
 interface DraftListProps {
@@ -91,7 +91,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                   <div className="flex items-center gap-3">
                     {draft.icon &&
                       ((): React.JSX.Element | null => {
-                        const IconComponent = PRODUCT_ICON_MAP[draft.icon];
+                        const IconComponent = ICON_LIBRARY_MAP[draft.icon];
                         return IconComponent ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400">
                             <IconComponent className="h-4 w-4" />

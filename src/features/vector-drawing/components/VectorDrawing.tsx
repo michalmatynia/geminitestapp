@@ -97,31 +97,33 @@ export function VectorDrawing({
     handleChange(shapes.map((shape) => simplifyShape(shape, 0.0025)));
   }, [handleChange, shapes]);
 
+  const resolvedBrushRadius = brushRadius ?? 6;
+  const resolvedImageSrc = imageSrc ?? null;
+  const resolvedActiveShapeId = activeShapeId ?? null;
+  const resolvedSelectedPointIndex = selectedPointIndex ?? null;
+  const handleSelectShape = onSelectShape ?? (() => {});
+
   return (
     <div className={className}>
       <VectorDrawingCanvas
-        allowWithoutImage={allowWithoutImage}
-        showEmptyState={showEmptyState}
-        emptyStateLabel={emptyStateLabel}
-        imageSrc={imageSrc}
+        {...(allowWithoutImage !== undefined ? { allowWithoutImage } : {})}
+        {...(showEmptyState !== undefined ? { showEmptyState } : {})}
+        {...(emptyStateLabel !== undefined ? { emptyStateLabel } : {})}
+        src={resolvedImageSrc}
         tool={currentTool}
         shapes={shapes}
         onChange={handleChange}
-        brushRadius={brushRadius}
-        activeShapeId={activeShapeId}
-        selectedPointIndex={selectedPointIndex}
-        onSelectShape={onSelectShape}
-        onSelectPoint={onSelectPoint}
-        className={canvasClassName}
+        brushRadius={resolvedBrushRadius}
+        activeShapeId={resolvedActiveShapeId}
+        selectedPointIndex={resolvedSelectedPointIndex}
+        onSelectShape={handleSelectShape}
+        {...(onSelectPoint ? { onSelectPoint } : {})}
+        {...(canvasClassName ? { className: canvasClassName } : {})}
       />
       <VectorDrawingToolbar
-        className={toolbarClassName}
+        {...(toolbarClassName ? { className: toolbarClassName } : {})}
         tool={currentTool}
         onSelectTool={handleToolChange}
-        onUndo={undefined}
-        onClose={undefined}
-        onDetach={undefined}
-        onClear={undefined}
         onSmooth={handleSmooth}
         onSimplify={handleSimplify}
         variant={toolbarVariant}

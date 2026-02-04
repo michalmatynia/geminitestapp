@@ -17,7 +17,8 @@ import { CssAnimationConfigPanel } from "./CssAnimationConfigPanel";
 import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
 import type { CustomCssAiConfig, CustomCssAiProvider } from "@/features/cms/types/custom-css-ai";
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from "@/features/cms/types/custom-css-ai";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
@@ -151,7 +152,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
     selectedParentBlock,
     dispatch,
   } = usePageBuilder();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [gridTemplateName, setGridTemplateName] = useState<string>("");
@@ -225,35 +226,65 @@ export function ComponentSettingsPanel(): React.ReactNode {
     setContentAiError(null);
   }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, contentAiLoading]);
 
-  useEffect(() => {
-    return () => {
-      if (cssAiAbortRef.current) {
-        cssAiAbortRef.current.abort();
-        cssAiAbortRef.current = null;
-      }
-      if (contentAiAbortRef.current) {
-        contentAiAbortRef.current.abort();
-        contentAiAbortRef.current = null;
-      }
-    };
-  }, []);
-  const modelsQuery = useChatbotModels({ enabled: showCustomCssTab });
-  const teachingAgentsQuery = useTeachingAgents();
-  const modelOptions = useMemo((): string[] => {
-    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
-    return Array.from(new Set(fromApi));
-  }, [modelsQuery.data]);
-  const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
-    [teachingAgentsQuery.data]
-  );
-  const providerOptions = useMemo(
-    () => [
-      { label: "AI model", value: "model" },
-      { label: "Deepthinking agent", value: "agent" },
-    ],
-    []
-  );
+    useEffect((): (() => void) => {
+
+      return (): void => {
+
+        if (cssAiAbortRef.current) {
+
+          cssAiAbortRef.current.abort();
+
+          cssAiAbortRef.current = null;
+
+        }
+
+        if (contentAiAbortRef.current) {
+
+          contentAiAbortRef.current.abort();
+
+          contentAiAbortRef.current = null;
+
+        }
+
+      };
+
+    }, []);
+
+  
+
+    const modelsQuery = useChatbotModels({ enabled: showCustomCssTab });
+
+    const teachingAgentsQuery = useTeachingAgents();
+
+    const modelOptions = useMemo((): string[] => {
+
+      const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+
+      return Array.from(new Set(fromApi));
+
+    }, [modelsQuery.data]);
+
+    const agentOptions = useMemo(
+
+      (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
+
+      [teachingAgentsQuery.data]
+
+    );
+
+    const providerOptions = useMemo(
+
+      (): Array<{ label: string; value: string }> => [
+
+        { label: "AI model", value: "model" },
+
+        { label: "Deepthinking agent", value: "agent" },
+
+      ],
+
+      []
+
+    );
   const contextPlaceholder = "{{page_context}}\n{{element_context}}";
   const PAGE_CONTEXT_LIMIT = 6000;
   const ELEMENT_CONTEXT_LIMIT = 2500;
@@ -272,7 +303,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       if (json.length <= limit) return json;
       return `${json.slice(0, limit)}\n...truncated...`;
     } catch {
-      const fallback = typeof value === "object" && value !== null ? "[complex object]" : String(value ?? "");
+      const fallback = (typeof value === "string" || typeof value === "number" || typeof value === "boolean") ? String(value) : "[complex value]";
       if (limit == null) return fallback;
       return fallback.length <= limit ? fallback : `${fallback.slice(0, limit)}...`;
     }
@@ -688,13 +719,17 @@ export function ComponentSettingsPanel(): React.ReactNode {
     );
   }, [cssDiff]);
 
-  const pageContextPreview = useMemo(() => {
+  const pageContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    contextPreviewNonce;
     return buildPageContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
 
-  const elementContextPreview = useMemo(() => {
+  const elementContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    contextPreviewNonce;
     return buildElementContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);
 
@@ -839,7 +874,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         toast(`CSS generated from ${provider}.`, { variant: "success" });
       }
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if ((error as Error)?.name === "AbortError") {
         setCssAiError("Generation cancelled.");
         toast("Generation cancelled.", { variant: "info" });
       } else {
@@ -1070,13 +1105,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return undefined;
   }, [selectedSection, selectedBlock, selectedColumn]);
 
+  const enabledAppEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledAppEmbeds = useMemo<AppEmbedId[]>(() => {
-    if (!settingsQuery.data) return [];
     return parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledAppEmbedsRaw,
       []
     );
-  }, [settingsQuery.data]);
+  }, [enabledAppEmbedsRaw]);
 
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
     const options = APP_EMBED_OPTIONS
@@ -1089,14 +1124,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return [{ label: "No app embeds enabled", value: "" }];
   }, [enabledAppEmbeds]);
 
+  const gridTemplatesRaw = settingsStore.get(GRID_TEMPLATE_SETTINGS_KEY);
   const gridTemplates = useMemo<GridTemplateRecord[]>(() => {
-    if (!settingsQuery.data) return [];
     const stored = parseJsonSetting<unknown>(
-      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      gridTemplatesRaw,
       []
     );
     return normalizeGridTemplates(stored);
-  }, [settingsQuery.data]);
+  }, [gridTemplatesRaw]);
 
   const handleSaveGridTemplate = useCallback(async (): Promise<void> => {
     if (!selectedSection || selectedSection.type !== "Grid") return;
@@ -1196,7 +1231,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         setContentAiError("No valid settings keys found in AI output.");
         return;
       }
-      entries.forEach(([key, value]) => {
+      entries.forEach(([key, value]: [string, unknown]) => {
         if (selectedSection && !selectedBlock && !selectedColumn) {
           handleSectionSettingChangeWithGridColumns(key, value);
         } else if (selectedColumn) {
@@ -1318,7 +1353,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       setContentAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${provider}).`, { variant: "success" });
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if ((error as Error)?.name === "AbortError") {
         setContentAiError("Generation cancelled.");
         toast("Generation cancelled.", { variant: "info" });
       } else {
@@ -1670,7 +1705,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                         onClick={() => void handleSaveGridTemplate()}
                         size="sm"
                         className="h-8"
-                        disabled={updateSetting.isPending || !selectedSection || !settingsQuery.data}
+                        disabled={updateSetting.isPending || !selectedSection}
                       >
                         Save
                       </Button>
@@ -2507,7 +2542,7 @@ function PageSettingsTab(): React.ReactNode {
     return Array.from(new Set(fromApi));
   }, [modelsQuery.data]);
   const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
     [teachingAgentsQuery.data]
   );
   const pageAiTaskOptions = useMemo(
@@ -2581,8 +2616,6 @@ function PageSettingsTab(): React.ReactNode {
     return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
   }, [domainSlugs, search]);
 
-  if (!page) return null;
-
   const handleStatusChange = (status: PageStatus): void => {
     dispatch({ type: "SET_PAGE_STATUS", status });
   };
@@ -2599,7 +2632,7 @@ function PageSettingsTab(): React.ReactNode {
     dispatch({ type: "SET_PAGE_MENU_VISIBILITY", showMenu: checked });
   };
 
-  const showMenuValue = page.showMenu !== false;
+  const showMenuValue = page ? page.showMenu !== false : false;
 
   const applySelectedSlugIds = (ids: string[]): void => {
     const selectedSlugsList = ids
@@ -2666,16 +2699,15 @@ function PageSettingsTab(): React.ReactNode {
     );
   }, [page, state.sections]);
 
+  const pageAiPlaceholder = "{{page_context}}\n{{available_templates}}";
   const templateCatalog = useMemo(
     () =>
       SECTION_TEMPLATES.map(
-        (template) =>
+        (template: (typeof SECTION_TEMPLATES)[number]) =>
           `- ${template.name} (${template.category}): ${template.description}`
       ).join("\n"),
     []
   );
-
-  const pageAiPlaceholder = "{{page_context}}\n{{available_templates}}";
 
   const extractPageAiJson = useCallback((raw: string): Record<string, unknown> | null => {
     const trimmed = raw.trim();
@@ -2804,7 +2836,7 @@ function PageSettingsTab(): React.ReactNode {
       setPageAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${provider}).`, { variant: "success" });
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if ((error as Error)?.name === "AbortError") {
         setPageAiError("Generation cancelled.");
         toast("Generation cancelled.", { variant: "info" });
       } else {
@@ -2870,7 +2902,7 @@ function PageSettingsTab(): React.ReactNode {
 
     const validZones = new Set<PageZone>(["header", "template", "footer"]);
     let inserted = 0;
-    sections.forEach((item) => {
+    sections.forEach((item: unknown) => {
       const entry = typeof item === "string" ? { template: item } : (item as Record<string, unknown>);
       const templateName = typeof entry.template === "string" ? entry.template : typeof entry.name === "string" ? entry.name : "";
       const typeName = typeof entry.type === "string" ? entry.type : "";
@@ -2879,7 +2911,7 @@ function PageSettingsTab(): React.ReactNode {
 
       if (templateName) {
         const template = SECTION_TEMPLATES.find(
-          (tpl) => tpl.name.toLowerCase() === templateName.toLowerCase()
+          (tpl: (typeof SECTION_TEMPLATES)[number]) => tpl.name.toLowerCase() === templateName.toLowerCase()
         );
         if (!template) return;
         const section = template.create();
@@ -2910,6 +2942,8 @@ function PageSettingsTab(): React.ReactNode {
       pageAiAbortRef.current = null;
     }
   }, []);
+
+  if (!page) return null;
 
   return (
     <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">

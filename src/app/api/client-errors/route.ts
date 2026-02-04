@@ -74,6 +74,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 }
 
+const disableClientErrorsRateLimit = process.env.NODE_ENV !== "production";
+
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "client-errors.POST", requireCsrf: false });
+  {
+    source: "client-errors.POST",
+    requireCsrf: false,
+    rateLimitKey: disableClientErrorsRateLimit ? false : "api",
+  }
+);

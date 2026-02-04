@@ -1,11 +1,4 @@
-src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(15,6): error TS2375: Type '{ embedded: boolean; onSaved: (() => void) | undefined; eyebrow: string; backLinkHref: string; backLinkLabel: string; }' is not assignable to type 'AdminPromptEngineValidationPatternsPageProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'onSaved' are incompatible.
-    Type '(() => void) | undefined' is not assignable to type '() => void'.
-      Type 'undefined' is not assignable to type '() => void'.
-src/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage.tsx(529,23): error TS2322: Type '"danger"' is not assignable to type 'SectionPanelVariant'.
-src/features/viewer3d/components/Viewer3D.tsx(18,28): error TS2307: Cannot find module 'three/examples/jsm/loaders/GLTFLoader' or its corresponding type declarations.
-src/shared/ui/data-table.tsx(37,13): error TS2428: All declarations of 'TableMeta' must have identical type parameters.
-src/shared/ui/tree/TreeContextMenu.tsx(61,14): error TS2375: Type '{ children: (string | Element | null)[]; key: string; onSelect: () => void | undefined; disabled: boolean | undefined; className: string; }' is not assignable to type 'Omit<DropdownMenuItemProps & RefAttributes<HTMLDivElement>, "ref">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'disabled' are incompatible.
-    Type 'boolean | undefined' is not assignable to type 'boolean'.
-      Type 'undefined' is not assignable to type 'boolean'.
+src/proxy.ts(14,34): error TS2344: Type 'AppRouteHandlerFn | null' does not satisfy the constraint '(...args: any) => any'.
+  Type 'null' is not assignable to type '(...args: any) => any'.
+src/proxy.ts(16,83): error TS2344: Type 'AppRouteHandlerFn | null' does not satisfy the constraint '(...args: any) => any'.
+  Type 'null' is not assignable to type '(...args: any) => any'.

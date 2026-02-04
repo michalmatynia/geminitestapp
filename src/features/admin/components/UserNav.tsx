@@ -14,23 +14,23 @@ import {
   Switch,
   ThemeToggle as ThemeToggleComponent,
 } from "@/shared/ui";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogOut, LogIn, SparklesIcon } from "lucide-react";
 
 export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } = {}): React.ReactNode {
   const { data: session } = useSession();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
-  const settingsMap = settingsQuery.data;
 
   const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
     if (value === undefined) return fallback;
     return ["true", "1", "yes", "on"].includes(value.toLowerCase());
   };
 
-  const queryPanelEnabled = parseEnabled(settingsMap?.get("query_status_panel_enabled"), false);
-  const queryPanelOpen = parseEnabled(settingsMap?.get("query_status_panel_open"), false);
+  const queryPanelEnabled = parseEnabled(settingsStore.get("query_status_panel_enabled"), false);
+  const queryPanelOpen = parseEnabled(settingsStore.get("query_status_panel_open"), false);
 
   const setQueryPanelSetting = (key: string, value: boolean): void => {
     if (key === "query_status_panel_enabled") {

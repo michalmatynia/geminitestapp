@@ -5,12 +5,14 @@ import { Suspense } from "react";
 import { ThemeProvider } from "@/shared/providers/theme-provider";
 
 import { QueryProvider } from "@/shared/providers/QueryProvider";
+import { SettingsStoreProvider } from "@/shared/providers/SettingsStoreProvider";
 import { BackgroundSyncProvider } from "@/shared/providers/BackgroundSyncProvider";
 import ClientErrorReporter from "@/features/observability";
 import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 import { AppFontProvider } from "@/shared/providers/AppFontProvider";
 import { CsrfProvider } from "@/shared/providers/CsrfProvider";
+import { UrlGuardProvider } from "@/shared/providers/UrlGuardProvider";
 import PageAnalyticsTracker from "@/features/analytics/components/PageAnalyticsTracker";
 
 import "./fonts.css";
@@ -31,26 +33,29 @@ export default function RootLayout({
       <body className={cn("font-sans")}>
         <ToastProvider>
           <QueryProvider>
-            <AppFontProvider />
-            <BackgroundSyncProvider>
-              <SessionProvider>
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="system"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  <CsrfProvider />
-                  <Suspense fallback={null}>
-                    <ClientErrorReporter />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <PageAnalyticsTracker />
-                  </Suspense>
-                  {children}
-                </ThemeProvider>
-              </SessionProvider>
-            </BackgroundSyncProvider>
+            <SettingsStoreProvider>
+              <AppFontProvider />
+              <BackgroundSyncProvider>
+                <SessionProvider>
+                  <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                  >
+                    <CsrfProvider />
+                    <UrlGuardProvider />
+                    <Suspense fallback={null}>
+                      <ClientErrorReporter />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <PageAnalyticsTracker />
+                    </Suspense>
+                    {children}
+                  </ThemeProvider>
+                </SessionProvider>
+              </BackgroundSyncProvider>
+            </SettingsStoreProvider>
           </QueryProvider>
         </ToastProvider>
       </body>

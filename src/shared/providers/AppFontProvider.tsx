@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import {
   APP_FONT_SET_SETTING_KEY,
   getAppFontSet,
@@ -16,7 +16,7 @@ function applyFontSet(id: AppFontSetId): void {
 }
 
 export function AppFontProvider(): null {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
 
   const stored = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -29,14 +29,15 @@ export function AppFontProvider(): null {
     applyFontSet(initial);
   }, [stored]);
 
+  const fontSetting = settingsStore.get(APP_FONT_SET_SETTING_KEY);
+
   useEffect(() => {
-    const id = getAppFontSet(settingsQuery.data?.get(APP_FONT_SET_SETTING_KEY)).id;
+    const id = getAppFontSet(fontSetting).id;
     applyFontSet(id);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LOCAL_STORAGE_KEY, id);
     }
-  }, [settingsQuery.data]);
+  }, [fontSetting]);
 
   return null;
 }
-

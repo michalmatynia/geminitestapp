@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Switch, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { Settings2 } from "lucide-react";
-import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { ICON_LIBRARY_MAP } from "@/features/icons";
 import { triggerButtonsApi } from "@/features/ai/ai-paths/lib";
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 import { useAiPathTriggerEvent } from "@/features/ai/ai-paths/hooks/useAiPathTriggerEvent";
@@ -105,7 +105,7 @@ export function TriggerButtonBar({
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       {buttons.map((button: AiTriggerButtonRecord) => {
-        const Icon = button.iconId ? PRODUCT_ICON_MAP[button.iconId] : null;
+        const Icon = button.iconId ? ICON_LIBRARY_MAP[button.iconId] : null;
         const display = button.display ?? "icon_label";
         const showLabel = display !== "icon";
         const runState = runStates[button.id];

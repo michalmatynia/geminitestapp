@@ -4,23 +4,24 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button, Checkbox, PanelHeader, useToast, SectionPanel } from "@/shared/ui";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { logClientError } from "@/features/observability";
 import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   
+  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const initialEnabled = useMemo<Set<AppEmbedId>>(() => {
-    if (!settingsQuery.data) return new Set<AppEmbedId>();
     const stored = parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledEmbedsRaw,
       []
     );
     return new Set(stored);
-  }, [settingsQuery.data]);
+  }, [enabledEmbedsRaw]);
 
   const [userEnabled, setUserEnabled] = useState<Set<AppEmbedId> | null>(null);
   const enabled: Set<AppEmbedId> = userEnabled ?? initialEnabled;
@@ -52,7 +53,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
     }
   };
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  if (settingsStore.isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-xs text-gray-500">
         Loading app embeds...

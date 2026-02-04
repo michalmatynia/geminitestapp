@@ -7,7 +7,7 @@ import type { PageZone } from "../../types/page-builder";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { SectionNodeItem } from "./ComponentTreeNodeItem";
 import { SectionPicker } from "./SectionPicker";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from "./settings/PageBuilderSettingsPage";
 import { FolderTreePanel, TreeHeader } from "@/shared/ui";
 import { readSectionDragData } from "../../utils/page-builder-dnd";
@@ -26,9 +26,9 @@ export function ComponentTreePanel(): React.ReactNode {
   const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
 
   // Get the settings for showing placeholders
-  const { data: settingsMap } = useSettingsMap();
-  const extractPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-  const sectionDropPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  const settingsStore = useSettingsStore();
+  const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
   // Show extract placeholder only when explicitly set to "true"
   const showExtractPlaceholder = extractPlaceholderValue === "true";
   // Show section drop placeholder by default (true unless explicitly set to "false")

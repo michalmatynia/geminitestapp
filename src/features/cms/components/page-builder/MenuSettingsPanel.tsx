@@ -11,7 +11,8 @@ import {
   PanelHeader,
   SectionPanel,
 } from "@/shared/ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import {
   CMS_MENU_SETTINGS_KEY,
@@ -239,7 +240,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const { theme } = useThemeSettings();
   const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const loadedKeyRef = useRef<string | null>(null);
@@ -262,21 +263,25 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     return getCmsMenuSettingsKey(menuScopeId);
   }, [menuScopeId, zoningEnabled]);
 
+  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
+  const menuSettingsRaw = settingsStore.get(menuKey);
+  const defaultMenuSettingsRaw = settingsStore.get(CMS_MENU_SETTINGS_KEY);
+
   const initialSettings = useMemo((): MenuSettings => {
-    if (!settingsQuery.isFetched) return DEFAULT_MENU_SETTINGS;
+    if (!settingsReady) return DEFAULT_MENU_SETTINGS;
     const stored = parseJsonSetting<Partial<MenuSettings> | null>(
-      settingsQuery.data?.get(menuKey),
+      menuSettingsRaw,
       null
     );
     if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
       const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
-        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+        defaultMenuSettingsRaw,
         null
       );
       return normalizeMenuSettings(fallback);
     }
     return normalizeMenuSettings(stored);
-  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
+  }, [menuKey, settingsReady, menuSettingsRaw, defaultMenuSettingsRaw]);
 
   const [userSettings, setUserSettings] = useState<MenuSettings | null>(null);
   const settings = userSettings ?? initialSettings;
@@ -303,8 +308,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const hasScopedMenu = useMemo((): boolean => {
     if (!zoningEnabled) return false;
     if (menuKey === CMS_MENU_SETTINGS_KEY) return false;
-    return settingsQuery.data?.has(menuKey) ?? false;
-  }, [menuKey, settingsQuery.data, zoningEnabled]);
+    return settingsStore.map.has(menuKey);
+  }, [menuKey, settingsStore.map, zoningEnabled]);
 
   const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]): void => {
     setUserSettings((prev: MenuSettings | null) => ({ ...(prev ?? initialSettings), [key]: value }));
@@ -346,10 +351,10 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   }, [initialSettings]);
 
   useEffect((): void => {
-    if (!settingsQuery.isFetched) return;
+    if (!settingsReady) return;
     hasHydratedRef.current = true;
     loadedKeyRef.current = menuKey;
-  }, [menuKey, settingsQuery.isFetched]);
+  }, [menuKey, settingsReady]);
 
   useEffect((): void => {
     if (!hasHydratedRef.current) return;

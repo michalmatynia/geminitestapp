@@ -1,0 +1,1 @@
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(10,61): error TS6133: 'SettingRecord' is declared but its value is never read.

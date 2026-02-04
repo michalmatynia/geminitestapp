@@ -32,6 +32,7 @@ import {
   type VectorToolMode,
 } from "@/features/vector-drawing";
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import {
   Camera,
   Folder,
@@ -59,7 +60,7 @@ import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "@/fe
 import { validateProgrammaticPrompt, type PromptValidationIssue, type PromptValidationSuggestion } from "@/features/prompt-engine/prompt-validator";
 import { formatProgrammaticPrompt } from "@/features/prompt-engine/prompt-formatter";
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from "../utils/param-ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings } from "../utils/studio-settings";
@@ -401,13 +402,6 @@ function SlotTree({
   const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
   const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
 
-  useEffect(() => {
-    setExpanded(new Set(["root"]));
-    setDragOverPath(null);
-    setDraggedSlotId(null);
-    setDraggedFolderPath(null);
-  }, [projectId]);
-
   const toggle = useCallback((id: string): void => {
     setExpanded((prev: Set<string>) => {
       const next = new Set(prev);
@@ -608,7 +602,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
@@ -669,19 +663,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [_maskGenOpen, setMaskGenOpen] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
 
+  const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
+  const studioSettingsRaw = settingsStore.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const openaiModelFallback = settingsStore.get("openai_model");
   const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY)),
-    [settingsQuery.data]
+    () => parsePromptEngineSettings(promptEngineRaw),
+    [promptEngineRaw]
   );
   const promptValidationSettings = promptEngineSettings.promptValidation;
 
   useEffect(() => {
     if (settingsLoaded) return;
-    if (!settingsQuery.data) return;
+    if (settingsStore.isLoading) return;
 
-    const stored = parseImageStudioSettings(settingsQuery.data.get(IMAGE_STUDIO_SETTINGS_KEY));
-    const promptEngineStored = parsePromptEngineSettings(settingsQuery.data.get(PROMPT_ENGINE_SETTINGS_KEY));
-    const openaiModelFallback = settingsQuery.data.get("openai_model");
+    const stored = parseImageStudioSettings(studioSettingsRaw);
+    const promptEngineStored = parsePromptEngineSettings(promptEngineRaw);
 
     const hydrated: ImageStudioSettings =
       openaiModelFallback && stored.targetAi.openai.model === defaultImageStudioSettings.targetAi.openai.model
@@ -702,7 +698,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
-  }, [settingsLoaded, settingsQuery.data]);
+  }, [settingsLoaded, settingsStore.isLoading, studioSettingsRaw, promptEngineRaw, openaiModelFallback]);
 
   useEffect(() => {
     const nextTab = normalizeStudioTab(searchParams?.get("tab"));
@@ -822,6 +818,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     () => (projectId ? `${SLOT_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null),
     [projectId]
   );
+  const treeSettingsRaw = treeKey ? settingsStore.get(treeKey) : undefined;
 
   const slotsQuery = useQuery({
     queryKey: ["image-studio", "slots", projectId],
@@ -861,10 +858,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
       setVirtualFolders([]);
       return;
     }
-    if (!settingsQuery.data) return;
+    if (settingsStore.isLoading) return;
     if (virtualFolders.length > 0) return;
 
-    const storedFolders = parseSlotFoldersSetting(settingsQuery.data.get(treeKey));
+    const storedFolders = parseSlotFoldersSetting(treeSettingsRaw);
     if (storedFolders.length > 0) {
       setVirtualFolders(storedFolders);
       return;
@@ -886,7 +883,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           logClientError(error, { context: { source: "AdminImageStudioPage", action: "seedSlotsTree" } });
         });
     }
-  }, [projectId, settingsQuery.data, slotsQuery.data, treeKey, updateSetting, virtualFolders.length]);
+  }, [projectId, settingsStore.isLoading, treeSettingsRaw, slotsQuery.data, treeKey, updateSetting, virtualFolders.length]);
 
   const persistFolders = useCallback(
     async (nextFolders: string[]): Promise<void> => {
@@ -1878,7 +1875,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     void updateSetting.mutateAsync({
       key: PROMPT_ENGINE_SETTINGS_KEY,
       value: serializeSetting(nextSettings),
-    }).catch((error) => {
+    }).catch((error: unknown) => {
       logClientError(error, { context: { source: "AdminImageStudioPage", action: "savePromptValidationRules" } });
     });
   }, [promptEngineSettings, promptValidationSettings, updateSetting]);
@@ -1909,7 +1906,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         value: serializeSetting(studioSettings),
       });
       toast("Image Studio settings saved.", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveSettings" } });
       toast("Failed to save Image Studio settings.", { variant: "error" });
     }
@@ -1925,8 +1922,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const handleRefreshSettings = useCallback((): void => {
     setSettingsLoaded(false);
-    void settingsQuery.refetch();
-  }, [settingsQuery]);
+    settingsStore.refetch();
+  }, [settingsStore]);
 
   const validationIssues: ParamIssue[] = useMemo(() => {
     if (!paramsState || !paramSpecs) return [];
@@ -2104,10 +2101,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
               variant="outline"
               size="sm"
               onClick={handleRefreshSettings}
-              disabled={settingsQuery.isFetching}
+              disabled={settingsStore.isFetching}
               title="Reload settings"
             >
-              <RefreshCcw className={cn("mr-2 size-4", settingsQuery.isFetching ? "animate-spin" : "")} />
+              <RefreshCcw className={cn("mr-2 size-4", settingsStore.isFetching ? "animate-spin" : "")} />
               Refresh
             </Button>
             <Button
@@ -2130,7 +2127,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       />
 
       <div className="p-3 space-y-4">
-        {settingsQuery.isLoading && !settingsLoaded ? (
+        {settingsStore.isLoading && !settingsLoaded ? (
           <div className="text-xs text-gray-500">Loading settings…</div>
         ) : null}
 
@@ -2273,7 +2270,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   void updateSetting.mutateAsync({
                     key: PROMPT_ENGINE_SETTINGS_KEY,
                     value: serializeSetting(nextSettings),
-                  }).catch((error) => {
+                  }).catch((error: unknown) => {
                     logClientError(error, { context: { source: "AdminImageStudioPage", action: "togglePromptValidation" } });
                     toast("Failed to update prompt validator.", { variant: "error" });
                   });
@@ -3479,6 +3476,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
           <div className="flex-1 overflow-hidden">
             <SlotTree
+              key={projectId}
               projectId={projectId}
               slots={slots}
               folders={folders}
@@ -3501,7 +3499,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         <SectionPanel className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
           <PanelHeader
             title="Preview"
-            subtitle={!isFocusMode ? (selectedSlot?.name || "—") : undefined}
+            {...(!isFocusMode ? { subtitle: selectedSlot?.name || "—" } : {})}
             actions={(
               <div className="flex items-center gap-2">
                 {!isFocusMode ? (

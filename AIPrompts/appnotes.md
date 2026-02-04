@@ -2,13 +2,24 @@
   - JSON Mapper node input/output changes
   - Node state autosave (selections + UI)
   - Node UI/UX improvements (modal, validation, extractor)
- Runtime performance/queue handling
+
   1. Regex node: proposal modal + accept/decline behavior
   2. Extractor modal: validation/extraction controls + results UI
   3. JSON Mapper node: input/output fields + result routing
   4. Node config modal: layout/scroll/sections improvements
   5. Validation patterns UI: lock/edit/export/import flows
   
+  2. More customization controls (layout, typography, media, effects)
+  3. Animation/interaction upgrades
+
+ 
+  1. Add a one-click “Generate + Save scheme” button directly in the schemes
+     list.
+  2. Add a dedicated /api/cms/theme-ai/stream endpoint and persist AI prompts
+     per scheme.
+
+React error overlay ? 
+
 
 AI Paths need to be tested, w IMage studio image upload nie chce cos dzialac i CMS widok obrazów jest nie teges
 

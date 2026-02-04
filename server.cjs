@@ -1,9 +1,12 @@
 const { createServer } = require('http');
-const { parse } = require('url');
 const { createHash } = require('crypto');
-const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
+if (dev && !process.env.NEXT_DISABLE_TURBOPACK) {
+  process.env.NEXT_DISABLE_TURBOPACK = '1';
+}
+
+const next = require('next');
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
@@ -30,7 +33,151 @@ const SCRAPER_GUARD = createScraperGuard({
 
 app.prepare().then(() => {
   const server = createServer((req, res) => {
-    const parsedUrl = parse(req.url, true);
+    const debugResponseHeaders = process.env.DEBUG_RESPONSE_HEADERS === 'true';
+    const originalSetHeader = res.setHeader.bind(res);
+    const normalizeRedirectHeader = (value) => {
+      if (value && typeof value === 'object' && typeof value.toString === 'function') {
+        value = value.toString();
+      }
+      if (typeof value !== 'string') return value;
+      if (value.startsWith('http:/') && !value.startsWith('http://')) {
+        return value.replace('http:/', 'http://');
+      }
+      if (value.startsWith('https:/') && !value.startsWith('https://')) {
+        return value.replace('https:/', 'https://');
+      }
+      return value;
+    };
+    res.setHeader = (name, value) => {
+      if (typeof name === 'string') {
+        const key = name.toLowerCase();
+        if (key === 'location' || key === 'refresh') {
+          if (debugResponseHeaders) {
+            console.warn('[response-header]', { name, value, stack: new Error().stack });
+          }
+          if (key === 'refresh') {
+            return;
+          }
+          if (Array.isArray(value)) {
+            return originalSetHeader(name, value.map(normalizeRedirectHeader));
+          }
+          return originalSetHeader(name, normalizeRedirectHeader(value));
+        }
+      }
+      return originalSetHeader(name, value);
+    };
+    const originalWriteHead = res.writeHead.bind(res);
+    res.writeHead = (statusCode, statusMessage, headers) => {
+      let nextStatusMessage = statusMessage;
+      let nextHeaders = headers;
+      if (
+        nextHeaders === undefined &&
+        nextStatusMessage &&
+        typeof nextStatusMessage === 'object'
+      ) {
+        nextHeaders = nextStatusMessage;
+        nextStatusMessage = undefined;
+      }
+      if (nextHeaders && typeof nextHeaders === 'object') {
+        if (nextHeaders.Location) nextHeaders.Location = normalizeRedirectHeader(nextHeaders.Location);
+        if (nextHeaders.location) nextHeaders.location = normalizeRedirectHeader(nextHeaders.location);
+        if (nextHeaders.Refresh) delete nextHeaders.Refresh;
+        if (nextHeaders.refresh) delete nextHeaders.refresh;
+      }
+      if (
+        debugResponseHeaders &&
+        typeof statusCode === 'number' &&
+        statusCode >= 300 &&
+        statusCode < 400 &&
+        statusCode !== 304
+      ) {
+        console.warn('[response-writeHead]', {
+          statusCode,
+          headers: nextHeaders,
+          stack: new Error().stack,
+        });
+      }
+      return originalWriteHead(statusCode, nextStatusMessage, nextHeaders);
+    };
+    const host = req.headers.host || 'localhost';
+    const baseUrl = `http://${host}`;
+    const originalRawUrl = req.url || '/';
+    let rawUrl = originalRawUrl;
+    if (/^https?:\/\//i.test(rawUrl)) {
+      try {
+        const absoluteUrl = new URL(rawUrl);
+        rawUrl = `${absoluteUrl.pathname}${absoluteUrl.search}${absoluteUrl.hash}`;
+      } catch {
+        rawUrl = '/';
+      }
+    }
+    const hostPrefix = `/${host}`;
+    while (rawUrl.startsWith(hostPrefix)) {
+      rawUrl = rawUrl.slice(hostPrefix.length) || '/';
+    }
+    if (rawUrl.startsWith(host)) {
+      rawUrl = rawUrl.slice(host.length) || '/';
+    }
+    while (rawUrl.startsWith(`//${host}`)) {
+      rawUrl = rawUrl.slice(`//${host}`.length) || '/';
+    }
+    const normalizedUrl = rawUrl || '/';
+    const shouldNormalize =
+      originalRawUrl.startsWith(hostPrefix) ||
+      originalRawUrl.startsWith(`//${host}`) ||
+      originalRawUrl === host ||
+      originalRawUrl.startsWith(`${host}/`);
+    if (shouldNormalize && normalizedUrl !== originalRawUrl) {
+      console.warn('[url-normalize] rewrite', {
+        original: originalRawUrl,
+        normalized: normalizedUrl,
+        host,
+        referer: req.headers.referer,
+        userAgent: req.headers['user-agent'],
+      });
+      res.statusCode = 307;
+      res.setHeader('Location', normalizedUrl);
+      res.end();
+      return;
+    }
+    if (normalizedUrl !== originalRawUrl) {
+      req.url = normalizedUrl;
+    }
+    if (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`)) {
+      console.warn('[url-normalize] received', {
+        original: originalRawUrl,
+        host,
+        referer: req.headers.referer,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+    if (normalizedUrl === '/__debug') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.end('ok');
+      return;
+    }
+    if (normalizedUrl === '/' && originalRawUrl !== '/') {
+      console.warn('[root-request]', {
+        url: originalRawUrl,
+        normalized: normalizedUrl,
+        host,
+        referer: req.headers.referer,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+    const url = new URL(normalizedUrl, baseUrl);
+    const parsedUrl = {
+      href: url.href,
+      pathname: url.pathname,
+      search: url.search,
+      query: Object.fromEntries(url.searchParams.entries()),
+      hash: url.hash,
+      host: url.host,
+      hostname: url.hostname,
+      protocol: url.protocol,
+      port: url.port,
+    };
     const remoteAddress = req.socket?.remoteAddress;
     if (remoteAddress) {
       if (!req.headers['x-forwarded-for']) {
@@ -50,7 +197,15 @@ app.prepare().then(() => {
       res.end(guardResult.message);
       return;
     }
-    handle(req, res, parsedUrl);
+    if (parsedUrl.pathname === '/') {
+      app.render(req, res, '/').catch((error) => {
+        console.error('[root-render] failed', error);
+        res.statusCode = 500;
+        res.end('Internal Server Error');
+      });
+      return;
+    }
+    handle(req, res);
   });
 
   server.listen(port, (err) => {

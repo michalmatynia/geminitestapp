@@ -10,7 +10,7 @@ type SettingsCache = {
   fetchedAt: number;
 };
 
-const SETTINGS_CACHE_TTL_MS = 5000;
+const SETTINGS_CACHE_TTL_MS = 30_000;
 let settingsCache: SettingsCache | null = null;
 let settingsInflight: Promise<SettingRecord[]> | null = null;
 

@@ -1,15 +1,14 @@
 "use client";
 
 import { useToast, Input, TreeContextMenu } from "@/shared/ui";
+import type { TreeContextMenuItem } from "@/shared/ui";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
 
 import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderNodeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { NoteItem } from "./NoteItem";
-import { TreeRow } from "./TreeRow";
-import { TreeCaret } from "./TreeCaret";
-import { TreeActionButton, TreeActionSlot } from "./TreeActions";
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot } from "@/shared/ui";
 import { getFolderDragId, getNoteDragId, hasDragType, resolveVerticalDropPosition, setFolderDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
 
 
@@ -58,7 +57,7 @@ export const FolderNode = React.memo(function FolderNode({
   const isExpanded = expandedFolderIds.has(folder.id);
   const isSelected = selectedFolderId === folder.id && !selectedNoteId;
   const isRenaming = renamingFolderId === folder.id;
-  const contextMenuItems = useMemo(
+  const contextMenuItems = useMemo<TreeContextMenuItem[]>(
     () => [
       { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folder.id) },
       { id: "new-folder", label: "New folder", icon: <FolderPlus className="size-3.5" />, onSelect: (): void => onCreateSubfolder(folder.id) },

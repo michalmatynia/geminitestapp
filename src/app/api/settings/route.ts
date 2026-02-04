@@ -6,7 +6,11 @@ import { WithId } from "mongodb";
 
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { APP_DB_PROVIDER_SETTING_KEY, getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import {
+  APP_DB_PROVIDER_SETTING_KEY,
+  getAppDbProvider,
+  invalidateAppDbProviderCache,
+} from "@/shared/lib/db/app-db-provider";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { internalError } from "@/shared/errors/app-error";
@@ -15,10 +19,18 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
+import {
+  SettingRecord,
+  getCachedSettings,
+  setCachedSettings,
+  clearSettingsCache,
+  getSettingsCacheStats,
+  isSettingsCacheDebugEnabled,
+  getSettingsInflight,
+  setSettingsInflight,
+} from "@/shared/lib/settings-cache";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
-
-type SettingRecord = { key: string; value: string };
 
 type SettingDocument = {
   key: string;
@@ -55,9 +67,6 @@ const settingSchema = z.object({
   value: z.string(),
 });
 
-const SETTINGS_CACHE_TTL_MS = 5_000;
-let settingsCache: { data: SettingRecord[]; ts: number } | null = null;
-let settingsInflight: Promise<SettingRecord[]> | null = null;
 
 const listMongoSettings = async (): Promise<SettingRecord[]> => {
   if (!process.env.MONGODB_URI) return [];
@@ -94,22 +103,28 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
   try {
-    const now = Date.now();
-    if (settingsCache && now - settingsCache.ts < SETTINGS_CACHE_TTL_MS) {
-      return NextResponse.json(settingsCache.data, {
-        headers: { "Cache-Control": "private, max-age=5" },
+    if (req.nextUrl.searchParams.get("debug") === "1" && isSettingsCacheDebugEnabled()) {
+      return NextResponse.json(getSettingsCacheStats(), {
+        headers: { "Cache-Control": "no-store" },
       });
     }
-    if (settingsInflight) {
-      const data = await settingsInflight;
+    const cached = getCachedSettings();
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=30" },
+      });
+    }
+    const inflight = getSettingsInflight();
+    if (inflight) {
+      const data = await inflight;
       return NextResponse.json(data, {
-        headers: { "Cache-Control": "private, max-age=5" },
+        headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=30" },
       });
     }
 
     const provider = await getAppDbProvider();
     const hasMongo = Boolean(process.env.MONGODB_URI);
-    settingsInflight = (async (): Promise<SettingRecord[]> => {
+    const inflightPromise = (async (): Promise<SettingRecord[]> => {
       const prismaSettings: SettingRecord[] = [];
       if (canUsePrismaSettings(provider)) {
         const settings = await prisma.setting.findMany({
@@ -145,14 +160,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           keys: settings.map((setting: SettingRecord) => setting.key),
         });
       }
-      settingsCache = { data: settings, ts: Date.now() };
+      setCachedSettings(settings);
       return settings;
     })();
+    setSettingsInflight(inflightPromise);
 
-    const data = await settingsInflight;
-    settingsInflight = null;
+    const data = await inflightPromise;
+    setSettingsInflight(null);
     return NextResponse.json(data, {
-      headers: { "Cache-Control": "private, max-age=5" },
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=30" },
     });
   } catch (error) {
     await ErrorSystem.captureException(error, {
@@ -172,8 +188,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }
   try {
-    settingsCache = null;
-    settingsInflight = null;
+    clearSettingsCache();
+    setSettingsInflight(null);
     const parsed = await parseJsonBody(req, settingSchema, {
       logPrefix: "settings.POST",
     });
@@ -209,6 +225,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         { request: req, source: "settings.POST" }
       );
     }
+    if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
+      invalidateAppDbProviderCache();
+    }
     if (shouldLog()) {
       await ErrorSystem.logInfo("[settings] saved", { service: "api/settings", key: setting.key });
     }
@@ -226,9 +245,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 }
 
+const disableSettingsRateLimit = process.env.NODE_ENV !== "production";
+
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "settings.GET" });
+  { source: "settings.GET", rateLimitKey: disableSettingsRateLimit ? false : "api" }
+);
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "settings.POST" });
+  { source: "settings.POST", rateLimitKey: disableSettingsRateLimit ? false : "write" }
+);

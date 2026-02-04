@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Brain } from "lucide-react";
 
 import {
@@ -107,7 +107,7 @@ const AssignmentEditor = ({
           type="checkbox"
           className="h-3 w-3 rounded border-gray-600"
           checked={assignment.enabled}
-          onChange={(e) => updateField({ enabled: e.target.checked })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ enabled: e.target.checked })}
           disabled={!!readOnly}
         />
         Enabled
@@ -118,14 +118,14 @@ const AssignmentEditor = ({
           <Label className="text-xs text-gray-400">Provider</Label>
           <Select
             value={assignment.provider}
-            onValueChange={(value) => updateField({ provider: value as AiBrainProvider })}
+            onValueChange={(value: string) => updateField({ provider: value as AiBrainProvider })}
             disabled={!!readOnly}
           >
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select provider" />
             </SelectTrigger>
             <SelectContent>
-              {providerOptions.map((opt) => (
+              {providerOptions.map((opt: { value: AiBrainProvider; label: string }) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -137,7 +137,7 @@ const AssignmentEditor = ({
           <Label className="text-xs text-gray-400">Model ID</Label>
           <Input
             value={assignment.modelId}
-            onChange={(e) => updateField({ modelId: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ modelId: e.target.value })}
             placeholder="gpt-4o-mini"
             disabled={!!readOnly || assignment.provider !== "model"}
           />
@@ -146,7 +146,7 @@ const AssignmentEditor = ({
           <Label className="text-xs text-gray-400">Agent ID</Label>
           <Input
             value={assignment.agentId}
-            onChange={(e) => updateField({ agentId: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ agentId: e.target.value })}
             placeholder="agent_xxx"
             disabled={!!readOnly || assignment.provider !== "agent"}
           />
@@ -159,7 +159,7 @@ const AssignmentEditor = ({
             max={2}
             step={0.1}
             value={assignment.temperature ?? ""}
-            onChange={(e) => updateField({ temperature: e.target.value === "" ? undefined : Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ temperature: e.target.value === "" ? undefined : Number(e.target.value) })}
             disabled={!!readOnly}
           />
         </div>
@@ -171,7 +171,7 @@ const AssignmentEditor = ({
             max={8192}
             step={1}
             value={assignment.maxTokens ?? ""}
-            onChange={(e) => updateField({ maxTokens: e.target.value === "" ? undefined : Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ maxTokens: e.target.value === "" ? undefined : Number(e.target.value) })}
             disabled={!!readOnly}
           />
         </div>
@@ -182,7 +182,7 @@ const AssignmentEditor = ({
         <Textarea
           className="min-h-[72px] text-xs"
           value={assignment.notes ?? ""}
-          onChange={(e) => updateField({ notes: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField({ notes: e.target.value })}
           placeholder="Optional notes for this assignment"
           disabled={!!readOnly}
         />
@@ -223,22 +223,22 @@ export function AdminBrainPage(): React.JSX.Element {
     });
   }
 
-  const effectiveAssignments = useMemo(() => {
-    return FEATURES.reduce<Record<AiBrainFeature, AiBrainAssignment>>((acc, feature) => {
+  const effectiveAssignments = useMemo((): Record<AiBrainFeature, AiBrainAssignment> => {
+    return FEATURES.reduce<Record<AiBrainFeature, AiBrainAssignment>>((acc: Record<AiBrainFeature, AiBrainAssignment>, feature: FeatureConfig) => {
       acc[feature.key] = resolveBrainAssignment(settings, feature.key);
       return acc;
     }, {} as Record<AiBrainFeature, AiBrainAssignment>);
   }, [settings]);
 
   const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {
-    setSettings((prev) => ({
+    setSettings((prev: AiBrainSettings) => ({
       ...prev,
       defaults: sanitizeBrainAssignment(next),
     }));
   }, []);
 
   const handleOverrideChange = useCallback((feature: AiBrainFeature, next: AiBrainAssignment): void => {
-    setSettings((prev) => ({
+    setSettings((prev: AiBrainSettings) => ({
       ...prev,
       assignments: {
         ...prev.assignments,
@@ -248,15 +248,15 @@ export function AdminBrainPage(): React.JSX.Element {
   }, []);
 
   const toggleOverride = useCallback((feature: AiBrainFeature, enabled: boolean): void => {
-    setOverridesEnabled((prev) => ({ ...prev, [feature]: enabled }));
+    setOverridesEnabled((prev: Record<AiBrainFeature, boolean>) => ({ ...prev, [feature]: enabled }));
     if (!enabled) {
-      setSettings((prev) => {
+      setSettings((prev: AiBrainSettings) => {
         const nextAssignments = { ...prev.assignments };
         delete nextAssignments[feature];
         return { ...prev, assignments: nextAssignments };
       });
     } else {
-    setSettings((prev) => ({
+    setSettings((prev: AiBrainSettings) => ({
       ...prev,
       assignments: {
         ...prev.assignments,
@@ -305,13 +305,6 @@ export function AdminBrainPage(): React.JSX.Element {
     });
   }, []);
 
-  useEffect(() => {
-    const raw = settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY);
-    if (!raw && settingsQuery.isSuccess && initializedAt === settingsQuery.dataUpdatedAt) {
-      setSettings(defaultBrainSettings);
-    }
-  }, [initializedAt, settingsQuery.data, settingsQuery.dataUpdatedAt, settingsQuery.isSuccess]);
-
   return (
     <div className="space-y-4">
       <SectionHeader
@@ -346,7 +339,7 @@ export function AdminBrainPage(): React.JSX.Element {
       </SectionPanel>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {FEATURES.map((feature) => {
+        {FEATURES.map((feature: FeatureConfig) => {
           const overrideEnabled = overridesEnabled[feature.key];
           const assignment = overrideEnabled
             ? settings.assignments[feature.key] ?? effectiveAssignments[feature.key]
@@ -363,7 +356,7 @@ export function AdminBrainPage(): React.JSX.Element {
                     type="checkbox"
                     className="h-3 w-3 rounded border-gray-600"
                     checked={overrideEnabled}
-                    onChange={(e) => toggleOverride(feature.key, e.target.checked)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => toggleOverride(feature.key, e.target.checked)}
                   />
                   Override
                 </label>
@@ -372,7 +365,7 @@ export function AdminBrainPage(): React.JSX.Element {
               <div className="mt-3">
                 <AssignmentEditor
                   assignment={assignment}
-                  onChange={(next) => handleOverrideChange(feature.key, next)}
+                  onChange={(next: AiBrainAssignment) => handleOverrideChange(feature.key, next)}
                   readOnly={!overrideEnabled}
                 />
               </div>

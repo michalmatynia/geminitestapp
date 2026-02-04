@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Button, Input, Label, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import type { AiNode, Edge, ModelConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
 import { DEFAULT_MODELS, toNumber } from "@/features/ai/ai-paths/lib";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from "@/features/ai/brain";
 
 type ModelNodeConfigSectionProps = {
@@ -22,12 +22,11 @@ export function ModelNodeConfigSection({
   modelOptions,
   updateSelectedNodeConfig,
 }: ModelNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "model") return null;
-
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const brainSettingsRaw = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
   const brainSettings = useMemo(
-    () => parseBrainSettings(settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY)),
-    [settingsQuery.data]
+    () => parseBrainSettings(brainSettingsRaw),
+    [brainSettingsRaw]
   );
   const brainAssignment = useMemo(
     () => resolveBrainAssignment(brainSettings, "ai_paths"),
@@ -35,15 +34,22 @@ export function ModelNodeConfigSection({
   );
   const brainAppliedRef = useRef<string | null>(null);
 
-  const modelConfig: ModelConfig = selectedNode.config?.model ?? {
-    modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
-    temperature: 0.7,
-    maxTokens: 800,
-    vision: selectedNode.inputs.includes("images"),
-  };
+  const modelConfig: ModelConfig = useMemo(
+    () =>
+      selectedNode.config?.model ?? {
+        modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
+        temperature: 0.7,
+        maxTokens: 800,
+        vision: selectedNode.inputs.includes("images"),
+      },
+    [selectedNode.config?.model, selectedNode.inputs]
+  );
+
+  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
 
   useEffect(() => {
-    if (!settingsQuery.isSuccess) return;
+    if (!settingsReady) return;
+    if (selectedNode.type !== "model") return;
     if (!brainAssignment.enabled || brainAssignment.provider !== "model") return;
     if (!brainAssignment.modelId) return;
     if (brainAppliedRef.current === selectedNode.id) return;
@@ -65,9 +71,12 @@ export function ModelNodeConfigSection({
     brainAssignment.temperature,
     modelConfig,
     selectedNode.id,
-    settingsQuery.isSuccess,
+    selectedNode.type,
+    settingsReady,
     updateSelectedNodeConfig,
   ]);
+
+  if (selectedNode.type !== "model") return null;
 
   const mergedModelOptions =
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)

@@ -1,13 +1,13 @@
 "use client";
 
 import { useToast, Input, TreeContextMenu } from "@/shared/ui";
+import type { TreeContextMenuItem } from "@/shared/ui";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { FileText, Edit2, Copy, Trash2, FilePlus } from "lucide-react";
 
 import type { NoteItemProps } from "@/features/foldertree/types/folder-tree-ui";
 import { getNoteDragId, hasDragType, setNoteDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
-import { TreeRow } from "./TreeRow";
-import { TreeActionButton, TreeActionSlot } from "./TreeActions";
+import { TreeRow, TreeActionButton, TreeActionSlot } from "@/shared/ui";
 
 
 export const NoteItem = React.memo(function NoteItem({
@@ -31,7 +31,7 @@ export const NoteItem = React.memo(function NoteItem({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(note.title);
   const [isDragOver, setIsDragOver] = useState(false);
-  const contextMenuItems = useMemo(
+  const contextMenuItems = useMemo<TreeContextMenuItem[]>(
     () => [
       { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folderId) },
       { id: "duplicate", label: "Duplicate", icon: <Copy className="size-3.5" />, onSelect: (): void => onDuplicateNote(note.id) },

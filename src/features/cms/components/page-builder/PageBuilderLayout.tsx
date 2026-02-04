@@ -74,12 +74,12 @@ function PageBuilderInner(): React.ReactNode {
   useEffect((): (() => void) | void => {
     if (typeof window === "undefined") return undefined;
     const handler = (event: Event): void => {
-      const detail = (event as CustomEvent).detail ?? {};
+      const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
       if (state.leftPanelCollapsed) {
         dispatch({ type: "TOGGLE_LEFT_PANEL" });
       }
       setLeftPanelMode("theme");
-      window.requestAnimationFrame(() => {
+      window.requestAnimationFrame((): void => {
         window.dispatchEvent(new CustomEvent("cms-theme-open", { detail }));
       });
     };

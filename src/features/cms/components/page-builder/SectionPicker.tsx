@@ -7,7 +7,7 @@ import type { BlockInstance, PageZone, SectionDefinition } from "../../types/pag
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from "./grid-templates";
 
@@ -32,21 +32,21 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const [isOpen, setIsOpen] = useState(false);
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
   const { dispatch } = usePageBuilder();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
   const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement"]), []);
   const gridAllowed = useMemo(
     () => sectionTypes.some((def: SectionDefinition) => def.type === "Grid"),
     [sectionTypes]
   );
+  const gridTemplatesRaw = settingsStore.get(GRID_TEMPLATE_SETTINGS_KEY);
   const savedGridTemplates = useMemo<GridTemplateRecord[]>(() => {
-    if (!settingsQuery.data) return [];
     const stored = parseJsonSetting<unknown>(
-      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      gridTemplatesRaw,
       []
     );
     return normalizeGridTemplates(stored);
-  }, [settingsQuery.data]);
+  }, [gridTemplatesRaw]);
   const groupedTemplates = useMemo(() => {
     const base = getTemplatesByCategory(zone);
     if (!gridAllowed || savedGridTemplates.length === 0) return base;

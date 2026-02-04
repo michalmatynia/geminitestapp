@@ -24,7 +24,8 @@ import {
   useDeleteSlug,
 } from "@/features/cms/hooks/useCmsQueries";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import { logClientError } from "@/shared/utils/observability/client-error-logger";
@@ -45,14 +46,15 @@ export default function SlugsPage(): React.JSX.Element {
     setActiveDomainId,
     zoningEnabled,
   } = useCmsDomainSelection({ initialDomainId: domainIdParam ?? null });
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
+  const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
     () =>
       normalizeCmsDomainSettings(
-        parseJsonSetting(settingsQuery.data?.get(CMS_DOMAIN_SETTINGS_KEY), null)
+        parseJsonSetting(domainSettingsRaw, null)
       ),
-    [settingsQuery.data]
+    [domainSettingsRaw]
   );
   const zoningToggleValue = domainSettings.zoningEnabled;
   const [attachOpen, setAttachOpen] = useState(false);

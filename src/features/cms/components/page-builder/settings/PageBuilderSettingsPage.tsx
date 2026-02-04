@@ -2,14 +2,17 @@
 
 import React, { useState } from "react";
 import { Card, Checkbox, Label, Button, useToast } from "@/shared/ui";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { Loader2 } from "lucide-react";
 
 export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = "page_builder_show_extract_placeholder";
 export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY = "page_builder_show_section_drop_placeholder";
 
 export function PageBuilderSettingsPage(): React.JSX.Element {
-  const { data: settingsMap, isLoading } = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const settingsMap = settingsStore.map;
+  const isLoading = settingsStore.isLoading;
   const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
 

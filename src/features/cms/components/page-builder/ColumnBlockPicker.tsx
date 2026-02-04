@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import type { BlockDefinition } from "../../types/page-builder";
 import { getBlockDefinition, getColumnAllowedBlockTypes } from "./section-registry";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { PickerDropdown, type PickerGroup } from "./PickerDropdown";
@@ -16,14 +16,14 @@ interface ColumnBlockPickerProps {
 }
 
 export function ColumnBlockPicker({ onSelect, allowedBlockTypes }: ColumnBlockPickerProps): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
-    if (!settingsQuery.data) return [];
     return parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledEmbedsRaw,
       []
     );
-  }, [settingsQuery.data]);
+  }, [enabledEmbedsRaw]);
   const hasAppEmbeds = enabledEmbeds.length > 0;
   const resolvedTypes = allowedBlockTypes
     ? allowedBlockTypes

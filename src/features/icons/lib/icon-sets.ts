@@ -66,7 +66,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const PRODUCT_ICONS = [
+export const ICON_LIBRARY = [
   { id: "activity", icon: Activity, label: "Activity" },
   { id: "airplay", icon: Airplay, label: "Airplay" },
   { id: "alarm-clock", icon: AlarmClock, label: "Alarm Clock" },
@@ -133,8 +133,8 @@ export const PRODUCT_ICONS = [
   { id: "pin", icon: Pin, label: "Pin" },
 ] as const;
 
-export const PRODUCT_ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
-  PRODUCT_ICONS.map(({ id, icon }: { id: string; icon: LucideIcon }) => [id, icon])
-) as Record<string, LucideIcon>;
+export type IconLibraryId = (typeof ICON_LIBRARY)[number]["id"];
 
-export type ProductIconId = (typeof PRODUCT_ICONS)[number]["id"];
+export const ICON_LIBRARY_MAP: Record<string, LucideIcon> = Object.fromEntries(
+  ICON_LIBRARY.map(({ id, icon }: { id: string; icon: LucideIcon }) => [id, icon])
+) as Record<string, LucideIcon>;

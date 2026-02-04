@@ -28,9 +28,9 @@ export type AiBrainSettings = {
   assignments: Partial<Record<AiBrainFeature, AiBrainAssignment>>;
 };
 
-const numberField = (min: number, max: number) =>
+const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
   z.preprocess(
-    (value) => {
+    (value: unknown) => {
       if (value === "" || value === null || value === undefined) return undefined;
       if (typeof value === "string") {
         const parsed = Number(value);

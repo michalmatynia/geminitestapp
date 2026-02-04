@@ -804,7 +804,7 @@ function SlideshowFrameNodeItem({
         icon: <Trash2 className="size-3.5" />,
         tone: "danger",
         disabled: !onRemoveBlock,
-        onSelect: () => {
+        onSelect: (): void => {
           if (onRemoveBlock) onRemoveBlock(sectionId, frame.id);
         },
       },
@@ -1065,7 +1065,7 @@ function RowNodeItem({
         icon: <Trash2 className="size-3.5" />,
         tone: "danger",
         disabled: !canRemoveRow,
-        onSelect: () => {
+        onSelect: (): void => {
           if (canRemoveRow) onRemoveGridRow(sectionId, row.id);
         },
       },
@@ -1382,7 +1382,7 @@ function ColumnNodeItem({
         icon: <Minus className="size-3.5" />,
         tone: "danger",
         disabled: !canRemove,
-        onSelect: () => {
+        onSelect: (): void => {
           if (canRemove) onRemoveColumnFromRow(sectionId, column.id, rowId);
         },
       },
@@ -1700,7 +1700,7 @@ function SectionBlockNodeItem({
         icon: <Trash2 className="size-3.5" />,
         tone: "danger",
         disabled: !onRemoveBlock,
-        onSelect: () => {
+        onSelect: (): void => {
           if (onRemoveBlock) onRemoveBlock(sectionId, block.id, columnId);
         },
       },
@@ -1976,7 +1976,7 @@ function BlockNodeItem({
         icon: <Trash2 className="size-3.5" />,
         tone: "danger",
         disabled: !onRemoveBlock || isBackgroundMode,
-        onSelect: () => {
+        onSelect: (): void => {
           if (onRemoveBlock && !isBackgroundMode) onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
         },
       },

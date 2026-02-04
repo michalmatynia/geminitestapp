@@ -7,6 +7,10 @@ export const APP_DB_PROVIDER_SETTING_KEY = "app_db_provider";
 
 export type AppDbProvider = "prisma" | "mongodb";
 
+const PROVIDER_CACHE_TTL_MS = 30_000;
+let providerCache: { value: AppDbProvider | null; ts: number } | null = null;
+let providerInflight: Promise<AppDbProvider | null> | null = null;
+
 const normalizeProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;
   return value.toLowerCase().trim() === "mongodb" ? "mongodb" : "prisma";
@@ -44,14 +48,27 @@ const readPrismaAppProviderSetting = async (): Promise<AppDbProvider | null> => 
 };
 
 export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> => {
-  const mongoSetting = await readMongoAppProviderSetting();
-  if (mongoSetting) return mongoSetting;
-  const prismaSetting = await readPrismaAppProviderSetting();
-  if (prismaSetting) return prismaSetting;
-  if (process.env.APP_DB_PROVIDER) {
-    return normalizeProvider(process.env.APP_DB_PROVIDER);
+  const now = Date.now();
+  if (providerCache && now - providerCache.ts < PROVIDER_CACHE_TTL_MS) {
+    return providerCache.value;
   }
-  return null;
+  if (providerInflight) {
+    return providerInflight;
+  }
+  providerInflight = (async (): Promise<AppDbProvider | null> => {
+    const mongoSetting = await readMongoAppProviderSetting();
+    if (mongoSetting) return mongoSetting;
+    const prismaSetting = await readPrismaAppProviderSetting();
+    if (prismaSetting) return prismaSetting;
+    if (process.env.APP_DB_PROVIDER) {
+      return normalizeProvider(process.env.APP_DB_PROVIDER);
+    }
+    return null;
+  })();
+  const value = await providerInflight;
+  providerCache = { value, ts: Date.now() };
+  providerInflight = null;
+  return value;
 };
 
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
@@ -68,4 +85,9 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   // Prefer MongoDB when configured; fall back to Prisma only if DATABASE_URL exists.
   if (process.env.MONGODB_URI) return "mongodb";
   return "prisma";
+};
+
+export const invalidateAppDbProviderCache = (): void => {
+  providerCache = null;
+  providerInflight = null;
 };

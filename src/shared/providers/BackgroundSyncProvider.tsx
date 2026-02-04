@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useSystemSync } from "@/shared/hooks/sync/useSystemSync";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { QueryDevPanel } from "@/shared/ui";
 
 type BackgroundSyncContextValue = {
@@ -38,16 +38,16 @@ const parseIntervalSeconds = (value: string | undefined): number => {
 };
 
 export function BackgroundSyncProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const resolvedSettings = useMemo(() => {
-    const map = settingsQuery.data;
+    const map = settingsStore.map;
     return {
       enabled: parseEnabled(map?.get(BACKGROUND_SYNC_KEYS.enabled), true),
       intervalSeconds: parseIntervalSeconds(map?.get(BACKGROUND_SYNC_KEYS.intervalSeconds)),
       queryPanelEnabled: parseEnabled(map?.get(QUERY_PANEL_KEYS.enabled), false),
       queryPanelOpen: parseEnabled(map?.get(QUERY_PANEL_KEYS.open), false),
     };
-  }, [settingsQuery.data]);
+  }, [settingsStore.map]);
 
   const { isOnline, lastSync, forceSync } = useSystemSync({
     enabled: resolvedSettings.enabled,

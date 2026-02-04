@@ -14,7 +14,7 @@ import { GripVertical, Trash2 } from "lucide-react";
 import {
   AiTriggerButtonDto,
 } from "@/shared/dtos/ai-trigger-buttons";
-import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { ICON_LIBRARY_MAP } from "@/features/icons";
 import { cn } from "@/shared/utils";
 
 // Define the record type for clarity as it's used extensively
@@ -146,7 +146,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
             </TableCell>
             <TableCell>
               {(() : React.JSX.Element => {
-                const Icon = row.iconId ? PRODUCT_ICON_MAP[row.iconId] : undefined;
+                const Icon = row.iconId ? ICON_LIBRARY_MAP[row.iconId] : undefined;
                 if (!Icon) return <span className="text-sm">{row.display}</span>;
                 return (
                 <span className="flex items-center gap-2">

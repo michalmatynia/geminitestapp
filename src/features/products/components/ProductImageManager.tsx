@@ -19,7 +19,8 @@ import React, { useEffect, useState } from "react";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { PlusIcon, XIcon, GripVertical, MoreVertical } from "lucide-react";
 import { DebugInfo, ProductImageSlot } from "@/features/products/types/products-ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from "@/shared/utils/drag-drop";
 
 const EXTERNAL_IMAGE_BASE_URL_KEY = "product_images_external_base_url";
@@ -40,9 +41,9 @@ export default function ProductImageManager(): React.JSX.Element {
     setImagesReordering,
   } = useProductFormContext();
 
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
-  const externalBaseSetting = settingsQuery.data?.get(EXTERNAL_IMAGE_BASE_URL_KEY) ?? "";
+  const externalBaseSetting = settingsStore.get(EXTERNAL_IMAGE_BASE_URL_KEY) ?? "";
 
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);

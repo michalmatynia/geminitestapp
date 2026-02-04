@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import type { BlockDefinition } from "../../types/page-builder";
 import { getAllowedBlockTypes } from "./section-registry";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { PickerDropdown } from "./PickerDropdown";
@@ -14,14 +14,14 @@ interface BlockPickerProps {
 }
 
 export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
-    if (!settingsQuery.data) return [];
     return parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledEmbedsRaw,
       []
     );
-  }, [settingsQuery.data]);
+  }, [enabledEmbedsRaw]);
   const hasAppEmbeds = enabledEmbeds.length > 0;
   const blockTypes = getAllowedBlockTypes(sectionType).filter((def: BlockDefinition) => {
     if (def.type !== "AppEmbed") return true;

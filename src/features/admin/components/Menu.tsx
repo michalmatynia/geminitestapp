@@ -261,7 +261,12 @@ const buildNavContextItems = (
   isOpen: boolean,
   hasChildren: boolean,
   onToggleOpen: (id: string) => void
-) => {
+): Array<{
+  id: string;
+  label?: string;
+  onSelect?: () => void;
+  separator?: boolean;
+}> => {
   const items: Array<{
     id: string;
     label?: string;
@@ -276,25 +281,26 @@ const buildNavContextItems = (
     items.push({ id: "toggle-children", label: isOpen ? "Collapse" : "Expand", onSelect: () => onToggleOpen(item.id) });
     items.push({ id: "separator-1", separator: true });
   }
-  if (item.href) {
+  const itemHref = item.href;
+  if (itemHref) {
     items.push({
       id: "open",
       label: "Open",
       onSelect: () => {
-        if (typeof window !== "undefined") window.location.assign(item.href!);
+        if (typeof window !== "undefined") window.location.assign(itemHref);
       },
     });
     items.push({
       id: "open-new",
       label: "Open in new tab",
       onSelect: () => {
-        if (typeof window !== "undefined") window.open(item.href!, "_blank", "noopener");
+        if (typeof window !== "undefined") window.open(itemHref, "_blank", "noopener");
       },
     });
     items.push({
       id: "copy-link",
       label: "Copy link",
-      onSelect: () => void copyToClipboard(item.href!),
+      onSelect: () => void copyToClipboard(itemHref),
     });
   }
 

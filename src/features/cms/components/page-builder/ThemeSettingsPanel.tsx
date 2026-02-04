@@ -22,7 +22,7 @@ import {
   PanelHeader,
   useToast,
 } from "@/shared/ui";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
 import type { ColorScheme, ColorSchemeColors, ThemeSettings } from "@/features/cms/types/theme-settings";
@@ -38,6 +38,7 @@ import {
 } from "./shared-fields";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/useAgentTeaching";
+import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from "@/features/ai/brain";
 
@@ -151,7 +152,7 @@ const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Par
 
   if (!colorsSource || typeof colorsSource !== "object") return null;
 
-  const colors = colorsSource as Record<string, unknown>;
+  const colors = colorsSource;
   const parsedRaw = {
     background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
     surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
@@ -160,11 +161,13 @@ const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Par
     border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
   };
   const parsed: Partial<ColorSchemeColors> = {};
-  Object.entries(parsedRaw).forEach(([key, val]) => {
-    if (val !== undefined) {
-      (parsed as any)[key] = val;
+  (Object.entries(parsedRaw) as Array<[keyof ColorSchemeColors, string | undefined]>).forEach(
+    ([key, val]: [keyof ColorSchemeColors, string | undefined]) => {
+      if (val !== undefined) {
+        parsed[key] = val;
+      }
     }
-  });
+  );
 
   if (!Object.values(parsed).some(Boolean) && !name) return null;
   return { ...(name ? { name } : {}), colors: parsed };
@@ -441,11 +444,13 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
   const { theme, setTheme, update } = useThemeSettings();
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const brainSettingsRaw = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
   const brainSettings = useMemo(
-    () => parseBrainSettings(settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY)),
-    [settingsQuery.data]
+    () => parseBrainSettings(brainSettingsRaw),
+    [brainSettingsRaw]
   );
+  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
   const brainAssignment = useMemo(
     () => resolveBrainAssignment(brainSettings, "cms_builder"),
     [brainSettings]
@@ -473,7 +478,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     return Array.from(new Set(fromApi));
   }, [modelsQuery.data]);
   const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
     [teachingAgentsQuery.data]
   );
   const schemeProviderOptions = useMemo(
@@ -624,7 +629,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   useEffect((): (() => void) | void => {
     if (typeof window === "undefined") return undefined;
     const handler = (event: Event): void => {
-      const detail = (event as CustomEvent).detail ?? {};
+      const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
       const section = typeof detail.section === "string" ? detail.section : "Colors";
       setUserOpenSections((prev: Set<string> | null) => {
         const current = prev ?? initialOpenSections;
@@ -635,7 +640,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       if (section === "Colors" && detail.action === "createScheme") {
         startAddScheme();
       }
-      window.requestAnimationFrame(() => {
+      window.requestAnimationFrame((): void => {
         const target = document.getElementById(toSectionId(section));
         target?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -838,7 +843,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   const applySchemeFromAi = useCallback((parsed: { name?: string | undefined; colors: Partial<ColorSchemeColors> }): void => {
     setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => {
       const next = { ...prev };
-      (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach((key) => {
+      (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach((key: keyof ColorSchemeColors) => {
         const value = parsed.colors[key];
         if (typeof value === "string" && value.trim().length) {
           next[key] = value.trim();
@@ -902,8 +907,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       let doneSignal = false;
 
       const processEvent = (raw: string): void => {
-        const lines = raw.split("\n").map((line) => line.trim());
-        const dataLine = lines.find((line) => line.startsWith("data:"));
+        const lines = raw.split("\n").map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith("data:"));
         if (!dataLine) return;
         const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
           delta?: string;
@@ -952,7 +957,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       applySchemeFromAi(parsed);
       toast(`Scheme generated from ${provider}.`, { variant: "success" });
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (error instanceof Error && error.name === "AbortError") {
         setSchemeAiError("Generation cancelled.");
         toast("Generation cancelled.", { variant: "info" });
       } else {
@@ -1335,7 +1340,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                             ) : null}
                           </div>
                           <div className="mt-2 grid grid-cols-5 gap-2">
-                            {(["background", "surface", "text", "accent", "border"] as Array<keyof ColorSchemeColors>).map((key) => {
+                            {(["background", "surface", "text", "accent", "border"] as Array<keyof ColorSchemeColors>).map((key: keyof ColorSchemeColors) => {
                               const value =
                                 schemeAiPreview.colors[key] ??
                                 newSchemeColors[key];
@@ -2132,11 +2137,24 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       updateSetting,
       theme,
       update,
+      agentOptions,
+      handleCancelSchemeAi,
+      handleGenerateScheme,
+      modelOptions,
+      schemeAiAgentId,
+      schemeAiError,
+      schemeAiLoading,
+      schemeAiModelId,
+      schemeAiOutput,
+      schemeAiPreview,
+      schemeAiPrompt,
+      schemeAiProvider,
+      schemeProviderOptions,
     ]
   );
 
   useEffect(() => {
-    if (!settingsQuery.isSuccess) return;
+    if (!settingsReady) return;
     if (brainAppliedRef.current) return;
     brainAppliedRef.current = true;
     if (!brainAssignment.enabled) return;
@@ -2147,7 +2165,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     if (brainAssignment.provider === "agent" && brainAssignment.agentId) {
       setSchemeAiAgentId(brainAssignment.agentId);
     }
-  }, [brainAssignment, settingsQuery.isSuccess]);
+  }, [brainAssignment, settingsReady]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

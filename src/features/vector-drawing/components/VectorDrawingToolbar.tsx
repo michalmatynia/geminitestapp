@@ -25,20 +25,20 @@ export type VectorDrawingToolbarVariant = "full" | "min";
 export interface VectorDrawingToolbarProps {
   tool: VectorToolMode;
   onSelectTool: (tool: VectorToolMode) => void;
-  onUndo?: () => void;
-  onClose?: () => void;
-  onDetach?: () => void;
-  onClear?: () => void;
-  onSmooth?: () => void;
-  onSimplify?: () => void;
-  disableUndo?: boolean;
-  disableClose?: boolean;
-  disableDetach?: boolean;
-  disableClear?: boolean;
-  disableSmooth?: boolean;
-  disableSimplify?: boolean;
-  className?: string;
-  variant?: VectorDrawingToolbarVariant;
+  onUndo?: (() => void) | undefined;
+  onClose?: (() => void) | undefined;
+  onDetach?: (() => void) | undefined;
+  onClear?: (() => void) | undefined;
+  onSmooth?: (() => void) | undefined;
+  onSimplify?: (() => void) | undefined;
+  disableUndo?: boolean | undefined;
+  disableClose?: boolean | undefined;
+  disableDetach?: boolean | undefined;
+  disableClear?: boolean | undefined;
+  disableSmooth?: boolean | undefined;
+  disableSimplify?: boolean | undefined;
+  className?: string | undefined;
+  variant?: VectorDrawingToolbarVariant | undefined;
 }
 
 type ToolOption = {

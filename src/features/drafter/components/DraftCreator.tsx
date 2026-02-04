@@ -6,10 +6,10 @@ import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/pro
 import type { CatalogRecord } from "@/features/products";
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
 import { logClientError } from "@/shared/utils/observability/client-error-logger";
-import { PRODUCT_ICONS } from "@/shared/constants/product-icons";
 import { useDraft, useCreateDraft, useUpdateDraft } from "@/features/drafter/hooks/useDrafts";
 import { useCatalogs } from "@/features/products/hooks/useProductMetadata";
 import { useQueries } from "@tanstack/react-query";
+import { IconSelector } from "@/features/icons";
 
 interface DraftCreatorProps {
   draftId: string | null;
@@ -354,25 +354,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
             <div className="space-y-2">
               <Label>Icon</Label>
-                              <div className="grid grid-cols-6 gap-2">
-                                {PRODUCT_ICONS.map((item: (typeof PRODUCT_ICONS)[number]): React.JSX.Element => {
-                                  const IconComponent = item.icon;                  return (
-                    <Button
-                      key={item.id}
-                      type="button"
-                      onClick={(): void => setIcon(icon === item.id ? null : item.id)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
-                        icon === item.id
-                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
-                          : "border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300"
-                      }`}
-                      title={item.label}
-                    >
-                      <IconComponent className="h-5 w-5" />
-                    </Button>
-                  );
-                })}
-              </div>
+              <IconSelector value={icon} onChange={setIcon} columns={6} showSearch={false} />
             </div>
           </div>
         </div>

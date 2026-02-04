@@ -6,7 +6,7 @@ import {
   PlusIcon,
   Package,
 } from "lucide-react";
-import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { ICON_LIBRARY_MAP } from "@/features/icons";
 import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 
@@ -96,7 +96,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             </Button>
             <div className="flex flex-wrap items-center gap-1.5">
               {activeDrafts.map((draft: ProductDraft) => {
-                const IconComponent = draft.icon ? PRODUCT_ICON_MAP[draft.icon] : null;
+                const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
                 return (
                   <Button
                     key={draft.id}

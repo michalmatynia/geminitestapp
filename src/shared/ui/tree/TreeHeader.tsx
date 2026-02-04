@@ -4,9 +4,9 @@ import React from "react";
 import { cn } from "@/shared/utils";
 
 export interface TreeHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  title?: string;
-  subtitle?: string;
-  actions?: React.ReactNode;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  actions?: React.ReactNode | undefined;
   children?: React.ReactNode;
 }
 

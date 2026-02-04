@@ -1,0 +1,11 @@
+src/features/vector-drawing/components/VectorDrawing.tsx(113,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/features/vector-drawing/components/VectorDrawing.tsx(114,9): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+  Type 'undefined' is not assignable to type 'number | null'.
+src/features/vector-drawing/components/VectorDrawing.tsx(115,9): error TS2322: Type '((id: string | null) => void) | undefined' is not assignable to type '(id: string | null) => void'.
+  Type 'undefined' is not assignable to type '(id: string | null) => void'.
+src/features/vector-drawing/components/VectorDrawing.tsx(119,8): error TS2375: Type '{ className: string | undefined; tool: VectorToolMode; onSelectTool: (nextTool: VectorToolMode) => void; onUndo: undefined; onClose: undefined; onDetach: undefined; onClear: undefined; onSmooth: () => void; onSimplify: () => void; variant: VectorDrawingToolbarVariant; }' is not assignable to type 'VectorDrawingToolbarProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onUndo' are incompatible.
+    Type 'undefined' is not assignable to type '() => void'.
+src/proxy.ts(13,10): error TS2554: Expected 2 arguments, but got 1.
+src/shared/ui/data-table.tsx(37,13): error TS2428: All declarations of 'TableMeta' must have identical type parameters.

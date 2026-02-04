@@ -6,33 +6,35 @@ import { useSession } from "next-auth/react";
 import { initClientErrorReporting, setClientErrorBaseContext } from "@/shared/utils/observability/client-error-logger";
 import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 
 export default function ClientErrorReporter(): null {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
 
   useEffect(() => {
     initClientErrorReporting();
   }, []);
 
+  const featureFlagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.featureFlags);
+  const tagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.tags);
+
   useEffect(() => {
-    if (!settingsQuery.data) return;
     const featureFlags = parseJsonSetting<Record<string, unknown> | null>(
-      settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
+      featureFlagsRaw,
       null
     );
     const tags = parseJsonSetting<Record<string, unknown> | null>(
-      settingsQuery.data.get(CLIENT_LOGGING_KEYS.tags),
+      tagsRaw,
       null
     );
     setClientErrorBaseContext({
       featureFlags,
       tags,
     });
-  }, [settingsQuery.data]);
+  }, [featureFlagsRaw, tagsRaw]);
 
   useEffect(() => {
     const context = {

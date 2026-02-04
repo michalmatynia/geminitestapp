@@ -4,25 +4,27 @@ import { useCallback, useMemo } from "react";
 import Link from "next/link";
 
 import { Button, Label, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from "../utils/ui-presets";
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
 
+  const presetsRaw = settingsStore.get(IMAGE_STUDIO_UI_PRESETS_KEY);
+  const activeRaw = settingsStore.get(IMAGE_STUDIO_UI_ACTIVE_KEY);
+
   const presets = useMemo(() => {
-    if (!settingsQuery.data) return [];
-    return parseImageStudioUiPresets(settingsQuery.data.get(IMAGE_STUDIO_UI_PRESETS_KEY));
-  }, [settingsQuery.data]);
+    return parseImageStudioUiPresets(presetsRaw);
+  }, [presetsRaw]);
 
   const activeId = useMemo(() => {
-    if (!settingsQuery.data) return "";
-    return parseJsonSetting<string | null>(settingsQuery.data.get(IMAGE_STUDIO_UI_ACTIVE_KEY), null) ?? "";
-  }, [settingsQuery.data]);
+    return parseJsonSetting<string | null>(activeRaw, null) ?? "";
+  }, [activeRaw]);
 
   const handleSetActive = useCallback(
     async (id: string): Promise<void> => {

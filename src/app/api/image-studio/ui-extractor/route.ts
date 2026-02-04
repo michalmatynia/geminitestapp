@@ -15,6 +15,7 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
 } from "@/features/ai/image-studio/utils/studio-settings";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 
 const uiControlEnum = z.enum([
   "auto",
@@ -80,9 +81,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
     const settings = parseImageStudioSettings(settingsRaw);
-    const model = settings.uiExtractor.model || (await getSettingValue("openai_model")) || "gpt-4o-mini";
-    const temperature = settings.uiExtractor.temperature ?? 0.2;
-    const max_output_tokens = settings.uiExtractor.max_output_tokens ?? 800;
+    const brainAssignment = await getBrainAssignmentForFeature("image_studio");
+    if (!brainAssignment.enabled) {
+      throw configurationError("AI Brain is disabled for Image Studio.");
+    }
+    if (brainAssignment.provider === "agent") {
+      throw configurationError("Image Studio UI extractor does not support agent providers yet.");
+    }
+    const model =
+      brainAssignment.modelId ||
+      settings.uiExtractor.model ||
+      (await getSettingValue("openai_model")) ||
+      "gpt-4o-mini";
+    const temperature = brainAssignment.temperature ?? settings.uiExtractor.temperature ?? 0.2;
+    const max_output_tokens = brainAssignment.maxTokens ?? settings.uiExtractor.max_output_tokens ?? 800;
 
     const client = new OpenAI({ apiKey });
 

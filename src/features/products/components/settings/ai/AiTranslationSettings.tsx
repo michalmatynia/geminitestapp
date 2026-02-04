@@ -3,6 +3,7 @@
 import { Button, Label, UnifiedSelect, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { logClientError } from "@/features/observability";
+import { fetchSettingsCached, invalidateSettingsCache } from "@/shared/api/settings-client";
 
 const STATIC_TRANSLATION_MODELS = [
   { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
@@ -20,12 +21,8 @@ export function AiTranslationSettings(): React.JSX.Element {
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       try {
-        const settingsRes = await fetch("/api/settings");
-        let settingsMap = new Map<string, string>();
-        if (settingsRes.ok) {
-          const data = await settingsRes.json() as { key: string, value: string }[];
-          settingsMap = new Map(data.map((item: { key: string, value: string }) => [item.key, item.value]));
-        }
+        const data = await fetchSettingsCached();
+        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
 
         setTranslationModel(settingsMap.get("ai_translation_model") || "gpt-4o");
 
@@ -57,6 +54,7 @@ export function AiTranslationSettings(): React.JSX.Element {
           value: translationModel,
         }),
       });
+      invalidateSettingsCache();
 
       toast("Settings saved.", { variant: "success" });
     } catch (error) {

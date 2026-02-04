@@ -3,6 +3,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from "@/shared/api/settings-client";
 import type {
   AiNode,
   ClusterPreset,
@@ -197,11 +201,7 @@ export function useAiPathsPersistence({
   const settingsQuery = useQuery({
     queryKey: ["settings"],
     queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) {
-        throw new Error("Failed to load AI Paths settings.");
-      }
-      return (await res.json()) as Array<{ key: string; value: string }>;
+      return await fetchSettingsCached();
     },
     enabled: false,
   });
@@ -1092,6 +1092,7 @@ export function useAiPathsPersistence({
           keepalive: true,
         });
       }
+      invalidateSettingsCache();
     };
 
     const handleBeforeUnload = (): void => {

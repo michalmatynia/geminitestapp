@@ -3,6 +3,7 @@
 
 import { useQuery, useQueryClient, type Query } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { fetchSettingsCached } from "@/shared/api/settings-client";
 
 // Predefined cache strategies
 export const cacheStrategies = {
@@ -197,7 +198,7 @@ export function useCacheWarming(): {
       },
       {
         queryKey: ['settings', 'global'],
-        queryFn: async (): Promise<any> => await fetch('/api/settings').then((r: Response) => r.json()),
+        queryFn: async (): Promise<any> => await fetchSettingsCached(),
       },
     ];
 

@@ -14,6 +14,7 @@ type SectionHeaderProps = {
   description?: string;
   actions?: ReactNode;
   eyebrow?: ReactNode;
+  icon?: ReactNode;
   size?: SectionHeaderSize;
   className?: string;
   titleClassName?: string;
@@ -25,6 +26,7 @@ export function SectionHeader({
   description,
   actions,
   eyebrow,
+  icon,
   size = "lg",
   className,
   titleClassName,
@@ -39,15 +41,18 @@ export function SectionHeader({
     >
       <div className="space-y-2">
         {eyebrow ? <div className="text-sm text-muted-foreground">{eyebrow}</div> : null}
-        <h1
-          className={cn(
-            "font-bold tracking-tight text-white",
-            titleSizes[size],
-            titleClassName
-          )}
-        >
-          {title}
-        </h1>
+        <div className="flex items-center gap-3">
+          {icon ? <div className="shrink-0">{icon}</div> : null}
+          <h1
+            className={cn(
+              "font-bold tracking-tight text-white",
+              titleSizes[size],
+              titleClassName
+            )}
+          >
+            {title}
+          </h1>
+        </div>
         {description ? (
           <p className={cn("text-sm text-gray-400", descriptionClassName)}>
             {description}

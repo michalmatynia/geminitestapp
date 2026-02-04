@@ -18,6 +18,7 @@ import { getImageFileRepository } from "@/features/files/server";
 import type { ImageFileRecord } from "@/shared/types/files";
 import { parseImageStudioSettings } from "@/features/ai/image-studio/utils/studio-settings";
 import { getSettingValue } from "@/features/products/services/aiDescriptionService";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 
 const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
 const publicRoot = path.join(process.cwd(), "public");
@@ -205,6 +206,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (!apiKey) {
       throw configurationError("OpenAI API key is missing. Set it in /admin/settings/ai.");
     }
+    const brainAssignment = await getBrainAssignmentForFeature("image_studio");
+    if (!brainAssignment.enabled) {
+      throw configurationError("AI Brain is disabled for Image Studio.");
+    }
+    if (brainAssignment.provider === "agent") {
+      throw configurationError("Image Studio runs do not support agent providers yet.");
+    }
 
     const client = new OpenAI({ apiKey });
 
@@ -259,7 +267,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
     }
 
-    const modelName = (settings.targetAi.openai.model ?? "").toLowerCase();
+    const resolvedModel = brainAssignment.modelId || settings.targetAi.openai.model;
+    const modelName = (resolvedModel ?? "").toLowerCase();
     if (modelName.includes("dall-e-2") && referencePaths.length > 0) {
       throw badRequestError("Multiple input images are only supported for GPT image models.");
     }
@@ -272,7 +281,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const imagePayload = inputImages.length === 1 ? inputImages[0]! : inputImages;
 
     const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
-      model: settings.targetAi.openai.model,
+      model: resolvedModel,
       prompt: parsed.data.prompt,
       image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming["image"],
       output_format: format,

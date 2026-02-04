@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
 import { logClientError } from "@/features/observability";
+import { fetchSettingsCached, invalidateSettingsCache } from "@/shared/api/settings-client";
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   sortBy: "created",
@@ -25,6 +26,10 @@ const DB_NOTEBOOK_KEY = "noteSettings:selectedNotebookId";
 const DB_AUTOFORMAT_KEY = "noteSettings:autoformatOnPaste";
 const DB_EDITOR_MODE_KEY = "noteSettings:editorMode";
 
+const fetchNoteSettingsList = async (): Promise<Array<{ key: string; value: string }>> => {
+  return await fetchSettingsCached();
+};
+
 interface NoteSettingsContextType {
   settings: NoteSettings;
   updateSettings: (updates: Partial<NoteSettings>) => void;
@@ -46,6 +51,7 @@ async function saveSelectedFolderToDb(folderId: string | null): Promise<void> {
         value: folderId ?? "",
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
     logClientError(error, { context: { source: "NoteSettingsContext", action: "saveSelectedFolderToDb", folderId } });
   }
@@ -61,6 +67,7 @@ async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void
         value: notebookId ?? "",
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
     logClientError(error, { context: { source: "NoteSettingsContext", action: "saveSelectedNotebookToDb", notebookId } });
   }
@@ -69,10 +76,7 @@ async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void
 // Helper to load selectedFolderId from database
 async function loadSelectedFolderFromDb(): Promise<string | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_SETTING_KEY);
 
     if (setting && setting.value) {
@@ -87,10 +91,7 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
 
 async function loadSelectedNotebookFromDb(): Promise<string | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
 
     if (setting && setting.value) {
@@ -113,6 +114,7 @@ async function saveAutoformatToDb(enabled: boolean): Promise<void> {
         value: enabled ? "true" : "false",
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
     logClientError(error, { context: { source: "NoteSettingsContext", action: "saveAutoformatToDb", enabled } });
   }
@@ -120,10 +122,7 @@ async function saveAutoformatToDb(enabled: boolean): Promise<void> {
 
 async function loadAutoformatFromDb(): Promise<boolean | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
 
     if (setting && setting.value) {
@@ -146,6 +145,7 @@ async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promis
         value: mode,
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
     logClientError(error, { context: { source: "NoteSettingsContext", action: "saveEditorModeToDb", mode } });
   }
@@ -153,10 +153,7 @@ async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promis
 
 async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
 
     if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {

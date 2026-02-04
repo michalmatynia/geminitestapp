@@ -4,16 +4,23 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 export const AI_BRAIN_SETTINGS_KEY = "ai_brain_settings";
 
 export type AiBrainProvider = "model" | "agent";
-export type AiBrainFeature = "cms_builder" | "system_logs" | "error_logs";
+export type AiBrainFeature =
+  | "cms_builder"
+  | "system_logs"
+  | "error_logs"
+  | "analytics"
+  | "image_studio"
+  | "ai_paths"
+  | "prompt_engine";
 
 export type AiBrainAssignment = {
   enabled: boolean;
   provider: AiBrainProvider;
   modelId: string;
   agentId: string;
-  temperature?: number;
-  maxTokens?: number;
-  notes?: string | null;
+  temperature?: number | undefined;
+  maxTokens?: number | undefined;
+  notes?: string | null | undefined;
 };
 
 export type AiBrainSettings = {
@@ -51,6 +58,10 @@ const settingsSchema = z.object({
       cms_builder: assignmentSchema.optional(),
       system_logs: assignmentSchema.optional(),
       error_logs: assignmentSchema.optional(),
+      analytics: assignmentSchema.optional(),
+      image_studio: assignmentSchema.optional(),
+      ai_paths: assignmentSchema.optional(),
+      prompt_engine: assignmentSchema.optional(),
     })
     .default({}),
 });

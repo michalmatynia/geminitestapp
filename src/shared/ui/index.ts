@@ -42,6 +42,7 @@ export * from "./search-input";
 export * from "./pagination";
 export * from "./shared-modal";
 export * from "./list-panel";
+export * from "./panel-header";
 export * from "./copy-button";
 export * from "./breadcrumb-scroller";
 export * from "./item-library";

@@ -15,6 +15,7 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
 } from "@/features/ai/image-studio/utils/studio-settings";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -42,14 +43,25 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
     const settings = parseImageStudioSettings(settingsRaw);
-    const model = settings.promptExtraction.gpt.model || (await getSettingValue("openai_model")) || "gpt-4o-mini";
+    const brainAssignment = await getBrainAssignmentForFeature("image_studio");
+    if (!brainAssignment.enabled) {
+      throw configurationError("AI Brain is disabled for Image Studio.");
+    }
+    if (brainAssignment.provider === "agent") {
+      throw configurationError("Image Studio prompt extraction does not support agent providers yet.");
+    }
+    const model =
+      brainAssignment.modelId ||
+      settings.promptExtraction.gpt.model ||
+      (await getSettingValue("openai_model")) ||
+      "gpt-4o-mini";
     if (!model.trim()) {
       throw configurationError("Prompt extraction model is missing. Set it in Image Studio settings.");
     }
 
-    const temperature = settings.promptExtraction.gpt.temperature ?? 0;
+    const temperature = brainAssignment.temperature ?? settings.promptExtraction.gpt.temperature ?? 0;
     const top_p = settings.promptExtraction.gpt.top_p ?? undefined;
-    const max_output_tokens = settings.promptExtraction.gpt.max_output_tokens ?? 1200;
+    const max_output_tokens = brainAssignment.maxTokens ?? settings.promptExtraction.gpt.max_output_tokens ?? 1200;
 
     const client = new OpenAI({ apiKey });
 

@@ -6,6 +6,7 @@ import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import { logClientError } from "@/features/observability";
+import { fetchSettingsCached, invalidateSettingsCache } from "@/shared/api/settings-client";
 
 const STATIC_VISION_MODELS = [
   { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
@@ -98,12 +99,8 @@ export function AiDescriptionSettings(): React.JSX.Element {
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       try {
-        const settingsRes = await fetch("/api/settings");
-        let settingsMap = new Map<string, string>();
-        if (settingsRes.ok) {
-          const data = (await settingsRes.json()) as { key: string, value: string }[];
-          settingsMap = new Map(data.map((item: { key: string, value: string }) => [item.key, item.value]));
-        }
+        const data = await fetchSettingsCached();
+        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
 
         setImageAnalysisModel(settingsMap.get("ai_vision_model") || "gpt-4o");
         setVisionInputPrompt(settingsMap.get("ai_vision_user_prompt") || "Analyze these product images...");
@@ -234,6 +231,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
                 value: JSON.stringify(newTestResult)
               }),
             });
+            invalidateSettingsCache();
           } catch (err) {
             logClientError(err, { context: { source: "AiDescriptionSettings", action: "saveTestResult", jobId } });
           }
@@ -348,6 +346,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           value: ""
         }),
       });
+      invalidateSettingsCache();
       toast("Test results cleared.", { variant: "success" });
     } catch (err) {
       console.warn("Failed to clear test results from database:", err);

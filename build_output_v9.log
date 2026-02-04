@@ -1,0 +1,366 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 193ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 9 errors:
+./src/features/foldertree/components/tree/FolderNode.tsx:12:1
+Module not found: Can't resolve './TreeActions'
+[0m [90m 10 |[39m [36mimport[39m { [33mTreeRow[39m } [36mfrom[39m [32m"./TreeRow"[39m[33m;[39m
+ [90m 11 |[39m [36mimport[39m { [33mTreeCaret[39m } [36mfrom[39m [32m"./TreeCaret"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mTreeActionButton[39m[33m,[39m [33mTreeActionSlot[39m } [36mfrom[39m [32m"./TreeActions"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 13 |[39m [36mimport[39m { getFolderDragId[33m,[39m getNoteDragId[33m,[39m hasDragType[33m,[39m resolveVerticalDropPosition[33m,[39m setFolderDragData[33m,[39m [33mDRAG_KEYS[39m } [36mfrom[39m [32m"@/shared/utils/drag-drop"[39m[33m;[39m
+ [90m 14 |[39m
+ [90m 15 |[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/components/tree/FolderNode.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component Browser]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component SSR]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/components/tree/NoteItem.tsx:10:1
+Module not found: Can't resolve './TreeActions'
+[0m [90m  8 |[39m [36mimport[39m { getNoteDragId[33m,[39m hasDragType[33m,[39m setNoteDragData[33m,[39m [33mDRAG_KEYS[39m } [36mfrom[39m [32m"@/shared/utils/drag-drop"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mTreeRow[39m } [36mfrom[39m [32m"./TreeRow"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 10 |[39m [36mimport[39m { [33mTreeActionButton[39m[33m,[39m [33mTreeActionSlot[39m } [36mfrom[39m [32m"./TreeActions"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 11 |[39m
+ [90m 12 |[39m
+ [90m 13 |[39m [36mexport[39m [36mconst[39m [33mNoteItem[39m [33m=[39m [33mReact[39m[33m.[39mmemo([36mfunction[39m [33mNoteItem[39m({[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/components/tree/NoteItem.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/components/tree/NoteItem.tsx [Client Component Browser]
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component Browser]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/components/tree/NoteItem.tsx [Client Component SSR]
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component SSR]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/components/tree/FolderNode.tsx:11:1
+Module not found: Can't resolve './TreeCaret'
+[0m [90m  9 |[39m [36mimport[39m { [33mNoteItem[39m } [36mfrom[39m [32m"./NoteItem"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mTreeRow[39m } [36mfrom[39m [32m"./TreeRow"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mTreeCaret[39m } [36mfrom[39m [32m"./TreeCaret"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { [33mTreeActionButton[39m[33m,[39m [33mTreeActionSlot[39m } [36mfrom[39m [32m"./TreeActions"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m { getFolderDragId[33m,[39m getNoteDragId[33m,[39m hasDragType[33m,[39m resolveVerticalDropPosition[33m,[39m setFolderDragData[33m,[39m [33mDRAG_KEYS[39m } [36mfrom[39m [32m"@/shared/utils/drag-drop"[39m[33m;[39m
+ [90m 14 |[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/components/tree/FolderNode.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component Browser]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component SSR]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/components/tree/FolderNode.tsx:10:1
+Module not found: Can't resolve './TreeRow'
+[0m [90m  8 |[39m [36mimport[39m type { [33mFolderNodeProps[39m } [36mfrom[39m [32m"@/features/foldertree/types/folder-tree-ui"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mNoteItem[39m } [36mfrom[39m [32m"./NoteItem"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 10 |[39m [36mimport[39m { [33mTreeRow[39m } [36mfrom[39m [32m"./TreeRow"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 11 |[39m [36mimport[39m { [33mTreeCaret[39m } [36mfrom[39m [32m"./TreeCaret"[39m[33m;[39m
+ [90m 12 |[39m [36mimport[39m { [33mTreeActionButton[39m[33m,[39m [33mTreeActionSlot[39m } [36mfrom[39m [32m"./TreeActions"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m { getFolderDragId[33m,[39m getNoteDragId[33m,[39m hasDragType[33m,[39m resolveVerticalDropPosition[33m,[39m setFolderDragData[33m,[39m [33mDRAG_KEYS[39m } [36mfrom[39m [32m"@/shared/utils/drag-drop"[39m[33m;[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/components/tree/FolderNode.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component Browser]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component SSR]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/components/tree/NoteItem.tsx:9:1
+Module not found: Can't resolve './TreeRow'
+[0m [90m  7 |[39m [36mimport[39m type { [33mNoteItemProps[39m } [36mfrom[39m [32m"@/features/foldertree/types/folder-tree-ui"[39m[33m;[39m
+ [90m  8 |[39m [36mimport[39m { getNoteDragId[33m,[39m hasDragType[33m,[39m setNoteDragData[33m,[39m [33mDRAG_KEYS[39m } [36mfrom[39m [32m"@/shared/utils/drag-drop"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mTreeRow[39m } [36mfrom[39m [32m"./TreeRow"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 10 |[39m [36mimport[39m { [33mTreeActionButton[39m[33m,[39m [33mTreeActionSlot[39m } [36mfrom[39m [32m"./TreeActions"[39m[33m;[39m
+ [90m 11 |[39m
+ [90m 12 |[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/components/tree/NoteItem.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/components/tree/NoteItem.tsx [Client Component Browser]
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component Browser]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/components/tree/NoteItem.tsx [Client Component SSR]
+    ./src/features/foldertree/components/tree/FolderNode.tsx [Client Component SSR]
+    ./src/features/foldertree/components/FolderTree.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/index.ts:3:1
+Module not found: Can't resolve './components/FolderTreePanel'
+[0m [90m 1 |[39m [90m// Auto-generated public API for feature. Edit with care.[39m
+ [90m 2 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/FolderTree"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/FolderTreePanel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeRow"[39m[33m;[39m
+ [90m 5 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeCaret"[39m[33m;[39m
+ [90m 6 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeActions"[39m[33m;[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/index.ts
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/index.ts [Client Component Browser]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/index.ts [Client Component SSR]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/index.ts:6:1
+Module not found: Can't resolve './components/tree/TreeActions'
+[0m [90m 4 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeRow"[39m[33m;[39m
+ [90m 5 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeCaret"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeActions"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./utils/tree"[39m[33m;[39m
+ [90m 8 |[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/index.ts
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/index.ts [Client Component Browser]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/index.ts [Client Component SSR]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/index.ts:5:1
+Module not found: Can't resolve './components/tree/TreeCaret'
+[0m [90m 3 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/FolderTreePanel"[39m[33m;[39m
+ [90m 4 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeRow"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeCaret"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeActions"[39m[33m;[39m
+ [90m 7 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./utils/tree"[39m[33m;[39m
+ [90m 8 |[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/index.ts
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/index.ts [Client Component Browser]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/index.ts [Client Component SSR]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/features/foldertree/index.ts:4:1
+Module not found: Can't resolve './components/tree/TreeRow'
+[0m [90m 2 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/FolderTree"[39m[33m;[39m
+ [90m 3 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/FolderTreePanel"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeRow"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeCaret"[39m[33m;[39m
+ [90m 6 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./components/tree/TreeActions"[39m[33m;[39m
+ [90m 7 |[39m [36mexport[39m [33m*[39m [36mfrom[39m [32m"./utils/tree"[39m[33m;[39m[0m
+
+
+
+Import traces:
+  App Route:
+    ./src/features/foldertree/index.ts
+    ./src/app/api/databases/restore/route.ts
+
+  Client Component Browser:
+    ./src/features/foldertree/index.ts [Client Component Browser]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component Browser]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+  Client Component SSR:
+    ./src/features/foldertree/index.ts [Client Component SSR]
+    ./src/features/notesapp/hooks/useNoteTheme.ts [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [Client Component SSR]
+    ./src/features/notesapp/pages/AdminNotesPage.tsx [App Route]
+    ./src/features/notesapp/index.ts [App Route]
+    ./src/app/api/ai-paths/update/route.ts [App Route]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./src/features/foldertree/components/tree/FolderNode.tsx:12:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/components/tree/NoteItem.tsx:10:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/components/tree/FolderNode.tsx:11:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/components/tree/FolderNode.tsx:10:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/components/tree/NoteItem.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/index.ts:3:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/index.ts:6:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/index.ts:5:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/features/foldertree/index.ts:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)

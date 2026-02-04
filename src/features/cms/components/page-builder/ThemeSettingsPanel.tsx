@@ -19,6 +19,7 @@ import {
   UnifiedSelect,
   FileUploadButton,
   FileUploadTrigger,
+  PanelHeader,
   useToast,
 } from "@/shared/ui";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
@@ -2134,17 +2135,27 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     ]
   );
 
+  useEffect(() => {
+    if (!settingsQuery.isSuccess) return;
+    if (brainAppliedRef.current) return;
+    brainAppliedRef.current = true;
+    if (!brainAssignment.enabled) return;
+    setSchemeAiProvider(brainAssignment.provider);
+    if (brainAssignment.provider === "model" && brainAssignment.modelId) {
+      setSchemeAiModelId(brainAssignment.modelId);
+    }
+    if (brainAssignment.provider === "agent" && brainAssignment.agentId) {
+      setSchemeAiAgentId(brainAssignment.agentId);
+    }
+  }, [brainAssignment, settingsQuery.isSuccess]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {showHeader && (
-        <div className="border-b border-border px-4 py-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Theme settings
-          </div>
-          <p className="mt-1 text-[11px] text-gray-500">
-            Configure global styles and storefront components.
-          </p>
-        </div>
+        <PanelHeader
+          title="Theme settings"
+          subtitle="Configure global styles and storefront components."
+        />
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-2">
@@ -2176,16 +2187,3 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     </div>
   );
 }
-  useEffect(() => {
-    if (!settingsQuery.isSuccess) return;
-    if (brainAppliedRef.current) return;
-    brainAppliedRef.current = true;
-    if (!brainAssignment.enabled) return;
-    setSchemeAiProvider(brainAssignment.provider);
-    if (brainAssignment.provider === "model" && brainAssignment.modelId) {
-      setSchemeAiModelId(brainAssignment.modelId);
-    }
-    if (brainAssignment.provider === "agent" && brainAssignment.agentId) {
-      setSchemeAiAgentId(brainAssignment.agentId);
-    }
-  }, [brainAssignment, settingsQuery.isSuccess]);

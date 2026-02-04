@@ -33,11 +33,11 @@ export const NoteItem = React.memo(function NoteItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const contextMenuItems = useMemo(
     () => [
-      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: () => onCreateNote(folderId) },
-      { id: "duplicate", label: "Duplicate", icon: <Copy className="size-3.5" />, onSelect: () => onDuplicateNote(note.id) },
-      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: () => onStartRename(note.id) },
+      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folderId) },
+      { id: "duplicate", label: "Duplicate", icon: <Copy className="size-3.5" />, onSelect: (): void => onDuplicateNote(note.id) },
+      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: (): void => onStartRename(note.id) },
       { id: "separator-1", separator: true },
-      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: () => onDeleteNote(note.id) },
+      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: (): void => onDeleteNote(note.id) },
     ],
     [folderId, note.id, onCreateNote, onDuplicateNote, onStartRename, onDeleteNote]
   );

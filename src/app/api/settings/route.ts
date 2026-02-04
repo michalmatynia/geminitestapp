@@ -55,6 +55,10 @@ const settingSchema = z.object({
   value: z.string(),
 });
 
+const SETTINGS_CACHE_TTL_MS = 5_000;
+let settingsCache: { data: SettingRecord[]; ts: number } | null = null;
+let settingsInflight: Promise<SettingRecord[]> | null = null;
+
 const listMongoSettings = async (): Promise<SettingRecord[]> => {
   if (!process.env.MONGODB_URI) return [];
   const mongo = await getMongoDb();
@@ -90,44 +94,66 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
   try {
+    const now = Date.now();
+    if (settingsCache && now - settingsCache.ts < SETTINGS_CACHE_TTL_MS) {
+      return NextResponse.json(settingsCache.data, {
+        headers: { "Cache-Control": "private, max-age=5" },
+      });
+    }
+    if (settingsInflight) {
+      const data = await settingsInflight;
+      return NextResponse.json(data, {
+        headers: { "Cache-Control": "private, max-age=5" },
+      });
+    }
+
     const provider = await getAppDbProvider();
     const hasMongo = Boolean(process.env.MONGODB_URI);
-    const prismaSettings: SettingRecord[] = [];
-    if (canUsePrismaSettings(provider)) {
-      const settings = await prisma.setting.findMany({
-        select: { key: true, value: true },
-      });
-      prismaSettings.push(...settings);
-    }
-    const mongoSettings = await listMongoSettings();
-    const settingsMap = new Map<string, SettingRecord>();
-    if (provider === "mongodb") {
-      mongoSettings.forEach((setting: SettingRecord) => {
-        settingsMap.set(setting.key, setting);
-      });
-    } else {
-      prismaSettings.forEach((setting: SettingRecord) => {
-        if (!authSettingKeys.has(setting.key) || !hasMongo) {
+    settingsInflight = (async (): Promise<SettingRecord[]> => {
+      const prismaSettings: SettingRecord[] = [];
+      if (canUsePrismaSettings(provider)) {
+        const settings = await prisma.setting.findMany({
+          select: { key: true, value: true },
+        });
+        prismaSettings.push(...settings);
+      }
+      const mongoSettings = await listMongoSettings();
+      const settingsMap = new Map<string, SettingRecord>();
+      if (provider === "mongodb") {
+        mongoSettings.forEach((setting: SettingRecord) => {
           settingsMap.set(setting.key, setting);
-        }
-      });
-      mongoSettings.forEach((setting: SettingRecord) => {
-        const shouldOverride =
-          isMongoPreferredSettingKey(setting.key) || !settingsMap.has(setting.key);
-        if (shouldOverride) {
-          settingsMap.set(setting.key, setting);
-        }
-      });
-    }
-    const settings = Array.from(settingsMap.values());
-    if (shouldLog()) {
-      await ErrorSystem.logInfo("[settings] fetched", {
-        service: "api/settings",
-        count: settings.length,
-        keys: settings.map((setting: SettingRecord) => setting.key),
-      });
-    }
-    return NextResponse.json(settings);
+        });
+      } else {
+        prismaSettings.forEach((setting: SettingRecord) => {
+          if (!authSettingKeys.has(setting.key) || !hasMongo) {
+            settingsMap.set(setting.key, setting);
+          }
+        });
+        mongoSettings.forEach((setting: SettingRecord) => {
+          const shouldOverride =
+            isMongoPreferredSettingKey(setting.key) || !settingsMap.has(setting.key);
+          if (shouldOverride) {
+            settingsMap.set(setting.key, setting);
+          }
+        });
+      }
+      const settings = Array.from(settingsMap.values());
+      if (shouldLog()) {
+        await ErrorSystem.logInfo("[settings] fetched", {
+          service: "api/settings",
+          count: settings.length,
+          keys: settings.map((setting: SettingRecord) => setting.key),
+        });
+      }
+      settingsCache = { data: settings, ts: Date.now() };
+      return settings;
+    })();
+
+    const data = await settingsInflight;
+    settingsInflight = null;
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "private, max-age=5" },
+    });
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: "api/settings",
@@ -146,6 +172,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }
   try {
+    settingsCache = null;
+    settingsInflight = null;
     const parsed = await parseJsonBody(req, settingSchema, {
       logPrefix: "settings.POST",
     });

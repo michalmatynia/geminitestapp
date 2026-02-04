@@ -68,6 +68,18 @@ export const parseDragIndex = (rawIndex?: string | null): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+export const resolveVerticalDropPosition = (
+  clientY: number,
+  rect: DOMRect,
+  options?: { thresholdRatio?: number; thresholdPx?: number }
+): "before" | "after" | null => {
+  const ratio = options?.thresholdRatio ?? 0.3;
+  const threshold = options?.thresholdPx ?? Math.max(8, rect.height * ratio);
+  if (clientY - rect.top <= threshold) return "before";
+  if (rect.bottom - clientY <= threshold) return "after";
+  return null;
+};
+
 export const setNoteDragData = (dataTransfer: DataTransfer, noteId: string): void => {
   setDragData(
     dataTransfer,

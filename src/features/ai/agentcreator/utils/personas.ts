@@ -3,6 +3,7 @@
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { AGENT_PERSONA_SETTINGS_KEY, DEFAULT_AGENT_PERSONA_SETTINGS } from "@/features/ai/agentcreator/constants/personas";
 import type { AgentPersona, AgentPersonaSettings } from "@/features/ai/agentcreator/types";
+import { fetchSettingsCached } from "@/shared/api/settings-client";
 
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -58,11 +59,7 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
 };
 
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
-  const res = await fetch("/api/settings", { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Failed to load agent personas.");
-  }
-  const data = (await res.json()) as Array<{ key: string; value: string }>;
+  const data = await fetchSettingsCached();
   const map = new Map(
     data.map((item: { key: string; value: string }) => [item.key, item.value])
   );

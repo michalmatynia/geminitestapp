@@ -13,6 +13,7 @@ import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, configurationError } from "@/shared/errors/app-error";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 
 const payloadSchema = z.object({
   imagePath: z.string().trim().min(1),
@@ -34,6 +35,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (!apiKey) {
       throw configurationError("OpenAI API key is missing. Set it in /admin/settings/ai.");
     }
+    const brainAssignment = await getBrainAssignmentForFeature("image_studio");
+    if (!brainAssignment.enabled) {
+      throw configurationError("AI Brain is disabled for Image Studio.");
+    }
+    if (brainAssignment.provider === "agent") {
+      throw configurationError("Image Studio mask generation does not support agent providers yet.");
+    }
 
     const publicRoot = path.join(process.cwd(), "public");
     const normalized = parsed.data.imagePath.replace(/^\/+/, "");
@@ -43,9 +51,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const ext = path.extname(diskPath).toLowerCase() === ".jpg" ? "jpeg" : "png";
 
     const client = new OpenAI({ apiKey });
+    const model = brainAssignment.modelId || "gpt-4o-mini";
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.1,
+      model,
+      temperature: brainAssignment.temperature ?? 0.1,
       messages: [
         {
           role: "system",

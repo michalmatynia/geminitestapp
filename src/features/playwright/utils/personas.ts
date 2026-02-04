@@ -6,6 +6,7 @@ import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
 } from "@/features/playwright/constants/playwright";
 import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright/types";
+import { fetchSettingsCached } from "@/shared/api/settings-client";
 
 export const createPlaywrightPersonaId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -104,11 +105,7 @@ export const findPlaywrightPersonaMatch = (
 };
 
 export const fetchPlaywrightPersonas = async (): Promise<PlaywrightPersona[]> => {
-  const res = await fetch("/api/settings", { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Failed to load Playwright personas.");
-  }
-  const data = (await res.json()) as Array<{ key: string; value: string }>;
+  const data = await fetchSettingsCached();
   const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
   const stored = parseJsonSetting<PlaywrightPersona[]>(
     map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
+import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
@@ -1270,8 +1270,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
       let doneSignal = false;
 
       const processEvent = (raw: string): void => {
-        const lines = raw.split("\n").map((line) => line.trim());
-        const dataLine = lines.find((line) => line.startsWith("data:"));
+        const lines = raw.split("\n").map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith("data:"));
         if (!dataLine) return;
         const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
           delta?: string;
@@ -1451,77 +1451,68 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
-      {/* Header */}
-      <div className="border-b border-border px-4 py-2">
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
-            aria-label="Hide right panel"
-            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-          >
-            <PanelRightClose className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={handleToggleInspector}
-            title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
-            aria-label="Toggle inspector"
-            className={`h-6 w-6 p-0 ${
-              state.inspectorEnabled
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <MousePointer2 className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
-            title="Desktop preview"
-            aria-label="Desktop preview"
-            className={`h-6 w-6 p-0 ${
-              state.previewMode === "desktop"
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <Monitor className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
-            title="Mobile preview"
-            aria-label="Mobile preview"
-            className={`h-6 w-6 p-0 ${
-              state.previewMode === "mobile"
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <Smartphone className="size-3.5" />
-          </Button>
-        </div>
-      </div>
-      <div className="px-4 py-2">
-        <h3 className="text-sm font-semibold text-white">
-          {selectedSection
-            ? `${sectionDef?.label ?? selectedSection.type}`
-            : selectedColumn
-            ? "Column"
-            : selectedBlock
-            ? `${blockDef?.label ?? selectedBlock.type}`
-            : "Settings"}
-        </h3>
-      </div>
+      <PanelHeader
+        title={selectedLabel || "Settings"}
+        actions={(
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
+              aria-label="Hide right panel"
+              className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+            >
+              <PanelRightClose className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={handleToggleInspector}
+              title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
+              aria-label="Toggle inspector"
+              className={`h-6 w-6 p-0 ${
+                state.inspectorEnabled
+                  ? "text-blue-300 bg-blue-500/10"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <MousePointer2 className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
+              title="Desktop preview"
+              aria-label="Desktop preview"
+              className={`h-6 w-6 p-0 ${
+                state.previewMode === "desktop"
+                  ? "text-blue-300 bg-blue-500/10"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Monitor className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
+              title="Mobile preview"
+              aria-label="Mobile preview"
+              className={`h-6 w-6 p-0 ${
+                state.previewMode === "mobile"
+                  ? "text-blue-300 bg-blue-500/10"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Smartphone className="size-3.5" />
+            </Button>
+          </div>
+        )}
+      />
 
       <div className="border-b border-border px-4 py-3">
         <div className="text-[10px] uppercase tracking-wider text-gray-400">Preview appearance</div>
@@ -2765,8 +2756,8 @@ function PageSettingsTab(): React.ReactNode {
       let doneSignal = false;
 
       const processEvent = (raw: string): void => {
-        const lines = raw.split("\n").map((line) => line.trim());
-        const dataLine = lines.find((line) => line.startsWith("data:"));
+        const lines = raw.split("\n").map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith("data:"));
         if (!dataLine) return;
         const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
           delta?: string;

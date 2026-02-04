@@ -67,6 +67,15 @@ const settings: SettingsOption[] = [
     bgColor: "bg-blue-500/10",
   },
   {
+    id: "brain",
+    href: "/admin/settings/brain",
+    icon: Brain,
+    title: "Brain",
+    description: "Assign AI providers and models to different app surfaces.",
+    color: "emerald",
+    bgColor: "bg-emerald-500/10",
+  },
+  {
     id: "database",
     href: "/admin/settings/database",
     icon: Database,

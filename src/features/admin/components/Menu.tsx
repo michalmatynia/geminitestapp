@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SearchInput, Tooltip, TreeHeader } from "@/shared/ui";
+import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from "@/shared/ui";
 import Link from "next/link";
 import {
   PackageIcon,
@@ -245,6 +245,62 @@ const filterTree = (items: NavItem[], query: string): NavItem[] => {
   return next;
 };
 
+const copyToClipboard = async (value: string): Promise<void> => {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+  } catch {
+    // ignore clipboard errors
+  }
+};
+
+const buildNavContextItems = (
+  item: NavItem,
+  isOpen: boolean,
+  hasChildren: boolean,
+  onToggleOpen: (id: string) => void
+) => {
+  const items: Array<{
+    id: string;
+    label?: string;
+    onSelect?: () => void;
+    separator?: boolean;
+  }> = [];
+
+  if (item.action) {
+    items.push({ id: "run-action", label: "Run action", onSelect: () => item.action?.() });
+  }
+  if (hasChildren) {
+    items.push({ id: "toggle-children", label: isOpen ? "Collapse" : "Expand", onSelect: () => onToggleOpen(item.id) });
+    items.push({ id: "separator-1", separator: true });
+  }
+  if (item.href) {
+    items.push({
+      id: "open",
+      label: "Open",
+      onSelect: () => {
+        if (typeof window !== "undefined") window.location.assign(item.href!);
+      },
+    });
+    items.push({
+      id: "open-new",
+      label: "Open in new tab",
+      onSelect: () => {
+        if (typeof window !== "undefined") window.open(item.href!, "_blank", "noopener");
+      },
+    });
+    items.push({
+      id: "copy-link",
+      label: "Copy link",
+      onSelect: () => void copyToClipboard(item.href!),
+    });
+  }
+
+  return items;
+};
+
 const collectGroupIds = (items: NavItem[]): Set<string> => {
   const ids = new Set<string>();
   const walk = (node: NavItem): void => {
@@ -322,6 +378,7 @@ function NavTree({
         // Only highlight leaf links (not folders). Folders get their "current" indicator via being open.
         const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
         const isOpen = !isCollapsed && hasChildren && (forcedOpenIds.has(item.id) || openIds.has(item.id));
+        const contextItems = buildNavContextItems(item, isOpen, hasChildren, onToggleOpen);
         const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
 
         const rowStyle: React.CSSProperties | undefined =
@@ -343,145 +400,155 @@ function NavTree({
               <Tooltip content={item.label} side="right">
                 <div>
                   {item.href ? (
-                    <Link
-                      href={item.href}
-                      prefetch={false}
-                      {...(item.onClick ? { onClick: item.onClick } : {})}
-                      className={cn(
-                        "flex items-center justify-center rounded-md px-2 py-2 transition border-l-2",
-                        sectionStyle ? sectionStyle.border : "border-transparent",
-                        active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
-                      )}
-                    >
-                      <span className="relative text-gray-200">
-                        {item.icon ?? <AppWindow className="size-4" />}
-                        {sectionStyle ? (
-                          <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
-                        ) : null}
-                      </span>
-                      <span className="sr-only">{item.label}</span>
-                    </Link>
+                    <TreeContextMenu items={contextItems}>
+                      <Link
+                        href={item.href}
+                        prefetch={false}
+                        {...(item.onClick ? { onClick: item.onClick } : {})}
+                        className={cn(
+                          "flex items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                          sectionStyle ? sectionStyle.border : "border-transparent",
+                          active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
+                        )}
+                      >
+                        <span className="relative text-gray-200">
+                          {item.icon ?? <AppWindow className="size-4" />}
+                          {sectionStyle ? (
+                            <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
+                          ) : null}
+                        </span>
+                        <span className="sr-only">{item.label}</span>
+                      </Link>
+                    </TreeContextMenu>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={(): void => {
-                        if (item.action) item.action();
-                        if (!item.href && hasChildren) onToggleOpen(item.id);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2",
-                        sectionStyle ? sectionStyle.border : "border-transparent",
-                        active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
-                      )}
-                    >
-                      <span className="relative text-gray-200">
-                        {item.icon ?? <AppWindow className="size-4" />}
-                        {sectionStyle ? (
-                          <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
-                        ) : null}
-                      </span>
-                      <span className="sr-only">{item.label}</span>
-                    </button>
+                    <TreeContextMenu items={contextItems}>
+                      <button
+                        type="button"
+                        onClick={(): void => {
+                          if (item.action) item.action();
+                          if (!item.href && hasChildren) onToggleOpen(item.id);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                          sectionStyle ? sectionStyle.border : "border-transparent",
+                          active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
+                        )}
+                      >
+                        <span className="relative text-gray-200">
+                          {item.icon ?? <AppWindow className="size-4" />}
+                          {sectionStyle ? (
+                            <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
+                          ) : null}
+                        </span>
+                        <span className="sr-only">{item.label}</span>
+                      </button>
+                    </TreeContextMenu>
                   )}
                 </div>
               </Tooltip>
             ) : (
               <>
                 {hasChildren ? (
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      if (item.action) {
-                        item.action();
-                        return;
-                      }
-                      onToggleOpen(item.id);
-                    }}
-                    className={rowClassName}
-                    style={rowStyle}
-                    aria-expanded={isOpen}
-                    aria-controls={`${item.id}-children`}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {depth === 0 && item.icon ? (
-                        <>
-                          {sectionStyle ? (
-                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
-                          ) : null}
-                          <span className="shrink-0 text-gray-200">{item.icon}</span>
-                        </>
-                      ) : depth > 0 ? (
-                        sectionStyle ? (
-                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
-                        ) : (
-                          <span className="shrink-0 text-gray-600">•</span>
-                        )
-                      ) : null}
+                  <TreeContextMenu items={contextItems}>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        if (item.action) {
+                          item.action();
+                          return;
+                        }
+                        onToggleOpen(item.id);
+                      }}
+                      className={rowClassName}
+                      style={rowStyle}
+                      aria-expanded={isOpen}
+                      aria-controls={`${item.id}-children`}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {depth === 0 && item.icon ? (
+                          <>
+                            {sectionStyle ? (
+                              <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                            ) : null}
+                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                          </>
+                        ) : depth > 0 ? (
+                          sectionStyle ? (
+                            <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                          ) : (
+                            <span className="shrink-0 text-gray-600">•</span>
+                          )
+                        ) : null}
 
-                      <span className="min-w-0 truncate text-left">{item.label}</span>
-                    </div>
+                        <span className="min-w-0 truncate text-left">{item.label}</span>
+                      </div>
 
-                    <ChevronRightIcon
-                      className={cn(
-                        "size-4 shrink-0 text-gray-400 transition-transform duration-200",
-                        isOpen ? "rotate-90" : ""
-                      )}
-                      aria-hidden="true"
-                    />
-                  </button>
+                      <ChevronRightIcon
+                        className={cn(
+                          "size-4 shrink-0 text-gray-400 transition-transform duration-200",
+                          isOpen ? "rotate-90" : ""
+                        )}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </TreeContextMenu>
                 ) : item.href ? (
-                  <Link
-                    href={item.href}
-                    prefetch={false}
-                    {...(item.onClick ? { onClick: item.onClick } : {})}
-                    className={rowClassName}
-                    style={rowStyle}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {depth === 0 && item.icon ? (
-                        <>
-                          {sectionStyle ? (
-                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
-                          ) : null}
-                          <span className="shrink-0 text-gray-200">{item.icon}</span>
-                        </>
-                      ) : depth > 0 ? (
-                        sectionStyle ? (
-                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
-                        ) : (
-                          <span className="shrink-0 text-gray-600">•</span>
-                        )
-                      ) : null}
-                      <span className="min-w-0 truncate">{item.label}</span>
-                    </div>
-                  </Link>
+                  <TreeContextMenu items={contextItems}>
+                    <Link
+                      href={item.href}
+                      prefetch={false}
+                      {...(item.onClick ? { onClick: item.onClick } : {})}
+                      className={rowClassName}
+                      style={rowStyle}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {depth === 0 && item.icon ? (
+                          <>
+                            {sectionStyle ? (
+                              <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                            ) : null}
+                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                          </>
+                        ) : depth > 0 ? (
+                          sectionStyle ? (
+                            <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                          ) : (
+                            <span className="shrink-0 text-gray-600">•</span>
+                          )
+                        ) : null}
+                        <span className="min-w-0 truncate">{item.label}</span>
+                      </div>
+                    </Link>
+                  </TreeContextMenu>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      if (item.action) item.action();
-                    }}
-                    className={rowClassName}
-                    style={rowStyle}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {depth === 0 && item.icon ? (
-                        <>
-                          {sectionStyle ? (
-                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
-                          ) : null}
-                          <span className="shrink-0 text-gray-200">{item.icon}</span>
-                        </>
-                      ) : depth > 0 ? (
-                        sectionStyle ? (
-                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
-                        ) : (
-                          <span className="shrink-0 text-gray-600">•</span>
-                        )
-                      ) : null}
-                      <span className="min-w-0 truncate text-left">{item.label}</span>
-                    </div>
-                  </button>
+                  <TreeContextMenu items={contextItems}>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        if (item.action) item.action();
+                      }}
+                      className={rowClassName}
+                      style={rowStyle}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {depth === 0 && item.icon ? (
+                          <>
+                            {sectionStyle ? (
+                              <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                            ) : null}
+                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                          </>
+                        ) : depth > 0 ? (
+                          sectionStyle ? (
+                            <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                          ) : (
+                            <span className="shrink-0 text-gray-600">•</span>
+                          )
+                        ) : null}
+                        <span className="min-w-0 truncate text-left">{item.label}</span>
+                      </div>
+                    </button>
+                  </TreeContextMenu>
                 )}
 
                 {hasChildren && isOpen ? (

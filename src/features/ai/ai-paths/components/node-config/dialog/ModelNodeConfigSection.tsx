@@ -1,12 +1,11 @@
 "use client";
 
-
-
-
-
+import { useEffect, useMemo, useRef } from "react";
 import { Button, Input, Label, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import type { AiNode, Edge, ModelConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
 import { DEFAULT_MODELS, toNumber } from "@/features/ai/ai-paths/lib";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from "@/features/ai/brain";
 
 type ModelNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -25,12 +24,50 @@ export function ModelNodeConfigSection({
 }: ModelNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "model") return null;
 
+  const settingsQuery = useSettingsMap();
+  const brainSettings = useMemo(
+    () => parseBrainSettings(settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY)),
+    [settingsQuery.data]
+  );
+  const brainAssignment = useMemo(
+    () => resolveBrainAssignment(brainSettings, "ai_paths"),
+    [brainSettings]
+  );
+  const brainAppliedRef = useRef<string | null>(null);
+
   const modelConfig: ModelConfig = selectedNode.config?.model ?? {
     modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
     temperature: 0.7,
     maxTokens: 800,
     vision: selectedNode.inputs.includes("images"),
   };
+
+  useEffect(() => {
+    if (!settingsQuery.isSuccess) return;
+    if (!brainAssignment.enabled || brainAssignment.provider !== "model") return;
+    if (!brainAssignment.modelId) return;
+    if (brainAppliedRef.current === selectedNode.id) return;
+    if (modelConfig.modelId && modelConfig.modelId !== DEFAULT_MODELS[0]) return;
+    brainAppliedRef.current = selectedNode.id;
+    updateSelectedNodeConfig({
+      model: {
+        ...modelConfig,
+        modelId: brainAssignment.modelId,
+        temperature: brainAssignment.temperature ?? modelConfig.temperature,
+        maxTokens: brainAssignment.maxTokens ?? modelConfig.maxTokens,
+      },
+    });
+  }, [
+    brainAssignment.enabled,
+    brainAssignment.maxTokens,
+    brainAssignment.modelId,
+    brainAssignment.provider,
+    brainAssignment.temperature,
+    modelConfig,
+    selectedNode.id,
+    settingsQuery.isSuccess,
+    updateSelectedNodeConfig,
+  ]);
 
   const mergedModelOptions =
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)

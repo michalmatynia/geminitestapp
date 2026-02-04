@@ -5,6 +5,7 @@ import { serializeSetting } from "@/shared/utils/settings-json";
 import { fetchPlaywrightPersonas } from "@/features/playwright/utils/personas";
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
 import type { PlaywrightPersona } from "@/features/playwright/types";
+import { invalidateSettingsCache } from "@/shared/api/settings-client";
 
 export const playwrightKeys = {
   all: ["playwright"] as const,
@@ -40,6 +41,7 @@ export function useSavePlaywrightPersonasMutation(): UseMutationResult<
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error || "Failed to save personas.");
       }
+      invalidateSettingsCache();
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: playwrightKeys.personas() });

@@ -17,6 +17,7 @@ import {
   parsePromptValidationRules,
   type PromptValidationRule,
 } from "@/features/prompt-engine";
+import { getBrainAssignmentForFeature } from "@/features/ai/brain/server";
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -46,7 +47,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       throw configurationError("OpenAI API key is missing. Set it in /admin/settings/ai.");
     }
 
-    const model = (await getSettingValue("openai_model"))?.trim() || "gpt-4o-mini";
+    const brainAssignment = await getBrainAssignmentForFeature("prompt_engine");
+    if (!brainAssignment.enabled) {
+      throw configurationError("AI Brain is disabled for Prompt Engine.");
+    }
+    if (brainAssignment.provider === "agent") {
+      throw configurationError("Prompt Engine pattern learning does not support agent providers yet.");
+    }
+    const model =
+      brainAssignment.modelId ||
+      (await getSettingValue("openai_model"))?.trim() ||
+      "gpt-4o-mini";
     const settingsRaw = await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY);
     const settings = parsePromptEngineSettings(settingsRaw);
     const existingRules = [

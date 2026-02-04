@@ -8,6 +8,7 @@ import {
   Input,
   Label,
   MultiSelect,
+  PanelHeader,
   SectionPanel,
   Select,
   SelectContent,
@@ -22,12 +23,14 @@ import {
   TreeContextMenu,
   TreeRow,
   useToast,
-  VectorCanvas,
-  VectorToolbar,
+} from "@/shared/ui";
+import {
+  VectorDrawingCanvas,
+  VectorDrawingToolbar,
   type VectorPoint,
   type VectorShape,
   type VectorToolMode,
-} from "@/shared/ui";
+} from "@/features/vector-drawing";
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
 import {
   Camera,
@@ -2092,33 +2095,45 @@ export function AdminImageStudioPage(): React.JSX.Element {
   });
 
   const settingsPanel = (
-    <div className="rounded border border-border bg-card/40 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-gray-300">Studio Settings</div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetStudioSettings}
-            disabled={updateSetting.isPending}
-          >
-            Reset
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => void saveStudioSettings()}
-            disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
-          >
-            {updateSetting.isPending ? "Saving..." : "Save"}
-          </Button>
-        </div>
-      </div>
+    <div className="rounded border border-border bg-card/40 overflow-hidden">
+      <PanelHeader
+        title="Studio Settings"
+        actions={(
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshSettings}
+              disabled={settingsQuery.isFetching}
+              title="Reload settings"
+            >
+              <RefreshCcw className={cn("mr-2 size-4", settingsQuery.isFetching ? "animate-spin" : "")} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetStudioSettings}
+              disabled={updateSetting.isPending}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void saveStudioSettings()}
+              disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
+            >
+              {updateSetting.isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        )}
+      />
 
-      {settingsQuery.isLoading && !settingsLoaded ? (
-        <div className="mt-2 text-xs text-gray-500">Loading settings…</div>
-      ) : null}
+      <div className="p-3 space-y-4">
+        {settingsQuery.isLoading && !settingsLoaded ? (
+          <div className="text-xs text-gray-500">Loading settings…</div>
+        ) : null}
 
-      <div className="mt-3 space-y-4">
         <div className="space-y-2">
           <Label className="text-xs text-gray-400">Prompt Extraction</Label>
           <div className="grid grid-cols-2 gap-2">
@@ -3142,26 +3157,29 @@ export function AdminImageStudioPage(): React.JSX.Element {
           {/* Project + Slots */}
         <SectionPanel
           className={cn(
-            "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            "flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0",
             isFocusMode && "pointer-events-none opacity-0 -translate-x-2"
           )}
           variant="subtle"
           aria-hidden={isFocusMode}
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-gray-400">Project & Slots</div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
-              }}
-              title="Refresh studio data"
-            >
-              <RefreshCcw className="mr-2 size-4" />
-              Refresh
-            </Button>
-          </div>
+          <PanelHeader
+            title="Project & Slots"
+            actions={(
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
+                }}
+                title="Refresh studio data"
+              >
+                <RefreshCcw className="mr-2 size-4" />
+                Refresh
+              </Button>
+            )}
+          />
+          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
             <div className="flex items-center gap-2">
@@ -3476,62 +3494,62 @@ export function AdminImageStudioPage(): React.JSX.Element {
               }}
             />
           </div>
+          </div>
         </SectionPanel>
 
         {/* Preview */}
-        <SectionPanel className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-hidden" variant="subtle">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-xs text-gray-400">Preview</div>
-              {!isFocusMode ? (
-                <div className="truncate text-sm text-gray-100">{selectedSlot?.name || "—"}</div>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2">
-              {!isFocusMode ? (
-                <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
-              ) : null}
-              {selectedSlot?.asset3dId ? (
-                <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
+        <SectionPanel className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
+          <PanelHeader
+            title="Preview"
+            subtitle={!isFocusMode ? (selectedSlot?.name || "—") : undefined}
+            actions={(
+              <div className="flex items-center gap-2">
+                {!isFocusMode ? (
+                  <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
+                ) : null}
+                {selectedSlot?.asset3dId ? (
+                  <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
+                    <Button
+                      type="button"
+                      variant={previewMode === "image" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setPreviewMode("image")}
+                    >
+                      Image
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={previewMode === "3d" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setPreviewMode("3d")}
+                    >
+                      3D
+                    </Button>
+                  </div>
+                ) : null}
+                {previewMode === "3d" && selectedSlot?.asset3dId ? (
                   <Button
                     type="button"
-                    variant={previewMode === "image" ? "secondary" : "ghost"}
+                    variant="outline"
                     size="sm"
-                    onClick={() => setPreviewMode("image")}
+                    onClick={() => void handleCaptureScreenshot()}
                   >
-                    Image
+                    <Camera className="mr-2 size-4" />
+                    Screenshot
                   </Button>
-                  <Button
-                    type="button"
-                    variant={previewMode === "3d" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setPreviewMode("3d")}
-                  >
-                    3D
-                  </Button>
-                </div>
-              ) : null}
-              {previewMode === "3d" && selectedSlot?.asset3dId ? (
+                ) : null}
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleCaptureScreenshot()}
+                  onClick={() => setIsFocusMode((prev: boolean) => !prev)}
                 >
-                  <Camera className="mr-2 size-4" />
-                  Screenshot
+                  {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+                  {isFocusMode ? "Edit" : "Show"}
                 </Button>
-              ) : null}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFocusMode((prev: boolean) => !prev)}
-              >
-                {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
-                {isFocusMode ? "Edit" : "Show"}
-              </Button>
-            </div>
-          </div>
+              </div>
+            )}
+          />
+          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-[11px] text-gray-400">Mask generator</div>
@@ -3578,7 +3596,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   />
                 </div>
               ) : (
-                <VectorCanvas
+                <VectorDrawingCanvas
                   src={selectedSlotImageSrc}
                   tool={tool}
                   shapes={maskShapes}
@@ -3593,7 +3611,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 />
               )}
             </div>
-            <VectorToolbar
+            <VectorDrawingToolbar
               className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
               tool={tool}
               onSelectTool={setTool}
@@ -3858,77 +3876,81 @@ export function AdminImageStudioPage(): React.JSX.Element {
               </div>
             </div>
           ) : null}
+          </div>
         </SectionPanel>
 
         {/* Prompt + Params */}
         <SectionPanel
           className={cn(
-            "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            "flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0",
             isFocusMode && "pointer-events-none opacity-0 translate-x-2"
           )}
           variant="subtle"
           aria-hidden={isFocusMode}
         >
-          <div className="flex items-center justify-between gap-2">
-            <div />
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (!promptText.trim()) return;
-                  if (studioSettings.promptExtraction.mode === "programmatic") {
-                    runProgrammaticExtraction();
-                    return;
-                  }
-                  toast(
-                    `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
-                    { variant: "info" }
-                  );
-                }}
-                disabled={!promptText.trim()}
-              >
-                AI extract
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={autoFormatPrompt}
-                disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== "programmatic"}
-                title="Apply automatic formatting fixes (best effort)"
-              >
-                Auto format
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleSuggestUi()}
-                disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
-                title="Suggest UI controls for extracted parameters"
-              >
-                <Wand2 className="mr-2 size-4" />
-                Suggest UI
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleLearnPatterns()}
-                disabled={!promptText.trim() || !canManagePatterns || learnLoading}
-                title="Learn validation patterns from the prompt"
-              >
-                <Sparkles className="mr-2 size-4" />
-                Learn patterns
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={runProgrammaticExtraction}
-                disabled={!promptText.trim()}
-              >
-                Extract params
-              </Button>
-            </div>
-          </div>
+          <PanelHeader
+            title="Prompt & Params"
+            actions={(
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!promptText.trim()) return;
+                    if (studioSettings.promptExtraction.mode === "programmatic") {
+                      runProgrammaticExtraction();
+                      return;
+                    }
+                    toast(
+                      `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
+                      { variant: "info" }
+                    );
+                  }}
+                  disabled={!promptText.trim()}
+                >
+                  AI extract
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={autoFormatPrompt}
+                  disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== "programmatic"}
+                  title="Apply automatic formatting fixes (best effort)"
+                >
+                  Auto format
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleSuggestUi()}
+                  disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
+                  title="Suggest UI controls for extracted parameters"
+                >
+                  <Wand2 className="mr-2 size-4" />
+                  Suggest UI
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleLearnPatterns()}
+                  disabled={!promptText.trim() || !canManagePatterns || learnLoading}
+                  title="Learn validation patterns from the prompt"
+                >
+                  <Sparkles className="mr-2 size-4" />
+                  Learn patterns
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runProgrammaticExtraction}
+                  disabled={!promptText.trim()}
+                >
+                  Extract params
+                </Button>
+              </div>
+            )}
+          />
+          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
 
           <div className="space-y-2">
             <Textarea
@@ -4072,6 +4094,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               </Button>
             </div>
           </div>
+          </div>
         </SectionPanel>
         </div>
 
@@ -4080,139 +4103,131 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
         <TabsContent value="projects">
           <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-            <SectionPanel variant="subtle" className="space-y-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-sm text-gray-200">Projects</div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { void projectsQuery.refetch(); }}
-                  title="Reload projects"
-                >
-                  <RefreshCcw className={cn("mr-2 size-4", projectsQuery.isFetching ? "animate-spin" : "")} />
-                  Refresh
-                </Button>
-              </div>
-
-              <Input
-                value={projectSearch}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
-                placeholder="Search projects..."
-                className="h-9"
+            <SectionPanel variant="subtle" className="p-0">
+              <PanelHeader
+                title="Projects"
+                actions={(
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { void projectsQuery.refetch(); }}
+                    title="Reload projects"
+                  >
+                    <RefreshCcw className={cn("mr-2 size-4", projectsQuery.isFetching ? "animate-spin" : "")} />
+                    Refresh
+                  </Button>
+                )}
               />
-
-              <div className="flex items-center gap-2">
+              <div className="space-y-4 p-4">
                 <Input
-                  value={newProjectId}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
-                  placeholder="New project id (e.g. milkbar-001)"
+                  value={projectSearch}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
+                  placeholder="Search projects..."
                   className="h-9"
                 />
-                <Button
-                  onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
-                  disabled={!newProjectId.trim() || createProjectMutation.isPending}
-                >
-                  Create
-                </Button>
-              </div>
 
-              <div className="text-[11px] text-gray-400">
-                {projectsQuery.isLoading ? "Loading projects..." : `${filteredProjects.length} project(s)`}
-              </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newProjectId}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
+                    placeholder="New project id (e.g. milkbar-001)"
+                    className="h-9"
+                  />
+                  <Button
+                    onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
+                    disabled={!newProjectId.trim() || createProjectMutation.isPending}
+                  >
+                    Create
+                  </Button>
+                </div>
 
-              <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
-                {filteredProjects.length === 0 ? (
-                  <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
-                    No projects found.
-                  </div>
-                ) : (
-                  filteredProjects.map((id: string) => (
-                    <div
-                      key={id}
-                      className={cn(
-                        "flex items-center justify-between gap-3 rounded border border-border bg-card/40 p-2",
-                        id === projectId && "border-emerald-500/40 bg-emerald-500/10"
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate text-sm text-gray-100">{id}</div>
-                        {id === projectId ? (
-                          <div className="text-[10px] text-emerald-200">Active</div>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setProjectId(id)}
-                          disabled={id === projectId}
-                        >
-                          Select
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-rose-500/30 text-rose-200 hover:bg-rose-500/10"
-                          onClick={() => void handleDeleteProject(id)}
-                          disabled={pendingDeleteId === id || deleteProjectMutation.isPending}
-                        >
-                          {pendingDeleteId === id ? "Deleting..." : "Delete"}
-                        </Button>
-                      </div>
+                <div className="text-[11px] text-gray-400">
+                  {projectsQuery.isLoading ? "Loading projects..." : `${filteredProjects.length} project(s)`}
+                </div>
+
+                <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
+                  {filteredProjects.length === 0 ? (
+                    <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                      No projects found.
                     </div>
-                  ))
-                )}
+                  ) : (
+                    filteredProjects.map((id: string) => (
+                      <div
+                        key={id}
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded border border-border bg-card/40 p-2",
+                          id === projectId && "border-emerald-500/40 bg-emerald-500/10"
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate text-sm text-gray-100">{id}</div>
+                          {id === projectId ? (
+                            <div className="text-[10px] text-emerald-200">Active</div>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setProjectId(id)}
+                            disabled={id === projectId}
+                          >
+                            Select
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-rose-500/30 text-rose-200 hover:bg-rose-500/10"
+                            onClick={() => void handleDeleteProject(id)}
+                            disabled={pendingDeleteId === id || deleteProjectMutation.isPending}
+                          >
+                            {pendingDeleteId === id ? "Deleting..." : "Delete"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </SectionPanel>
 
-            <SectionPanel variant="subtle" className="space-y-4">
-              <div className="text-sm text-gray-200">Active project</div>
-              {projectId ? (
-                <div className="space-y-3 text-sm text-gray-300">
-                  <div>
-                    Project: <span className="text-gray-100">{projectId}</span>
+            <SectionPanel variant="subtle" className="p-0">
+              <PanelHeader title="Active project" />
+              <div className="space-y-4 p-4">
+                {projectId ? (
+                  <div className="space-y-3 text-sm text-gray-300">
+                    <div>
+                      Project: <span className="text-gray-100">{projectId}</span>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Slots loaded: <span className="text-gray-200">{slots.length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleTabChange("studio")}>
+                        Open Studio
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setProjectId("")}
+                        disabled={!projectId}
+                      >
+                        Clear selection
+                      </Button>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    Slots loaded: <span className="text-gray-200">{slots.length}</span>
+                ) : (
+                  <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                    No project selected yet.
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleTabChange("studio")}>
-                      Open Studio
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setProjectId("")}
-                      disabled={!projectId}
-                    >
-                      Clear selection
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
-                  No project selected yet.
-                </div>
-              )}
+                )}
+              </div>
             </SectionPanel>
           </div>
         </TabsContent>
 
         <TabsContent value="settings">
           <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-sm text-gray-200">Studio Settings</div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshSettings}
-                disabled={settingsQuery.isFetching}
-                title="Reload settings"
-              >
-                <RefreshCcw className={cn("mr-2 size-4", settingsQuery.isFetching ? "animate-spin" : "")} />
-                Refresh
-              </Button>
-            </div>
             {settingsPanel}
           </div>
         </TabsContent>

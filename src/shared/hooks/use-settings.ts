@@ -9,6 +9,10 @@ import {
   type UseMutationResult,
 } from "@tanstack/react-query";
 import type { SystemSetting } from "@/shared/types/settings";
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from "@/shared/api/settings-client";
 
 export type { SystemSetting };
 
@@ -16,12 +20,12 @@ export function useSettings(): UseQueryResult<SystemSetting[], Error> {
   return useQuery({
     queryKey: ["settings"],
     queryFn: async (): Promise<SystemSetting[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) {
-        console.warn("[settings] Failed to fetch settings", res.status);
+      try {
+        return (await fetchSettingsCached()) as SystemSetting[];
+      } catch (error) {
+        console.warn("[settings] Failed to fetch settings", error);
         return [];
       }
-      return (await res.json()) as SystemSetting[];
     },
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -35,12 +39,12 @@ export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
   return useQuery({
     queryKey: ["settings"],
     queryFn: async (): Promise<SystemSetting[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) {
-        console.warn("[settings] Failed to fetch settings", res.status);
+      try {
+        return (await fetchSettingsCached()) as SystemSetting[];
+      } catch (error) {
+        console.warn("[settings] Failed to fetch settings", error);
         return [];
       }
-      return (await res.json()) as SystemSetting[];
     },
     select: (data: SystemSetting[]): Map<string, string> =>
       new Map(data.map((item) => [item.key, item.value])),
@@ -73,6 +77,7 @@ export function useUpdateSetting(): UseMutationResult<
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) throw new Error("Failed to update setting");
+      invalidateSettingsCache();
       return (await res.json()) as SystemSetting;
     },
     onSuccess: (): void => {
@@ -104,6 +109,7 @@ export function useUpdateSettingsBulk(): UseMutationResult<
       if (responses.some((res) => !res.ok)) {
         throw new Error("Failed to update settings");
       }
+      invalidateSettingsCache();
       return responses;
     },
     onSuccess: (): void => {

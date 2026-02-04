@@ -1,0 +1,27 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx
+   229:15  error    Missing return type on function                                                                                                                   @typescript-eslint/explicit-function-return-type
+   275:98  error    'value ?? ""' will use Object's default stringification format ('[object Object]') when stringified                                               @typescript-eslint/no-base-to-string
+   694:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   699:6   warning  React Hook useMemo has an unnecessary dependency: 'contextPreviewNonce'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+   842:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  1199:24  error    Expected a type annotation                                                                                                                        @typescript-eslint/typedef
+  1321:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2519:49  error    Expected agent to have a type annotation                                                                                                          @typescript-eslint/typedef
+  2643:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                      react-hooks/rules-of-hooks
+  2652:23  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2678:27  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                        react-hooks/rules-of-hooks
+  2681:10  error    Expected template to have a type annotation                                                                                                       @typescript-eslint/typedef
+  2689:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2706:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2723:32  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2768:44  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2769:38  error    Expected line to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2816:11  warning  Use 'isAbortError(error)' or check 'error.name === "AbortError"' instead of 'instanceof DOMException' for better cross-environment compatibility  no-restricted-syntax
+  2839:29  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+  2882:23  error    Expected item to have a type annotation                                                                                                           @typescript-eslint/typedef
+  2891:12  error    Expected tpl to have a type annotation                                                                                                            @typescript-eslint/typedef
+  2916:30  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                    react-hooks/rules-of-hooks
+
+✖ 22 problems (17 errors, 5 warnings)
+

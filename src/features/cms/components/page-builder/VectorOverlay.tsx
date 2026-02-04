@@ -4,13 +4,15 @@ import React, { useCallback, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/shared/ui";
 import {
-  VectorCanvas,
-  VectorToolbar,
+  VectorDrawingCanvas,
+  VectorDrawingToolbar,
   vectorShapesToPath,
+  smoothShape,
+  simplifyShape,
   DEFAULT_VECTOR_VIEWBOX,
   type VectorShape,
   type VectorToolMode,
-} from "@/shared/ui";
+} from "@/features/vector-drawing";
 import type { VectorOverlayRequest } from "../../hooks/usePageBuilderContext";
 import { cn } from "@/shared/utils";
 
@@ -46,7 +48,11 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
 
   const handleApply = useCallback((): void => {
     const path = vectorShapesToPath(shapes);
-    request.onApply({ shapes, path });
+    request.onApply({
+      shapes,
+      path,
+      points: shapes.map((shape: VectorShape) => ({ shapeId: shape.id, points: shape.points })),
+    });
     onClose();
   }, [onClose, request, shapes]);
 
@@ -89,6 +95,24 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
     setSelectedPointIndex(null);
   }, []);
 
+  const handleSmooth = useCallback((): void => {
+    setShapes((prev: VectorShape[]) =>
+      prev.map((shape: VectorShape) => {
+        if (activeShapeId && shape.id !== activeShapeId) return shape;
+        return smoothShape(shape, 1);
+      })
+    );
+  }, [activeShapeId]);
+
+  const handleSimplify = useCallback((): void => {
+    setShapes((prev: VectorShape[]) =>
+      prev.map((shape: VectorShape) => {
+        if (activeShapeId && shape.id !== activeShapeId) return shape;
+        return simplifyShape(shape, 0.0025);
+      })
+    );
+  }, [activeShapeId]);
+
   return (
     <div
       className={cn(
@@ -96,7 +120,7 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
         className
       )}
     >
-      <VectorCanvas
+      <VectorDrawingCanvas
         allowWithoutImage
         showEmptyState={false}
         tool={tool}
@@ -146,7 +170,7 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
         </div>
       </div>
 
-      <VectorToolbar
+      <VectorDrawingToolbar
         className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2"
         tool={tool}
         onSelectTool={setTool}
@@ -154,10 +178,15 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
         onClose={handleCloseShape}
         onDetach={handleDetach}
         onClear={handleClear}
+        onSmooth={handleSmooth}
+        onSimplify={handleSimplify}
         disableUndo={!activeShapeId}
         disableClose={!activeShapeId}
         disableDetach={!activeShapeId}
         disableClear={shapes.length === 0}
+        disableSmooth={!activeShapeId}
+        disableSimplify={!activeShapeId}
+        variant="min"
       />
     </div>
   );

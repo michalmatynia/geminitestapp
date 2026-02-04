@@ -284,9 +284,13 @@ export const generateAnalyticsInsight = async (params: {
   rangeHours?: number;
   scope?: "all" | "public" | "admin";
 }): Promise<AiInsightRecord> => {
-  const provider = ((await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsProvider)) || "model") as "model" | "agent";
-  const modelId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel);
-  const agentId = await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId);
+  const brainAssignment = await getBrainAssignmentForFeature("analytics");
+  if (!brainAssignment.enabled) {
+    throw new Error("AI Brain is disabled for Analytics.");
+  }
+  const provider = brainAssignment.provider;
+  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel));
+  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId));
 
   const rangeHours = params.rangeHours ?? 24;
   const to = new Date();

@@ -47,6 +47,26 @@ const FEATURES: FeatureConfig[] = [
     description: "Theme/style generation and design assistants inside the CMS Builder.",
   },
   {
+    key: "image_studio",
+    label: "Image Studio",
+    description: "Prompt extraction, UI extractor, and prompt learning for Image Studio.",
+  },
+  {
+    key: "prompt_engine",
+    label: "Prompt Engine",
+    description: "Validation learning and prompt tooling shared across the app.",
+  },
+  {
+    key: "ai_paths",
+    label: "AI Paths",
+    description: "Default model settings for AI Paths model nodes.",
+  },
+  {
+    key: "analytics",
+    label: "Analytics",
+    description: "AI analytics summaries and warnings across the dashboard.",
+  },
+  {
     key: "system_logs",
     label: "System Logs",
     description: "AI summaries and insights in the System Logs dashboard.",
@@ -80,7 +100,7 @@ const AssignmentEditor = ({
 
   return (
     <div className={cn("grid gap-3", readOnly ? "opacity-70" : "")}
-      aria-disabled={readOnly}
+      aria-disabled={!!readOnly}
     >
       <label className="flex items-center gap-2 text-xs text-gray-300">
         <input
@@ -88,7 +108,7 @@ const AssignmentEditor = ({
           className="h-3 w-3 rounded border-gray-600"
           checked={assignment.enabled}
           onChange={(e) => updateField({ enabled: e.target.checked })}
-          disabled={readOnly}
+          disabled={!!readOnly}
         />
         Enabled
       </label>
@@ -99,7 +119,7 @@ const AssignmentEditor = ({
           <Select
             value={assignment.provider}
             onValueChange={(value) => updateField({ provider: value as AiBrainProvider })}
-            disabled={readOnly}
+            disabled={!!readOnly}
           >
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select provider" />
@@ -119,7 +139,7 @@ const AssignmentEditor = ({
             value={assignment.modelId}
             onChange={(e) => updateField({ modelId: e.target.value })}
             placeholder="gpt-4o-mini"
-            disabled={readOnly || assignment.provider !== "model"}
+            disabled={!!readOnly || assignment.provider !== "model"}
           />
         </div>
         <div className="space-y-1">
@@ -128,7 +148,7 @@ const AssignmentEditor = ({
             value={assignment.agentId}
             onChange={(e) => updateField({ agentId: e.target.value })}
             placeholder="agent_xxx"
-            disabled={readOnly || assignment.provider !== "agent"}
+            disabled={!!readOnly || assignment.provider !== "agent"}
           />
         </div>
         <div className="space-y-1">
@@ -140,7 +160,7 @@ const AssignmentEditor = ({
             step={0.1}
             value={assignment.temperature ?? ""}
             onChange={(e) => updateField({ temperature: e.target.value === "" ? undefined : Number(e.target.value) })}
-            disabled={readOnly}
+            disabled={!!readOnly}
           />
         </div>
         <div className="space-y-1">
@@ -152,7 +172,7 @@ const AssignmentEditor = ({
             step={1}
             value={assignment.maxTokens ?? ""}
             onChange={(e) => updateField({ maxTokens: e.target.value === "" ? undefined : Number(e.target.value) })}
-            disabled={readOnly}
+            disabled={!!readOnly}
           />
         </div>
       </div>
@@ -164,7 +184,7 @@ const AssignmentEditor = ({
           value={assignment.notes ?? ""}
           onChange={(e) => updateField({ notes: e.target.value })}
           placeholder="Optional notes for this assignment"
-          disabled={readOnly}
+          disabled={!!readOnly}
         />
       </div>
     </div>
@@ -179,6 +199,10 @@ export function AdminBrainPage(): React.JSX.Element {
   const [settings, setSettings] = useState<AiBrainSettings>(defaultBrainSettings);
   const [overridesEnabled, setOverridesEnabled] = useState<Record<AiBrainFeature, boolean>>({
     cms_builder: false,
+    image_studio: false,
+    prompt_engine: false,
+    ai_paths: false,
+    analytics: false,
     system_logs: false,
     error_logs: false,
   });
@@ -190,6 +214,10 @@ export function AdminBrainPage(): React.JSX.Element {
     setSettings(parsed);
     setOverridesEnabled({
       cms_builder: Boolean(parsed.assignments.cms_builder),
+      image_studio: Boolean(parsed.assignments.image_studio),
+      prompt_engine: Boolean(parsed.assignments.prompt_engine),
+      ai_paths: Boolean(parsed.assignments.ai_paths),
+      analytics: Boolean(parsed.assignments.analytics),
       system_logs: Boolean(parsed.assignments.system_logs),
       error_logs: Boolean(parsed.assignments.error_logs),
     });
@@ -228,13 +256,13 @@ export function AdminBrainPage(): React.JSX.Element {
         return { ...prev, assignments: nextAssignments };
       });
     } else {
-      setSettings((prev) => ({
-        ...prev,
-        assignments: {
-          ...prev.assignments,
-          [feature]: prev.assignments[feature] ?? resolveBrainAssignment(prev, feature),
-        },
-      }));
+    setSettings((prev) => ({
+      ...prev,
+      assignments: {
+        ...prev.assignments,
+        [feature]: prev.assignments[feature] ?? resolveBrainAssignment(prev, feature),
+      },
+    }));
     }
   }, []);
 
@@ -245,6 +273,10 @@ export function AdminBrainPage(): React.JSX.Element {
         defaults: sanitizeBrainAssignment(settings.defaults),
         assignments: {
           ...(overridesEnabled.cms_builder ? { cms_builder: sanitizeBrainAssignment(settings.assignments.cms_builder ?? buildAssignment()) } : {}),
+          ...(overridesEnabled.image_studio ? { image_studio: sanitizeBrainAssignment(settings.assignments.image_studio ?? buildAssignment()) } : {}),
+          ...(overridesEnabled.prompt_engine ? { prompt_engine: sanitizeBrainAssignment(settings.assignments.prompt_engine ?? buildAssignment()) } : {}),
+          ...(overridesEnabled.ai_paths ? { ai_paths: sanitizeBrainAssignment(settings.assignments.ai_paths ?? buildAssignment()) } : {}),
+          ...(overridesEnabled.analytics ? { analytics: sanitizeBrainAssignment(settings.assignments.analytics ?? buildAssignment()) } : {}),
           ...(overridesEnabled.system_logs ? { system_logs: sanitizeBrainAssignment(settings.assignments.system_logs ?? buildAssignment()) } : {}),
           ...(overridesEnabled.error_logs ? { error_logs: sanitizeBrainAssignment(settings.assignments.error_logs ?? buildAssignment()) } : {}),
         },
@@ -262,7 +294,15 @@ export function AdminBrainPage(): React.JSX.Element {
 
   const handleReset = useCallback((): void => {
     setSettings(defaultBrainSettings);
-    setOverridesEnabled({ cms_builder: false, system_logs: false, error_logs: false });
+    setOverridesEnabled({
+      cms_builder: false,
+      image_studio: false,
+      prompt_engine: false,
+      ai_paths: false,
+      analytics: false,
+      system_logs: false,
+      error_logs: false,
+    });
   }, []);
 
   useEffect(() => {

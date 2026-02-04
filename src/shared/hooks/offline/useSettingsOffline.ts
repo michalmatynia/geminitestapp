@@ -1,5 +1,9 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useOfflineMutation } from "@/shared/hooks/useOfflineMutation";
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from "@/shared/api/settings-client";
 
 export interface SettingRecord {
   key: string;
@@ -18,9 +22,13 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
   const settingsQuery: UseQueryResult<SettingRecord[], Error> = useQuery({
     queryKey: ["settings"],
     queryFn: async (): Promise<SettingRecord[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return (await res.json()) as SettingRecord[];
+      try {
+        return await fetchSettingsCached();
+      } catch (error) {
+        throw error instanceof Error
+          ? error
+          : new Error("Failed to fetch settings");
+      }
     },
     staleTime: 1000 * 60 * 30, // 30 minutes - longer for offline support
     networkMode: 'offlineFirst',
@@ -34,6 +42,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) throw new Error("Failed to update setting");
+      invalidateSettingsCache();
       return (await res.json()) as SettingRecord;
     },
     {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Button, Checkbox, useToast, SectionPanel } from "@/shared/ui";
+import { Button, Checkbox, PanelHeader, useToast, SectionPanel } from "@/shared/ui";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { logClientError } from "@/features/observability";
@@ -63,12 +63,10 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {showHeader && (
-        <div className="border-b border-border px-4 py-3">
-          <h3 className="text-sm font-semibold text-white">App Embeds</h3>
-          <p className="mt-1 text-xs text-gray-500">
-            Enable apps you can embed into CMS layouts.
-          </p>
-        </div>
+        <PanelHeader
+          title="App embeds"
+          subtitle="Enable apps you can embed into CMS layouts."
+        />
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-3">

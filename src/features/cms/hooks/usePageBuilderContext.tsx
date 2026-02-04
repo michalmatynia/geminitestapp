@@ -1837,6 +1837,7 @@ export const initialState: PageBuilderState = {
 export interface VectorOverlayResult {
   shapes: VectorShape[];
   path: string;
+  points: Array<{ shapeId: string; points: VectorShape["points"] }>;
 }
 
 export interface VectorOverlayRequest {

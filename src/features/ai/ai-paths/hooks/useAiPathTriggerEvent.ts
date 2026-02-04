@@ -3,6 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/ui";
 import { logger } from "@/shared/utils/logger";
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from "@/shared/api/settings-client";
 
 import type {
   AiNode,
@@ -97,9 +101,7 @@ const loadPathConfigsFromSettings = async (
     const data =
       settingsData ??
       ((await (async (): Promise<Array<{ key: string; value: string }> | null> => {
-        const settingsRes = await fetch("/api/settings");
-        if (!settingsRes.ok) return null;
-        return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+        return await fetchSettingsCached();
       })()) ?? []);
     if (!data.length) return { configs: {}, settingsPathOrder: [] };
     const map = new Map<string, string>(
@@ -321,11 +323,7 @@ export function useAiPathTriggerEvent(): {
           settingsData = await queryClient.fetchQuery({
             queryKey: ["settings"],
             queryFn: async () => {
-              const settingsRes = await fetch("/api/settings");
-              if (!settingsRes.ok) {
-                throw new Error("Failed to load AI Paths settings.");
-              }
-              return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+              return await fetchSettingsCached();
             },
             staleTime: AI_PATHS_SETTINGS_STALE_MS,
           });
@@ -618,6 +616,7 @@ export function useAiPathTriggerEvent(): {
               body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
             });
           }
+          invalidateSettingsCache();
         } catch (error) {
           logger.error("Failed to persist AI Paths settings snapshot", error);
         }

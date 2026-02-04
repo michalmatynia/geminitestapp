@@ -8,6 +8,7 @@ import {
   UnifiedSelect,
   Checkbox,
   Button,
+  PanelHeader,
   SectionPanel,
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
@@ -881,14 +882,10 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {showHeader && (
-        <div className="border-b border-border px-4 py-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Menu settings
-          </div>
-          <p className="mt-1 text-[11px] text-gray-500">
-            Configure the look and behaviour of your page navigation.
-          </p>
-        </div>
+        <PanelHeader
+          title="Menu settings"
+          subtitle="Configure the look and behaviour of your page navigation."
+        />
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-3">

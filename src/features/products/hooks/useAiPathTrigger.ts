@@ -4,6 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/ui";
 import { logClientError } from "@/features/observability/utils/client-error-logger";
 import { logger } from "@/shared/utils/logger";
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from "@/shared/api/settings-client";
 import type {
   AiNode,
   PathConfig,
@@ -205,9 +209,7 @@ export function useAiPathTrigger(): {
           const data = await queryClient.fetchQuery({
             queryKey: ["settings"],
             queryFn: async () => {
-              const settingsRes = await fetch("/api/settings");
-              if (!settingsRes.ok) throw new Error("Failed to load AI Paths settings.");
-              return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+              return await fetchSettingsCached();
             },
             staleTime: AI_PATHS_SETTINGS_STALE_MS,
           });
@@ -440,6 +442,7 @@ export function useAiPathTrigger(): {
               body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
             });
           }
+          invalidateSettingsCache();
         } catch (error) {
           logClientError(error, { context: { source: "useAiPathTrigger", action: "persistSettingsSnapshot", pathId: updatedConfig.id } });
         }

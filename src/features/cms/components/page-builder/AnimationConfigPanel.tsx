@@ -27,6 +27,7 @@ import {
   RadioGroupItem,
   type VectorShape,
 } from "@/shared/ui";
+import type { VectorOverlayResult } from "../../hooks/usePageBuilderContext";
 import { RangeField, SelectField } from "./shared-fields";
 import type {
   GsapAnimationConfig,
@@ -815,7 +816,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
       title: "Motion Path",
       description: "Draw the motion path directly on the preview canvas.",
       initialShapes: motionPathShapesValue,
-      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+      onApply: ({ shapes, path }: VectorOverlayResult) => {
         onChange({ ...config, motionPathEnabled: true, motionPathPath: path, motionPathShapes: shapes });
       },
     });
@@ -932,7 +933,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
       title: "SVG Draw Path",
       description: "Draw a custom SVG path to animate stroke drawing.",
       initialShapes: svgDrawShapesValue,
-      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+      onApply: ({ shapes, path }: VectorOverlayResult) => {
         onChange({ ...config, svgDrawEnabled: true, svgDrawPath: path, svgDrawShapes: shapes });
       },
     });
@@ -968,7 +969,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
       title: "SVG Morph Target",
       description: "Draw the target path for morphing.",
       initialShapes: svgMorphShapesValue,
-      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+      onApply: ({ shapes, path }: VectorOverlayResult) => {
         onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
       },
     });

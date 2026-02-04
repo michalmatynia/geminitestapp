@@ -10,7 +10,7 @@ import { NoteItem } from "./NoteItem";
 import { TreeRow } from "./TreeRow";
 import { TreeCaret } from "./TreeCaret";
 import { TreeActionButton, TreeActionSlot } from "./TreeActions";
-import { getFolderDragId, getNoteDragId, hasDragType, setFolderDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
+import { getFolderDragId, getNoteDragId, hasDragType, resolveVerticalDropPosition, setFolderDragData, DRAG_KEYS } from "@/shared/utils/drag-drop";
 
 
 import type { NoteRecord } from "@/shared/types/notes";
@@ -60,11 +60,11 @@ export const FolderNode = React.memo(function FolderNode({
   const isRenaming = renamingFolderId === folder.id;
   const contextMenuItems = useMemo(
     () => [
-      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: () => onCreateNote(folder.id) },
-      { id: "new-folder", label: "New folder", icon: <FolderPlus className="size-3.5" />, onSelect: () => onCreateSubfolder(folder.id) },
-      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: () => onStartRename(folder.id) },
+      { id: "new-note", label: "New note", icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folder.id) },
+      { id: "new-folder", label: "New folder", icon: <FolderPlus className="size-3.5" />, onSelect: (): void => onCreateSubfolder(folder.id) },
+      { id: "rename", label: "Rename", icon: <Edit2 className="size-3.5" />, onSelect: (): void => onStartRename(folder.id) },
       { id: "separator-1", separator: true },
-      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: () => onDelete(folder.id) },
+      { id: "delete", label: "Delete", icon: <Trash2 className="size-3.5" />, tone: "danger", onSelect: (): void => onDelete(folder.id) },
     ],
     [folder.id, onCreateNote, onCreateSubfolder, onStartRename, onDelete]
   );
@@ -126,12 +126,8 @@ export const FolderNode = React.memo(function FolderNode({
   }, [draggedFolderId, folder.id, allFolders]);
 
   const showReorderZones = Boolean(onReorderFolder) && Boolean(draggedFolderId) && draggedFolderId !== folder.id;
-  const resolveReorderPosition = (clientY: number, rect: DOMRect): "before" | "after" | null => {
-    const threshold = Math.max(10, rect.height * 0.4);
-    if (clientY - rect.top <= threshold) return "before";
-    if (rect.bottom - clientY <= threshold) return "after";
-    return null;
-  };
+  const resolveReorderPosition = (clientY: number, rect: DOMRect): "before" | "after" | null =>
+    resolveVerticalDropPosition(clientY, rect, { thresholdRatio: 0.4, thresholdPx: 10 });
 
   const handleReorderDragOver = (position: "above" | "below") => (e: React.DragEvent<HTMLDivElement>): void => {
     if (!draggedFolderId) return;

@@ -8,6 +8,7 @@ import { normalizePlaywrightPersonas } from "@/features/playwright/utils/persona
 import type { PlaywrightPersona } from "@/features/playwright/types";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import type { Template, BaseInventory } from "@/features/data-import-export";
+import { fetchSettingsCached } from "@/shared/api/settings-client";
 
 export function useIntegrations(): UseQueryResult<Integration[]> {
   return useQuery({
@@ -77,11 +78,7 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   return useQuery({
     queryKey: ["playwright-personas"],
     queryFn: async (): Promise<PlaywrightPersona[]> => {
-      const res = await fetch("/api/settings", { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error("Failed to load Playwright personas.");
-      }
-      const data = (await res.json()) as Array<{ key: string; value: string }>;
+      const data = await fetchSettingsCached();
       const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
       const stored = parseJsonSetting<PlaywrightPersona[]>(
         map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),

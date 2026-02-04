@@ -5,6 +5,7 @@ import { serializeSetting } from "@/shared/utils/settings-json";
 import { fetchAgentPersonas } from "@/features/ai/agentcreator/utils/personas";
 import { AGENT_PERSONA_SETTINGS_KEY } from "@/features/ai/agentcreator/constants/personas";
 import type { AgentPersona } from "@/features/ai/agentcreator/types";
+import { invalidateSettingsCache } from "@/shared/api/settings-client";
 
 export const agentPersonaKeys = {
   all: ["agent-personas"] as const,
@@ -40,6 +41,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error || "Failed to save agent personas.");
       }
+      invalidateSettingsCache();
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: agentPersonaKeys.list() });

@@ -33,9 +33,9 @@ import {
   Frame,
   type LucideIcon,
 } from "lucide-react";
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu } from "@/shared/ui";
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from "@/shared/ui";
 import { readBlockDragData, readSectionDragData, setBlockDragData, setSectionDragData } from "../../utils/page-builder-dnd";
-import { DRAG_KEYS, hasDragType } from "@/shared/utils/drag-drop";
+import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from "@/shared/utils/drag-drop";
 import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
 import { BlockPicker } from "./BlockPicker";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
@@ -231,7 +231,7 @@ export function SectionNodeItem({
   const [sectionDropPosition, setSectionDropPosition] = useState<"above" | "below" | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
-  const sectionMenuItems = useMemo(
+  const sectionMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "toggle-visibility",
@@ -256,9 +256,9 @@ export function SectionNodeItem({
     block.type !== "Row" && block.type !== "Column" ? [{ block, index }] : []
   );
   const resolveSectionDropPosition = (clientY: number, rect: DOMRect): "above" | "below" | null => {
-    const threshold = Math.max(8, rect.height * 0.3);
-    if (clientY - rect.top <= threshold) return "above";
-    if (rect.bottom - clientY <= threshold) return "below";
+    const position = resolveVerticalDropPosition(clientY, rect, { thresholdRatio: 0.3, thresholdPx: 8 });
+    if (position === "before") return "above";
+    if (position === "after") return "below";
     return null;
   };
 
@@ -796,7 +796,7 @@ function SlideshowFrameNodeItem({
   const isDragging = draggedBlockId === frame.id;
   const blockLabel = resolveBlockLabel(frame, "Frame");
   const frameAllowedTypes = getBlockDefinition("SlideshowFrame")?.allowedBlockTypes ?? [];
-  const frameMenuItems = useMemo(
+  const frameMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "remove-frame",
@@ -1050,7 +1050,7 @@ function RowNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const firstColumn = columns[0] ?? null;
   const rowLabel = resolveNodeLabel(`Row ${rowIndex + 1}`, row.settings["label"]);
-  const rowMenuItems = useMemo(
+  const rowMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "add-column",
@@ -1374,7 +1374,7 @@ function ColumnNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
   const columnLabel = resolveNodeLabel(`Column ${columnIndex + 1}`, column.settings["label"]);
-  const columnMenuItems = useMemo(
+  const columnMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "remove-column",
@@ -1692,7 +1692,7 @@ function SectionBlockNodeItem({
   const isDragging = draggedBlockId === block.id;
   const isTextAtom = block.type === "TextAtom";
   const blockLabel = resolveBlockLabel(block, block.type);
-  const sectionBlockMenuItems = useMemo(
+  const sectionBlockMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "remove-block",
@@ -1968,7 +1968,7 @@ function BlockNodeItem({
     (block.settings?.["backgroundTarget"] as string || "none") !== "none";
   const backgroundTarget = (block.settings?.["backgroundTarget"] as string) || "none";
   const canDrag = !disableDrag && !isBackgroundMode;
-  const blockMenuItems = useMemo(
+  const blockMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: "remove-block",

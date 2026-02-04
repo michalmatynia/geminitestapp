@@ -20,6 +20,9 @@ import { PixelationPass } from "./shaders/PixelationEffect";
 import { OrderedDitheringPass } from "./shaders/OrderedDitheringEffect";
 import { ToneMappingMode, BlendFunction } from "postprocessing";
 
+const FALLBACK_TEXTURE_DATA_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
+
 // Error Boundary for 3D components
 class Model3DErrorBoundary extends Component<
   { children: React.ReactNode; onError?: (error: Error) => void },
@@ -134,11 +137,30 @@ function Model3D({
   rotation,
   scale,
 }: Model3DProps): React.JSX.Element {
-  const { scene } = useGLTF(url, true); // Enable error handling
+  const replacedTextureRef = useRef(false);
+  const { scene } = useGLTF(
+    url,
+    true,
+    true,
+    (loader) => {
+      loader.manager.setURLModifier((resourceUrl: string) => {
+        if (resourceUrl.startsWith("blob:")) {
+          replacedTextureRef.current = true;
+          return FALLBACK_TEXTURE_DATA_URL;
+        }
+        return resourceUrl;
+      });
+    }
+  );
   const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     if (scene) {
+      if (replacedTextureRef.current) {
+        console.warn(
+          "[Viewer3D] Model references blob: textures. Re-export as .glb or embed textures to restore materials."
+        );
+      }
       // Optimize materials for PBR rendering
       scene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {

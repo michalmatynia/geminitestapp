@@ -776,7 +776,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
         const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
         if (!res.ok) {
           const errorPayload = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(errorPayload?.error || `Failed to load slots (${res.status})`);
+          const error = new Error(errorPayload?.error || `Failed to load slots (${res.status})`) as Error & {
+            status?: number;
+          };
+          error.status = res.status;
+          throw error;
         }
         const data = (await res.json().catch(() => ({ slots: [] }))) as StudioSlotsResponse;
         return {
@@ -787,7 +791,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
         throw error;
       }
     },
-    staleTime: 5_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) => {
+      const status = (error as Error & { status?: number }).status;
+      if (status === 429) return false;
+      return failureCount < 2;
+    },
   });
 
   useEffect(() => {

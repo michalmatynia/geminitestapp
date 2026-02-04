@@ -714,7 +714,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                             </div>
                             {logInterpretations[log.id]?.warnings?.length ? (
                               <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                                {logInterpretations[log.id].warnings.map((warning, index) => (
+                                {logInterpretations[log.id]?.warnings?.map((warning, index) => (
                                   <li key={`${log.id}-ai-${index}`}>{warning}</li>
                                 ))}
                               </ul>

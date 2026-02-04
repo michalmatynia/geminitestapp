@@ -603,7 +603,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             <div className="text-[11px] text-gray-500">
               Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : "off"}
               {queueHistory.length > 0
-                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1].ts).toLocaleTimeString()}`
+                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
                 : ""}
             </div>
           </div>

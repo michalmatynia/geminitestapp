@@ -3,7 +3,7 @@
 import { Button, Input, Label, FileUploadTrigger } from "@/shared/ui";
 import { Upload, Loader2, Plus, X } from "lucide-react";
 import { useState, useCallback } from "react";
-import { validate3DFile, SUPPORTED_3D_FORMATS } from "../utils/validateAsset3d";
+import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from "../utils/validateAsset3d";
 import { uploadAsset3DFile } from "../api";
 import type { Asset3DRecord } from "../types";
 import { cn } from "@/shared/utils";
@@ -34,8 +34,8 @@ export function Asset3DUploader({
   const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleFileSelect = useCallback((selectedFile: File): void => {
-    const validation = validate3DFile(selectedFile);
+  const handleFileSelect = useCallback(async (selectedFile: File): Promise<void> => {
+    const validation = await validate3DFileAsync(selectedFile);
     if (!validation.valid) {
       setError(validation.error ?? "Invalid file");
       return;
@@ -58,7 +58,7 @@ export function Asset3DUploader({
       e.preventDefault();
       setIsDragOver(false);
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) handleFileSelect(droppedFile);
+      if (droppedFile) void handleFileSelect(droppedFile);
     },
     [handleFileSelect]
   );
@@ -115,7 +115,7 @@ export function Asset3DUploader({
           accept=".glb,.gltf"
           onFilesSelected={(files: File[]) => {
             const selectedFile = files[0];
-            if (selectedFile) handleFileSelect(selectedFile);
+            if (selectedFile) void handleFileSelect(selectedFile);
           }}
           asChild
         >

@@ -2380,15 +2380,14 @@ function PreviewBlockItem({
       className={stretchClass}
     >
       <GsapAnimationWrapper config={animConfig}>
-        <CssAnimationWrapper config={cssAnimConfig}>
-          <EventEffectsWrapper
-            settings={block.settings}
-            disableClick
-            nodeId={inlineCustomNodeId}
-            customCss={inlineCustomCss}
-          >
-            {node}
-          </EventEffectsWrapper>
+                    <CssAnimationWrapper config={cssAnimConfig}>
+                      <EventEffectsWrapper
+                        settings={block.settings}
+                        disableClick
+                        nodeId={inlineCustomNodeId ?? ""}
+                        customCss={inlineCustomCss}
+                      >
+                        {node}          </EventEffectsWrapper>
         </CssAnimationWrapper>
       </GsapAnimationWrapper>
     </InspectorHover>

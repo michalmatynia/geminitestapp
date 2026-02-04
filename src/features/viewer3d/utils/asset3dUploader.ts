@@ -3,7 +3,7 @@ import path from "path";
 import { getAsset3DRepository } from "@/features/viewer3d/services/asset3d-repository";
 import { ErrorSystem } from "@/features/observability/server";
 import type { Asset3DRecord } from "@/features/viewer3d/types";
-import { isValid3DAsset } from "./validateAsset3d";
+import { isValid3DAsset, validate3DFileAsync } from "./validateAsset3d";
 
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const assets3dRoot = path.join(uploadsRoot, "assets3d");
@@ -25,6 +25,10 @@ export async function uploadAsset3D(
 ): Promise<Asset3DRecord> {
   if (!isValid3DAsset(file)) {
     throw new Error("Invalid 3D asset file type. Supported: .glb, .gltf");
+  }
+  const validation = await validate3DFileAsync(file);
+  if (!validation.valid) {
+    throw new Error(validation.error ?? "Invalid 3D asset file.");
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());

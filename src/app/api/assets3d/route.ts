@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from "@/features/viewer3d/server";
 import { apiHandler, getQueryParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -16,16 +17,27 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const isPublicStr = searchParams.get("isPublic");
   const tagsStr = searchParams.get("tags");
 
-  const repository = getAsset3DRepository();
-  const assets = await repository.listAssets3D({
-    ...(filename && { filename }),
-    ...(category && { category }),
-    ...(search && { search }),
-    ...(isPublicStr && { isPublic: isPublicStr === "true" }),
-    ...(tagsStr && { tags: tagsStr.split(",").filter(Boolean) }),
-  });
+  try {
+    const repository = getAsset3DRepository();
+    const assets = await repository.listAssets3D({
+      ...(filename && { filename }),
+      ...(category && { category }),
+      ...(search && { search }),
+      ...(isPublicStr && { isPublic: isPublicStr === "true" }),
+      ...(tagsStr && { tags: tagsStr.split(",").filter(Boolean) }),
+    });
 
-  return NextResponse.json(assets);
+    return NextResponse.json(assets);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022" || error.code === "P1001" || error.code === "P1003")
+    ) {
+      console.warn("[assets3d] Falling back to empty list due to missing table or database.", error.code);
+      return NextResponse.json([]);
+    }
+    throw error;
+  }
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

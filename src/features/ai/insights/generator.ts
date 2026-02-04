@@ -7,6 +7,7 @@ import type { AnalyticsSummaryDto } from "@/shared/types";
 import { ErrorSystem } from "@/features/observability/server";
 import { listAnalyticsEvents, getAnalyticsSummary } from "@/features/analytics/server";
 import { listSystemLogs, getSystemLogMetrics } from "@/features/observability/server";
+import { SystemLogRecord } from "@/shared/types/system-logs";
 import { getSettingValue } from "@/features/products/services/aiDescriptionService";
 import { runTeachingChat } from "@/features/ai/agentcreator/teaching/server/chat";
 import { AI_INSIGHTS_SETTINGS_KEYS } from "./settings";
@@ -38,17 +39,17 @@ const sanitizeEvents = (events: AnalyticsSummaryDto["recent"] | undefined) =>
     meta: event.meta ?? null,
   }));
 
-const sanitizeLogs = (logs: Array<{ id: string; level: string; message: string; source: string | null; createdAt: string; path?: string | null; method?: string | null; statusCode?: number | null; context?: Record<string, unknown> | null }>) =>
+const sanitizeLogs = (logs: SystemLogRecord[]) =>
   logs.map((log) => ({
     id: log.id,
     level: log.level,
     message: log.message,
     source: log.source,
-    createdAt: log.createdAt,
+    createdAt: typeof log.createdAt === "string" ? log.createdAt : log.createdAt.toISOString(),
     path: log.path ?? null,
     method: log.method ?? null,
     statusCode: log.statusCode ?? null,
-    context: log.context ? { fingerprint: log.context?.fingerprint } : null,
+    context: log.context ? { fingerprint: (log.context as any)?.fingerprint } : null,
   }));
 
 const getClient = (

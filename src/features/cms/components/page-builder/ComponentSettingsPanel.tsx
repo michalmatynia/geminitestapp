@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
-import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
+import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
@@ -23,6 +23,7 @@ import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/fea
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
 import { logClientError } from "@/features/observability";
 import { RangeField, SelectField } from "./shared-fields";
+import { SECTION_TEMPLATES } from "./section-templates";
 import {
   EVENT_CLICK_ACTION_OPTIONS,
   EVENT_CLICK_TARGET_OPTIONS,
@@ -159,12 +160,20 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const [cssAiError, setCssAiError] = useState<string | null>(null);
   const [cssAiOutput, setCssAiOutput] = useState<string>("");
   const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
+  const [contentAiProvider, setContentAiProvider] = useState<"model" | "agent">("model");
+  const [contentAiModelId, setContentAiModelId] = useState<string>("");
+  const [contentAiAgentId, setContentAiAgentId] = useState<string>("");
+  const [contentAiPrompt, setContentAiPrompt] = useState<string>("");
+  const [contentAiLoading, setContentAiLoading] = useState<boolean>(false);
+  const [contentAiError, setContentAiError] = useState<string | null>(null);
+  const [contentAiOutput, setContentAiOutput] = useState<string>("");
   const [contextPreviewOpen, setContextPreviewOpen] = useState<boolean>(false);
   const [contextPreviewTab, setContextPreviewTab] = useState<"page" | "element">("page");
   const [contextPreviewFull, setContextPreviewFull] = useState<boolean>(false);
   const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
   const cssAiAbortRef = useRef<AbortController | null>(null);
-  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss">("settings");
+  const contentAiAbortRef = useRef<AbortController | null>(null);
+  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss" | "ai">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
   const isGridSection = selectedSection?.type === "Grid";
   const isBlockSection = selectedSection?.type === "Block";
@@ -206,11 +215,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
     setCssAiError(null);
   }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, cssAiLoading]);
 
+  useEffect((): void => {
+    if (contentAiLoading && contentAiAbortRef.current) {
+      contentAiAbortRef.current.abort();
+      contentAiAbortRef.current = null;
+    }
+    setContentAiOutput("");
+    setContentAiError(null);
+  }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, contentAiLoading]);
+
   useEffect(() => {
     return () => {
       if (cssAiAbortRef.current) {
         cssAiAbortRef.current.abort();
         cssAiAbortRef.current = null;
+      }
+      if (contentAiAbortRef.current) {
+        contentAiAbortRef.current.abort();
+        contentAiAbortRef.current = null;
       }
     };
   }, []);
@@ -234,6 +256,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const contextPlaceholder = "{{page_context}}\n{{element_context}}";
   const PAGE_CONTEXT_LIMIT = 6000;
   const ELEMENT_CONTEXT_LIMIT = 2500;
+
+  useEffect((): void => {
+    if (contentAiProvider !== "model") return;
+    if (contentAiModelId.trim().length) return;
+    if (!modelOptions.length) return;
+    setContentAiModelId(modelOptions[0]!);
+  }, [contentAiProvider, contentAiModelId, modelOptions]);
 
   const stringifyContext = useCallback((value: unknown, limit?: number | null): string => {
     try {
@@ -278,6 +307,17 @@ export function ComponentSettingsPanel(): React.ReactNode {
     };
     return stringifyContext(pageContext, resolvedLimit);
   }, [state.currentPage, state.sections, stringifyContext, serializeBlock]);
+
+  const selectedGridRow = useMemo<BlockInstance | null>(() => {
+    if (!selectedParentSection || selectedParentSection.type !== "Grid" || !selectedParentColumn) return null;
+    return (
+      selectedParentSection.blocks.find(
+        (block: BlockInstance) =>
+          block.type === "Row" &&
+          (block.blocks ?? []).some((column: BlockInstance) => column.id === selectedParentColumn.id)
+      ) ?? null
+    );
+  }, [selectedParentSection, selectedParentColumn]);
 
   const buildElementContext = useCallback((limit?: number | null): string => {
     const resolvedLimit = limit === undefined ? ELEMENT_CONTEXT_LIMIT : limit;
@@ -363,17 +403,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
     selectedParentSection?.type === "Grid" &&
     !selectedParentBlock;
   const imageBackgroundSrc = (selectedBlock?.settings?.["src"] as string) || "";
-  const selectedGridRow = useMemo<BlockInstance | null>(() => {
-    if (!selectedParentSection || selectedParentSection.type !== "Grid" || !selectedParentColumn) return null;
-    return (
-      selectedParentSection.blocks.find(
-        (block: BlockInstance) =>
-          block.type === "Row" &&
-          (block.blocks ?? []).some((column: BlockInstance) => column.id === selectedParentColumn.id)
-      ) ?? null
-    );
-  }, [selectedParentSection, selectedParentColumn]);
-
   // ---------------------------------------------------------------------------
   // Background mode for ImageElement
   // ---------------------------------------------------------------------------
@@ -580,6 +609,23 @@ export function ComponentSettingsPanel(): React.ReactNode {
       return fenceMatch[1].trim();
     }
     return trimmed.replace(/```/g, "").trim();
+  }, []);
+
+  const extractJsonFromResponse = useCallback((raw: string): Record<string, unknown> | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
+    const first = candidate.indexOf("{");
+    const last = candidate.lastIndexOf("}");
+    const jsonText = first >= 0 && last > first ? candidate.slice(first, last + 1) : candidate;
+    try {
+      const parsed = JSON.parse(jsonText) as unknown;
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
   }, []);
 
   const buildDiffLines = useCallback(
@@ -1098,6 +1144,226 @@ export function ComponentSettingsPanel(): React.ReactNode {
     [eventSettingsSource]
   );
 
+  const contentAiAllowedKeys = useMemo((): string[] => {
+    if (selectedSection && sectionDef) {
+      return prependManagementFields(sectionDef.settingsSchema ?? []).map((field) => field.key);
+    }
+    if (selectedColumn && columnDef) {
+      return prependManagementFields(columnDef.settingsSchema ?? []).map((field) => field.key);
+    }
+    if (selectedBlock && blockDef) {
+      return prependManagementFields(blockDef.settingsSchema ?? []).map((field) => field.key);
+    }
+    return [];
+  }, [selectedSection, selectedColumn, selectedBlock, sectionDef, columnDef, blockDef]);
+
+  const contentAiPlaceholder = "{{page_context}}\n{{element_context}}\n{{allowed_keys}}";
+
+  const buildContentAiPrompt = useCallback((): string => {
+    const basePrompt = contentAiPrompt.trim();
+    const defaultPrompt = "Generate JSON settings for the selected element. Return only JSON.";
+    const promptBody = basePrompt.length ? basePrompt : defaultPrompt;
+    const pageContext = buildPageContext();
+    const elementContext = buildElementContext();
+    const allowedKeys = contentAiAllowedKeys.length
+      ? contentAiAllowedKeys.join(", ")
+      : "No schema keys available.";
+    const withPlaceholders = promptBody
+      .replace(/{{\s*page_context\s*}}/gi, pageContext)
+      .replace(/{{\s*element_context\s*}}/gi, elementContext)
+      .replace(/{{\s*allowed_keys\s*}}/gi, allowedKeys);
+    const usesPlaceholders =
+      /{{\s*page_context\s*}}/i.test(promptBody) ||
+      /{{\s*element_context\s*}}/i.test(promptBody) ||
+      /{{\s*allowed_keys\s*}}/i.test(promptBody);
+    if (usesPlaceholders) return withPlaceholders;
+    return `${withPlaceholders}\n\nAllowed keys:\n${allowedKeys}\n\nPage context:\n${pageContext}\n\nElement context:\n${elementContext}`;
+  }, [contentAiPrompt, buildPageContext, buildElementContext, contentAiAllowedKeys]);
+
+  const applyContentAiSettings = useCallback(
+    (settingsPatch: Record<string, unknown>): void => {
+      const allowed = new Set(contentAiAllowedKeys);
+      const filtered =
+        allowed.size > 0
+          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>((acc, [key, value]) => {
+              if (allowed.has(key)) acc[key] = value;
+              return acc;
+            }, {})
+          : settingsPatch;
+      const entries = Object.entries(filtered);
+      if (entries.length === 0) {
+        setContentAiError("No valid settings keys found in AI output.");
+        return;
+      }
+      entries.forEach(([key, value]) => {
+        if (selectedSection && !selectedBlock && !selectedColumn) {
+          handleSectionSettingChangeWithGridColumns(key, value);
+        } else if (selectedColumn) {
+          handleColumnSettingChange(key, value);
+        } else if (selectedBlock) {
+          handleBlockSettingChange(key, value);
+        }
+      });
+      toast("AI settings applied.", { variant: "success" });
+    },
+    [
+      contentAiAllowedKeys,
+      selectedSection,
+      selectedBlock,
+      selectedColumn,
+      handleSectionSettingChangeWithGridColumns,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+      toast,
+    ]
+  );
+
+  const handleGenerateContentAi = useCallback(async (): Promise<void> => {
+    if (contentAiLoading) return;
+    setContentAiError(null);
+    setContentAiOutput("");
+    setContentAiLoading(true);
+    try {
+      const prompt = buildContentAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error("Prompt is empty.");
+      }
+
+      const provider = contentAiProvider;
+      const modelId = provider === "model" ? (contentAiModelId.trim() || modelOptions[0] || "") : "";
+      const agentId = provider === "agent" ? contentAiAgentId.trim() : "";
+      if (provider === "model" && !modelId) {
+        throw new Error("Select an AI model first.");
+      }
+      if (provider === "agent" && !agentId) {
+        throw new Error("Select a Deepthinking agent first.");
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content:
+            "You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.",
+        },
+        { role: "user", content: prompt },
+      ];
+
+      const controller = new AbortController();
+      contentAiAbortRef.current = controller;
+
+      const res = await fetch("/api/cms/css-ai/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Streaming request failed.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split("\n").map((line) => line.trim());
+        const dataLine = lines.find((line) => line.startsWith("data:"));
+        if (!dataLine) return;
+        const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
+          delta?: string;
+          done?: boolean;
+          error?: string;
+        };
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.delta) {
+          accumulated += payload.delta;
+          setContentAiOutput(accumulated);
+        }
+        if (payload.done) {
+          doneSignal = true;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const parsed = extractJsonFromResponse(accumulated);
+      if (!parsed) throw new Error("AI response did not include JSON.");
+      setContentAiOutput(JSON.stringify(parsed, null, 2));
+      toast(`AI output ready (${provider}).`, { variant: "success" });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setContentAiError("Generation cancelled.");
+        toast("Generation cancelled.", { variant: "info" });
+      } else {
+        const message = error instanceof Error ? error.message : "Failed to generate AI output.";
+        setContentAiError(message);
+        toast(message, { variant: "error" });
+      }
+    } finally {
+      setContentAiLoading(false);
+      contentAiAbortRef.current = null;
+    }
+  }, [
+    contentAiLoading,
+    buildContentAiPrompt,
+    contentAiProvider,
+    contentAiModelId,
+    contentAiAgentId,
+    modelOptions,
+    extractJsonFromResponse,
+    toast,
+  ]);
+
+  const handleApplyContentAi = useCallback((): void => {
+    if (!contentAiOutput.trim()) {
+      setContentAiError("No AI output to apply.");
+      return;
+    }
+    const parsed = extractJsonFromResponse(contentAiOutput);
+    if (!parsed) {
+      setContentAiError("AI output is not valid JSON.");
+      return;
+    }
+    const settingsSource =
+      typeof parsed.settings === "object" && parsed.settings
+        ? (parsed.settings as Record<string, unknown>)
+        : parsed;
+    applyContentAiSettings(settingsSource);
+  }, [contentAiOutput, extractJsonFromResponse, applyContentAiSettings]);
+
+  const handleCancelContentAi = useCallback((): void => {
+    if (contentAiAbortRef.current) {
+      contentAiAbortRef.current.abort();
+      contentAiAbortRef.current = null;
+    }
+  }, []);
+
   const selectedLabel = useMemo((): string => {
     if (selectedSection) return sectionDef?.label ?? selectedSection.type;
     if (selectedColumn) return "Column";
@@ -1172,13 +1438,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
   }, [activeTab, dispatch, state.inspectorEnabled]);
 
-  if (!showEventsTab && activeTab === "events") {
-    setActiveTab("settings");
-  }
-
-  if (!showCustomCssTab && activeTab === "customCss") {
-    setActiveTab("settings");
-  }
+  useEffect((): void => {
+    if (!showEventsTab && activeTab === "events") {
+      setActiveTab("settings");
+      return;
+    }
+    if (!showCustomCssTab && activeTab === "customCss") {
+      setActiveTab("settings");
+    }
+  }, [showEventsTab, showCustomCssTab, activeTab]);
 
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
@@ -1336,7 +1604,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab(value as "settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss")
+            setActiveTab(value as "settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss" | "ai")
           }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
@@ -1353,6 +1621,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             {showConnectionsTab && (
               <TabsTrigger value="connections" className="flex-1 text-xs">Connections</TabsTrigger>
             )}
+            <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
           </TabsList>
 
           {/* ---- Settings tab ---- */}
@@ -1613,6 +1882,130 @@ export function ComponentSettingsPanel(): React.ReactNode {
               value={currentCssAnimationConfig}
               onChange={handleCssAnimationChange}
             />
+          </TabsContent>
+          {/* ---- AI tab ---- */}
+          <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
+            <div className="space-y-3">
+              <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+                AI content for <span className="text-gray-200">{selectedLabel}</span>
+              </div>
+              <SectionPanel variant="subtle-compact" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase tracking-wider text-gray-400">
+                    Content AI
+                  </Label>
+                  <span className="text-[10px] text-gray-500">JSON output</span>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-400">Provider</Label>
+                  <UnifiedSelect
+                    value={contentAiProvider}
+                    onValueChange={(value: string): void => setContentAiProvider(value as "model" | "agent")}
+                    options={providerOptions}
+                    placeholder="Select provider"
+                  />
+                </div>
+                {contentAiProvider !== "agent" ? (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-400">Model</Label>
+                    <UnifiedSelect
+                      value={contentAiModelId}
+                      onValueChange={(value: string): void => setContentAiModelId(value)}
+                      options={modelOptions.map((model: string) => ({ value: model, label: model }))}
+                      placeholder={modelOptions.length ? "Select model" : "No models available"}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+                    <UnifiedSelect
+                      value={contentAiAgentId}
+                      onValueChange={(value: string): void => setContentAiAgentId(value)}
+                      options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
+                      placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-400">Prompt</Label>
+                  <Textarea
+                    value={contentAiPrompt}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                      setContentAiPrompt(e.target.value)
+                    }
+                    placeholder={`Describe the content you want.\n\nContext:\n${contentAiPlaceholder}`}
+                    className="min-h-[120px] text-xs"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] text-gray-500">Context placeholders</div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={(): void => {
+                      const current = contentAiPrompt.trim();
+                      const nextPrompt = current.length ? `${current}\n\n${contentAiPlaceholder}` : contentAiPlaceholder;
+                      setContentAiPrompt(nextPrompt);
+                    }}
+                  >
+                    Insert placeholders
+                  </Button>
+                </div>
+                <Textarea
+                  value={contentAiPlaceholder}
+                  readOnly
+                  className="min-h-[64px] text-xs font-mono text-gray-300"
+                />
+                <div className="text-[11px] text-gray-500">
+                  <span className="font-mono text-gray-300">allowed_keys</span> = {contentAiAllowedKeys.length ? contentAiAllowedKeys.join(", ") : "No keys available."}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={(): void => void handleGenerateContentAi()}
+                    disabled={contentAiLoading}
+                  >
+                    {contentAiLoading ? "Generating…" : "Generate JSON"}
+                  </Button>
+                  {contentAiLoading && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancelContentAi}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+                {contentAiError && (
+                  <div className="text-xs text-red-400">{contentAiError}</div>
+                )}
+                {contentAiOutput && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-gray-400">AI output</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleApplyContentAi}
+                      >
+                        Apply to settings
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={contentAiOutput}
+                      readOnly
+                      className="min-h-[140px] text-xs font-mono text-gray-300"
+                    />
+                  </div>
+                )}
+              </SectionPanel>
+            </div>
           </TabsContent>
           {showCustomCssTab && (
             <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0">
@@ -2102,9 +2495,55 @@ function PageSettingsTab(): React.ReactNode {
   const allSlugsQuery = useCmsAllSlugs(Boolean(page));
   const updateSlug = useUpdateSlug();
   const [search, setSearch] = useState("");
+  const { toast } = useToast();
+  const [pageAiProvider, setPageAiProvider] = useState<"model" | "agent">("model");
+  const [pageAiModelId, setPageAiModelId] = useState<string>("");
+  const [pageAiAgentId, setPageAiAgentId] = useState<string>("");
+  const [pageAiPrompt, setPageAiPrompt] = useState<string>("");
+  const [pageAiTask, setPageAiTask] = useState<"layout" | "seo">("layout");
+  const [pageAiOutput, setPageAiOutput] = useState<string>("");
+  const [pageAiError, setPageAiError] = useState<string | null>(null);
+  const [pageAiLoading, setPageAiLoading] = useState<boolean>(false);
+  const pageAiAbortRef = useRef<AbortController | null>(null);
+  const modelsQuery = useChatbotModels();
+  const teachingAgentsQuery = useTeachingAgents();
 
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
+  const modelOptions = useMemo((): string[] => {
+    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+    return Array.from(new Set(fromApi));
+  }, [modelsQuery.data]);
+  const agentOptions = useMemo(
+    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    [teachingAgentsQuery.data]
+  );
+  const pageAiTaskOptions = useMemo(
+    () => [
+      { label: "Layout plan", value: "layout" },
+      { label: "SEO metadata", value: "seo" },
+    ],
+    []
+  );
+  const pageAiProviderOptions = useMemo(
+    () => [
+      { label: "AI model", value: "model" },
+      { label: "Deepthinking agent", value: "agent" },
+    ],
+    []
+  );
+
+  useEffect((): void => {
+    if (pageAiProvider !== "model") return;
+    if (pageAiModelId.trim().length) return;
+    if (!modelOptions.length) return;
+    setPageAiModelId(modelOptions[0]!);
+  }, [pageAiProvider, pageAiModelId, modelOptions]);
+
+  useEffect((): void => {
+    setPageAiOutput("");
+    setPageAiError(null);
+  }, [pageAiTask]);
   const allSlugByValue = useMemo((): Map<string, Slug> => {
     const map = new Map<string, Slug>();
     allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
@@ -2200,11 +2639,292 @@ function PageSettingsTab(): React.ReactNode {
     });
   };
 
+  useEffect((): (() => void) => {
+    return (): void => {
+      if (pageAiAbortRef.current) {
+        pageAiAbortRef.current.abort();
+        pageAiAbortRef.current = null;
+      }
+    };
+  }, []);
+
+  const pageContext = useMemo((): string => {
+    if (!page) return "No page loaded.";
+    return JSON.stringify(
+      {
+        page: {
+          id: page.id,
+          name: page.name,
+          status: page.status,
+          slugs: page.slugs ?? [],
+          seoTitle: page.seoTitle,
+          seoDescription: page.seoDescription,
+          seoCanonical: page.seoCanonical,
+          seoOgImage: page.seoOgImage,
+          robotsMeta: page.robotsMeta,
+        },
+        sections: state.sections.map((section: SectionInstance) => ({
+          id: section.id,
+          type: section.type,
+          zone: section.zone,
+        })),
+      },
+      null,
+      2
+    );
+  }, [page, state.sections]);
+
+  const templateCatalog = useMemo(
+    () =>
+      SECTION_TEMPLATES.map(
+        (template) =>
+          `- ${template.name} (${template.category}): ${template.description}`
+      ).join("\n"),
+    []
+  );
+
+  const pageAiPlaceholder = "{{page_context}}\n{{available_templates}}";
+
+  const extractPageAiJson = useCallback((raw: string): Record<string, unknown> | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
+    const first = candidate.indexOf("{");
+    const last = candidate.lastIndexOf("}");
+    const jsonText = first >= 0 && last > first ? candidate.slice(first, last + 1) : candidate;
+    try {
+      const parsed = JSON.parse(jsonText) as unknown;
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const buildPageAiPrompt = useCallback((): string => {
+    const basePrompt = pageAiPrompt.trim();
+    const defaultPrompt =
+      pageAiTask === "seo"
+        ? "Generate SEO metadata for this page. Return JSON with seoTitle, seoDescription, seoCanonical, seoOgImage, robotsMeta."
+        : "Create a layout plan using available templates. Return JSON with a sections array using template names.";
+    const promptBody = basePrompt.length ? basePrompt : defaultPrompt;
+    const resolved = promptBody
+      .replace(/{{\s*page_context\s*}}/gi, pageContext)
+      .replace(/{{\s*available_templates\s*}}/gi, templateCatalog);
+    const usesPlaceholders =
+      /{{\s*page_context\s*}}/i.test(promptBody) ||
+      /{{\s*available_templates\s*}}/i.test(promptBody);
+    if (usesPlaceholders) return resolved;
+    return `${resolved}\n\nPage context:\n${pageContext}\n\nAvailable templates:\n${templateCatalog}`;
+  }, [pageAiPrompt, pageAiTask, pageContext, templateCatalog]);
+
+  const handleGeneratePageAi = useCallback(async (): Promise<void> => {
+    if (pageAiLoading) return;
+    setPageAiError(null);
+    setPageAiOutput("");
+    setPageAiLoading(true);
+    try {
+      const prompt = buildPageAiPrompt();
+      if (!prompt.trim()) throw new Error("Prompt is empty.");
+
+      const provider = pageAiProvider;
+      const modelId = provider === "model" ? (pageAiModelId.trim() || modelOptions[0] || "") : "";
+      const agentId = provider === "agent" ? pageAiAgentId.trim() : "";
+      if (provider === "model" && !modelId) throw new Error("Select an AI model first.");
+      if (provider === "agent" && !agentId) throw new Error("Select a Deepthinking agent first.");
+
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content:
+            "You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.",
+        },
+        { role: "user", content: prompt },
+      ];
+
+      const controller = new AbortController();
+      pageAiAbortRef.current = controller;
+
+      const res = await fetch("/api/cms/css-ai/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Streaming request failed.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split("\n").map((line) => line.trim());
+        const dataLine = lines.find((line) => line.startsWith("data:"));
+        if (!dataLine) return;
+        const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
+          delta?: string;
+          done?: boolean;
+          error?: string;
+        };
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.delta) {
+          accumulated += payload.delta;
+          setPageAiOutput(accumulated);
+        }
+        if (payload.done) {
+          doneSignal = true;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const parsed = extractPageAiJson(accumulated);
+      if (!parsed) throw new Error("AI response did not include JSON.");
+      setPageAiOutput(JSON.stringify(parsed, null, 2));
+      toast(`AI output ready (${provider}).`, { variant: "success" });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setPageAiError("Generation cancelled.");
+        toast("Generation cancelled.", { variant: "info" });
+      } else {
+        const message = error instanceof Error ? error.message : "Failed to generate AI output.";
+        setPageAiError(message);
+        toast(message, { variant: "error" });
+      }
+    } finally {
+      setPageAiLoading(false);
+      pageAiAbortRef.current = null;
+    }
+  }, [
+    pageAiLoading,
+    buildPageAiPrompt,
+    pageAiProvider,
+    pageAiModelId,
+    pageAiAgentId,
+    modelOptions,
+    extractPageAiJson,
+    toast,
+  ]);
+
+  const handleApplyPageAi = useCallback((): void => {
+    if (!pageAiOutput.trim()) {
+      setPageAiError("No AI output to apply.");
+      return;
+    }
+    const parsed = extractPageAiJson(pageAiOutput);
+    if (!parsed) {
+      setPageAiError("AI output is not valid JSON.");
+      return;
+    }
+
+    if (pageAiTask === "seo") {
+      const source =
+        typeof parsed.seo === "object" && parsed.seo
+          ? (parsed.seo as Record<string, unknown>)
+          : parsed;
+      const seoPatch: Record<string, string> = {};
+      if (typeof source.seoTitle === "string") seoPatch.seoTitle = source.seoTitle;
+      if (typeof source.seoDescription === "string") seoPatch.seoDescription = source.seoDescription;
+      if (typeof source.seoCanonical === "string") seoPatch.seoCanonical = source.seoCanonical;
+      if (typeof source.seoOgImage === "string") seoPatch.seoOgImage = source.seoOgImage;
+      if (typeof source.robotsMeta === "string") seoPatch.robotsMeta = source.robotsMeta;
+      if (Object.keys(seoPatch).length === 0) {
+        setPageAiError("No SEO fields found in AI output.");
+        return;
+      }
+      dispatch({ type: "UPDATE_SEO", seo: seoPatch });
+      toast("SEO metadata applied.", { variant: "success" });
+      return;
+    }
+
+    const sectionsRaw =
+      Array.isArray(parsed)
+        ? parsed
+        : parsed.sections ?? parsed.layout ?? parsed.plan;
+    const sections = Array.isArray(sectionsRaw) ? sectionsRaw : [];
+    if (!sections.length) {
+      setPageAiError("No sections found in AI output.");
+      return;
+    }
+
+    const validZones = new Set<PageZone>(["header", "template", "footer"]);
+    let inserted = 0;
+    sections.forEach((item) => {
+      const entry = typeof item === "string" ? { template: item } : (item as Record<string, unknown>);
+      const templateName = typeof entry.template === "string" ? entry.template : typeof entry.name === "string" ? entry.name : "";
+      const typeName = typeof entry.type === "string" ? entry.type : "";
+      const zoneCandidate = typeof entry.zone === "string" ? entry.zone : "template";
+      const zone = validZones.has(zoneCandidate as PageZone) ? (zoneCandidate as PageZone) : "template";
+
+      if (templateName) {
+        const template = SECTION_TEMPLATES.find(
+          (tpl) => tpl.name.toLowerCase() === templateName.toLowerCase()
+        );
+        if (!template) return;
+        const section = template.create();
+        section.zone = zone;
+        dispatch({ type: "INSERT_TEMPLATE_SECTION", section });
+        inserted += 1;
+        return;
+      }
+
+      if (typeName) {
+        const def = getSectionDefinition(typeName);
+        if (!def) return;
+        dispatch({ type: "ADD_SECTION", sectionType: typeName, zone });
+        inserted += 1;
+      }
+    });
+
+    if (inserted === 0) {
+      setPageAiError("No valid templates or section types matched.");
+      return;
+    }
+    toast(`Inserted ${inserted} section${inserted === 1 ? "" : "s"}.`, { variant: "success" });
+  }, [pageAiOutput, pageAiTask, extractPageAiJson, dispatch, toast]);
+
+  const handleCancelPageAi = useCallback((): void => {
+    if (pageAiAbortRef.current) {
+      pageAiAbortRef.current.abort();
+      pageAiAbortRef.current = null;
+    }
+  }, []);
+
   return (
     <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
       <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
         <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
         <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
+        <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
       </TabsList>
 
       {/* ---- Page tab ---- */}
@@ -2442,6 +3162,127 @@ function PageSettingsTab(): React.ReactNode {
               {page.seoDescription || "No description set"}
             </p>
           </div>
+        </div>
+      </TabsContent>
+
+      {/* ---- AI tab ---- */}
+      <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
+        <div className="space-y-4">
+          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+            AI page assistant
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Task</Label>
+            <UnifiedSelect
+              value={pageAiTask}
+              onValueChange={(value: string): void => setPageAiTask(value as "layout" | "seo")}
+              options={pageAiTaskOptions}
+              placeholder="Select task"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Provider</Label>
+            <UnifiedSelect
+              value={pageAiProvider}
+              onValueChange={(value: string): void => setPageAiProvider(value as "model" | "agent")}
+              options={pageAiProviderOptions}
+              placeholder="Select provider"
+            />
+          </div>
+          {pageAiProvider !== "agent" ? (
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400">Model</Label>
+              <UnifiedSelect
+                value={pageAiModelId}
+                onValueChange={(value: string): void => setPageAiModelId(value)}
+                options={modelOptions.map((model: string) => ({ value: model, label: model }))}
+                placeholder={modelOptions.length ? "Select model" : "No models available"}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+              <UnifiedSelect
+                value={pageAiAgentId}
+                onValueChange={(value: string): void => setPageAiAgentId(value)}
+                options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
+                placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Prompt</Label>
+            <Textarea
+              value={pageAiPrompt}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setPageAiPrompt(e.target.value)}
+              placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
+              className="min-h-[120px] text-xs"
+              spellCheck={false}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] text-gray-500">Context placeholders</div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={(): void => {
+                const current = pageAiPrompt.trim();
+                const nextPrompt = current.length ? `${current}\n\n${pageAiPlaceholder}` : pageAiPlaceholder;
+                setPageAiPrompt(nextPrompt);
+              }}
+            >
+              Insert placeholders
+            </Button>
+          </div>
+          <Textarea
+            value={pageAiPlaceholder}
+            readOnly
+            className="min-h-[64px] text-xs font-mono text-gray-300"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={(): void => void handleGeneratePageAi()}
+              disabled={pageAiLoading}
+            >
+              {pageAiLoading ? "Generating…" : "Generate"}
+            </Button>
+            {pageAiLoading && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleCancelPageAi}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+          {pageAiError && (
+            <div className="text-xs text-red-400">{pageAiError}</div>
+          )}
+          {pageAiOutput && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-gray-400">AI output</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleApplyPageAi}
+                >
+                  Apply
+                </Button>
+              </div>
+              <Textarea
+                value={pageAiOutput}
+                readOnly
+                className="min-h-[140px] text-xs font-mono text-gray-300"
+              />
+            </div>
+          )}
         </div>
       </TabsContent>
     </Tabs>

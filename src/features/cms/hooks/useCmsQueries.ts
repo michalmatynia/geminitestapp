@@ -80,7 +80,11 @@ export function useUpdatePage(): UseMutationResult<Page, Error, { id: string; in
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) => {
       const { ok, payload } = await updatePage(id, input);
-      if (!ok) throw new Error("Failed to update page");
+      if (!ok) {
+        const message =
+          (payload as unknown as { error?: string }).error ?? "Failed to update page";
+        throw new Error(message);
+      }
       return payload;
     },
     onSuccess: (_data: Page, variables: { id: string; input: Page & { slugIds?: string[] } }) => {

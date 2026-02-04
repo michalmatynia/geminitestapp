@@ -544,13 +544,13 @@ function SectionBlockRenderer({
   const stretchStyle = stretch ? { height: "100%" } : undefined;
   const allowInlineCustomCss = block.type !== "Block";
   const inlineCustomCss = allowInlineCustomCss ? block.settings["customCss"] : undefined;
-  const inlineCustomNodeId = allowInlineCustomCss ? block.id : undefined;
+  const inlineCustomNodeId = allowInlineCustomCss ? block.id : "";
 
   const wrapInline = (node: React.ReactNode): React.ReactNode => (
     <EventEffectsWrapper
       settings={block.settings}
-      nodeId={inlineCustomNodeId}
-      customCss={inlineCustomCss}
+      {...(inlineCustomNodeId ? { nodeId: inlineCustomNodeId } : {})}
+      {...(inlineCustomCss !== undefined ? { customCss: inlineCustomCss } : {})}
     >
       {node}
     </EventEffectsWrapper>

@@ -1,58 +1,38 @@
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts(86,192): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts(86,193): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts(177,191): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts(177,192): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts(53,196): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts(53,197): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts(190,193): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts(190,194): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts(258,190): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts(258,191): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts(69,191): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts(69,192): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts(91,191): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts(91,192): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts(192,190): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts(192,191): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(211,187): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(211,188): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(958,182): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(958,183): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/route.ts(170,137): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/route.ts(170,138): error TS1128: Declaration or statement expected.
-src/app/api/integrations/[id]/connections/route.ts(171,140): error TS1005: ',' expected.
-src/app/api/integrations/[id]/connections/route.ts(171,141): error TS1128: Declaration or statement expected.
-src/app/api/integrations/connections/[id]/route.ts(198,137): error TS1005: ',' expected.
-src/app/api/integrations/connections/[id]/route.ts(198,138): error TS1128: Declaration or statement expected.
-src/app/api/integrations/connections/[id]/route.ts(199,146): error TS1005: ',' expected.
-src/app/api/integrations/connections/[id]/route.ts(199,147): error TS1128: Declaration or statement expected.
-src/app/api/integrations/connections/[id]/session/route.ts(57,145): error TS1005: ',' expected.
-src/app/api/integrations/connections/[id]/session/route.ts(57,146): error TS1128: Declaration or statement expected.
-src/app/api/integrations/export-templates/[id]/route.ts(100,138): error TS1005: ',' expected.
-src/app/api/integrations/export-templates/[id]/route.ts(100,139): error TS1128: Declaration or statement expected.
-src/app/api/integrations/export-templates/[id]/route.ts(101,138): error TS1005: ',' expected.
-src/app/api/integrations/export-templates/[id]/route.ts(101,139): error TS1128: Declaration or statement expected.
-src/app/api/integrations/export-templates/[id]/route.ts(102,147): error TS1005: ',' expected.
-src/app/api/integrations/export-templates/[id]/route.ts(102,148): error TS1128: Declaration or statement expected.
-src/app/api/integrations/import-templates/[id]/route.ts(99,138): error TS1005: ',' expected.
-src/app/api/integrations/import-templates/[id]/route.ts(99,139): error TS1128: Declaration or statement expected.
-src/app/api/integrations/import-templates/[id]/route.ts(100,138): error TS1005: ',' expected.
-src/app/api/integrations/import-templates/[id]/route.ts(100,139): error TS1128: Declaration or statement expected.
-src/app/api/integrations/import-templates/[id]/route.ts(101,147): error TS1005: ',' expected.
-src/app/api/integrations/import-templates/[id]/route.ts(101,148): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/export-to-base/route.ts(865,152): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/export-to-base/route.ts(865,153): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts(134,194): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts(134,195): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/purge/route.ts(34,189): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/purge/route.ts(34,190): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(88,183): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(88,184): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(89,180): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(89,181): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts(53,106): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts(54,1): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/route.ts(114,143): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/route.ts(114,144): error TS1128: Declaration or statement expected.
-src/app/api/integrations/products/[id]/listings/route.ts(115,146): error TS1005: ',' expected.
-src/app/api/integrations/products/[id]/listings/route.ts(115,147): error TS1128: Declaration or statement expected.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(550,6): error TS2375: Type '{ children: ReactNode; settings: Record<string, unknown>; nodeId: string | undefined; customCss: unknown; }' is not assignable to type 'EventEffectsWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'nodeId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/AnimationConfigPanel.tsx(1485,67): error TS2345: Argument of type 'string' is not assignable to parameter of type '"children" | "self" | "descendants"'.
+src/features/cms/components/page-builder/AnimationConfigPanel.tsx(1530,29): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(1881,14): error TS2375: Type '{ value: CssAnimationConfig | undefined; onChange: (config: CssAnimationConfig) => void; }' is not assignable to type 'CssAnimationConfigPanelProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'value' are incompatible.
+    Type 'CssAnimationConfig | undefined' is not assignable to type 'CssAnimationConfig'.
+      Type 'undefined' is not assignable to type 'CssAnimationConfig'.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(2035,49): error TS2379: Argument of type '{ provider: CustomCssAiConfig["provider"]; }' is not assignable to parameter of type 'Partial<CustomCssAiConfig>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'provider' are incompatible.
+    Type 'CustomCssAiProvider | undefined' is not assignable to type 'CustomCssAiProvider'.
+      Type 'undefined' is not assignable to type 'CustomCssAiProvider'.
+src/features/cms/components/page-builder/CssAnimationConfigPanel.tsx(52,29): error TS2322: Type 'string' is not assignable to type 'CssAnimationEffect'.
+src/features/cms/components/page-builder/CssAnimationConfigPanel.tsx(117,29): error TS2322: Type 'string' is not assignable to type 'CssAnimationDirection'.
+src/features/cms/components/page-builder/CssAnimationConfigPanel.tsx(124,29): error TS2322: Type 'string' is not assignable to type 'CssAnimationFillMode'.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(205,7): error TS2375: Type '{ slugIds?: string[]; name: string; showMenu: boolean; status: PageStatus; publishedAt: string | null; seoTitle: string | null; seoDescription: string | null; seoOgImage: string | null; ... 5 more ...; slugs?: PageSlugLink[]; }' is not assignable to type 'Page & { slugIds?: string[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ slugIds?: string[]; name: string; showMenu: boolean; status: PageStatus; publishedAt: string | null; seoTitle: string | null; seoDescription: string | null; seoOgImage: string | null; ... 5 more ...; slugs?: PageSlugLink[]; }' is not assignable to type 'Page' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'publishedAt' are incompatible.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2384,12): error TS2375: Type '{ children: ReactNode; settings: Record<string, unknown>; disableClick: true; nodeId: string | undefined; customCss: unknown; }' is not assignable to type 'EventEffectsWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'nodeId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(784,21): error TS2375: Type '{ name?: string | undefined; colors: Partial<ColorSchemeColors>; }' is not assignable to type '{ name?: string; colors: Partial<ColorSchemeColors>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(802,11): error TS2375: Type '{ background: string | undefined; surface: string | undefined; text: string | undefined; accent: string | undefined; border: string | undefined; }' is not assignable to type 'Partial<ColorSchemeColors>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'background' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(812,5): error TS2375: Type '{ name: string | undefined; colors: Partial<ColorSchemeColors>; }' is not assignable to type '{ name?: string; colors: Partial<ColorSchemeColors>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.

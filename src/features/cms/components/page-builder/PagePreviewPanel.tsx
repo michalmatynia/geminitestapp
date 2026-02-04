@@ -178,21 +178,26 @@ export function PagePreviewPanel(): React.ReactNode {
     if (!state.currentPage) return;
 
     const page = state.currentPage;
+    const slugIds =
+      Array.isArray(page.slugIds)
+        ? page.slugIds.filter((idValue: string | undefined | null) => typeof idValue === "string" && idValue.trim().length > 0)
+        : undefined;
     const updatedPage = {
       ...page,
+      name: page.name?.trim() || "Untitled page",
       showMenu: page.showMenu ?? true,
       status: page.status,
-      publishedAt: page.publishedAt || "",
-      seoTitle: page.seoTitle || "",
-      seoDescription: page.seoDescription || "",
-      seoOgImage: page.seoOgImage || "",
-      seoCanonical: page.seoCanonical || "",
-      robotsMeta: page.robotsMeta || "",
+      publishedAt: page.publishedAt || null,
+      seoTitle: page.seoTitle || null,
+      seoDescription: page.seoDescription || null,
+      seoOgImage: page.seoOgImage || null,
+      seoCanonical: page.seoCanonical || null,
+      robotsMeta: page.robotsMeta || null,
       components: state.sections.map((s: SectionInstance) => ({
         type: s.type,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
       })),
-      ...(page.slugIds && { slugIds: page.slugIds }),
+      ...(slugIds ? { slugIds } : {}),
     };
 
     await updatePage.mutateAsync({

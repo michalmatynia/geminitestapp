@@ -143,7 +143,7 @@ async function POST_handler(
 export const GET = apiHandlerWithParams<{ projectId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     GET_handler(req, ctx, params),
-  { source: "image-studio.projects.[projectId].slots.GET" }
+  { source: "image-studio.projects.[projectId].slots.GET", rateLimitKey: "search" }
 );
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/shared/errors/resolve-error";
 import { badRequestError, forbiddenError, payloadTooLargeError, validationError } from "@/shared/errors/app-error";
-import { enforceRateLimit, type RateLimiterKey } from "@/shared/lib/api/rate-limit";
+import { enforceRateLimit } from "@/shared/lib/api/rate-limit";
 import {
   CSRF_SAFE_METHODS,
   getCsrfTokenFromHeaders,

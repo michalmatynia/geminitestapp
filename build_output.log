@@ -1,15 +1,20 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
 
-> libapp2@0.1.0 build
-> prisma generate && next build
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 28.3s
+  Running TypeScript ...
+Failed to compile.
 
-Loaded Prisma config from prisma.config.ts.
+./src/features/cms/components/page-builder/AnimationConfigPanel.tsx:1485:67
+Type error: Argument of type 'string' is not assignable to parameter of type '"children" | "self" | "descendants"'.
 
-Prisma schema loaded from prisma/schema.prisma.
-
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 357ms
-
-Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-
-
-⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/lock, is another instance of next build running?
-  Suggestion: If you intended to restart next build, terminate the other process, and then try again.
+[0m [90m 1483 |[39m                       size[33m=[39m[32m"sm"[39m
+ [90m 1484 |[39m                       variant[33m=[39m{isActive [33m?[39m [32m"secondary"[39m [33m:[39m [32m"outline"[39m}
+[31m[1m>[22m[39m[90m 1485 |[39m                       onClick[33m=[39m{()[33m:[39m [36mvoid[39m [33m=>[39m handleNodeTargetChange(option[33m.[39mvalue)}
+ [90m      |[39m                                                                   [31m[1m^[22m[39m
+ [90m 1486 |[39m                       className[33m=[39m[32m"h-8 w-10 p-0"[39m
+ [90m 1487 |[39m                       aria[33m-[39mlabel[33m=[39m{option[33m.[39mlabel}
+ [90m 1488 |[39m                     [33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

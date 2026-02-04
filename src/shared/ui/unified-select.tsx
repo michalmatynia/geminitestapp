@@ -18,7 +18,7 @@ export interface SelectOption {
 }
 
 interface UnifiedSelectProps {
-  value: string;
+  value: string | undefined;
   onValueChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string | undefined;
@@ -40,10 +40,14 @@ export function UnifiedSelect({
   disabled = false,
   ariaLabel,
 }: UnifiedSelectProps): React.JSX.Element {
+  const normalizedOptions = options.filter((option) => option.value && option.value.trim() !== "");
+  const hasValue = normalizedOptions.some((option) => option.value === value);
+  const safeValue = hasValue ? value : undefined;
+
   return (
     <div className={cn("w-full", className)}>
       <Select
-        value={value}
+        value={safeValue}
         onValueChange={onValueChange}
         disabled={disabled}
       >
@@ -54,9 +58,7 @@ export function UnifiedSelect({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className={contentClassName}>
-          {options
-            .filter((option) => option.value && option.value.trim() !== "")
-            .map((option) => (
+          {normalizedOptions.map((option) => (
               <SelectItem 
                 key={option.value} 
                 value={option.value}

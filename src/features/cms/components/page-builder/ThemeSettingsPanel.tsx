@@ -133,7 +133,7 @@ const normalizeAiString = (value: unknown): string | undefined => {
   return trimmed.length ? trimmed : undefined;
 };
 
-const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
+const parseColorSchemePayload = (payload: unknown): { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null => {
   if (!payload || typeof payload !== "object") return null;
   const raw = payload as Record<string, unknown>;
   const name =
@@ -149,13 +149,19 @@ const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Par
   if (!colorsSource || typeof colorsSource !== "object") return null;
 
   const colors = colorsSource as Record<string, unknown>;
-  const parsed: Partial<ColorSchemeColors> = {
-    background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
-    surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
-    text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground),
-    accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary),
-    border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
-  };
+      const parsedRaw = {
+        background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg) ?? null,
+        surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card) ?? null,
+        text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground) ?? null,
+        accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary) ?? null,
+        border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline) ?? null,
+      };
+  const parsed: Partial<ColorSchemeColors> = {};
+  Object.entries(parsedRaw).forEach(([key, val]) => {
+    if (val !== undefined) {
+      (parsed as any)[key] = val;
+    }
+  });
 
   if (!Object.values(parsed).some(Boolean) && !name) return null;
   return { name, colors: parsed };
@@ -579,6 +585,29 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setSchemeAiModelId(modelOptions[0]!);
   }, [schemeAiProvider, schemeAiModelId, modelOptions]);
 
+  const activeScheme = useMemo((): { id: string; name: string; colors: ColorSchemeColors } | null => {
+    if (!theme.colorSchemes.length) return null;
+    return theme.colorSchemes.find((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0]!;
+  }, [theme.colorSchemes, theme.activeColorSchemeId]);
+
+  const resetSchemeAiState = useCallback((): void => {
+    if (schemeAiAbortRef.current) {
+      schemeAiAbortRef.current.abort();
+      schemeAiAbortRef.current = null;
+    }
+    setSchemeAiLoading(false);
+    setSchemeAiError(null);
+    setSchemeAiOutput("");
+  }, []);
+
+  const startAddScheme = useCallback((): void => {
+    setNewSchemeName("");
+    setNewSchemeColors(activeScheme?.colors ?? DEFAULT_SCHEME_COLORS);
+    setEditingSchemeId(null);
+    setSchemeView("edit");
+    resetSchemeAiState();
+  }, [activeScheme, resetSchemeAiState]);
+
   useEffect((): (() => void) | void => {
     if (typeof window === "undefined") return undefined;
     const handler = (event: Event): void => {
@@ -604,38 +633,6 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     };
   }, [initialOpenSections, startAddScheme]);
 
-  const toggleSection = useCallback((section: string): void => {
-    setUserOpenSections((prev: Set<string> | null) => {
-      const current = prev ?? initialOpenSections;
-      const next = new Set(current);
-      if (next.has(section)) { next.delete(section); } else { next.add(section); }
-      return next;
-    });
-  }, [initialOpenSections]);
-
-  const activeScheme = useMemo((): { id: string; name: string; colors: ColorSchemeColors } | null => {
-    if (!theme.colorSchemes.length) return null;
-    return theme.colorSchemes.find((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0]!;
-  }, [theme.colorSchemes, theme.activeColorSchemeId]);
-
-  const resetSchemeAiState = useCallback((): void => {
-    if (schemeAiAbortRef.current) {
-      schemeAiAbortRef.current.abort();
-      schemeAiAbortRef.current = null;
-    }
-    setSchemeAiLoading(false);
-    setSchemeAiError(null);
-    setSchemeAiOutput("");
-  }, []);
-
-  const startAddScheme = useCallback((): void => {
-    setNewSchemeName("");
-    setNewSchemeColors(activeScheme?.colors ?? DEFAULT_SCHEME_COLORS);
-    setEditingSchemeId(null);
-    setSchemeView("edit");
-    resetSchemeAiState();
-  }, [activeScheme, resetSchemeAiState]);
-
   const startEditScheme = useCallback((schemeId: string): void => {
     const scheme = theme.colorSchemes.find((item: { id: string }) => item.id === schemeId);
     if (!scheme) return;
@@ -651,7 +648,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     const currentName = editingSchemeId
       ? theme.colorSchemes.find((scheme: { id: string }) => scheme.id === editingSchemeId)?.name
       : undefined;
-    const schemeName = trimmed || currentName || `Scheme ${theme.colorSchemes.length + 1}`;
+    const schemeName = (trimmed || currentName || `Scheme ${theme.colorSchemes.length + 1}`) ?? "";
 
     if (editingSchemeId) {
       setTheme((prev: typeof theme) => ({
@@ -967,6 +964,19 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       schemeAiAbortRef.current = null;
     }
   }, []);
+
+  const toggleSection = useCallback((section: string): void => {
+    setUserOpenSections((prev: Set<string> | null) => {
+      const current = prev ?? initialOpenSections;
+      const next = new Set(current);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
+  }, [initialOpenSections]);
 
   // ---------------------------------------------------------------------------
   // Section bodies

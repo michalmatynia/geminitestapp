@@ -24,7 +24,7 @@ const prismaAny = prisma as unknown as {
     findMany: (args: unknown) => Promise<unknown[]>;
     findFirst: (args: unknown) => Promise<unknown>;
     count: (args: unknown) => Promise<number>;
-    updateMany: (args: unknown) => Promise<unknown>;
+    updateMany: (args: unknown) => Promise<{ count: number }>;
   };
   aiPathRunNode?: {
     createMany: (args: unknown) => Promise<unknown>;

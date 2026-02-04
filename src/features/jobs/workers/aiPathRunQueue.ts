@@ -222,7 +222,7 @@ export const getAiPathRunQueueStatus = async (): Promise<{
     if (!values.length) return null;
     const rank = Math.ceil((percentile / 100) * values.length) - 1;
     const idx = Math.min(values.length - 1, Math.max(0, rank));
-    return values[idx];
+    return values[idx] ?? null;
   };
   const repo = getPathRunRepository();
   const stats = await repo.getQueueStats();

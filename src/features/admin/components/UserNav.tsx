@@ -16,9 +16,9 @@ import {
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { LogOut, LogIn } from "lucide-react";
+import { LogOut, LogIn, SparklesIcon } from "lucide-react";
 
-export function UserNav(): React.ReactNode {
+export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } = {}): React.ReactNode {
   const { data: session } = useSession();
   const settingsQuery = useSettingsMap();
   const updateSettings = useUpdateSettingsBulk();
@@ -71,6 +71,16 @@ export function UserNav(): React.ReactNode {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => {
+            if (onOpenAiWarnings) onOpenAiWarnings();
+          }}
+          disabled={!onOpenAiWarnings}
+        >
+          <SparklesIcon className="mr-2 h-4 w-4" />
+          <span>AI warnings</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="flex flex-col items-start gap-2"

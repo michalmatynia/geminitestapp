@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/ui";
 import Link from "next/link";
-import { ChevronLeftIcon, SparklesIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
@@ -118,16 +118,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
         <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
           <div className="pointer-events-auto">
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-2"
-                onClick={() => setAiDrawerOpen(true)}
-              >
-                <SparklesIcon className="size-4" />
-                AI Warnings
-              </Button>
-              <UserNav />
+              <UserNav onOpenAiWarnings={() => setAiDrawerOpen(true)} />
             </div>
           </div>
         </header>

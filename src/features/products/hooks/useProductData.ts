@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { 
   getProducts, 
@@ -13,6 +13,8 @@ import type {
   ProductWithImages, 
 } from "@/features/products/types";
 import type { DeleteResponse } from "@/shared/types/api";
+import { useOfflineMutation } from "@/shared/hooks/offline/useOfflineMutation";
+import { addQueuedProductId, removeQueuedProductId } from "@/features/products/state/queued-product-ops";
 
 // --- Queries ---
 
@@ -68,68 +70,95 @@ export function useProductsCount(
 // --- Mutations ---
 
 export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (formData: FormData) => createProduct(formData),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+  return useOfflineMutation(
+    (formData: FormData) => createProduct(formData),
+    {
+      queryKey: ["products"],
+      extraInvalidateKeys: [["products-count"]],
+      queuedMessage: "Product creation queued in runtime queue.",
+      processedMessage: "Queued product creation completed.",
+      errorMessage: "Failed to create product",
+    }
+  );
 }
 
-export function useUpdateProductMutation(): UseMutationResult<ProductWithImages, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
+export function useUpdateProductMutation(): UseMutationResult<ProductWithImages | null, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
+  return useOfflineMutation(
+    async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const response = await fetch(`/api/products/${id}`, {
           method: "PUT",
           body: data,
         });
-        if (!response.ok) throw new Error("Failed to update product");
+        if (!response.ok) {
+          const errorData = (await response.json().catch(() => ({}))) as {
+            error?: string;
+            details?: unknown;
+          };
+          let message = errorData.error || "Failed to update product";
+          if (Array.isArray(errorData.details) && errorData.details.length > 0) {
+            const detailMessages = errorData.details
+              .slice(0, 3)
+              .map((d: { field?: unknown; message?: unknown }) => {
+                const field = typeof d.field === "string" && d.field ? d.field : "field";
+                const msg = typeof d.message === "string" && d.message ? d.message : "invalid";
+                return `${field}: ${msg}`;
+              })
+              .join(", ");
+            if (detailMessages) message = `${message} (${detailMessages})`;
+          }
+          throw new Error(message);
+        }
         return response.json() as Promise<ProductWithImages>;
-      } else {
-        return updateProduct(id, data);
       }
+      return updateProduct(id, data);
     },
-    onSuccess: (data: ProductWithImages): void => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products", data.id] });
-    },
-  });
+    {
+      queryKey: ["products"],
+      extraInvalidateKeys: (variables) => [["products", variables.id]],
+      queuedMessage: "Product update queued in runtime queue.",
+      processedMessage: "Queued product update completed.",
+      errorMessage: "Failed to update product",
+      onQueued: (variables) => addQueuedProductId(variables.id),
+      onProcessed: (variables) => removeQueuedProductId(variables.id),
+    }
+  );
 }
 
-export function useDeleteProductMutation(): UseMutationResult<DeleteResponse, Error, string, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | null, Error, string, unknown> {
+  return useOfflineMutation(
+    (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
+    {
+      queryKey: ["products"],
+      extraInvalidateKeys: [["products-count"]],
+      queuedMessage: "Product deletion queued in runtime queue.",
+      processedMessage: "Queued product deletion completed.",
+      errorMessage: "Failed to delete product",
+      onQueued: (id) => addQueuedProductId(id),
+      onProcessed: (id) => removeQueuedProductId(id),
+    }
+  );
 }
 
-export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean }, Error, string[], unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (ids: string[]): Promise<{ success: boolean }> => {
+export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean } | null, Error, string[], unknown> {
+  return useOfflineMutation(
+    async (ids: string[]): Promise<{ success: boolean }> => {
       const responses = await Promise.all(
         ids.map((id: string) => deleteProduct(id))
       );
       if (responses.some((r: { success: boolean }) => !r.success)) throw new Error("Failed to delete some products");
       return { success: true };
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+    {
+      queryKey: ["products"],
+      extraInvalidateKeys: [["products-count"]],
+      queuedMessage: "Product deletion queued in runtime queue.",
+      processedMessage: "Queued product deletion completed.",
+      errorMessage: "Failed to delete some products",
+      onQueued: (ids) => ids.forEach((id) => addQueuedProductId(id)),
+      onProcessed: (ids) => ids.forEach((id) => removeQueuedProductId(id)),
+    }
+  );
 }
 
 // --- Composite Hook ---

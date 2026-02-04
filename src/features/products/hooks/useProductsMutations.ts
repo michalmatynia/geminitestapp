@@ -78,7 +78,12 @@ export function useDeleteProduct(): UseMutationResult<
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete product");
-      return (await response.json()) as DeleteResponse;
+      if (response.status === 204) {
+        return { success: true };
+      }
+      const data = (await response.json().catch(() => null)) as DeleteResponse | null;
+      if (!data) return { success: true };
+      return { success: data.success !== false, message: data.message };
     },
     onSuccess: async (): Promise<void> => {
       await Promise.all([

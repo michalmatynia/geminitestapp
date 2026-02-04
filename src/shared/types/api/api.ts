@@ -12,7 +12,7 @@ export interface ApiError {
 
 export interface DeleteResponse {
   success: boolean;
-  message?: string;
+  message?: string | undefined;
 }
 
 export interface ApiHandlerContext {

@@ -48,15 +48,33 @@ async function GET_handler(
     const projectId = sanitizeProjectId(params.projectId);
     if (!projectId) throw badRequestError("Project id is required");
 
-    const slots = await prisma.imageStudioSlot.findMany({
-      where: { projectId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        imageFile: true,
-        screenshotFile: true,
-        asset3d: true,
-      },
-    });
+    let slots: unknown[] = [];
+    try {
+      slots = await prisma.imageStudioSlot.findMany({
+        where: { projectId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          imageFile: true,
+          screenshotFile: true,
+          asset3d: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const code = error.code;
+        if (code === "P2021" || code === "P2022") {
+          return NextResponse.json(
+            {
+              slots: [],
+              warning: "Image studio slots store is not available yet.",
+              code,
+            },
+            { status: 200 }
+          );
+        }
+      }
+      throw error;
+    }
 
     return NextResponse.json({ slots });
   } catch (error) {
@@ -84,7 +102,24 @@ async function POST_handler(
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const existingCount = await prisma.imageStudioSlot.count({ where: { projectId } });
+    let existingCount = 0;
+    try {
+      existingCount = await prisma.imageStudioSlot.count({ where: { projectId } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const code = error.code;
+        if (code === "P2021" || code === "P2022") {
+          return NextResponse.json(
+            {
+              error: "Image studio slots store is not available yet.",
+              code,
+            },
+            { status: 503 }
+          );
+        }
+      }
+      throw error;
+    }
     const incomingSlots = parsed.data.slots ?? [];
     const count = parsed.data.count ?? incomingSlots.length;
     const maxCreate = Math.max(0, Math.min(100 - existingCount, count));
@@ -116,18 +151,35 @@ async function POST_handler(
         metadata: (slot.metadata as Prisma.JsonValue) ?? null,
       }));
 
-    const created = await prisma.$transaction(
-      slotsToCreate.map((slot) =>
-        prisma.imageStudioSlot.create({
-          data: slot as Prisma.ImageStudioSlotCreateInput,
-          include: {
-            imageFile: true,
-            screenshotFile: true,
-            asset3d: true,
-          },
-        })
-      )
-    );
+    let created: Prisma.ImageStudioSlotCreateInput[] | unknown[] = [];
+    try {
+      created = await prisma.$transaction(
+        slotsToCreate.map((slot) =>
+          prisma.imageStudioSlot.create({
+            data: slot as Prisma.ImageStudioSlotCreateInput,
+            include: {
+              imageFile: true,
+              screenshotFile: true,
+              asset3d: true,
+            },
+          })
+        )
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const code = error.code;
+        if (code === "P2021" || code === "P2022") {
+          return NextResponse.json(
+            {
+              error: "Image studio slots store is not available yet.",
+              code,
+            },
+            { status: 503 }
+          );
+        }
+      }
+      throw error;
+    }
 
     return NextResponse.json({ slots: created }, { status: 201 });
   } catch (error) {

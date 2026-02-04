@@ -4,7 +4,8 @@ import { Button } from "@/shared/ui";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
+import type { Session } from "next-auth";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { usePathname } from "next/navigation";
@@ -132,15 +133,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
 export function AdminLayout({
   children,
   initialMenuCollapsed = false,
+  session = null,
 }: {
   children: React.ReactNode;
   initialMenuCollapsed?: boolean;
+  session?: Session | null;
 }): React.ReactNode {
   return (
-    <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-      <NoteSettingsProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </NoteSettingsProvider>
-    </AdminLayoutProvider>
+    <SessionProvider session={session}>
+      <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+        <NoteSettingsProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </NoteSettingsProvider>
+      </AdminLayoutProvider>
+    </SessionProvider>
   );
 }

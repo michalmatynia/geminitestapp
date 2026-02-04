@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge } from "@/shared/ui";
+import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge, Badge } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
 import { ArrowUpDown, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -324,10 +324,12 @@ export const getProductColumns = (
       const meta: {
             productNameKey?: ProductNameKey;
             onProductNameClick?: (p: ProductWithImages) => void;
+            queuedProductIds?: Set<string>;
           } | undefined = table.options.meta as
         | {
             productNameKey?: ProductNameKey;
             onProductNameClick?: (p: ProductWithImages) => void;
+            queuedProductIds?: Set<string>;
           }
         | undefined;
 
@@ -341,6 +343,7 @@ export const getProductColumns = (
       const handleNameClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductNameClick;
 
       const isImported: boolean = !!product.baseProductId;
+      const isQueued: boolean = meta?.queuedProductIds?.has(product.id) ?? false;
 
       return (
         <div>
@@ -378,6 +381,11 @@ export const getProductColumns = (
                     aria-label="Imported product"
                   />
                 </span>
+              )}
+              {isQueued && (
+                <Badge variant="processing" className="ml-1">
+                  Queued
+                </Badge>
               )}
             </div>
           )}

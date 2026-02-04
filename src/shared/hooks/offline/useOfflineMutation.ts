@@ -7,7 +7,9 @@ interface QueuedMutation {
   id: string;
   mutationFn: () => Promise<unknown>;
   queryKey: readonly unknown[];
-  optimisticUpdate?: (oldData: unknown) => unknown;
+  optimisticUpdate?: ((oldData: unknown) => unknown) | undefined;
+  invalidateKeys?: (readonly (readonly unknown[])[]) | undefined;
+  onProcessed?: (() => void) | undefined;
   timestamp: number;
 }
 
@@ -32,6 +34,12 @@ class OfflineMutationQueue {
       try {
         await mutation.mutationFn();
         void queryClient.invalidateQueries({ queryKey: mutation.queryKey });
+        if (mutation.invalidateKeys) {
+          mutation.invalidateKeys.forEach((key: readonly unknown[]) => {
+            void queryClient.invalidateQueries({ queryKey: key });
+          });
+        }
+        mutation.onProcessed?.();
       } catch (error) {
         logClientError(error, { 
           context: { 
@@ -56,7 +64,7 @@ class OfflineMutationQueue {
     if (typeof window !== 'undefined') {
       // NOTE: function serialization is not supported by JSON.stringify
       // In a real app, you'd store mutation metadata and reconstruct the fn
-      const payload = this.queue.map(({ mutationFn: _, ...rest }: QueuedMutation) => rest);
+      const payload = this.queue.map(({ mutationFn: _, onProcessed: __, ...rest }: QueuedMutation) => rest);
       if (payload.length === 0) {
         localStorage.removeItem('offline-mutation-queue');
       } else {
@@ -91,22 +99,46 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
   mutationFn: (variables: TVariables) => Promise<TData>,
   options: {
     queryKey: readonly unknown[];
+    extraInvalidateKeys?: readonly (readonly unknown[])[] | ((variables: TVariables) => readonly (readonly unknown[])[]);
     optimisticUpdate?: (oldData: TContext | undefined, variables: TVariables) => TContext;
     successMessage?: string;
     errorMessage?: string;
+    queuedMessage?: string;
+    processedMessage?: string;
+    onQueued?: (variables: TVariables) => void;
+    onProcessed?: (variables: TVariables) => void;
   }
 ): UseMutationResult<TData, TError, TVariables, TContext> {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const resolveExtraKeys = useCallback(
+    (variables: TVariables): readonly (readonly unknown[])[] => {
+      if (!options.extraInvalidateKeys) return [];
+      return typeof options.extraInvalidateKeys === "function"
+        ? options.extraInvalidateKeys(variables)
+        : options.extraInvalidateKeys;
+    },
+    [options.extraInvalidateKeys]
+  );
 
   return useMutation({
     mutationFn: async (variables: TVariables): Promise<TData> => {
-      if (!navigator.onLine) {
+      const isOnline = typeof navigator === "undefined" ? true : navigator.onLine;
+      if (!isOnline) {
+        const extraKeys = resolveExtraKeys(variables);
+        options.onQueued?.(variables);
         // Queue for later execution
         const queuedMutation: QueuedMutation = {
           id: Date.now().toString(),
           mutationFn: (): Promise<TData> => mutationFn(variables),
           queryKey: options.queryKey,
+          invalidateKeys: extraKeys,
+          onProcessed: (): void => {
+            if (options.processedMessage) {
+              toast(options.processedMessage as string, { variant: "success" });
+            }
+            options.onProcessed?.(variables);
+          },
           timestamp: Date.now(),
         };
         
@@ -119,17 +151,23 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
           );
         }
         
-        toast("Changes saved offline. Will sync when online.", { variant: "info" });
+        toast(options.queuedMessage || "Changes saved offline. Will sync when online.", { variant: "info" });
         return null as TData;
       }
       
       return mutationFn(variables);
     },
-    onSuccess: (_data: TData, _variables: TVariables): void => {
-      if (navigator.onLine && options.successMessage) {
+    onSuccess: (_data: TData, variables: TVariables): void => {
+      const isOnline = typeof navigator === "undefined" ? true : navigator.onLine;
+      if (isOnline && options.successMessage) {
         toast(options.successMessage, { variant: "success" });
       }
+      if (!isOnline) return;
       void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      const extraKeys = resolveExtraKeys(variables);
+      extraKeys.forEach((key: readonly unknown[]) => {
+        void queryClient.invalidateQueries({ queryKey: key });
+      });
     },
     onError: (error: TError): void => {
       const message = options.errorMessage || 

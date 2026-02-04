@@ -69,20 +69,24 @@ export function useProductOperations(
     setIsCreateOpen(true);
   };
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = (info?: { queued?: boolean }) => {
     setIsCreateOpen(false);
     setInitialSku("");
-    setRefreshTrigger((prev) => prev + 1);
-    toast("Product created successfully.", { variant: "success" });
+    if (!info?.queued) {
+      setRefreshTrigger((prev) => prev + 1);
+      toast("Product created successfully.", { variant: "success" });
+    }
   };
 
-  const handleEditSuccess = () => {
-    if (editingProduct) {
+  const handleEditSuccess = (info?: { queued?: boolean }) => {
+    if (!info?.queued && editingProduct) {
       setLastEditedId(editingProduct.id);
     }
     setEditingProduct(null);
-    setRefreshTrigger((prev) => prev + 1);
-    toast("Product updated successfully.", { variant: "success" });
+    if (!info?.queued) {
+      setRefreshTrigger((prev) => prev + 1);
+      toast("Product updated successfully.", { variant: "success" });
+    }
   };
 
   const handleEditSave = (savedProduct: ProductWithImages) => {

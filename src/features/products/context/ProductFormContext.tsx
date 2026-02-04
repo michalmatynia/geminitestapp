@@ -131,7 +131,7 @@ export function ProductFormProvider({
   children: React.ReactNode;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
-  onSuccess?: (() => void) | undefined;
+  onSuccess?: ((info?: { queued?: boolean }) => void) | undefined;
   onEditSave?: ((saved: ProductWithImages) => void) | undefined;
   requireSku?: boolean | undefined;
   initialSku?: string | undefined;
@@ -367,44 +367,19 @@ export function ProductFormProvider({
     formData.append("parameters", JSON.stringify(normalizedParameters));
 
     try {
-      let savedProduct: ProductWithImages;
-      
-      if (product) {
-        // Update mode - we can't easily use FormData with our current update mutation because it expects JSON
-        // Actually, the API route handles both.
-        // Let's check the API route.
-        
-        // Wait, updateProduct in api/products.ts uses fetch with body: JSON.stringify(data)
-        // If we want to support images, we might need a separate endpoint or multipart support.
-        // The context code above uses fetch(url, { method: "PUT", body: formData })
-        
-        const response = await fetch(`/api/products/${product.id}`, {
-          method: "PUT",
-          body: formData,
-        });
+      const savedProduct = product
+        ? await updateMutation.mutateAsync({ id: product.id, data: formData })
+        : await createMutation.mutateAsync(formData);
 
-        if (!response.ok) {
-          const errorData = (await response.json().catch(() => ({}))) as {
-            error?: string;
-            details?: unknown;
-          };
-          let message = errorData.error || "Failed to update product";
-          if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-            const detailMessages = errorData.details
-              .slice(0, 3)
-              .map((d: { field?: unknown; message?: unknown }) => {
-                const field = typeof d.field === "string" && d.field ? d.field : "field";
-                const msg = typeof d.message === "string" && d.message ? d.message : "invalid";
-                return `${field}: ${msg}`;
-              })
-              .join(", ");
-            if (detailMessages) message = `${message} (${detailMessages})`;
-          }
-          throw new Error(message);
+      const isQueued = savedProduct == null;
+
+      if (isQueued) {
+        if (product) {
+          onSuccess?.({ queued: true });
+        } else {
+          onSuccess?.({ queued: true });
         }
-        savedProduct = (await response.json()) as ProductWithImages;
-      } else {
-        savedProduct = (await createMutation.mutateAsync(formData)) as ProductWithImages;
+        return;
       }
 
       // Small delay to ensure DB consistency before refetch
@@ -419,7 +394,7 @@ export function ProductFormProvider({
       if (!product) {
         onSuccess?.();
       } else {
-        refreshImages(savedProduct);
+        refreshImages(savedProduct as ProductWithImages);
         setUploadSuccess(true);
         if (successTimerRef.current) {
           clearTimeout(successTimerRef.current);
@@ -432,7 +407,7 @@ export function ProductFormProvider({
         if (!onSuccess) {
           toast("Product updated successfully.", { variant: "success" });
         }
-        onEditSave?.(savedProduct);
+        onEditSave?.(savedProduct as ProductWithImages);
         onSuccess?.();
         router.refresh();
       }

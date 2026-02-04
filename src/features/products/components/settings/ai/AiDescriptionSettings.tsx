@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import { logClientError } from "@/features/observability";
-import { fetchSettingsCached, invalidateSettingsCache } from "@/shared/api/settings-client";
+import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from "@/shared/api/settings-client";
 
 const STATIC_VISION_MODELS = [
   { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
@@ -103,7 +103,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
     const loadData = async (): Promise<void> => {
       try {
         const data = await fetchSettingsCached();
-        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
+        const settingsMap = new Map(data.map((item: SettingRecord) => [item.key, item.value]));
 
         setImageAnalysisModel(settingsMap.get("ai_vision_model") || "gpt-4o");
         setVisionInputPrompt(settingsMap.get("ai_vision_user_prompt") || "Analyze these product images...");

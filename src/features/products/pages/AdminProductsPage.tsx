@@ -351,10 +351,14 @@ export function AdminProductsPage(): React.JSX.Element {
     if (selectedProductIds.length === 0) return;
 
     try {
-      await bulkDeleteMutation.mutateAsync(selectedProductIds);
-      toast("Selected products deleted successfully.", { variant: "success" });
-      setRowSelection({});
-      setRefreshTrigger((prev: number) => prev + 1);
+      setIsMassDeleteConfirmOpen(false);
+      const result = await bulkDeleteMutation.mutateAsync(selectedProductIds);
+      const isQueued = result == null;
+      if (!isQueued) {
+        toast("Selected products deleted successfully.", { variant: "success" });
+        setRowSelection({});
+        setRefreshTrigger((prev: number) => prev + 1);
+      }
     } catch (error) {
       logClientError(error, { context: { source: "AdminProductsPage", action: "massDelete", productIds: selectedProductIds } });
       setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
@@ -363,15 +367,18 @@ export function AdminProductsPage(): React.JSX.Element {
 
   const handleConfirmSingleDelete = useCallback(async () => {
     if (!productToDelete) return;
+    const targetId = productToDelete.id;
+    setProductToDelete(null);
     try {
-      await bulkDeleteMutation.mutateAsync([productToDelete.id]);
-      toast("Product deleted successfully.", { variant: "success" });
-      setRefreshTrigger((prev: number) => prev + 1);
+      const result = await bulkDeleteMutation.mutateAsync([targetId]);
+      const isQueued = result == null;
+      if (!isQueued) {
+        toast("Product deleted successfully.", { variant: "success" });
+        setRefreshTrigger((prev: number) => prev + 1);
+      }
     } catch (error) {
-      logClientError(error, { context: { source: "AdminProductsPage", action: "singleDelete", productId: productToDelete.id } });
+      logClientError(error, { context: { source: "AdminProductsPage", action: "singleDelete", productId: targetId } });
       setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
-    } finally {
-      setProductToDelete(null);
     }
   }, [productToDelete, setActionError, toast, bulkDeleteMutation]);
 
@@ -432,6 +439,7 @@ export function AdminProductsPage(): React.JSX.Element {
         description={`Are you sure you want to delete ${Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length} selected products? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
+        loading={bulkDeleteMutation.isPending}
       />
       <ConfirmDialog
         open={!!productToDelete}
@@ -445,6 +453,7 @@ export function AdminProductsPage(): React.JSX.Element {
         description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || "this product"}"? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
+        loading={bulkDeleteMutation.isPending}
       />
       <ProductListPanel
         onCreateProduct={handleOpenCreate}

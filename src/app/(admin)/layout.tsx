@@ -12,8 +12,9 @@ export default async function Layout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   let initialMenuCollapsed = false;
+  let session = null;
   try {
-    const session = await auth();
+    session = await auth();
     if (!session?.user) {
       redirect("/auth/signin");
     }
@@ -26,5 +27,9 @@ export default async function Layout({
   } catch {
     redirect("/auth/signin");
   }
-  return <AdminLayout initialMenuCollapsed={initialMenuCollapsed}>{children}</AdminLayout>;
+  return (
+    <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
+      {children}
+    </AdminLayout>
+  );
 }

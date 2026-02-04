@@ -24,10 +24,10 @@ interface ProductModalsProps {
   createDraft?: ProductDraft | null;
   initialCatalogId?: string | null;
   onCloseCreate: () => void;
-  onCreateSuccess: () => void;
+  onCreateSuccess: (info?: { queued?: boolean }) => void;
   editingProduct: ProductWithImages | null;
   onCloseEdit: () => void;
-  onEditSuccess: () => void;
+  onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   onCloseIntegrations: () => void;
@@ -88,6 +88,7 @@ export function ProductModals({
             onClose={onCloseCreate}
             title="Create Product"
             submitButtonText="Create"
+            closeOnSubmit
           />
         </ProductFormProvider>
       )}
@@ -103,6 +104,7 @@ export function ProductModals({
             onClose={onCloseEdit}
             title="Edit Product"
             submitButtonText="Update"
+            closeOnSubmit
           />
         </ProductFormProvider>
       )}
@@ -180,12 +182,14 @@ function ProductFormModal({
   open,
   onClose, 
   title, 
-  submitButtonText 
+  submitButtonText,
+  closeOnSubmit = false,
 }: { 
   open: boolean;
   onClose: () => void;
   title: string;
   submitButtonText: string;
+  closeOnSubmit?: boolean;
 }): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product } =
     useProductFormContext();
@@ -204,7 +208,12 @@ function ProductFormModal({
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => void handleSubmit()}
+          onClick={() => {
+            void handleSubmit();
+            if (closeOnSubmit) {
+              onClose();
+            }
+          }}
           disabled={uploading}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >

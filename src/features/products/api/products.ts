@@ -105,5 +105,10 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     const errorData = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(errorData.error || "Failed to delete product");
   }
-  return res.json() as Promise<{ success: boolean }>;
+  if (res.status === 204) {
+    return { success: true };
+  }
+  const data = (await res.json().catch(() => null)) as { success?: boolean } | null;
+  if (!data) return { success: true };
+  return { success: data.success !== false };
 }

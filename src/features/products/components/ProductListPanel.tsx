@@ -10,6 +10,7 @@ import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-t
 import type { ProductDraft } from "@/features/products/types/drafts";
 import type { Catalog } from "@/features/products/types";
 import type { PriceGroupWithDetails, ProductWithImages } from "@/features/products/types";
+import { useQueuedProductIds } from "@/features/products/state/queued-product-ops";
 
 const ProductListHeader = dynamic(
   () =>
@@ -148,6 +149,7 @@ export const ProductListPanel = memo(function ProductListPanel({
   isLoading,
   skeletonRows,
 }: ProductListPanelProps) {
+  const queuedProductIds = useQueuedProductIds();
   const headerProps = useMemo(
     () => ({
       onCreateProduct,
@@ -241,6 +243,7 @@ export const ProductListPanel = memo(function ProductListPanel({
         onExportSettingsClick,
         integrationBadgeIds,
         integrationBadgeStatuses,
+        queuedProductIds,
       },
     }),
     [
@@ -262,6 +265,7 @@ export const ProductListPanel = memo(function ProductListPanel({
       onExportSettingsClick,
       integrationBadgeIds,
       integrationBadgeStatuses,
+      queuedProductIds,
     ]
   );
 

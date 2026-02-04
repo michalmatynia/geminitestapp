@@ -267,8 +267,14 @@ export function GsapAnimationWrapper({
       const { ScrollTrigger } = await import("gsap/ScrollTrigger");
       const { CustomEase } = await import("gsap/CustomEase");
       const { MotionPathPlugin } = await import("gsap/MotionPathPlugin");
-      if (ScrollTrigger && CustomEase && MotionPathPlugin) {
-        gsap.registerPlugin(ScrollTrigger, CustomEase, MotionPathPlugin);
+      if (ScrollTrigger) {
+        gsap.registerPlugin(ScrollTrigger);
+      }
+      if (CustomEase) {
+        gsap.registerPlugin(CustomEase);
+      }
+      if (MotionPathPlugin) {
+        gsap.registerPlugin(MotionPathPlugin);
       }
 
       if (cancelled || !ref.current) return;
@@ -279,7 +285,9 @@ export function GsapAnimationWrapper({
         if (!targets.length) return;
         const ease = buildEase(mergedConfig, CustomEase);
         const stagger = buildStagger(mergedConfig, targets.length);
-        const scrollTrigger = buildScrollTrigger(mergedConfig, root, targets.length);
+        const scrollTrigger = ScrollTrigger
+          ? buildScrollTrigger(mergedConfig, root, targets.length)
+          : undefined;
         const baseVars: GSAPTweenVars = {
           duration: mergedConfig.duration ?? DEFAULT_ANIMATION_CONFIG.duration ?? 0.6,
           delay: mergedConfig.delay ?? DEFAULT_ANIMATION_CONFIG.delay ?? 0,

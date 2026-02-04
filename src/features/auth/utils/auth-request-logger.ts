@@ -29,6 +29,8 @@ const safeHeaderKeys = new Set([
   "x-request-id",
 ]);
 
+const AUTH_LOGGING_ENABLED = process.env.AUTH_LOGGING === "true";
+
 const getClientIp = (req: Request): string | null => {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -80,6 +82,7 @@ const extractHeaders = (req: Request): Record<string, string> => {
 };
 
 export async function logAuthEvent(input: AuthLogInput): Promise<void> {
+  if (!AUTH_LOGGING_ENABLED) return;
   try {
     const url = new URL(input.req.url);
     const context: Record<string, unknown> = {

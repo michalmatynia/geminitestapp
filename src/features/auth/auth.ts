@@ -265,14 +265,19 @@ const buildProviders = (): Provider[] => {
 
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
-    await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
+    const authLoggingEnabled = process.env.AUTH_LOGGING === "true";
+    if (authLoggingEnabled) {
+      await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
+    }
     const configuredProvider = await getAuthDataProvider();
     const provider = requireAuthProvider(configuredProvider);
     const adapter =
       provider === "prisma"
         ? PrismaAdapter(prisma)
         : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
-    console.log(`[AUTH] Adapter configured for ${provider}.`);
+    if (authLoggingEnabled) {
+      console.log(`[AUTH] Adapter configured for ${provider}.`);
+    }
 
     return {
       ...authConfig,

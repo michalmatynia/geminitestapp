@@ -14,7 +14,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     if (staleCount > 0) {
       console.log(`[api/products/ai-jobs] Marked ${staleCount} stale running jobs as failed`);
     }
-    startProductAiJobQueue();
     const { searchParams } = new URL(req.url);
 
     // Check if requesting queue status
@@ -27,6 +26,16 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
     const productId = searchParams.get("productId") || undefined;
     const jobs = await getProductAiJobs(productId);
+    const queueStatus = getQueueStatus();
+    if (!queueStatus.running) {
+      const hasActiveJobs = jobs.some(
+        (job) => job.status === "pending" || job.status === "running"
+      );
+      const hasScheduledJobs = jobs.some((job) => hasScheduledMarker(job.payload));
+      if (hasActiveJobs || hasScheduledJobs) {
+        startProductAiJobQueue();
+      }
+    }
     return NextResponse.json({ jobs });
   } catch (error: unknown) {
     return createErrorResponse(error, {
@@ -36,6 +45,19 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     });
   }
 }
+
+const hasScheduledMarker = (payload: unknown): boolean => {
+  if (!payload || typeof payload !== "object") return false;
+  const record = payload as Record<string, unknown>;
+  const keys = ["runAt", "scheduledAt", "scheduleAt", "nextRunAt", "schedule", "scheduled", "cron"];
+  if (keys.some((key) => record[key])) return true;
+  const context = record.context;
+  if (context && typeof context === "object") {
+    const ctx = context as Record<string, unknown>;
+    if (keys.some((key) => ctx[key])) return true;
+  }
+  return false;
+};
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {

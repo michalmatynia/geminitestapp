@@ -3,33 +3,36 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 import { cn } from "@/shared/utils"
 
-type NativeOption = { value: string; label: string; disabled?: boolean }
+type NativeOption = { value: string; label: string; disabled?: boolean | undefined }
 
 type NativeSelectContextValue = {
   value: string
-  onValueChange?: (value: string) => void
-  disabled?: boolean
+  onValueChange?: ((value: string) => void) | undefined
+  disabled?: boolean | undefined
   options: NativeOption[]
-  placeholder?: string
+  placeholder?: string | undefined
 }
 
 const NativeSelectContext = React.createContext<NativeSelectContextValue | null>(null)
 
-const shouldUseNativeSelect = (): boolean =>
-  typeof window !== "undefined" && window.location.pathname.startsWith("/admin/image-studio")
+const useNativeSelectMode = (): boolean => {
+  const pathname = usePathname()
+  return pathname ? pathname.startsWith("/admin/image-studio") : false
+}
 
 const getNodeText = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === "boolean") return ""
   if (typeof node === "string" || typeof node === "number") return String(node)
   if (Array.isArray(node)) return node.map(getNodeText).join("")
-  if (React.isValidElement(node)) return getNodeText(node.props.children)
+  if (React.isValidElement(node)) return getNodeText((node.props as any).children)
   return ""
 }
 
-const extractNativeOptions = (children: React.ReactNode): { options: NativeOption[]; placeholder?: string } => {
+const extractNativeOptions = (children: React.ReactNode): { options: NativeOption[]; placeholder?: string | undefined } => {
   const options: NativeOption[] = []
   let placeholder: string | undefined
 
@@ -37,24 +40,25 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
     if (!node) return
     React.Children.forEach(node, (child) => {
       if (!React.isValidElement(child)) return
-      if (child.type === SelectValue && child.props?.placeholder) {
-        placeholder = String(child.props.placeholder)
+      const props = child.props as any
+      if (child.type === SelectValue && props?.placeholder) {
+        placeholder = String(props.placeholder)
       }
       if (child.type === SelectContent || child.type === SelectGroup) {
-        walk(child.props.children)
+        walk(props.children)
         return
       }
       if (child.type === SelectItem) {
-        const value = typeof child.props.value === "string" ? child.props.value : String(child.props.value ?? "")
+        const value = typeof props.value === "string" ? props.value : String(props.value ?? "")
         if (!value) return
         options.push({
           value,
-          label: getNodeText(child.props.children),
-          disabled: Boolean(child.props.disabled),
+          label: getNodeText(props.children),
+          disabled: Boolean(props.disabled),
         })
         return
       }
-      walk(child.props.children)
+      walk(props.children)
     })
   }
 
@@ -65,9 +69,16 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
 const Select: React.FC<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
 > = ({ value, defaultValue, onValueChange, disabled, children, ...props }) => {
-  if (!shouldUseNativeSelect()) {
+  const useNativeSelect = useNativeSelectMode()
+  if (!useNativeSelect) {
     return (
-      <SelectPrimitive.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} {...props}>
+      <SelectPrimitive.Root
+        {...(value !== undefined ? { value } : {})}
+        {...(defaultValue !== undefined ? { defaultValue } : {})}
+        {...(onValueChange !== undefined ? { onValueChange } : {})}
+        {...(disabled !== undefined ? { disabled } : {})}
+        {...props}
+      >
         {children}
       </SelectPrimitive.Root>
     )
@@ -81,7 +92,7 @@ const Select: React.FC<
       value={{
         value: normalizedValue,
         onValueChange,
-        disabled: Boolean(disabled),
+        disabled: disabled !== undefined ? Boolean(disabled) : undefined,
         options,
         placeholder,
       }}
@@ -92,12 +103,14 @@ const Select: React.FC<
 }
 
 const SelectGroup = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Group>) => {
-  if (!shouldUseNativeSelect()) return <SelectPrimitive.Group {...props} />
+  const useNativeSelect = useNativeSelectMode()
+  if (!useNativeSelect) return <SelectPrimitive.Group {...props} />
   return <>{props.children}</>
 }
 
 const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>) => {
-  if (!shouldUseNativeSelect()) return <SelectPrimitive.Value {...props} />
+  const useNativeSelect = useNativeSelectMode()
+  if (!useNativeSelect) return <SelectPrimitive.Value {...props} />
   return null
 }
 
@@ -105,7 +118,8 @@ const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, ...props }, ref) => {
-  if (!shouldUseNativeSelect()) {
+  const useNativeSelect = useNativeSelectMode()
+  if (!useNativeSelect) {
     return (
       <SelectPrimitive.Trigger
         ref={ref}
@@ -173,7 +187,8 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "item-aligned", ...props }, ref) => {
-  if (shouldUseNativeSelect()) return null
+  const useNativeSelect = useNativeSelectMode()
+  if (useNativeSelect) return null
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -206,7 +221,8 @@ const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
 >(({ className, ...props }, ref) => {
-  if (shouldUseNativeSelect()) return null
+  const useNativeSelect = useNativeSelectMode()
+  if (useNativeSelect) return null
   return (
     <SelectPrimitive.Label
       ref={ref}
@@ -221,7 +237,8 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  if (shouldUseNativeSelect()) return null
+  const useNativeSelect = useNativeSelectMode()
+  if (useNativeSelect) return null
   return (
     <SelectPrimitive.Item
       ref={ref}
@@ -247,7 +264,8 @@ const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => {
-  if (shouldUseNativeSelect()) return null
+  const useNativeSelect = useNativeSelectMode()
+  if (useNativeSelect) return null
   return (
     <SelectPrimitive.Separator
       ref={ref}

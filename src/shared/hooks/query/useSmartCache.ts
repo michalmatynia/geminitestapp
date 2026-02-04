@@ -197,7 +197,7 @@ export function useCacheWarming(): {
         },
       },
       {
-        queryKey: ['settings', 'global'],
+        queryKey: ['settings'],
         queryFn: async (): Promise<any> => await fetchSettingsCached(),
       },
     ];

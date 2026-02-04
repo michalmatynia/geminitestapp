@@ -18,6 +18,7 @@ type CmsMenuProps = {
 
 export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMenuProps): React.ReactNode {
   const pathname = usePathname();
+  const [hydrated, setHydrated] = useState(false);
   const itemsRef = useRef<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState<boolean>(
     menu.collapsible ? menu.collapsedByDefault : false
@@ -36,6 +37,10 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   useEffect(() => {
     setIsHiddenOnScroll(false);
   }, [menu.menuPlacement, menu.hideOnScroll, positionMode]);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!allowHideOnScroll) {
@@ -244,7 +249,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
         )}
         <div style={itemsStyle} ref={itemsRef}>
           {menu.items.map((item: { id: string; url: string; label: string; imageUrl?: string }) => {
-            const isActive = pathname === item.url;
+            const isActive = hydrated ? pathname === item.url : false;
             const color = isActive ? resolvedColors.accent : resolvedColors.text;
             const activeStyles: React.CSSProperties = {};
             if (isActive) {

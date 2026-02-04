@@ -991,10 +991,14 @@ export default function Menu(): React.ReactNode {
     () => applySectionColors(nav, sectionColors),
     [nav, sectionColors]
   );
+  const baseNavWithColors = useMemo(
+    () => applySectionColors(baseNav, sectionColors),
+    [baseNav, sectionColors]
+  );
 
   const favoriteItems = useMemo((): NavItem[] => {
     if (favoriteIds.length === 0) return [];
-    const flattened = flattenAdminNav(navWithColors);
+    const flattened = flattenAdminNav(baseNavWithColors);
     const byId = new Map(flattened.map((entry: FlattenedNavItem) => [entry.id, entry.item]));
     const seen = new Set<string>();
     const items: NavItem[] = [];

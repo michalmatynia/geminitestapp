@@ -57,7 +57,7 @@ export function CmsPageShell({
   }
 
   return (
-    <div style={pageStyle}>
+    <div style={pageStyle} suppressHydrationWarning>
       {menuVisible ? (
         <CmsMenu
           menu={menu}
@@ -65,7 +65,7 @@ export function CmsPageShell({
           animationsEnabled={theme.enableAnimations}
         />
       ) : null}
-      <main style={contentStyle}>{children}</main>
+      <main style={contentStyle} suppressHydrationWarning>{children}</main>
     </div>
   );
 }

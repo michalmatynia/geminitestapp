@@ -30,10 +30,29 @@ export function useProductAiJobs(scope: string = "all"): UseQueryResult<{ jobs: 
       if (!res.ok) throw new Error("Failed to load product AI jobs");
       return (await res.json()) as { jobs: ProductAiJob[] };
     },
-    refetchInterval: 5000, // Refetch every 5 seconds for job status
+    refetchInterval: (query) => {
+      const data = query.state.data as { jobs?: ProductAiJob[] } | undefined;
+      if (!data || !Array.isArray(data.jobs)) return 5000;
+      const hasActive = data.jobs.some((job) => job.status === "pending" || job.status === "running");
+      const hasScheduled = data.jobs.some((job) => hasScheduledMarker(job.payload));
+      return hasActive || hasScheduled ? 5000 : false;
+    },
     refetchIntervalInBackground: true,
   });
 }
+
+const hasScheduledMarker = (payload: unknown): boolean => {
+  if (!payload || typeof payload !== "object") return false;
+  const record = payload as Record<string, unknown>;
+  const keys = ["runAt", "scheduledAt", "scheduleAt", "nextRunAt", "schedule", "scheduled", "cron"];
+  if (keys.some((key) => record[key])) return true;
+  const context = record.context;
+  if (context && typeof context === "object") {
+    const ctx = context as Record<string, unknown>;
+    if (keys.some((key) => ctx[key])) return true;
+  }
+  return false;
+};
 
 export function useChatbotJobs(scope: string = "all"): UseQueryResult<{ jobs: unknown[] }> {
   return useQuery({

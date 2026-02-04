@@ -53,8 +53,9 @@ export function TreeCaret({
   }
 
   return (
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={0}
       aria-label={ariaLabel}
       className={cn("rounded p-0.5 hover:bg-muted/50", sharedClasses, buttonClassName)}
       onClick={(event: React.MouseEvent): void => {
@@ -71,6 +72,6 @@ export function TreeCaret({
       }}
     >
       <Icon className={iconClasses} />
-    </button>
+    </span>
   );
 }

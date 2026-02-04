@@ -899,10 +899,19 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const createSlots = useCallback(
     async (slots: Array<Partial<ImageStudioSlotRecord>>): Promise<ImageStudioSlotRecord[]> => {
       if (!projectId) throw new Error("Select or create a project first.");
+      const payloadSlots = slots.map((slot) => ({
+        name: typeof slot.name === "string" ? slot.name : undefined,
+        folderPath: typeof slot.folderPath === "string" ? slot.folderPath : undefined,
+        imageUrl: typeof slot.imageUrl === "string" ? slot.imageUrl : undefined,
+        imageBase64: typeof slot.imageBase64 === "string" ? slot.imageBase64 : undefined,
+        imageFileId: typeof slot.imageFileId === "string" ? slot.imageFileId : undefined,
+        asset3dId: typeof slot.asset3dId === "string" ? slot.asset3dId : undefined,
+        metadata: slot.metadata && typeof slot.metadata === "object" ? slot.metadata : undefined,
+      }));
       const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slots }),
+        body: JSON.stringify({ slots: payloadSlots }),
       });
       const data = (await res.json().catch(() => null)) as StudioSlotsResponse | { error?: string } | null;
       if (!res.ok) {
@@ -1265,8 +1274,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [projectId, selectedSlot]);
 
       useEffect(() => {
-        setSlotImageUrlDraft(selectedSlot?.imageUrl ?? "");
-        setSlotBase64Draft(selectedSlot?.imageBase64 ?? "");
+        const nextUrl = selectedSlot?.imageUrl ?? "";
+        const nextBase64 = selectedSlot?.imageBase64 ?? "";
+        setSlotImageUrlDraft((prev) => (prev === nextUrl ? prev : nextUrl));
+        setSlotBase64Draft((prev) => (prev === nextBase64 ? prev : nextBase64));
       }, [selectedSlot?.id, selectedSlot?.imageUrl, selectedSlot?.imageBase64]);
   
       const compositeAssetOptions = useMemo(() => {
@@ -1304,15 +1315,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
       }, [projectId, selectedSlotId, slots]);
   useEffect(() => {
     const currentFolder = selectedSlot?.folderPath ?? "";
-    setMoveTargetFolder(currentFolder);
-  }, [selectedSlot]);
+    setMoveTargetFolder((prev) => (prev === currentFolder ? prev : currentFolder));
+  }, [selectedSlot?.folderPath]);
 
   useEffect(() => {
-    if (selectedSlot?.asset3dId && !selectedSlotImageSrc) {
-      setPreviewMode("3d");
-      return;
-    }
-    setPreviewMode("image");
+    const nextMode = selectedSlot?.asset3dId && !selectedSlotImageSrc ? "3d" : "image";
+    setPreviewMode((prev) => (prev === nextMode ? prev : nextMode));
   }, [selectedSlot?.asset3dId, selectedSlotImageSrc]);
 
   useEffect(() => {
@@ -1388,7 +1396,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
 
   useEffect(() => {
-    setUiSuggestMode(studioSettings.uiExtractor.mode);
+    setUiSuggestMode((prev) => (prev === studioSettings.uiExtractor.mode ? prev : studioSettings.uiExtractor.mode));
   }, [studioSettings.uiExtractor.mode]);
 
   const buildRuleKey = useCallback((rule: PromptValidationRule, fallback: number): string =>

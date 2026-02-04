@@ -58,12 +58,13 @@ export function CmsPageRenderer({
     const content = comp.content as SectionContent;
     return {
       key: `section-${idx}`,
+      id: `section-${idx}`,
       type: comp.type,
       zone: (content.zone as PageZone) ?? "template",
       settings: content.settings ?? {},
       blocks: content.blocks ?? [],
     };
-  }).filter((section: { key: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !section.settings["isHidden"]);
+  }).filter((section: { key: string; id: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !section.settings["isHidden"]);
 
   const sectionsByZone: Record<PageZone, typeof sections> = {
     header: [],
@@ -90,6 +91,7 @@ export function CmsPageRenderer({
                 <EventEffectsWrapper settings={section.settings}>
                   <SectionRenderer
                     type={section.type}
+                    sectionId={section.id}
                     settings={section.settings}
                     blocks={section.blocks}
                     colorSchemes={colorSchemes ?? {}}
@@ -107,18 +109,19 @@ export function CmsPageRenderer({
 
 interface SectionRendererProps {
   type: string;
+  sectionId: string;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
   colorSchemes: Record<string, ColorSchemeColors>;
   layout: { fullWidth?: boolean };
 }
 
-function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {
+function SectionRenderer({ type, sectionId, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {
   switch (type) {
     case "AnnouncementBar":
       return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Block":
-      return <FrontendBlockSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendBlockSection sectionId={sectionId} settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "TextElement":
       return <FrontendTextElementSection settings={settings} />;
     case "TextAtom":
@@ -136,7 +139,7 @@ function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: Secti
     case "RichText":
       return <FrontendRichTextSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Grid":
-      return <FrontendGridSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendGridSection sectionId={sectionId} settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Accordion":
       return <FrontendAccordionSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Testimonials":

@@ -142,6 +142,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       marginLeft: 0,
       marginRight: 0,
       background: { type: "none" },
+      customCss: "",
     },
     settingsSchema: [
       {
@@ -242,6 +243,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       alignItems: "stretch",
       textAlign: "left",
       background: { type: "none" },
+      customCss: "",
     },
     settingsSchema: [
       {
@@ -343,6 +345,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       opacity: 100,
       zIndex: 0,
       background: { type: "none" },
+      customCss: "",
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
@@ -1655,6 +1658,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       overflow: "visible",
       opacity: 100,
       zIndex: 0,
+      customCss: "",
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
@@ -1928,6 +1932,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       overflow: "visible",
       opacity: 100,
       zIndex: 0,
+      customCss: "",
     },
     settingsSchema: [
       { key: "rows", label: "Rows", type: "range", defaultValue: 1, min: 1, max: 8 },

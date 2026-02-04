@@ -185,6 +185,11 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             splitLines: config?.splitLines ?? true,
             sampleText: config?.sampleText ?? "",
             aiPrompt: config?.aiPrompt ?? "",
+            aiAutoRun: config?.aiAutoRun ?? false,
+            activeVariant: config?.activeVariant ?? "manual",
+            manual: config?.manual,
+            aiProposal: config?.aiProposal,
+            aiProposals: config?.aiProposals,
           },
         },
       };
@@ -821,6 +826,8 @@ export const getDefaultConfigForType = (
         splitLines: true,
         sampleText: "",
         aiPrompt: "",
+        aiAutoRun: false,
+        activeVariant: "manual",
       },
     };
   }

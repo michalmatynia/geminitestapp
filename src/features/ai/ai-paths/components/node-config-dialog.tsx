@@ -67,6 +67,7 @@ type NodeConfigDialogProps = {
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: (nodeId: string) => void;
+  clearNodeHistory?: (nodeId: string) => void | Promise<void>;
   onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi?: boolean;
   dbQueryPresets: DbQueryPreset[];
@@ -99,6 +100,7 @@ export function NodeConfigDialog({
   handleFetchUpdaterSample,
   handleRunSimulation,
   clearRuntimeForNode,
+  clearNodeHistory,
   onSendToAi,
   sendingToAi,
   dbQueryPresets,
@@ -309,7 +311,11 @@ export function NodeConfigDialog({
             </div>
           </TabsContent>
           <TabsContent value="history">
-            <NodeHistoryTab selectedNode={selectedNode} runtimeState={runtimeState} />
+            <NodeHistoryTab
+              selectedNode={selectedNode}
+              runtimeState={runtimeState}
+              onClearNodeHistory={clearNodeHistory}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

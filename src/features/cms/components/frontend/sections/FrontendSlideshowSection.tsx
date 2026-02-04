@@ -29,8 +29,18 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
 
   const frames = useMemo((): BlockInstance[] => {
     const frameBlocks = blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
-    if (frameBlocks.length > 0) return frameBlocks;
-    return blocks.map((block: BlockInstance) => ({
+    const legacyBlocks = blocks.filter((block: BlockInstance) => block.type !== "SlideshowFrame");
+    if (frameBlocks.length > 0) {
+      if (legacyBlocks.length === 0) return frameBlocks;
+      const legacyFrames = legacyBlocks.map((block: BlockInstance) => ({
+        id: block.id,
+        type: "SlideshowFrame",
+        settings: {},
+        blocks: [block],
+      }));
+      return [...frameBlocks, ...legacyFrames];
+    }
+    return legacyBlocks.map((block: BlockInstance) => ({
       id: block.id,
       type: "SlideshowFrame",
       settings: {},
@@ -39,6 +49,13 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
   }, [blocks]);
 
   const slideCount = frames.length;
+
+  useEffect((): void => {
+    if (slideCount === 0) return;
+    if (activeIndex >= slideCount) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, slideCount]);
 
   const goToNext = useCallback((): void => {
     if (slideCount <= 1) return;
@@ -144,16 +161,18 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
         </div>
 
         {/* Navigation arrows */}
-        {slideCount > 1 && showArrows && (
+        {slideCount > 1 && (showArrows || showDots) && (
           <div className="mt-4 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={goToPrev}
-              disabled={!loop && activeIndex === 0}
-              className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
+            {showArrows && (
+              <button
+                type="button"
+                onClick={goToPrev}
+                disabled={!loop && activeIndex === 0}
+                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+            )}
 
             {showDots && (
               <div className="flex gap-2">
@@ -168,14 +187,16 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={goToNext}
-              disabled={!loop && activeIndex === slideCount - 1}
-              className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
+            {showArrows && (
+              <button
+                type="button"
+                onClick={goToNext}
+                disabled={!loop && activeIndex === slideCount - 1}
+                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            )}
           </div>
         )}
       </div>

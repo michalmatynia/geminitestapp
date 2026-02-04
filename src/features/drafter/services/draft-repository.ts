@@ -35,6 +35,7 @@ type MongoDraftDoc = {
   priceComment?: string | null;
   stock?: number | null;
   catalogIds?: string[];
+  categoryId?: string | null;
   categoryIds?: string[];
   tagIds?: string[];
   parameters?: ProductParameterValue[];
@@ -85,7 +86,12 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     priceComment: draft.priceComment || null,
     stock: draft.stock || null,
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
-    categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
+    categoryId:
+      typeof draft.categoryId === "string"
+        ? draft.categoryId
+        : Array.isArray(draft.categoryIds)
+        ? draft.categoryIds[0] ?? null
+        : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     parameters: Array.isArray(draft.parameters)
       ? draft.parameters
@@ -130,7 +136,12 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     priceComment: draft.priceComment || null,
     stock: draft.stock || null,
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
-    categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
+    categoryId:
+      typeof draft.categoryId === "string"
+        ? draft.categoryId
+        : Array.isArray(draft.categoryIds)
+        ? draft.categoryIds[0] ?? null
+        : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     parameters: Array.isArray(draft.parameters)
       ? draft.parameters
@@ -176,7 +187,8 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     baseProductId: input.baseProductId || null,
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     catalogIds: input.catalogIds || [],
-    categoryIds: input.categoryIds || [],
+    categoryId: input.categoryId || null,
+    categoryIds: input.categoryId ? [input.categoryId] : [],
     tagIds: input.tagIds || [],
     parameters: input.parameters || [],
     icon: input.icon || null,
@@ -212,7 +224,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     priceComment: input.priceComment || null,
     stock: input.stock || null,
     catalogIds: draft.catalogIds || [],
-    categoryIds: draft.categoryIds || [],
+    categoryId: draft.categoryId || null,
     tagIds: draft.tagIds || [],
     parameters: draft.parameters || [],
     defaultPriceGroupId: input.defaultPriceGroupId || null,
@@ -228,12 +240,18 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
 const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
   const now = new Date();
+  const updatePayload: Partial<MongoDraftDoc> = { ...input };
+  if ("categoryId" in input) {
+    const normalized = typeof input.categoryId === "string" && input.categoryId.trim() ? input.categoryId.trim() : null;
+    updatePayload.categoryId = normalized;
+    updatePayload.categoryIds = normalized ? [normalized] : [];
+  }
 
   const result = await mongo.collection<MongoDraftDoc>("product_drafts").findOneAndUpdate(
     { _id: id },
     {
       $set: {
-        ...input,
+        ...updatePayload,
         updatedAt: now,
       } as Partial<MongoDraftDoc>,
     },
@@ -273,7 +291,12 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
     priceComment: doc.priceComment || null,
     stock: doc.stock || null,
     catalogIds: Array.isArray(doc.catalogIds) ? doc.catalogIds : [],
-    categoryIds: Array.isArray(doc.categoryIds) ? doc.categoryIds : [],
+    categoryId:
+      typeof doc.categoryId === "string"
+        ? doc.categoryId
+        : Array.isArray(doc.categoryIds)
+        ? doc.categoryIds[0] ?? null
+        : null,
     tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
     parameters: Array.isArray(doc.parameters)
       ? doc.parameters
@@ -303,7 +326,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
   return drafts.map((draft: Prisma.ProductDraftGetPayload<Record<string, never>>) => ({
     ...draft,
     catalogIds: draft.catalogIds as string[],
-    categoryIds: draft.categoryIds as string[],
+    categoryId: typeof draft.categoryId === "string" ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
     parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
@@ -320,7 +343,7 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
   return {
     ...draft,
     catalogIds: draft.catalogIds as string[],
-    categoryIds: draft.categoryIds as string[],
+    categoryId: typeof draft.categoryId === "string" ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
     parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
@@ -352,7 +375,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
       priceComment: input.priceComment,
       stock: input.stock,
       catalogIds: input.catalogIds || [],
-      categoryIds: input.categoryIds || [],
+      categoryId: input.categoryId || null,
       tagIds: input.tagIds || [],
       parameters: input.parameters || [],
       defaultPriceGroupId: input.defaultPriceGroupId,
@@ -366,7 +389,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
   return {
     ...draft,
     catalogIds: draft.catalogIds as string[],
-    categoryIds: draft.categoryIds as string[],
+    categoryId: typeof draft.categoryId === "string" ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
     parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
@@ -383,7 +406,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
     return {
       ...draft,
       catalogIds: draft.catalogIds as string[],
-      categoryIds: draft.categoryIds as string[],
+      categoryId: typeof draft.categoryId === "string" ? draft.categoryId : null,
       tagIds: draft.tagIds as string[],
       parameters: draft.parameters as ProductParameterValue[],
       imageLinks: draft.imageLinks as string[],

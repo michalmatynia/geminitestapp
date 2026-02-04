@@ -56,7 +56,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill("") as string[]);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
@@ -133,7 +133,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
         setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
         setSelectedCatalogIds(draft.catalogIds || []);
-        setSelectedCategoryIds(draft.categoryIds || []);
+      setSelectedCategoryId(draft.categoryId ?? null);
         setSelectedTagIds(draft.tagIds || []);
         setParameterValues(draft.parameters || []);
       }, 0);
@@ -206,7 +206,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         priceComment: priceComment.trim() || null,
         stock: stock ? parseInt(stock, 10) : null,
         catalogIds: selectedCatalogIds,
-        categoryIds: selectedCategoryIds,
+        categoryId: selectedCategoryId ?? null,
         tagIds: selectedTagIds,
         parameters: parameterValues
           .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
@@ -243,8 +243,8 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   };
 
   const toggleCategory = (categoryId: string): void => {
-    setSelectedCategoryIds((prev: string[]): string[] =>
-      prev.includes(categoryId) ? prev.filter((id: string): boolean => id !== categoryId) : [...prev, categoryId]
+    setSelectedCategoryId((prev: string | null): string | null =>
+      prev === categoryId ? null : categoryId
     );
   };
 
@@ -639,7 +639,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                   type="button"
                   onClick={(): void => toggleCategory(category.id)}
                   className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    selectedCategoryIds.includes(category.id)
+                    selectedCategoryId === category.id
                       ? "bg-emerald-600 text-white"
                       : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}

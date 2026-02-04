@@ -8,6 +8,7 @@ import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
+import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 
@@ -496,6 +497,7 @@ export function PreviewSection({
   }
 
   if (section.type === "AnnouncementBar" || section.type === "Block") {
+    const isBlockSection = section.type === "Block";
     const alignment = (section.settings["contentAlignment"] as string) || "center";
     const alignmentClasses =
       alignment === "left"
@@ -530,7 +532,11 @@ export function PreviewSection({
             ? "ring-2 ring-inset ring-blue-500/60"
             : "ring-2 ring-inset ring-blue-500/40"
           : "hover:ring-1 hover:ring-inset hover:ring-border/40"
-        : "";
+      : "";
+    const sectionSelector = isBlockSection ? getCustomCssSelector(section.id) : null;
+    const sectionCustomCss = isBlockSection
+      ? buildScopedCustomCss(section.settings["customCss"], sectionSelector)
+      : null;
     return (
       wrapInspector(
         <div
@@ -541,8 +547,11 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={containerStyles}
-          className={`relative w-full transition cursor-pointer ${containerRingClass} ${inspectorZ}`}
+          className={`relative w-full transition cursor-pointer ${containerRingClass} ${inspectorZ}${
+            isBlockSection ? ` cms-node-${section.id}` : ""
+          }`}
         >
+          {sectionCustomCss ? <style data-cms-custom-css={section.id}>{sectionCustomCss}</style> : null}
           {renderSectionActions()}
           {divider}
           <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-6xl" })}>
@@ -691,6 +700,8 @@ export function PreviewSection({
         return columnHeightMode === "fixed" && columnHeight > 0;
       });
     });
+    const sectionSelector = getCustomCssSelector(section.id);
+    const sectionCustomCss = buildScopedCustomCss(section.settings["customCss"], sectionSelector);
 
     if (rowsToRender.length === 0 && !showEditorChrome) {
       return null;
@@ -706,8 +717,9 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
         >
+          {sectionCustomCss ? <style data-cms-custom-css={section.id}>{sectionCustomCss}</style> : null}
           {renderSectionActions()}
           {divider}
           <div className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
@@ -756,6 +768,8 @@ export function PreviewSection({
                       const rowHeight = (row.settings?.["height"] as number) || 0;
                       const rowHeightStyle =
                         rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
+                      const rowSelector = getCustomCssSelector(row.id);
+                      const rowCustomCss = buildScopedCustomCss(row.settings?.["customCss"], rowSelector);
                       // Row background mode images
                       const rowBackgroundModeImages = collectBackgroundImages(row.blocks ?? [], "row");
                       const rowBackgroundSettings = row.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
@@ -779,10 +793,11 @@ export function PreviewSection({
                             }
                           }}
                           style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                          className={`relative ${hasRowBackground ? "overflow-hidden" : ""} ${
+                          className={`relative cms-node-${row.id} ${hasRowBackground ? "overflow-hidden" : ""} ${
                             isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                           }`}
                         >
+                          {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
                           {/* Row background mode images */}
                           {rowBackgroundModeImages.map((block: BlockInstance) => (
                             <React.Fragment key={`row-bg-mode-${block.id}`}>
@@ -825,10 +840,12 @@ export function PreviewSection({
                               const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
                               const columnHeight = (column.settings?.["height"] as number) || 0;
                               const columnGapValue = resolveGapValue(column.settings?.["gap"], "medium");
-                              const columnGapClass = shouldStretch ? "" : getGapClass(columnGapValue);
-                              const columnGapStyle = shouldStretch ? undefined : getGapStyle(column.settings?.["gapPx"]);
+                              const columnGapClass = getGapClass(columnGapValue);
+                              const columnGapStyle = getGapStyle(column.settings?.["gapPx"]);
                               const columnJustify = resolveJustifyContent(column.settings?.["justifyContent"]);
                               const columnAlign = resolveAlignItems(column.settings?.["alignItems"]);
+                              const columnSelector = getCustomCssSelector(column.id);
+                              const columnCustomCss = buildScopedCustomCss(column.settings?.["customCss"], columnSelector);
                               const columnStyles = {
                                 ...getSectionStyles(column.settings ?? {}, colorSchemes),
                                 ...getTextAlign(column.settings?.["textAlign"]),
@@ -926,12 +943,13 @@ export function PreviewSection({
                                         e.stopPropagation();
                                         onSelect(column.id);
                                       }
-                                    }}
+                                  }}
                                     style={{ ...columnStyles, ...columnStyle }}
-                                    className={`relative h-full text-left transition cursor-pointer ${
+                                    className={`relative h-full text-left transition cursor-pointer cms-node-${column.id} ${
                                       isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                                     } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""}`}
                                   >
+                                    {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
                                     {/* Column background mode images */}
                                     {columnBackgroundModeImages.map((block: BlockInstance) => (
                                       <React.Fragment key={`col-bg-mode-${block.id}`}>
@@ -948,13 +966,15 @@ export function PreviewSection({
                                       });
                                       const isSingleBlock = contentBlocks.length === 1;
                                       const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
+                                      const resolvedGapClass = shouldStretch ? "" : columnGapClass;
+                                      const resolvedGapStyle = shouldStretch ? undefined : columnGapStyle;
                                       return (
                                         <div
-                                          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : columnGapClass} ${
+                                          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : resolvedGapClass} ${
                                             isInspecting ? "" : "pointer-events-none"
                                           }`}
                                           style={{
-                                            ...(columnGapStyle ?? {}),
+                                            ...(resolvedGapStyle ?? {}),
                                             ...(columnJustify ? { justifyContent: columnJustify } : {}),
                                             ...(columnAlign ? { alignItems: columnAlign } : {}),
                                           }}
@@ -1762,10 +1782,19 @@ export function PreviewSection({
     const heightMode = (section.settings["heightMode"] as string) || "auto";
     const height = (section.settings["height"] as number) || 360;
     const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
+    const legacyBlocks = section.blocks.filter((block: BlockInstance) => block.type !== "SlideshowFrame");
     const frames =
       frameBlocks.length > 0
-        ? frameBlocks
-        : section.blocks.map((block: BlockInstance) => ({
+        ? [
+            ...frameBlocks,
+            ...legacyBlocks.map((block: BlockInstance) => ({
+              id: block.id,
+              type: "SlideshowFrame",
+              settings: {},
+              blocks: [block],
+            })),
+          ]
+        : legacyBlocks.map((block: BlockInstance) => ({
             id: block.id,
             type: "SlideshowFrame",
             settings: {},
@@ -1846,6 +1875,7 @@ export function PreviewSection({
                             sectionId={section.id}
                             sectionType={section.type}
                             sectionZone={section.zone}
+                            parentBlockId={firstFrame?.id}
                             onOpenMedia={onOpenMedia}
                             mediaStyles={mediaStyles}
                           />
@@ -1859,17 +1889,19 @@ export function PreviewSection({
                   </div>
                 )}
               </div>
-              {slideCount > 1 && showArrows && (
+              {slideCount > 1 && (showArrows || showDots) && (
                 <div className="mt-4 flex items-center justify-center gap-4">
-                  <button
-                    type="button"
-                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
-                  >
-                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  </button>
+                  {showArrows && (
+                    <button
+                      type="button"
+                      className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                    >
+                      <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                  )}
                   {showDots && (
                     <div className="flex gap-2">
-                      {section.blocks.map((_: BlockInstance, idx: number) => (
+                      {frames.map((_: BlockInstance, idx: number) => (
                         <div
                           key={idx}
                           className={`size-2 rounded-full transition ${idx === 0 ? "bg-white" : "bg-gray-600"}`}
@@ -1877,12 +1909,14 @@ export function PreviewSection({
                       ))}
                     </div>
                   )}
-                  <button
-                    type="button"
-                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
-                  >
-                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </button>
+                  {showArrows && (
+                    <button
+                      type="button"
+                      className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                    >
+                      <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -3353,9 +3387,15 @@ function PreviewBlockSectionBlock({
   const flexDirClass = direction === "column" ? "flex-col" : "flex-row";
   const wrapClass = direction === "column" ? "" : wrapSetting === "nowrap" ? "flex-nowrap" : "flex-wrap";
   const shouldStretchChildren = stretch && children.length === 1;
+  const blockSelector = getCustomCssSelector(block.id);
+  const blockCustomCss = buildScopedCustomCss(block.settings["customCss"], blockSelector);
 
   return (
-    <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
+    <div
+      style={{ ...blockStyles, ...(stretchStyle ?? {}) }}
+      className={`${stretch ? "h-full" : ""} cms-node-${block.id}`.trim()}
+    >
+      {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       <div
         className={`flex ${flexDirClass} ${wrapClass}`}
         style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
@@ -3712,10 +3752,19 @@ function PreviewSlideshowBlock({
   const heightMode = (block.settings["heightMode"] as string) || "auto";
   const height = (block.settings["height"] as number) || 360;
   const frameBlocks = (block.blocks ?? []).filter((b: BlockInstance) => b.type === "SlideshowFrame");
+  const legacyBlocks = (block.blocks ?? []).filter((b: BlockInstance) => b.type !== "SlideshowFrame");
   const frames =
     frameBlocks.length > 0
-      ? frameBlocks
-      : (block.blocks ?? []).map((b: BlockInstance) => ({
+      ? [
+          ...frameBlocks,
+          ...legacyBlocks.map((b: BlockInstance) => ({
+            id: b.id,
+            type: "SlideshowFrame",
+            settings: {},
+            blocks: [b],
+          })),
+        ]
+      : legacyBlocks.map((b: BlockInstance) => ({
           id: b.id,
           type: "SlideshowFrame",
           settings: {},
@@ -3788,7 +3837,7 @@ function PreviewSlideshowBlock({
                         sectionType={sectionType}
                         sectionZone={sectionZone}
                         columnId={columnId}
-                        parentBlockId={block.id}
+                        parentBlockId={firstFrame?.id}
                         onOpenMedia={onOpenMedia}
                         mediaStyles={mediaStyles}
                       />
@@ -3802,14 +3851,16 @@ function PreviewSlideshowBlock({
               </div>
             )}
           </div>
-          {frames.length > 1 && showArrows && (
+          {frames.length > 1 && (showArrows || showDots) && (
             <div className="mt-4 flex items-center justify-center gap-4">
-              <button
-                type="button"
-                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
-              >
-                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              </button>
+              {showArrows && (
+                <button
+                  type="button"
+                  className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                >
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+              )}
               {showDots && (
                 <div className="flex gap-2">
                   {frames.map((_: BlockInstance, idx: number) => (
@@ -3820,12 +3871,14 @@ function PreviewSlideshowBlock({
                   ))}
                 </div>
               )}
-              <button
-                type="button"
-                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
-              >
-                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </button>
+              {showArrows && (
+                <button
+                  type="button"
+                  className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                >
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              )}
             </div>
           )}
         </>

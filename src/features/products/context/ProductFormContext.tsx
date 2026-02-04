@@ -75,8 +75,8 @@ export interface ProductFormContextType {
   toggleCatalog: (catalogId: string) => void;
   categories: ProductCategory[];
   categoriesLoading: boolean;
-  selectedCategoryIds: string[];
-  toggleCategory: (categoryId: string) => void;
+  selectedCategoryId: string | null;
+  setCategoryId: (categoryId: string | null) => void;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -210,8 +210,8 @@ export function ProductFormProvider({
     toggleCatalog,
     categories,
     categoriesLoading,
-    selectedCategoryIds,
-    toggleCategory,
+    selectedCategoryId,
+    setCategoryId,
     tags,
     tagsLoading,
     selectedTagIds,
@@ -233,7 +233,7 @@ export function ProductFormProvider({
         : initialCatalogId
           ? [initialCatalogId]
           : undefined,
-    initialCategoryIds: draft?.categoryIds,
+    initialCategoryId: draft?.categoryId ?? null,
     initialTagIds: draft?.tagIds,
     setValue,
     getValues,
@@ -335,9 +335,12 @@ export function ProductFormProvider({
     selectedCatalogIds.forEach((catalogId: string): void => {
       formData.append("catalogIds", catalogId);
     });
-    selectedCategoryIds.forEach((categoryId: string): void => {
-      formData.append("categoryIds", categoryId);
-    });
+    if (selectedCategoryId) {
+      formData.append("categoryId", selectedCategoryId);
+    } else {
+      // Ensure update mode can clear the category.
+      formData.append("categoryId", "");
+    }
     selectedTagIds.forEach((tagId: string): void => {
       formData.append("tagIds", tagId);
     });
@@ -475,8 +478,8 @@ export function ProductFormProvider({
           toggleCatalog,
           categories,
           categoriesLoading,
-          selectedCategoryIds,
-          toggleCategory,
+          selectedCategoryId,
+          setCategoryId,
           tags,
           tagsLoading,
           selectedTagIds,

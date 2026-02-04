@@ -16,6 +16,7 @@ import {
   GitBranchIcon,
   Plug,
   AppWindow,
+  Image as ImageIcon,
   ChevronRightIcon,
   StarIcon,
 } from "lucide-react";
@@ -422,6 +423,13 @@ export const buildAdminNav = (handlers: {
       { id: "workspace/databases", label: "Databases", href: "/admin/databases" },
       { id: "workspace/app-embeds", label: "App Embeds", href: "/admin/app-embeds" },
     ],
+  },
+  {
+    id: "image-studio",
+    label: "Image Studio",
+    href: "/admin/image-studio",
+    icon: <ImageIcon className="size-4" />,
+    keywords: ["ai", "images", "mask", "studio", "relight"],
   },
   {
     id: "commerce",

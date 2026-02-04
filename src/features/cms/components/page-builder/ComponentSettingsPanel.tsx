@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, useToast } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
@@ -146,8 +146,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [gridTemplateName, setGridTemplateName] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "events" | "connections">("settings");
+  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "events" | "connections" | "customCss">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
+  const isGridSection = selectedSection?.type === "Grid";
+  const isBlockSection = selectedSection?.type === "Block";
+  const isBlockBlock = selectedBlock?.type === "Block";
+  const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || isRowBlock || isBlockBlock);
+  const customCssValue = useMemo((): string => {
+    if (selectedSection && (isGridSection || isBlockSection)) {
+      return (selectedSection.settings["customCss"] as string) || "";
+    }
+    if (selectedColumn) {
+      return (selectedColumn.settings["customCss"] as string) || "";
+    }
+    if (selectedBlock && (isRowBlock || isBlockBlock)) {
+      return (selectedBlock.settings["customCss"] as string) || "";
+    }
+    return "";
+  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection, isRowBlock, isBlockBlock]);
   const rowCount = useMemo((): number => {
     if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
     return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row").length;
@@ -307,6 +323,58 @@ export function ComponentSettingsPanel(): React.ReactNode {
     [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]
   );
 
+  // ---------------------------------------------------------------------------
+  // Column settings handlers
+  // ---------------------------------------------------------------------------
+
+  const handleColumnSettingChange = useCallback(
+    (key: string, value: unknown): void => {
+      if (!selectedColumn || !selectedColumnParentSection) return;
+      const nextSettings: Record<string, unknown> = {
+        [key]: value,
+        ...(key === "background" ? { backgroundColor: "" } : {}),
+      };
+      if (key === "heightMode" && value === "inherit") {
+        nextSettings.height = 0;
+      }
+      dispatch({
+        type: "UPDATE_COLUMN_SETTINGS",
+        sectionId: selectedColumnParentSection.id,
+        columnId: selectedColumn.id,
+        settings: nextSettings,
+      });
+    },
+    [selectedColumn, selectedColumnParentSection, dispatch]
+  );
+
+  const handleCustomCssChange = useCallback(
+    (value: string): void => {
+      if (selectedSection && (isGridSection || isBlockSection)) {
+        handleSectionSettingChange("customCss", value);
+        return;
+      }
+      if (selectedColumn) {
+        handleColumnSettingChange("customCss", value);
+        return;
+      }
+      if (selectedBlock && (isRowBlock || isBlockBlock)) {
+        handleBlockSettingChange("customCss", value);
+      }
+    },
+    [
+      selectedSection,
+      selectedColumn,
+      selectedBlock,
+      isGridSection,
+      isBlockSection,
+      isRowBlock,
+      isBlockBlock,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+    ]
+  );
+
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
 
@@ -316,6 +384,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
         type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK",
         sectionId: selectedParentSection.id,
         columnId: selectedParentColumn.id,
+        parentBlockId: selectedParentBlock.id,
+        elementId: selectedBlock.id,
+      });
+    } else if (selectedParentBlock) {
+      // Element inside a nested block within a section (e.g. slideshow frame)
+      dispatch({
+        type: "REMOVE_ELEMENT_FROM_SECTION_BLOCK",
+        sectionId: selectedParentSection.id,
         parentBlockId: selectedParentBlock.id,
         elementId: selectedBlock.id,
       });
@@ -404,30 +480,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
       rowId: selectedBlock.id,
     });
   }, [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
-
-  // ---------------------------------------------------------------------------
-  // Column settings handlers
-  // ---------------------------------------------------------------------------
-
-  const handleColumnSettingChange = useCallback(
-    (key: string, value: unknown): void => {
-      if (!selectedColumn || !selectedColumnParentSection) return;
-      const nextSettings: Record<string, unknown> = {
-        [key]: value,
-        ...(key === "background" ? { backgroundColor: "" } : {}),
-      };
-      if (key === "heightMode" && value === "inherit") {
-        nextSettings.height = 0;
-      }
-      dispatch({
-        type: "UPDATE_COLUMN_SETTINGS",
-        sectionId: selectedColumnParentSection.id,
-        columnId: selectedColumn.id,
-        settings: nextSettings,
-      });
-    },
-    [selectedColumn, selectedColumnParentSection, dispatch]
-  );
 
   const handleSectionSettingChangeWithGridColumns = useCallback(
     (key: string, value: unknown): void => {
@@ -636,6 +688,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
   }, [showEventsTab, activeTab]);
 
+  useEffect(() => {
+    if (!showCustomCssTab && activeTab === "customCss") {
+      setActiveTab("settings");
+    }
+  }, [showCustomCssTab, activeTab]);
+
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
       {/* Header */}
@@ -792,13 +850,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab(value as "settings" | "animation" | "events" | "connections")
+            setActiveTab(value as "settings" | "animation" | "events" | "connections" | "customCss")
           }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
             <TabsTrigger value="animation" className="flex-1 text-xs">Animation</TabsTrigger>
+            {showCustomCssTab && (
+              <TabsTrigger value="customCss" className="flex-1 text-xs">CSS</TabsTrigger>
+            )}
             {showEventsTab && (
               <TabsTrigger value="events" className="flex-1 text-xs">Events</TabsTrigger>
             )}
@@ -1059,6 +1120,33 @@ export function ComponentSettingsPanel(): React.ReactNode {
               onChange={handleAnimationChange}
             />
           </TabsContent>
+          {showCustomCssTab && (
+            <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0">
+              <div className="space-y-3">
+                <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+                  Custom CSS for{" "}
+                  <span className="text-gray-200">
+                    {selectedSection && (isGridSection || isBlockSection)
+                      ? selectedSection.type
+                      : selectedColumn
+                        ? "Column"
+                        : selectedBlock?.type ?? "Item"}
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-500">
+                  Use <span className="font-mono text-gray-300">parent</span> to target this element and{" "}
+                  <span className="font-mono text-gray-300">children</span> to target its direct children.
+                </div>
+                <Textarea
+                  value={customCssValue}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => handleCustomCssChange(e.target.value)}
+                  placeholder={`parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}`}
+                  className="min-h-[160px] font-mono text-xs"
+                  spellCheck={false}
+                />
+              </div>
+            </TabsContent>
+          )}
           {showEventsTab && (
             <TabsContent value="events" className="flex-1 overflow-y-auto p-4 mt-0">
               {!eventConfig ? (

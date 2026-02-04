@@ -195,6 +195,11 @@ export type RegexConfig = {
   splitLines?: boolean;
   sampleText?: string;
   aiPrompt?: string;
+  aiAutoRun?: boolean;
+  activeVariant?: "manual" | "ai";
+  manual?: { pattern: string; flags?: string; groupBy?: string };
+  aiProposal?: { pattern: string; flags?: string; groupBy?: string };
+  aiProposals?: Array<{ pattern: string; flags?: string; groupBy?: string; createdAt: string }>;
 };
 
 export type IteratorConfig = {

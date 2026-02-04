@@ -168,7 +168,13 @@ export function SettingsFieldRenderer({
       {field.type === "select" && (
         <SelectField
           label={field.label}
-          value={(value as string) ?? ""}
+          value={
+            (typeof value === "string" && value.trim().length > 0)
+              ? value
+              : typeof field.defaultValue === "string"
+                ? field.defaultValue
+                : ""
+          }
           onChange={handleChange}
           options={field.options ?? []}
           disabled={isDisabled}

@@ -382,13 +382,15 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
         textForPrompt
       )
     : "";
+  const aiAutoRun = regexConfig.aiAutoRun ?? false;
 
   if (!pattern) {
+    const emptyGrouped = regexConfig.outputMode === "array" ? [] : {};
     return {
-      grouped: regexConfig.outputMode === "array" ? [] : {},
+      grouped: emptyGrouped,
       matches: [],
-      ...(isExtractMode ? { value: null } : {}),
-      ...(aiPrompt ? { aiPrompt } : {}),
+      value: isExtractMode ? null : emptyGrouped,
+      ...(aiAutoRun && aiPrompt ? { aiPrompt } : {}),
     };
   }
 
@@ -396,11 +398,12 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   try {
     compiled = new RegExp(pattern, flags);
   } catch {
+    const emptyGrouped = regexConfig.outputMode === "array" ? [] : {};
     return {
-      grouped: regexConfig.outputMode === "array" ? [] : {},
+      grouped: emptyGrouped,
       matches: [],
-      ...(isExtractMode ? { value: null } : {}),
-      ...(aiPrompt ? { aiPrompt } : {}),
+      value: isExtractMode ? null : emptyGrouped,
+      ...(aiAutoRun && aiPrompt ? { aiPrompt } : {}),
     };
   }
 
@@ -520,8 +523,8 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   return {
     grouped,
     matches,
-    ...(isExtractMode ? { value: extractedValue } : {}),
-    ...(aiPrompt ? { aiPrompt } : {}),
+    value: isExtractMode ? extractedValue : grouped,
+    ...(aiAutoRun && aiPrompt ? { aiPrompt } : {}),
   };
 };
 

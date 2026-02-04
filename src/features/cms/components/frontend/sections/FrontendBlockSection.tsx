@@ -1,6 +1,7 @@
 
 import type { BlockInstance } from "../../../types/page-builder";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from "../theme-styles";
+import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 
 const resolveJustifyContent = (value: unknown): React.CSSProperties["justifyContent"] | undefined => {
@@ -25,6 +26,7 @@ const resolveAlignmentToJustify = (alignment: string): React.CSSProperties["just
   alignment === "center" ? "center" : alignment === "right" ? "flex-end" : "flex-start";
 
 interface FrontendBlockSectionProps {
+  sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
   colorSchemes?: Record<string, ColorSchemeColors> | undefined;
@@ -32,6 +34,7 @@ interface FrontendBlockSectionProps {
 }
 
 export function FrontendBlockSection({
+  sectionId,
   settings,
   blocks,
   colorSchemes,
@@ -55,6 +58,8 @@ export function FrontendBlockSection({
   const linkUrl = (settings["linkUrl"] as string) || "";
   const linkTarget = (settings["linkTarget"] as string) || "_self";
   const linkRel = linkTarget === "_blank" ? "noopener noreferrer" : undefined;
+  const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
+  const customCss = buildScopedCustomCss(settings["customCss"], sectionSelector);
 
   const content = (
     <div
@@ -68,7 +73,11 @@ export function FrontendBlockSection({
   );
 
   return (
-    <section className="w-full" style={sectionStyles}>
+    <section
+      className={`w-full${sectionId ? ` cms-node-${sectionId}` : ""}`}
+      style={sectionStyles}
+    >
+      {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-6xl" })}>
         {linkUrl ? (
           <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">

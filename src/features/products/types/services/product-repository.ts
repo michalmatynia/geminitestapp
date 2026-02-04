@@ -38,9 +38,9 @@ export type ProductRepository = {
     productId: string,
     catalogIds: string[]
   ): Promise<void>;
-  replaceProductCategories(
+  replaceProductCategory(
     productId: string,
-    categoryIds: string[]
+    categoryId: string | null
   ): Promise<void>;
   replaceProductTags(
     productId: string,

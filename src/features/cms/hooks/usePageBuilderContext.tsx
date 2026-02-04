@@ -362,15 +362,20 @@ function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInsta
   return blocks.map((block: BlockInstance): BlockInstance => {
     const normalizedId = ensureUniqueId(block.id, seen);
     const nested = block.blocks ? normalizeBlocks(block.blocks, seen) : undefined;
+    const def = getBlockDefinition(block.type);
+    const mergedSettings = applySettingsDefaults(
+      block.settings ?? {},
+      def?.settingsSchema,
+      def?.defaultSettings ?? {}
+    );
     const normalized: BlockInstance = {
       ...block,
       id: normalizedId,
+      settings: mergedSettings,
       ...(nested ? { blocks: nested } : {}),
     };
     if (normalized.type === TEXT_ATOM_BLOCK_TYPE) {
-      const text = normalizeTextAtomText(normalized.settings?.["text"]);
-      const nextBlocks = buildTextAtomLetterBlocks(text, normalized.blocks, seen);
-      return { ...normalized, blocks: nextBlocks };
+      return applyTextAtomSettings(normalized, mergedSettings, seen);
     }
     return normalized;
   });
@@ -1483,13 +1488,8 @@ export function basePageBuilderReducer(
     }
 
     case "ADD_ELEMENT_TO_CAROUSEL_FRAME": {
-      const elemDef = getBlockDefinition(action.elementType);
-      if (!elemDef) return state;
-      const newElem: BlockInstance = {
-        id: uid(),
-        type: action.elementType,
-        settings: { ...elemDef.defaultSettings },
-      };
+      const newElem = createBlockInstance(action.elementType);
+      if (!newElem) return state;
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;
         return {

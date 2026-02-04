@@ -131,7 +131,7 @@ async function createProduct(
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
     const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
-    const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
+    const categoryId = normalizeCategoryId(formData);
     const tagIds = normalizeTagIds(formData.getAll("tagIds"));
     const producerIds = normalizeProducerIds(formData.getAll("producerIds"));
     const noteIds = normalizeNoteIds(formData.getAll("noteIds"));
@@ -142,7 +142,7 @@ async function createProduct(
       validatedData.sku,
     );
     await updateProductCatalogs(product.id, catalogIds);
-    await updateProductCategories(product.id, categoryIds);
+    await updateProductCategory(product.id, categoryId);
     await updateProductTags(product.id, tagIds);
     await updateProductProducers(product.id, producerIds);
     await updateProductNotes(product.id, noteIds);
@@ -192,9 +192,9 @@ async function updateProduct(
       const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
       await updateProductCatalogs(id, catalogIds);
     }
-    if (formData.has("categoryIds")) {
-      const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
-      await updateProductCategories(id, categoryIds);
+    if (formData.has("categoryId") || formData.has("categoryIds")) {
+      const categoryId = normalizeCategoryId(formData);
+      await updateProductCategory(id, categoryId);
     }
     if (formData.has("tagIds")) {
       const tagIds = normalizeTagIds(formData.getAll("tagIds"));
@@ -402,12 +402,20 @@ function normalizeCatalogIds(entries: FormDataEntryValue[]): string[] {
     .filter((entry: string): boolean => entry.length > 0);
 }
 
-function normalizeCategoryIds(entries: FormDataEntryValue[]): string[] {
-  return entries
+function normalizeCategoryId(formData: FormData): string | null {
+  const direct = formData.get("categoryId");
+  if (typeof direct === "string") {
+    const trimmed = direct.trim();
+    if (trimmed) return trimmed;
+    return null;
+  }
+  const legacyEntries = formData.getAll("categoryIds");
+  const normalized = legacyEntries
     .map((entry: FormDataEntryValue): string =>
       typeof entry === "string" ? entry.trim() : "",
     )
     .filter((entry: string): boolean => entry.length > 0);
+  return normalized[0] ?? null;
 }
 
 function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
@@ -459,12 +467,12 @@ async function updateProductCatalogs(
   }
 }
 
-async function updateProductCategories(
+async function updateProductCategory(
   productId: string,
-  categoryIds: string[],
+  categoryId: string | null,
 ): Promise<void> {
   const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductCategories(productId, categoryIds);
+  await productRepository.replaceProductCategory(productId, categoryId);
 }
 
 async function updateProductTags(

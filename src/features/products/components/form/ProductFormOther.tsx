@@ -28,8 +28,8 @@ export default function ProductFormOther(): React.JSX.Element {
     toggleCatalog,
     categories,
     categoriesLoading,
-    selectedCategoryIds,
-    toggleCategory,
+    selectedCategoryId,
+    setCategoryId,
     tags,
     tagsLoading,
     selectedTagIds,
@@ -53,6 +53,9 @@ export default function ProductFormOther(): React.JSX.Element {
   const selectedCatalogSummary = selectedCatalogLabels.length
     ? selectedCatalogLabels.join(", ")
     : "Select catalogs";
+  const selectedCategoryLabel = selectedCategoryId
+    ? categories.find((category: ProductCategory) => category.id === selectedCategoryId)?.name ?? "Selected category"
+    : "Select category";
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
@@ -307,11 +310,11 @@ export default function ProductFormOther(): React.JSX.Element {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="w-full justify-between" disabled={selectedCatalogIds.length === 0}>
-              {selectedCategoryIds.length > 0
-                ? `${selectedCategoryIds.length} categor${selectedCategoryIds.length === 1 ? 'y' : 'ies'} selected`
+              {selectedCategoryId
+                ? selectedCategoryLabel
                 : selectedCatalogIds.length === 0
                 ? "Select a catalog first"
-                : "Select categories"}
+                : "Select category"}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
@@ -347,8 +350,10 @@ export default function ProductFormOther(): React.JSX.Element {
                   filteredCategories.map((category: ProductCategory) => (
                     <DropdownMenuCheckboxItem
                       key={category.id}
-                      checked={selectedCategoryIds.includes(category.id)}
-                      onCheckedChange={() => toggleCategory(category.id)}
+                      checked={selectedCategoryId === category.id}
+                      onCheckedChange={(checked: boolean) => {
+                        setCategoryId(checked ? category.id : null);
+                      }}
                     >
                       {category.name}
                     </DropdownMenuCheckboxItem>

@@ -120,8 +120,7 @@ export class CachedProductService {
       const products = await productService.getProducts(categoryFilters);
       const filtered = products.filter(
         (product: ProductWithImages) =>
-          Array.isArray(product.categories) &&
-          product.categories.some((entry: { categoryId: string }) => entry.categoryId === categoryId)
+          typeof product.categoryId === "string" && product.categoryId === categoryId
       );
       return typeof limit === "number" && limit > 0
         ? filtered.slice(0, limit)

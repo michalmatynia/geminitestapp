@@ -691,6 +691,7 @@ function ZoneGroup({
                     onAddColumnToRow={onAddColumnToRow}
                     onRemoveColumnFromRow={onRemoveColumnFromRow}
                     onAddElementToNestedBlock={onAddElementToNestedBlock}
+                    onAddElementToSectionBlock={onAddElementToSectionBlock}
                     onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
                     onToggleSectionVisibility={onToggleSectionVisibility}
                     onRemoveSection={onRemoveSection}

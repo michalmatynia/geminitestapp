@@ -33,6 +33,7 @@ const updateDraftSchema = z.object({
   priceComment: z.string().optional().nullable(),
   stock: z.number().optional().nullable(),
   catalogIds: z.array(z.string()).optional(),
+  categoryId: z.string().optional().nullable(),
   categoryIds: z.array(z.string()).optional(),
   tagIds: z.array(z.string()).optional(),
   parameters: z
@@ -90,7 +91,11 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       return parsed.response;
     }
     const data = parsed.data;
-    const draft = await updateDraft(id, data as UpdateProductDraftInput);
+    const categoryId =
+      (typeof data.categoryId === "string" && data.categoryId.trim()) ||
+      (Array.isArray(data.categoryIds) ? data.categoryIds.find((value: string) => value.trim()) : null) ||
+      null;
+    const draft = await updateDraft(id, { ...data, categoryId } as UpdateProductDraftInput);
 
     if (!draft) {
       return createErrorResponse(notFoundError("Draft not found", { id }), {

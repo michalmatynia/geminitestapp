@@ -32,7 +32,7 @@ export type ProductDraft = {
 
   // Catalog and metadata
   catalogIds?: string[];
-  categoryIds?: string[];
+  categoryId?: string | null;
   tagIds?: string[];
   parameters?: ProductParameterValue[];
 
@@ -79,7 +79,7 @@ export type CreateProductDraftInput = {
   priceComment?: string | null | undefined;
   stock?: number | null | undefined;
   catalogIds?: string[] | undefined;
-  categoryIds?: string[] | undefined;
+  categoryId?: string | null | undefined;
   tagIds?: string[] | undefined;
   parameters?: ProductParameterValue[] | undefined;
   defaultPriceGroupId?: string | null | undefined;

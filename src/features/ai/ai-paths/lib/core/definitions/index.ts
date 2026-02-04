@@ -123,6 +123,7 @@ export const palette: NodeDefinition[] = [
         sampleText: "",
         aiPrompt:
           "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+        aiAutoRun: false,
       },
     },
   },

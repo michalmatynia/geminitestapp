@@ -69,6 +69,22 @@ const safeJsonStringify = (value: unknown): string => {
   }
 };
 
+const parseRuntimeState = (value: unknown): RuntimeState => {
+  if (!value) return { inputs: {}, outputs: {} };
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as RuntimeState;
+      return parsed && typeof parsed === "object" ? parsed : { inputs: {}, outputs: {} };
+    } catch {
+      return { inputs: {}, outputs: {} };
+    }
+  }
+  if (typeof value === "object") {
+    return value as RuntimeState;
+  }
+  return { inputs: {}, outputs: {} };
+};
+
 const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
 ): Promise<{
@@ -464,6 +480,7 @@ export function useAiPathTriggerEvent(): {
       });
 
       const runAt = new Date().toISOString();
+      const seedState = parseRuntimeState(selectedConfig.runtimeState);
       let runtimeState: RuntimeState;
       try {
         runtimeState = await evaluateGraphWithIteratorAutoContinue({
@@ -475,6 +492,9 @@ export function useAiPathTriggerEvent(): {
           triggerEvent: triggerEventId,
           triggerContext,
           deferPoll: false,
+          recordHistory: true,
+          historyLimit: 50,
+          seedHistory: seedState.history ?? undefined,
           onNodeFinish: (payload: { node: AiNode }): void => {
             const { node } = payload;
             if (!node || node.type === "simulation") return;

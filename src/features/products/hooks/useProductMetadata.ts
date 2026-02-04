@@ -113,8 +113,8 @@ export interface ProductMetadataHookResult {
   toggleCatalog: (catalogId: string) => void;
   categories: ProductCategory[];
   categoriesLoading: boolean;
-  selectedCategoryIds: string[];
-  toggleCategory: (categoryId: string) => void;
+  selectedCategoryId: string | null;
+  setCategoryId: (categoryId: string | null) => void;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -133,7 +133,7 @@ export interface UseProductMetadataProps {
   product?: ProductWithImages | undefined;
   initialCatalogId?: string | undefined;
   initialCatalogIds?: string[] | undefined;
-  initialCategoryIds?: string[] | undefined;
+  initialCategoryId?: string | null | undefined;
   initialTagIds?: string[] | undefined;
   setValue?: UseFormSetValue<ProductFormData> | undefined;
   getValues?: UseFormGetValues<ProductFormData> | undefined;
@@ -144,7 +144,7 @@ export function useProductMetadata({
   product,
   initialCatalogId,
   initialCatalogIds,
-  initialCategoryIds,
+  initialCategoryId,
   initialTagIds,
 }: UseProductMetadataProps): ProductMetadataHookResult {
   const catalogsQuery = useCatalogs();
@@ -166,11 +166,14 @@ export function useProductMetadata({
   }, [product, initialCatalogIds, initialCatalogId]);
 
   const initialCategorySelection = React.useMemo(() => {
-    if (product?.categories) {
-      return product.categories.map((c: { categoryId: string }) => c.categoryId);
+    if (product?.categoryId) {
+      return product.categoryId;
     }
-    return initialCategoryIds || [];
-  }, [product, initialCategoryIds]);
+    if (initialCategoryId) {
+      return initialCategoryId;
+    }
+    return null;
+  }, [product, initialCategoryId]);
 
   const initialTagSelection = React.useMemo(() => {
     if (product?.tags) {
@@ -187,7 +190,7 @@ export function useProductMetadata({
   }, [product]);
   
   const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(initialCatalogSelection);
-  const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>(initialCategorySelection);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(initialCategorySelection);
   const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
   const [selectedProducerIds, setSelectedProducerIds] = React.useState<string[]>(initialProducerSelection);
 
@@ -199,7 +202,7 @@ export function useProductMetadata({
   }, [initialCatalogSelection]);
 
   React.useEffect(() => {
-    setSelectedCategoryIds((prev: string[]) => (arraysEqual(prev, initialCategorySelection) ? prev : initialCategorySelection));
+    setSelectedCategoryId((prev: string | null) => (prev === initialCategorySelection ? prev : initialCategorySelection));
   }, [initialCategorySelection]);
 
   React.useEffect(() => {
@@ -225,12 +228,9 @@ export function useProductMetadata({
     );
   };
 
-  const toggleCategory = (categoryId: string): void => {
-    setSelectedCategoryIds((prev: string[]) => 
-      prev.includes(categoryId) 
-        ? prev.filter((id: string) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+  const setCategoryId = (categoryId: string | null): void => {
+    const trimmed = typeof categoryId === "string" ? categoryId.trim() : "";
+    setSelectedCategoryId(trimmed ? trimmed : null);
   };
 
   const toggleTag = (tagId: string): void => {
@@ -303,8 +303,8 @@ export function useProductMetadata({
     toggleCatalog,
     categories: categoriesQuery.data || [],
     categoriesLoading: categoriesQuery.isLoading,
-    selectedCategoryIds,
-    toggleCategory,
+    selectedCategoryId,
+    setCategoryId,
     tags: tagsQuery.data || [],
     tagsLoading: tagsQuery.isLoading,
     selectedTagIds,

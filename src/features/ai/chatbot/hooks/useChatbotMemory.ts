@@ -14,7 +14,9 @@ export function useChatbotMemory(params: string = ""): UseQueryResult<ChatbotMem
     queryFn: async (): Promise<ChatbotMemoryItem[]> => {
       const res = await fetch(`/api/chatbot/memory?${params}`);
       if (!res.ok) throw new Error("Failed to load memory");
-      return res.json() as Promise<ChatbotMemoryItem[]>;
+      const data = (await res.json()) as ChatbotMemoryItem[] | { items?: ChatbotMemoryItem[] };
+      if (Array.isArray(data)) return data;
+      return Array.isArray(data.items) ? data.items : [];
     },
   });
 }

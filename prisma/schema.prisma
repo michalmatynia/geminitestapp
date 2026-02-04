@@ -750,6 +750,7 @@ model ProductCategoryAssignment {
   category ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([productId, categoryId])
+  @@unique([productId])
 }
 
 model ProductTag {
@@ -1066,7 +1067,7 @@ model ProductDraft {
   priceComment        String?
   stock               Int?
   catalogIds          Json     @default("[]")
-  categoryIds         Json     @default("[]")
+  categoryId          String?
   tagIds              Json     @default("[]")
   parameters          Json     @default("[]")
   defaultPriceGroupId String?

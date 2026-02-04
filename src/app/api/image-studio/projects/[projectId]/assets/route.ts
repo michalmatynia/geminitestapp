@@ -3,8 +3,8 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
-import { SecureFileUpload } from "@/features/products/security/file-upload";
 import { uploadFile } from "@/features/files/utils/fileUploader";
+import { getImageFileRepository } from "@/features/files/server";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -17,6 +17,33 @@ const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+
+function normalizeStudioPublicPath(filepath: string | null | undefined): string | null {
+  const raw = typeof filepath === "string" ? filepath.trim() : "";
+  if (!raw) return null;
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      return normalizeStudioPublicPath(url.pathname);
+    } catch {
+      return raw;
+    }
+  }
+
+  let normalized = raw.replace(/\\/g, "/");
+  if (normalized.startsWith("public/")) {
+    normalized = `/${normalized}`;
+  }
+  const uploadsIndex = normalized.indexOf("/uploads/");
+  if (uploadsIndex >= 0) {
+    normalized = normalized.slice(uploadsIndex);
+  } else if (normalized.startsWith("uploads/")) {
+    normalized = `/${normalized}`;
+  }
+  if (!normalized.startsWith("/")) normalized = `/${normalized}`;
+  return normalized;
+}
 
 type UploadedFileLike = File;
 
@@ -86,7 +113,12 @@ async function GET_handler(
       const imageFileRepository = await getImageFileRepository();
       const files = await imageFileRepository.listImageFiles();
       repoAssets = files
-        .filter((file: ImageFileRecord) => typeof file.filepath === "string" && file.filepath.startsWith(prefix));
+        .map((file: ImageFileRecord) => {
+          const normalized = normalizeStudioPublicPath(file.filepath);
+          if (!normalized || !normalized.startsWith(prefix)) return null;
+          return normalized === file.filepath ? file : { ...file, filepath: normalized };
+        })
+        .filter(Boolean) as ImageFileRecord[];
     } catch {
       // If repository/DB is down, we still want to show disk assets.
       repoAssets = [];
@@ -133,39 +165,30 @@ async function POST_handler(
     const projectId = sanitizeProjectId(params.projectId);
     if (!projectId) throw badRequestError("Project id is required");
 
-  const formData = await req.formData();
-  const folder = formData.get("folder");
-  const files = extractUploadedFiles(formData);
+    const formData = await req.formData();
+    const folder = formData.get("folder");
+    const files = extractUploadedFiles(formData);
 
-  if (files.length === 0) {
-    return NextResponse.json({ error: "No files provided" }, { status: 400 });
-  }
+    if (files.length === 0) {
+      return NextResponse.json({ error: "No files provided" }, { status: 400 });
+    }
 
-  const uploaded: ImageFileRecord[] = [];
-  const validation = await SecureFileUpload.validateMultipleFiles(files);
-  if (!validation.isValid) {
-    const errors = [
-      ...validation.globalErrors,
-      ...validation.results.flatMap((result) => result.errors),
-    ];
-    return NextResponse.json({ error: "Invalid file upload", details: errors }, { status: 400 });
-  }
+    const uploaded: ImageFileRecord[] = [];
 
-  for (let index = 0; index < files.length; index += 1) {
-    const file = files[index]!;
-    const sanitizedName = validation.results[index]?.sanitizedName ?? file.name;
-    uploaded.push(
-      await uploadFile(file, {
-        category: "studio",
-        projectId,
-        folder: typeof folder === "string" ? folder : null,
-        allowOrphanRecord: true,
-        filenameOverride: sanitizedName,
-      })
-    );
-  }
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index]!;
+      uploaded.push(
+        await uploadFile(file, {
+          category: "studio",
+          projectId,
+          folder: typeof folder === "string" ? folder : null,
+          allowOrphanRecord: true,
+          filenameOverride: file.name,
+        })
+      );
+    }
 
-  return NextResponse.json({ uploaded }, { status: 201 });
+    return NextResponse.json({ uploaded }, { status: 201 });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

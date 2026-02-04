@@ -137,7 +137,7 @@ export type ProductCatalogRecord = {
 export type ProductWithImages = ProductRecord & {
   images: ProductImageRecord[];
   catalogs: ProductCatalogRecord[];
-  categories?: { categoryId: string }[];
+  categoryId?: string | null;
   tags?: { tagId: string }[];
   producers?: { producerId: string }[];
 };

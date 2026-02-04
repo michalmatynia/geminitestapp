@@ -98,6 +98,8 @@ export function AiPathsSettingsView({
     handleRemoveEdge,
     handleClearWires,
     handleClearConnectorData,
+    handleClearHistory,
+    handleClearNodeHistory,
     handleDisconnectPort,
     handleReconnectInput,
     handleSelectNode,
@@ -186,6 +188,8 @@ export function AiPathsSettingsView({
     reportAiPathsError,
     toast,
   } = state;
+
+  const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState("");
@@ -278,6 +282,17 @@ export function AiPathsSettingsView({
                       disabled={!activePathId}
                     >
                       Clear Connector Data
+                    </Button>
+                    <Button
+                      className="rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10"
+                      onClick={() => {
+                        void handleClearHistory();
+                      }}
+                      type="button"
+                      disabled={!activePathId}
+                      title={hasHistory ? "Clear history for all nodes in this path" : "No history recorded yet"}
+                    >
+                      Clear History
                     </Button>
                     <Button
                       className="rounded-md border border-border text-sm text-rose-200 hover:bg-rose-500/10"
@@ -579,6 +594,7 @@ export function AiPathsSettingsView({
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={handleRunSimulation}
         clearRuntimeForNode={clearRuntimeForNode}
+        clearNodeHistory={handleClearNodeHistory}
         onSendToAi={handleSendToAi}
         sendingToAi={sendingToAi}
         dbQueryPresets={dbQueryPresets}

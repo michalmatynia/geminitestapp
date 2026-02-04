@@ -168,10 +168,16 @@ export class ProductTransformer {
 
   private static transformToV3(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
     // V3 format - future structure with enhanced features
+    const resolvedCategoryId =
+      typeof (data as { categoryId?: unknown }).categoryId === "string"
+        ? ((data as { categoryId?: string }).categoryId ?? null)
+        : Array.isArray((data as { categories?: Array<{ categoryId?: string }> }).categories)
+        ? (data as { categories?: Array<{ categoryId?: string }> }).categories?.[0]?.categoryId ?? null
+        : null;
     return {
       ...this.transformToV2(data),
       variants: data.variants || [],
-      categories: data.categories || [],
+      categoryId: resolvedCategoryId,
       tags: data.tags || [],
       seo: {
         slug: data.slug,

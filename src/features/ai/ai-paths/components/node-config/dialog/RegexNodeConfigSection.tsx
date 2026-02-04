@@ -269,6 +269,69 @@ export function RegexNodeConfigSection({
   const [pendingAiRegex, setPendingAiRegex] = React.useState<string>("");
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   const lastInjectedResponseRef = React.useRef<string>("");
+  const hasAiProposal = Boolean(regexConfig.aiProposal?.pattern?.trim());
+  const activeVariant = regexConfig.activeVariant ?? "manual";
+  const aiProposals = regexConfig.aiProposals ?? [];
+
+  const applyVariant = React.useCallback(
+    (variant: "manual" | "ai"): void => {
+      if (variant === "ai" && regexConfig.aiProposal?.pattern) {
+        updateRegex({
+          activeVariant: "ai",
+          pattern: regexConfig.aiProposal.pattern,
+          flags: regexConfig.aiProposal.flags ?? regexConfig.flags,
+          groupBy: regexConfig.aiProposal.groupBy ?? regexConfig.groupBy,
+        });
+        return;
+      }
+      if (variant === "manual" && regexConfig.manual?.pattern) {
+        updateRegex({
+          activeVariant: "manual",
+          pattern: regexConfig.manual.pattern,
+          flags: regexConfig.manual.flags ?? regexConfig.flags,
+          groupBy: regexConfig.manual.groupBy ?? regexConfig.groupBy,
+        });
+        return;
+      }
+      updateRegex({ activeVariant: variant });
+    },
+    [regexConfig, updateRegex]
+  );
+
+  const addAiProposal = React.useCallback(
+    (proposal: { pattern: string; flags?: string; groupBy?: string }): void => {
+      const normalized = {
+        pattern: proposal.pattern.trim(),
+        flags: (proposal.flags ?? "").trim(),
+        groupBy: (proposal.groupBy ?? "").trim(),
+        createdAt: new Date().toISOString(),
+      };
+      if (!normalized.pattern) return;
+      const exists = aiProposals.some(
+        (item) =>
+          item.pattern === normalized.pattern &&
+          (item.flags ?? "") === normalized.flags &&
+          (item.groupBy ?? "") === normalized.groupBy
+      );
+      if (exists) return;
+      const next = [normalized, ...aiProposals].slice(0, 8);
+      updateRegex({ aiProposals: next });
+    },
+    [aiProposals, updateRegex]
+  );
+
+  const updateVariantField = React.useCallback(
+    (field: "pattern" | "flags" | "groupBy", value: string): void => {
+      const patch: Partial<RegexConfig> = { [field]: value };
+      if (activeVariant === "ai" && regexConfig.aiProposal?.pattern) {
+        patch.aiProposal = { ...regexConfig.aiProposal, [field]: value };
+      } else if (activeVariant === "manual" && regexConfig.manual?.pattern) {
+        patch.manual = { ...regexConfig.manual, [field]: value };
+      }
+      updateRegex(patch);
+    },
+    [activeVariant, regexConfig.aiProposal, regexConfig.manual, updateRegex]
+  );
 
   const codeSnippets = React.useMemo((): string[] => {
     if (!pendingAiRegex) return [];
@@ -498,10 +561,25 @@ export function RegexNodeConfigSection({
                 toast("Could not parse AI regex suggestion.", { variant: "error" });
                 return;
               }
+              const nextManual = regexConfig.manual?.pattern
+                ? regexConfig.manual
+                : {
+                    pattern: regexConfig.pattern ?? "",
+                    flags: regexConfig.flags ?? "",
+                    groupBy: regexConfig.groupBy ?? "match",
+                  };
+              addAiProposal(candidate);
               updateRegex({
                 pattern: candidate.pattern,
                 flags: candidate.flags || normalizedFlags,
                 ...(candidate.groupBy ? { groupBy: candidate.groupBy } : {}),
+                activeVariant: "ai",
+                manual: nextManual,
+                aiProposal: {
+                  pattern: candidate.pattern,
+                  flags: candidate.flags || normalizedFlags,
+                  groupBy: candidate.groupBy ?? regexConfig.groupBy ?? "match",
+                },
               });
               setPendingAiRegex("");
               toast("AI regex accepted.", { variant: "success" });
@@ -620,17 +698,86 @@ export function RegexNodeConfigSection({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
             <Label className="text-xs text-gray-400">Regex Pattern</Label>
+            {hasAiProposal ? (
+              <div className="mt-2 flex items-center gap-2">
+                <Select
+                  value={activeVariant}
+                  onValueChange={(value: string): void => {
+                    if (value === "ai" || value === "manual") {
+                      applyVariant(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[180px] border-border bg-card/70 text-xs text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-border bg-gray-900">
+                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="ai">AI Proposal</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="text-[11px] text-gray-500">
+                  Switch between manual and AI proposal.
+                </div>
+              </div>
+            ) : null}
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={regexConfig.pattern ?? ""}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                updateRegex({ pattern: event.target.value })
+                updateVariantField("pattern", event.target.value)
               }
               placeholder='Example: ^(?<prefix>[A-Z]+)-(?<id>\\d+)$'
             />
             <p className="mt-2 text-[11px] text-gray-500">
               Pattern is stored without / delimiters. You can paste /pattern/flags and click Normalize.
             </p>
+            {aiProposals.length > 0 ? (
+              <div className="mt-3 rounded-md border border-border bg-card/50 p-2">
+                <div className="mb-2 text-[11px] text-gray-300">AI Proposal History</div>
+                <div className="space-y-2">
+                  {aiProposals.map((proposal, index) => (
+                    <div key={`${proposal.pattern}-${proposal.createdAt}-${index}`} className="rounded border border-border/60 bg-card/60 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] text-gray-200 truncate">{proposal.pattern}</div>
+                        <Button
+                          type="button"
+                          className="h-6 rounded-md border border-emerald-700 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
+                          onClick={() => {
+                            const nextManual = regexConfig.manual?.pattern
+                              ? regexConfig.manual
+                              : {
+                                  pattern: regexConfig.pattern ?? "",
+                                  flags: regexConfig.flags ?? "",
+                                  groupBy: regexConfig.groupBy ?? "match",
+                                };
+                            updateRegex({
+                              pattern: proposal.pattern,
+                              flags: proposal.flags ?? normalizedFlags,
+                              groupBy: proposal.groupBy ?? regexConfig.groupBy,
+                              activeVariant: "ai",
+                              manual: nextManual,
+                              aiProposal: {
+                                pattern: proposal.pattern,
+                                flags: proposal.flags ?? normalizedFlags,
+                                groupBy: proposal.groupBy ?? regexConfig.groupBy ?? "match",
+                              },
+                            });
+                          }}
+                        >
+                          Use
+                        </Button>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-gray-400">
+                        <span>flags: {proposal.flags ?? normalizedFlags}</span>
+                        <span>groupBy: {proposal.groupBy ?? "match"}</span>
+                        <span>{new Date(proposal.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="w-[140px]">
             <Label className="text-xs text-gray-400">Flags</Label>
@@ -638,7 +785,7 @@ export function RegexNodeConfigSection({
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={regexConfig.flags ?? ""}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                updateRegex({ flags: event.target.value })
+                updateVariantField("flags", event.target.value)
               }
               placeholder="gim"
             />
@@ -650,13 +797,11 @@ export function RegexNodeConfigSection({
                   const combined = (regexConfig.pattern ?? "").trim();
                   const extracted = extractRegexLiteral(combined);
                   if (!extracted) {
-                    updateRegex({ flags: normalizedFlags });
+                    updateVariantField("flags", normalizedFlags);
                     return;
                   }
-                  updateRegex({
-                    pattern: extracted.pattern,
-                    flags: normalizeRegexFlags(extracted.flags),
-                  });
+                  updateVariantField("pattern", extracted.pattern);
+                  updateVariantField("flags", normalizeRegexFlags(extracted.flags));
                 }}
                 title="Normalize flags / parse /pattern/flags if pasted into the Pattern field"
               >
@@ -730,7 +875,7 @@ export function RegexNodeConfigSection({
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={regexConfig.groupBy ?? "match"}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                updateRegex({ groupBy: event.target.value })
+                updateVariantField("groupBy", event.target.value)
               }
               placeholder={isExtractMode ? "match | 1 | amount | groups | captures" : "match | 1 | prefix"}
             />
@@ -850,6 +995,18 @@ export function RegexNodeConfigSection({
           ) : (
             <div className="text-[11px] text-amber-200">Not connected to AI Model</div>
           )}
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
+          <div>
+            <div className="text-[11px] text-gray-300">Auto-run AI prompt</div>
+            <div className="text-[11px] text-gray-500">
+              When off, Regex won&apos;t auto-trigger the model during path runs.
+            </div>
+          </div>
+          <Switch
+            checked={regexConfig.aiAutoRun ?? false}
+            onCheckedChange={(checked: boolean) => updateRegex({ aiAutoRun: checked })}
+          />
         </div>
 
         <Textarea

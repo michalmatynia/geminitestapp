@@ -852,9 +852,13 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           catalogs: Array.isArray((doc as { catalogs?: unknown[] }).catalogs)
             ? (doc as { catalogs?: Array<{ catalogId: string; assignedAt?: Date }> }).catalogs ?? []
             : [],
-          categories: Array.isArray((doc as { categories?: unknown[] }).categories)
-            ? (doc as { categories?: Array<{ categoryId: string; assignedAt?: Date }> }).categories ?? []
-            : [],
+          categories: (() => {
+            const categoryId =
+              (doc as { categoryId?: string | null }).categoryId ??
+              ((doc as { categories?: Array<{ categoryId?: string }> }).categories ?? [])[0]?.categoryId ??
+              null;
+            return categoryId ? [{ categoryId, assignedAt: new Date() }] : [];
+          })(),
           tags: Array.isArray((doc as { tags?: unknown[] }).tags)
             ? (doc as { tags?: Array<{ tagId: string; assignedAt?: Date }> }).tags ?? []
             : [],
@@ -984,7 +988,10 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           priceComment: (doc as { priceComment?: string | null }).priceComment ?? null,
           stock: (doc as { stock?: number | null }).stock ?? null,
           catalogIds: (doc as { catalogIds?: any[] }).catalogIds ?? [],
-          categoryIds: (doc as { categoryIds?: any[] }).categoryIds ?? [],
+          categoryId:
+            (doc as { categoryId?: string | null }).categoryId ??
+            ((doc as { categoryIds?: any[] }).categoryIds ?? [])[0] ??
+            null,
           tagIds: (doc as { tagIds?: any[] }).tagIds ?? [],
           parameters: (doc as { parameters?: any[] }).parameters ?? [],
           defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
@@ -2025,80 +2032,88 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
           .map((entry: { languageId: string }) => entry.languageId),
       ])
     );
-    const docs = rows.map((product) => ({
-      _id: product.id,
-      id: product.id,
-      sku: product.sku ?? null,
-      baseProductId: product.baseProductId ?? null,
-      defaultPriceGroupId: product.defaultPriceGroupId ?? null,
-      ean: product.ean ?? null,
-      gtin: product.gtin ?? null,
-      asin: product.asin ?? null,
-      name_en: product.name_en ?? null,
-      name_pl: product.name_pl ?? null,
-      name_de: product.name_de ?? null,
-      description_en: product.description_en ?? null,
-      description_pl: product.description_pl ?? null,
-      description_de: product.description_de ?? null,
-      supplierName: product.supplierName ?? null,
-      supplierLink: product.supplierLink ?? null,
-      priceComment: product.priceComment ?? null,
-      stock: product.stock ?? null,
-      price: product.price ?? null,
-      sizeLength: product.sizeLength ?? null,
-      sizeWidth: product.sizeWidth ?? null,
-      weight: product.weight ?? null,
-      length: product.length ?? null,
-      parameters: product.parameters ?? [],
-      imageLinks: product.imageLinks ?? [],
-      imageBase64s: product.imageBase64s ?? [],
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-      images: product.images.map((image) => ({
-        productId: image.productId,
-        imageFileId: image.imageFileId,
-        assignedAt: image.assignedAt,
-        imageFile: {
-          id: image.imageFile.id,
-          filename: image.imageFile.filename,
-          filepath: image.imageFile.filepath,
-          mimetype: image.imageFile.mimetype,
-          size: image.imageFile.size,
-          width: image.imageFile.width ?? null,
-          height: image.imageFile.height ?? null,
-          tags: image.imageFile.tags ?? [],
-          createdAt: image.imageFile.createdAt,
-          updatedAt: image.imageFile.updatedAt,
-        },
-      })),
-      catalogs: product.catalogs.map((entry: any) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
-        catalog: {
-          id: entry.catalog.id,
-          name: entry.catalog.name,
-          description: entry.catalog.description ?? null,
-          isDefault: entry.catalog.isDefault,
-          defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
-          defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
-          priceGroupIds: entry.catalog.priceGroupIds ?? [],
-          createdAt: entry.catalog.createdAt,
-          updatedAt: entry.catalog.updatedAt,
-          languageIds: catalogLanguageMap.get(entry.catalog.id) ?? [],
-        },
-      })),
-      categories: product.categories.map((entry: any) => ({
-        productId: entry.productId,
-        categoryId: entry.categoryId,
-        assignedAt: entry.assignedAt,
-      })),
-      tags: product.tags.map((entry: any) => ({
-        productId: entry.productId,
-        tagId: entry.tagId,
-        assignedAt: entry.assignedAt,
-      })),
-    }));
+    const docs = rows.map((product) => {
+      const categoryId = product.categories[0]?.categoryId ?? null;
+      return {
+        _id: product.id,
+        id: product.id,
+        sku: product.sku ?? null,
+        baseProductId: product.baseProductId ?? null,
+        defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+        ean: product.ean ?? null,
+        gtin: product.gtin ?? null,
+        asin: product.asin ?? null,
+        name_en: product.name_en ?? null,
+        name_pl: product.name_pl ?? null,
+        name_de: product.name_de ?? null,
+        description_en: product.description_en ?? null,
+        description_pl: product.description_pl ?? null,
+        description_de: product.description_de ?? null,
+        supplierName: product.supplierName ?? null,
+        supplierLink: product.supplierLink ?? null,
+        priceComment: product.priceComment ?? null,
+        stock: product.stock ?? null,
+        price: product.price ?? null,
+        sizeLength: product.sizeLength ?? null,
+        sizeWidth: product.sizeWidth ?? null,
+        weight: product.weight ?? null,
+        length: product.length ?? null,
+        parameters: product.parameters ?? [],
+        imageLinks: product.imageLinks ?? [],
+        imageBase64s: product.imageBase64s ?? [],
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        images: product.images.map((image) => ({
+          productId: image.productId,
+          imageFileId: image.imageFileId,
+          assignedAt: image.assignedAt,
+          imageFile: {
+            id: image.imageFile.id,
+            filename: image.imageFile.filename,
+            filepath: image.imageFile.filepath,
+            mimetype: image.imageFile.mimetype,
+            size: image.imageFile.size,
+            width: image.imageFile.width ?? null,
+            height: image.imageFile.height ?? null,
+            tags: image.imageFile.tags ?? [],
+            createdAt: image.imageFile.createdAt,
+            updatedAt: image.imageFile.updatedAt,
+          },
+        })),
+        catalogs: product.catalogs.map((entry: any) => ({
+          productId: entry.productId,
+          catalogId: entry.catalogId,
+          assignedAt: entry.assignedAt,
+          catalog: {
+            id: entry.catalog.id,
+            name: entry.catalog.name,
+            description: entry.catalog.description ?? null,
+            isDefault: entry.catalog.isDefault,
+            defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
+            defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
+            priceGroupIds: entry.catalog.priceGroupIds ?? [],
+            createdAt: entry.catalog.createdAt,
+            updatedAt: entry.catalog.updatedAt,
+            languageIds: catalogLanguageMap.get(entry.catalog.id) ?? [],
+          },
+        })),
+        categoryId,
+        categories: categoryId
+          ? [
+              {
+                productId: product.id,
+                categoryId,
+                assignedAt: new Date(),
+              },
+            ]
+          : [],
+        tags: product.tags.map((entry: any) => ({
+          productId: entry.productId,
+          tagId: entry.tagId,
+          assignedAt: entry.assignedAt,
+        })),
+      };
+    });
 
     const collection = mongo.collection("products");
     const deleted = await collection.deleteMany({});
@@ -2133,7 +2148,8 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       priceComment: row.priceComment ?? null,
       stock: row.stock ?? null,
       catalogIds: row.catalogIds ?? [],
-      categoryIds: row.categoryIds ?? [],
+      categoryId: row.categoryId ?? null,
+      categoryIds: row.categoryId ? [row.categoryId] : [],
       tagIds: row.tagIds ?? [],
       parameters: row.parameters ?? [],
       defaultPriceGroupId: row.defaultPriceGroupId ?? null,

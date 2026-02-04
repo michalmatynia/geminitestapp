@@ -139,9 +139,9 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                         {draft.catalogIds.length} Catalog(s)
                       </span>
                     )}
-                    {draft.categoryIds && draft.categoryIds.length > 0 && (
+                    {draft.categoryId && (
                       <span className="rounded bg-gray-800 px-2 py-1">
-                        {draft.categoryIds.length} Category(s)
+                        Category set
                       </span>
                     )}
                     {draft.tagIds && draft.tagIds.length > 0 && (

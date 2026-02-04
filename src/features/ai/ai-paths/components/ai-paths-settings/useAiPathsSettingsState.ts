@@ -772,6 +772,114 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     }
   };
 
+  const handleClearHistory = async (): Promise<void> => {
+    if (!activePathId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to clear history.", { variant: "info" });
+      return;
+    }
+    const currentHistory = runtimeState.history ?? {};
+    if (Object.keys(currentHistory).length === 0) {
+      toast("No history recorded for this path yet.", { variant: "info" });
+      return;
+    }
+    const nextRuntimeState: RuntimeState = { ...runtimeState };
+    delete nextRuntimeState.history;
+    const updatedAt = new Date().toISOString();
+    const config: PathConfig = {
+      id: activePathId,
+      version: STORAGE_VERSION,
+      name: pathName,
+      description: pathDescription,
+      trigger: activeTrigger,
+      nodes,
+      edges,
+      updatedAt,
+      isLocked: isPathLocked,
+      isActive: isPathActive,
+      parserSamples,
+      updaterSamples,
+      runtimeState: nextRuntimeState,
+      lastRunAt,
+      uiState: {
+        selectedNodeId,
+        configOpen,
+      },
+    };
+    setRuntimeState(nextRuntimeState);
+    const nextConfigs = { ...pathConfigs, [activePathId]: config };
+    setPathConfigs(nextConfigs);
+    try {
+      const safeConfigs = serializePathConfigs(nextConfigs);
+      await persistPreferences({
+        aiPathsPathIndex: paths,
+        aiPathsPathConfigs: safeConfigs,
+      });
+      await persistPathSettings(paths, activePathId, config);
+      toast("History cleared for the current path.", { variant: "success" });
+    } catch (error) {
+      reportAiPathsError(error, { action: "clearHistory", pathId: activePathId }, "Failed to clear history:");
+      toast("Failed to clear history.", { variant: "error" });
+    }
+  };
+
+  const handleClearNodeHistory = async (nodeId: string): Promise<void> => {
+    if (!activePathId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to clear history.", { variant: "info" });
+      return;
+    }
+    const currentHistory = runtimeState.history ?? {};
+    if (!currentHistory[nodeId] || currentHistory[nodeId]!.length === 0) {
+      toast("No history recorded for this node yet.", { variant: "info" });
+      return;
+    }
+    const nextHistory = { ...currentHistory };
+    delete nextHistory[nodeId];
+    const nextRuntimeState: RuntimeState = { ...runtimeState };
+    if (Object.keys(nextHistory).length > 0) {
+      nextRuntimeState.history = nextHistory;
+    } else {
+      delete nextRuntimeState.history;
+    }
+    const updatedAt = new Date().toISOString();
+    const config: PathConfig = {
+      id: activePathId,
+      version: STORAGE_VERSION,
+      name: pathName,
+      description: pathDescription,
+      trigger: activeTrigger,
+      nodes,
+      edges,
+      updatedAt,
+      isLocked: isPathLocked,
+      isActive: isPathActive,
+      parserSamples,
+      updaterSamples,
+      runtimeState: nextRuntimeState,
+      lastRunAt,
+      uiState: {
+        selectedNodeId,
+        configOpen,
+      },
+    };
+    setRuntimeState(nextRuntimeState);
+    const nextConfigs = { ...pathConfigs, [activePathId]: config };
+    setPathConfigs(nextConfigs);
+    try {
+      const safeConfigs = serializePathConfigs(nextConfigs);
+      await persistPreferences({
+        aiPathsPathIndex: paths,
+        aiPathsPathConfigs: safeConfigs,
+      });
+      await persistPathSettings(paths, activePathId, config);
+      toast("Node history cleared.", { variant: "success" });
+    } catch (error) {
+      reportAiPathsError(error, { action: "clearNodeHistory", pathId: activePathId, nodeId }, "Failed to clear node history:");
+      toast("Failed to clear node history.", { variant: "error" });
+    }
+  };
+
   const updateSelectedNode = (patch: Partial<AiNode>): void => {
     if (!selectedNodeId) return;
     if (isPathLocked) {
@@ -1219,6 +1327,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleRemoveEdge,
     handleClearWires,
     handleClearConnectorData,
+    handleClearHistory,
+    handleClearNodeHistory,
     handleDisconnectPort,
     handleReconnectInput,
     handleSelectNode,

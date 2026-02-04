@@ -32,6 +32,7 @@ const createDraftSchema = z.object({
   priceComment: z.string().optional().nullable(),
   stock: z.number().optional().nullable(),
   catalogIds: z.array(z.string()).optional(),
+  categoryId: z.string().optional().nullable(),
   categoryIds: z.array(z.string()).optional(),
   tagIds: z.array(z.string()).optional(),
   parameters: z
@@ -79,7 +80,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       return parsed.response;
     }
     const data = parsed.data;
-    const draft = await createDraft(data as CreateProductDraftInput);
+    const categoryId =
+      (typeof data.categoryId === "string" && data.categoryId.trim()) ||
+      (Array.isArray(data.categoryIds) ? data.categoryIds.find((id: string) => id.trim()) : null) ||
+      null;
+    const draft = await createDraft({
+      ...data,
+      categoryId,
+    } as CreateProductDraftInput);
     return NextResponse.json(draft, { status: 201 });
   } catch (error) {
     return createErrorResponse(error, {

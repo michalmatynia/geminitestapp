@@ -250,9 +250,7 @@ export const prismaProductRepository: ProductRepository = {
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categories: product.categories.map((c: { categoryId: string }) => ({
-        categoryId: c.categoryId,
-      })),
+      categoryId: product.categories[0]?.categoryId ?? null,
       tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: product.producers.map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -307,9 +305,7 @@ export const prismaProductRepository: ProductRepository = {
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categories: product.categories.map((c: { categoryId: string }) => ({
-        categoryId: c.categoryId,
-      })),
+      categoryId: product.categories[0]?.categoryId ?? null,
       tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: product.producers.map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -465,19 +461,17 @@ export const prismaProductRepository: ProductRepository = {
     });
   },
 
-  async replaceProductCategories(productId: string, categoryIds: string[]) {
+  async replaceProductCategory(productId: string, categoryId: string | null) {
     await prisma.productCategoryAssignment.deleteMany({ where: { productId } });
-    if (categoryIds.length === 0) return;
-    const uniqueIds = Array.from(new Set(categoryIds));
-    const existing = await prisma.productCategory.findMany({
-      where: { id: { in: uniqueIds } },
+    const normalized = typeof categoryId === "string" ? categoryId.trim() : "";
+    if (!normalized) return;
+    const existing = await prisma.productCategory.findUnique({
+      where: { id: normalized },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await prisma.productCategoryAssignment.createMany({
-      data: validIds.map((categoryId: string) => ({ productId, categoryId })),
+    if (!existing) return;
+    await prisma.productCategoryAssignment.create({
+      data: { productId, categoryId: normalized },
     });
   },
 

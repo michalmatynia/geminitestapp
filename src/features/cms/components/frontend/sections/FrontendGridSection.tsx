@@ -9,11 +9,13 @@ import { FrontendHeroBlock } from "./FrontendHeroBlock";
 import { FrontendCarousel } from "./FrontendCarousel";
 import { FrontendSlideshowSection } from "./FrontendSlideshowSection";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
+import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 
 // Section-type blocks that need special rendering inside columns
 const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"]);
 
 interface FrontendGridSectionProps {
+  sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
   colorSchemes?: Record<string, ColorSchemeColors> | undefined;
@@ -241,8 +243,10 @@ function collectBackgroundImages(blocks: BlockInstance[], target: "grid" | "row"
   return result;
 }
 
-export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
+export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
+  const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
+  const sectionCustomCss = buildScopedCustomCss(settings["customCss"], sectionSelector);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
   const directColumns = blocks.filter((b: BlockInstance) => b.type === "Column");
   // Legacy: ImageElements directly in grid that don't have background mode set
@@ -275,7 +279,11 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
   if (rowsToRender.length === 0) return null;
 
   return (
-    <section style={sectionStyles} className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
+    <section
+      style={sectionStyles}
+      className={`relative${sectionId ? ` cms-node-${sectionId}` : ""} ${hasGridBackground ? "overflow-hidden" : ""}`}
+    >
+      {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
       {/* Legacy: ImageElements directly in grid without background mode */}
       {gridImageBlocks.map((block: BlockInstance) => (
         <Fragment key={`grid-background-${block.id}`}>
@@ -321,6 +329,8 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.["src"] as string) || "");
               const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
               const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
+              const rowSelector = getCustomCssSelector(row.id);
+              const rowCustomCss = buildScopedCustomCss(row.settings?.["customCss"], rowSelector);
 
               // Direction setting: horizontal (side by side) or vertical (stacked)
               const direction = (row.settings?.["direction"] as string) || "horizontal";
@@ -334,9 +344,10 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               return (
                 <div
                   key={`grid-row-${row.id}-${rowIndex}`}
-                  className={`relative ${hasRowBackground ? "overflow-hidden" : ""}`}
+                  className={`relative cms-node-${row.id} ${hasRowBackground ? "overflow-hidden" : ""}`}
                   style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                 >
+                  {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
                   {/* Row background mode images */}
                   {rowBackgroundModeImages.map((block: BlockInstance) => (
                     <Fragment key={`row-bg-mode-${block.id}`}>
@@ -444,6 +455,8 @@ function ColumnRenderer({
   const columnGapStyle = shouldStretch ? undefined : getGapStyle(column.settings?.["gapPx"]);
   const columnJustify = resolveJustifyContent(column.settings?.["justifyContent"]);
   const columnAlign = resolveAlignItems(column.settings?.["alignItems"]);
+  const columnSelector = getCustomCssSelector(column.id);
+  const columnCustomCss = buildScopedCustomCss(column.settings?.["customCss"], columnSelector);
   const columnStyles = {
     ...getSectionStyles(column.settings ?? {}, colorSchemes),
     ...getTextAlign(column.settings?.["textAlign"]),
@@ -458,9 +471,10 @@ function ColumnRenderer({
   return (
     <GsapAnimationWrapper config={animConfig}>
       <div
-        className={`relative ${hasColumnBackground ? "overflow-hidden" : ""}`}
+        className={`relative cms-node-${column.id} ${hasColumnBackground ? "overflow-hidden" : ""}`}
         style={{ ...columnStyles, ...columnStyle }}
       >
+        {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
         {/* Column background mode images */}
         {columnBackgroundModeImages.map((block: BlockInstance) => (
           <Fragment key={`col-bg-mode-${block.id}`}>
@@ -576,6 +590,8 @@ function SectionBlockRenderer({
     const linkUrl = (block.settings["linkUrl"] as string) || "";
     const linkTarget = (block.settings["linkTarget"] as string) || "_self";
     const linkRel = linkTarget === "_blank" ? "noopener noreferrer" : undefined;
+    const blockSelector = getCustomCssSelector(block.id);
+    const blockCustomCss = buildScopedCustomCss(block.settings["customCss"], blockSelector);
     const content = (
       <div
         className={`flex ${flexDirClass} ${wrapClass}`}
@@ -588,7 +604,11 @@ function SectionBlockRenderer({
     );
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
+        <div
+          style={{ ...sectionStyles, ...(stretchStyle ?? {}) }}
+          className={`${stretchClass} cms-node-${block.id}`.trim()}
+        >
+          {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
           {linkUrl ? (
             <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
               {content}

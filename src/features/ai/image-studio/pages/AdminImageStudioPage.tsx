@@ -3,10 +3,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { Button, FileUploadButton, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Textarea, useToast } from "@/shared/ui";
+import {
+  Button,
+  FileUploadButton,
+  Input,
+  Label,
+  SectionHeader,
+  SectionPanel,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SharedModal,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+  useToast,
+} from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { Folder, Image as ImageIcon, Maximize2, Minimize2, MousePointer2, Pentagon, RefreshCcw, Settings, Sparkles, Upload, Wand2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import FileManager from "@/features/files/components/FileManager";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
@@ -21,6 +41,7 @@ import { logClientError } from "@/features/observability";
 import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings, type PromptValidationRule } from "../utils/studio-settings";
 
 type ToolMode = "select" | "polygon" | "lasso" | "rect" | "ellipse" | "brush";
+type StudioTab = "studio" | "projects" | "settings" | "validation";
 
 type Point = { x: number; y: number }; // normalized 0..1
 type MaskShapeType = "polygon" | "lasso" | "rect" | "ellipse" | "brush";
@@ -46,6 +67,11 @@ type UiSuggestion = {
   reason: string | null;
   source: "heuristic" | "ai";
 };
+
+const isStudioTab = (value: string | null): value is StudioTab =>
+  value === "studio" || value === "projects" || value === "settings" || value === "validation";
+
+const normalizeStudioTab = (value: string | null): StudioTab => (isStudioTab(value) ? value : "studio");
 type UiSuggestionRow = {
   path: string;
   valuePreview: string;
@@ -66,6 +92,71 @@ function safeJsonStringify(value: unknown): string {
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
+}
+
+const STUDIO_UPLOAD_PREFIX = "/uploads/studio/";
+
+function sanitizeStudioProjectId(value: string): string {
+  return value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+}
+
+function normalizePublicPath(value: string | null | undefined): string | null {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return null;
+  if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("file:")) {
+    return raw;
+  }
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      if (url.pathname.includes("/uploads/")) {
+        return normalizePublicPath(url.pathname);
+      }
+      return raw;
+    } catch {
+      return raw;
+    }
+  }
+
+  let normalized = raw.replace(/\\/g, "/");
+  if (normalized.startsWith("public/")) {
+    normalized = `/${normalized}`;
+  }
+  const publicIndex = normalized.indexOf("/public/");
+  if (publicIndex >= 0) {
+    normalized = normalized.slice(publicIndex + "/public".length);
+  }
+  const uploadsIndex = normalized.indexOf("/uploads/");
+  if (uploadsIndex >= 0) {
+    normalized = normalized.slice(uploadsIndex);
+  }
+  if (!normalized.startsWith("/")) normalized = `/${normalized}`;
+  return normalized;
+}
+
+function normalizeStudioFilepath(projectId: string, filepath: string | null | undefined): string | null {
+  const normalized = normalizePublicPath(filepath);
+  if (!normalized) return null;
+  if (normalized.startsWith(STUDIO_UPLOAD_PREFIX)) return normalized;
+
+  const safeProjectId = sanitizeStudioProjectId(projectId);
+  const uploadsPrefix = `/uploads/${safeProjectId}/`;
+  if (safeProjectId && normalized.startsWith(uploadsPrefix)) {
+    return normalized.replace(uploadsPrefix, `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`);
+  }
+
+  return normalized;
+}
+
+function normalizeStudioAssets(projectId: string, assets: ImageFileRecord[]): ImageFileRecord[] {
+  if (!assets.length) return assets;
+  const safeProjectId = sanitizeStudioProjectId(projectId);
+  return assets.map((asset) => {
+    const normalized = normalizeStudioFilepath(safeProjectId, asset.filepath);
+    if (!normalized || normalized === asset.filepath) return asset;
+    return { ...asset, filepath: normalized };
+  });
 }
 
 async function loadImageElement(src: string): Promise<HTMLImageElement> {
@@ -165,7 +256,8 @@ async function computeBboxFromEdges(src: string): Promise<{ x: number; y: number
 }
 
 function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode {
-  const prefix = `/uploads/studio/${projectId}/`;
+  const safeProjectId = sanitizeStudioProjectId(projectId);
+  const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
   const root: TreeNode = { id: "root", name: projectId || "Project", type: "folder", path: "", children: [] };
 
   const ensureFolder = (parent: TreeNode, folderName: string, folderPath: string): TreeNode => {
@@ -181,8 +273,9 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode 
   };
 
   assets.forEach((asset: ImageFileRecord) => {
-    if (!asset.filepath || !asset.filepath.startsWith(prefix)) return;
-    const relative = asset.filepath.slice(prefix.length).replace(/^\/+/, "");
+    const normalizedPath = normalizeStudioFilepath(safeProjectId, asset.filepath);
+    if (!normalizedPath || !normalizedPath.startsWith(prefix)) return;
+    const relative = normalizedPath.slice(prefix.length).replace(/^\/+/, "");
     const parts = relative.split("/").filter(Boolean);
     if (parts.length === 0) return;
 
@@ -192,12 +285,13 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode 
       const isLast = index === parts.length - 1;
 
       if (isLast) {
+        const normalizedAsset = normalizedPath === asset.filepath ? asset : { ...asset, filepath: normalizedPath };
         cursor.children.push({
           id: `file:${asset.id}`,
           name: part,
           type: "file",
           path: parts.slice(0, -1).join("/"),
-          asset,
+          asset: normalizedAsset,
           children: [],
         });
         cursor.children.sort((a: TreeNode, b: TreeNode) => {
@@ -343,6 +437,7 @@ function MaskCanvas({
   onSelectPoint?: (index: number | null) => void;
   brushRadius: number;
 }): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
@@ -419,6 +514,15 @@ function MaskCanvas({
     const onResize = (): void => syncCanvasSize();
     window.addEventListener("resize", onResize);
     return (): void => window.removeEventListener("resize", onResize);
+  }, [syncCanvasSize]);
+
+  useEffect(() => {
+    if (!containerRef.current || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      syncCanvasSize();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, [syncCanvasSize]);
 
   const toPoint = (event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
@@ -603,7 +707,10 @@ function MaskCanvas({
   }, [onChange, shapes]);
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20">
+    <div
+      ref={containerRef}
+      className="relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20"
+    >
       {src ? (
         <>
           <div className="relative h-full w-full">
@@ -641,10 +748,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const { toast } = useToast();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
-  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
@@ -655,6 +764,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
     JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2)
   );
   const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<StudioTab>("studio");
+  const [projectSearch, setProjectSearch] = useState<string>("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const [projectId, setProjectId] = useState<string>("");
   const [newProjectId, setNewProjectId] = useState<string>("");
@@ -718,8 +831,29 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [settingsLoaded, settingsQuery.data]);
 
   useEffect(() => {
+    const nextTab = normalizeStudioTab(searchParams?.get("tab"));
+    setActiveTab(nextTab);
+  }, [searchParams]);
+
+  const handleTabChange = useCallback(
+    (value: string): void => {
+      const nextTab = normalizeStudioTab(value);
+      setActiveTab(nextTab);
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      if (nextTab === "studio") {
+        params.delete("tab");
+      } else {
+        params.set("tab", nextTab);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, router, searchParams]
+  );
+
+  useEffect(() => {
     const saved = localStorage.getItem("imageStudio.projectId") ?? "";
-    if (saved) setProjectId(saved);
+    if (saved) setProjectId(sanitizeStudioProjectId(saved));
   }, []);
 
   useEffect(() => {
@@ -796,6 +930,44 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || "Failed to delete project");
+      return id;
+    },
+    onSuccess: async (deletedId: string): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
+      if (projectId === deletedId) {
+        setProjectId("");
+        setSelectedFolder("");
+        setSelectedAssetId(null);
+      }
+      toast("Project deleted.", { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Failed to delete project.", { variant: "error" });
+    },
+  });
+
+  const handleDeleteProject = useCallback(
+    async (id: string): Promise<void> => {
+      if (!id) return;
+      const confirmed = window.confirm(`Delete project "${id}" and all its assets? This cannot be undone.`);
+      if (!confirmed) return;
+      setPendingDeleteId(id);
+      try {
+        await deleteProjectMutation.mutateAsync(id);
+      } finally {
+        setPendingDeleteId(null);
+      }
+    },
+    [deleteProjectMutation]
+  );
+
   const assetsQuery = useQuery({
     queryKey: ["image-studio", "assets", projectId],
     enabled: Boolean(projectId),
@@ -848,15 +1020,51 @@ export function AdminImageStudioPage(): React.JSX.Element {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ files: payload.files, folder: payload.folder }),
       });
-      const data = (await res.json().catch(() => null)) as StudioImportResponse | { error?: string } | null;
+      const data = (await res.json().catch(() => null)) as
+        | StudioImportResponse
+        | { error?: string; failures?: Array<{ filepath: string; error: string }> }
+        | null;
       if (!res.ok) {
+        if (data && Array.isArray((data as StudioImportResponse).failures)) {
+          return {
+            uploaded: [],
+            failures: (data as StudioImportResponse).failures ?? [],
+          };
+        }
+        if (data && "error" in data && data.error === "No files imported") {
+          return {
+            uploaded: [],
+            failures: Array.isArray(data.failures) ? data.failures : [],
+          };
+        }
         throw new Error((data && "error" in data && data.error) || "Import failed");
       }
       return (data ?? { uploaded: [], failures: [] }) as StudioImportResponse;
     },
     onSuccess: async (data: StudioImportResponse): Promise<void> => {
+      queryClient.setQueryData(["image-studio", "assets", projectId], (prev: ImageFileRecord[] | undefined) => {
+        const current = Array.isArray(prev) ? prev : [];
+        if (!data.uploaded.length) return current;
+        const byId = new Map<string, ImageFileRecord>();
+        current.forEach((asset) => {
+          if (asset && asset.id) byId.set(asset.id, asset);
+        });
+        data.uploaded.forEach((asset) => {
+          if (!asset || !asset.id) return;
+          byId.set(asset.id, asset);
+        });
+        return Array.from(byId.values());
+      });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
-      if (data.failures && data.failures.length > 0) {
+      if (!data.uploaded.length) {
+        const failure = data.failures?.[0];
+        toast(
+          failure
+            ? `No files imported. ${failure.error}: ${failure.filepath}`
+            : "No files imported. Check that selected files are under /uploads and still exist.",
+          { variant: "error" }
+        );
+      } else if (data.failures && data.failures.length > 0) {
         toast(`Imported ${data.uploaded.length} file(s). ${data.failures.length} failed.`, { variant: "info" });
       } else {
         toast("Import complete.", { variant: "success" });
@@ -867,7 +1075,17 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
-  const assets = assetsQuery.data ?? [];
+  const assets = useMemo(
+    () => normalizeStudioAssets(projectId, assetsQuery.data ?? []),
+    [projectId, assetsQuery.data]
+  );
+
+  const filteredProjects = useMemo((): string[] => {
+    const list = projectsQuery.data ?? [];
+    const term = projectSearch.trim().toLowerCase();
+    if (!term) return list;
+    return list.filter((id: string) => id.toLowerCase().includes(term));
+  }, [projectSearch, projectsQuery.data]);
 
   const selectedAsset = useMemo(() => {
     if (!selectedAssetId) return null;
@@ -887,7 +1105,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
     async (files: ImageFileSelection[]): Promise<void> => {
       setDriveImportOpen(false);
       if (files.length === 0) return;
-      await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
+      try {
+        await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
+      } catch {
+        // Errors are surfaced via toast in onError
+      }
     },
     [importFromDriveMutation, selectedFolder]
   );
@@ -1458,8 +1680,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
       if (outputs.length > 0) {
         const output = outputs[0]!;
         setSelectedAssetId(output.id);
-        const prefix = `/uploads/studio/${projectId}/`;
-        const relative = output.filepath.startsWith(prefix) ? output.filepath.slice(prefix.length) : "";
+        const safeProjectId = sanitizeStudioProjectId(projectId);
+        const prefix = `${STUDIO_UPLOAD_PREFIX}${safeProjectId}/`;
+        const normalizedOutputPath = normalizeStudioFilepath(safeProjectId, output.filepath);
+        const relative =
+          normalizedOutputPath && normalizedOutputPath.startsWith(prefix)
+            ? normalizedOutputPath.slice(prefix.length)
+            : "";
         const parts = relative.split("/").filter(Boolean);
         if (parts.length > 1) {
           setSelectedFolder(parts.slice(0, -1).join("/"));
@@ -1471,6 +1698,726 @@ export function AdminImageStudioPage(): React.JSX.Element {
       toast(error instanceof Error ? error.message : "Run failed.", { variant: "error" });
     },
   });
+
+  const settingsPanel = (
+    <div className="rounded border border-border bg-card/40 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs text-gray-300">Studio Settings</div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetStudioSettings}
+            disabled={updateSetting.isPending}
+          >
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void saveStudioSettings()}
+            disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
+          >
+            {updateSetting.isPending ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </div>
+
+      {settingsQuery.isLoading && !settingsLoaded ? (
+        <div className="mt-2 text-xs text-gray-500">Loading settings…</div>
+      ) : null}
+
+      <div className="mt-3 space-y-4">
+        <div className="space-y-2">
+          <Label className="text-xs text-gray-400">Prompt Extraction</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Mode</div>
+              <Select
+                value={studioSettings.promptExtraction.mode}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      mode: value === "gpt" ? "gpt" : "programmatic",
+                    },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="programmatic">Programmatic</SelectItem>
+                  <SelectItem value="gpt">GPT (AI)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Model</div>
+              <Input
+                value={studioSettings.promptExtraction.gpt.model}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
+                    },
+                  }))
+                }
+                className="h-8"
+                placeholder="e.g. gpt-4o-mini"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Temperature</div>
+              <Input
+                type="number"
+                value={studioSettings.promptExtraction.gpt.temperature ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      gpt: { ...prev.promptExtraction.gpt, temperature: next },
+                    },
+                  }));
+                }}
+                className="h-8"
+                min={0}
+                max={2}
+                step={0.1}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Top P</div>
+              <Input
+                type="number"
+                value={studioSettings.promptExtraction.gpt.top_p ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      gpt: { ...prev.promptExtraction.gpt, top_p: next },
+                    },
+                  }));
+                }}
+                className="h-8"
+                min={0}
+                max={1}
+                step={0.05}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Max Output Tokens</div>
+              <Input
+                type="number"
+                value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      gpt: { ...prev.promptExtraction.gpt, max_output_tokens: next },
+                    },
+                  }));
+                }}
+                className="h-8"
+                min={1}
+                step={1}
+              />
+            </div>
+            <div className="text-[11px] text-gray-500">
+              Stores config only; AI extraction endpoint is next.
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label className="text-xs text-gray-400">Prompt Validator</Label>
+            <label className="flex items-center gap-2 text-xs text-gray-200">
+              <input
+                type="checkbox"
+                checked={studioSettings.promptValidation.enabled}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
+                  }))
+                }
+              />
+              Enabled
+            </label>
+          </div>
+          <div className="text-[11px] text-gray-500">
+            Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className="text-gray-300">autofix</span> operations, and falls back to <span className="text-gray-300">similar</span> suggestions when they contain backticked replacements.
+          </div>
+          <Textarea
+            value={promptValidationRulesText}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
+            className="h-40 font-mono text-[11px]"
+            placeholder="JSON array of validator rules"
+          />
+          {promptValidationRulesError ? (
+            <div className="text-[11px] text-red-300">{promptValidationRulesError}</div>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs text-gray-400">UI Extractor</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Mode</div>
+              <Select
+                value={studioSettings.uiExtractor.mode}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    uiExtractor: {
+                      ...prev.uiExtractor,
+                      mode: value === "ai" || value === "both" ? value : "heuristic",
+                    },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="heuristic">Heuristic</SelectItem>
+                  <SelectItem value="ai">AI</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Model</div>
+              <Input
+                value={studioSettings.uiExtractor.model}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    uiExtractor: { ...prev.uiExtractor, model: e.target.value },
+                  }))
+                }
+                className="h-8"
+                placeholder="e.g. gpt-4o-mini"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Temperature</div>
+              <Input
+                type="number"
+                value={studioSettings.uiExtractor.temperature ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const next = e.target.value === "" ? null : Number(e.target.value);
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    uiExtractor: { ...prev.uiExtractor, temperature: Number.isFinite(next as number) ? next : null },
+                  }));
+                }}
+                className="h-8"
+                step={0.1}
+                min={0}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Max tokens</div>
+              <Input
+                type="number"
+                value={studioSettings.uiExtractor.max_output_tokens ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const next = e.target.value === "" ? null : Number(e.target.value);
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    uiExtractor: { ...prev.uiExtractor, max_output_tokens: Number.isFinite(next as number) ? next : null },
+                  }));
+                }}
+                className="h-8"
+                min={1}
+                step={1}
+              />
+            </div>
+          </div>
+          <div className="text-[11px] text-gray-500">
+            Suggests UI controls for extracted params using heuristic rules, AI, or both.
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs text-gray-400">Target AI (OpenAI / GPT)</Label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">API</div>
+              <Select
+                value={studioSettings.targetAi.openai.api}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === "responses" ? "responses" : "images" } },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="images">Images</SelectItem>
+                  <SelectItem value="responses">Responses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Model</div>
+              <Input
+                value={studioSettings.targetAi.openai.model}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
+                  }))
+                }
+                className="h-8"
+                placeholder={studioSettings.targetAi.openai.api === "images" ? "e.g. gpt-image-1" : "e.g. gpt-4o-mini"}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Temperature</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.temperature ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, temperature: next } },
+                  }));
+                }}
+                className="h-8"
+                min={0}
+                max={2}
+                step={0.1}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Top P</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.top_p ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, top_p: next } },
+                  }));
+                }}
+                className="h-8"
+                min={0}
+                max={1}
+                step={0.05}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Max Output Tokens</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.max_output_tokens ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, max_output_tokens: next } },
+                  }));
+                }}
+                className="h-8"
+                min={1}
+                step={1}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Seed</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.seed ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, seed: next } },
+                  }));
+                }}
+                className="h-8"
+                step={1}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Presence Penalty</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.presence_penalty ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, presence_penalty: next } },
+                  }));
+                }}
+                className="h-8"
+                min={-2}
+                max={2}
+                step={0.1}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Frequency Penalty</div>
+              <Input
+                type="number"
+                value={studioSettings.targetAi.openai.frequency_penalty ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? null : Number(raw);
+                  if (raw !== "" && !Number.isFinite(next)) return;
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, frequency_penalty: next } },
+                  }));
+                }}
+                className="h-8"
+                min={-2}
+                max={2}
+                step={0.1}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex items-center gap-2 text-xs text-gray-200">
+              <input
+                type="checkbox"
+                checked={studioSettings.targetAi.openai.stream}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, stream: e.target.checked } },
+                  }))
+                }
+              />
+              Stream
+            </label>
+
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Tool Choice</div>
+              <Select
+                value={studioSettings.targetAi.openai.tool_choice ?? "__null__"}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: {
+                      ...prev.targetAi,
+                      openai: { ...prev.targetAi.openai, tool_choice: value === "__null__" ? null : value === "none" ? "none" : "auto" },
+                    },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__null__">Default</SelectItem>
+                  <SelectItem value="auto">auto</SelectItem>
+                  <SelectItem value="none">none</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Reasoning Effort</div>
+              <Select
+                value={studioSettings.targetAi.openai.reasoning_effort ?? "__null__"}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: {
+                      ...prev.targetAi,
+                      openai: {
+                        ...prev.targetAi.openai,
+                        reasoning_effort: value === "__null__" ? null : (value as ImageStudioSettings["targetAi"]["openai"]["reasoning_effort"]),
+                      },
+                    },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__null__">Default</SelectItem>
+                  <SelectItem value="low">low</SelectItem>
+                  <SelectItem value="medium">medium</SelectItem>
+                  <SelectItem value="high">high</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">Response Format</div>
+              <Select
+                value={studioSettings.targetAi.openai.response_format ?? "__null__"}
+                onValueChange={(value: string) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: {
+                      ...prev.targetAi,
+                      openai: {
+                        ...prev.targetAi.openai,
+                        response_format: value === "__null__" ? null : value === "json" ? "json" : "text",
+                      },
+                    },
+                  }))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__null__">Default</SelectItem>
+                  <SelectItem value="text">text</SelectItem>
+                  <SelectItem value="json">json</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-gray-500">User (optional)</div>
+              <Input
+                value={studioSettings.targetAi.openai.user ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev: ImageStudioSettings) => ({
+                    ...prev,
+                    targetAi: {
+                      ...prev.targetAi,
+                      openai: { ...prev.targetAi.openai, user: e.target.value.trim() ? e.target.value : null },
+                    },
+                  }))
+                }
+                className="h-8"
+                placeholder="e.g. user_123"
+              />
+            </div>
+            <div className="text-[11px] text-gray-500">
+              Tip: store your API key at <span className="text-gray-300">/admin/settings/ai</span>.
+            </div>
+          </div>
+
+          {studioSettings.targetAi.openai.api === "images" ? (
+            <div className="space-y-2 rounded border border-border/60 bg-card/30 p-2">
+              <div className="text-xs text-gray-400">Images API options</div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">Size</div>
+                  <Input
+                    value={studioSettings.targetAi.openai.image.size ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            image: { ...prev.targetAi.openai.image, size: e.target.value.trim() ? e.target.value : null },
+                          },
+                        },
+                      }))
+                    }
+                    className="h-8"
+                    placeholder="e.g. 1536x1024"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">Quality</div>
+                  <Select
+                    value={studioSettings.targetAi.openai.image.quality ?? "__null__"}
+                    onValueChange={(value: string) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            image: {
+                              ...prev.targetAi.openai.image,
+                              quality: value === "__null__" ? null : value === "high" ? "high" : "standard",
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__null__">Default</SelectItem>
+                      <SelectItem value="standard">standard</SelectItem>
+                      <SelectItem value="high">high</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">Background</div>
+                  <Select
+                    value={studioSettings.targetAi.openai.image.background ?? "__null__"}
+                    onValueChange={(value: string) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            image: {
+                              ...prev.targetAi.openai.image,
+                              background: value === "__null__" ? null : value === "transparent" ? "transparent" : "white",
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__null__">Default</SelectItem>
+                      <SelectItem value="white">white</SelectItem>
+                      <SelectItem value="transparent">transparent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">Format</div>
+                  <Select
+                    value={studioSettings.targetAi.openai.image.format ?? "png"}
+                    onValueChange={(value: string) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            image: { ...prev.targetAi.openai.image, format: value === "jpeg" ? "jpeg" : "png" },
+                          },
+                        },
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="png">png</SelectItem>
+                      <SelectItem value="jpeg">jpeg</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">N</div>
+                  <Input
+                    type="number"
+                    value={studioSettings.targetAi.openai.image.n ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const raw = e.target.value;
+                      const next = raw === "" ? null : Number(raw);
+                      if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            image: { ...prev.targetAi.openai.image, n: next },
+                          },
+                        },
+                      }));
+                    }}
+                    className="h-8"
+                    min={1}
+                    step={1}
+                  />
+                </div>
+                <div className="text-[11px] text-gray-500">
+                  For edits, keep <span className="text-gray-300">N=1</span>.
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="space-y-1">
+            <div className="text-[11px] text-gray-500">Advanced Overrides (JSON)</div>
+            <Textarea
+              value={advancedOverridesText}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
+              className="h-28 font-mono text-[11px]"
+              placeholder='e.g. {"metadata":{"project":"milkbar-001"}}'
+            />
+            {advancedOverridesError ? (
+              <div className="text-[11px] text-red-300">{advancedOverridesError}</div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto max-w-none space-y-6 py-10">
@@ -2334,15 +3281,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSettingsOpen((prev: boolean) => !prev)}
-                title="Image Studio settings"
-              >
-                <Settings className="mr-2 size-4" />
-                Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={() => {
                   if (!promptText.trim()) return;
                   if (studioSettings.promptExtraction.mode === "programmatic") {
@@ -2397,726 +3335,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
               </Button>
             </div>
           </div>
-
-          {settingsOpen ? (
-            <div className="rounded border border-border bg-card/40 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-xs text-gray-300">Studio Settings</div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resetStudioSettings}
-                    disabled={updateSetting.isPending}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => void saveStudioSettings()}
-                    disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
-                  >
-                    {updateSetting.isPending ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </div>
-
-              {settingsQuery.isLoading && !settingsLoaded ? (
-                <div className="mt-2 text-xs text-gray-500">Loading settings…</div>
-              ) : null}
-
-              <div className="mt-3 space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">Prompt Extraction</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Mode</div>
-                      <Select
-                        value={studioSettings.promptExtraction.mode}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptExtraction: {
-                              ...prev.promptExtraction,
-                              mode: value === "gpt" ? "gpt" : "programmatic",
-                            },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="programmatic">Programmatic</SelectItem>
-                          <SelectItem value="gpt">GPT (AI)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Model</div>
-                      <Input
-                        value={studioSettings.promptExtraction.gpt.model}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptExtraction: {
-                              ...prev.promptExtraction,
-                              gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
-                            },
-                          }))
-                        }
-                        className="h-8"
-                        placeholder="e.g. gpt-4o-mini"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Temperature</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.promptExtraction.gpt.temperature ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptExtraction: {
-                              ...prev.promptExtraction,
-                              gpt: { ...prev.promptExtraction.gpt, temperature: next },
-                            },
-                          }));
-                        }}
-                        className="h-8"
-                        min={0}
-                        max={2}
-                        step={0.1}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Top P</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.promptExtraction.gpt.top_p ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptExtraction: {
-                              ...prev.promptExtraction,
-                              gpt: { ...prev.promptExtraction.gpt, top_p: next },
-                            },
-                          }));
-                        }}
-                        className="h-8"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Max Output Tokens</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptExtraction: {
-                              ...prev.promptExtraction,
-                              gpt: { ...prev.promptExtraction.gpt, max_output_tokens: next },
-                            },
-                          }));
-                        }}
-                        className="h-8"
-                        min={1}
-                        step={1}
-                      />
-                    </div>
-                    <div className="text-[11px] text-gray-500">
-                      Stores config only; AI extraction endpoint is next.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label className="text-xs text-gray-400">Prompt Validator</Label>
-                    <label className="flex items-center gap-2 text-xs text-gray-200">
-                      <input
-                        type="checkbox"
-                        checked={studioSettings.promptValidation.enabled}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
-                          }))
-                        }
-                      />
-                      Enabled
-                    </label>
-                  </div>
-                  <div className="text-[11px] text-gray-500">
-                    Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className="text-gray-300">autofix</span> operations, and falls back to <span className="text-gray-300">similar</span> suggestions when they contain backticked replacements.
-                  </div>
-                  <Textarea
-                    value={promptValidationRulesText}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
-                    className="h-40 font-mono text-[11px]"
-                    placeholder="JSON array of validator rules"
-                  />
-                  {promptValidationRulesError ? (
-                    <div className="text-[11px] text-red-300">{promptValidationRulesError}</div>
-                  ) : null}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">UI Extractor</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Mode</div>
-                      <Select
-                        value={studioSettings.uiExtractor.mode}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            uiExtractor: {
-                              ...prev.uiExtractor,
-                              mode: value === "ai" || value === "both" ? value : "heuristic",
-                            },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="heuristic">Heuristic</SelectItem>
-                          <SelectItem value="ai">AI</SelectItem>
-                          <SelectItem value="both">Both</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Model</div>
-                      <Input
-                        value={studioSettings.uiExtractor.model}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            uiExtractor: { ...prev.uiExtractor, model: e.target.value },
-                          }))
-                        }
-                        className="h-8"
-                        placeholder="e.g. gpt-4o-mini"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Temperature</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.uiExtractor.temperature ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const next = e.target.value === "" ? null : Number(e.target.value);
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            uiExtractor: { ...prev.uiExtractor, temperature: Number.isFinite(next as number) ? next : null },
-                          }));
-                        }}
-                        className="h-8"
-                        step={0.1}
-                        min={0}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Max tokens</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.uiExtractor.max_output_tokens ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const next = e.target.value === "" ? null : Number(e.target.value);
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            uiExtractor: { ...prev.uiExtractor, max_output_tokens: Number.isFinite(next as number) ? next : null },
-                          }));
-                        }}
-                        className="h-8"
-                        min={1}
-                        step={1}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-[11px] text-gray-500">
-                    Suggests UI controls for extracted params using heuristic rules, AI, or both.
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">Target AI (OpenAI / GPT)</Label>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">API</div>
-                      <Select
-                        value={studioSettings.targetAi.openai.api}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === "responses" ? "responses" : "images" } },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="images">Images</SelectItem>
-                          <SelectItem value="responses">Responses</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Model</div>
-                      <Input
-                        value={studioSettings.targetAi.openai.model}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
-                          }))
-                        }
-                        className="h-8"
-                        placeholder={studioSettings.targetAi.openai.api === "images" ? "e.g. gpt-image-1" : "e.g. gpt-4o-mini"}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Temperature</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.temperature ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, temperature: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        min={0}
-                        max={2}
-                        step={0.1}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Top P</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.top_p ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, top_p: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Max Output Tokens</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.max_output_tokens ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, max_output_tokens: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        min={1}
-                        step={1}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Seed</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.seed ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, seed: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        step={1}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Presence Penalty</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.presence_penalty ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, presence_penalty: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        min={-2}
-                        max={2}
-                        step={0.1}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Frequency Penalty</div>
-                      <Input
-                        type="number"
-                        value={studioSettings.targetAi.openai.frequency_penalty ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === "" ? null : Number(raw);
-                          if (raw !== "" && !Number.isFinite(next)) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, frequency_penalty: next } },
-                          }));
-                        }}
-                        className="h-8"
-                        min={-2}
-                        max={2}
-                        step={0.1}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 text-xs text-gray-200">
-                      <input
-                        type="checkbox"
-                        checked={studioSettings.targetAi.openai.stream}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, stream: e.target.checked } },
-                          }))
-                        }
-                      />
-                      Stream
-                    </label>
-
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Tool Choice</div>
-                      <Select
-                        value={studioSettings.targetAi.openai.tool_choice ?? "__null__"}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: { ...prev.targetAi.openai, tool_choice: value === "__null__" ? null : value === "none" ? "none" : "auto" },
-                            },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__null__">Default</SelectItem>
-                          <SelectItem value="auto">auto</SelectItem>
-                          <SelectItem value="none">none</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Reasoning Effort</div>
-                      <Select
-                        value={studioSettings.targetAi.openai.reasoning_effort ?? "__null__"}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: {
-                                ...prev.targetAi.openai,
-                                reasoning_effort: value === "__null__" ? null : (value as ImageStudioSettings["targetAi"]["openai"]["reasoning_effort"]),
-                              },
-                            },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__null__">Default</SelectItem>
-                          <SelectItem value="low">low</SelectItem>
-                          <SelectItem value="medium">medium</SelectItem>
-                          <SelectItem value="high">high</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">Response Format</div>
-                      <Select
-                        value={studioSettings.targetAi.openai.response_format ?? "__null__"}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: {
-                                ...prev.targetAi.openai,
-                                response_format: value === "__null__" ? null : value === "json" ? "json" : "text",
-                              },
-                            },
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__null__">Default</SelectItem>
-                          <SelectItem value="text">text</SelectItem>
-                          <SelectItem value="json">json</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[11px] text-gray-500">User (optional)</div>
-                      <Input
-                        value={studioSettings.targetAi.openai.user ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: { ...prev.targetAi.openai, user: e.target.value.trim() ? e.target.value : null },
-                            },
-                          }))
-                        }
-                        className="h-8"
-                        placeholder="e.g. user_123"
-                      />
-                    </div>
-                    <div className="text-[11px] text-gray-500">
-                      Tip: store your API key at <span className="text-gray-300">/admin/settings/ai</span>.
-                    </div>
-                  </div>
-
-                  {studioSettings.targetAi.openai.api === "images" ? (
-                    <div className="space-y-2 rounded border border-border/60 bg-card/30 p-2">
-                      <div className="text-xs text-gray-400">Images API options</div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-gray-500">Size</div>
-                          <Input
-                            value={studioSettings.targetAi.openai.image.size ?? ""}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setStudioSettings((prev: ImageStudioSettings) => ({
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    image: { ...prev.targetAi.openai.image, size: e.target.value.trim() ? e.target.value : null },
-                                  },
-                                },
-                              }))
-                            }
-                            className="h-8"
-                            placeholder="e.g. 1536x1024"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-gray-500">Quality</div>
-                          <Select
-                            value={studioSettings.targetAi.openai.image.quality ?? "__null__"}
-                            onValueChange={(value: string) =>
-                              setStudioSettings((prev: ImageStudioSettings) => ({
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    image: {
-                                      ...prev.targetAi.openai.image,
-                                      quality: value === "__null__" ? null : value === "high" ? "high" : "standard",
-                                    },
-                                  },
-                                },
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__null__">Default</SelectItem>
-                              <SelectItem value="standard">standard</SelectItem>
-                              <SelectItem value="high">high</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-gray-500">Background</div>
-                          <Select
-                            value={studioSettings.targetAi.openai.image.background ?? "__null__"}
-                            onValueChange={(value: string) =>
-                              setStudioSettings((prev: ImageStudioSettings) => ({
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    image: {
-                                      ...prev.targetAi.openai.image,
-                                      background: value === "__null__" ? null : value === "transparent" ? "transparent" : "white",
-                                    },
-                                  },
-                                },
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__null__">Default</SelectItem>
-                              <SelectItem value="white">white</SelectItem>
-                              <SelectItem value="transparent">transparent</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-gray-500">Format</div>
-                          <Select
-                            value={studioSettings.targetAi.openai.image.format ?? "png"}
-                            onValueChange={(value: string) =>
-                              setStudioSettings((prev: ImageStudioSettings) => ({
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    image: { ...prev.targetAi.openai.image, format: value === "jpeg" ? "jpeg" : "png" },
-                                  },
-                                },
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="png">png</SelectItem>
-                              <SelectItem value="jpeg">jpeg</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-gray-500">N</div>
-                          <Input
-                            type="number"
-                            value={studioSettings.targetAi.openai.image.n ?? ""}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              const raw = e.target.value;
-                              const next = raw === "" ? null : Number(raw);
-                              if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                              setStudioSettings((prev: ImageStudioSettings) => ({
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    image: { ...prev.targetAi.openai.image, n: next },
-                                  },
-                                },
-                              }));
-                            }}
-                            className="h-8"
-                            min={1}
-                            step={1}
-                          />
-                        </div>
-                        <div className="text-[11px] text-gray-500">
-                          For edits, keep <span className="text-gray-300">N=1</span>.
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="space-y-1">
-                    <div className="text-[11px] text-gray-500">Advanced Overrides (JSON)</div>
-                    <Textarea
-                      value={advancedOverridesText}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
-                      className="h-28 font-mono text-[11px]"
-                      placeholder='e.g. {"metadata":{"project":"milkbar-001"}}'
-                    />
-                    {advancedOverridesError ? (
-                      <div className="text-[11px] text-red-300">{advancedOverridesError}</div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
 
           <div className="space-y-2">
             <Textarea

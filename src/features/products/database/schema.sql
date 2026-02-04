@@ -95,6 +95,7 @@ CREATE TABLE product_category_assignments (
 -- Junction table indexes
 CREATE INDEX idx_product_categories_product ON product_category_assignments(product_id);
 CREATE INDEX idx_product_categories_category ON product_category_assignments(category_id);
+CREATE UNIQUE INDEX idx_product_categories_single ON product_category_assignments(product_id);
 
 -- Product parameters for flexible attributes
 CREATE TABLE product_parameters (

@@ -21,7 +21,8 @@ type ProductDocument = Omit<ProductRecord, "createdAt" | "updatedAt"> & {
   updatedAt: Date;
   images?: ProductWithImages["images"];
   catalogs?: ProductWithImages["catalogs"];
-  categories?: ProductWithImages["categories"];
+  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
+  categoryId?: string | null;
   tags?: ProductWithImages["tags"];
   producers?: ProductWithImages["producers"];
 };
@@ -61,7 +62,12 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
   images: Array.isArray(doc.images) ? doc.images : [],
   catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
-  categories: Array.isArray(doc.categories) ? doc.categories : [],
+  categoryId:
+    typeof doc.categoryId === "string"
+      ? doc.categoryId
+      : Array.isArray(doc.categories)
+      ? doc.categories[0]?.categoryId ?? null
+      : null,
   tags: Array.isArray(doc.tags) ? doc.tags : [],
   producers: Array.isArray(doc.producers) ? doc.producers : [],
 });
@@ -523,33 +529,44 @@ export const mongoProductRepository: ProductRepository = {
       );
   },
 
-  async replaceProductCategories(productId: string, categoryIds: string[]) {
+  async replaceProductCategory(productId: string, categoryId: string | null) {
     const db = await getMongoDb();
-    if (categoryIds.length === 0) {
+    const normalized = typeof categoryId === "string" ? categoryId.trim() : "";
+    if (!normalized) {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
           { $or: [{ _id: productId }, { id: productId }] },
-          { $set: { categories: [], updatedAt: new Date() } }
+          { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
         );
       return;
     }
-    const uniqueIds = Array.from(new Set(categoryIds));
     const categories = await db
       .collection("product_categories")
-      .find({ id: { $in: uniqueIds } })
+      .find({ id: normalized })
       .toArray();
+    if (categories.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          { $or: [{ _id: productId }, { id: productId }] },
+          { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
+        );
+      return;
+    }
     const now = new Date();
-    const categoryEntries = categories.map((category: Document) => ({
-      productId,
-      categoryId: (category as unknown as { id: string }).id,
-      assignedAt: now,
-    }));
+    const categoryEntries = [
+      {
+        productId,
+        categoryId: (categories[0] as unknown as { id: string }).id,
+        assignedAt: now,
+      },
+    ];
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
         { $or: [{ _id: productId }, { id: productId }] },
-        { $set: { categories: categoryEntries, updatedAt: new Date() } }
+        { $set: { categories: categoryEntries, categoryId: categoryEntries[0]?.categoryId ?? null, updatedAt: new Date() } }
       );
   },
 

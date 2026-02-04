@@ -36,6 +36,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
+import { BlockPicker } from "./BlockPicker";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 import { getBlockDefinition, getSectionDefinition } from "./section-registry";
 
@@ -159,7 +160,7 @@ export function SectionNodeItem({
   sectionIndex,
   selectedNodeId,
   onSelect,
-  onAddBlock: _onAddBlock,
+  onAddBlock,
   onDropBlock,
   onDropBlockToSection,
   onAddBlockToColumn,
@@ -206,7 +207,8 @@ export function SectionNodeItem({
     section.type === "ButtonElement";
   const isSlideshowSection = section.type === "Slideshow";
   const hasChildren = section.blocks.length > 0;
-  const canToggle = !isFileSection && (section.type === "Grid" || hasChildren);
+  const hasAllowedBlocks = (getSectionDefinition(section.type)?.allowedBlockTypes?.length ?? 0) > 0;
+  const canToggle = !isFileSection && (section.type === "Grid" || hasChildren || hasAllowedBlocks);
   const isExpanded = canToggle && expandedIds.has(section.id);
   const targetAllowsTextElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextElement") ?? false;
@@ -602,57 +604,67 @@ export function SectionNodeItem({
         </div>
       )}
 
-      {isExpanded && hasBlocks && section.type !== "Grid" && !isFileSection && (
+      {isExpanded && section.type !== "Grid" && !isFileSection && (
         <div className="ml-4 border-l border-border/30 pl-1">
-          {section.blocks.map((block: BlockInstance, index: number) => (
-            isSlideshowSection && block.type === "SlideshowFrame" ? (
-              <SlideshowFrameNodeItem
-                key={block.id}
-                frame={block}
-                index={index}
-                sectionId={section.id}
-                selectedNodeId={selectedNodeId}
-                onSelect={onSelect}
-                onAddElementToSectionBlock={onAddElementToSectionBlock}
-                onDropBlock={onDropBlock}
-                onRemoveBlock={onRemoveBlock}
-                expandedIds={expandedIds}
-                onToggleExpand={onToggleExpand}
-                draggedBlockId={draggedBlockId}
-                setDraggedBlockId={setDraggedBlockId}
-                draggedBlockType={draggedBlockType}
-                setDraggedBlockType={setDraggedBlockType}
-                draggedFromSectionId={draggedFromSectionId}
-                setDraggedFromSectionId={setDraggedFromSectionId}
-                draggedFromColumnId={draggedFromColumnId}
-                setDraggedFromColumnId={setDraggedFromColumnId}
-                draggedFromParentBlockId={draggedFromParentBlockId}
-                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-              />
-            ) : (
-              <BlockNodeItem
-                key={block.id}
-                block={block}
-                index={index}
-                sectionId={section.id}
-                selectedNodeId={selectedNodeId}
-                onSelect={onSelect}
-                onDropBlock={onDropBlock}
-                onDropBlockToSection={onDropBlockToSection}
-                onRemoveBlock={onRemoveBlock}
-                draggedBlockId={draggedBlockId}
-                setDraggedBlockId={setDraggedBlockId}
-                draggedBlockType={draggedBlockType}
-                setDraggedBlockType={setDraggedBlockType}
-                draggedFromSectionId={draggedFromSectionId}
-                setDraggedFromSectionId={setDraggedFromSectionId}
-                draggedFromColumnId={draggedFromColumnId}
-                setDraggedFromColumnId={setDraggedFromColumnId}
-                draggedFromParentBlockId={draggedFromParentBlockId}
-                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-              />
-            )
-          ))}
+          {hasBlocks ? (
+            section.blocks.map((block: BlockInstance, index: number) => (
+              isSlideshowSection && block.type === "SlideshowFrame" ? (
+                <SlideshowFrameNodeItem
+                  key={block.id}
+                  frame={block}
+                  index={index}
+                  sectionId={section.id}
+                  selectedNodeId={selectedNodeId}
+                  onSelect={onSelect}
+                  onAddElementToSectionBlock={onAddElementToSectionBlock}
+                  onDropBlock={onDropBlock}
+                  onRemoveBlock={onRemoveBlock}
+                  expandedIds={expandedIds}
+                  onToggleExpand={onToggleExpand}
+                  draggedBlockId={draggedBlockId}
+                  setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
+                  draggedFromSectionId={draggedFromSectionId}
+                  setDraggedFromSectionId={setDraggedFromSectionId}
+                  draggedFromColumnId={draggedFromColumnId}
+                  setDraggedFromColumnId={setDraggedFromColumnId}
+                  draggedFromParentBlockId={draggedFromParentBlockId}
+                  setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                />
+              ) : (
+                <BlockNodeItem
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  sectionId={section.id}
+                  selectedNodeId={selectedNodeId}
+                  onSelect={onSelect}
+                  onDropBlock={onDropBlock}
+                  onDropBlockToSection={onDropBlockToSection}
+                  onRemoveBlock={onRemoveBlock}
+                  draggedBlockId={draggedBlockId}
+                  setDraggedBlockId={setDraggedBlockId}
+                  draggedBlockType={draggedBlockType}
+                  setDraggedBlockType={setDraggedBlockType}
+                  draggedFromSectionId={draggedFromSectionId}
+                  setDraggedFromSectionId={setDraggedFromSectionId}
+                  draggedFromColumnId={draggedFromColumnId}
+                  setDraggedFromColumnId={setDraggedFromColumnId}
+                  draggedFromParentBlockId={draggedFromParentBlockId}
+                  setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                />
+              )
+            ))
+          ) : (
+            <div className="py-2 text-xs text-gray-500">No blocks yet.</div>
+          )}
+          <div className="mt-1">
+            <BlockPicker
+              sectionType={section.type}
+              onSelect={(blockType: string) => onAddBlock(section.id, blockType)}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -755,8 +767,10 @@ function SlideshowFrameNodeItem({
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
+          const dragType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
           const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
-          const isBlockDrop = (draggedBlockId && draggedBlockId !== frame.id) || hasBlockPayload;
+          const isFrameDrag = dragType === "SlideshowFrame";
+          const isBlockDrop = isFrameDrag && ((draggedBlockId && draggedBlockId !== frame.id) || hasBlockPayload);
           if (!isBlockDrop) return;
           e.preventDefault();
           e.stopPropagation();
@@ -770,6 +784,8 @@ function SlideshowFrameNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
+          const dragType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
+          if (dragType !== "SlideshowFrame") return;
           const dragId =
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
           const fromSection =
@@ -1923,7 +1939,7 @@ function BlockNodeItem({
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
       className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-        isBackgroundMode ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
+        isBackgroundMode ? "cursor-not-allowed" : canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
       } ${
         isDragOver
           ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
@@ -1940,8 +1956,10 @@ function BlockNodeItem({
         <span title={`Locked as ${backgroundTarget} background`}>
           <Lock className="size-3 shrink-0 text-amber-500" />
         </span>
-      ) : (
+      ) : canDrag ? (
         <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
+      ) : (
+        <span className="size-3 shrink-0" />
       )}
       <Icon className="size-3.5 shrink-0" />
       <span className="truncate">{blockLabel}</span>

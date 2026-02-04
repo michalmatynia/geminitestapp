@@ -186,6 +186,16 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           ? Boolean(input.context?.critical)
           : false;
 
+    // Emit to console for standard logging and capture tools
+    const consoleMsg = `[${input.source || "system"}] ${input.message}`;
+    if (input.level === "error" || critical) {
+      console.error(consoleMsg, context);
+    } else if (input.level === "warn") {
+      console.warn(consoleMsg, context);
+    } else {
+      console.log(consoleMsg, context);
+    }
+
     if (critical) {
       await notifyCriticalError(created, critical);
     }

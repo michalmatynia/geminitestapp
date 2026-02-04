@@ -150,7 +150,7 @@ function normalizeStudioFilepath(projectId: string, filepath: string | null | un
 function normalizeStudioAssets(projectId: string, assets: ImageFileRecord[]): ImageFileRecord[] {
   if (!assets.length) return assets;
   const safeProjectId = sanitizeStudioProjectId(projectId);
-  return assets.map((asset) => {
+  return assets.map((asset: ImageFileRecord) => {
     const normalized = normalizeStudioFilepath(safeProjectId, asset.filepath);
     if (!normalized || normalized === asset.filepath) return asset;
     return { ...asset, filepath: normalized };
@@ -158,10 +158,10 @@ function normalizeStudioAssets(projectId: string, assets: ImageFileRecord[]): Im
 }
 
 async function loadImageElement(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  return new Promise<HTMLImageElement>((resolve: (value: HTMLImageElement) => void, reject: (reason?: any) => void) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Failed to load image for mask generation."));
+    img.onload = (): void => resolve(img);
+    img.onerror = (): void => reject(new Error("Failed to load image for mask generation."));
     img.src = src;
   });
 }
@@ -541,7 +541,7 @@ function MaskCanvas({
       syncCanvasSize();
     });
     observer.observe(containerRef.current);
-    return () => observer.disconnect();
+    return (): void => observer.disconnect();
   }, [syncCanvasSize]);
 
   const toPoint = (event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
@@ -649,7 +649,7 @@ function MaskCanvas({
           if (hitSegment) {
             onSelectShape(hitSegment.shapeId);
             onChange(
-              shapes.map((shape) => {
+              shapes.map((shape: MaskShape) => {
                 if (shape.id !== hitSegment.shapeId) return shape;
                 const nextPoints = [...shape.points];
                 nextPoints.splice(hitSegment.insertIndex, 0, hitSegment.point);
@@ -695,7 +695,7 @@ function MaskCanvas({
           const dist = Math.hypot(dx, dy);
           if (dist < 10) {
             onChange(
-              shapes.map((shape) =>
+              shapes.map((shape: MaskShape) =>
                 shape.id === activeShape.id ? { ...shape, closed: true } : shape
               )
             );
@@ -703,7 +703,7 @@ function MaskCanvas({
           }
         }
         onChange(
-          shapes.map((shape) =>
+          shapes.map((shape: MaskShape) =>
             shape.id === activeShape.id ? { ...shape, points: [...shape.points, nextPoint] } : shape
           )
         );
@@ -764,7 +764,7 @@ function MaskCanvas({
       }
     };
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    return (): void => window.removeEventListener("keydown", handleKey);
   }, [activeShapeId, onChange, onSelectPoint, selectedPointIndex, shapes]);
 
   const handleMouseMove = useCallback(
@@ -893,6 +893,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
+  const hasManualProjectSelectionRef = useRef<boolean>(false);
   const [moveTargetFolder, setMoveTargetFolder] = useState<string>("");
 
   const [tool, setTool] = useState<ToolMode>("select");
@@ -975,6 +976,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
     const saved = localStorage.getItem("imageStudio.projectId") ?? "";
     if (saved) setProjectId(sanitizeStudioProjectId(saved));
   }, []);
+
+  useEffect(() => {
+    if (projectId) return;
+    if (hasManualProjectSelectionRef.current) return;
+    const first = projectsQuery.data?.[0];
+    if (first) {
+      setProjectId(first);
+      hasManualProjectSelectionRef.current = true;
+    }
+  }, [projectId, projectsQuery.data]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1433,7 +1444,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       });
       const data = (await res.json().catch(() => null)) as { rules?: PromptValidationRule[]; error?: string } | null;
       if (!res.ok) throw new Error(data?.error || "Failed to learn patterns.");
-      const rules = Array.isArray(data?.rules) ? data!.rules : [];
+      const rules = Array.isArray(data?.rules) ? data.rules : [];
       setLearnCandidates(rules);
       const selection: Record<string, boolean> = {};
       rules.forEach((rule: PromptValidationRule, index: number) => {
@@ -1603,7 +1614,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         });
         const data = (await res.json().catch(() => null)) as { suggestions?: UiSuggestion[]; error?: string } | null;
         if (!res.ok) throw new Error(data?.error || "Failed to extract UI suggestions.");
-        ai = Array.isArray(data?.suggestions) ? data!.suggestions : [];
+        ai = Array.isArray(data?.suggestions) ? data.suggestions : [];
       }
       setUiSuggestionRows(buildSuggestionRows(heuristic, ai));
     } catch (error) {
@@ -2881,7 +2892,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           setUiSuggestionRows((prev) =>
                             prev.map((item) =>
                               item.path === row.path && isParamUiControl(value)
-                                ? { ...item, selected: value as ParamUiControl }
+                                ? { ...item, selected: value }
                                 : item
                             )
                           )
@@ -3179,7 +3190,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
             <div className="flex items-center gap-2">
-              <Select value={projectId || "__none__"} onValueChange={(value: string) => setProjectId(value === "__none__" ? "" : value)}>
+              <Select
+                value={projectId || "__none__"}
+                onValueChange={(value: string) => {
+                  hasManualProjectSelectionRef.current = true;
+                  setProjectId(value === "__none__" ? "" : value);
+                }}
+              >
                 <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder={projectsQuery.isLoading ? "Loading..." : "Select project"} />
                 </SelectTrigger>
@@ -3201,6 +3218,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 <RefreshCcw className="size-4" />
               </Button>
             </div>
+            {!projectId ? (
+              <div className="text-[11px] text-amber-200">
+                Select or create a project to enable uploads and imports.
+              </div>
+            ) : null}
 
             <div className="flex items-center gap-2">
               <Input

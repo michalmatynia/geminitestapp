@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
+import { useToast, Button, UnifiedSelect, Input, Label, SharedModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from "@/shared/ui";
 import { useState, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -124,30 +124,23 @@ export function TagsSettings({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Tags are managed per catalog.
         </p>
         <div className="w-full max-w-xs">
-          <Select
+          <UnifiedSelect
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: Catalog) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault ? " (Default)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: Catalog) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? " (Default)" : ""}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {selectedCatalogId && (
         <>
@@ -161,7 +154,7 @@ export function TagsSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Tags for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -184,18 +177,17 @@ export function TagsSettings({
             ) : (
               <div className="space-y-2">
                 {tags.map((tag: ProductTag) => (
-                  <div
+                  <SectionPanel
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
+                    variant="subtle-compact"
+                    className="flex items-center justify-between gap-3 bg-gray-900"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className="size-3 rounded-full border border"
-                        style={{ backgroundColor: tag.color || "#38bdf8" }}
+                      <UiTag
+                        label={tag.name}
+                        color={tag.color || "#38bdf8"}
+                        dot
                       />
-                      <span className="text-sm text-gray-100 truncate">
-                        {tag.name}
-                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -214,11 +206,11 @@ export function TagsSettings({
                         <Trash2 className="size-3" />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 
@@ -262,7 +254,7 @@ export function TagsSettings({
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={formData.catalogId}
                   onValueChange={(value: string): void =>
                     setFormData((prev: TagFormData) => ({
@@ -270,19 +262,12 @@ export function TagsSettings({
                       catalogId: value,
                     }))
                   }
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
-                    <SelectValue placeholder="Select catalog" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {catalogs.map((catalog: Catalog) => (
-                      <SelectItem key={catalog.id} value={catalog.id}>
-                        {catalog.name}
-                        {catalog.isDefault ? " (Default)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={catalogs.map((catalog: Catalog) => ({
+                    value: catalog.id,
+                    label: `${catalog.name}${catalog.isDefault ? " (Default)" : ""}`
+                  }))}
+                  placeholder="Select catalog"
+                />
               </div>
             </div>
 

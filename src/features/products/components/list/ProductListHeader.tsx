@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Pagination, ConfirmDialog } from "@/shared/ui";
+import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog } from "@/shared/ui";
 import { memo, useState } from "react";
 import {
   PlusIcon,
@@ -129,60 +129,38 @@ export const ProductListHeader = memo(function ProductListHeader({
 
         {/* Filter selectors */}
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-          <Select
+          <UnifiedSelect
             value={nameLocale}
             onValueChange={(value: string) =>
               setNameLocale(value as "name_en" | "name_pl" | "name_de")
             }
-          >
-            <SelectTrigger
-              className="w-full sm:w-44"
-              aria-label="Select product name language"
-            >
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent>
-              {languageOptions.map((option: { value: "name_en" | "name_pl" | "name_de"; label: string }) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={languageOptions}
+            placeholder="Language"
+            triggerClassName="w-full sm:w-44"
+            ariaLabel="Select product name language"
+          />
 
-          <Select value={currencyCode} onValueChange={setCurrencyCode}>
-            <SelectTrigger
-              className="w-full sm:w-32"
-              aria-label="Select currency"
-            >
-              <SelectValue placeholder="Currency" />
-            </SelectTrigger>
-            <SelectContent>
-              {currencyOptions.map((code: string) => (
-                <SelectItem key={code} value={code}>
-                  {code}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <UnifiedSelect
+            value={currencyCode}
+            onValueChange={setCurrencyCode}
+            options={currencyOptions.map((code: string) => ({ value: code, label: code }))}
+            placeholder="Currency"
+            triggerClassName="w-full sm:w-32"
+            ariaLabel="Select currency"
+          />
 
-          <Select value={catalogFilter} onValueChange={setCatalogFilter}>
-            <SelectTrigger
-              className="w-full sm:w-52"
-              aria-label="Filter by catalog"
-            >
-              <SelectValue placeholder="Catalog" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All catalogs</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {catalogs.map((catalog: Catalog) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <UnifiedSelect
+            value={catalogFilter}
+            onValueChange={setCatalogFilter}
+            options={[
+              { value: "all", label: "All catalogs" },
+              { value: "unassigned", label: "Unassigned" },
+              ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
+            ]}
+            placeholder="Catalog"
+            triggerClassName="w-full sm:w-52"
+            ariaLabel="Filter by catalog"
+          />
         </div>
 
         <div className="flex items-center gap-2">

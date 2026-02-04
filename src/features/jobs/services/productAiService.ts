@@ -45,10 +45,32 @@ const toProductSummary = (product: Record<string, unknown> | null): ProductSumma
 };
 
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
-  console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
+  try {
+    const { ErrorSystem } = await import("@/features/observability/services/error-system");
+    void ErrorSystem.logInfo(`[enqueueProductAiJob] Creating job`, {
+      service: "product-ai-service",
+      productId,
+      context: { type, payload: typeof payload === 'object' ? payload : undefined }
+    });
+  } catch {
+    // Fallback to console if logging fails
+    console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
+  }
   const jobRepository = await getProductAiJobRepository();
   const jobRecord = await jobRepository.createJob(productId, type, payload);
-  console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+  
+  try {
+    const { ErrorSystem } = await import("@/features/observability/services/error-system");
+    void ErrorSystem.logInfo(`[enqueueProductAiJob] Job created`, {
+      service: "product-ai-service",
+      productId,
+      jobId: jobRecord.id,
+      context: { type }
+    });
+  } catch {
+     console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+  }
+  
   return toProductAiJob(jobRecord);
 }
 

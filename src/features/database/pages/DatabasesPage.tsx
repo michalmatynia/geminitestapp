@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog } from "@/shared/ui";
+import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger } from "@/shared/ui";
 import { useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
@@ -208,30 +208,16 @@ export default function DatabasesPage(): React.JSX.Element {
       />
 
       {/* Tabs */}
-      <div className="mb-6 border-b border">
-        <div className="flex gap-4">
-          <Button
-            onClick={(): void => setActiveTab("postgresql")}
-            className={`px-4 py-2 font-medium transition ${ 
-              activeTab === "postgresql"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            PostgreSQL
-          </Button>
-          <Button
-            onClick={(): void => setActiveTab("mongodb")}
-            className={`px-4 py-2 font-medium transition ${ 
-              activeTab === "mongodb"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            MongoDB
-          </Button>
-        </div>
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value: string): void => setActiveTab(value as DatabaseType)}
+        className="mb-6"
+      >
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="postgresql">PostgreSQL</TabsTrigger>
+          <TabsTrigger value="mongodb">MongoDB</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <SectionHeader
         title={`Databases - ${activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}`}

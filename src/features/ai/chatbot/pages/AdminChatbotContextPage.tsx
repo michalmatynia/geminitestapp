@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag } from "@/shared/ui";
 import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
 import Link from "next/link";
 import React, { Suspense, useEffect, useRef, useState } from "react";
@@ -414,12 +414,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
                           <span className="text-xs text-gray-500">None</span>
                         ) : (
                           (item.tags || []).map((tag: string): React.JSX.Element => (
-                            <span
+                            <Tag
                               key={tag}
-                              className="rounded-full border px-2 py-[1px] text-xs text-gray-300"
-                            >
-                              {tag}
-                            </span>
+                              label={tag}
+                            />
                           ))
                         )}
                       </div>
@@ -522,11 +520,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {(modalDraft.tags || []).map((tag: string): React.JSX.Element => (
-                      <Button
+                      <Tag
                         key={tag}
-                        type="button"
-                        className="rounded-full border bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                        onClick={(): void => {
+                        label={tag}
+                        onRemove={(): void => {
                           setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
                             prev
                               ? {
@@ -538,10 +535,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                               : prev
                           );
                         }}
-                      >
-                        {tag}
-                        <span className="ml-1 text-gray-500">×</span>
-                      </Button>
+                      />
                     ))}
                   </div>
                   <div className="mt-2 flex gap-2">

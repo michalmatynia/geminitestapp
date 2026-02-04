@@ -1,86 +1,16 @@
-import type { PageSummary, Page, PageStatus, PageSeoData } from "./index";
-
-// ---------------------------------------------------------------------------
-// Settings schema (drives the right-panel form controls)
-// ---------------------------------------------------------------------------
-
-export interface SettingsFieldOption {
-  label: string;
-  value: string;
-}
-
-export interface SettingsField {
-  key: string;
-  label: string;
-  type:
-    | "text"
-    | "select"
-    | "radio"
-    | "number"
-    | "image"
-    | "asset3d"
-    | "color-scheme"
-    | "range"
-    | "color"
-    | "font-family"
-    | "font-weight"
-    | "spacing"
-    | "border"
-    | "shadow"
-    | "background"
-    | "typography"
-    | "link"
-    | "alignment";
-  options?: SettingsFieldOption[];
-  defaultValue?: unknown;
-  min?: number;
-  max?: number;
-  disabled?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Definition types (registry entries -- what section/block types exist)
-// ---------------------------------------------------------------------------
-
-export interface SectionDefinition {
-  type: string;
-  label: string;
-  icon: string;
-  defaultSettings: Record<string, unknown>;
-  settingsSchema: SettingsField[];
-  allowedBlockTypes: string[];
-}
-
-export interface BlockDefinition {
-  type: string;
-  label: string;
-  icon: string;
-  defaultSettings: Record<string, unknown>;
-  settingsSchema: SettingsField[];
-  /** Optional: block types that can be dropped directly into this block (e.g., Row accepts elements) */
-  allowedBlockTypes?: string[];
-}
-
-// ---------------------------------------------------------------------------
-// Instance types (placed on a page)
-// ---------------------------------------------------------------------------
-
-export type PageZone = "header" | "template" | "footer";
-
-export interface BlockInstance {
-  id: string;
-  type: string;
-  settings: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export interface SectionInstance {
-  id: string;
-  type: string;
-  zone: PageZone;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-}
+import type {
+  PageSummary,
+  Page,
+  PageStatus,
+  PageSeoData,
+  SettingsFieldOption,
+  SettingsField,
+  SectionDefinition,
+  BlockDefinition,
+  PageZone,
+  BlockInstance,
+  SectionInstance
+} from "@/shared/types/domain/cms";
 
 // ---------------------------------------------------------------------------
 // Page builder state & actions

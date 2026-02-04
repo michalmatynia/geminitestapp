@@ -67,7 +67,7 @@ export const ADMIN_MENU_COLORS: AdminMenuColorOption[] = [
 ];
 
 export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object.fromEntries(
-  ADMIN_MENU_COLORS.map((option) => [option.value, option])
+  ADMIN_MENU_COLORS.map((option: AdminMenuColorOption) => [option.value, option])
 );
 
 export type FlattenedNavItem = {
@@ -148,7 +148,10 @@ export const adminNavToCustomNav = (items: NavItem[]): AdminMenuCustomNode[] =>
       : {}),
   }));
 
-const indexAdminNav = (items: NavItem[], map = new Map<string, NavItem>()): Map<string, NavItem> => {
+const indexAdminNav = (
+  items: NavItem[],
+  map: Map<string, NavItem> = new Map<string, NavItem>()
+): Map<string, NavItem> => {
   items.forEach((item: NavItem) => {
     map.set(item.id, item);
     if (item.children && item.children.length > 0) {
@@ -865,10 +868,16 @@ export default function Menu(): React.ReactNode {
 
   const { data: preferences } = useUserPreferences();
   const favoriteIds = useMemo(
-    () => (preferences?.adminMenuFavorites ?? []).filter((id): id is string => typeof id === "string" && id.length > 0),
+    () =>
+      (preferences?.adminMenuFavorites ?? []).filter(
+        (id: unknown): id is string => typeof id === "string" && id.length > 0
+      ),
     [preferences]
   );
-  const sectionColors = preferences?.adminMenuSectionColors ?? {};
+  const sectionColors = useMemo(
+    () => preferences?.adminMenuSectionColors ?? {},
+    [preferences?.adminMenuSectionColors]
+  );
   const customEnabled = Boolean(preferences?.adminMenuCustomEnabled);
   const customNav = useMemo(
     () => normalizeAdminMenuCustomNav(preferences?.adminMenuCustomNav),

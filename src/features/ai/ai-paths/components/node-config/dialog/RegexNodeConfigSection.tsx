@@ -256,22 +256,25 @@ export function RegexNodeConfigSection({
     };
   }, [isRegexNode, selectedNode.config?.regex]);
 
-  const updateRegex = (patch: Partial<RegexConfig>): void => {
-    if (!isRegexNode) return;
-    updateSelectedNodeConfig({
-      regex: {
-        ...regexConfig,
-        ...patch,
-      },
-    });
-  };
+  const updateRegex = React.useCallback(
+    (patch: Partial<RegexConfig>): void => {
+      if (!isRegexNode) return;
+      updateSelectedNodeConfig({
+        regex: {
+          ...regexConfig,
+          ...patch,
+        },
+      });
+    },
+    [isRegexNode, updateSelectedNodeConfig, regexConfig]
+  );
 
   const [pendingAiRegex, setPendingAiRegex] = React.useState<string>("");
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   const lastInjectedResponseRef = React.useRef<string>("");
   const hasAiProposal = Boolean(regexConfig.aiProposal?.pattern?.trim());
   const activeVariant = regexConfig.activeVariant ?? "manual";
-  const aiProposals = regexConfig.aiProposals ?? [];
+  const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
 
   const applyVariant = React.useCallback(
     (variant: "manual" | "ai"): void => {
@@ -308,7 +311,7 @@ export function RegexNodeConfigSection({
       };
       if (!normalized.pattern) return;
       const exists = aiProposals.some(
-        (item) =>
+        (item: { pattern: string; flags?: string; groupBy?: string; createdAt: string }) =>
           item.pattern === normalized.pattern &&
           (item.flags ?? "") === normalized.flags &&
           (item.groupBy ?? "") === normalized.groupBy
@@ -736,7 +739,7 @@ export function RegexNodeConfigSection({
               <div className="mt-3 rounded-md border border-border bg-card/50 p-2">
                 <div className="mb-2 text-[11px] text-gray-300">AI Proposal History</div>
                 <div className="space-y-2">
-                  {aiProposals.map((proposal, index) => (
+                  {aiProposals.map((proposal: { pattern: string; flags?: string; groupBy?: string; createdAt: string }, index: number) => (
                     <div key={`${proposal.pattern}-${proposal.createdAt}-${index}`} className="rounded border border-border/60 bg-card/60 p-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px] text-gray-200 truncate">{proposal.pattern}</div>

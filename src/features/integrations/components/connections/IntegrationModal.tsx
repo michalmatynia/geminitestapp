@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Card, SharedModal, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, SharedModal, Label, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 
 import {
@@ -358,7 +358,7 @@ export function IntegrationModal({
               )}
 
               {isTradera && activeConnection && (
-                <div className="mt-4 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
+                <SectionPanel variant="subtle-compact" className="mt-4 text-xs text-gray-300">
                   <div className="flex items-center justify-between gap-3">
                     <p>
                       <span className="text-gray-400">Session cookie:</span>{" "}
@@ -383,7 +383,7 @@ export function IntegrationModal({
                         ).toLocaleString()
                       : "—"}
                   </p>
-                </div>
+                </SectionPanel>
               )}
             </TabsContent>
 
@@ -442,7 +442,7 @@ export function IntegrationModal({
 
             {showPlaywright && (
               <TabsContent value="playwright" className="mt-4 space-y-4">
-                <Card className="border-border bg-card/60 p-4">
+                <SectionPanel variant="subtle" className="p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">
@@ -473,31 +473,27 @@ export function IntegrationModal({
                         <Label className="text-xs text-gray-400">
                           Persona
                         </Label>
-                        <Select
+                        <UnifiedSelect
                           value={playwrightPersonaId ?? "custom"}
                           onValueChange={(value: string): void =>
                             onSelectPlaywrightPersona(
                               value === "custom" ? null : value
                             )
                           }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select persona" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="custom">Custom</SelectItem>
-                            {playwrightPersonas.map((persona: PlaywrightPersona) => (
-                              <SelectItem key={persona.id} value={persona.id}>
-                                {persona.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={[
+                            { value: "custom", label: "Custom" },
+                            ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
+                              value: persona.id,
+                              label: persona.name
+                            }))
+                          ]}
+                          placeholder="Select persona"
+                        />
                         <p className="text-[11px] text-gray-500">
                           Selecting a persona overwrites the settings below.
                         </p>
                       </div>
-                      <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
+                      <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
                         {selectedPersona ? (
                           <>
                             <p className="text-xs font-semibold text-gray-200">
@@ -518,10 +514,10 @@ export function IntegrationModal({
                             </p>
                           </>
                         )}
-                      </div>
+                      </SectionPanel>
                     </div>
                   )}
-                </Card>
+                </SectionPanel>
 
                 <DynamicPlaywrightSettingsForm
                   settings={playwrightSettings}

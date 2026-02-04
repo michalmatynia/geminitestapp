@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from "lucide-react";
 
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
@@ -61,7 +61,7 @@ const cloneCustomNav = (items: AdminMenuCustomNode[]): AdminMenuCustomNode[] => 
 
 const flattenCustomNav = (
   items: AdminMenuCustomNode[],
-  depth = 0,
+  depth: number = 0,
   pathPrefix: number[] = []
 ): FlattenedCustomNode[] => {
   const entries: FlattenedCustomNode[] = [];
@@ -86,7 +86,10 @@ const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNa
   return entries;
 };
 
-const collectCustomIds = (items: AdminMenuCustomNode[], ids = new Set<string>()): Set<string> => {
+const collectCustomIds = (
+  items: AdminMenuCustomNode[],
+  ids: Set<string> = new Set<string>()
+): Set<string> => {
   items.forEach((node: AdminMenuCustomNode) => {
     ids.add(node.id);
     if (node.children && node.children.length > 0) {
@@ -127,8 +130,8 @@ const stripUsedIds = (
   usedIds.add(node.id);
   const children = node.children
     ? node.children
-        .map((child) => stripUsedIds(child, usedIds))
-        .filter((child): child is AdminMenuCustomNode => Boolean(child))
+        .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
+        .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
     : undefined;
   return {
     ...node,
@@ -147,6 +150,8 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const [customEnabled, setCustomEnabled] = useState(false);
   const [customNav, setCustomNav] = useState<AdminMenuCustomNode[]>([]);
   const [libraryQuery, setLibraryQuery] = useState("");
+  const [draggedPath, setDraggedPath] = useState<number[] | null>(null);
+  const [dragOver, setDragOver] = useState<{ path: number[]; position: "above" | "below" } | null>(null);
 
   const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     event.preventDefault();
@@ -178,7 +183,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     setFavorites(Array.isArray(preferences.adminMenuFavorites) ? preferences.adminMenuFavorites : []);
     setSectionColors(
       preferences.adminMenuSectionColors && typeof preferences.adminMenuSectionColors === "object"
-        ? (preferences.adminMenuSectionColors as Record<string, string>)
+        ? preferences.adminMenuSectionColors
         : {}
     );
     setCustomEnabled(Boolean(preferences.adminMenuCustomEnabled));
@@ -294,8 +299,41 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     });
   };
 
-  const updateCustomLabel = (path: number[], value: string): void => {
+  const isSamePath = (a: number[], b: number[]): boolean =>
+    a.length === b.length && a.every((value, index) => value === b[index]);
+  const isPathPrefix = (parent: number[], child: number[]): boolean =>
+    parent.length <= child.length && parent.every((value, index) => value === child[index]);
+
+  const moveCustomNodeTo = (
+    dragged: number[],
+    target: number[],
+    position: "above" | "below"
+  ): void => {
+    if (isSamePath(dragged, target)) return;
     setCustomNav((prev) => {
+      const next = cloneCustomNav(prev);
+      const draggedInfo = getParentAtPath(next, dragged);
+      const targetInfo = getParentAtPath(next, target);
+      if (!draggedInfo || !targetInfo) return prev;
+      const targetParentPath = target.slice(0, -1);
+      if (isPathPrefix(dragged, targetParentPath)) return prev;
+      const [node] = draggedInfo.parent.splice(draggedInfo.index, 1);
+      if (!node) return prev;
+
+      let insertIndex = position === "above" ? targetInfo.index : targetInfo.index + 1;
+      if (
+        draggedInfo.parent === targetInfo.parent &&
+        draggedInfo.index < insertIndex
+      ) {
+        insertIndex -= 1;
+      }
+      targetInfo.parent.splice(insertIndex, 0, node);
+      return next;
+    });
+  };
+
+  const updateCustomLabel = (path: number[], value: string): void => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
       if (!info || !info.parent[info.index]) return prev;
@@ -305,7 +343,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const updateCustomHref = (path: number[], value: string): void => {
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
       if (!info || !info.parent[info.index]) return prev;
@@ -319,7 +357,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const addCustomNodeAt = (kind: "link" | "group", parentPath?: number[]): void => {
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const node = createCustomNode(kind);
       if (!parentPath || parentPath.length === 0) {
@@ -335,7 +373,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const addBuiltInNode = (entry: AdminNavNodeEntry): void => {
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const usedIds = collectCustomIds(next);
       const [node] = adminNavToCustomNav([entry.item]);
@@ -348,7 +386,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const removeCustomNode = (path: number[]): void => {
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
       if (!info) return prev;
@@ -357,22 +395,8 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     });
   };
 
-  const moveCustomNode = (path: number[], direction: "up" | "down"): void => {
-    setCustomNav((prev) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info) return prev;
-      const targetIndex = direction === "up" ? info.index - 1 : info.index + 1;
-      if (targetIndex < 0 || targetIndex >= info.parent.length) return prev;
-      const [node] = info.parent.splice(info.index, 1);
-      if (!node) return prev;
-      info.parent.splice(targetIndex, 0, node);
-      return next;
-    });
-  };
-
   const indentCustomNode = (path: number[]): void => {
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
       if (!info || info.index === 0) return prev;
@@ -387,7 +411,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
 
   const outdentCustomNode = (path: number[]): void => {
     if (path.length < 2) return;
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
       if (!info) return prev;
@@ -404,9 +428,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const handleSave = async (): Promise<void> => {
     try {
       const validFavorites = favorites.filter((id: string) => flattened.some((item: AdminNavLeaf) => item.id === id));
-      const sectionIds = new Set(sections.map((section) => section.id));
+      const sectionIds = new Set(sections.map((section: { id: string }) => section.id));
       const validSectionColors = Object.fromEntries(
-        Object.entries(sectionColors).filter(([sectionId]) => sectionIds.has(sectionId))
+        Object.entries(sectionColors).filter(([sectionId]: [string, string]) => sectionIds.has(sectionId))
       );
       await updatePreferences.mutateAsync({
         adminMenuFavorites: validFavorites,
@@ -546,7 +570,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           <p className="mt-1 text-xs text-gray-400">Assign accents to top-level menu sections.</p>
 
           <div className="mt-4 space-y-4">
-            {sections.map((section) => {
+            {sections.map((section: NavItem) => {
               const current = sectionColors[section.id] ?? "none";
               const colorStyle = current !== "none" ? ADMIN_MENU_COLOR_MAP[current] : null;
               return (
@@ -559,7 +583,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                     )}
                     <span className="text-sm text-gray-200">{section.label}</span>
                   </div>
-                  <Select value={current} onValueChange={(value) => updateSectionColor(section.id, value)}>
+                  <Select value={current} onValueChange={(value: string) => updateSectionColor(section.id, value)}>
                     <SelectTrigger className="h-8 w-[160px] border-border bg-gray-900/40 text-xs text-white">
                       <SelectValue placeholder="Select color" />
                     </SelectTrigger>
@@ -592,7 +616,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
           <div className="flex items-center gap-2">
             <Label className="text-xs text-gray-400">Use custom layout</Label>
-            <Switch checked={customEnabled} onCheckedChange={(checked) => setCustomEnabled(Boolean(checked))} />
+            <Switch checked={customEnabled} onCheckedChange={(checked: boolean) => setCustomEnabled(Boolean(checked))} />
           </div>
         </div>
 
@@ -619,6 +643,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">Layout</h3>
+            <p className="mt-1 text-[11px] text-gray-500">Drag the grip to reorder. Use indent/outdent to nest items.</p>
             {flattenedCustomNav.length === 0 ? (
               <p className="mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
                 No items yet. Add links or groups to start building your menu.
@@ -626,25 +651,84 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
             ) : (
               <div className="mt-3 space-y-2">
                 {flattenedCustomNav.map((entry: FlattenedCustomNode) => {
-                  const { node, path, depth, index, siblingCount } = entry;
+                  const { node, path, depth } = entry;
                   const baseEntry = libraryItemMap.get(node.id);
                   const isBuiltIn = Boolean(baseEntry);
                   const labelValue = node.label ?? baseEntry?.label ?? "Untitled";
                   const hrefValue = node.href ?? baseEntry?.href ?? "";
-                  const canMoveUp = index > 0;
-                  const canMoveDown = index < siblingCount - 1;
                   const canIndent = index > 0;
                   const canOutdent = path.length > 1;
+                  const isDragging = draggedPath ? isSamePath(draggedPath, path) : false;
+                  const isDragTarget = dragOver ? isSamePath(dragOver.path, path) : false;
                   return (
                     <div
                       key={node.id}
-                      className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2"
+                      className={cn(
+                        "relative flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2",
+                        isDragging && "opacity-50"
+                      )}
+                      onDragOver={(event): void => {
+                        event.preventDefault();
+                        const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const position = event.clientY < rect.top + rect.height / 2 ? "above" : "below";
+                        setDragOver({ path, position });
+                      }}
+                      onDrop={(event): void => {
+                        event.preventDefault();
+                        const raw = event.dataTransfer.getData("application/x-admin-menu-path") || event.dataTransfer.getData("text/plain");
+                        let dragged: number[] | null = draggedPath;
+                        if (raw) {
+                          try {
+                            const parsed = JSON.parse(raw) as unknown;
+                            if (Array.isArray(parsed) && parsed.every((value) => Number.isInteger(value))) {
+                              dragged = parsed as number[];
+                            }
+                          } catch {
+                            // ignore
+                          }
+                        }
+                        if (!dragged || !dragOver) {
+                          setDragOver(null);
+                          return;
+                        }
+                        moveCustomNodeTo(dragged, path, dragOver.position);
+                        setDragOver(null);
+                        setDraggedPath(null);
+                      }}
+                      onDragLeave={(event): void => {
+                        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                        setDragOver((prev) => (prev && isSamePath(prev.path, path) ? null : prev));
+                      }}
                     >
+                      {isDragTarget && dragOver?.position === "above" ? (
+                        <div className="pointer-events-none absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-blue-500" />
+                      ) : null}
+                      {isDragTarget && dragOver?.position === "below" ? (
+                        <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-blue-500" />
+                      ) : null}
                       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" style={{ paddingLeft: depth * 16 }}>
+                        <button
+                          type="button"
+                          className="grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200"
+                          draggable
+                          onDragStart={(event): void => {
+                            event.dataTransfer.setData("application/x-admin-menu-path", JSON.stringify(path));
+                            event.dataTransfer.setData("text/plain", JSON.stringify(path));
+                            event.dataTransfer.effectAllowed = "move";
+                            setDraggedPath(path);
+                          }}
+                          onDragEnd={(): void => {
+                            setDraggedPath(null);
+                            setDragOver(null);
+                          }}
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="size-4" />
+                        </button>
                         <div className="min-w-[160px] flex-1">
                           <Input
                             value={labelValue}
-                            onChange={(event) => updateCustomLabel(path, event.target.value)}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomLabel(path, event.target.value)}
                             placeholder="Label"
                             className="h-8 bg-gray-900/40 text-xs"
                             disabled={isBuiltIn}
@@ -653,7 +737,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         <div className="min-w-[180px] flex-1">
                           <Input
                             value={hrefValue}
-                            onChange={(event) => updateCustomHref(path, event.target.value)}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomHref(path, event.target.value)}
                             placeholder="/admin/..."
                             className="h-8 bg-gray-900/40 text-xs"
                             disabled={isBuiltIn}
@@ -669,28 +753,6 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          disabled={!canMoveUp}
-                          onClick={() => moveCustomNode(path, "up")}
-                          title="Move up"
-                        >
-                          <ArrowUp className="size-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          disabled={!canMoveDown}
-                          onClick={() => moveCustomNode(path, "down")}
-                          title="Move down"
-                        >
-                          <ArrowDown className="size-3" />
-                        </Button>
                         <Button
                           type="button"
                           variant="outline"
@@ -789,7 +851,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         <Button
           type="button"
           size="sm"
-          onClick={handleSave}
+          onClick={() => {
+            void handleSave();
+          }}
           disabled={!isDirty || updatePreferences.isPending}
         >
           {updatePreferences.isPending ? "Saving..." : "Save Settings"}

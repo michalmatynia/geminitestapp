@@ -830,7 +830,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       return;
     }
     const currentHistory = runtimeState.history ?? {};
-    if (!currentHistory[nodeId] || currentHistory[nodeId]!.length === 0) {
+    if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
       toast("No history recorded for this node yet.", { variant: "info" });
       return;
     }

@@ -3,6 +3,7 @@
 import { Button } from "@/shared/ui";
 import { useEffect } from "react";
 import Link from "next/link";
+import { logClientError } from "@/features/observability";
 
 export default function FrontendError({
   error,
@@ -13,6 +14,10 @@ export default function FrontendError({
 }) {
   useEffect(() => {
     console.error(error);
+    logClientError(error, {
+      ...(error.digest ? { digest: error.digest } : {}),
+      context: { source: "frontend-error-boundary" },
+    });
   }, [error]);
 
   return (

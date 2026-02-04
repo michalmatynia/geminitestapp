@@ -3,6 +3,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";
+import { ErrorSystem } from "@/features/observability/server";
 import { promises as fs } from "fs";
 import path from "path";
 import type { Browser, BrowserContext, Page, ConsoleMessage, Request, Response, Locator } from "playwright";
@@ -129,6 +130,10 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
   }
 
   if (!("agentBrowserLog" in prisma) || !("agentBrowserSnapshot" in prisma)) {
+    void ErrorSystem.logWarning("[chatbot][agent][tool] Agent browser tables not initialized.", {
+      service: "agent-tool",
+      runId
+    });
     return {
       ok: false,
       error: "Agent browser tables not initialized. Run prisma generate/db push.",
@@ -1583,8 +1588,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         }
       } catch (recordError) {
         try {
-          const { ErrorSystem } = await import("@/features/observability/services/error-system");
-          void ErrorSystem.captureException(recordError, { 
+          await ErrorSystem.captureException(recordError, { 
             service: "agent-tool", 
             action: "captureVideo",
             runId 
@@ -1607,8 +1611,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           });
         } catch (updateError) {
           try {
-            const { ErrorSystem } = await import("@/features/observability/services/error-system");
-            void ErrorSystem.captureException(updateError, { 
+            await ErrorSystem.captureException(updateError, { 
               service: "agent-tool", 
               action: "updateRecordingPath",
               runId,
@@ -1665,8 +1668,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     const message = error instanceof Error ? error.message : "Tool failed.";
     
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-tool", 
         action: "runAgentTool",
         runId,
@@ -1713,6 +1715,10 @@ export async function runAgentBrowserControl({
 }): Promise<AgentToolResult> {
     const debugEnabled = process.env.DEBUG_CHATBOT === "true";
   if (!("agentBrowserLog" in prisma) || !("agentBrowserSnapshot" in prisma)) {
+    void ErrorSystem.logWarning("[chatbot][agent][tool] Agent browser tables not initialized.", {
+      service: "agent-control",
+      runId
+    });
     return {
       ok: false,
       error: "Agent browser tables not initialized. Run prisma generate/db push.",
@@ -1831,8 +1837,7 @@ export async function runAgentBrowserControl({
     const message = error instanceof Error ? error.message : "Control action failed.";
     
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-control", 
         action: "runAgentBrowserControl",
         runId,

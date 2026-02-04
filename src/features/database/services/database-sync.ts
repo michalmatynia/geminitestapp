@@ -852,7 +852,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           catalogs: Array.isArray((doc as { catalogs?: unknown[] }).catalogs)
             ? (doc as { catalogs?: Array<{ catalogId: string; assignedAt?: Date }> }).catalogs ?? []
             : [],
-          categories: (() => {
+          categories: ((): Array<{ categoryId: string; assignedAt: Date }> => {
             const categoryId =
               (doc as { categoryId?: string | null }).categoryId ??
               ((doc as { categories?: Array<{ categoryId?: string }> }).categories ?? [])[0]?.categoryId ??

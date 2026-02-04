@@ -1,2 +1,2 @@
-// Legacy compatibility - re-export from api/system-logs
-export * from './api/system-logs';
+// Legacy compatibility - re-export from domain/system-logs
+export * from './domain/system-logs';

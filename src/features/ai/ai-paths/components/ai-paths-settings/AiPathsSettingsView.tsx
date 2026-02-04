@@ -3,7 +3,7 @@
 
 import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal } from "@/shared/ui";
+import { Button, Input, Label, UnifiedSelect, SharedModal } from "@/shared/ui";
 import { CanvasBoard } from "../canvas-board";
 import { CanvasSidebar } from "../canvas-sidebar";
 import { ClusterPresetsPanel } from "../cluster-presets-panel";
@@ -361,24 +361,20 @@ export function AiPathsSettingsView({
                       Last run: {new Date(lastRunAt).toLocaleTimeString()}
                     </div>
                   )}
-                  <Select
+                  <UnifiedSelect
                     value={activePathId}
                     onValueChange={(value: string): void => {
                       if (!value || value === activePathId) return;
                       handleSwitchPath(value);
                     }}
-                  >
-                    <SelectTrigger className="h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white">
-                      <SelectValue placeholder="Switch path" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-gray-900">
-                      {groupPaths.map((path: PathMeta) => (
-                        <SelectItem key={path.id} value={path.id}>
-                          {path.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={groupPaths.map((path: PathMeta) => ({
+                      value: path.id,
+                      label: path.name
+                    }))}
+                    placeholder="Switch path"
+                    className="w-[320px]"
+                    triggerClassName="h-9 border-border bg-card/60 px-3 text-sm text-white"
+                  />
                   <Button
                     type="button"
                     className="h-9 rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"

@@ -1,14 +1,14 @@
 "use client";
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, useToastSettings, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Label, UnifiedSelect, useToast, useToastSettings, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import React, { useState } from "react";
 
 const positionOptions = [
-  { value: "top-right", label: "Top Right", desc: "Corner top right" },
-  { value: "top-left", label: "Top Left", desc: "Corner top left" },
-  { value: "bottom-right", label: "Bottom Right", desc: "Corner bottom right" },
-  { value: "bottom-left", label: "Bottom Left", desc: "Corner bottom left" },
+  { value: "top-right", label: "Top Right", description: "Corner top right" },
+  { value: "top-left", label: "Top Left", description: "Corner top left" },
+  { value: "bottom-right", label: "Bottom Right", description: "Corner bottom right" },
+  { value: "bottom-left", label: "Bottom Left", description: "Corner bottom left" },
 ] as const;
 
 const accentOptions = [
@@ -83,21 +83,16 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 <Label htmlFor="position" className="mb-3 block text-sm font-semibold">
                   Toast Position
                 </Label>
-                <Select value={position} onValueChange={(val: string) => setPosition(val as PositionType)}>
-                  <SelectTrigger id="position">
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positionOptions.map((option: { value: string; label: string; desc: string }) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div>
-                          <p className="font-medium">{option.label}</p>
-                          <p className="text-xs text-gray-400">{option.desc}</p>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <UnifiedSelect
+                  value={position}
+                  onValueChange={(val: string) => setPosition(val as PositionType)}
+                  options={positionOptions.map((opt: { value: string; label: string; description: string }) => ({
+                    value: opt.value,
+                    label: opt.label,
+                    description: opt.description
+                  }))}
+                  placeholder="Select position"
+                />
                 <p className="mt-2 text-xs text-gray-400">
                   Choose where notifications appear on your screen.
                 </p>
@@ -108,21 +103,16 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 <Label htmlFor="accent" className="mb-3 block text-sm font-semibold">
                   Accent Color
                 </Label>
-                <Select value={accent} onValueChange={(val: string) => setAccent(val as AccentType)}>
-                  <SelectTrigger id="accent">
-                    <SelectValue placeholder="Select accent color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accentOptions.map((option: { value: string; label: string; color: string }) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex items-center gap-2">
-                          <div className={`size-3 rounded-full ${option.color}`} />
-                          <span>{option.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <UnifiedSelect
+                  value={accent}
+                  onValueChange={(val: string) => setAccent(val as AccentType)}
+                  options={accentOptions.map((opt: { value: string; label: string; color: string }) => ({
+                    value: opt.value,
+                    label: opt.label,
+                    description: opt.value === accent ? "Currently selected" : undefined
+                  }))}
+                  placeholder="Select accent color"
+                />
                 <p className="mt-2 text-xs text-gray-400">
                   Select the primary color for success notifications.
                 </p>
@@ -174,7 +164,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
         <div>
           <SectionPanel className="sticky top-6 p-6">
             <h2 className="mb-4 text-sm font-semibold text-white">Position Preview</h2>
-            <div className="relative aspect-video w-full rounded-lg border border-border bg-gray-900">
+            <SectionPanel variant="subtle" className="relative aspect-video w-full bg-gray-900">
               {/* Position indicator */}
               <div
                 className={`absolute size-10 rounded-lg border-2 border-dashed border-emerald-400/50 bg-emerald-400/10 ${preview.x}-3 ${preview.y}-3 flex items-center justify-center`}
@@ -187,9 +177,9 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               <div className="absolute right-2 top-2 text-xs text-gray-500">TR</div>
               <div className="absolute bottom-2 left-2 text-xs text-gray-500">BL</div>
               <div className="absolute bottom-2 right-2 text-xs text-gray-500">BR</div>
-            </div>
+            </SectionPanel>
 
-            <div className="mt-4 space-y-2 rounded-lg border border-border bg-gray-900 p-3">
+            <SectionPanel variant="subtle-compact" className="mt-4 space-y-2 bg-gray-900 p-3">
               <p className="text-xs font-medium text-gray-300">Current Settings:</p>
               <div className="space-y-1">
                 <p className="flex items-center justify-between text-xs text-gray-400">
@@ -204,13 +194,13 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   </span>
                 </div>
               </div>
-            </div>
+            </SectionPanel>
 
-            <div className="mt-4 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+            <SectionPanel variant="subtle-compact" className="mt-4 border-blue-500/20 bg-blue-500/5 p-3">
               <p className="text-xs text-blue-200">
                 💡 Click the preview buttons to see how notifications appear with your settings.
               </p>
-            </div>
+            </SectionPanel>
           </SectionPanel>
         </div>
       </div>

@@ -5,13 +5,10 @@ import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   Checkbox,
   Button,
+  SectionPanel,
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
@@ -113,7 +110,7 @@ function ColorField({
         <Input
           value={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className="h-7 flex-1 bg-gray-800/40 text-xs"
+          className="h-7 flex-1 bg-gray-800/40 text-xs font-mono"
         />
       </div>
     </div>
@@ -203,18 +200,12 @@ function SelectField({
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-7 bg-gray-800/40 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt: { label: string; value: string }) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={value}
+        onValueChange={onChange}
+        options={options}
+        triggerClassName="h-7 bg-gray-800/40 text-xs"
+      />
     </div>
   );
 }
@@ -490,9 +481,10 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           return (
             <div className="space-y-2">
               {settings.items.map((item: MenuItem) => (
-                <div
+                <SectionPanel
                   key={item.id}
-                  className="flex items-start gap-1.5 rounded border border-border/40 bg-gray-800/30 p-2"
+                  variant="subtle-compact"
+                  className="flex items-start gap-1.5 p-2"
                 >
                   <div className="flex-1 space-y-1.5">
                     <Input
@@ -530,7 +522,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   >
                     <Trash2 className="size-3.5" />
                   </button>
-                </div>
+                </SectionPanel>
               ))}
               <Button
                 size="sm"
@@ -900,31 +892,28 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-3">
-          <div className="rounded border border-border/40 bg-gray-900/50 p-3">
+          <SectionPanel variant="subtle" className="p-3">
             <Label className="text-[10px] uppercase tracking-wider text-gray-500">
               Menu scope
             </Label>
             {zoningEnabled ? (
               <div className="mt-2 space-y-2">
-                <Select
+                <UnifiedSelect
                   value={menuScopeId}
                   onValueChange={(value: string): void => {
                     setUserMenuScopeId(value);
                   }}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default (fallback)</SelectItem>
-                    {domains.map((domain: CmsDomain) => (
-                      <SelectItem key={domain.id} value={domain.id}>
-                        {domain.domain}
-                        {domain.id === activeDomainId ? " (active)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "default", label: "Default (fallback)" },
+                    ...domains.map((domain: CmsDomain) => ({
+                      value: domain.id,
+                      label: domain.domain,
+                      description: domain.id === activeDomainId ? "active" : undefined
+                    }))
+                  ]}
+                  placeholder="Select zone"
+                  triggerClassName="h-8 text-xs"
+                />
                 {menuScopeId !== "default" && !hasScopedMenu ? (
                   <p className="text-[10px] text-gray-500">
                     Using default menu until you customize this zone.
@@ -936,14 +925,15 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 Simple routing enabled. This menu applies globally.
               </p>
             )}
-          </div>
+          </SectionPanel>
           <div className="space-y-2">
           {MENU_SECTIONS.map((section: string) => {
             const isOpen = openSections.has(section);
             return (
-              <div
+              <SectionPanel
                 key={section}
-                className="rounded border border-border/40 bg-gray-900/60"
+                variant="subtle"
+                className="p-0 overflow-hidden"
               >
                 <button
                   type="button"
@@ -957,7 +947,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 {isOpen && (
                   <div className="px-3 pb-3">{renderSectionBody(section)}</div>
                 )}
-              </div>
+              </SectionPanel>
             );
           })}
           </div>

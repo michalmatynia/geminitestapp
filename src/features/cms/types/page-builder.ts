@@ -12,6 +12,20 @@ import type {
   SectionInstance
 } from "@/shared/types/domain/cms";
 
+export type {
+  PageSummary,
+  Page,
+  PageStatus,
+  PageSeoData,
+  SettingsFieldOption,
+  SettingsField,
+  SectionDefinition,
+  BlockDefinition,
+  PageZone,
+  BlockInstance,
+  SectionInstance
+};
+
 // ---------------------------------------------------------------------------
 // Page builder state & actions
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast, Alert } from "@/shared/ui";
+import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, UnifiedSelect, SharedModal, useToast, Alert } from "@/shared/ui";
 import { useState } from "react";
 
 import type { ProductWithImages } from "@/features/products";
@@ -247,21 +247,15 @@ export default function SelectProductForListingModal({
           <>
             <div className="space-y-2">
               <Label htmlFor="product">Select Product</Label>
-              <Select
+              <UnifiedSelect
                 value={selectedProductId}
                 onValueChange={setSelectedProductId}
-              >
-                <SelectTrigger id="product">
-                  <SelectValue placeholder="Select a product..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((product: ProductWithImages) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {getProductDisplayName(product)} ({product.sku})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={products.map((product: ProductWithImages) => ({
+                  value: product.id,
+                  label: `${getProductDisplayName(product)} (${product.sku})`
+                }))}
+                placeholder="Select a product..."
+              />
             </div>
 
             {isBaseComIntegration && (

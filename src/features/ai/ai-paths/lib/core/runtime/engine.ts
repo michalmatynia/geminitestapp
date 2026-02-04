@@ -113,12 +113,12 @@ const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env.AI_P
 const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env.AI_PATHS_NODE_RETRY_BACKOFF_MS ?? "", 10) || 750);
 
 const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
   let timer: NodeJS.Timeout | null = null;
-  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+  const timeoutPromise = new Promise<never>((_resolve: (value: PromiseLike<never>) => void, reject: (reason?: unknown) => void) => {
     timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
   });
   try {
@@ -680,31 +680,33 @@ export async function evaluateGraph({
           const result = await withRetries(
             () =>
               withTimeout(
-                handler({
-                  node,
-                  nodeInputs,
-                  prevOutputs,
-                  edges: sanitizedEdges,
-                  nodes,
-                  nodeById,
-                  activePathId,
-                  triggerNodeId,
-                  triggerEvent,
-                  triggerContext,
-                  deferPoll,
-                  skipAiJobs,
-                  now,
-                  allOutputs: outputs,
-                  allInputs: nextInputs,
-                  fetchEntityCached,
-                  reportAiPathsError,
-                  toast,
-                  simulationEntityType,
-                  simulationEntityId,
-                  resolvedEntity,
-                  fallbackEntityId,
-                  executed,
-                }),
+                Promise.resolve(
+                  handler({
+                    node,
+                    nodeInputs,
+                    prevOutputs,
+                    edges: sanitizedEdges,
+                    nodes,
+                    nodeById,
+                    activePathId,
+                    triggerNodeId,
+                    triggerEvent,
+                    triggerContext,
+                    deferPoll,
+                    skipAiJobs,
+                    now,
+                    allOutputs: outputs,
+                    allInputs: nextInputs,
+                    fetchEntityCached,
+                    reportAiPathsError,
+                    toast,
+                    simulationEntityType,
+                    simulationEntityId,
+                    resolvedEntity,
+                    fallbackEntityId,
+                    executed,
+                  })
+                ),
                 timeoutMs,
                 `${node.type}:${node.id}`
               ),

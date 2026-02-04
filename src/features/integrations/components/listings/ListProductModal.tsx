@@ -1,5 +1,5 @@
 "use client";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal } from "@/shared/ui";
+import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal, SectionPanel } from "@/shared/ui";
 import { useState } from "react";
 import { logClientError } from "@/features/observability";
 
@@ -201,7 +201,7 @@ export function ListProductModal({
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <SectionPanel variant="subtle-compact" className="border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
             <div className="flex flex-col gap-3">
               <span>{error}</span>
               {isBaseComIntegration && isImageExportError(error) ? (
@@ -240,20 +240,20 @@ export function ListProductModal({
                 </div>
               ) : null}
             </div>
-          </div>
+          </SectionPanel>
         )}
 
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
         ) : integrationsWithConnections.length === 0 ? (
-          <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-6 text-center">
+          <SectionPanel variant="subtle" className="border-yellow-500/40 bg-yellow-500/10 p-6 text-center">
             <p className="text-sm text-yellow-200">
               No integrations with configured accounts found.
             </p>
             <p className="mt-2 text-xs text-yellow-300/70">
               Please set up an integration with at least one account first.
             </p>
-          </div>
+          </SectionPanel>
         ) : (
           <>
             {hasPresetSelection ? (
@@ -265,45 +265,33 @@ export function ListProductModal({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="integration">Marketplace / Integration</Label>
-                  <Select
+                  <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
-                  >
-                    <SelectTrigger id="integration">
-                      <SelectValue placeholder="Select a marketplace..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {integrationsWithConnections
-                        .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                        .map((integration: IntegrationWithConnections) => (
-                          <SelectItem key={integration.id} value={integration.id}>
-                            {integration.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                    options={integrationsWithConnections
+                      .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                      .map((integration: IntegrationWithConnections) => ({
+                        value: integration.id,
+                        label: integration.name
+                      }))}
+                    placeholder="Select a marketplace..."
+                  />
                 </div>
 
                 {selectedIntegration && (
                   <div className="space-y-2">
                     <Label htmlFor="connection">Account</Label>
-                    <Select
+                    <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
-                    >
-                      <SelectTrigger id="connection">
-                        <SelectValue placeholder="Select an account..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedIntegration.connections
-                          .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                          .map((connection: IntegrationConnectionBasic) => (
-                            <SelectItem key={connection.id} value={connection.id}>
-                              {connection.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                      options={selectedIntegration.connections
+                        .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                        .map((connection: IntegrationConnectionBasic) => ({
+                          value: connection.id,
+                          label: connection.name
+                        }))}
+                      placeholder="Select an account..."
+                    />
                     <p className="text-xs text-gray-500">
                       Choose which account to use for listing this product on{" "}
                       {selectedIntegration.name}.

@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from "lucide-react";
 
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch, useToast } from "@/shared/ui";
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
 import {
@@ -78,7 +78,13 @@ const flattenCustomNav = (
 const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNavNodeEntry[] => {
   const entries: AdminNavNodeEntry[] = [];
   items.forEach((item: NavItem) => {
-    entries.push({ id: item.id, label: item.label, href: item.href, parents, item });
+    entries.push({ 
+      id: item.id, 
+      label: item.label, 
+      parents, 
+      item,
+      ...(item.href ? { href: item.href } : {})
+    });
     if (item.children && item.children.length > 0) {
       entries.push(...flattenAdminNavNodes(item.children, [...parents, item.label]));
     }
@@ -119,7 +125,7 @@ const getParentAtPath = (
   const parentNode = parentPath.length ? getNodeAtPath(items, parentPath) : null;
   const parent = parentPath.length ? parentNode?.children ?? null : items;
   if (!parent) return null;
-  return { parent, index: path[path.length - 1] };
+  return { parent, index: path[path.length - 1] as number };
 };
 
 const stripUsedIds = (
@@ -300,9 +306,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const isSamePath = (a: number[], b: number[]): boolean =>
-    a.length === b.length && a.every((value, index) => value === b[index]);
+    a.length === b.length && a.every((value: number, index: number) => value === b[index]);
   const isPathPrefix = (parent: number[], child: number[]): boolean =>
-    parent.length <= child.length && parent.every((value, index) => value === child[index]);
+    parent.length <= child.length && parent.every((value: number, index: number) => value === child[index]);
 
   const moveCustomNodeTo = (
     dragged: number[],
@@ -310,7 +316,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     position: "above" | "below"
   ): void => {
     if (isSamePath(dragged, target)) return;
-    setCustomNav((prev) => {
+    setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const draggedInfo = getParentAtPath(next, dragged);
       const targetInfo = getParentAtPath(next, target);
@@ -336,8 +342,10 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
-      if (!info || !info.parent[info.index]) return prev;
-      info.parent[info.index].label = value;
+      if (!info) return prev;
+      const node = info.parent[info.index];
+      if (!node) return prev;
+      node.label = value;
       return next;
     });
   };
@@ -346,11 +354,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
     setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const info = getParentAtPath(next, path);
-      if (!info || !info.parent[info.index]) return prev;
+      if (!info) return prev;
+      const node = info.parent[info.index];
+      if (!node) return prev;
       if (value.trim().length === 0) {
-        delete info.parent[info.index].href;
+        delete node.href;
       } else {
-        info.parent[info.index].href = value;
+        node.href = value;
       }
       return next;
     });
@@ -476,13 +486,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
 
           <div className="mt-4 space-y-3">
             {favoritesList.length === 0 ? (
-              <p className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
+              <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
                 No favorites yet. Select items below to pin them here.
-              </p>
+              </SectionPanel>
             ) : (
               <div className="space-y-2">
                 {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
-                  <div key={entry?.id} className="flex items-center justify-between rounded-md border border-border/60 bg-card/40 px-3 py-2">
+                  <SectionPanel key={entry?.id} variant="subtle" className="flex items-center justify-between px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm text-white">{entry?.label}</div>
                       {entry?.parents?.length ? (
@@ -522,7 +532,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         Remove
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 ))}
               </div>
             )}
@@ -574,7 +584,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               const current = sectionColors[section.id] ?? "none";
               const colorStyle = current !== "none" ? ADMIN_MENU_COLOR_MAP[current] : null;
               return (
-                <div key={section.id} className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-card/40 px-3 py-2">
+                <SectionPanel key={section.id} variant="subtle" className="flex items-center justify-between gap-3 px-3 py-2">
                   <div className="flex items-center gap-2">
                     {colorStyle ? (
                       <span className={cn("h-2.5 w-2.5 rounded-full", colorStyle.dot)} />
@@ -583,25 +593,20 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                     )}
                     <span className="text-sm text-gray-200">{section.label}</span>
                   </div>
-                  <Select value={current} onValueChange={(value: string) => updateSectionColor(section.id, value)}>
-                    <SelectTrigger className="h-8 w-[160px] border-border bg-gray-900/40 text-xs text-white">
-                      <SelectValue placeholder="Select color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        <span className="text-xs text-gray-400">None</span>
-                      </SelectItem>
-                      {ADMIN_MENU_COLORS.map((option: ColorOption) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("h-2.5 w-2.5 rounded-full", option.dot)} />
-                            <span>{option.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <UnifiedSelect
+                    value={current}
+                    onValueChange={(value: string) => updateSectionColor(section.id, value)}
+                    options={[
+                      { value: "none", label: "None" },
+                      ...ADMIN_MENU_COLORS.map((option: ColorOption) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))
+                    ]}
+                    className="w-[160px]"
+                    triggerClassName="h-8 text-xs"
+                  />
+                </SectionPanel>
               );
             })}
           </div>
@@ -650,7 +655,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               </p>
             ) : (
               <div className="mt-3 space-y-2">
-                {flattenedCustomNav.map((entry: FlattenedCustomNode) => {
+                {flattenedCustomNav.map((entry: FlattenedCustomNode, index: number) => {
                   const { node, path, depth } = entry;
                   const baseEntry = libraryItemMap.get(node.id);
                   const isBuiltIn = Boolean(baseEntry);
@@ -667,20 +672,20 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         "relative flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2",
                         isDragging && "opacity-50"
                       )}
-                      onDragOver={(event): void => {
+                      onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
                         event.preventDefault();
                         const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
                         const position = event.clientY < rect.top + rect.height / 2 ? "above" : "below";
                         setDragOver({ path, position });
                       }}
-                      onDrop={(event): void => {
+                      onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
                         event.preventDefault();
                         const raw = event.dataTransfer.getData("application/x-admin-menu-path") || event.dataTransfer.getData("text/plain");
                         let dragged: number[] | null = draggedPath;
                         if (raw) {
                           try {
                             const parsed = JSON.parse(raw) as unknown;
-                            if (Array.isArray(parsed) && parsed.every((value) => Number.isInteger(value))) {
+                            if (Array.isArray(parsed) && parsed.every((value: unknown) => Number.isInteger(value))) {
                               dragged = parsed as number[];
                             }
                           } catch {
@@ -695,9 +700,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         setDragOver(null);
                         setDraggedPath(null);
                       }}
-                      onDragLeave={(event): void => {
+                      onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
                         if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                        setDragOver((prev) => (prev && isSamePath(prev.path, path) ? null : prev));
+                        setDragOver((prev: { path: number[]; position: "above" | "below" } | null) => (prev && isSamePath(prev.path, path) ? null : prev));
                       }}
                     >
                       {isDragTarget && dragOver?.position === "above" ? (
@@ -711,7 +716,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                           type="button"
                           className="grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200"
                           draggable
-                          onDragStart={(event): void => {
+                          onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
                             event.dataTransfer.setData("application/x-admin-menu-path", JSON.stringify(path));
                             event.dataTransfer.setData("text/plain", JSON.stringify(path));
                             event.dataTransfer.effectAllowed = "move";

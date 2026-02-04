@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, Input, Label, Textarea, UnifiedSelect, SectionPanel } from "@/shared/ui";
 
 
 
@@ -384,34 +384,21 @@ export function ParserNodeConfigSection({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-[11px] text-gray-300">
+      <SectionPanel variant="subtle-compact" className="px-3 py-2 text-[11px] text-gray-300">
         <div className="text-gray-400">Input source</div>
         <div className="mt-1 text-sm text-gray-200">{parserSourceLabel}</div>
-      </div>
+      </SectionPanel>
       <div>
         <Label className="text-xs text-gray-400">Preset</Label>
-        <Select
+        <UnifiedSelect
           value={presetId}
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select preset" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            {presetOptions.map((preset: { id: string; label: string }) => (
-              <SelectItem key={preset.id} value={preset.id}>
-                {preset.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {activePreset && (
-          <p className="mt-2 text-[11px] text-gray-500">
-            {activePreset.description}
-          </p>
-        )}
+          options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({ value: p.id, label: p.label, description: (p as { description?: string }).description }))}
+          placeholder="Select preset"
+          className="mt-2"
+        />
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             type="button"
@@ -433,7 +420,7 @@ export function ParserNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Sample JSON</Label>
         <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
-          <Select
+          <UnifiedSelect
             value={sampleState.entityType}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -444,16 +431,13 @@ export function ParserNodeConfigSection({
                 },
               }))
             }
-          >
-            <SelectTrigger className="border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Entity type" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="product">Product</SelectItem>
-              <SelectItem value="note">Note</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "product", label: "Product" },
+              { value: "note", label: "Note" },
+              { value: "custom", label: "Custom" },
+            ]}
+            placeholder="Entity type"
+          />
           <div className="space-y-2">
             <Input
               className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
@@ -471,7 +455,7 @@ export function ParserNodeConfigSection({
               placeholder="Entity ID"
             />
             {simulationOptions.length > 0 && (
-              <Select
+              <UnifiedSelect
                 value={sampleState.simulationId ?? ""}
                 onValueChange={(value: string) => {
                   const option = simulationOptions.find(
@@ -488,18 +472,10 @@ export function ParserNodeConfigSection({
                     },
                   }));
                 }}
-              >
-                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                  <SelectValue placeholder="Use simulation ID" />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  {simulationOptions.map((option: { id: string; label: string }) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label }))}
+                placeholder="Use simulation ID"
+                triggerClassName="text-[10px] h-8"
+              />
             )}
           </div>
           <Button
@@ -532,7 +508,7 @@ export function ParserNodeConfigSection({
           placeholder='{ "id": "123", "title": "Sample" }'
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Select
+          <UnifiedSelect
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -543,16 +519,13 @@ export function ParserNodeConfigSection({
                 },
               }))
             }
-          >
-            <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Mapping mode" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="top">Top-level fields</SelectItem>
-              <SelectItem value="flatten">Flatten nested</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
+            options={[
+              { value: "top", label: "Top-level fields" },
+              { value: "flatten", label: "Flatten nested" },
+            ]}
+            className="w-[180px]"
+          />
+          <UnifiedSelect
             value={String(sampleState.depth)}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -563,18 +536,9 @@ export function ParserNodeConfigSection({
                 },
               }))
             }
-          >
-            <SelectTrigger className="w-[160px] border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Depth" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              {[1, 2, 3, 4].map((depth: number) => (
-                <SelectItem key={depth} value={String(depth)}>
-                  Depth {depth}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
+            className="w-[160px]"
+          />
           <Button
             type="button"
             className={`rounded-md border px-3 text-[10px] ${
@@ -595,7 +559,7 @@ export function ParserNodeConfigSection({
             {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
           </Button>
           {sampleState.mappingMode === "flatten" && (
-            <Select
+            <UnifiedSelect
               value={sampleState.keyStyle}
               onValueChange={(value: string) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -606,15 +570,12 @@ export function ParserNodeConfigSection({
                   },
                 }))
               }
-            >
-              <SelectTrigger className="w-[170px] border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Key style" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="path">Path keys</SelectItem>
-                <SelectItem value="leaf">Leaf keys</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "path", label: "Path keys" },
+                { value: "leaf", label: "Leaf keys" },
+              ]}
+              className="w-[170px]"
+            />
           )}
         </div>
         {parsedSample.error ? (
@@ -653,7 +614,7 @@ export function ParserNodeConfigSection({
 
       <div>
         <Label className="text-xs text-gray-400">Output Mode</Label>
-        <Select
+        <UnifiedSelect
           value={outputMode}
           onValueChange={(value: string) =>
             commitMappingsImmediate(
@@ -661,15 +622,12 @@ export function ParserNodeConfigSection({
               value as "individual" | "bundle"
             )
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select output mode" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="individual">Individual outputs</SelectItem>
-            <SelectItem value="bundle">Single bundle output</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "individual", label: "Individual outputs" },
+            { value: "bundle", label: "Single bundle output" },
+          ]}
+          className="mt-2"
+        />
         <p className="mt-2 text-[11px] text-gray-500">
           Bundle mode emits a single <span className="text-gray-300">bundle</span>{" "}
           port and uses mapping keys as placeholders for Prompt templates.
@@ -737,18 +695,13 @@ export function ParserNodeConfigSection({
                 }
                 placeholder="$.path.to.value"
               />
-              <Select onValueChange={(value: string) => updateMappingPath(index, value)}>
-                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                  <SelectValue placeholder="Pick a suggested path" />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                {uniqueSuggestedPathOptions.map((option: { value: string; label: string }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                onValueChange={(value: string) => updateMappingPath(index, value)}
+                options={uniqueSuggestedPathOptions}
+                placeholder="Pick a suggested path"
+                triggerClassName="text-[10px] h-8"
+                value=""
+              />
             </div>
             <Button
               type="button"
@@ -790,7 +743,7 @@ export function ParserNodeConfigSection({
         </Button>
       </div>
       {imageEntryIndex >= 0 && (
-        <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
+        <SectionPanel variant="subtle-compact" className="p-3 text-[11px] text-gray-400">
           <div className="text-gray-300">Image helpers</div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
@@ -821,7 +774,7 @@ export function ParserNodeConfigSection({
               Use $.media
             </Button>
           </div>
-        </div>
+        </SectionPanel>
       )}
       <p className="text-[11px] text-gray-500">
         Use JSON paths like{" "}

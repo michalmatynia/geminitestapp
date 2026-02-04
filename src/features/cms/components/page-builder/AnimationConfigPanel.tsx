@@ -7,11 +7,8 @@ import {
   Label,
   Input,
   Textarea,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
+  SectionPanel,
   RadioGroup,
   RadioGroupItem,
 } from "@/shared/ui";
@@ -1077,18 +1074,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Easing
             </Label>
-            <Select value={config.easing} onValueChange={handleEasingChange}>
-              <SelectTrigger className="w-full text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ANIMATION_EASINGS.map((e: { label: string; value: AnimationEasing }) => (
-                  <SelectItem key={e.value} value={e.value}>
-                    {e.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnifiedSelect
+              value={config.easing}
+              onValueChange={handleEasingChange}
+              options={ANIMATION_EASINGS}
+            />
             {config.easing === "custom" && (
               <Input
                 value={customEaseValue}
@@ -1125,23 +1115,16 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
           </div>
 
           {/* Timeline choreography */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Timeline choreography
               </Label>
-              <Select value={timelineModeValue} onValueChange={handleTimelineModeChange}>
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timelineModeOptions.map((option: { label: string; value: TimelineMode }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={timelineModeValue}
+                onValueChange={handleTimelineModeChange}
+                options={timelineModeOptions}
+              />
             </div>
 
             {timelineModeValue !== "none" && (
@@ -1286,26 +1269,19 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </p>
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Scroll storytelling */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Scroll storytelling
               </Label>
-              <Select value={scrollModeValue} onValueChange={handleScrollModeChange}>
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {scrollModeOptions.map((option: { label: string; value: ScrollMode }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={scrollModeValue}
+                onValueChange={handleScrollModeChange}
+                options={scrollModeOptions}
+              />
             </div>
 
             {scrollModeValue !== "none" && (
@@ -1340,18 +1316,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                       Reveal style
                     </Label>
-                    <Select value={revealStyleValue} onValueChange={handleRevealStyleChange}>
-                      <SelectTrigger className="w-full text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {revealStyleOptions.map((option: { label: string; value: RevealStyle }) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <UnifiedSelect
+                      value={revealStyleValue}
+                      onValueChange={handleRevealStyleChange}
+                      options={revealStyleOptions}
+                    />
                   </div>
                 )}
 
@@ -1410,26 +1379,19 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </p>
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Parallax */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Parallax
               </Label>
-              <Select value={parallaxPresetValue} onValueChange={handleParallaxPresetChange}>
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PARALLAX_PRESETS.map((option: { label: string; value: ParallaxPreset }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={parallaxPresetValue}
+                onValueChange={handleParallaxPresetChange}
+                options={PARALLAX_PRESETS}
+              />
             </div>
 
             {parallaxPresetValue !== "none" && (
@@ -1439,18 +1401,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                       Pattern
                     </Label>
-                    <Select value={parallaxPatternValue} onValueChange={handleParallaxPatternChange}>
-                      <SelectTrigger className="w-full text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PARALLAX_PATTERNS.map((option: { label: string; value: ParallaxPattern }) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <UnifiedSelect
+                      value={parallaxPatternValue}
+                      onValueChange={handleParallaxPatternChange}
+                      options={PARALLAX_PATTERNS}
+                    />
                   </div>
 
                   <label className="flex items-center gap-2 text-xs text-gray-300">
@@ -1463,18 +1418,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                   <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                     Axis
                   </Label>
-                  <Select value={parallaxAxisValue} onValueChange={handleParallaxAxisChange}>
-                    <SelectTrigger className="w-full text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parallaxAxisOptions.map((option: { label: string; value: ParallaxAxis }) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UnifiedSelect
+                    value={parallaxAxisValue}
+                    onValueChange={handleParallaxAxisChange}
+                    options={parallaxAxisOptions}
+                  />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1605,10 +1553,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </p>
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Motion Path */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Motion Path
@@ -1704,10 +1652,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </div>
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* SVG Effects */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               SVG Effects
             </Label>
@@ -1774,25 +1722,18 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </>
               )}
             </div>
-          </div>
+          </SectionPanel>
 
           {/* Text Effects */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Text Effects
             </Label>
-            <Select value={textEffectValue} onValueChange={handleTextEffectChange}>
-              <SelectTrigger className="w-full text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TEXT_EFFECTS.map((option: { label: string; value: TextEffect }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnifiedSelect
+              value={textEffectValue}
+              onValueChange={handleTextEffectChange}
+              options={TEXT_EFFECTS}
+            />
 
             {textEffectValue !== "none" && (
               <>
@@ -1893,10 +1834,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 )}
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Visual Effects */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Visual FX
             </Label>
@@ -1962,25 +1903,18 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 className="text-sm"
               />
             </div>
-          </div>
+          </SectionPanel>
 
           {/* Velocity-based FX */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Velocity FX
             </Label>
-            <Select value={velocityEffectValue} onValueChange={handleVelocityEffectChange}>
-              <SelectTrigger className="w-full text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VELOCITY_EFFECTS.map((option: { label: string; value: VelocityEffect }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnifiedSelect
+              value={velocityEffectValue}
+              onValueChange={handleVelocityEffectChange}
+              options={VELOCITY_EFFECTS}
+            />
             {velocityEffectValue !== "none" && (
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -2011,10 +1945,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </div>
               </>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Draggable */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Draggable
@@ -2026,18 +1960,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
-                  <Select value={draggableTypeValue} onValueChange={handleDraggableTypeChange}>
-                    <SelectTrigger className="w-full text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UnifiedSelect
+                    value={draggableTypeValue}
+                    onValueChange={handleDraggableTypeChange}
+                    options={DRAG_AXES}
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -2107,10 +2034,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 )}
               </div>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Observer */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Observer (Events)
@@ -2153,18 +2080,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
-                    <Select value={observerAxisValue} onValueChange={handleObserverAxisChange}>
-                      <SelectTrigger className="w-full text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <UnifiedSelect
+                      value={observerAxisValue}
+                      onValueChange={handleObserverAxisChange}
+                      options={DRAG_AXES}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Speed</Label>
@@ -2181,10 +2101,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </div>
               </div>
             )}
-          </div>
+          </SectionPanel>
 
           {/* Magnet effect */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+          <SectionPanel variant="subtle-compact" className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Magnet
@@ -2224,18 +2144,11 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
-                    <Select value={magnetAxisValue} onValueChange={handleMagnetAxisChange}>
-                      <SelectTrigger className="w-full text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <UnifiedSelect
+                      value={magnetAxisValue}
+                      onValueChange={handleMagnetAxisChange}
+                      options={DRAG_AXES}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Return speed</Label>
@@ -2252,7 +2165,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 </div>
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
     </div>

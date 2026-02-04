@@ -1,5 +1,20 @@
 "use client";
-import { SharedModal, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog, Alert } from "@/shared/ui";
+import {
+  SharedModal,
+  Button,
+  Input,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  UnifiedSelect,
+  Label,
+  useToast,
+  StatusBadge,
+  ConfirmDialog,
+  Alert,
+  SectionPanel,
+} from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -221,40 +236,34 @@ export function ProductListingsModal({
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
 
   const StartListingPanel: React.FC = (): React.JSX.Element => (
-    <div className="rounded-md border border-border bg-card/60 px-4 py-4">
+    <SectionPanel variant="subtle" className="px-4 py-4">
       {_loadingIntegrations ? (
         <p className="text-sm text-gray-400">Loading integrations...</p>
       ) : integrations.length === 0 ? (
-        <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+        <SectionPanel variant="subtle-compact" className="border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
           No connected integrations.{" "}
           <Link href="/admin/integrations" className="underline hover:text-yellow-100">
             Set up an integration
           </Link>
           .
-        </div>
+        </SectionPanel>
       ) : (
         <div className="space-y-4">
           <div className="text-left">
             <Label className="mb-2 block text-xs font-medium text-gray-300">
               Integration
             </Label>
-            <Select
+            <UnifiedSelect
               value={selectedIntegrationId}
               onValueChange={setSelectedIntegrationId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an integration..." />
-              </SelectTrigger>
-              <SelectContent>
-                {integrations
-                  .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                  .map((integration: IntegrationWithConnections): React.JSX.Element => (
-                    <SelectItem key={integration.id} value={integration.id}>
-                      {integration.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              options={integrations
+                .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                .map((integration: IntegrationWithConnections) => ({
+                  value: integration.id,
+                  label: integration.name
+                }))}
+              placeholder="Select an integration..."
+            />
           </div>
 
           {selectedIntegration && selectedIntegration.connections.length > 0 && (
@@ -262,23 +271,17 @@ export function ProductListingsModal({
               <Label className="mb-2 block text-xs font-medium text-gray-300">
                 Account / Connection
               </Label>
-              <Select
+              <UnifiedSelect
                 value={selectedConnectionId}
                 onValueChange={setSelectedConnectionId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an account..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedIntegration.connections
-                    .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                    .map((connection: IntegrationConnectionBasic): React.JSX.Element => (
-                      <SelectItem key={connection.id} value={connection.id}>
-                        {connection.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                options={selectedIntegration.connections
+                  .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                  .map((connection: IntegrationConnectionBasic) => ({
+                    value: connection.id,
+                    label: connection.name
+                  }))}
+                placeholder="Select an account..."
+              />
             </div>
           )}
 
@@ -296,7 +299,7 @@ export function ProductListingsModal({
           </div>
         </div>
       )}
-    </div>
+    </SectionPanel>
   );
 
   const SyncConfigurationPanel: React.FC = (): React.JSX.Element => {
@@ -306,7 +309,7 @@ export function ProductListingsModal({
     const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
 
     return (
-      <div className="rounded-md border border-border bg-card/60 p-3">
+      <SectionPanel variant="subtle" className="p-3">
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-xs font-medium uppercase tracking-wide text-gray-400">
             Sync Configuration
@@ -317,23 +320,24 @@ export function ProductListingsModal({
           </div>
         </div>
 
-        <div className="mb-3 rounded border border-blue-500/20 bg-blue-500/5 px-2 py-1.5">
+        <SectionPanel variant="subtle-compact" className="mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5">
           <div className="flex items-center gap-2 text-xs text-blue-300">
             <ArrowRight className="size-3" />
             <span>
               Currently configured for <strong>one-way export</strong> (Product &rarr; Base.com)
             </span>
           </div>
-        </div>
+        </SectionPanel>
 
         <div className="space-y-1">
           {syncFields.map((field: { name: string; value: string; hasValue: boolean; syncDirection: SyncDirection; description: string }): React.JSX.Element => (
-            <div
+            <SectionPanel
               key={field.name}
-              className={`flex items-center justify-between rounded px-2 py-1.5 text-xs ${
+              variant="subtle-compact"
+              className={`flex items-center justify-between px-2 py-1.5 text-xs ${
                 field.hasValue
                   ? "bg-card/50"
-                  : "bg-gray-900/20 opacity-50"
+                  : "bg-gray-900/20 opacity-50 border-none"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -354,7 +358,7 @@ export function ProductListingsModal({
                   {getSyncDirectionIcon(field.hasValue ? field.syncDirection : "none")}
                 </div>
               </div>
-            </div>
+            </SectionPanel>
           ))}
         </div>
 
@@ -378,7 +382,7 @@ export function ProductListingsModal({
           </div>
         </div>
 
-        <div className="mt-4 rounded border border-border bg-card/50 p-3">
+        <SectionPanel variant="subtle-compact" className="mt-4 border border-border bg-card/50 p-3">
           <div className="mb-2 flex items-center justify-between">
             <h5 className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Images
@@ -405,8 +409,8 @@ export function ProductListingsModal({
               Connect this product to Base.com to enable image sync.
             </p>
           )}
-        </div>
-      </div>
+        </SectionPanel>
+      </SectionPanel>
     );
   };
 

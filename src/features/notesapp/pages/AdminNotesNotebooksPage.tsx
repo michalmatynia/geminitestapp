@@ -166,9 +166,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 const isEditing = editingId === notebook.id;
                 const isActive = selectedNotebookId === notebook.id;
                 return (
-                  <div
+                  <SectionPanel
                     key={notebook.id}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-border/60"
+                    variant="subtle"
+                    className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition hover:border-border/60"
                     onClick={(): void => {
                       updateSettings({ selectedNotebookId: notebook.id });
                       router.push("/admin/notes");
@@ -292,7 +293,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </SectionPanel>
                 );
               })}
             </div>

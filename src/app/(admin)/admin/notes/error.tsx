@@ -2,6 +2,7 @@
 
 import { Button } from "@/shared/ui";
 import { useEffect } from "react";
+import { logClientError } from "@/features/observability";
 
 export default function NotesError({
   error,
@@ -12,6 +13,10 @@ export default function NotesError({
 }) {
   useEffect(() => {
     console.error(error);
+    logClientError(error, {
+      ...(error.digest ? { digest: error.digest } : {}),
+      context: { source: "admin-notes-error-boundary" },
+    });
   }, [error]);
 
   return (

@@ -2,11 +2,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import {
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   RadioGroup,
   RadioGroupItem,
   Button,
@@ -15,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  UnifiedSelect,
+  SectionPanel,
 } from "@/shared/ui";
 import { Link2, Search } from "lucide-react";
 import type { SettingsField, SettingsFieldOption } from "../../types/page-builder";
@@ -422,19 +419,12 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">
           <span className="text-[10px] text-gray-500 uppercase">Style</span>
-          <Select
+          <UnifiedSelect
             value={(border.style as string) ?? "solid"}
             onValueChange={(v: string): void => update("style", v)}
-          >
-            <SelectTrigger className="text-xs h-7">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BORDER_STYLE_OPTIONS.map((opt: SettingsFieldOption) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={BORDER_STYLE_OPTIONS}
+            triggerClassName="text-xs h-7"
+          />
         </div>
         <div className="space-y-0.5">
           <span className="text-[10px] text-gray-500 uppercase">Color</span>
@@ -519,21 +509,17 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
 
   return (
     <div className="space-y-2">
-      <Select value={bgType} onValueChange={(v: string): void => update("type", v)}>
-        <SelectTrigger className="text-xs h-7">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {BG_TYPE_OPTIONS.map((opt: SettingsFieldOption) => (
-            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={bgType}
+        onValueChange={(v: string): void => update("type", v)}
+        options={BG_TYPE_OPTIONS}
+        triggerClassName="text-xs h-7"
+      />
 
       {bgType === "none" && (
-        <div className="rounded border border-border/40 bg-gray-900/30 px-3 py-2 text-[11px] text-gray-400">
+        <SectionPanel variant="subtle-compact" className="px-3 py-2 text-[11px] text-gray-400">
           No background override (uses color scheme / inherited background).
-        </div>
+        </SectionPanel>
       )}
 
       {bgType === "solid" && (
@@ -557,24 +543,16 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500 w-10">Dir</span>
-            <Select
+            <UnifiedSelect
               value={currentDirectionValue}
               onValueChange={(v: string): void => {
                 if (v === "custom") return;
                 update("gradientAngle", Number(v));
               }}
-            >
-              <SelectTrigger className="text-xs h-7 flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {GRADIENT_DIRECTION_OPTIONS.map((opt: SettingsFieldOption) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={GRADIENT_DIRECTION_OPTIONS}
+              className="flex-1"
+              triggerClassName="text-xs h-7"
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500 w-10">From</span>
@@ -663,38 +641,22 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
     <div className="space-y-2">
       <div className="space-y-0.5">
         <span className="text-[10px] text-gray-500 uppercase">Font Family</span>
-        <Select
+        <UnifiedSelect
           value={(typo.fontFamily as string) ?? "Inter, sans-serif"}
           onValueChange={(v: string): void => update("fontFamily", v)}
-        >
-          <SelectTrigger className="text-xs h-7">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONT_FAMILY_OPTIONS.map((opt: SettingsFieldOption) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                <span style={{ fontFamily: opt.value }}>{opt.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={FONT_FAMILY_OPTIONS}
+          triggerClassName="text-xs h-7"
+        />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">
           <span className="text-[10px] text-gray-500 uppercase">Weight</span>
-          <Select
+          <UnifiedSelect
             value={String((typo.fontWeight as string | number) ?? "400")}
             onValueChange={(v: string): void => update("fontWeight", v)}
-          >
-            <SelectTrigger className="text-xs h-7">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FONT_WEIGHT_OPTIONS.map((opt: SettingsFieldOption) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={FONT_WEIGHT_OPTIONS}
+            triggerClassName="text-xs h-7"
+          />
         </div>
         <div className="space-y-0.5">
           <span className="text-[10px] text-gray-500 uppercase">Size (px)</span>

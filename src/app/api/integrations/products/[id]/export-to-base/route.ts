@@ -154,7 +154,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const defaultInventoryId = await getExportDefaultInventoryId();
     const resolvedInventoryId = defaultInventoryId || data.inventoryId;
 
-    console.log("[export-to-base] Starting export", {
+    await ErrorSystem.logInfo("[export-to-base] Starting export", {
       productId,
       connectionId: data.connectionId,
       inventoryId: resolvedInventoryId,
@@ -177,7 +177,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       });
     }
 
-    console.log("[export-to-base] Product loaded", {
+    await ErrorSystem.logInfo("[export-to-base] Product loaded", {
       productId,
       sku: product.sku,
       name: product.name_en || product.name_pl || "unnamed",
@@ -206,7 +206,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       );
     }
 
-    console.log("[export-to-base] Connection loaded", {
+    await ErrorSystem.logInfo("[export-to-base] Connection loaded", {
       connectionId: data.connectionId,
       connectionName: connection.name,
       hasToken: Boolean(connection.baseApiToken || connection.password),
@@ -286,7 +286,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     // Check for duplicate SKU in Base.com if not allowed
     const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
     if (!allowDuplicateSku && product.sku) {
-      console.log("[export-to-base] Checking if SKU exists in Base.com", {
+      await ErrorSystem.logInfo("[export-to-base] Checking if SKU exists in Base.com", {
         sku: product.sku,
         inventoryId: resolvedInventoryId,
       });
@@ -299,7 +299,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         skuVal
       );
       if (skuCheck.exists) {
-        console.warn("[export-to-base] SKU already exists in Base.com", {
+        await ErrorSystem.logWarning("[export-to-base] SKU already exists in Base.com", {
           sku: product.sku,
           existingProductId: skuCheck.productId,
         });
@@ -489,7 +489,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           if (!validWarehouseIds.has(warehouseId)) {
             const fallbackWarehouseId =
               warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
-            console.warn("[export-to-base] Warehouse not in inventory, using fallback", {
+            await ErrorSystem.logWarning("[export-to-base] Warehouse not in inventory, using fallback", {
               warehouseId,
               fallbackWarehouseId,
               inventoryId: targetInventoryId,
@@ -500,7 +500,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           warehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
         }
       } catch (error) {
-        console.warn("[export-to-base] Failed to verify warehouse, skipping stock export", {
+        await ErrorSystem.logWarning("[export-to-base] Failed to verify warehouse, skipping stock export", {
           warehouseId,
           inventoryId: targetInventoryId,
           error,
@@ -530,7 +530,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     let effectiveMappings = imagesOnly ? [] : filterStockMappings(mappings);
 
     // Export to Base.com
-    console.log("[export-to-base] Calling Base.com API", {
+    await ErrorSystem.logInfo("[export-to-base] Calling Base.com API", {
       productId,
       inventoryId: targetInventoryId,
       mappingsCount: effectiveMappings.length,
@@ -640,7 +640,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const warehouseMismatch = !imagesOnly && isWarehouseMismatch(result.error);
 
     if (!imagesOnly && !result.success && warehouseMismatch && allowStockFallback) {
-      console.warn("[export-to-base] Warehouse mismatch, retrying without stock", {
+      await ErrorSystem.logWarning("[export-to-base] Warehouse mismatch, retrying without stock", {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -672,7 +672,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         }
       );
     } else if (!imagesOnly && !result.success && warehouseMismatch) {
-      console.warn("[export-to-base] Warehouse mismatch, failing export", {
+      await ErrorSystem.logWarning("[export-to-base] Warehouse mismatch, failing export", {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -687,7 +687,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       includeStockWithoutWarehouse &&
       isStockMismatch(result.error)
     ) {
-      console.warn("[export-to-base] Retrying without stock export", {
+      await ErrorSystem.logWarning("[export-to-base] Retrying without stock export", {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -819,7 +819,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       );
     }
 
-    console.log("[export-to-base] Export successful", {
+    await ErrorSystem.logInfo("[export-to-base] Export successful", {
       productId,
       externalProductId: result.productId,
     });

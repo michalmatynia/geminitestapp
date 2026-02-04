@@ -1,18 +1,57 @@
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/run/route.ts
-   44:19  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
-  209:47  error    Unsafe argument of type `any` assigned to a parameter of type `ImageEditParamsNonStreaming`                                                                                                          @typescript-eslint/no-unsafe-argument
-  209:58  error    Unexpected any. Specify a different type                                                                                                                                                             @typescript-eslint/no-explicit-any
+  54:19  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
-  114:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
-  556:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 561) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/ui-extractor/route.ts
+  47:14  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/user/preferences/route.ts
+  32:31  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
-  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+  407:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper.tsx
+  210:13  error  Unknown property 'ry.id}>
+ ' found  react/no-unknown-property
+  211:15  error  Unknown property '"}`}>
+   ' found  react/no-unknown-property
+  212:18  error  Unknown property '">
+      ' found  react/no-unknown-property
+  212:48  error  Unknown property '"flex' found      react/no-unknown-property
+  225:23  error  Unknown property '         ' found  react/no-unknown-property
+  227:21  error  Unknown property '         ' found  react/no-unknown-property
+  233:15  error  Unknown property '</td>
+   ' found  react/no-unknown-property
+  260:10  error  Unknown property '
+    <div' found  react/no-unknown-property
+  262:12  error  Unknown property '     <div' found  react/no-unknown-property
+  264:15  error  Unknown property '      <h2' found  react/no-unknown-property
+  267:14  error  Unknown property '       <p' found  react/no-unknown-property
+  272:14  error  Unknown property '     <div' found  react/no-unknown-property
+  302:12  error  Unknown property '     <div' found  react/no-unknown-property
+  304:14  error  Unknown property '     <div' found  react/no-unknown-property
+  319:17  error  Unknown property 'text-xs t' found  react/no-unknown-property
+  326:12  error  Unknown property 'flex gap-' found  react/no-unknown-property
+  327:14  error  Unknown property 'text-gray' found  react/no-unknown-property
+  328:24  error  Unknown property 'text-whit' found  react/no-unknown-property
+  330:14  error  Unknown property 'text-gray' found  react/no-unknown-property
+  331:25  error  Unknown property 'text-emer' found  react/no-unknown-property
+  334:16  error  Unknown property 'text-gray' found  react/no-unknown-property
+  335:36  error  Unknown property 'text-yell' found  react/no-unknown-property
+  341:12  error  Unknown property 'overflow-' found  react/no-unknown-property
+  342:16  error  Unknown property 'w-full">
+' found  react/no-unknown-property
+  344:17  error  Unknown property 'border-b ' found  react/no-unknown-property
+  345:19  error  Unknown property 'px-4 py-3' found  react/no-unknown-property
+  348:19  error  Unknown property 'px-4 py-3' found  react/no-unknown-property
+  356:21  error  Unknown property ' classN' found    react/no-unknown-property
+  356:33  error  Unknown property 'px-4 py-8' found  react/no-unknown-property
+  362:21  error  Unknown property ' classN' found    react/no-unknown-property
+  362:33  error  Unknown property 'px-4 py-8' found  react/no-unknown-property
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
-  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  113:10  error  Unknown property 'lassName=' found  react/no-unknown-property
 
-✖ 7 problems (3 errors, 4 warnings)
+✖ 36 problems (32 errors, 4 warnings)
 

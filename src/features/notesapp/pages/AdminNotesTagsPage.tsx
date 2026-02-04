@@ -175,9 +175,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               {filteredTags.map((tag: TagRecord) => {
                 const isEditing = editingId === tag.id;
                 return (
-                  <div
+                  <SectionPanel
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
+                    variant="subtle"
+                    className="flex items-center justify-between gap-3 px-4 py-3"
                   >
                     <div className="flex flex-1 items-center gap-3">
                       <span
@@ -240,7 +241,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                         <Trash2 size={16} />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 );
               })}
             </div>

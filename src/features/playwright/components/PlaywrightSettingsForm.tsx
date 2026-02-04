@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Checkbox, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, Input, Label, Checkbox, SectionPanel, UnifiedSelect } from "@/shared/ui";
 import { Dispatch, SetStateAction, ChangeEvent, ReactElement } from "react";
 import type { PlaywrightSettings } from "@/features/playwright/types";
 import { playwrightDeviceOptions } from "@/features/playwright/constants/playwright";
@@ -87,7 +87,7 @@ export function PlaywrightSettingsForm({
           </Label>
           {settings.emulateDevice && (
             <div className="mt-3">
-              <Select
+              <UnifiedSelect
                 value={settings.deviceName}
                 onValueChange={(v: string): void =>
                   setSettings((prev: PlaywrightSettings) => ({
@@ -95,20 +95,9 @@ export function PlaywrightSettingsForm({
                     deviceName: v,
                   }))
                 }
-              >
-                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
-                  <SelectValue placeholder="Select device" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-border text-white">
-                  {playwrightDeviceOptions.map(
-                    (opt: { label: string; value: string }): ReactElement => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
+                options={playwrightDeviceOptions}
+                placeholder="Select device"
+              />
             </div>
           )}
         </SectionPanel>
@@ -202,10 +191,11 @@ export function PlaywrightSettingsForm({
           )}
         </SectionPanel>
 
-        <details className="rounded-lg border bg-card/60 p-3 backdrop-blur">
-          <summary className="cursor-pointer text-sm font-semibold text-gray-200">
-            Advanced settings
-          </summary>
+        <SectionPanel variant="subtle" className="p-3">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-gray-200">
+              Advanced settings
+            </summary>
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-xs font-semibold text-gray-300">
@@ -416,6 +406,7 @@ export function PlaywrightSettingsForm({
             </SectionPanel>
           </div>
         </details>
+      </SectionPanel>
 
         {shouldShowSave && onSave ? (
           <div className="flex justify-end">

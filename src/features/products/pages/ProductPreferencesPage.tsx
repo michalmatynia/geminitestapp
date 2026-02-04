@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Label, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/products/hooks/useUserPreferences";
@@ -94,32 +94,27 @@ export function ProductPreferencesPage(): React.JSX.Element {
         />
 
         <div className="space-y-6">
-          {/* Product List Section */}
-          <SectionPanel className="p-6">
+          <SectionPanel variant="subtle" className="p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">Product List Settings</h2>
 
             <div className="space-y-4">
               {/* Name Locale */}
               <div className="space-y-2">
                 <Label htmlFor="nameLocale">Product Name Language</Label>
-                <Select
+                <UnifiedSelect
                   value={preferences.nameLocale || "name_en"}
-                  onValueChange={(value: "name_en" | "name_pl" | "name_de") =>
+                  onValueChange={(value: string) =>
                     setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
-                      nameLocale: value,
+                      nameLocale: value as "name_en" | "name_pl" | "name_de",
                     }))
                   }
-                >
-                  <SelectTrigger id="nameLocale">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name_en">English</SelectItem>
-                    <SelectItem value="name_pl">Polish</SelectItem>
-                    <SelectItem value="name_de">German</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "name_en", label: "English" },
+                    { value: "name_pl", label: "Polish" },
+                    { value: "name_de", label: "German" },
+                  ]}
+                />
                 <p className="text-xs text-gray-500">
                   Default language for product names in the list
                 </p>
@@ -128,7 +123,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               {/* Default Catalog Filter */}
               <div className="space-y-2">
                 <Label htmlFor="catalogFilter">Default Catalog Filter</Label>
-                <Select
+                <UnifiedSelect
                   value={preferences.catalogFilter || "all"}
                   onValueChange={(value: string) =>
                     setPreferences((prev: ProductListPreferences) => ({
@@ -136,19 +131,14 @@ export function ProductPreferencesPage(): React.JSX.Element {
                       catalogFilter: value,
                     }))
                   }
-                >
-                  <SelectTrigger id="catalogFilter">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Catalogs</SelectItem>
-                    {catalogs.map((catalog: Catalog) => (
-                      <SelectItem key={catalog.id} value={catalog.id}>
-                        {catalog.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "all", label: "All Catalogs" },
+                    ...catalogs.map((catalog: Catalog) => ({
+                      value: catalog.id,
+                      label: catalog.name
+                    }))
+                  ]}
+                />
                 <p className="text-xs text-gray-500">
                   Default catalog filter when opening the product list
                 </p>
@@ -176,24 +166,20 @@ export function ProductPreferencesPage(): React.JSX.Element {
               {/* Thumbnail Source */}
               <div className="space-y-2">
                 <Label htmlFor="thumbnailSource">Thumbnail Source</Label>
-                <Select
+                <UnifiedSelect
                   value={preferences.thumbnailSource || "file"}
-                  onValueChange={(value: "file" | "link" | "base64") =>
+                  onValueChange={(value: string) =>
                     setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
-                      thumbnailSource: value,
+                      thumbnailSource: value as "file" | "link" | "base64",
                     }))
                   }
-                >
-                  <SelectTrigger id="thumbnailSource">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="file">File Uploads</SelectItem>
-                    <SelectItem value="link">URL Links</SelectItem>
-                    <SelectItem value="base64">Base64</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "file", label: "File Uploads" },
+                    { value: "link", label: "URL Links" },
+                    { value: "base64", label: "Base64" },
+                  ]}
+                />
                 <p className="text-xs text-gray-500">
                   Choose which image source is used for product list thumbnails
                 </p>
@@ -202,7 +188,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               {/* Page Size */}
               <div className="space-y-2">
                 <Label htmlFor="pageSize">Products Per Page</Label>
-                <Select
+                <UnifiedSelect
                   value={String(preferences.pageSize || 50)}
                   onValueChange={(value: string) =>
                     setPreferences((prev: ProductListPreferences) => ({
@@ -210,18 +196,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
                       pageSize: parseInt(value, 10),
                     }))
                   }
-                >
-                  <SelectTrigger id="pageSize">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={["10", "25", "50", "100", "200"].map((size: string) => ({ value: size, label: size }))}
+                />
                 <p className="text-xs text-gray-500">
                   Number of products to display per page
                 </p>

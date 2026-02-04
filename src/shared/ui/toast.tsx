@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { X, CheckCircle, AlertCircle, Info, type LucideIcon } from "lucide-react";
 
 type ToastVariant = "success" | "error" | "info";
 
@@ -45,7 +45,7 @@ const defaultSettings: ToastSettings = {
   accent: "emerald",
 };
 
-const createToastId = () => {
+const createToastId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -95,7 +95,7 @@ const accentStyles: Record<
   },
 };
 
-const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"]) => {
+const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"]): { container: string; icon: string } => {
   if (variant === "error") {
     return {
       container: "border-red-500/40 bg-red-500/10 text-red-100",
@@ -109,7 +109,7 @@ const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"])
   };
 };
 
-const getToastIcon = (variant: ToastVariant) => {
+const getToastIcon = (variant: ToastVariant): LucideIcon => {
   switch (variant) {
     case "success":
       return CheckCircle;
@@ -120,7 +120,7 @@ const getToastIcon = (variant: ToastVariant) => {
   }
 };
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [settings, setSettings] = useState<ToastSettings>(() => {
     if (typeof window === "undefined") return defaultSettings;
@@ -141,8 +141,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   });
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const removeToast = useCallback((id: string): void => {
+    setToasts((prev: ToastItem[]) => prev.filter((toast: ToastItem) => toast.id !== id));
     const timer = timers.current.get(id);
     if (timer) {
       clearTimeout(timer);
@@ -151,12 +151,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toast = useCallback(
-    (message: string, options?: Partial<Omit<ToastItem, "id" | "message">>) => {
+    (message: string, options?: Partial<Omit<ToastItem, "id" | "message">>): void => {
       const id = createToastId();
       const variant = options?.variant ?? "success";
       const duration = options?.duration ?? 2000;
 
-      setToasts((prev) => [
+      setToasts((prev: ToastItem[]) => [
         ...prev,
         {
           id,
@@ -172,7 +172,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [removeToast]
   );
 
-  const updateSettings = useCallback((next: ToastSettings) => {
+  const updateSettings = useCallback((next: ToastSettings): void => {
     setSettings(next);
     window.localStorage.setItem("toastSettings", JSON.stringify(next));
   }, []);
@@ -226,7 +226,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider.");
@@ -234,7 +234,7 @@ export function useToast() {
   return context;
 }
 
-export function useToastSettings() {
+export function useToastSettings(): ToastSettingsContextValue {
   const context = useContext(ToastSettingsContext);
   if (!context) {
     throw new Error("useToastSettings must be used within a ToastProvider.");

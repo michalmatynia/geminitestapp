@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type RootState } from "@react-three/fiber";
 import {
   OrbitControls,
   Center,
@@ -117,7 +117,7 @@ function AutoRotateGroup({
   children: React.ReactNode;
 }): React.JSX.Element {
   const ref = useRef<THREE.Group>(null);
-  useFrame((_, delta) => {
+  useFrame((_state: RootState, delta: number) => {
     if (!enabled || !ref.current) return;
     ref.current.rotation.y += delta * speed * 0.6;
   });

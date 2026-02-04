@@ -240,8 +240,10 @@ const buildProviders = (): Provider[] => {
     );
   } else {
     // Non-critical warning, log to system but don't spam if not configured
-    // We can use console.warn or ErrorSystem.logWarning
-    console.warn("[AUTH] Google Client ID/Secret not found. Google login will be unavailable.");
+    void ErrorSystem.logWarning("[AUTH] Google Client ID/Secret not found. Google login will be unavailable.", {
+      service: "auth",
+      provider: "google"
+    });
   }
 
   if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
@@ -252,7 +254,10 @@ const buildProviders = (): Provider[] => {
       })
     );
   } else {
-    console.warn("[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.");
+    void ErrorSystem.logWarning("[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.", {
+      service: "auth",
+      provider: "facebook"
+    });
   }
 
   return providers;

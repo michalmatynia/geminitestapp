@@ -39,7 +39,6 @@ export function EventEffectsWrapper({
   disableClick = false,
   children,
 }: EventEffectsWrapperProps): React.ReactNode {
-  if (children === null || children === undefined) return children;
   const config = useMemo<CmsEventEffectsConfig>(
     () => getEventEffectsConfig(settings),
     [settings]
@@ -96,6 +95,8 @@ export function EventEffectsWrapper({
     },
     [clickEnabled, handleClick]
   );
+
+  if (children === null || children === undefined) return children;
 
   if (!React.isValidElement(children)) {
     if (!eventClassName && Object.keys(hoverStyle).length === 0) {

@@ -107,7 +107,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <div className="rounded-md border bg-card/60 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-0 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-border/60">
@@ -177,7 +177,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             )}
           </TableBody>
         </Table>
-      </div>
+      </SectionPanel>
 
       <ConfirmDialog
         open={!!itemToDelete}

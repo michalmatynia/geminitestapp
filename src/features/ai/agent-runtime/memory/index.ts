@@ -2,6 +2,7 @@ import "server-only";
 
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
+import { ErrorSystem } from "@/features/observability/server";
 
 const DEFAULT_MEMORY_VALIDATION_MODEL =
   process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL;
@@ -35,9 +36,9 @@ export async function addAgentMemory(params: {
   metadata?: Record<string, unknown>;
 }): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>> | null> {
   if (!("agentMemoryItem" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Memory table not initialized.");
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][memory] Memory table not initialized.", {
+      service: "agent-memory",
+    });
     return null;
   }
   try {
@@ -53,8 +54,7 @@ export async function addAgentMemory(params: {
     });
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-memory", 
         action: "addAgentMemory",
         runId: params.runId ?? undefined 
@@ -77,9 +77,9 @@ export async function listAgentMemory(params: {
   scope?: MemoryScope;
 }): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>>[]> {
   if (!("agentMemoryItem" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Memory table not initialized.");
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][memory] Memory table not initialized.", {
+      service: "agent-memory",
+    });
     return [];
   }
   try {
@@ -92,8 +92,7 @@ export async function listAgentMemory(params: {
     });
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-memory", 
         action: "listAgentMemory",
         runId: params.runId ?? undefined,
@@ -123,9 +122,9 @@ export async function addAgentLongTermMemory(params: {
   importance?: number | null;
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null> {
   if (!("agentLongTermMemory" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][memory] Long-term memory table not initialized.", {
+      service: "agent-memory",
+    });
     return null;
   }
   try {
@@ -145,8 +144,7 @@ export async function addAgentLongTermMemory(params: {
     });
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-memory", 
         action: "addAgentLongTermMemory",
         memoryKey: params.memoryKey,
@@ -323,9 +321,9 @@ export async function listAgentLongTermMemory(params: {
   tags?: string[];
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>[]> {
   if (!("agentLongTermMemory" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][memory] Long-term memory table not initialized.", {
+      service: "agent-memory",
+    });
     return [];
   }
   try {
@@ -351,8 +349,7 @@ export async function listAgentLongTermMemory(params: {
     return items;
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
+      await ErrorSystem.captureException(error, { 
         service: "agent-memory", 
         action: "listAgentLongTermMemory",
         memoryKey: params.memoryKey 

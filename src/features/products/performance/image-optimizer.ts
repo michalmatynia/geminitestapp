@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { ErrorSystem } from "@/features/observability/server";
 
 import {
   DEFAULT_IMAGE_SIZES,
@@ -98,7 +99,12 @@ export class ImageOptimizer {
           });
 
         } catch (error) {
-          console.warn(`Failed to optimize image for ${format}/${sizeName}:`, error);
+          void ErrorSystem.logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
+            service: "image-optimizer",
+            format,
+            sizeName,
+            error
+          });
         }
       }
     }

@@ -5,6 +5,7 @@ import type { Document, Filter } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getProductDataProvider } from "@/features/products/server";
+import { ErrorSystem } from "@/features/observability/server";
 
 type ImportTemplateProvider = "mongodb" | "prisma";
 
@@ -55,7 +56,10 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
-      console.warn("[ImportTemplateRepository] Parsed value is not an array:", parsed);
+      void ErrorSystem.logWarning("[ImportTemplateRepository] Parsed value is not an array", {
+        service: "import-template-repository",
+        parsed
+      });
       return [];
     }
     return parsed

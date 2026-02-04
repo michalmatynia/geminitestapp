@@ -63,7 +63,7 @@ describe("DraftCreator Component", () => {
     expect(form).not.toBeNull();
     
     act(() => {
-      fireEvent.submit(form);
+      fireEvent.submit(form!);
     });
     
     expect(onSaveSuccess).not.toHaveBeenCalled();

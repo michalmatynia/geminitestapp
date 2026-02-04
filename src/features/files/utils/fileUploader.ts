@@ -33,9 +33,9 @@ function sanitizeFolderPath(value: string): string {
   const normalized = value.replace(/\\/g, "/").trim();
   const parts = normalized
     .split("/")
-    .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .map((part: string) => part.trim())
+    .filter((part: string) => part && part !== "." && part !== "..")
+    .map((part: string) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
     .filter(Boolean);
 
   return parts.join("/");

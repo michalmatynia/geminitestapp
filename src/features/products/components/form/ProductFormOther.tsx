@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/shared/ui";
+import { Button, Input, Label, UnifiedSelect, SectionPanel, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
@@ -123,9 +123,9 @@ export default function ProductFormOther(): React.JSX.Element {
   return (
     <div className="space-y-4">
       {!hasCatalogs && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <SectionPanel variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           Select a catalog to set pricing and price groups.
-        </div>
+        </SectionPanel>
       )}
       {hasCatalogs && (
         <>
@@ -151,28 +151,22 @@ export default function ProductFormOther(): React.JSX.Element {
                 <span className="ml-2 text-xs text-muted-foreground">(Auto-assigned from catalog)</span>
               )}
             </Label>
-            <Select
+            <UnifiedSelect
               onValueChange={(value: string) => setValue("defaultPriceGroupId", value)}
               value={getValues("defaultPriceGroupId") || ""}
               disabled={isPriceGroupAutoAssigned}
-            >
-              <SelectTrigger className={isPriceGroupAutoAssigned ? "cursor-not-allowed opacity-60" : ""}>
-                <SelectValue placeholder="Select default price group" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredPriceGroups.map((group: PriceGroupWithDetails) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name} {group.isDefault ? "(Default)" : ""}{" "}
-                    ({group.currency?.code ?? group.currencyCode})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
+                value: group.id,
+                label: `${group.name}${group.isDefault ? " (Default)" : ""} (${group.currency?.code ?? group.currencyCode})`
+              }))}
+              placeholder="Select default price group"
+              triggerClassName={isPriceGroupAutoAssigned ? "cursor-not-allowed opacity-60" : ""}
+            />
           </div>
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
             <div className="mb-4">
               <Label className="mb-2 block">Price Groups Overview</Label>
-              <div className="rounded-md border">
+              <SectionPanel variant="subtle" className="p-0 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/50">
                     <tr>
@@ -183,7 +177,7 @@ export default function ProductFormOther(): React.JSX.Element {
                   </thead>
                   <tbody>
                     {priceGroupPrices.map((group: PriceGroupWithCalculatedPrice) => (
-                      <tr key={group.id} className="border-b last:border-0">
+                      <tr key={group.id} className="border-b last:border-0 border-border/50">
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
                             <span className={group.id === selectedDefaultPriceGroupId ? "font-semibold" : ""}>
@@ -199,10 +193,10 @@ export default function ProductFormOther(): React.JSX.Element {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2">{group.currency?.code ?? group.currencyCode}</td>
+                        <td className="px-3 py-2 text-gray-400">{group.currency?.code ?? group.currencyCode}</td>
                         <td className="px-3 py-2 text-right font-mono">
                           {group.calculatedPrice !== null ? (
-                            <span className={group.isCalculated ? "text-blue-600" : ""}>
+                            <span className={group.isCalculated ? "text-blue-400" : "text-white"}>
                               {group.calculatedPrice.toFixed(2)}
                             </span>
                           ) : (
@@ -213,7 +207,7 @@ export default function ProductFormOther(): React.JSX.Element {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </SectionPanel>
               <p className="mt-2 text-xs text-muted-foreground">
                 Blue prices are calculated based on the selected default price group and multipliers.
               </p>

@@ -3,7 +3,7 @@
 import React from "react";
 import { Button, SearchInput, UnifiedSelect } from "@/shared/ui";
 
-import { FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
+import { X, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
 import type { NotesFiltersProps } from "@/features/notesapp/types/notes-ui";
 import type { TagRecord } from "@/shared/types/notes";
 
@@ -28,10 +28,6 @@ export function NotesFilters({
   highlightTagId,
   buildBreadcrumbPath,
 }: NotesFiltersProps): React.JSX.Element {
-  const [isLayoutOpen, setIsLayoutOpen] = React.useState(false);
-  const layoutLabel =
-    viewMode === "list" ? "List" : gridDensity === 8 ? "Grid 8" : "Grid 4";
-
   return (
     <div className="flex-1">
         <div className="relative">
@@ -98,83 +94,34 @@ export function NotesFilters({
         </div>
 
         <div className="mt-2 flex gap-2">
-          <Button
-            onClick={(): void => updateSettings({ searchScope: "both" })}
-            className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-              searchScope === "both"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-            title="Search in title and content"
-          >
-            <FileText size={14} />
-            <Heading size={14} />
-          </Button>
-          <Button
-            onClick={(): void => updateSettings({ searchScope: "title" })}
-            className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-              searchScope === "title"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-            title="Search in title only"
-          >
-            <Heading size={14} />
-          </Button>
-          <Button
-            onClick={(): void => updateSettings({ searchScope: "content" })}
-            className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-              searchScope === "content"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-            title="Search in content only"
-          >
-            <FileText size={14} />
-          </Button>
+          <UnifiedSelect
+            value={searchScope}
+            onValueChange={(val: string) => updateSettings({ searchScope: val as "both" | "title" | "content" })}
+                          options={[
+                            { value: "both", label: "Title + Content" },
+                            { value: "title", label: "Title Only" },
+                            { value: "content", label: "Content Only" },
+                          ]}            triggerClassName="h-8 w-40 text-xs bg-gray-800 border-border text-gray-300"
+          />
 
           <div className="ml-auto flex items-center gap-1">
-            <span className="text-xs text-gray-500 mr-1">Sort:</span>
-            <Button
-              onClick={(): void => updateSettings({ sortBy: "created" })}
-              className={`rounded px-2 py-1 text-xs transition ${
-                sortBy === "created"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-              }`}
-              title="Sort by created date"
-            >
-              Date
-            </Button>
-            <Button
-              onClick={(): void => updateSettings({ sortBy: "updated" })}
-              className={`rounded px-2 py-1 text-xs transition ${
-                sortBy === "updated"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-              }`}
-              title="Sort by modified date"
-            >
-              Modified
-            </Button>
-            <Button
-              onClick={(): void => updateSettings({ sortBy: "name" })}
-              className={`rounded px-2 py-1 text-xs transition ${
-                sortBy === "name"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-              }`}
-              title="Sort by name"
-            >
-              Name
-            </Button>
+            <UnifiedSelect
+              value={sortBy}
+              onValueChange={(val: string) => updateSettings({ sortBy: val as "created" | "updated" | "name" })}
+              options={[
+                { value: "created", label: "Date Created" },
+                { value: "updated", label: "Date Modified" },
+                { value: "name", label: "Name" },
+              ]}
+              triggerClassName="h-8 w-36 text-xs bg-gray-800 border-border text-gray-300"
+            />
             <Button
               onClick={(): void =>
                 updateSettings({
                   sortOrder: sortOrder === "asc" ? "desc" : "asc",
                 })
               }
-              className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
+              className="h-8 rounded px-2 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition border border-border"
               title={
                 sortOrder === "asc"
                   ? "Ascending (click to change)"
@@ -224,63 +171,25 @@ export function NotesFilters({
               <span>Links</span>
             </Button>
           </div>
-          <div className="relative flex items-center gap-2 ml-2 pl-2 border-l border">
-            <Button
-              type="button"
-              onClick={(): void => setIsLayoutOpen((prev: boolean) => !prev)}
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
-              title="Layout options"
-            >
-              {viewMode === "list" ? <List size={14} /> : <LayoutGrid size={14} />}
-              <span>{layoutLabel}</span>
-              <ChevronDown size={12} />
-            </Button>
-            {isLayoutOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={(): void => setIsLayoutOpen(false)}
-                />
-                <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-gray-900 p-1 shadow-lg">
-                  <Button
-                    type="button"
-                    onClick={(): void => {
-                      updateSettings({ viewMode: "grid", gridDensity: 4 });
-                      setIsLayoutOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                  >
-                    <LayoutGrid size={14} />
-                    <span className="flex-1 text-left">Grid (4 per row)</span>
-                    {viewMode === "grid" && gridDensity === 4 && <Check size={12} />}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={(): void => {
-                      updateSettings({ viewMode: "grid", gridDensity: 8 });
-                      setIsLayoutOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                  >
-                    <LayoutGrid size={14} />
-                    <span className="flex-1 text-left">Grid (8 per row)</span>
-                    {viewMode === "grid" && gridDensity === 8 && <Check size={12} />}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={(): void => {
-                      updateSettings({ viewMode: "list" });
-                      setIsLayoutOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                  >
-                    <List size={14} />
-                    <span className="flex-1 text-left">List</span>
-                    {viewMode === "list" && <Check size={12} />}
-                  </Button>
-                </div>
-              </>
-            )}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border">
+            <UnifiedSelect
+              value={viewMode === "list" ? "list" : `grid-${gridDensity}`}
+              onValueChange={(val: string) => {
+                if (val === "list") {
+                  updateSettings({ viewMode: "list" });
+                } else if (val === "grid-4") {
+                  updateSettings({ viewMode: "grid", gridDensity: 4 });
+                } else if (val === "grid-8") {
+                  updateSettings({ viewMode: "grid", gridDensity: 8 });
+                }
+              }}
+              options={[
+                { value: "list", label: "List" },
+                { value: "grid-4", label: "Grid (4)" },
+                { value: "grid-8", label: "Grid (8)" },
+              ]}
+              triggerClassName="h-8 w-28 text-xs bg-gray-800 border-border text-gray-300"
+            />
           </div>
         </div>
     </div>

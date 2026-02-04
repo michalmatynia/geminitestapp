@@ -6,11 +6,7 @@ import {
   Button,
   ListPanel,
   SectionHeader,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   Label,
   Checkbox,
   Switch,
@@ -172,19 +168,18 @@ export default function SlugsPage(): React.JSX.Element {
                   </Label>
                 </div>
                 {zoningEnabled ? (
-                  <Select value={activeDomainId || ""} onValueChange={handleDomainChange}>
-                    <SelectTrigger className="h-9 w-[220px]">
-                      <SelectValue placeholder="Current domain" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {domains.map((item: CmsDomain) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.domain}
-                          {hostDomainId === item.id ? " (current)" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UnifiedSelect
+                    value={activeDomainId || ""}
+                    onValueChange={handleDomainChange}
+                    options={domains.map((item: CmsDomain) => ({
+                      value: item.id,
+                      label: item.domain,
+                      description: hostDomainId === item.id ? "current" : undefined
+                    }))}
+                    placeholder="Current domain"
+                    className="w-[220px]"
+                    triggerClassName="h-9"
+                  />
                 ) : (
                   <span className="text-xs text-muted-foreground">Simple routing</span>
                 )}

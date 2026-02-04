@@ -240,7 +240,16 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
 const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
   const now = new Date();
-  const updatePayload: Partial<MongoDraftDoc> = { ...input };
+  const updatePayload: Partial<MongoDraftDoc> = {};
+  
+  // Explicitly copy non-undefined values to satisfy exactOptionalPropertyTypes
+  (Object.keys(input) as (keyof UpdateProductDraftInput)[]).forEach((key: keyof UpdateProductDraftInput) => {
+    const val = input[key];
+    if (val !== undefined) {
+      (updatePayload as Record<string, unknown>)[key] = val;
+    }
+  });
+
   if ("categoryId" in input) {
     const normalized = typeof input.categoryId === "string" && input.categoryId.trim() ? input.categoryId.trim() : null;
     updatePayload.categoryId = normalized;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SharedModal, Input, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, SharedModal, Input, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge, UnifiedSelect } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -204,24 +204,16 @@ export default function ProductListingJobsPanel({
       </div>
       <div className="flex items-center gap-2">
         <Label htmlFor="exportJobsPageSize">Rows</Label>
-        <Select
+        <UnifiedSelect
           value={String(pageSize)}
           onValueChange={(value: string): void => {
             setPageSize(Number(value));
             setPage(1);
           }}
-        >
-          <SelectTrigger id="exportJobsPageSize" className="h-8 w-20 border-border bg-gray-900 text-xs text-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-900 border-border text-white">
-            {[10, 25, 50, 100].map((size: number) => (
-              <SelectItem key={size} value={String(size)}>
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={[10, 25, 50, 100].map((size: number) => ({ value: String(size), label: String(size) }))}
+          className="w-20"
+          triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
+        />
         <Button
           variant="outline"
           size="sm"

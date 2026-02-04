@@ -1,8 +1,8 @@
 "use client";
-import { FilePreviewModal, Button, useToast, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal } from "@/shared/ui";
+import { FilePreviewModal, Button, useToast, Input, UnifiedSelect, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products";
 import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";
@@ -84,7 +84,7 @@ export default function FileManager({
   }, [enableTagSearch, filenameSearch, tagSearchList]);
   const { data: assets3d = [] } = useAssets3D(assetFilters);
 
-  const getFileKind = (filepath: string): FileKind => {
+  const getFileKind = useCallback((filepath: string): FileKind => {
     const clean = (filepath || "").trim();
     if (!clean) return "other";
     if (clean.startsWith("data:")) return "base64";
@@ -93,9 +93,9 @@ export default function FileManager({
       return "upload";
     }
     return "other";
-  };
+  }, []);
 
-  const resolveFolder = (filepath: string): string => {
+  const resolveFolder = useCallback((filepath: string): string => {
     const kind = getFileKind(filepath);
     if (kind === "base64") return "base64";
     if (kind === "link") {
@@ -112,14 +112,14 @@ export default function FileManager({
       return parts[1] ?? "uploads";
     }
     return parts[0] || "uploads";
-  };
+  }, [getFileKind]);
 
   const uploadFiles = useMemo(
     () => files.filter((file: ExpandedImageFile) => {
       const kind = getFileKind(file.filepath);
       return kind === "upload" || kind === "other";
     }),
-    [files]
+    [files, getFileKind]
   );
 
   const folderOptions = useMemo((): string[] => {
@@ -130,7 +130,7 @@ export default function FileManager({
       }
     });
     return ["all", ...Array.from(folders).sort()];
-  }, [uploadFiles]);
+  }, [uploadFiles, resolveFolder]);
 
   const initialFolderFilter = useMemo((): string => {
     if (defaultFolder && folderOptions.includes(defaultFolder)) {
@@ -160,14 +160,14 @@ export default function FileManager({
       const kind = getFileKind(file.filepath);
       return kind === "upload" || kind === "other";
     };
-  }, [activeTab]);
+  }, [activeTab, getFileKind]);
 
   const filteredFiles = useMemo((): ExpandedImageFile[] => {
     const base = files.filter(filterByTab);
     if (activeTab !== "uploads") return base;
     if (folderFilter === "all") return base;
     return base.filter((file: ExpandedImageFile) => resolveFolder(file.filepath) === folderFilter);
-  }, [files, filterByTab, folderFilter, activeTab]);
+  }, [files, filterByTab, folderFilter, activeTab, resolveFolder]);
 
   const fileById = useMemo((): Map<string, ExpandedImageFile> => {
     return new Map(files.map((file: ExpandedImageFile) => [file.id, file]));
@@ -308,18 +308,17 @@ export default function FileManager({
           />
         )}
         {folderFilterEnabled && (
-          <Select value={folderFilter} onValueChange={(value: string): void => setLocalFolderFilter(value)}>
-            <SelectTrigger className="w-full md:w-48 text-sm">
-              <SelectValue placeholder="All folders" />
-            </SelectTrigger>
-            <SelectContent>
-              {folderOptions.map((folder: string) => (
-                <SelectItem key={folder} value={folder}>
-                  {folder === "all" ? "All folders" : folder}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <UnifiedSelect
+            value={folderFilter}
+            onValueChange={(value: string): void => setLocalFolderFilter(value)}
+            options={folderOptions.map((folder: string) => ({
+              value: folder,
+              label: folder === "all" ? "All folders" : folder
+            }))}
+            placeholder="All folders"
+            className="w-full md:w-48"
+            triggerClassName="text-sm"
+          />
         )}
         {mode === "select" && selectionMode === "multiple" && showBulkActions && (
           <div className="flex items-center gap-2">
@@ -380,15 +379,16 @@ export default function FileManager({
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
             className="w-full md:w-72 p-2 bg-gray-800 rounded"
           />
-          <Select value={bulkTagMode} onValueChange={(value: string): void => setBulkTagMode(value as "add" | "replace")}>
-            <SelectTrigger className="w-full md:w-32 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="add">Add</SelectItem>
-              <SelectItem value="replace">Replace</SelectItem>
-            </SelectContent>
-          </Select>
+          <UnifiedSelect
+            value={bulkTagMode}
+            onValueChange={(value: string): void => setBulkTagMode(value as "add" | "replace")}
+            options={[
+              { value: "add", label: "Add" },
+              { value: "replace", label: "Replace" }
+            ]}
+            className="w-full md:w-32"
+            triggerClassName="text-sm"
+          />
           <Button
             size="sm"
             onClick={(): void => { void handleApplyTags(); }}

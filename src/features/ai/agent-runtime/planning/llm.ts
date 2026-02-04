@@ -2,6 +2,7 @@ import "server-only";
 
 import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";
+import { ErrorSystem } from "@/features/observability/server";
 import type {
   AgentDecision,
   PlanStep,
@@ -10,7 +11,6 @@ import type {
   PlannerMeta,
 } from "@/features/ai/agent-runtime/types/agent";
 import {
-  DEBUG_CHATBOT,
   MAX_PLAN_STEPS,
   MAX_STEP_ATTEMPTS,
   OLLAMA_BASE_URL,
@@ -374,12 +374,10 @@ export async function buildPlanWithLLM({
           : {}),
     };
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Planner fallback", {
-        runId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Planner fallback", {
+      runId,
+      error,
+    });
     return {
       steps: fallbackSteps,
       decision: decideNextAction(prompt, memory),
@@ -561,12 +559,10 @@ export async function buildAdaptivePlanReview({
     }
     return result;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Planner review fallback", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Planner review fallback", {
+      ...(runId && { runId }),
+      error,
+    });
     return { shouldReplan: false, steps: [] };
   }
 }
@@ -805,12 +801,10 @@ export async function buildSelfCheckReview({
     }
     return result;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Self-check fallback", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Self-check fallback", {
+      ...(runId && { runId }),
+      error,
+    });
     return { action: "continue", steps: [] };
   }
 }
@@ -988,12 +982,10 @@ export async function buildResumePlanReview({
     }
     return result;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Resume planner fallback", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Resume planner fallback", {
+      ...(runId && { runId }),
+      error,
+    });
     return { shouldReplan: false, steps: [] };
   }
 }
@@ -1129,12 +1121,10 @@ export async function evaluatePlanWithLLM({
     }
     return { score, revisedSteps };
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan evaluation failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Plan evaluation failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -1233,12 +1223,10 @@ export async function verifyPlanWithLLM({
     }
     return parsed;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan verification failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Plan verification failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -1341,12 +1329,10 @@ export async function buildSelfImprovementReviewWithLLM({
         typeof parsed.confidence === "number" ? parsed.confidence : undefined,
     };
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Self-improvement review failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Self-improvement review failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -1445,12 +1431,10 @@ export async function summarizePlannerMemoryWithLLM({
     }
     return packed;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Planner summary failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Planner summary failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -1602,12 +1586,10 @@ export async function buildMidRunAdaptationWithLLM({
     }
     return result;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Mid-run adaptation failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Mid-run adaptation failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return { shouldAdapt: false, steps: [] };
   }
 }
@@ -1707,12 +1689,10 @@ export async function dedupePlanStepsWithLLM({
     }
     return dedupedSteps;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan dedupe failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Plan dedupe failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return steps;
   }
 }
@@ -1813,12 +1793,10 @@ export async function guardRepetitionWithLLM({
     }
     return guarded;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Repetition guard failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Repetition guard failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return candidateSteps;
   }
 }
@@ -1917,12 +1895,10 @@ export async function buildCheckpointBriefWithLLM({
     }
     return { summary, nextActions, risks };
   } catch (err) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Checkpoint brief failed", {
-        ...(runId && { runId }),
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Checkpoint brief failed", {
+      ...(runId && { runId }),
+      error: err,
+    });
     return null;
   }
 }
@@ -2045,12 +2021,10 @@ export async function optimizePlanWithLLM({
       optimizedSteps,
     };
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan optimization failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Plan optimization failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -2139,12 +2113,10 @@ export async function enrichPlanHierarchyWithLLM({
     }
     return enriched;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Hierarchy enrichment failed", {
-        ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Hierarchy enrichment failed", {
+      ...(runId && { runId }),
+      error,
+    });
     return null;
   }
 }
@@ -2242,12 +2214,10 @@ export async function expandHierarchyFromStepsWithLLM({
     }
     return expanded;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan hierarchy expansion failed", {
-        runId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.logWarning("[chatbot][agent][engine] Plan hierarchy expansion failed", {
+      runId,
+      error,
+    });
     return null;
   }
 }

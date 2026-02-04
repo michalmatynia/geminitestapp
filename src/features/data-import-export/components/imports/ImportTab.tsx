@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Checkbox, Pagination, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import NextImage from "next/image";
 import type {
   CatalogOption,
@@ -101,8 +101,8 @@ export function ImportTab({
   lastResult,
 }: ImportTabProps): React.JSX.Element {
   return (
-    <>
-      <div className="rounded-md border border-border bg-gray-900 p-4">
+    <div className="space-y-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Base.com</h2>
@@ -130,22 +130,14 @@ export function ImportTab({
             <div className="flex-1 min-w-[200px]">
               <Label className="text-xs text-gray-400">Inventory</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={inventoryId}
                   onValueChange={setInventoryId}
                   disabled={inventories.length === 0}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                    <SelectValue placeholder={inventories.length === 0 ? "Load inventories first" : "Select inventory"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-border text-white">
-                    {inventories.map((inventory: InventoryOption) => (
-                      <SelectItem key={inventory.id} value={inventory.id}>
-                        {inventory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name }))}
+                  placeholder={inventories.length === 0 ? "Load inventories first" : "Select inventory"}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
               </div>
             </div>
             <Button
@@ -162,22 +154,19 @@ export function ImportTab({
             <div className="w-40">
               <Label className="text-xs text-gray-400">Limit</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={limit}
                   onValueChange={setLimit}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-border text-white">
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "1", label: "1" },
+                    { value: "5", label: "5" },
+                    { value: "10", label: "10" },
+                    { value: "50", label: "50" },
+                    { value: "100", label: "100" },
+                    { value: "all", label: "All" }
+                  ]}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
               </div>
             </div>
           </div>
@@ -186,46 +175,33 @@ export function ImportTab({
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={catalogId || "__none__"}
                   onValueChange={(v: string): void => setCatalogId(v === "__none__" ? "" : v)}
                   disabled={loadingCatalogs || catalogs.length === 0}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                    <SelectValue placeholder={loadingCatalogs ? "Loading catalogs..." : "No catalogs"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-border text-white">
-                    <SelectItem value="__none__">— No catalog —</SelectItem>
-                    {catalogs.map((catalog: CatalogOption) => (
-                      <SelectItem key={catalog.id} value={catalog.id}>
-                        {catalog.name}
-                        {catalog.isDefault ? " (Default)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "__none__", label: "— No catalog —" },
+                    ...catalogs.map((cat: CatalogOption) => ({ value: cat.id, label: `${cat.name}${cat.isDefault ? " (Default)" : ""}` }))
+                  ]}
+                  placeholder={loadingCatalogs ? "Loading catalogs..." : "No catalogs"}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
               </div>
             </div>
             <div>
               <Label className="text-xs text-gray-400">Import template</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={importTemplateId || "__none__"}
                   onValueChange={(v: string): void => setImportTemplateId(v === "__none__" ? "" : v)}
                   disabled={loadingImportTemplates || importTemplates.length === 0}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                    <SelectValue placeholder="No template" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-border text-white">
-                    <SelectItem value="__none__">No template</SelectItem>
-                    {importTemplates.map((template: Template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "__none__", label: "No template" },
+                    ...importTemplates.map((template: Template) => ({ value: template.id, label: template.name }))
+                  ]}
+                  placeholder="No template"
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
               </div>
             </div>
           </div>
@@ -234,18 +210,15 @@ export function ImportTab({
             <div>
               <Label className="text-xs text-gray-400">Images</Label>
               <div className="mt-2">
-                <Select
+                <UnifiedSelect
                   value={imageMode}
                   onValueChange={(v: string): void => setImageMode(v as "links" | "download")}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-border text-white">
-                    <SelectItem value="links">Import image links</SelectItem>
-                    <SelectItem value="download">Download product images</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "links", label: "Import image links" },
+                    { value: "download", label: "Download product images" }
+                  ]}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
               </div>
               <p className="mt-2 text-xs text-gray-500">
                 Image links keep Base.com URLs. Download stores images in your
@@ -290,9 +263,9 @@ export function ImportTab({
             </Button>
           </div>
         </div>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-md border border-border bg-gray-900 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-white">
@@ -319,38 +292,34 @@ export function ImportTab({
               placeholder="Search SKU..."
               className="h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
-            <Select
+            <UnifiedSelect
               value={uniqueOnly ? "unique" : "all"}
               onValueChange={(v: string): void =>
                 (setUniqueOnly(v === "unique"), setImportListPage(1))
               }
-            >
-              <SelectTrigger className="h-8 w-32 border-border bg-gray-900 text-xs text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-border text-white">
-                <SelectItem value="unique">Unique only</SelectItem>
-                <SelectItem value="all">All products</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
+              options={[
+                { value: "unique", label: "Unique only" },
+                { value: "all", label: "All products" }
+              ]}
+              className="w-32"
+              triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
+            />
+            <UnifiedSelect
               value={String(importListPageSize)}
               onValueChange={(value: string): void => {
                 const nextSize = Number(value);
                 setImportListPageSize(Number.isFinite(nextSize) ? nextSize : 25);
                 setImportListPage(1);
               }}
-            >
-              <SelectTrigger className="h-8 w-32 border-border bg-gray-900 text-xs text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-border text-white">
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="25">25 / page</SelectItem>
-                <SelectItem value="50">50 / page</SelectItem>
-                <SelectItem value="100">100 / page</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "10", label: "10 / page" },
+                { value: "25", label: "25 / page" },
+                { value: "50", label: "50 / page" },
+                { value: "100", label: "100 / page" }
+              ]}
+              className="w-32"
+              triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
+            />
             <Button
               onClick={(): void => {
                 void handleLoadImportList();
@@ -386,7 +355,7 @@ export function ImportTab({
         ) : null}
 
         {importList.length > 0 ? (
-          <div className="mt-3 max-h-96 overflow-auto rounded-md border border-border bg-card/70">
+          <SectionPanel variant="subtle-compact" className="mt-3 max-h-96 overflow-auto p-0">
             <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10">
               <span className="flex items-center">
                 <Checkbox
@@ -511,7 +480,7 @@ export function ImportTab({
                 </span>
               </div>
             ))}
-          </div>
+          </SectionPanel>
         ) : (
           <p className="mt-3 text-xs text-gray-500">
             {importList.length > 0
@@ -519,10 +488,10 @@ export function ImportTab({
               : "No items loaded yet."}
           </p>
         )}
-      </div>
+      </SectionPanel>
 
       {lastResult ? (
-        <div className="rounded-md border border-border bg-gray-900 p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <h3 className="text-sm font-semibold text-white">
             Last import summary
           </h3>
@@ -541,8 +510,8 @@ export function ImportTab({
               ))}
             </div>
           ) : null}
-        </div>
+        </SectionPanel>
       ) : null}
-    </>
+    </div>
   );
 }

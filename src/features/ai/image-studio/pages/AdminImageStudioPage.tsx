@@ -158,8 +158,8 @@ function normalizeStudioAssets(projectId: string, assets: ImageFileRecord[]): Im
 }
 
 async function loadImageElement(src: string): Promise<HTMLImageElement> {
-  return new Promise<HTMLImageElement>((resolve: (value: HTMLImageElement) => void, reject: (reason?: any) => void) => {
-    const img = new Image();
+  return new Promise<HTMLImageElement>((resolve: (value: HTMLImageElement) => void, reject: (reason?: unknown) => void) => {
+    const img = document.createElement("img");
     img.onload = (): void => resolve(img);
     img.onerror = (): void => reject(new Error("Failed to load image for mask generation."));
     img.src = src;
@@ -346,7 +346,7 @@ function AssetTree({
   onSelectAsset: (asset: ImageFileRecord) => void;
 }): React.JSX.Element {
   const tree = useMemo(() => buildAssetTree(projectId, assets, folders), [projectId, assets, folders]);
-  const initialExpanded = useMemo(() => new Set(["root"]), [projectId]);
+  const initialExpanded = useMemo(() => new Set(["root"]), []);
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
 
   // Reset expanded when projectId changes (derived state pattern)
@@ -544,7 +544,7 @@ function MaskCanvas({
     return (): void => observer.disconnect();
   }, [syncCanvasSize]);
 
-  const toPoint = (event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
+  const toPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -554,9 +554,9 @@ function MaskCanvas({
       x: Math.min(1, Math.max(0, x)),
       y: Math.min(1, Math.max(0, y)),
     };
-  };
+  }, []);
 
-  const hitTestPoint = (event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string; pointIndex: number } | null => {
+  const hitTestPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string; pointIndex: number } | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -576,9 +576,9 @@ function MaskCanvas({
       }
     }
     return null;
-  };
+  }, [shapes]);
 
-  const hitTestSegment = (
+  const hitTestSegment = useCallback((
     event: React.MouseEvent<HTMLCanvasElement>
   ): { shapeId: string; insertIndex: number; point: Point } | null => {
     const canvas = canvasRef.current;
@@ -638,7 +638,7 @@ function MaskCanvas({
       }
     }
     return null;
-  };
+  }, [shapes]);
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
@@ -671,7 +671,7 @@ function MaskCanvas({
       if (tool === "polygon") {
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
-        const activeShape = shapes.find((s) => s.id === activeShapeId && s.type === "polygon" && !s.closed);
+        const activeShape = shapes.find((s: MaskShape) => s.id === activeShapeId && s.type === "polygon" && !s.closed);
         if (!activeShape) {
           const newShape: MaskShape = {
             id: `shape_${Date.now().toString(36)}`,
@@ -743,7 +743,7 @@ function MaskCanvas({
         onChange([...shapes, newShape]);
       }
     },
-    [activeShapeId, onChange, onSelectPoint, onSelectShape, shapes, src, tool]
+    [activeShapeId, hitTestPoint, hitTestSegment, onChange, onSelectPoint, onSelectShape, shapes, src, toPoint, tool]
   );
 
   useEffect(() => {
@@ -752,9 +752,9 @@ function MaskCanvas({
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         onChange(
-          shapes.map((shape) => {
+          shapes.map((shape: MaskShape) => {
             if (shape.id !== activeShapeId) return shape;
-            const nextPoints = shape.points.filter((_, idx) => idx !== selectedPointIndex);
+            const nextPoints = shape.points.filter((_: Point, idx: number) => idx !== selectedPointIndex);
             return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
           })
         );
@@ -774,7 +774,7 @@ function MaskCanvas({
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
         onChange(
-          shapes.map((shape) => {
+          shapes.map((shape: MaskShape) => {
             if (shape.id !== dragRef.current?.shapeId) return shape;
             const nextPoints = [...shape.points];
             nextPoints[dragRef.current.pointIndex] = nextPoint;
@@ -787,7 +787,7 @@ function MaskCanvas({
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
         onChange(
-          shapes.map((shape) => {
+          shapes.map((shape: MaskShape) => {
             if (shape.id !== drawingRef.current?.shapeId) return shape;
             if (shape.type === "lasso" || shape.type === "brush") {
               const last = shape.points[shape.points.length - 1];
@@ -809,13 +809,13 @@ function MaskCanvas({
         );
       }
     },
-    [onChange, shapes, src]
+    [brushRadius, onChange, shapes, src, toPoint]
   );
 
   const handleMouseUp = useCallback((): void => {
     if (drawingRef.current) {
       onChange(
-        shapes.map((shape) =>
+        shapes.map((shape: MaskShape) =>
           shape.id === drawingRef.current?.shapeId ? { ...shape, closed: true } : shape
         )
       );
@@ -921,6 +921,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [uiSuggestMinConfidence, setUiSuggestMinConfidence] = useState<number>(0.5);
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [maskGenLoading, setMaskGenLoading] = useState<boolean>(false);
+  const [_maskGenOpen, setMaskGenOpen] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
 
   useEffect(() => {
@@ -953,7 +954,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   useEffect(() => {
     const nextTab = normalizeStudioTab(searchParams?.get("tab"));
-    setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
+    setActiveTab((prev: StudioTab) => (prev === nextTab ? prev : nextTab));
   }, [searchParams]);
 
   const handleTabChange = useCallback(
@@ -977,51 +978,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
     if (saved) setProjectId(sanitizeStudioProjectId(saved));
   }, []);
 
-  useEffect(() => {
-    if (projectId) return;
-    if (hasManualProjectSelectionRef.current) return;
-    const first = projectsQuery.data?.[0];
-    if (first) {
-      setProjectId(first);
-      hasManualProjectSelectionRef.current = true;
-    }
-  }, [projectId, projectsQuery.data]);
-
-  useEffect(() => {
-    if (!projectId) return;
-    localStorage.setItem("imageStudio.projectId", projectId);
-  }, [projectId]);
-
-  useEffect(() => {
-    const key = `imageStudio.paramUiOverrides.${projectId || "default"}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) {
-      setParamUiOverrides({});
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        setParamUiOverrides({});
-        return;
-      }
-      const next: Record<string, ParamUiControl> = {};
-      Object.entries(parsed as Record<string, unknown>).forEach(([path, value]: [string, unknown]) => {
-        if (!path.trim() || !isParamUiControl(value)) return;
-        if (value === "auto") return;
-        next[path] = value;
-      });
-      setParamUiOverrides(next);
-    } catch {
-      setParamUiOverrides({});
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    const key = `imageStudio.paramUiOverrides.${projectId || "default"}`;
-    localStorage.setItem(key, JSON.stringify(paramUiOverrides));
-  }, [paramUiOverrides, projectId]);
-
   const projectsQuery = useQuery({
     queryKey: ["image-studio", "projects"],
     queryFn: async (): Promise<string[]> => {
@@ -1037,6 +993,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
     staleTime: 10_000,
   });
+
+  useEffect(() => {
+    if (projectId) return;
+    if (hasManualProjectSelectionRef.current) return;
+    const first = projectsQuery.data?.[0];
+    if (first) {
+      setProjectId(first);
+      hasManualProjectSelectionRef.current = true;
+    }
+  }, [projectId, projectsQuery.data]);
 
   const createProjectMutation = useMutation({
     mutationFn: async (id: string): Promise<string> => {
@@ -1162,7 +1128,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     onSuccess: async (folder: string): Promise<void> => {
       queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
         const current = prev ?? { assets: [], folders: [] };
-        const nextFolders = Array.from(new Set([...(current.folders ?? []), folder])).sort((a, b) => a.localeCompare(b));
+        const nextFolders = Array.from(new Set([...(current.folders ?? []), folder])).sort((a: string, b: string) => a.localeCompare(b));
         return { ...current, folders: nextFolders };
       });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
@@ -1258,10 +1224,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
           return prev ?? { assets: current, folders: [] };
         }
         const byId = new Map<string, ImageFileRecord>();
-        current.forEach((asset) => {
+        current.forEach((asset: ImageFileRecord) => {
           if (asset && asset.id) byId.set(asset.id, asset);
         });
-        data.uploaded.forEach((asset) => {
+        data.uploaded.forEach((asset: ImageFileRecord) => {
           if (!asset || !asset.id) return;
           byId.set(asset.id, asset);
         });
@@ -1300,7 +1266,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
   const folderOptions = useMemo(() => {
     const unique = new Set<string>(["", ...folders.filter(Boolean)]);
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+    return Array.from(unique).sort((a: string, b: string) => a.localeCompare(b));
   }, [folders]);
 
   const getAssetFolder = useCallback(
@@ -1412,15 +1378,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setUiSuggestMode(studioSettings.uiExtractor.mode);
   }, [studioSettings.uiExtractor.mode]);
 
-  const buildRuleKey = (rule: PromptValidationRule, fallback: number): string =>
-    rule.id?.trim() ? rule.id : `learned_${fallback}`;
+  const buildRuleKey = useCallback((rule: PromptValidationRule, fallback: number): string =>
+    rule.id?.trim() ? rule.id : `learned_${fallback}`, []);
 
-  const ruleSignature = (rule: PromptValidationRule): string => {
+  const ruleSignature = useCallback((rule: PromptValidationRule): string => {
     if (rule.kind === "regex") {
       return `regex:${rule.pattern}/${rule.flags}`;
     }
     return `params:${rule.id}`;
-  };
+  }, []);
 
   const handleLearnPatterns = useCallback(async (): Promise<void> => {
     if (!promptText.trim()) {
@@ -1516,7 +1482,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveLearnedPatterns" } });
       toast("Failed to save learned patterns.", { variant: "error" });
     }
-  }, [buildRuleKey, learnCandidates, learnSelection, studioSettings, toast, updateSetting]);
+  }, [buildRuleKey, learnCandidates, learnSelection, ruleSignature, studioSettings, toast, updateSetting]);
 
   const paramLeaves: ParamLeaf[] = useMemo(() => {
     if (!paramsState) return [];
@@ -1554,8 +1520,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [paramLeaves, paramSpecs, paramsState]);
 
   const buildSuggestionRows = useCallback((heuristic: UiSuggestion[], ai: UiSuggestion[]): UiSuggestionRow[] => {
-    const heuristicMap = new Map(heuristic.map((s) => [s.path, s]));
-    const aiMap = new Map(ai.map((s) => [s.path, s]));
+    const heuristicMap = new Map(heuristic.map((s: UiSuggestion) => [s.path, s]));
+    const aiMap = new Map(ai.map((s: UiSuggestion) => [s.path, s]));
     const allPaths = Array.from(new Set([...heuristicMap.keys(), ...aiMap.keys()]));
     return allPaths.map((path: string) => {
       const h = heuristicMap.get(path);
@@ -1570,16 +1536,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
         hintParts.push(`enum: ${spec.enumOptions.length} option(s)`);
       }
       const hint = hintParts.length > 0 ? hintParts.join(" • ") : null;
-      const options = Array.from(
-        new Set([...(h?.options ?? []), ...(a?.options ?? []), "auto"])
-      ).filter(isParamUiControl);
       const selected = a?.control ?? h?.control ?? "auto";
       return {
         path,
         valuePreview: h?.valuePreview ?? a?.valuePreview ?? "",
         hint,
-        heuristic: h,
-        ai: a,
+        ...(h ? { heuristic: h } : {}),
+        ...(a ? { ai: a } : {}),
         selected,
         apply: true,
       };
@@ -1636,7 +1599,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
     }
     setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
       const next = { ...prev };
-      toApply.forEach((row) => {
+      toApply.forEach((row: UiSuggestionRow) => {
         if (row.selected === "auto") {
           delete next[row.path];
         } else {
@@ -1668,7 +1631,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const addMaskFromPolygon = useCallback((points: Point[], name: string): void => {
     if (points.length < 3) return;
-    const clamped = points.map((p) => ({ x: clamp01(p.x), y: clamp01(p.y) }));
+    const clamped = points.map((p: Point) => ({ x: clamp01(p.x), y: clamp01(p.y) }));
     const newShape: MaskShape = {
       id: `shape_${Date.now().toString(36)}`,
       name,
@@ -1839,7 +1802,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
         return;
       }
       if (shape.type === "rect" && shape.points.length >= 2) {
-        const [a, b] = shape.points;
+        const a = shape.points[0]!;
+        const b = shape.points[1]!;
         const minX = Math.min(a.x, b.x);
         const maxX = Math.max(a.x, b.x);
         const minY = Math.min(a.y, b.y);
@@ -1853,7 +1817,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
         return;
       }
       if (shape.type === "ellipse" && shape.points.length >= 2) {
-        const [a, b] = shape.points;
+        const a = shape.points[0]!;
+        const b = shape.points[1]!;
         const cx = (a.x + b.x) / 2;
         const cy = (a.y + b.y) / 2;
         const rx = Math.abs(a.x - b.x) / 2;
@@ -2731,7 +2696,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           type="checkbox"
                           checked={Boolean(learnSelection[key])}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setLearnSelection((prev) => ({ ...prev, [key]: e.target.checked }))
+                            setLearnSelection((prev: Record<string, boolean>) => ({ ...prev, [key]: e.target.checked }))
                           }
                         />
                         <span>
@@ -2761,7 +2726,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               type="button"
               variant="outline"
               onClick={() =>
-                setLearnSelection((prev) => {
+                setLearnSelection((prev: Record<string, boolean>) => {
                   const next = { ...prev };
                   learnCandidates.forEach((rule: PromptValidationRule, index: number) => {
                     next[buildRuleKey(rule, index)] = true;
@@ -2858,8 +2823,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           type="checkbox"
                           checked={row.apply}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setUiSuggestionRows((prev) =>
-                              prev.map((item) => (item.path === row.path ? { ...item, apply: e.target.checked } : item))
+                            setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                              prev.map((item: UiSuggestionRow) => (item.path === row.path ? { ...item, apply: e.target.checked } : item))
                             )
                           }
                         />
@@ -2889,8 +2854,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <Select
                         value={selected}
                         onValueChange={(value: string) =>
-                          setUiSuggestionRows((prev) =>
-                            prev.map((item) =>
+                          setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                            prev.map((item: UiSuggestionRow) =>
                               item.path === row.path && isParamUiControl(value)
                                 ? { ...item, selected: value }
                                 : item
@@ -2902,7 +2867,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {uniqueOptions.map((option) => (
+                          {uniqueOptions.map((option: ParamUiControl) => (
                             <SelectItem key={option} value={option}>
                               {paramUiControlLabel(option)}
                             </SelectItem>
@@ -2917,8 +2882,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            setUiSuggestionRows((prev) =>
-                              prev.map((item) =>
+                            setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                              prev.map((item: UiSuggestionRow) =>
                                 item.path === row.path ? { ...item, selected: row.heuristic!.control } : item
                               )
                             )
@@ -2933,8 +2898,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            setUiSuggestionRows((prev) =>
-                              prev.map((item) =>
+                            setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                              prev.map((item: UiSuggestionRow) =>
                                 item.path === row.path ? { ...item, selected: row.ai!.control } : item
                               )
                             )
@@ -2948,8 +2913,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          setUiSuggestionRows((prev) =>
-                            prev.map((item) =>
+                          setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                            prev.map((item: UiSuggestionRow) =>
                               item.path === row.path ? { ...item, selected: "auto" } : item
                             )
                           )
@@ -2969,7 +2934,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               type="button"
               variant="outline"
               onClick={() =>
-                setUiSuggestionRows((prev) => prev.map((row) => ({ ...row, apply: true })))
+                setUiSuggestionRows((prev: UiSuggestionRow[]) => prev.map((row: UiSuggestionRow) => ({ ...row, apply: true })))
               }
               disabled={uiSuggestionRows.length === 0}
             >
@@ -2979,8 +2944,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
               type="button"
               variant="outline"
               onClick={() =>
-                setUiSuggestionRows((prev) =>
-                  prev.map((row) => {
+                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                  prev.map((row: UiSuggestionRow) => {
                     const best = row.ai?.confidence && row.heuristic?.confidence
                       ? (row.ai.confidence >= row.heuristic.confidence ? row.ai.control : row.heuristic.control)
                       : row.ai?.control ?? row.heuristic?.control ?? row.selected;
@@ -3108,7 +3073,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             onClick={() => {
               if (!activeMaskId) return;
               setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape) =>
+                prev.map((shape: MaskShape) =>
                   shape.id === activeMaskId
                     ? { ...shape, points: shape.points.slice(0, -1), closed: false }
                     : shape
@@ -3128,7 +3093,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             onClick={() => {
               if (!activeMaskId) return;
               setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape) =>
+                prev.map((shape: MaskShape) =>
                   shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
                 )
               );
@@ -3146,7 +3111,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             onClick={() => {
               if (!activeMaskId) return;
               setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape) => {
+                prev.map((shape: MaskShape) => {
                   if (shape.id !== activeMaskId) return shape;
                   if (!shape.closed) return shape;
                   if (shape.points.length < 3) return { ...shape, closed: false };
@@ -3394,7 +3359,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      setMaskShapes((prev: MaskShape[]) => prev.filter((shape) => shape.id !== activeMaskId));
+                      setMaskShapes((prev: MaskShape[]) => prev.filter((shape: MaskShape) => shape.id !== activeMaskId));
                       setActiveMaskId(null);
                     }}
                     disabled={!activeMaskId}
@@ -3406,7 +3371,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   {maskShapes.length === 0 ? (
                     <div className="text-gray-500">No mask layers yet.</div>
                   ) : (
-                    maskShapes.map((shape) => (
+                    maskShapes.map((shape: MaskShape) => (
                       <button
                         key={shape.id}
                         type="button"
@@ -3427,11 +3392,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     <div>
                       <Label className="text-[11px] text-gray-400">Layer name</Label>
                       <Input
-                        value={maskShapes.find((s) => s.id === activeMaskId)?.name ?? ""}
+                        value={maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.name ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const value = e.target.value;
                           setMaskShapes((prev: MaskShape[]) =>
-                            prev.map((shape) => (shape.id === activeMaskId ? { ...shape, name: value } : shape))
+                            prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, name: value } : shape))
                           );
                         }}
                         className="h-8"
@@ -3441,11 +3406,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       <label className="flex items-center gap-2 text-[11px] text-gray-200">
                         <input
                           type="checkbox"
-                          checked={Boolean(maskShapes.find((s) => s.id === activeMaskId)?.visible ?? true)}
+                          checked={Boolean(maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.visible ?? true)}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const checked = e.target.checked;
                             setMaskShapes((prev: MaskShape[]) =>
-                              prev.map((shape) => (shape.id === activeMaskId ? { ...shape, visible: checked } : shape))
+                              prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, visible: checked } : shape))
                             );
                           }}
                         />
@@ -3505,9 +3470,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       onClick={() => {
                         if (!activeMaskId || selectedPointIndex === null) return;
                         setMaskShapes((prev: MaskShape[]) =>
-                          prev.map((shape) => {
+                          prev.map((shape: MaskShape) => {
                             if (shape.id !== activeMaskId) return shape;
-                            const nextPoints = shape.points.filter((_, idx) => idx !== selectedPointIndex);
+                            const nextPoints = shape.points.filter((_: Point, idx: number) => idx !== selectedPointIndex);
                             return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
                           })
                         );
@@ -3527,7 +3492,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     onClick={() => {
                       if (!activeMaskId) return;
                       setMaskShapes((prev: MaskShape[]) =>
-                        prev.map((shape) => {
+                        prev.map((shape: MaskShape) => {
                           if (shape.id !== activeMaskId) return shape;
                           if (shape.points.length < 3) return shape;
                           const pts = shape.points;
@@ -3553,7 +3518,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     onClick={() => {
                       if (!activeMaskId) return;
                       setMaskShapes((prev: MaskShape[]) =>
-                        prev.map((shape) => {
+                        prev.map((shape: MaskShape) => {
                           if (shape.id !== activeMaskId) return shape;
                           if (shape.points.length < 2) return shape;
                           const next: Point[] = [];

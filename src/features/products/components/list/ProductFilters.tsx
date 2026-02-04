@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Label, Button, DropdownMenuItem, SearchInput, SelectionBar } from "@/shared/ui";
+import { Input, Label, Button, DropdownMenuItem, SearchInput, SelectionBar, SectionPanel } from "@/shared/ui";
 import { memo, useCallback } from "react";
 
 
@@ -51,7 +51,7 @@ export const ProductFilters = memo(function ProductFilters({
   };
 
   return (
-    <div className="mb-4 space-y-3 rounded-lg border bg-card p-4">
+    <SectionPanel className="mb-4 space-y-3">
       {/* Filter title and reset button */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">
@@ -168,7 +168,7 @@ export const ProductFilters = memo(function ProductFilters({
           />
         </div>
       </div>
-    </div>
+    </SectionPanel>
   );
 });
 

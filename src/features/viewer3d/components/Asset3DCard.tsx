@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle, Tag } from "@/shared/ui";
+import { Button, SectionPanel, Tag } from "@/shared/ui";
 import { Box, Eye, Edit2, Trash2, Loader2, Globe, Lock } from "lucide-react";
 import type { Asset3DRecord } from "../types";
 import { cn } from "@/shared/utils";
@@ -39,14 +39,14 @@ export function Asset3DCard({
   const displayName = asset.name || asset.filename.replace(/^\d+-/, "");
 
   return (
-    <Card
+    <SectionPanel
       className={cn(
-        "bg-card/60 overflow-hidden transition-colors group hover:border-blue-500/60",
+        "overflow-hidden transition-colors group hover:border-blue-500/60 p-0",
         className,
       )}
     >
       {/* Preview Area */}
-      <CardHeader
+      <div
         className="h-40 bg-muted/30 p-0 flex items-center justify-center cursor-pointer relative"
         onClick={(): void => onPreview(asset)}
       >
@@ -86,18 +86,18 @@ export function Asset3DCard({
             {asset.category}
           </div>
         )}
-      </CardHeader>
+      </div>
 
       {/* Info */}
-      <CardContent className="p-3">
+      <div className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <CardTitle
+            <h3
               className="text-sm font-medium truncate"
               title={displayName}
             >
               {displayName}
-            </CardTitle>
+            </h3>
             {asset.description && (
               <p
                 className="text-xs text-muted-foreground truncate mt-0.5"
@@ -127,9 +127,9 @@ export function Asset3DCard({
             )}
           </div>
         )}
-      </CardContent>
+      </div>
 
-      <CardFooter className="flex items-center justify-between p-3 pt-0 mt-0">
+      <div className="flex items-center justify-between p-3 pt-0 mt-0">
         <div className="text-xs text-muted-foreground">
           <span>{formatFileSize(asset.size)}</span>
           <span className="mx-1">•</span>
@@ -164,7 +164,7 @@ export function Asset3DCard({
             )}
           </Button>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </SectionPanel>
   );
 }

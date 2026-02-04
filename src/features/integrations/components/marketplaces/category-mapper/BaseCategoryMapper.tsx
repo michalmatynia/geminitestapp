@@ -1,10 +1,10 @@
-import { useToast, Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { useToast, Button, Label, UnifiedSelect } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { logClientError } from "@/features/observability";
 
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
-import type { ProductCategoryDto, Catalog } from "@/features/products";
+import type { Catalog, ProductCategoryDto } from "@/features/products";
 
 import { useCatalogs } from "@/features/products/hooks/useCatalogQueries";
 import { useProductCategories } from "@/features/products/hooks/useCategoryQueries";
@@ -231,25 +231,18 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
             </div>
           </td>
           <td className="px-4 py-2">
-            <Select
+            <UnifiedSelect
               value={currentMapping ?? "__unmapped__"}
               onValueChange={(v: string): void =>
                 handleMappingChange(category.id, v === "__unmapped__" ? null : v)
               }
               disabled={internalCategoriesLoading || !selectedCatalogId}
-            >
-              <SelectTrigger className="w-full bg-gray-800 border-border text-white text-sm h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__unmapped__">— Not mapped —</SelectItem>
-                {internalCategories.map((ic: ProductCategoryDto) => (
-                  <SelectItem key={ic.id} value={ic.id}>
-                    {ic.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "__unmapped__", label: "— Not mapped —" },
+                ...internalCategories.map((ic: ProductCategoryDto) => ({ value: ic.id, label: ic.name }))
+              ]}
+              triggerClassName="w-full bg-gray-800 border-border text-white text-sm h-8"
+            />
           </td>
         </tr>
         {hasChildren && isExpanded && (
@@ -309,25 +302,17 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       <div className="flex items-center gap-4">
         <Label className="text-sm text-gray-400">Target Catalog:</Label>
         <div className="w-[200px]">
-          <Select
+          <UnifiedSelect
             value={selectedCatalogId ?? "__none__"}
             onValueChange={(v: string): void => setSelectedCatalogId(v === "__none__" ? null : v)}
             disabled={catalogsLoading}
-          >
-            <SelectTrigger className="bg-gray-800 border-border text-white text-sm h-9">
-              <SelectValue placeholder={catalogsLoading ? "Loading..." : "Select catalog"} />
-            </SelectTrigger>
-            <SelectContent>
-              {!catalogsLoading && catalogs.length === 0 && (
-                <SelectItem value="__none__">No catalogs available</SelectItem>
-              )}
-              {catalogs.map((catalog: Catalog) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[
+              ...(!catalogsLoading && catalogs.length === 0 ? [{ value: "__none__", label: "No catalogs available" }] : []),
+              ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
+            ]}
+            placeholder={catalogsLoading ? "Loading..." : "Select catalog"}
+            triggerClassName="bg-gray-800 border-border text-white text-sm h-9"
+          />
         </div>
 
         {selectedCatalogId && (

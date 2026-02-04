@@ -1,13 +1,7 @@
 "use client";
 
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui";
+import { UnifiedSelect } from "@/shared/ui";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { CmsDomain } from "@/features/cms/types";
 
@@ -49,20 +43,22 @@ export function CmsDomainSelector({
           {label}
         </span>
       ) : null}
-      <Select value={activeDomainId ?? ""} onValueChange={handleChange} disabled={domains.length === 0}>
-        <SelectTrigger className={triggerClassName ?? "h-9 w-[220px]"}>
-          <SelectValue placeholder={domains.length ? "Select zone" : "No zones"} />
-        </SelectTrigger>
-        <SelectContent>
-          {domains.map((item: CmsDomain) => (
-            <SelectItem key={item.id} value={item.id}>
-              {item.domain}
-              {hostDomainId === item.id ? " (current)" : ""}
-              {item.aliasOf ? " (shared)" : ""}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={activeDomainId ?? ""}
+        onValueChange={handleChange}
+        disabled={domains.length === 0}
+        options={domains.map((item: CmsDomain) => ({
+          value: item.id,
+          label: item.domain,
+          description: [
+            hostDomainId === item.id ? "current host" : null,
+            item.aliasOf ? "shared zone" : null
+          ].filter(Boolean).join(", ") || undefined
+        }))}
+        placeholder={domains.length ? "Select zone" : "No zones"}
+        className="w-[220px]"
+        triggerClassName={triggerClassName}
+      />
     </div>
   );
 }

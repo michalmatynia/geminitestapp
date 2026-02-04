@@ -1,6 +1,6 @@
 "use client";
 
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Label, UnifiedSelect } from "@/shared/ui";
 import type { AgentPersonaSettings } from "@/features/ai/agentcreator/types";
 
 const DEFAULT_VALUE = "__default__";
@@ -105,22 +105,16 @@ export function AgentPersonaSettingsForm({
               <Label className="text-xs text-gray-300">{field.label}</Label>
               <p className="text-[11px] text-gray-500">{field.description}</p>
             </div>
-            <Select
+            <UnifiedSelect
               value={toSelectValue(settings[field.key])}
               onValueChange={(value: string): void => handleUpdate(field.key, value)}
-            >
-              <SelectTrigger className="w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value={DEFAULT_VALUE}>Default (auto)</SelectItem>
-                {mergedOptions.map((model: string) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: DEFAULT_VALUE, label: "Default (auto)" },
+                ...mergedOptions.map((model: string) => ({ value: model, label: model }))
+              ]}
+              placeholder="Select model"
+              triggerClassName="w-full border-border bg-card/70 text-sm text-white"
+            />
           </div>
         ))}
       </div>

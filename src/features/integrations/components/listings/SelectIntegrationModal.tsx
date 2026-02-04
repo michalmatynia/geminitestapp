@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Button, Label } from "@/shared/ui";
+import { SharedModal, UnifiedSelect, Button, Label, SectionPanel } from "@/shared/ui";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 import Link from "next/link";
@@ -44,37 +44,31 @@ export default function SelectIntegrationModal({
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
         ) : integrations.length === 0 ? (
-          <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-6 text-center">
+          <SectionPanel variant="subtle" className="border-yellow-500/40 bg-yellow-500/10 p-6 text-center">
             <p className="text-sm text-yellow-200">No connected integrations</p>
             <p className="mt-2 text-xs text-yellow-300/70">
               <Link href="/admin/integrations" className="underline hover:text-yellow-100">
                 Set up an integration first
               </Link>
             </p>
-          </div>
+          </SectionPanel>
         ) : (
           <>
             <div>
               <Label className="mb-2 block text-sm font-medium text-gray-300">
                 Integration
               </Label>
-              <Select
+              <UnifiedSelect
                 value={selectedIntegrationId}
                 onValueChange={(value: string): void => setSelectedIntegrationId(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an integration..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {integrations
-                    .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                    .map((integration: IntegrationWithConnections) => (
-                      <SelectItem key={integration.id} value={integration.id}>
-                        {integration.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                options={integrations
+                  .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                  .map((integration: IntegrationWithConnections) => ({
+                    value: integration.id,
+                    label: integration.name
+                  }))}
+                placeholder="Select an integration..."
+              />
             </div>
 
             {selectedIntegration && selectedIntegration.connections.length > 0 && (
@@ -82,23 +76,17 @@ export default function SelectIntegrationModal({
                 <Label className="mb-2 block text-sm font-medium text-gray-300">
                   Account / Connection
                 </Label>
-                <Select
+                <UnifiedSelect
                   value={selectedConnectionId}
                   onValueChange={(value: string): void => setSelectedConnectionId(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an account..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedIntegration.connections
-                      .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                      .map((connection: IntegrationConnectionBasic) => (
-                        <SelectItem key={connection.id} value={connection.id}>
-                          {connection.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                  options={selectedIntegration.connections
+                    .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                    .map((connection: IntegrationConnectionBasic) => ({
+                      value: connection.id,
+                      label: connection.name
+                    }))}
+                  placeholder="Select an account..."
+                />
               </div>
             )}
 

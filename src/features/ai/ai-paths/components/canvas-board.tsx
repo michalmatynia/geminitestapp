@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "@/shared/ui";
+import { Button, Tooltip, SectionPanel } from "@/shared/ui";
 
 import type { AiNode, Edge, RuntimeState } from "@/features/ai/ai-paths/lib";
 import {
@@ -638,12 +638,12 @@ export function CanvasBoard({
       onPointerUp={onPanEnd}
       onPointerLeave={onPanEnd}
     >
-      <div className="absolute bottom-3 left-3 z-10 rounded-md border bg-card/70 backdrop-blur px-3 py-2 text-[11px] text-gray-400">
+      <SectionPanel variant="subtle-compact" className="absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400">
         Nodes: {nodes.length}
         {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ""}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
-      </div>
-      <div className="absolute bottom-4 right-4 z-10 rounded-md border bg-card/70 backdrop-blur p-2 text-xs text-gray-300">
+      </SectionPanel>
+      <SectionPanel variant="subtle-compact" className="absolute bottom-4 right-4 z-10 p-2 text-xs text-gray-300">
         <div className="mb-2 text-[11px] uppercase text-gray-500">View Controls</div>
         <div className="flex items-center gap-2">
           <Button
@@ -678,7 +678,7 @@ export function CanvasBoard({
             Reset
           </Button>
         </div>
-      </div>
+      </SectionPanel>
       <div
         ref={canvasRef}
         className="absolute left-0 top-0"

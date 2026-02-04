@@ -166,7 +166,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         setIcon(null);
         setImageLinks(Array(15).fill("") as string[]);
         setSelectedCatalogIds([]);
-        setSelectedCategoryIds([]);
+        setSelectedCategoryId(null);
         setSelectedTagIds([]);
         setParameterValues([]);
       }, 0);

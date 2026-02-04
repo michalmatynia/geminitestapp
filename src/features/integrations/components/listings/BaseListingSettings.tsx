@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
+import { Label, UnifiedSelect, Checkbox } from "@/shared/ui";
 import type { BaseInventory, Template } from "@/features/data-import-export/types/imports";
 
 interface BaseListingSettingsProps {
@@ -33,24 +33,18 @@ export function BaseListingSettings({
         <Label htmlFor="inventory">
           Base.com Inventory {loadingInventories && "(Loading...)"}
         </Label>
-        <Select
+        <UnifiedSelect
           value={selectedInventoryId}
           onValueChange={onInventoryIdChange}
           disabled={loadingInventories || inventories.length === 0}
-        >
-          <SelectTrigger id="inventory">
-            <SelectValue placeholder="Select inventory..." />
-          </SelectTrigger>
-          <SelectContent>
-            {inventories
-              .filter((inventory: BaseInventory): boolean => !!inventory.id)
-              .map((inventory: BaseInventory) => (
-                <SelectItem key={inventory.id} value={inventory.id}>
-                  {inventory.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+          options={inventories
+            .filter((inventory: BaseInventory): boolean => !!inventory.id)
+            .map((inventory: BaseInventory) => ({
+              value: inventory.id,
+              label: inventory.name
+            }))}
+          placeholder="Select inventory..."
+        />
         {inventories.length === 0 && !loadingInventories && (
           <p className="text-xs text-red-400">
             No inventories found. Please check your Base.com account.
@@ -60,24 +54,20 @@ export function BaseListingSettings({
 
       <div className="space-y-2">
         <Label htmlFor="template">Template (Optional)</Label>
-        <Select
+        <UnifiedSelect
           value={selectedTemplateId}
           onValueChange={onTemplateIdChange}
-        >
-          <SelectTrigger id="template">
-            <SelectValue placeholder="No template (use defaults)" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No template</SelectItem>
-            {templates
+          options={[
+            { value: "none", label: "No template" },
+            ...templates
               .filter((template: Template): boolean => !!template.id)
-              .map((template: Template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+              .map((template: Template) => ({
+                value: template.id,
+                label: template.name
+              }))
+          ]}
+          placeholder="No template (use defaults)"
+        />
         <p className="text-xs text-gray-500">
           Templates define how product fields map to Base.com fields.
         </p>

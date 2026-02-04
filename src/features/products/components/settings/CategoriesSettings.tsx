@@ -1,6 +1,22 @@
 "use client";
 
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Input, Textarea, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
+import {
+  Button,
+  UnifiedSelect,
+  useToast,
+  Input,
+  Textarea,
+  Label,
+  SharedModal,
+  EmptyState,
+  ConfirmDialog,
+  SectionPanel,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ChevronRight,
@@ -506,30 +522,23 @@ export function CategoriesSettings({
   return (
     <div className="space-y-5">
       {/* Catalog Selector */}
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Each catalog has its own category tree. Select a catalog to manage its categories.
         </p>
         <div className="w-full max-w-xs">
-          <Select
+          <UnifiedSelect
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault && " (Default)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: Catalog) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? " (Default)" : ""}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {/* Category Tree */}
       {selectedCatalogId && (
@@ -544,7 +553,7 @@ export function CategoriesSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -610,7 +619,7 @@ export function CategoriesSettings({
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect } from "@/shared/ui";
+import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect, SectionPanel } from "@/shared/ui";
 
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
@@ -166,7 +166,7 @@ export function NoteListView({
     >
         {/* Breadcrumb */}
         {selectedFolderId && (
-          <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
+          <SectionPanel variant="subtle-compact" className="mb-6 flex items-center gap-2 text-sm text-gray-400 bg-transparent border-none p-0">
             {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
               <React.Fragment key={index}>
                 <Button
@@ -184,7 +184,7 @@ export function NoteListView({
                 )}
               </React.Fragment>
             ))}
-          </div>
+          </SectionPanel>
         )}
 
         {/* Notes Grid */}

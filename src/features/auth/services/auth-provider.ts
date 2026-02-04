@@ -3,6 +3,7 @@ import "server-only";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
+import { ErrorSystem } from "@/features/observability/server";
 
 export type AuthDbProvider = "mongodb" | "prisma";
 
@@ -50,13 +51,19 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {
   if (provider === "prisma") {
     if (!process.env.DATABASE_URL) {
-      console.warn("[auth-provider] DATABASE_URL missing; falling back to MongoDB.");
+      void ErrorSystem.logWarning("[auth-provider] DATABASE_URL missing; falling back to MongoDB.", {
+        service: "auth-provider",
+        requestedProvider: "prisma"
+      });
       return "mongodb";
     }
     return "prisma";
   }
   if (!process.env.MONGODB_URI) {
-    console.warn("[auth-provider] MONGODB_URI missing; falling back to Prisma.");
+    void ErrorSystem.logWarning("[auth-provider] MONGODB_URI missing; falling back to Prisma.", {
+      service: "auth-provider",
+      requestedProvider: "mongodb"
+    });
     return "prisma";
   }
   return "mongodb";

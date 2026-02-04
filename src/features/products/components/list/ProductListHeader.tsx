@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog } from "@/shared/ui";
+import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog, SectionPanel } from "@/shared/ui";
 import { memo, useState } from "react";
 import {
   PlusIcon,
@@ -116,7 +116,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       </div>
 
       {/* Controls section */}
-      <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <SectionPanel className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -173,7 +173,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             {isConvertingAll ? "Converting..." : "Convert all products"}
           </Button>
         </div>
-      </div>
+      </SectionPanel>
 
       <ConfirmDialog
         open={showBase64AllConfirm}

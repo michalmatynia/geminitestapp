@@ -22,7 +22,7 @@ const authKeys = {
 const AUTH_USERS_STALE_MS = 10_000;
 const AUTH_SECURITY_STALE_MS = 10_000;
 
-export function useAuthUsers(enabled = true): UseQueryResult<AuthUsersResponse, Error> {
+export function useAuthUsers(enabled: boolean = true): UseQueryResult<AuthUsersResponse, Error> {
   return useQuery({
     queryKey: authKeys.users,
     queryFn: fetchAuthUsers,
@@ -34,7 +34,7 @@ export function useAuthUsers(enabled = true): UseQueryResult<AuthUsersResponse, 
 export function useAuthUserSecurity(userId?: string | null): UseQueryResult<AuthUserSecurityProfile, Error> {
   return useQuery({
     queryKey: userId ? authKeys.userSecurity(userId) : authKeys.userSecurity(""),
-    queryFn: () => fetchAuthUserSecurity(userId as string),
+    queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId as string),
     enabled: Boolean(userId),
     staleTime: AUTH_SECURITY_STALE_MS,
   });

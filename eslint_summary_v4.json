@@ -1,0 +1,34 @@
+[
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/ModelNodeConfigSection.tsx",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/services/draft-repository.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/pages/ProductPreferencesPage.tsx",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/Asset3DPreviewModal.tsx",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/button.tsx",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/client-only.tsx",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx",
+    "errorCount": 1
+  }
+]

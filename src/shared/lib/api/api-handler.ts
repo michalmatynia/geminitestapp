@@ -186,7 +186,7 @@ const DEFAULT_GET_CACHE_CONTROL = "private, max-age=60, stale-while-revalidate=3
 function applyDefaultCacheHeaders(
   response: Response,
   method: string,
-  override?: string | undefined
+  override?: string
 ): void {
   if (response.headers.has("Cache-Control")) return;
   if (override && override.trim()) {

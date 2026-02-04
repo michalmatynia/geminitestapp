@@ -188,9 +188,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             aiPrompt: config?.aiPrompt ?? "",
             aiAutoRun: config?.aiAutoRun ?? false,
             activeVariant: config?.activeVariant ?? "manual",
-            manual: config?.manual,
-            aiProposal: config?.aiProposal,
-            aiProposals: config?.aiProposals,
+            ...(config?.manual ? { manual: config.manual } : {}),
+            ...(config?.aiProposal ? { aiProposal: config.aiProposal } : {}),
+            ...(config?.aiProposals ? { aiProposals: config.aiProposals } : {}),
           },
         },
       };

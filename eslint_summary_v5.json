@@ -1,0 +1,42 @@
+[
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/components/AgentPersonaSettingsForm.tsx",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/teaching/pages/AgentTeachingAgentsPage.tsx",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/teaching/pages/AgentTeachingCollectionsPage.tsx",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/components/imports/ExportTab.tsx",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/components/imports/ImportTab.tsx",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/listings/BaseListingSettings.tsx",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/listings/SelectIntegrationModal.tsx",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/listings/SelectProductForListingModal.tsx",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper.tsx",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormOther.tsx",
+    "errorCount": 60
+  }
+]

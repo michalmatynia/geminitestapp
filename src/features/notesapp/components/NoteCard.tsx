@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { BreadcrumbScroller, Button, CopyButton, Card, CardContent, CardFooter, CardHeader, Tag, Badge } from "@/shared/ui";
+import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from "@/shared/ui";
+import { cn } from "@/shared/utils";
 
 import Image from "next/image";
 import { ChevronRight, Pin, Star } from "lucide-react";
@@ -120,7 +121,7 @@ function NoteCardBase({
   );
 
   return (
-    <Card
+    <SectionPanel
       key={note.id}
       draggable={enableDrag}
       onDragStart={
@@ -157,14 +158,14 @@ function NoteCardBase({
         ["--note-inline-code-bg" as never]:
           effectiveTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
       }}
-      className={`rounded-lg border p-4 shadow-sm transition ${
+      className={cn(
+        "p-4 transition",
         enableDrag
           ? "cursor-grab active:cursor-grabbing hover:shadow-md"
-          : "cursor-pointer hover:shadow-md hover:brightness-90"
-      }`}
+          : "cursor-pointer hover:shadow-md hover:brightness-90",
+      )}
     >
-      <CardHeader className="p-4 pb-2">
-        <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{note.title}</h3>
           {isCodeNote && (
@@ -200,10 +201,9 @@ function NoteCardBase({
             </Button>
             {note.isPinned && <Pin size={16} className="text-blue-600" />}
           </div>
-        </div>
-      </CardHeader>
+      </div>
       
-      <CardContent className="p-4 pt-0">
+      <div className="pt-0">
         {thumbnailFile && (
           <div className="mb-3 overflow-hidden rounded-md border">
             <Image
@@ -229,10 +229,10 @@ function NoteCardBase({
             />
           ))}
         </div>
-      </CardContent>
+      </div>
 
       {(showTimestamps || showBreadcrumbs || (showRelatedNotes && relatedNotes.length > 0)) && (
-        <CardFooter className="flex flex-col items-stretch p-4 pt-0">
+        <div className="flex flex-col items-stretch pt-2 mt-2 border-t border-white/10">
           {showTimestamps && (
             <div className="flex flex-col gap-0.5 text-[10px] text-gray-500">
               <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
@@ -285,9 +285,9 @@ function NoteCardBase({
                 ))}
             </div>
           )}
-        </CardFooter>
+        </div>
       )}
-    </Card>
+    </SectionPanel>
   );
 }
 

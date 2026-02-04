@@ -49,25 +49,19 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
   }, [blocks]);
 
   const slideCount = frames.length;
-
-  useEffect((): void => {
-    if (slideCount === 0) return;
-    if (activeIndex >= slideCount) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, slideCount]);
+  const currentActiveIndex = activeIndex >= slideCount ? 0 : activeIndex;
 
   const goToNext = useCallback((): void => {
     if (slideCount <= 1) return;
-    if (!loop && activeIndex >= slideCount - 1) return;
+    if (!loop && currentActiveIndex >= slideCount - 1) return;
     setActiveIndex((prev: number) => (prev + 1) % slideCount);
-  }, [slideCount, loop, activeIndex]);
+  }, [slideCount, loop, currentActiveIndex]);
 
   const goToPrev = useCallback((): void => {
     if (slideCount <= 1) return;
-    if (!loop && activeIndex <= 0) return;
+    if (!loop && currentActiveIndex <= 0) return;
     setActiveIndex((prev: number) => (prev - 1 + slideCount) % slideCount);
-  }, [slideCount, loop, activeIndex]);
+  }, [slideCount, loop, currentActiveIndex]);
 
   useEffect((): (() => void) | undefined => {
     if (!autoplay || isPaused || slideCount <= 1 || autoplaySpeed <= 0) return undefined;
@@ -94,8 +88,8 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
         <div
           className="relative overflow-hidden rounded-lg min-h-[300px]"
           style={slideHeightStyle}
-          onMouseEnter={pauseOnHover ? () => setIsPaused(true) : undefined}
-          onMouseLeave={pauseOnHover ? () => setIsPaused(false) : undefined}
+          onMouseEnter={pauseOnHover ? (): void => setIsPaused(true) : undefined}
+          onMouseLeave={pauseOnHover ? (): void => setIsPaused(false) : undefined}
         >
           {frames.map((frame: BlockInstance, idx: number) => {
             const frameSettings = frame.settings ?? {};
@@ -134,12 +128,12 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
               style={
                 transition === "fade"
                   ? {
-                      opacity: idx === activeIndex ? 1 : 0,
-                      pointerEvents: idx === activeIndex ? "auto" : "none",
+                      opacity: idx === currentActiveIndex ? 1 : 0,
+                      pointerEvents: idx === currentActiveIndex ? "auto" : "none",
                       transitionDuration: `${transitionDuration}ms`,
                     }
                   : {
-                      transform: `translateX(${(idx - activeIndex) * 100}%)`,
+                      transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
                       transitionDuration: `${transitionDuration}ms`,
                     }
               }
@@ -167,7 +161,7 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
               <button
                 type="button"
                 onClick={goToPrev}
-                disabled={!loop && activeIndex === 0}
+                disabled={!loop && currentActiveIndex === 0}
                 className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -180,8 +174,8 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveIndex(idx)}
-                    className={`size-2 rounded-full transition ${idx === activeIndex ? "bg-white" : "bg-gray-600"}`}
+                    onClick={(): void => setActiveIndex(idx)}
+                    className={`size-2 rounded-full transition ${idx === currentActiveIndex ? "bg-white" : "bg-gray-600"}`}
                   />
                 ))}
               </div>
@@ -191,7 +185,7 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
               <button
                 type="button"
                 onClick={goToNext}
-                disabled={!loop && activeIndex === slideCount - 1}
+                disabled={!loop && currentActiveIndex === slideCount - 1}
                 className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>

@@ -73,12 +73,12 @@ describe("DraftRepository (Prisma)", () => {
     const input = {
       name: "Draft with Arrays",
       catalogIds: ["cat1", "cat2"],
-      categoryIds: ["tag1"],
+      categoryId: "tag1",
     };
 
     const created = await createDraft(input);
     expect(created.catalogIds).toEqual(["cat1", "cat2"]);
-    expect(created.categoryIds).toEqual(["tag1"]);
+    expect(created.categoryId).toBe("tag1");
 
     const updated = await updateDraft(created.id, { catalogIds: ["cat3"] });
     expect(updated?.catalogIds).toEqual(["cat3"]);

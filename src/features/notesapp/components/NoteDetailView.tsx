@@ -1,4 +1,4 @@
-import { Button, useToast } from "@/shared/ui";
+import { Button, useToast, SectionPanel } from "@/shared/ui";
 import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -356,8 +356,8 @@ export function NoteDetailView({
           />
         </div>
       ) : (
-        <div
-          className="flex-1 overflow-y-auto rounded-lg border border-border bg-gray-900 p-6 cursor-text"
+        <SectionPanel
+          className="flex-1 overflow-y-auto p-6 cursor-text"
           onDoubleClick={() => setIsEditing(true)}
           style={previewStyle}
         >
@@ -425,9 +425,10 @@ export function NoteDetailView({
                     .map((related: RelatedNote) => {
                       const relatedNote = relatedPreviewNotes[related.id];
                       return (
-                        <div
+                        <SectionPanel
                           key={related.id}
-                          className="relative w-40 cursor-pointer rounded-md border px-3 py-2 text-left text-xs transition"
+                          variant="subtle-compact"
+                          className="relative w-40 cursor-pointer text-left text-xs transition"
                           style={relatedPreviewStyle}
                           role="button"
                           tabIndex={0}
@@ -456,7 +457,7 @@ export function NoteDetailView({
                           >
                             <X size={12} />
                           </Button>
-                        </div>
+                        </SectionPanel>
                       );
                     })}
                 </div>
@@ -467,7 +468,7 @@ export function NoteDetailView({
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
             <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
           </div>
-        </div>
+        </SectionPanel>
       )}
     </div>
   );

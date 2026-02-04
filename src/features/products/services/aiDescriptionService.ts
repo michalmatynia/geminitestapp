@@ -5,6 +5,7 @@ import type { ChatCompletionContentPart } from "openai/resources/chat/completion
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getImageFileRepository } from "@/features/files/server";
+import { ErrorSystem } from "@/features/observability/server";
 import type { ProductFormData } from "../types/forms";
 import type { ImageFileRecord } from "@/shared/types/files";
 import fs from "fs/promises";
@@ -50,7 +51,11 @@ export async function getSettingValue(key: string): Promise<string | null> {
         return value; // Return immediately if found in MongoDB
       }
     } catch (err) {
-      console.warn(`Mongo setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
+        service: "ai-description-service",
+        key,
+        error: err
+      });
     }
   }
 
@@ -63,7 +68,11 @@ export async function getSettingValue(key: string): Promise<string | null> {
       });
       if (setting) value = setting.value;
     } catch (err) {
-      console.warn(`Prisma setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+        service: "ai-description-service",
+        key,
+        error: err
+      });
     }
   }
 
@@ -78,7 +87,11 @@ export async function getSettingValue(key: string): Promise<string | null> {
         value = doc.value;
       }
     } catch (err) {
-      console.warn(`Mongo fallback setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Mongo fallback setting fetch failed for ${key}`, {
+        service: "ai-description-service",
+        key,
+        error: err
+      });
     }
   }
 

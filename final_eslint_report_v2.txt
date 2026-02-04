@@ -1,73 +1,142 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
-  34:9  warning  The 'promptConfig' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. To fix this, wrap the initialization of 'promptConfig' in its own useMemo() Hook                                           react-hooks/exhaustive-deps
-  37:9  warning  The 'runtimeInputs' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'runtimeInputs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/run/route.ts
+  54:19  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
-  113:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
-  555:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 560) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/ui-extractor/route.ts
+  47:14  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-formatter.ts
-  233:36  error  Expected segment to have a type annotation  @typescript-eslint/typedef
-  301:22  error  Expected rule to have a type annotation     @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-params.ts
-  279:38  error  Expected a type annotation                  @typescript-eslint/typedef
-  395:11  error  Expected segment to have a type annotation  @typescript-eslint/typedef
-  396:14  error  Expected value to have a type annotation    @typescript-eslint/typedef
-  456:18  error  Expected line to have a type annotation     @typescript-eslint/typedef
-  500:43  error  Expected a type annotation                  @typescript-eslint/typedef
-  501:50  error  Expected h to have a type annotation        @typescript-eslint/typedef
-  509:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  514:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  519:48  error  Expected leaf to have a type annotation     @typescript-eslint/typedef
-  522:19  error  Expected leaf to have a type annotation     @typescript-eslint/typedef
-  628:33  error  Expected spec to have a type annotation     @typescript-eslint/typedef
-  687:23  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  691:39  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  695:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  699:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  710:39  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  714:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
-  718:44  error  Expected v to have a type annotation        @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-validator.ts
-  29:33  error  Expected sim to have a type annotation   @typescript-eslint/typedef
-  59:27  error  Expected rule to have a type annotation  @typescript-eslint/typedef
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/user/preferences/route.ts
+  32:31  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
-  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
-  408:29  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
-  413:67  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
-  414:65  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
-  442:24  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
-  446:69  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
-  447:44  error    Expected rule to have a type annotation                                                                                                                                                              @typescript-eslint/typedef
+  407:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
-  86:6  warning  React Hook useEffect has a missing dependency: 'editingUser?.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx
+  687:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/BackgroundSyncProvider.tsx
-  6:1  error  '@/shared/ui/QueryDevPanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/user-preferences.ts
-  9:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/copy-button.tsx
-  7:1   error  '@/features/observability' import is restricted from being used by a pattern. Shared layer must not import from features  no-restricted-imports
-  7:32  error  Unexpected path "@/features/observability" imported in restricted zone. Shared layer must not import from features        import/no-restricted-paths
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx:687:7
+  685 |   useEffect(() => {
+  686 |     if (!showEventsTab && activeTab === "events") {
+> 687 |       setActiveTab("settings");
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  688 |     }
+  689 |   }, [showEventsTab, activeTab]);
+  690 |           react-hooks/set-state-in-effect
+  693:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentSettingsPanel.tsx:693:7
+  691 |   useEffect(() => {
+  692 |     if (!showCustomCssTab && activeTab === "customCss") {
+> 693 |       setActiveTab("settings");
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  694 |     }
+  695 |   }, [showCustomCssTab, activeTab]);
+  696 |  react-hooks/set-state-in-effect
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/shared-fields.tsx
+  274:42  error  Expected prev to have a type annotation   @typescript-eslint/typedef
+  275:61  error  Expected t to have a type annotation      @typescript-eslint/typedef
+  295:32  error  Expected asset to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/shared/EventEffectsWrapper.tsx
+  43:18  error  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?      react-hooks/rules-of-hooks
+  47:22  error  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?      react-hooks/rules-of-hooks
+  51:26  error  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?      react-hooks/rules-of-hooks
+  58:23  error  React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  90:25  error  React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-sync.ts
+  855:27  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/components/DraftCreator.tsx
+  169:9  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/services/draft-repository.ts
+  329:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  346:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  392:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  409:7  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/components/FileManager.tsx
+  122:5  warning  React Hook useMemo has a missing dependency: 'getFileKind'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  133:6  warning  React Hook useMemo has a missing dependency: 'resolveFolder'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  163:6  warning  React Hook useMemo has a missing dependency: 'getFileKind'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  170:6  warning  React Hook useMemo has a missing dependency: 'resolveFolder'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/utils/fileUploader.ts
+  36:11  error  Expected part to have a type annotation  @typescript-eslint/typedef
+  37:14  error  Expected part to have a type annotation  @typescript-eslint/typedef
+  38:11  error  Expected part to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/Viewer3D.tsx
+  120:13  error  Expected _ to have a type annotation      @typescript-eslint/typedef
+  120:16  error  Expected delta to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts
+  189:23  error  Explicit undefined is unnecessary on an optional parameter  @typescript-eslint/no-duplicate-type-constituents
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/cms.ts
+  1:10  error  'DtoBase' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  1:19  error  'NamedDto' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/button.tsx
+  84:9  error  Unsafe argument of type error typed assigned to a parameter of type `ClassValue`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-argument
+  88:9  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/button.tsx:88:9
+  86 |       );
+  87 |       const mergedProps = mergeProps(
+> 88 |         {
+     |         ^
+> 89 |           ...props,
+     | ^^^^^^^^^^^^^^^^^^^
+> 90 |           className: mergedClassName,
+     | ^^^^^^^^^^^^^^^^^^^
+> 91 |           disabled: loading || props.disabled,
+     | ^^^^^^^^^^^^^^^^^^^
+> 92 |           ref,
+     | ^^^^^^^^^^^^^^^^^^^
+> 93 |         },
+     | ^^^^^^^^^^ Passing a ref to a function may read its value during render
+  94 |         child.props
+  95 |       );
+  96 |       return React.cloneElement(child, mergedProps, childContent);  react-hooks/refs
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/client-only.tsx
+  14:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/client-only.tsx:14:5
+  12 |
+  13 |   useEffect(() => {
+> 14 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |   }, []);
+  16 |
+  17 |   if (!mounted) {  react-hooks/set-state-in-effect
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
-  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  37:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/status-badge.tsx
-  41:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
-  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/logger.ts
-  27:15  error  Unsafe assignment of an `any` value      @typescript-eslint/no-unsafe-assignment
-  27:36  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
-  28:9   error  Unsafe call of an `any` typed value      @typescript-eslint/no-unsafe-call
-
-✖ 44 problems (38 errors, 6 warnings)
+✖ 36 problems (28 errors, 8 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
 

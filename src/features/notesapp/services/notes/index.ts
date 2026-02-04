@@ -5,6 +5,7 @@ import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, 
 import { cleanupNoteFile } from "./file-cleanup";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { configurationError } from "@/shared/errors/app-error";
+import { ErrorSystem } from "@/features/observability/server";
 
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;
@@ -130,12 +131,11 @@ export const noteService: NoteRepository = {
           await repoCall("update", relatedId, { relatedNoteIds: nextIds });
         } catch (syncError) {
           try {
-            const { logSystemError } = await import("@/features/observability/server");
-            await logSystemError({ 
-              message: "[noteService][update] Failed to sync relation",
-              error: syncError,
-              source: "note-service",
-              context: { action: "syncRelatedNote", noteId: id, relatedId }
+            await ErrorSystem.captureException(syncError, { 
+              service: "note-service",
+              action: "syncRelatedNote",
+              noteId: id,
+              relatedId
             });
           } catch (logError) {
             console.error("[noteService][update] Failed to sync relation (and logging failed)", {
@@ -165,12 +165,10 @@ export const noteService: NoteRepository = {
         );
     } catch (error) {
         try {
-          const { logSystemError } = await import("@/features/observability/server");
-          await logSystemError({ 
-            message: "[noteService][delete] Failed to cleanup files",
-            error,
-            source: "note-service",
-            context: { action: "deleteNoteFiles", noteId: id }
+          await ErrorSystem.captureException(error, { 
+            service: "note-service",
+            action: "deleteNoteFiles",
+            noteId: id
           });
         } catch (logError) {
           console.error("[noteService][delete] Failed to cleanup files (and logging failed)", error, logError);

@@ -1,6 +1,4 @@
-"use client";
-
-import { Button } from "@/shared/ui";
+import { Button, SectionPanel } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import { ChevronDown, Copy, Check } from "lucide-react";
 
@@ -108,7 +106,7 @@ export function ExportLogViewer({
   };
 
   return (
-    <div className="rounded-lg border bg-card/50">
+    <SectionPanel variant="subtle" className="p-0 overflow-hidden">
       <div
         role="button"
         tabIndex={0}
@@ -149,7 +147,7 @@ export function ExportLogViewer({
       {isOpen && (
         <div className="border-t border px-4 py-3 bg-card/50 max-h-96 overflow-y-auto">
           {imagePayloadSummary && (
-            <div className="mb-3 rounded-md border border-border bg-card/70 p-2 text-[11px] text-gray-300">
+            <SectionPanel variant="subtle-compact" className="mb-3 p-2 text-[11px] text-gray-300">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">
                 Image payload summary
               </div>
@@ -177,7 +175,7 @@ export function ExportLogViewer({
                   <span>Resized: {imagePayloadSummary.resizedCount}</span>
                 ) : null}
               </div>
-            </div>
+            </SectionPanel>
           )}
           <div className="space-y-2 font-mono text-xs">
             {logs.map((log: ExportLog, index: number) => {
@@ -216,6 +214,6 @@ export function ExportLogViewer({
           </div>
         </div>
       )}
-    </div>
+    </SectionPanel>
   );
 }

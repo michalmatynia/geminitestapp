@@ -1,4 +1,4 @@
-import { Button, Input, Label, Textarea } from "@/shared/ui";
+import { Button, Input, Label, Textarea, SectionPanel } from "@/shared/ui";
 
 
 
@@ -56,8 +56,9 @@ export function CanvasSidebar({
 
   return (
     <div className="space-y-4">
-      <div
-        className="rounded-lg border bg-card/60 backdrop-blur p-4"
+      <SectionPanel
+        variant="subtle"
+        className="p-4"
         data-edge-panel
       >
         <div className="mb-3 flex items-center justify-between">
@@ -131,11 +132,12 @@ export function CanvasSidebar({
                   {isExpanded && (
                     <div className="space-y-2 px-3 pb-3">
                       {items.map((node: NodeDefinition) => (
-                        <div
+                        <SectionPanel
                           key={node.title}
+                          variant="subtle-compact"
                           draggable
                           onDragStart={(event: React.DragEvent<HTMLDivElement>) => onDragStart(event, node)}
-                          className="cursor-grab rounded-lg border bg-card/60 backdrop-blur p-3 text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
+                          className="cursor-grab text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
                           {((): React.JSX.Element => {
                             const isScheduledTrigger =
@@ -161,7 +163,7 @@ export function CanvasSidebar({
                           <p className="mt-1 text-[11px] text-gray-400">
                             {node.description}
                           </p>
-                        </div>
+                        </SectionPanel>
                       ))}
                     </div>
                   )}
@@ -170,14 +172,14 @@ export function CanvasSidebar({
             })}
           </div>
         )}
-      </div>
+      </SectionPanel>
 
       {!selectedEdgeId && (
-        <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
           {selectedNode ? (
             <div className="space-y-3 text-xs text-gray-300">
-              <div className="rounded-md border bg-card/50 px-3 py-2 text-[11px] text-gray-400">
+              <SectionPanel variant="subtle-compact" className="bg-card/50 px-3 py-2 text-[11px] text-gray-400">
                 <div className="flex items-center justify-between">
                   <span className="uppercase text-gray-500">Type</span>
                   <div className="flex items-center gap-1">
@@ -191,7 +193,7 @@ export function CanvasSidebar({
                     </span>
                   </div>
                 </div>
-              </div>
+              </SectionPanel>
               {selectedNode.type === "trigger" && (
                 <div className="space-y-2">
                   <Button
@@ -239,7 +241,7 @@ export function CanvasSidebar({
                   }
                 />
               </div>
-              <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
+              <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
                 Inputs:{" "}
                 {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(", ") ||
                   "None"}{" "}
@@ -247,7 +249,7 @@ export function CanvasSidebar({
                 Outputs:{" "}
                 {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(", ") ||
                   "None"}
-              </div>
+              </SectionPanel>
               {selectedNode.type === "prompt" && ((): React.JSX.Element | null => {
                 const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
@@ -286,7 +288,7 @@ export function CanvasSidebar({
                 const directPlaceholders = inputPorts.filter((port: string) => port !== "bundle");
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
-                  <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
+                  <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -308,7 +310,7 @@ export function CanvasSidebar({
                           .join(", ")}
                       </div>
                     )}
-                  </div>
+                  </SectionPanel>
                 );
               })()}
               <Button
@@ -330,10 +332,10 @@ export function CanvasSidebar({
               Select a node to inspect inputs, outputs, and configuration.
             </div>
           )}
-        </div>
+        </SectionPanel>
       )}
 
-      <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="mb-3 text-sm font-semibold text-white">Connections</div>
         <div className="space-y-2 text-xs text-gray-400">
           <div>Active wires: {edges.length}</div>
@@ -342,7 +344,7 @@ export function CanvasSidebar({
             const fromNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.from) : null;
             const toNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.to) : null;
             return selectedEdge ? (
-              <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+              <SectionPanel variant="subtle-compact" className="space-y-3 border-blue-500/30 bg-blue-500/5 p-3">
                 <div className="text-xs font-medium text-blue-300">Selected Wire</div>
                 <div className="space-y-2">
                   <div className="rounded border bg-card/50 p-2">
@@ -399,7 +401,7 @@ export function CanvasSidebar({
                     Remove
                   </Button>
                 </div>
-              </div>
+              </SectionPanel>
             ) : null;
           })() : (
             <div className="text-[11px] text-gray-500">Click a wire to select it.</div>
@@ -420,12 +422,13 @@ export function CanvasSidebar({
               const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? "?"} → ${toNode?.title ?? edge.to}.${edge.toPort ?? "?"}`;
               const isSelected = edge.id === selectedEdgeId;
               return (
-                <div
+                <SectionPanel
                   key={edge.id}
-                  className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
+                  variant="subtle-compact"
+                  className={`flex items-center justify-between gap-2 border px-2 py-1 ${
                     isSelected
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : "border bg-card/40"
+                      : "bg-card/40"
                   }`}
                 >
                   <span className="truncate">{label}</span>
@@ -436,12 +439,12 @@ export function CanvasSidebar({
                   >
                     Select
                   </button>
-                </div>
+                </SectionPanel>
               );
             })}
           </div>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

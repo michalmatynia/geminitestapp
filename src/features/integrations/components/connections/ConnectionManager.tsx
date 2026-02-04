@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Input, Label, SectionPanel } from "@/shared/ui";
 import { Dispatch, SetStateAction } from "react";
 import { Integration, IntegrationConnection, TestLogEntry } from "@/features/integrations/types/integrations-ui";
 
@@ -68,7 +68,7 @@ export function ConnectionManager({
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <h3 className="text-sm font-semibold text-white">
           {editingConnectionId ? "Connection details" : "Add connection"}
         </h3>
@@ -132,18 +132,19 @@ export function ConnectionManager({
             {editingConnectionId ? "Update connection" : "Save connection"}
           </Button>
         </div>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <h3 className="text-sm font-semibold text-white">Existing connection</h3>
         {connections.length === 0 ? (
           <p className="mt-3 text-sm text-gray-400">No connections yet.</p>
         ) : (
           <div className="mt-3 space-y-3">
             {connections.slice(0, 1).map((connection: IntegrationConnection) => (
-              <div
+              <SectionPanel
                 key={connection.id}
-                className="flex items-center justify-between rounded-md border border-border bg-card/70 px-3 py-2"
+                variant="subtle-compact"
+                className="flex items-center justify-between p-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -174,12 +175,12 @@ export function ConnectionManager({
                     Remove
                   </Button>
                 </div>
-              </div>
+              </SectionPanel>
             ))}
           </div>
         )}
         {showPlaywright && (
-          <div className="mt-4 rounded-md border border-border bg-card/60 p-3">
+          <SectionPanel variant="subtle-compact" className="mt-4 p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-300">
                 Playwright live update
@@ -218,9 +219,9 @@ export function ConnectionManager({
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

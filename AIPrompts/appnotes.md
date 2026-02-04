@@ -1,4 +1,4 @@
-
+AI Paths need to be tested, w IMage studio image upload nie chce cos dzialac i CMS widok obrazów jest nie teges
 
 * In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily
 
@@ -7,6 +7,7 @@
 * Third I want an extractor, that will recognise the prompt pattern and assign the promper UI Element to each parameter value. Be it a dropdown a slider, checkbox, text field, set of buttons or a text field. If not sure, The extractor needs to have a suggestion pattern, where you can choose which aspect to map to UI or even choose the type of UI you want for a given parameter value.
 
 
+Regex Extractor Validator Formatter should be a separate Feature
 
 
 * When I run my model Nodes in AI Paths, I don't see any history entires of Inputs and output.

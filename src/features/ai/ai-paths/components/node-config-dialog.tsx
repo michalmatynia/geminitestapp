@@ -314,7 +314,7 @@ export function NodeConfigDialog({
             <NodeHistoryTab
               selectedNode={selectedNode}
               runtimeState={runtimeState}
-              onClearNodeHistory={clearNodeHistory}
+              {...(clearNodeHistory && { onClearNodeHistory: clearNodeHistory })}
             />
           </TabsContent>
         </Tabs>

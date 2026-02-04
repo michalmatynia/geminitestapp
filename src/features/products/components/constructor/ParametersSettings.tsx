@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast, Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
+import { useToast, Button, Input, Label, UnifiedSelect, SharedModal, EmptyState, ConfirmDialog, SectionPanel } from "@/shared/ui";
 import { useState, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -125,30 +125,23 @@ export function ParametersSettings({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Parameters are managed per catalog.
         </p>
         <div className="w-full max-w-xs">
-          <Select
+          <UnifiedSelect
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: CatalogRecord) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault ? " (Default)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: CatalogRecord) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? " (Default)" : ""}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {selectedCatalogId && (
         <>
@@ -162,7 +155,7 @@ export function ParametersSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Parameters for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -185,9 +178,10 @@ export function ParametersSettings({
             ) : (
               <div className="space-y-2">
                 {parameters.map((parameter: ProductParameter) => (
-                  <div
+                  <SectionPanel
                     key={parameter.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
+                    variant="subtle-compact"
+                    className="flex items-center justify-between gap-3 p-3"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-gray-100 truncate">
@@ -219,11 +213,11 @@ export function ParametersSettings({
                         <Trash2 className="size-3" />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 

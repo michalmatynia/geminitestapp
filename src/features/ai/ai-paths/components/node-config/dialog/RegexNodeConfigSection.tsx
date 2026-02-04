@@ -256,17 +256,22 @@ export function RegexNodeConfigSection({
     };
   }, [isRegexNode, selectedNode.config?.regex]);
 
+  const regexConfigRef = React.useRef(regexConfig);
+  React.useEffect(() => {
+    regexConfigRef.current = regexConfig;
+  });
+
   const updateRegex = React.useCallback(
     (patch: Partial<RegexConfig>): void => {
       if (!isRegexNode) return;
       updateSelectedNodeConfig({
         regex: {
-          ...regexConfig,
+          ...regexConfigRef.current,
           ...patch,
         },
       });
     },
-    [isRegexNode, updateSelectedNodeConfig, regexConfig]
+    [isRegexNode, updateSelectedNodeConfig]
   );
 
   const [pendingAiRegex, setPendingAiRegex] = React.useState<string>("");
@@ -279,20 +284,22 @@ export function RegexNodeConfigSection({
   const applyVariant = React.useCallback(
     (variant: "manual" | "ai"): void => {
       if (variant === "ai" && regexConfig.aiProposal?.pattern) {
+        const proposal = regexConfig.aiProposal;
         updateRegex({
           activeVariant: "ai",
-          pattern: regexConfig.aiProposal.pattern,
-          flags: regexConfig.aiProposal.flags ?? regexConfig.flags,
-          groupBy: regexConfig.aiProposal.groupBy ?? regexConfig.groupBy,
+          pattern: proposal.pattern,
+          ...(proposal.flags ?? regexConfig.flags ? { flags: proposal.flags ?? regexConfig.flags } : {}),
+          ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
         });
         return;
       }
       if (variant === "manual" && regexConfig.manual?.pattern) {
+        const manual = regexConfig.manual;
         updateRegex({
           activeVariant: "manual",
-          pattern: regexConfig.manual.pattern,
-          flags: regexConfig.manual.flags ?? regexConfig.flags,
-          groupBy: regexConfig.manual.groupBy ?? regexConfig.groupBy,
+          pattern: manual.pattern,
+          ...(manual.flags ?? regexConfig.flags ? { flags: manual.flags ?? regexConfig.flags } : {}),
+          ...(manual.groupBy ?? regexConfig.groupBy ? { groupBy: manual.groupBy ?? regexConfig.groupBy } : {}),
         });
         return;
       }
@@ -756,8 +763,8 @@ export function RegexNodeConfigSection({
                                 };
                             updateRegex({
                               pattern: proposal.pattern,
-                              flags: proposal.flags ?? normalizedFlags,
-                              groupBy: proposal.groupBy ?? regexConfig.groupBy,
+                              ...(proposal.flags ?? normalizedFlags ? { flags: proposal.flags ?? normalizedFlags } : {}),
+                              ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
                               activeVariant: "ai",
                               manual: nextManual,
                               aiProposal: {

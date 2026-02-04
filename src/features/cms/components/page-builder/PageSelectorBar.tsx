@@ -3,13 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Layers } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui";
+import { UnifiedSelect } from "@/shared/ui";
 import type { PageSummary } from "../../types";
 import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
@@ -99,18 +93,17 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
           <span>Page</span>
         </div>
       )}
-      <Select value={selectedPageId} onValueChange={handlePageChange}>
-        <SelectTrigger className={isToolbar ? "h-8 w-56" : "w-64"}>
-          <SelectValue placeholder="Select a page..." />
-        </SelectTrigger>
-        <SelectContent>
-          {(pagesQuery.data ?? []).map((page: PageSummary) => (
-            <SelectItem key={page.id} value={page.id}>
-              {page.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={selectedPageId}
+        onValueChange={handlePageChange}
+        options={(pagesQuery.data ?? []).map((page: PageSummary) => ({
+          value: page.id,
+          label: page.name
+        }))}
+        placeholder="Select a page..."
+        className={isToolbar ? "w-56" : "w-64"}
+        triggerClassName={isToolbar ? "h-8" : undefined}
+      />
     </div>
   );
 }

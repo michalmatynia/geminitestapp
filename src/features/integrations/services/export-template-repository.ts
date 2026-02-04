@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getProductDataProvider } from "@/features/products/server";
+import { ErrorSystem } from "@/features/observability/server";
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
@@ -61,7 +62,10 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
-      console.warn("[ExportTemplateRepository] Parsed value is not an array:", parsed);
+      void ErrorSystem.logWarning("[ExportTemplateRepository] Parsed value is not an array", {
+        service: "export-template-repository",
+        parsed
+      });
       return [];
     }
     return parsed

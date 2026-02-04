@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog } from "@/shared/ui";
+import { Button, Input, UnifiedSelect, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog } from "@/shared/ui";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
@@ -377,24 +377,16 @@ export default function SystemLogsPage(): React.JSX.Element {
             <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <Label className="text-xs text-gray-400">Level</Label>
-                <Select
+                <UnifiedSelect
                   value={level}
                   onValueChange={(value: string): void => {
                     setLevel(value as SystemLogLevel | "all");
                     setPage(1);
                   }}
-                >
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="All levels" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {levelOptions.map((option: (typeof levelOptions)[number]) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={levelOptions}
+                  placeholder="All levels"
+                  triggerClassName="mt-2"
+                />
               </div>
               <div>
                 <Label className="text-xs text-gray-400">Search</Label>
@@ -451,7 +443,7 @@ export default function SystemLogsPage(): React.JSX.Element {
         }
       >
         <div className="space-y-6">
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-white">Metrics</h2>
@@ -471,23 +463,23 @@ export default function SystemLogsPage(): React.JSX.Element {
               </div>
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <div className="rounded-md border border-border bg-card p-3">
+                <SectionPanel variant="subtle-compact" className="p-3">
                   <div className="text-xs text-gray-400">Totals</div>
                   <div className="mt-2 space-y-1 text-sm text-gray-200">
                     <div>Total: {metrics.total}</div>
                     <div>Last 24h: {metrics.last24Hours}</div>
                     <div>Last 7d: {metrics.last7Days}</div>
                   </div>
-                </div>
-                <div className="rounded-md border border-border bg-card p-3">
+                </SectionPanel>
+                <SectionPanel variant="subtle-compact" className="p-3">
                   <div className="text-xs text-gray-400">By level</div>
                   <div className="mt-2 space-y-1 text-sm text-gray-200">
                     <div className="text-red-300">Errors: {levels.error}</div>
                     <div className="text-yellow-300">Warnings: {levels.warn}</div>
                     <div className="text-blue-300">Info: {levels.info}</div>
                   </div>
-                </div>
-                <div className="rounded-md border border-border bg-card p-3">
+                </SectionPanel>
+                <SectionPanel variant="subtle-compact" className="p-3">
                   <div className="text-xs text-gray-400">Top sources</div>
                   {metrics.topSources.length === 0 ? (
                     <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
@@ -514,12 +506,12 @@ export default function SystemLogsPage(): React.JSX.Element {
                       ))}
                     </div>
                   )}
-                </div>
+                </SectionPanel>
               </div>
             )}
-          </div>
+          </SectionPanel>
 
-          <div className="rounded-md border border-border bg-card/50">
+          <SectionPanel variant="subtle" className="p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
               <span>
                 Showing {logs.length} of {total} logs
@@ -576,7 +568,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                           Details
                         </summary>
                         {log.source === "client" && log.context ? (
-                          <div className="mt-2 rounded border border-border bg-card p-2 text-[11px] text-gray-300">
+                          <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
                             <div className="font-semibold text-gray-200">Client context</div>
                             <div className="mt-2 grid gap-2 md:grid-cols-2">
                               <div>
@@ -612,7 +604,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                                 <div>{String((getContextValue(log.context, "network.rtt") as string | number | null) ?? "—")}</div>
                               </div>
                             </div>
-                          </div>
+                          </SectionPanel>
                         ) : null}
                         {log.stack && (
                           <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
@@ -630,7 +622,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </div>
       </ListPanel>
     </div>

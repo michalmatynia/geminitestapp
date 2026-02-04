@@ -96,23 +96,35 @@ export async function translateProduct(params: TranslateProductParams): Promise<
   const translationModel = translationModelSetting?.trim() || "gpt-4o";
   const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
 
-  console.log(`[aiTranslationService] Using model: ${translationModel}`);
+  await ErrorSystem.logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
+    service: "ai-translation-service",
+    translationModel
+  });
 
   const { openai, isOllama } = getClient(translationModel, apiKey);
 
   if (isOllama) {
-    console.log(`[aiTranslationService] Using Ollama at: ${OLLAMA_BASE_URL}`);
+    await ErrorSystem.logInfo(`[aiTranslationService] Using Ollama`, {
+      service: "ai-translation-service",
+      url: OLLAMA_BASE_URL
+    });
   }
 
-  console.log(`[aiTranslationService] Target languages: ${targetLanguages.join(", ")}`);
-  console.log(`[aiTranslationService] Source language: ${sourceLanguage}`);
+  await ErrorSystem.logInfo(`[aiTranslationService] Starting translation`, {
+    service: "ai-translation-service",
+    targetLanguages,
+    sourceLanguage
+  });
 
   const translations: Record<string, { name: string; description: string }> = {};
 
   // Translate to each target language
   for (const targetLang of targetLanguages) {
     if (targetLang.toLowerCase() === sourceLanguage.toLowerCase()) {
-      console.log(`[aiTranslationService] Skipping ${targetLang} because it is the source language`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Skipping ${targetLang} (source language)`, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang
+      });
       continue;
     }
 
@@ -136,7 +148,10 @@ Important:
 - Only respond with the JSON, no additional text`;
 
     try {
-      console.log(`[aiTranslationService] Translating to ${targetLang}...`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Translating to ${targetLang}...`, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang
+      });
 
       const options: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
         model: translationModel,
@@ -170,7 +185,10 @@ Important:
         });
       }
 
-      console.log(`[aiTranslationService] Received response for ${targetLang}`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Received response for ${targetLang}`, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang
+      });
 
       const parsed = extractJson(content) as { name?: string; description?: string };
       translations[targetLang.toLowerCase()] = {
@@ -178,7 +196,10 @@ Important:
         description: parsed.description || "",
       };
 
-      console.log(`[aiTranslationService] Successfully translated to ${targetLang}`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Successfully translated to ${targetLang}`, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
@@ -208,7 +229,11 @@ Important:
       }
 
       // For other errors, continue with other languages but don't save fallback
-      console.warn(`[aiTranslationService] Skipping ${targetLang} due to error`);
+      await ErrorSystem.logWarning(`[aiTranslationService] Skipping ${targetLang} due to error`, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang,
+        error: errorMessage
+      });
     }
   }
 

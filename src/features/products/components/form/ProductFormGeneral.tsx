@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
@@ -29,9 +29,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
   return (
     <div className="space-y-4">
       {!hasCatalogs && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <SectionPanel variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.
-        </div>
+        </SectionPanel>
       )}
 
       {hasCatalogs && !languagesReady && (
@@ -162,21 +162,18 @@ export default function ProductFormGeneral(): React.JSX.Element {
         <div className="flex-1">
           <Label>Product Identifier</Label>
           <div className="flex gap-2">
-            <Select
+            <UnifiedSelect
               value={identifierType}
               onValueChange={(value: string): void =>
                 setIdentifierType(value as "ean" | "gtin" | "asin")
               }
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ean">EAN</SelectItem>
-                <SelectItem value="gtin">GTIN</SelectItem>
-                <SelectItem value="asin">ASIN</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "ean", label: "EAN" },
+                { value: "gtin", label: "GTIN" },
+                { value: "asin", label: "ASIN" },
+              ]}
+              className="w-[100px]"
+            />
             <Input
               id={identifierType}
               {...register(identifierType)}

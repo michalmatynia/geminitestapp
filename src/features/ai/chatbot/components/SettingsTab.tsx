@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, useToast } from "@/shared/ui";
+import { Button, Label, UnifiedSelect, SectionPanel, Checkbox, useToast } from "@/shared/ui";
 
 import Link from "next/link";
 
@@ -84,39 +84,32 @@ export function SettingsTab({
 
   return (
     <div className="space-y-6 p-4">
-      <div className="space-y-4">
+      <SectionPanel variant="subtle" className="space-y-4 p-4">
         <h3 className="text-lg font-medium text-white">General Settings</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Model</Label>
-            <Select value={model} onValueChange={(value: string): void => setModel(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent>
-                {modelOptions.map((opt: string): React.JSX.Element => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnifiedSelect
+              value={model}
+              onValueChange={(value: string): void => setModel(value)}
+              options={modelOptions.map((opt: string) => ({ value: opt, label: opt }))}
+              placeholder="Select a model"
+            />
           </div>
           <div className="space-y-2">
             <Label>Search Provider</Label>
-            <Select value={searchProvider} onValueChange={(value: string): void => setSearchProvider(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="serpapi">SerpApi</SelectItem>
-                <SelectItem value="google">Google</SelectItem>
-                <SelectItem value="bing">Bing</SelectItem>
-              </SelectContent>
-            </Select>
+            <UnifiedSelect
+              value={searchProvider}
+              onValueChange={(value: string): void => setSearchProvider(value)}
+              options={[
+                { value: "serpapi", label: "SerpApi" },
+                { value: "google", label: "Google" },
+                { value: "bing", label: "Bing" },
+              ]}
+            />
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Label className="flex items-center gap-2 text-sm text-gray-300">
             <Checkbox
               checked={webSearchEnabled} onCheckedChange={(checked: boolean): void => setWebSearchEnabled(Boolean(checked))}
@@ -136,7 +129,7 @@ export function SettingsTab({
             Use Local Context
           </Label>
         </div>
-      </div>
+      </SectionPanel>
 
       <AgentCreatorSettingsSection
         agentModeEnabled={agentModeEnabled}
@@ -154,7 +147,7 @@ export function SettingsTab({
       />
 
       {agentModeEnabled && (
-        <div className="rounded-md border border-border bg-card/60 p-4 space-y-4">
+        <SectionPanel variant="subtle" className="space-y-4 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-white">
@@ -179,27 +172,23 @@ export function SettingsTab({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-xs text-gray-400">Persona</Label>
-                <Select
+                <UnifiedSelect
                   value={playwrightPersonaId ?? "custom"}
                   onValueChange={handlePersonaChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select persona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">Custom</SelectItem>
-                    {personas.map((persona: PlaywrightPersona): React.JSX.Element => (
-                      <SelectItem key={persona.id} value={persona.id}>
-                        {persona.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "custom", label: "Custom" },
+                    ...personas.map((persona: PlaywrightPersona) => ({
+                      value: persona.id,
+                      label: persona.name
+                    }))
+                  ]}
+                  placeholder="Select persona"
+                />
                 <p className="text-[11px] text-gray-500">
                   Selecting a persona updates the headless setting.
                 </p>
               </div>
-              <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
+              <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
                 {selectedPersona ? (
                   <>
                     <p className="text-xs font-semibold text-gray-200">
@@ -220,10 +209,10 @@ export function SettingsTab({
                     </p>
                   </>
                 )}
-              </div>
+              </SectionPanel>
             </div>
           )}
-        </div>
+        </SectionPanel>
       )}
 
       <div className="flex justify-end">

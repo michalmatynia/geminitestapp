@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
-import { Input, ItemLibrary, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
+import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from "@/shared/ui";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { buildModelProfile } from "@/features/ai/chatbot/utils";
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
@@ -150,21 +150,12 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>LLM model</Label>
-              <Select
+              <UnifiedSelect
                 value={draft.llmModel ?? ""}
                 onValueChange={(value: string) => onChange({ llmModel: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select LLM model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chatModels.map((model: string) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={chatModels.map((model: string) => ({ value: model, label: model }))}
+                placeholder="Select LLM model"
+              />
               <div className="text-[11px] text-gray-500">
                 Model used to answer questions.
               </div>
@@ -172,21 +163,12 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
 
             <div className="space-y-2">
               <Label>Embedding model</Label>
-              <Select
+              <UnifiedSelect
                 value={draft.embeddingModel ?? ""}
                 onValueChange={(value: string) => onChange({ embeddingModel: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select embedding model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {embeddingModels.map((model: string) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
+                placeholder="Select embedding model"
+              />
               <div className="text-[11px] text-gray-500">
                 Must match the embedding collections you attach.
               </div>

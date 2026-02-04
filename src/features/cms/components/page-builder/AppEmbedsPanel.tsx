@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Button, Checkbox, useToast } from "@/shared/ui";
+import { Button, Checkbox, useToast, SectionPanel } from "@/shared/ui";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { logClientError } from "@/features/observability";
@@ -75,9 +75,10 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
           {APP_EMBED_OPTIONS.map((option: { id: AppEmbedId; label: string; description: string; settingsRoute: string }) => {
             const isEnabled = enabled.has(option.id);
             return (
-              <div
+              <SectionPanel
                 key={option.id}
-                className="rounded-md border border-border/50 bg-gray-900/60 p-3"
+                variant="subtle"
+                className="p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -100,7 +101,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
                     Open settings
                   </Link>
                 </div>
-              </div>
+              </SectionPanel>
             );
           })}
         </div>

@@ -262,7 +262,7 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
   const sectionGapStyle = getGapStyle(settings["rowGapPx"]);
   const columnGapPx =
     typeof settings["columnGapPx"] === "number" && Number.isFinite(settings["columnGapPx"])
-      ? (settings["columnGapPx"] as number)
+      ? settings["columnGapPx"]
       : 0;
   const gridBackgroundSettings = settings["backgroundImage"] as Record<string, unknown> | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");

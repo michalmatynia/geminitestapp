@@ -3,7 +3,7 @@
 
 
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Input, Label, UnifiedSelect } from "@/shared/ui";
 import type { AiNode, GateConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
 
 type GateNodeConfigSectionProps = {
@@ -26,7 +26,7 @@ export function GateNodeConfigSection({
     <div className="space-y-4">
       <div>
         <Label className="text-xs text-gray-400">Mode</Label>
-        <Select
+        <UnifiedSelect
           value={gateConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -36,15 +36,13 @@ export function GateNodeConfigSection({
               },
             })
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select mode" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="block">Block on invalid</SelectItem>
-            <SelectItem value="pass">Pass-through</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: "block", label: "Block on invalid" },
+            { value: "pass", label: "Pass-through" }
+          ]}
+          placeholder="Select mode"
+          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+        />
       </div>
       <div>
         <Label className="text-xs text-gray-400">Fail Message</Label>

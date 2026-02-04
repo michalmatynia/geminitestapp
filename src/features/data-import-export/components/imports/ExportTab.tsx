@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Checkbox, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, Input, Checkbox, Label, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 
 import type {
@@ -124,7 +124,7 @@ export function ExportTab({
   };
 
   return (
-    <div className="rounded-md border border-border bg-gray-900 p-4">
+    <SectionPanel variant="subtle" className="p-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">
@@ -147,25 +147,17 @@ export function ExportTab({
               Base connection for inventories/warehouses
             </Label>
             <div className="mt-2">
-              <Select
+              <UnifiedSelect
                 value={selectedBaseConnectionId || "__none__"}
                 onValueChange={(v: string): void => setSelectedBaseConnectionId(v === "__none__" ? "" : v)}
                 disabled={baseConnections.length === 0}
-              >
-                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                  <SelectValue placeholder={baseConnections.length === 0 ? "No connections loaded" : "Select a connection..."} />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-border text-white">
-                  <SelectItem value="__none__">Select a connection...</SelectItem>
-                  {baseConnections.map(
-                    (connection: IntegrationConnectionBasic) => (
-                      <SelectItem key={connection.id} value={connection.id}>
-                        {connection.name}
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "__none__", label: "Select a connection..." },
+                  ...baseConnections.map((connection: IntegrationConnectionBasic) => ({ value: connection.id, label: connection.name }))
+                ]}
+                placeholder={baseConnections.length === 0 ? "No connections loaded" : "Select a connection..."}
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Used for loading inventories/warehouses and debug output.
@@ -174,23 +166,17 @@ export function ExportTab({
           <div>
             <Label className="text-xs text-gray-400">Default Inventory</Label>
             <div className="mt-2">
-              <Select
+              <UnifiedSelect
                 value={exportInventoryId || "__none__"}
                 onValueChange={(v: string): void => setExportInventoryId(v === "__none__" ? "" : v)}
                 disabled={inventories.length === 0 && !exportInventoryId}
-              >
-                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                  <SelectValue placeholder={inventories.length === 0 ? (exportInventoryId ? `Saved inventory (${exportInventoryId})` : "No inventories loaded") : "Select default inventory..."} />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-border text-white">
-                  <SelectItem value="__none__">Select default inventory...</SelectItem>
-                  {inventories.map((inv: InventoryOption) => (
-                    <SelectItem key={inv.id} value={inv.id}>
-                      {inv.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "__none__", label: "Select default inventory..." },
+                  ...inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name }))
+                ]}
+                placeholder={inventories.length === 0 ? (exportInventoryId ? `Saved inventory (${exportInventoryId})` : "No inventories loaded") : "Select default inventory..."}
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Default inventory for product exports
@@ -202,7 +188,7 @@ export function ExportTab({
               Default Export Template
             </Label>
             <div className="mt-2">
-              <Select
+              <UnifiedSelect
                 value={exportActiveTemplateId || "__none__"}
                 onValueChange={(nextId: string): void => {
                   const val = nextId === "__none__" ? "" : nextId;
@@ -216,19 +202,13 @@ export function ExportTab({
                   }
                 }}
                 disabled={loadingExportTemplates || exportTemplates.length === 0}
-              >
-                <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                  <SelectValue placeholder="No template (use defaults)" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-border text-white">
-                  <SelectItem value="__none__">No template (use defaults)</SelectItem>
-                  {exportTemplates.map((tpl: Template) => (
-                    <SelectItem key={tpl.id} value={tpl.id}>
-                      {tpl.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "__none__", label: "No template (use defaults)" },
+                  ...exportTemplates.map((tpl: Template) => ({ value: tpl.id, label: tpl.name }))
+                ]}
+                placeholder="No template (use defaults)"
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Template for field mapping on export
@@ -239,27 +219,20 @@ export function ExportTab({
         <div>
           <Label className="text-xs text-gray-400">Default Warehouse ID</Label>
           <div className="mt-2">
-            <Select
+            <UnifiedSelect
               value={exportWarehouseId || "__none__"}
               onValueChange={(v: string): void => setExportWarehouseId(v === "__none__" ? "" : v)}
               disabled={warehouseOptions.length === 0}
-            >
-              <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white h-9">
-                <SelectValue placeholder={warehouseOptions.length === 0 ? "Load warehouses first" : "Skip stock export"} />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-border text-white">
-                <SelectItem value="__none__">Skip stock export</SelectItem>
-                {warehouseOptions.map((warehouse: WarehouseOption) => (
-                  <SelectItem key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name} ({warehouse.id})
-                    {showAllWarehouses &&
-                    !inventoryWarehouseIds.has(warehouse.id)
-                      ? " (not in inventory)"
-                      : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "__none__", label: "Skip stock export" },
+                ...warehouseOptions.map((warehouse: WarehouseOption) => ({
+                  value: warehouse.id,
+                  label: `${warehouse.name} (${warehouse.id})${showAllWarehouses && !inventoryWarehouseIds.has(warehouse.id) ? " (not in inventory)" : ""}`
+                }))
+              ]}
+              placeholder={warehouseOptions.length === 0 ? "Load warehouses first" : "Skip stock export"}
+              triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+            />
           </div>
           <p className="mt-1 text-xs text-gray-500">
             Used for exporting stock quantities to Base.com. Leave blank to skip
@@ -298,7 +271,7 @@ export function ExportTab({
           ) : null}
         </div>
 
-        <div className="rounded-md border border-border bg-card p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-white">
@@ -324,9 +297,10 @@ export function ExportTab({
           ) : (
             <div className="mt-3 space-y-3">
               {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                <div
+                <SectionPanel
                   key={preset.id}
-                  className="rounded-md border border-border bg-card/60 p-3"
+                  variant="subtle-compact"
+                  className="p-3"
                 >
                   <div className="text-xs font-semibold text-gray-200">
                     {preset.label}
@@ -389,13 +363,13 @@ export function ExportTab({
                     />
                     <span>Force JPEG conversion</span>
                   </div>
-                </div>
+                </SectionPanel>
               ))}
             </div>
           )}
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
+        <SectionPanel variant="subtle-compact" className="border-blue-900/50 bg-blue-900/20 p-4">
           <h3 className="text-sm font-semibold text-blue-200">
             Export Guidelines
           </h3>
@@ -427,9 +401,9 @@ export function ExportTab({
               tab
             </li>
           </ul>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-md border border-border bg-card p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <h3 className="text-sm font-semibold text-white mb-3">
             Quick Actions
           </h3>
@@ -500,7 +474,7 @@ export function ExportTab({
               </Button>
             </Link>
           </div>
-        </div>
+        </SectionPanel>
         {debugWarehouses ? (
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -607,6 +581,6 @@ export function ExportTab({
           </div>
         ) : null}
       </div>
-    </div>
+    </SectionPanel>
   );
 }

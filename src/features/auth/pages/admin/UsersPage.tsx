@@ -125,7 +125,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     setUserRoles(storedUserRoles);
     setDirtyRoles(false);
     lastSettingsRef.current = { roles: rolesSettingRaw, userRoles: userRolesSettingRaw };
-  }, [rolesSettingRaw, userRolesSettingRaw, settingsQuery.dataUpdatedAt]);
+  }, [rolesSettingRaw, userRolesSettingRaw, settingsQuery.data, settingsQuery.dataUpdatedAt]);
 
   const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();

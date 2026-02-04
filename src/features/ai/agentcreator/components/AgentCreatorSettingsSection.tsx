@@ -1,9 +1,6 @@
 "use client";
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
-
-
-
+import { Input, Label, Checkbox, UnifiedSelect, SectionPanel } from "@/shared/ui";
 
 type AgentCreatorSettingsSectionProps = {
   agentModeEnabled: boolean;
@@ -47,20 +44,19 @@ export function AgentCreatorSettingsSection({
         </Label>
       </div>
       {agentModeEnabled && (
-        <div className="space-y-4 rounded-md border border-border p-4">
+        <SectionPanel variant="subtle" className="space-y-4 p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Browser</Label>
-              <Select value={agentBrowser} onValueChange={setAgentBrowser}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="chromium">Chromium</SelectItem>
-                  <SelectItem value="firefox">Firefox</SelectItem>
-                  <SelectItem value="webkit">WebKit</SelectItem>
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={agentBrowser}
+                onValueChange={setAgentBrowser}
+                options={[
+                  { value: "chromium", label: "Chromium" },
+                  { value: "firefox", label: "Firefox" },
+                  { value: "webkit", label: "WebKit" },
+                ]}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="agent-max-steps">Max Steps</Label>
@@ -72,7 +68,7 @@ export function AgentCreatorSettingsSection({
               />
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Label className="flex items-center gap-2 text-sm text-gray-300">
               <Checkbox
                 checked={agentRunHeadless}
@@ -101,7 +97,7 @@ export function AgentCreatorSettingsSection({
               Require Approval
             </Label>
           </div>
-        </div>
+        </SectionPanel>
       )}
     </div>
   );

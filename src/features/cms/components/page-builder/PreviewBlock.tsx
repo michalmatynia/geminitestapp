@@ -774,7 +774,7 @@ export function PreviewSection({
     const sectionGapStyle = getGapStyle(section.settings["rowGapPx"]);
     const columnGapPx =
       typeof section.settings["columnGapPx"] === "number" && Number.isFinite(section.settings["columnGapPx"])
-        ? (section.settings["columnGapPx"] as number)
+        ? section.settings["columnGapPx"]
         : 0;
     const gridBackgroundSettings = section.settings["backgroundImage"] as Record<string, unknown> | undefined;
     const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
@@ -2279,15 +2279,15 @@ function PreviewBlockItem({
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const selectedBorderClass = isInspecting
-    ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
-    : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
+    ? "ring-2 ring-inset ring-blue-500/40"
+    : "ring-1 ring-inset ring-blue-400/30";
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
   // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
   const inspectorActive = isInspecting;
   const isHovered = inspectorActive && hoveredNodeId === block.id;
   const inspectorZ = inspectorActive && (isHovered || isSelected) ? "z-30" : "";
   const hoverFrameClass = isHovered && !isSelected
-    ? "border-blue-400/70 ring-4 ring-blue-500/45"
+    ? "ring-4 ring-inset ring-blue-500/45"
     : "";
   const isFaithful = !showEditorChrome;
   const canvasSelectedClass = isSelected
@@ -2385,14 +2385,14 @@ function PreviewBlockItem({
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
               sectionBase,
-              `rounded border-2 ${
+              `rounded ${
                 isSelected
                   ? `${selectedBorderClass} ${selectedSoftBg}`
-                  : "border-border/30 bg-gray-800/30 hover:border-border/50"
+                  : "ring-1 ring-inset ring-border/30 bg-gray-800/30 hover:ring-border/50"
               }`
             )}
           >
-            <div className={showEditorChrome ? "p-2.5 overflow-hidden" : ""}>
+            <div className={showEditorChrome ? "overflow-hidden" : ""}>
               {block.type === "ImageWithText" && (
                 <PreviewImageWithTextBlock
                   block={block}
@@ -2617,11 +2617,11 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             "inline-flex items-center gap-2 text-sm transition",
-            `${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
-                : "border-transparent text-gray-300 hover:border-border/30"
-            } rounded border px-2 py-1`
+                : "ring-1 ring-inset ring-border/30 text-gray-300 hover:ring-border/50"
+            }`
           )}
         >
           {showEditorChrome ? <Megaphone className="size-3.5 text-gray-400" /> : null}
@@ -2652,10 +2652,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             baseClasses,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -2689,10 +2689,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             baseClasses,
-            `rounded border p-0 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -2723,10 +2723,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             "inline-flex items-center justify-center transition",
-            `rounded border px-1 py-0.5 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-transparent hover:border-border/40"
+                : "ring-1 ring-inset ring-transparent hover:ring-border/40"
             }`
           )}
         >
@@ -2835,21 +2835,21 @@ function PreviewBlockItem({
 
       return (
         wrapBlock(
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={handleSelect}
-            onKeyDown={handleKeyDown}
-            className={buildContainerClass(
-              `w-full ${contained ? "max-w-full" : ""}`,
-              `rounded border ${
-                isSelected
-                  ? `${selectedBorderClass} ${selectedSoftBg}`
-                  : "border-border/30 bg-gray-800/20 hover:border-border/50"
-              }`
-            )}
-            style={{ height: `${Math.max(120, height)}px` }}
-          >
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass(
+            `w-full ${contained ? "max-w-full" : ""}`,
+            `rounded ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
+            }`
+          )}
+          style={{ height: `${Math.max(120, height)}px` }}
+        >
             <Viewer3D
               modelUrl={modelUrl}
               backgroundColor={backgroundColor}
@@ -2887,10 +2887,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full ${contained ? "max-w-full" : ""}`,
-            `rounded border ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
           style={{ height: `${Math.max(120, height)}px` }}
@@ -2957,10 +2957,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `inline-block ${contained ? "max-w-full" : ""}`,
-            `cms-hover-button rounded border p-3 ${
+            `cms-hover-button rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -2986,10 +2986,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3036,10 +3036,10 @@ function PreviewBlockItem({
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
               baseClasses,
-              `rounded border p-1 ${
+              `rounded ${
                 isSelected
                   ? `${selectedBorderClass} ${selectedSoftBg}`
-                  : "border-transparent hover:border-border/30"
+                  : "ring-1 ring-inset ring-transparent hover:ring-border/30"
               }`
             )}
           >
@@ -3120,10 +3120,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3170,10 +3170,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3218,10 +3218,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3251,10 +3251,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `text-left transition ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3305,10 +3305,10 @@ function PreviewBlockItem({
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `text-left transition ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `rounded ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+                : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
             }`
           )}
         >
@@ -3336,10 +3336,10 @@ function PreviewBlockItem({
         onKeyDown={handleKeyDown}
         className={buildContainerClass(
           `flex w-full items-center gap-2 text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-          `rounded border p-3 ${
+          `rounded ${
             isSelected
               ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+              : "ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50"
           }`
         )}
       >

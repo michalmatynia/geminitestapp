@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge } from "@/shared/ui";
+import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge, UnifiedSelect, SectionPanel } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
@@ -8,14 +8,14 @@ import { ProductWithImages, ProductImageRecord } from "@/features/products/types
 import { logClientError } from "@/features/observability";
 
 const STATIC_VISION_MODELS = [
-  { id: "gpt-4o", name: "GPT-4o" },
-  { id: "gpt-4-turbo", name: "GPT-4 Turbo" },
+  { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo", description: "OpenAI" },
 ];
 
 const STATIC_TEXT_MODELS = [
-  { id: "gpt-4o", name: "GPT-4o" },
-  { id: "gpt-4-turbo", name: "GPT-4 Turbo" },
-  { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo" },
+  { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo", description: "OpenAI" },
+  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", description: "OpenAI" },
 ];
 
 const AVAILABLE_PLACEHOLDERS = [
@@ -67,7 +67,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
   const [generationOutputPrompt, setGenerationOutputPrompt] = useState("");
   const [generationOutputEnabled, setGenerationOutputEnabled] = useState(false);
 
-  const [ollamaModels, setOllamaModels] = useState<{ id: string; name: string }[]>([]);
+  const [ollamaModels, setOllamaModels] = useState<{ value: string; label: string; description: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -132,7 +132,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
         if (chatbotRes.ok) {
           const data = (await chatbotRes.json()) as { models?: string[] };
           if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map((name: string) => ({ id: name, name })));
+            setOllamaModels(data.models.map((name: string) => ({ value: name, label: name, description: "Ollama" })));
           }
         }
       } catch (error) {
@@ -413,7 +413,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           </div>
         </div>
 
-        <div className="space-y-6 rounded-md border border-border bg-card/50 p-6">
+        <SectionPanel className="space-y-6 p-6">
           {/* Path 1 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -439,33 +439,23 @@ export function AiDescriptionSettings(): React.JSX.Element {
                       <CopyIcon className="size-3 mr-1"/>Copy
                     </Button>
                   </div>
-                  <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
+                  <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
                     {testResult?.analysisInitial ? (
                       <div className="whitespace-pre-wrap">{testResult.analysisInitial}</div>
                     ) : (
                       <span className="text-gray-600 italic text-xs">Waiting for test...</span>
                     )}
-                  </div>
+                  </SectionPanel>
                 </div>
               </div>
 
               <div className="max-w-md">
                 <Label>Vision Model</Label>
-                <Select value={imageAnalysisModel} onValueChange={setImageAnalysisModel}>
-                  <SelectTrigger className="mt-1.5 bg-gray-900 border text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>OpenAI</SelectLabel>
-                      {STATIC_VISION_MODELS.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
-                    </SelectGroup>
-                    {ollamaModels.length > 0 && (
-                      <SelectGroup>
-                        <SelectLabel>Ollama</SelectLabel>
-                        {ollamaModels.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
-                      </SelectGroup>
-                    )}
-                  </SelectContent>
-                </Select>
+                <UnifiedSelect
+                  value={imageAnalysisModel}
+                  onValueChange={setImageAnalysisModel}
+                  options={[...STATIC_VISION_MODELS, ...ollamaModels]}
+                />
               </div>
 
               <div className="pt-4 border-t border-border/50 space-y-4">
@@ -496,13 +486,13 @@ export function AiDescriptionSettings(): React.JSX.Element {
                           <CopyIcon className="size-3 mr-1"/>Copy
                         </Button>
                       </div>
-                      <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
+                      <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
                         {testResult?.analysisFinal ? (
                           <div className="whitespace-pre-wrap">{testResult.analysisFinal}</div>
                         ) : (
                           <span className="text-gray-600 italic text-xs">No result yet.</span>
                         )}
-                      </div>
+                      </SectionPanel>
                     </div>
                   </div>
                 )}
@@ -537,33 +527,23 @@ export function AiDescriptionSettings(): React.JSX.Element {
                       <CopyIcon className="size-3 mr-1"/>Copy
                     </Button>
                   </div>
-                  <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
+                  <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
                     {testResult?.descriptionInitial ? (
                       <div className="whitespace-pre-wrap">{testResult.descriptionInitial}</div>
                     ) : (
                       <span className="text-gray-600 italic text-xs">Waiting for test...</span>
                     )}
-                  </div>
+                  </SectionPanel>
                 </div>
               </div>
 
               <div className="max-w-md">
                 <Label>Generation Model</Label>
-                <Select value={descriptionGenerationModel} onValueChange={setDescriptionGenerationModel}>
-                  <SelectTrigger className="mt-1.5 bg-gray-900 border text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>OpenAI</SelectLabel>
-                      {STATIC_TEXT_MODELS.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
-                    </SelectGroup>
-                    {ollamaModels.length > 0 && (
-                      <SelectGroup>
-                        <SelectLabel>Ollama</SelectLabel>
-                        {ollamaModels.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
-                      </SelectGroup>
-                    )}
-                  </SelectContent>
-                </Select>
+                <UnifiedSelect
+                  value={descriptionGenerationModel}
+                  onValueChange={setDescriptionGenerationModel}
+                  options={[...STATIC_TEXT_MODELS, ...ollamaModels]}
+                />
               </div>
 
               <div className="pt-4 border-t border-border/50 space-y-4">
@@ -594,20 +574,20 @@ export function AiDescriptionSettings(): React.JSX.Element {
                           <CopyIcon className="size-3 mr-1"/>Copy
                         </Button>
                       </div>
-                      <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
+                      <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
                         {testResult?.descriptionFinal ? (
                           <div className="whitespace-pre-wrap">{testResult.descriptionFinal}</div>
                         ) : (
                           <span className="text-gray-600 italic text-xs">No result yet.</span>
                         )}
-                      </div>
+                      </SectionPanel>
                     </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </SectionPanel>
       </div>
 
       <div className="flex justify-end">
@@ -616,5 +596,5 @@ export function AiDescriptionSettings(): React.JSX.Element {
         </Button>
       </div>
     </div>
-</>);
+  </>);
 }

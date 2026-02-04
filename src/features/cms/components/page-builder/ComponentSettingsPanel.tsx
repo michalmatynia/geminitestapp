@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
@@ -682,17 +682,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
   }, [activeTab, dispatch, state.inspectorEnabled]);
 
-  useEffect(() => {
-    if (!showEventsTab && activeTab === "events") {
-      setActiveTab("settings");
-    }
-  }, [showEventsTab, activeTab]);
+  if (!showEventsTab && activeTab === "events") {
+    setActiveTab("settings");
+  }
 
-  useEffect(() => {
-    if (!showCustomCssTab && activeTab === "customCss") {
-      setActiveTab("settings");
-    }
-  }, [showCustomCssTab, activeTab]);
+  if (!showCustomCssTab && activeTab === "customCss") {
+    setActiveTab("settings");
+  }
 
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">

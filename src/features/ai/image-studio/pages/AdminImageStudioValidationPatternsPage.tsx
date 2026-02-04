@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, RefreshCcw } from "lucide-react";
 
@@ -158,9 +158,8 @@ export function AdminImageStudioValidationPatternsPage({
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const importLearnedInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    if (!settingsQuery.isSuccess) return;
-    if (initializedAt === settingsQuery.dataUpdatedAt) return;
+  if (settingsQuery.isSuccess && initializedAt !== settingsQuery.dataUpdatedAt) {
+    setInitializedAt(settingsQuery.dataUpdatedAt);
     const settings = parseImageStudioSettings(rawSettings);
     const rules = settings.promptValidation.rules ?? defaultImageStudioSettings.promptValidation.rules;
     setDrafts(rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
@@ -169,8 +168,7 @@ export function AdminImageStudioValidationPatternsPage({
     setSaveError(null);
     setIsDirty(false);
     setLearnedDirty(false);
-    setInitializedAt(settingsQuery.dataUpdatedAt);
-  }, [initializedAt, rawSettings, settingsQuery.dataUpdatedAt, settingsQuery.isSuccess]);
+  }
 
   const sortedDrafts = useMemo((): RuleDraft[] => {
     const list = [...drafts];

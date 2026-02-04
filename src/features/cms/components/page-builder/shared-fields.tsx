@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Button, SharedModal, useToast } from "@/shared/ui";
+import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import NextImage from "next/image";
 import { Upload, FolderOpen, Loader2 } from "lucide-react";
@@ -207,7 +207,9 @@ export function Asset3DPickerField({
           size="sm"
           variant="outline"
           className="text-xs"
-          onClick={(): void => selectedAsset && setPreviewAsset(selectedAsset)}
+          onClick={(): void => {
+            if (selectedAsset) setPreviewAsset(selectedAsset);
+          }}
           disabled={disabled || !selectedAsset}
         >
           Preview
@@ -235,22 +237,16 @@ export function Asset3DPickerField({
               placeholder="Search assets..."
               className="h-9"
             />
-            <Select
+            <UnifiedSelect
               value={category}
               onValueChange={(value: string) => setCategory(value)}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">All categories</SelectItem>
-                {categories.map((cat: string) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "__all__", label: "All categories" },
+                ...categories.map((cat: string) => ({ value: cat, label: cat }))
+              ]}
+              placeholder="Category"
+              triggerClassName="h-9"
+            />
             <label className="flex items-center gap-2 text-xs text-gray-300">
               <Checkbox
                 checked={isPublicOnly}
@@ -261,7 +257,7 @@ export function Asset3DPickerField({
           </div>
 
           {tags.length > 0 ? (
-            <div className="rounded border border-border/60 bg-card/40 p-2">
+            <SectionPanel variant="subtle" className="p-2">
               <div className="text-[11px] text-gray-400">Tags</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {tags.map((tag: string) => {
@@ -277,8 +273,8 @@ export function Asset3DPickerField({
                           : "border-border/60 text-gray-300 hover:border-emerald-500/40"
                       )}
                       onClick={() => {
-                        setSelectedTags((prev) =>
-                          prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                        setSelectedTags((prev: string[]) =>
+                          prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
                         );
                       }}
                     >
@@ -287,7 +283,7 @@ export function Asset3DPickerField({
                   );
                 })}
               </div>
-            </div>
+            </SectionPanel>
           ) : null}
 
           <div className="grid gap-3 md:grid-cols-[1fr_320px]">
@@ -298,8 +294,8 @@ export function Asset3DPickerField({
                 <div className="text-xs text-gray-400">No 3D assets found.</div>
               ) : (
                 <div className="space-y-2">
-                  {assets.map((asset) => (
-                    <div key={asset.id} className="rounded border border-border/60 bg-card/50 p-2">
+                  {assets.map((asset: Asset3DRecord) => (
+                    <SectionPanel key={asset.id} variant="subtle" className="p-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm text-gray-100">{asset.name || asset.filename}</div>
@@ -329,12 +325,12 @@ export function Asset3DPickerField({
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </SectionPanel>
                   ))}
                 </div>
               )}
             </div>
-            <div className="rounded border border-border/60 bg-card/40 p-2">
+            <SectionPanel variant="subtle" className="p-2">
               <div className="text-[11px] text-gray-400">Preview</div>
               {previewAsset ? (
                 <div className="mt-2 h-56">
@@ -361,7 +357,7 @@ export function Asset3DPickerField({
               ) : (
                 <div className="mt-2 text-xs text-gray-500">Pick an asset to preview.</div>
               )}
-            </div>
+            </SectionPanel>
           </div>
         </div>
       </SharedModal>
@@ -510,18 +506,14 @@ export function SelectField({
           {label}
         </Label>
       )}
-      <Select value={value} onValueChange={onChange} disabled={disabled || false}>
-        <SelectTrigger className="h-7 bg-gray-800/40 text-xs">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt: { label: string; value: string }): React.JSX.Element => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={value}
+        onValueChange={onChange}
+        disabled={disabled || false}
+        options={options}
+        placeholder={placeholder}
+        triggerClassName="h-7 bg-gray-800/40 text-xs"
+      />
     </div>
   );
 }

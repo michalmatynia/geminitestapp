@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal, Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from "@/shared/ui";
+import { SharedModal, Button, Label, UnifiedSelect, Input, SectionPanel } from "@/shared/ui";
 import { Viewer3D, type LightingPreset, type EnvironmentPreset } from "./Viewer3D";
 import {
   Download,
@@ -348,21 +348,12 @@ export function Asset3DPreviewModal({
                     {/* Environment Preset */}
                     <div>
                       <Label className="text-sm text-gray-300 mb-2 block">HDR Environment</Label>
-                      <Select
+                      <UnifiedSelect
                         value={environment}
                         onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
-                      >
-                        <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {environmentPresets.map((preset: EnvironmentPresetOption) => (
-                            <SelectItem key={preset.value} value={preset.value}>
-                              {preset.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={environmentPresets}
+                        triggerClassName="w-full bg-gray-800 border-gray-700 text-white text-sm h-10"
+                      />
                     </div>
 
                     {/* Lighting Preset */}
@@ -585,7 +576,7 @@ export function Asset3DPreviewModal({
                         <div className="pl-6 space-y-3">
                           <div>
                             <Label className="text-xs text-gray-400 mb-1 block">Preset</Label>
-                            <Select
+                            <UnifiedSelect
                               value={orderedDitheringPreset}
                               onValueChange={(v: string): void => {
                                 const value = v as OrderedDitheringPresetKey | "custom";
@@ -594,21 +585,15 @@ export function Asset3DPreviewModal({
                                   applyOrderedDitheringPreset(value);
                                 }
                               }}
-                            >
-                              <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-gray-800 border-gray-700">
-                                {orderedDitheringEntries.map(
-                                  ([key, preset]: [OrderedDitheringPresetKey, (typeof orderedDitheringPresets)[OrderedDitheringPresetKey]]) => (
-                                  <SelectItem key={key} value={key}>
-                                    {preset.label}
-                                  </SelectItem>
-                                  )
-                                )}
-                                <SelectItem value="custom">Custom</SelectItem>
-                              </SelectContent>
-                            </Select>
+                              options={[
+                                ...orderedDitheringEntries.map(([key, preset]: [OrderedDitheringPresetKey, (typeof orderedDitheringPresets)[OrderedDitheringPresetKey]]) => ({
+                                  value: key,
+                                  label: preset.label
+                                })),
+                                { value: "custom", label: "Custom" }
+                              ]}
+                              triggerClassName="w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8"
+                            />
                           </div>
                           <div>
                             <Label className="text-xs text-gray-400 mb-1 block">
@@ -646,24 +631,15 @@ export function Asset3DPreviewModal({
                           </div>
                           <div>
                             <Label className="text-xs text-gray-400 mb-1 block">Luminance</Label>
-                            <Select
+                            <UnifiedSelect
                               value={String(orderedDitheringLuminanceMethod)}
                               onValueChange={(v: string): void => {
                                 setOrderedDitheringLuminanceMethod(parseInt(v, 10));
                                 setOrderedDitheringPreset("custom");
                               }}
-                            >
-                              <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-gray-800 border-gray-700">
-                                {orderedDitheringLuminanceOptions.map((option: LuminanceOption) => (
-                                  <SelectItem key={option.value} value={String(option.value)}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              options={orderedDitheringLuminanceOptions.map((opt: LuminanceOption) => ({ value: String(opt.value), label: opt.label }))}
+                              triggerClassName="w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8"
+                            />
                           </div>
                           <label className="flex items-center gap-3 cursor-pointer">
                             <Input
@@ -760,12 +736,12 @@ export function Asset3DPreviewModal({
                     </div>
 
                     {/* Controls Help */}
-                    <div className="p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400 space-y-1">
+                    <SectionPanel variant="subtle-compact" className="p-3 text-xs text-gray-400 space-y-1">
                       <p className="font-medium text-gray-300 mb-2">Controls:</p>
                       <p>• Left click + drag to rotate</p>
                       <p>• Right click + drag to pan</p>
                       <p>• Scroll to zoom</p>
-                    </div>
+                    </SectionPanel>
                   </>
                 )}
               </div>

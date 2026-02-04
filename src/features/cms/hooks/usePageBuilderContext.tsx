@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useMemo, type ReactNode } from "react";
+import React, { createContext, useContext, useReducer, useMemo, useState, useCallback, type ReactNode } from "react";
 import type {
   PageBuilderState,
   PageBuilderAction,
@@ -13,6 +13,7 @@ import type {
 import { DEFAULT_INSPECTOR_SETTINGS } from "../types/page-builder";
 import type { Page, PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
+import type { VectorShape } from "@/shared/ui";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1833,6 +1834,19 @@ export const initialState: PageBuilderState = {
   history: { past: [], future: [] },
 };
 
+export interface VectorOverlayResult {
+  shapes: VectorShape[];
+  path: string;
+}
+
+export interface VectorOverlayRequest {
+  title: string;
+  description?: string;
+  initialShapes?: VectorShape[];
+  onApply: (result: VectorOverlayResult) => void;
+  onCancel?: () => void;
+}
+
 interface PageBuilderContextValue {
   state: PageBuilderState;
   dispatch: React.Dispatch<PageBuilderAction>;
@@ -1843,6 +1857,9 @@ interface PageBuilderContextValue {
   selectedColumnParentSection: SectionInstance | null;
   selectedParentColumn: BlockInstance | null;
   selectedParentBlock: BlockInstance | null;
+  vectorOverlay: VectorOverlayRequest | null;
+  openVectorOverlay: (request: VectorOverlayRequest) => void;
+  closeVectorOverlay: () => void;
 }
 
 const PageBuilderContext = createContext<PageBuilderContextValue | undefined>(
@@ -1851,6 +1868,15 @@ const PageBuilderContext = createContext<PageBuilderContextValue | undefined>(
 
 export function PageBuilderProvider({ children }: { children: ReactNode }): React.ReactNode {
   const [state, dispatch] = useReducer(pageBuilderReducer, initialState);
+  const [vectorOverlay, setVectorOverlay] = useState<VectorOverlayRequest | null>(null);
+
+  const openVectorOverlay = useCallback((request: VectorOverlayRequest): void => {
+    setVectorOverlay(request);
+  }, []);
+
+  const closeVectorOverlay = useCallback((): void => {
+    setVectorOverlay(null);
+  }, []);
 
   const { selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentBlock } = useMemo(() => {
     const empty = {
@@ -1892,8 +1918,34 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
   }, [state.sections, state.selectedNodeId]);
 
   const value = useMemo(
-    () => ({ state, dispatch, selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentBlock }),
-    [state, dispatch, selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentBlock]
+    () => ({
+      state,
+      dispatch,
+      selectedSection,
+      selectedBlock,
+      selectedParentSection,
+      selectedColumn,
+      selectedColumnParentSection,
+      selectedParentColumn,
+      selectedParentBlock,
+      vectorOverlay,
+      openVectorOverlay,
+      closeVectorOverlay,
+    }),
+    [
+      state,
+      dispatch,
+      selectedSection,
+      selectedBlock,
+      selectedParentSection,
+      selectedColumn,
+      selectedColumnParentSection,
+      selectedParentColumn,
+      selectedParentBlock,
+      vectorOverlay,
+      openVectorOverlay,
+      closeVectorOverlay,
+    ]
   );
 
   return (

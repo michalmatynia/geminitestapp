@@ -19,6 +19,7 @@ import {
   Image as ImageIcon,
   ChevronRightIcon,
   StarIcon,
+  SparklesIcon,
 } from "lucide-react";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -755,6 +756,13 @@ export const buildAdminNav = (handlers: {
         href: "/admin/analytics",
         icon: <BarChart3Icon className="size-4" />,
         keywords: ["page analytics", "traffic", "visitors", "referrers"],
+      },
+      {
+        id: "system/ai-insights",
+        label: "AI Insights",
+        href: "/admin/ai-insights",
+        icon: <SparklesIcon className="size-4" />,
+        keywords: ["ai insights", "analytics", "logs", "warnings"],
       },
       { id: "system/logs", label: "System Logs", href: "/admin/system/logs", icon: <ActivityIcon className="size-4" /> },
       { id: "system/uploads", label: "Upload Events", href: "/admin/system/upload-events", icon: <ActivityIcon className="size-4" /> },

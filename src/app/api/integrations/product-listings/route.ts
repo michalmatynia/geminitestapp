@@ -19,7 +19,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       active: 3,
       pending: 2,
       failed: 1,
-      removed: 0,
+      removed: 0
     };
 
     const byProduct = new Map<string, string>();
@@ -41,11 +41,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.listings.GET",
-      fallbackMessage: "Failed to fetch listing summary",
+      fallbackMessage: "Failed to fetch listing summary"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.listings.GET" });
+ { source: "products.listings.GET", requireCsrf: false });

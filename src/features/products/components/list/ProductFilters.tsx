@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Label, Button, DropdownMenuItem, SearchInput, SelectionBar, FiltersContainer } from "@/shared/ui";
+import { Input, Label, DropdownMenuItem, SearchInput, SelectionBar, FiltersContainer } from "@/shared/ui";
 import { memo, useCallback } from "react";
 
 

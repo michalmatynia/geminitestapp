@@ -2,6 +2,7 @@
 import { Fragment } from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
+import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { FrontendImageWithTextBlock } from "./FrontendImageWithTextBlock";
@@ -9,7 +10,9 @@ import { FrontendHeroBlock } from "./FrontendHeroBlock";
 import { FrontendCarousel } from "./FrontendCarousel";
 import { FrontendSlideshowSection } from "./FrontendSlideshowSection";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
+import { CssAnimationWrapper } from "../CssAnimationWrapper";
 import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
+import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
 
 // Section-type blocks that need special rendering inside columns
 const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"]);
@@ -331,6 +334,7 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
               const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
               const rowSelector = getCustomCssSelector(row.id);
               const rowCustomCss = buildScopedCustomCss(row.settings?.["customCss"], rowSelector);
+              const rowCssAnimConfig = row.settings?.["cssAnimation"] as CssAnimationConfig | undefined;
 
               // Direction setting: horizontal (side by side) or vertical (stacked)
               const direction = (row.settings?.["direction"] as string) || "horizontal";
@@ -342,70 +346,71 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
                 : "";
 
               return (
-                <div
-                  key={`grid-row-${row.id}-${rowIndex}`}
-                  className={`relative cms-node-${row.id} ${hasRowBackground ? "overflow-hidden" : ""}`}
-                  style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                >
-                  {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
-                  {/* Row background mode images */}
-                  {rowBackgroundModeImages.map((block: BlockInstance) => (
-                    <Fragment key={`row-bg-mode-${block.id}`}>
-                      {renderBackgroundImageLayer(block.settings)}
-                    </Fragment>
-                  ))}
-                  {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
+                <CssAnimationWrapper key={`grid-row-${row.id}-${rowIndex}`} config={rowCssAnimConfig}>
                   <div
-                    className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row"} ${rowWrapClass} ${rowGapClass}`}
-                    style={{
-                      ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
-                      ...(rowGapStyle ?? {}),
-                      ...(rowJustify ? { justifyContent: rowJustify } : {}),
-                      ...(rowAlign ? { alignItems: rowAlign } : {}),
-                    }}
+                    className={`relative cms-node-${row.id} ${hasRowBackground ? "overflow-hidden" : ""}`}
+                    style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                   >
-                    {/* Render all children in order, handling columns and direct elements */}
-                    {rowChildren.map((child: BlockInstance) => {
-                      // Skip ImageElements that are in background mode (grid or row)
-                      if (child.type === "ImageElement") {
-                        const bgTarget = (child.settings?.["backgroundTarget"] as string) || "none";
-                        if (bgTarget === "grid" || bgTarget === "row") return null;
-                      }
+                    {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
+                    {/* Row background mode images */}
+                    {rowBackgroundModeImages.map((block: BlockInstance) => (
+                      <Fragment key={`row-bg-mode-${block.id}`}>
+                        {renderBackgroundImageLayer(block.settings)}
+                      </Fragment>
+                    ))}
+                    {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
+                    <div
+                      className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row"} ${rowWrapClass} ${rowGapClass}`}
+                      style={{
+                        ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
+                        ...(rowGapStyle ?? {}),
+                        ...(rowJustify ? { justifyContent: rowJustify } : {}),
+                        ...(rowAlign ? { alignItems: rowAlign } : {}),
+                      }}
+                    >
+                      {/* Render all children in order, handling columns and direct elements */}
+                      {rowChildren.map((child: BlockInstance) => {
+                        // Skip ImageElements that are in background mode (grid or row)
+                        if (child.type === "ImageElement") {
+                          const bgTarget = (child.settings?.["backgroundTarget"] as string) || "none";
+                          if (bgTarget === "grid" || bgTarget === "row") return null;
+                        }
 
-                      if (child.type === "Column") {
-                        // Columns get flex-1 to share space equally when horizontal
-                        return (
-                          <div key={child.id} className={isVertical ? "w-full" : "flex-1 min-w-0"}>
-                            <ColumnRenderer
-                              column={child}
-                              colorSchemes={colorSchemes}
-                              rowHeightMode={rowHeightMode}
-                              rowHeight={rowHeight}
-                            />
-                          </div>
-                        );
-                      }
-                      // Direct elements in row (not inside a column)
-                      const minHeight = getBlockMinHeight(child.type);
-                      const wrapperStyle: React.CSSProperties = {
-                        minHeight: `${minHeight}px`,
-                        position: "relative",
-                      };
-                      if (SECTION_BLOCK_TYPES.has(child.type)) {
+                        if (child.type === "Column") {
+                          // Columns get flex-1 to share space equally when horizontal
+                          return (
+                            <div key={child.id} className={isVertical ? "w-full" : "flex-1 min-w-0"}>
+                              <ColumnRenderer
+                                column={child}
+                                colorSchemes={colorSchemes}
+                                rowHeightMode={rowHeightMode}
+                                rowHeight={rowHeight}
+                              />
+                            </div>
+                          );
+                        }
+                        // Direct elements in row (not inside a column)
+                        const minHeight = getBlockMinHeight(child.type);
+                        const wrapperStyle: React.CSSProperties = {
+                          minHeight: `${minHeight}px`,
+                          position: "relative",
+                        };
+                        if (SECTION_BLOCK_TYPES.has(child.type)) {
+                          return (
+                            <div key={child.id} className={isVertical ? "w-full" : ""} style={wrapperStyle}>
+                              <SectionBlockRenderer block={child} colorSchemes={colorSchemes} />
+                            </div>
+                          );
+                        }
                         return (
                           <div key={child.id} className={isVertical ? "w-full" : ""} style={wrapperStyle}>
-                            <SectionBlockRenderer block={child} colorSchemes={colorSchemes} />
+                            <FrontendBlockRenderer block={child} />
                           </div>
                         );
-                      }
-                      return (
-                        <div key={child.id} className={isVertical ? "w-full" : ""} style={wrapperStyle}>
-                          <FrontendBlockRenderer block={child} />
-                        </div>
-                      );
-                    })}
+                      })}
+                    </div>
                   </div>
-                </div>
+                </CssAnimationWrapper>
               );
             })}
           </div>
@@ -442,6 +447,7 @@ function ColumnRenderer({
   });
 
   const animConfig = column.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const cssAnimConfig = column.settings["cssAnimation"] as CssAnimationConfig | undefined;
   const isSingleBlock = contentChildren.length === 1;
   const columnHeightMode = (column.settings["heightMode"] as string) || "inherit";
   const columnHeight = (column.settings["height"] as number) || 0;
@@ -470,48 +476,50 @@ function ColumnRenderer({
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      <div
-        className={`relative cms-node-${column.id} ${hasColumnBackground ? "overflow-hidden" : ""}`}
-        style={{ ...columnStyles, ...columnStyle }}
-      >
-        {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
-        {/* Column background mode images */}
-        {columnBackgroundModeImages.map((block: BlockInstance) => (
-          <Fragment key={`col-bg-mode-${block.id}`}>
-            {renderBackgroundImageLayer(block.settings)}
-          </Fragment>
-        ))}
-        {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings)}
+      <CssAnimationWrapper config={cssAnimConfig}>
         <div
-          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : columnGapClass}`}
-          style={{
-            ...(columnGapStyle ?? {}),
-            ...(columnJustify ? { justifyContent: columnJustify } : {}),
-            ...(columnAlign ? { alignItems: columnAlign } : {}),
-          }}
+          className={`relative cms-node-${column.id} ${hasColumnBackground ? "overflow-hidden" : ""}`}
+          style={{ ...columnStyles, ...columnStyle }}
         >
-          {contentChildren.map((block: BlockInstance, blockIndex: number) => {
-            const minHeight = getBlockMinHeight(block.type);
-            const wrapperStyle: React.CSSProperties = {
-              ...(shouldStretch ? { height: "100%" } : { minHeight: `${minHeight}px` }),
-              position: "relative",
-              zIndex: contentChildren.length - blockIndex,
-            };
-            if (SECTION_BLOCK_TYPES.has(block.type)) {
+          {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
+          {/* Column background mode images */}
+          {columnBackgroundModeImages.map((block: BlockInstance) => (
+            <Fragment key={`col-bg-mode-${block.id}`}>
+              {renderBackgroundImageLayer(block.settings)}
+            </Fragment>
+          ))}
+          {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings)}
+          <div
+            className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : columnGapClass}`}
+            style={{
+              ...(columnGapStyle ?? {}),
+              ...(columnJustify ? { justifyContent: columnJustify } : {}),
+              ...(columnAlign ? { alignItems: columnAlign } : {}),
+            }}
+          >
+            {contentChildren.map((block: BlockInstance, blockIndex: number) => {
+              const minHeight = getBlockMinHeight(block.type);
+              const wrapperStyle: React.CSSProperties = {
+                ...(shouldStretch ? { height: "100%" } : { minHeight: `${minHeight}px` }),
+                position: "relative",
+                zIndex: contentChildren.length - blockIndex,
+              };
+              if (SECTION_BLOCK_TYPES.has(block.type)) {
+                return (
+                  <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
+                    <SectionBlockRenderer block={block} colorSchemes={colorSchemes} stretch={shouldStretch} />
+                  </div>
+                );
+              }
               return (
                 <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
-                  <SectionBlockRenderer block={block} colorSchemes={colorSchemes} stretch={shouldStretch} />
+                  <FrontendBlockRenderer block={block} stretch={shouldStretch} />
                 </div>
               );
-            }
-            return (
-              <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
-                <FrontendBlockRenderer block={block} stretch={shouldStretch} />
-              </div>
-            );
-          })}
+            })}
+          </div>
         </div>
-      </div>
+      </CssAnimationWrapper>
     </GsapAnimationWrapper>
   );
 }
@@ -531,24 +539,49 @@ function SectionBlockRenderer({
 }): React.ReactNode {
   const children = block.blocks ?? [];
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const cssAnimConfig = block.settings["cssAnimation"] as CssAnimationConfig | undefined;
   const stretchClass = stretch ? "h-full" : "";
   const stretchStyle = stretch ? { height: "100%" } : undefined;
+  const allowInlineCustomCss = block.type !== "Block";
+  const inlineCustomCss = allowInlineCustomCss ? block.settings["customCss"] : undefined;
+  const inlineCustomNodeId = allowInlineCustomCss ? block.id : undefined;
+
+  const wrapInline = (node: React.ReactNode): React.ReactNode => (
+    <EventEffectsWrapper
+      settings={block.settings}
+      nodeId={inlineCustomNodeId}
+      customCss={inlineCustomCss}
+    >
+      {node}
+    </EventEffectsWrapper>
+  );
+  const wrapEventsOnly = (node: React.ReactNode): React.ReactNode => (
+    <EventEffectsWrapper settings={block.settings}>{node}</EventEffectsWrapper>
+  );
 
   if (block.type === "ImageWithText") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div className={stretchClass} style={stretchStyle}>
-          <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
-        </div>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div className={stretchClass} style={stretchStyle}>
+              <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
+            </div>
+          )}
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
   if (block.type === "Hero") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div className={stretchClass} style={stretchStyle}>
-          <FrontendHeroBlock settings={block.settings} blocks={children} />
-        </div>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div className={stretchClass} style={stretchStyle}>
+              <FrontendHeroBlock settings={block.settings} blocks={children} />
+            </div>
+          )}
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
@@ -556,17 +589,21 @@ function SectionBlockRenderer({
     const sectionStyles = getSectionStyles(block.settings, colorSchemes);
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
-          <div className="space-y-4">
-            {children.length > 0 ? (
-              children.map((child: BlockInstance) => (
-                <FrontendBlockRenderer key={child.id} block={child} />
-              ))
-            ) : (
-              <p className="text-gray-500">Rich text section</p>
-            )}
-          </div>
-        </div>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
+              <div className="space-y-4">
+                {children.length > 0 ? (
+                  children.map((child: BlockInstance) => (
+                    <FrontendBlockRenderer key={child.id} block={child} />
+                  ))
+                ) : (
+                  <p className="text-gray-500">Rich text section</p>
+                )}
+              </div>
+            </div>
+          )}
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
@@ -604,19 +641,23 @@ function SectionBlockRenderer({
     );
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div
-          style={{ ...sectionStyles, ...(stretchStyle ?? {}) }}
-          className={`${stretchClass} cms-node-${block.id}`.trim()}
-        >
-          {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
-          {linkUrl ? (
-            <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
-              {content}
-            </a>
-          ) : (
-            content
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapEventsOnly(
+            <div
+              style={{ ...sectionStyles, ...(stretchStyle ?? {}) }}
+              className={`${stretchClass} cms-node-${block.id}`.trim()}
+            >
+              {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
+              {linkUrl ? (
+                <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
+                  {content}
+                </a>
+              ) : (
+                content
+              )}
+            </div>
           )}
-        </div>
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
@@ -653,33 +694,45 @@ function SectionBlockRenderer({
 
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretchClass}>
-          {letters.length > 0 ? (
-            letters.map((letter: BlockInstance) => (
-              <FrontendBlockRenderer key={letter.id} block={letter} />
-            ))
-          ) : (
-            <span className="text-sm text-gray-400">Text atoms</span>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretchClass}>
+              {letters.length > 0 ? (
+                letters.map((letter: BlockInstance) => (
+                  <FrontendBlockRenderer key={letter.id} block={letter} />
+                ))
+              ) : (
+                <span className="text-sm text-gray-400">Text atoms</span>
+              )}
+            </div>
           )}
-        </div>
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
   if (block.type === "Carousel") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div className={stretchClass} style={stretchStyle}>
-          <FrontendCarousel settings={block.settings} blocks={children} />
-        </div>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div className={stretchClass} style={stretchStyle}>
+              <FrontendCarousel settings={block.settings} blocks={children} />
+            </div>
+          )}
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }
   if (block.type === "Slideshow") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div className={stretchClass} style={stretchStyle}>
-          <FrontendSlideshowSection settings={block.settings} blocks={children} colorSchemes={colorSchemes} layout={{ fullWidth: true }} />
-        </div>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          {wrapInline(
+            <div className={stretchClass} style={stretchStyle}>
+              <FrontendSlideshowSection settings={block.settings} blocks={children} colorSchemes={colorSchemes} layout={{ fullWidth: true }} />
+            </div>
+          )}
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     );
   }

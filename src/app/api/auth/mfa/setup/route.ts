@@ -7,6 +7,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { conflictError, authError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (!userId) {
       throw authError("Unauthorized.");
     }
+    await logAuthEvent({
+      req,
+      action: "auth.mfa.setup",
+      stage: "start",
+      userId,
+    });
 
     const profile = await getAuthSecurityProfile(userId);
     if (profile.mfaEnabled) {
@@ -43,6 +50,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const label = `${issuer}:${email}`;
     const otpauthUrl = buildOtpAuthUrl({ secret, issuer, label });
 
+    await logAuthEvent({
+      req,
+      action: "auth.mfa.setup",
+      stage: "success",
+      userId,
+      status: 200,
+    });
     return NextResponse.json({
       ok: true,
       secret,
@@ -59,4 +73,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "auth.mfa.setup.POST" });
+ { source: "auth.mfa.setup.POST", requireCsrf: false });

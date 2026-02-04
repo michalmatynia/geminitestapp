@@ -128,7 +128,7 @@ export function MultiSelect({
                   key={option.value}
                   checked={selected.includes(option.value)}
                   onCheckedChange={() => toggleOption(option.value)}
-                  disabled={option.disabled ?? undefined}
+                  {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
                 >
                   {option.label}
                 </DropdownMenuCheckboxItem>

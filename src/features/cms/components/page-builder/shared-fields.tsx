@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel, FileUploadButton } from "@/shared/ui";
+import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel, FileUploadButton, type FileUploadHelpers } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import NextImage from "next/image";
 import { Upload, FolderOpen, Loader2 } from "lucide-react";
@@ -30,7 +30,7 @@ export function ImagePickerField({
   const uploadMutation = useUploadCmsMedia();
   const { toast } = useToast();
 
-  const handleFileUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void; setProgress: (value: number) => void }): Promise<void> => {
+  const handleFileUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     const file = files[0];
     if (!file) return;
 
@@ -86,7 +86,7 @@ export function ImagePickerField({
           className="text-xs"
           accept="image/*"
           disabled={disabled || isUploading}
-          onFilesSelected={(files: File[], helpers) => handleFileUpload(files, helpers)}
+          onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleFileUpload(files, helpers)}
         >
           <Upload className="mr-1.5 size-3" />
           {value ? "Replace" : "Upload"}
@@ -120,6 +120,11 @@ export function ImagePickerField({
         onOpenChange={setOpen}
         selectionMode="single"
         onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? "")}
+        {...(handleFileUpload && {
+          onFilesSelected: async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
+            if (files.length > 0) await handleFileUpload(files, helpers);
+          },
+        })}
       />
     </div>
   );

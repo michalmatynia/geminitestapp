@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 import Link from "next/link";
 
 import { Button, Label, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
@@ -14,20 +14,18 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
 
-  const [presets, setPresets] = useState<ImageStudioUiPreset[]>([]);
-  const [activeId, setActiveId] = useState<string>("");
+  const presets = useMemo(() => {
+    if (!settingsQuery.data) return [];
+    return parseImageStudioUiPresets(settingsQuery.data.get(IMAGE_STUDIO_UI_PRESETS_KEY));
+  }, [settingsQuery.data]);
 
-  useEffect(() => {
-    if (!settingsQuery.data) return;
-    const presetsRaw = settingsQuery.data.get(IMAGE_STUDIO_UI_PRESETS_KEY);
-    const activeRaw = settingsQuery.data.get(IMAGE_STUDIO_UI_ACTIVE_KEY);
-    setPresets(parseImageStudioUiPresets(presetsRaw));
-    setActiveId(parseJsonSetting<string | null>(activeRaw, null) ?? "");
+  const activeId = useMemo(() => {
+    if (!settingsQuery.data) return "";
+    return parseJsonSetting<string | null>(settingsQuery.data.get(IMAGE_STUDIO_UI_ACTIVE_KEY), null) ?? "";
   }, [settingsQuery.data]);
 
   const handleSetActive = useCallback(
     async (id: string): Promise<void> => {
-      setActiveId(id);
       try {
         await updateSetting.mutateAsync({
           key: IMAGE_STUDIO_UI_ACTIVE_KEY,
@@ -45,9 +43,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const handleDelete = useCallback(
     async (id: string): Promise<void> => {
       const next = presets.filter((preset: ImageStudioUiPreset) => preset.id !== id);
-      setPresets(next);
       const nextActive = activeId === id ? "" : activeId;
-      setActiveId(nextActive);
       try {
         await updateSetting.mutateAsync({
           key: IMAGE_STUDIO_UI_PRESETS_KEY,

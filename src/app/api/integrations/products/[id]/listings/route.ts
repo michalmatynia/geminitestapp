@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
-  connectionId: z.string().min(1),
+  connectionId: z.string().min(1)
 });
 
 /**
@@ -33,7 +33,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.[id].listings.GET",
-      fallbackMessage: "Failed to fetch listings",
+      fallbackMessage: "Failed to fetch listings"
     });
   }
 }
@@ -50,7 +50,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
 
     const parsed = await parseJsonBody(req, createListingSchema, {
-      logPrefix: "integrations.products.listings.POST",
+      logPrefix: "integrations.products.listings.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -69,7 +69,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const integration = await integrationRepo.getIntegrationById(data.integrationId);
     if (!integration) {
       throw notFoundError("Integration not found", {
-        integrationId: data.integrationId,
+        integrationId: data.integrationId
       });
     }
 
@@ -91,14 +91,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     if (exists) {
       throw conflictError("Product is already listed on this account", {
         productId,
-        connectionId: data.connectionId,
+        connectionId: data.connectionId
       });
     }
 
     const listing = await listingRepo.createListing({
       productId,
       integrationId: data.integrationId,
-      connectionId: data.connectionId,
+      connectionId: data.connectionId
     });
 
     return NextResponse.json(listing, { status: 201 });
@@ -106,10 +106,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.[id].listings.POST",
-      fallbackMessage: "Failed to create listing",
+      fallbackMessage: "Failed to create listing"
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "integrations.products.[id].listings.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "integrations.products.[id].listings.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
+  source: "integrations.products.[id].listings.GET", requireCsrf: false
+});
+
+export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {
+  source: "integrations.products.[id].listings.POST", requireCsrf: false
+});

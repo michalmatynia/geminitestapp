@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
 import {
   Button,
   FileUploadButton,
@@ -19,29 +18,23 @@ import {
   Tabs,
   TabsContent,
   Textarea,
-  Tooltip,
   useToast,
+  VectorCanvas,
+  VectorToolbar,
+  type VectorPoint,
+  type VectorShape,
+  type VectorToolMode,
 } from "@/shared/ui";
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
 import {
-  Brush,
   Camera,
-  Check,
-  Circle,
   Folder,
   Image as ImageIcon,
-  Lasso,
   Maximize2,
   Minimize2,
-  MousePointer2,
-  Pentagon,
   Plus,
-  RectangleHorizontal,
   RefreshCcw,
-  RotateCcw,
   Sparkles,
-  Trash2,
-  Unlink,
   Upload,
   Wand2,
   X,
@@ -67,19 +60,10 @@ import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudio
 import { expandFolderPath, normalizeFolderPaths } from "../utils/studio-tree";
 import { AdminImageStudioValidationPatternsPage } from "./AdminImageStudioValidationPatternsPage";
 
-type ToolMode = "select" | "polygon" | "lasso" | "rect" | "ellipse" | "brush";
 type StudioTab = "studio" | "projects" | "settings" | "validation";
-
-type Point = { x: number; y: number }; // normalized 0..1
-type MaskShapeType = "polygon" | "lasso" | "rect" | "ellipse" | "brush";
-type MaskShape = {
-  id: string;
-  name: string;
-  type: MaskShapeType;
-  points: Point[];
-  closed: boolean;
-  visible: boolean;
-};
+type ToolMode = VectorToolMode;
+type Point = VectorPoint; // normalized 0..1
+type MaskShape = VectorShape;
 
 type StudioProjectsResponse = { projects: string[] };
 type StudioSlotsResponse = { slots: ImageStudioSlotRecord[] };
@@ -182,12 +166,12 @@ type ImageStudioSlotRecord = {
 };
 
 function parseSlotFoldersSetting(raw: string | null | undefined): string[] {
-  const parsed = parseJsonSetting(raw);
+  const parsed = parseJsonSetting<Record<string, unknown> | null>(raw, null);
   if (!parsed || typeof parsed !== "object") return [];
   const folders = Array.isArray((parsed as { folders?: unknown }).folders)
     ? ((parsed as { folders?: unknown[] }).folders ?? [])
     : [];
-  return normalizeFolderPaths(folders.filter((folder: unknown) => typeof folder === "string") as string[]);
+  return normalizeFolderPaths(folders.filter((folder: unknown): folder is string => typeof folder === "string"));
 }
 
 function serializeSlotFoldersSetting(folders: string[]): string {
@@ -195,10 +179,13 @@ function serializeSlotFoldersSetting(folders: string[]): string {
 }
 
 async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve: (value: string) => void, reject: (reason?: Error) => void) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.onload = (): void => {
+      const result = reader.result;
+      resolve(typeof result === "string" ? result : "");
+    };
+    reader.onerror = (): void => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -404,22 +391,21 @@ function SlotTree({
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const initialExpanded = useMemo(() => new Set(["root"]), []);
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
-  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
-
-  // Reset expanded when projectId changes (derived state pattern)
-  const [prevProjectId, setPrevProjectId] = useState(projectId);
-  if (projectId !== prevProjectId) {
-    setPrevProjectId(projectId);
-    setExpanded(new Set(["root"]));
-    setDragOverPath(null);
-    setDraggedSlotId(null);
-    setDraggedFolderPath(null);
-  }
-
-  const toggle = useCallback((id: string): void => {
-    setExpanded((prev: Set<string>) => {
+              const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+              const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
+              const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+          
+              // Reset state when projectId changes (derived state pattern during render)
+              const [prevProjectId, setPrevProjectId] = useState(projectId);
+              if (projectId !== prevProjectId) {
+                setPrevProjectId(projectId);
+                setExpanded(new Set(["root"]));
+                setDragOverPath(null);
+                setDraggedSlotId(null);
+                      setDraggedFolderPath(null);
+                    }
+                
+                    const toggle = useCallback((id: string): void => {    setExpanded((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -561,433 +547,6 @@ function SlotTree({
         </div>
       ) : (
         renderNode(tree, 0)
-      )}
-    </div>
-  );
-}
-
-function MaskCanvas({
-  src,
-  tool,
-  shapes,
-  activeShapeId,
-  selectedPointIndex,
-  onChange,
-  onSelectShape,
-  onSelectPoint,
-  brushRadius,
-}: {
-  src: string | null;
-  tool: ToolMode;
-  shapes: MaskShape[];
-  activeShapeId: string | null;
-  selectedPointIndex: number | null;
-  onChange: (nextShapes: MaskShape[]) => void;
-  onSelectShape: (id: string | null) => void;
-  onSelectPoint?: (index: number | null) => void;
-  brushRadius: number;
-}): React.JSX.Element {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
-  const drawingRef = useRef<{ shapeId: string; type: MaskShapeType } | null>(null);
-
-  const draw = useCallback((): void => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const toPx = (p: Point): { x: number; y: number } => ({
-      x: p.x * canvas.width,
-      y: p.y * canvas.height,
-    });
-
-    shapes.forEach((shape: MaskShape) => {
-      if (!shape.visible) return;
-      if (shape.points.length === 0) return;
-      const isActive = shape.id === activeShapeId;
-      ctx.lineWidth = isActive ? 2.5 : 2;
-      ctx.strokeStyle = isActive ? "rgba(16, 185, 129, 0.95)" : "rgba(56, 189, 248, 0.95)";
-      ctx.fillStyle = "rgba(56, 189, 248, 0.15)";
-
-      ctx.beginPath();
-      const first = toPx(shape.points[0]!);
-      ctx.moveTo(first.x, first.y);
-      shape.points.slice(1).forEach((p: Point) => {
-        const px = toPx(p);
-        ctx.lineTo(px.x, px.y);
-      });
-      if (shape.closed && shape.points.length >= 3) {
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.stroke();
-
-      if (shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush") {
-        shape.points.forEach((p: Point, index: number) => {
-          const px = toPx(p);
-          ctx.beginPath();
-          ctx.arc(px.x, px.y, index === 0 ? 5 : 4, 0, Math.PI * 2);
-          const isSelected = isActive && index === (selectedPointIndex ?? -1);
-          ctx.fillStyle = isSelected ? "rgba(251, 191, 36, 0.95)" : (index === 0 ? "rgba(16, 185, 129, 0.95)" : "rgba(56, 189, 248, 0.95)");
-          ctx.fill();
-          ctx.strokeStyle = "rgba(0,0,0,0.35)";
-          ctx.stroke();
-        });
-      }
-    });
-  }, [activeShapeId, selectedPointIndex, shapes]);
-
-  const syncCanvasSize = useCallback((): void => {
-    const img = imgRef.current;
-    const canvas = canvasRef.current;
-    if (!img || !canvas) return;
-    const rect = img.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    draw();
-  }, [draw]);
-
-  useEffect(() => {
-    syncCanvasSize();
-  }, [syncCanvasSize, src, shapes.length]);
-
-  useEffect(() => {
-    const onResize = (): void => syncCanvasSize();
-    window.addEventListener("resize", onResize);
-    return (): void => window.removeEventListener("resize", onResize);
-  }, [syncCanvasSize]);
-
-  useEffect(() => {
-    if (!containerRef.current || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      syncCanvasSize();
-    });
-    observer.observe(containerRef.current);
-    return (): void => observer.disconnect();
-  }, [syncCanvasSize]);
-
-  const toPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
-    const y = (event.clientY - rect.top) / rect.height;
-    return {
-      x: Math.min(1, Math.max(0, x)),
-      y: Math.min(1, Math.max(0, y)),
-    };
-  }, []);
-
-  const hitTestPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string; pointIndex: number } | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const radius = 8;
-    for (const shape of shapes) {
-      if (!shape.visible) continue;
-      if (!(shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush")) continue;
-      for (let idx = 0; idx < shape.points.length; idx += 1) {
-        const p = shape.points[idx]!;
-        const px = p.x * rect.width;
-        const py = p.y * rect.height;
-        if (Math.hypot(px - x, py - y) <= radius) {
-          return { shapeId: shape.id, pointIndex: idx };
-        }
-      }
-    }
-    return null;
-  }, [shapes]);
-
-  const hitTestSegment = useCallback((
-    event: React.MouseEvent<HTMLCanvasElement>
-  ): { shapeId: string; insertIndex: number; point: Point } | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const maxDist = 8;
-
-    const pointToSegment = (ax: number, ay: number, bx: number, by: number): number => {
-      const abx = bx - ax;
-      const aby = by - ay;
-      const apx = x - ax;
-      const apy = y - ay;
-      const abLenSq = abx * abx + aby * aby;
-      if (abLenSq === 0) return Math.hypot(x - ax, y - ay);
-      const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abLenSq));
-      const px = ax + abx * t;
-      const py = ay + aby * t;
-      return Math.hypot(x - px, y - py);
-    };
-
-    for (const shape of shapes) {
-      if (!shape.visible) continue;
-      if (!(shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush")) continue;
-      if (shape.points.length < 2) continue;
-      const pts = shape.points;
-      for (let idx = 0; idx < pts.length - 1; idx += 1) {
-        const a = pts[idx]!;
-        const b = pts[idx + 1]!;
-        const ax = a.x * rect.width;
-        const ay = a.y * rect.height;
-        const bx = b.x * rect.width;
-        const by = b.y * rect.height;
-        if (pointToSegment(ax, ay, bx, by) <= maxDist) {
-          return {
-            shapeId: shape.id,
-            insertIndex: idx + 1,
-            point: { x: x / rect.width, y: y / rect.height },
-          };
-        }
-      }
-      if (shape.closed && shape.points.length >= 3) {
-        const a = pts[pts.length - 1]!;
-        const b = pts[0]!;
-        const ax = a.x * rect.width;
-        const ay = a.y * rect.height;
-        const bx = b.x * rect.width;
-        const by = b.y * rect.height;
-        if (pointToSegment(ax, ay, bx, by) <= maxDist) {
-          return {
-            shapeId: shape.id,
-            insertIndex: pts.length,
-            point: { x: x / rect.width, y: y / rect.height },
-          };
-        }
-      }
-    }
-    return null;
-  }, [shapes]);
-
-  const handleMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLCanvasElement>): void => {
-      if (!src) return;
-      if (tool === "select") {
-        if (event.shiftKey) {
-          const hitSegment = hitTestSegment(event);
-          if (hitSegment) {
-            onSelectShape(hitSegment.shapeId);
-            onChange(
-              shapes.map((shape: MaskShape) => {
-                if (shape.id !== hitSegment.shapeId) return shape;
-                const nextPoints = [...shape.points];
-                nextPoints.splice(hitSegment.insertIndex, 0, hitSegment.point);
-                return { ...shape, points: nextPoints };
-              })
-            );
-            onSelectPoint?.(hitSegment.insertIndex);
-            return;
-          }
-        }
-        const hit = hitTestPoint(event);
-        if (hit) {
-          dragRef.current = hit;
-          onSelectShape(hit.shapeId);
-          onSelectPoint?.(hit.pointIndex);
-        }
-        return;
-      }
-      if (tool === "polygon") {
-        const nextPoint = toPoint(event);
-        if (!nextPoint) return;
-        const activeShape = shapes.find((s: MaskShape) => s.id === activeShapeId && s.type === "polygon" && !s.closed);
-        if (!activeShape) {
-          const newShape: MaskShape = {
-            id: `shape_${Date.now().toString(36)}`,
-            name: `Polygon ${shapes.length + 1}`,
-            type: "polygon",
-            points: [nextPoint],
-            closed: false,
-            visible: true,
-          };
-          onSelectShape(newShape.id);
-          onChange([...shapes, newShape]);
-          return;
-        }
-        if (activeShape.points.length >= 3) {
-          const canvas = canvasRef.current;
-          if (!canvas) return;
-          const rect = canvas.getBoundingClientRect();
-          const first = activeShape.points[0]!;
-          const dx = (first.x - nextPoint.x) * rect.width;
-          const dy = (first.y - nextPoint.y) * rect.height;
-          const dist = Math.hypot(dx, dy);
-          if (dist < 10) {
-            onChange(
-              shapes.map((shape: MaskShape) =>
-                shape.id === activeShape.id ? { ...shape, closed: true } : shape
-              )
-            );
-            return;
-          }
-        }
-        onChange(
-          shapes.map((shape: MaskShape) =>
-            shape.id === activeShape.id ? { ...shape, points: [...shape.points, nextPoint] } : shape
-          )
-        );
-        return;
-      }
-
-      if (tool === "lasso" || tool === "brush") {
-        const nextPoint = toPoint(event);
-        if (!nextPoint) return;
-        const newShape: MaskShape = {
-          id: `shape_${Date.now().toString(36)}`,
-          name: tool === "brush" ? `Brush ${shapes.length + 1}` : `Lasso ${shapes.length + 1}`,
-          type: tool === "brush" ? "brush" : "lasso",
-          points: [nextPoint],
-          closed: false,
-          visible: true,
-        };
-        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
-        onSelectShape(newShape.id);
-        onChange([...shapes, newShape]);
-        return;
-      }
-
-      if (tool === "rect" || tool === "ellipse") {
-        const nextPoint = toPoint(event);
-        if (!nextPoint) return;
-        const newShape: MaskShape = {
-          id: `shape_${Date.now().toString(36)}`,
-          name: tool === "rect" ? `Rect ${shapes.length + 1}` : `Ellipse ${shapes.length + 1}`,
-          type: tool,
-          points: [nextPoint, nextPoint],
-          closed: true,
-          visible: true,
-        };
-        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
-        onSelectShape(newShape.id);
-        onChange([...shapes, newShape]);
-      }
-    },
-    [activeShapeId, hitTestPoint, hitTestSegment, onChange, onSelectPoint, onSelectShape, shapes, src, toPoint, tool]
-  );
-
-  useEffect(() => {
-    if (!activeShapeId || selectedPointIndex === null) return;
-    const handleKey = (event: KeyboardEvent): void => {
-      if (event.key === "Delete" || event.key === "Backspace") {
-        event.preventDefault();
-        onChange(
-          shapes.map((shape: MaskShape) => {
-            if (shape.id !== activeShapeId) return shape;
-            const nextPoints = shape.points.filter((_: Point, idx: number) => idx !== selectedPointIndex);
-            return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
-          })
-        );
-        onSelectPoint?.(null);
-      } else if (event.key === "Escape") {
-        onSelectPoint?.(null);
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return (): void => window.removeEventListener("keydown", handleKey);
-  }, [activeShapeId, onChange, onSelectPoint, selectedPointIndex, shapes]);
-
-  const handleMouseMove = useCallback(
-    (event: React.MouseEvent<HTMLCanvasElement>): void => {
-      if (!src) return;
-      if (dragRef.current) {
-        const nextPoint = toPoint(event);
-        if (!nextPoint) return;
-        onChange(
-          shapes.map((shape: MaskShape) => {
-            if (shape.id !== dragRef.current?.shapeId) return shape;
-            const nextPoints = [...shape.points];
-            nextPoints[dragRef.current.pointIndex] = nextPoint;
-            return { ...shape, points: nextPoints };
-          })
-        );
-        return;
-      }
-      if (drawingRef.current) {
-        const nextPoint = toPoint(event);
-        if (!nextPoint) return;
-        onChange(
-          shapes.map((shape: MaskShape) => {
-            if (shape.id !== drawingRef.current?.shapeId) return shape;
-            if (shape.type === "lasso" || shape.type === "brush") {
-              const last = shape.points[shape.points.length - 1];
-              if (last) {
-                const dx = (last.x - nextPoint.x);
-                const dy = (last.y - nextPoint.y);
-                if (Math.hypot(dx, dy) < brushRadius / 200) {
-                  return shape;
-                }
-              }
-              return { ...shape, points: [...shape.points, nextPoint] };
-            }
-            if (shape.type === "rect" || shape.type === "ellipse") {
-              const nextPoints = shape.points.length >= 2 ? [shape.points[0]!, nextPoint] : [nextPoint, nextPoint];
-              return { ...shape, points: nextPoints };
-            }
-            return shape;
-          })
-        );
-      }
-    },
-    [brushRadius, onChange, shapes, src, toPoint]
-  );
-
-  const handleMouseUp = useCallback((): void => {
-    if (drawingRef.current) {
-      onChange(
-        shapes.map((shape: MaskShape) =>
-          shape.id === drawingRef.current?.shapeId ? { ...shape, closed: true } : shape
-        )
-      );
-    }
-    dragRef.current = null;
-    drawingRef.current = null;
-  }, [onChange, shapes]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20"
-    >
-      {src ? (
-        <>
-          <div className="relative h-full w-full">
-            <Image
-              ref={imgRef}
-              src={src}
-              alt="Selected slot"
-              fill
-              className="select-none object-contain"
-              onLoadingComplete={() => syncCanvasSize()}
-              draggable={false}
-              unoptimized
-            />
-          </div>
-          <canvas
-            ref={canvasRef}
-            className={cn(
-              "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-              tool === "select" ? "cursor-default" : "cursor-crosshair"
-            )}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          />
-        </>
-      ) : (
-        <div className="text-sm text-gray-400">Select an image slot to preview.</div>
       )}
     </div>
   );
@@ -1215,8 +774,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
     queryFn: async (): Promise<StudioSlotsResponse> => {
       try {
         const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
-        if (!res.ok) throw new Error("Failed to load slots");
-        const data = (await res.json()) as StudioSlotsResponse;
+        if (!res.ok) {
+          const errorPayload = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(errorPayload?.error || `Failed to load slots (${res.status})`);
+        }
+        const data = (await res.json().catch(() => ({ slots: [] }))) as StudioSlotsResponse;
         return {
           slots: Array.isArray(data.slots) ? data.slots : [],
         };
@@ -1328,17 +890,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
         throw new Error(data?.error || "Failed to delete slot");
       }
     },
-    onSuccess: async (_: void, slotId: string): Promise<void> => {
-      queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
-        const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
-        return { slots: current.filter((slot: ImageStudioSlotRecord) => slot.id !== slotId) };
-      });
-      if (selectedSlotId === slotId) {
-        setSelectedSlotId(null);
-      }
-      toast("Slot deleted.", { variant: "success" });
-    },
-    onError: (error: unknown): void => {
+          onSuccess: (_: void, slotId: string): void => {
+            queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+              const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+              return { slots: current.filter((slot: ImageStudioSlotRecord) => slot.id !== slotId) };
+            });
+            if (selectedSlotId === slotId) {
+              setSelectedSlotId(null);
+            }
+            toast("Slot deleted.", { variant: "success" });
+          },    onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Failed to delete slot.", { variant: "error" });
     },
   });
@@ -1351,10 +912,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
         data: { folderPath: nextFolder || null },
       });
     },
-    onSuccess: async (): Promise<void> => {
-      toast("Slot moved.", { variant: "success" });
-    },
-    onError: (error: unknown): void => {
+          onSuccess: (): void => {
+            toast("Slot moved.", { variant: "success" });
+          },    onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Failed to move slot.", { variant: "error" });
     },
   });
@@ -1437,8 +997,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       }
       return (data ?? { uploaded: [], failures: [] }) as StudioUploadResponse;
     },
-    onSuccess: async (data: StudioUploadResponse, variables): Promise<void> => {
-      if (data.uploaded?.length) {
+          onSuccess: async (data: StudioUploadResponse, variables: { files: File[]; folder: string }): Promise<void> => {      if (data.uploaded?.length) {
         const fileByName = new Map<string, File>();
         variables.files.forEach((file: File) => fileByName.set(file.name, file));
         const slotsCreated = await createSlots(
@@ -1461,7 +1020,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               data: {
                 imageFileId: fileRecord.id,
                 imageUrl: normalizePublicPath(fileRecord.filepath),
-                imageBase64: dataUrl ?? undefined,
+                imageBase64: dataUrl,
               },
             });
           })
@@ -1495,13 +1054,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
       await persistFolders(nextFolders);
       return expanded[expanded.length - 1] ?? "";
     },
-    onSuccess: async (folder: string): Promise<void> => {
-      setVirtualFolders((prev: string[]) => normalizeFolderPaths([...prev, ...expandFolderPath(folder)]));
-      setSelectedFolder(folder);
-      setNewFolderName("");
-      toast("Folder created.", { variant: "success" });
-    },
-    onError: (error: unknown): void => {
+          onSuccess: (folder: string): void => {
+            setVirtualFolders((prev: string[]) => normalizeFolderPaths([...prev, ...expandFolderPath(folder)]));
+            setSelectedFolder(folder);
+            setNewFolderName("");
+            toast("Folder created.", { variant: "success" });
+          },    onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Failed to create folder.", { variant: "error" });
     },
   });
@@ -1557,7 +1115,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               data: {
                 imageFileId: file.id,
                 imageUrl: normalizePublicPath(file.filepath),
-                imageBase64: dataUrl ?? undefined,
+                imageBase64: dataUrl,
               },
             });
           })
@@ -1643,45 +1201,44 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return { id: selectedSlot.imageFileId ?? undefined, filepath };
   }, [projectId, selectedSlot]);
 
-  useEffect(() => {
-    setSlotImageUrlDraft(selectedSlot?.imageUrl ?? "");
-    setSlotBase64Draft(selectedSlot?.imageBase64 ?? "");
-  }, [selectedSlot?.id]);
-
-  const compositeAssetOptions = useMemo(() => {
-    const options = slots.map((slot: ImageStudioSlotRecord) => {
-      const folder = slot.folderPath ?? "";
-      const name = slot.name || slot.id;
-      const label = folder ? `${folder}/${name}` : name;
-      return {
-        value: slot.id,
-        label,
-        disabled: slot.id === selectedSlotId,
-      };
-    });
-    return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [slots, selectedSlotId]);
-
-  const compositeAssets = useMemo(() => {
-    if (compositeAssetIds.length === 0) return [];
-    const byId = new Map(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot]));
-    return compositeAssetIds
-      .map((id: string) => byId.get(id))
-      .filter((slot: ImageStudioSlotRecord | undefined): slot is ImageStudioSlotRecord => Boolean(slot));
-  }, [slots, compositeAssetIds]);
-
-  useEffect(() => {
-    if (!projectId) {
-      setCompositeAssetIds([]);
-      return;
-    }
-    const validIds = new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id));
-    setCompositeAssetIds((prev) => {
-      const next = prev.filter((id) => validIds.has(id) && id !== selectedSlotId);
-      return next.length === prev.length ? prev : next;
-    });
-  }, [projectId, selectedSlotId, slots]);
-
+      useEffect(() => {
+        setSlotImageUrlDraft(selectedSlot?.imageUrl ?? "");
+        setSlotBase64Draft(selectedSlot?.imageBase64 ?? "");
+      }, [selectedSlot?.id, selectedSlot?.imageUrl, selectedSlot?.imageBase64]);
+  
+      const compositeAssetOptions = useMemo(() => {
+        const options = slots.map((slot: ImageStudioSlotRecord) => {
+          const folder = slot.folderPath ?? "";
+          const name = slot.name || slot.id;
+          const label = folder ? `${folder}/${name}` : name;
+          return {
+            value: slot.id,
+            label,
+            disabled: slot.id === selectedSlotId,
+          };
+        });
+        return options.sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
+      }, [slots, selectedSlotId]);
+  
+      const compositeAssets = useMemo(() => {
+        if (compositeAssetIds.length === 0) return [];
+        const byId = new Map(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot]));
+        return compositeAssetIds
+          .map((id: string) => byId.get(id))
+          .filter((slot: ImageStudioSlotRecord | undefined): slot is ImageStudioSlotRecord => Boolean(slot));
+      }, [slots, compositeAssetIds]);
+  
+      useEffect(() => {
+        if (!projectId) {
+          setCompositeAssetIds([]);
+          return;
+        }
+        const validIds = new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id));
+        setCompositeAssetIds((prev: string[]) => {
+          const next = prev.filter((id: string) => validIds.has(id) && id !== selectedSlotId);
+          return next.length === prev.length ? prev : next;
+        });
+      }, [projectId, selectedSlotId, slots]);
   useEffect(() => {
     const currentFolder = selectedSlot?.folderPath ?? "";
     setMoveTargetFolder(currentFolder);
@@ -1725,8 +1282,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       setParamsState(null);
       setParamSpecs(null);
       setPromptSourceAtExtract(null);
-      if (shouldToast) toast(result.error, { variant: "error" });
-      return result;
+              if (shouldToast) toast(String(result.error), { variant: "error" });      return result;
     }
     setParamsState(result.params);
     setParamSpecs(inferParamSpecs(result.params, result.rawObjectText));
@@ -2094,7 +1650,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         data: {
           imageUrl: url,
           imageFileId: null,
-          imageBase64: dataUrl ?? undefined,
+          imageBase64: dataUrl,
         },
       });
       toast("Slot image updated.", { variant: "success" });
@@ -2199,18 +1755,18 @@ export function AdminImageStudioPage(): React.JSX.Element {
       body: JSON.stringify({ dataUrl }),
     });
     const data = (await res.json().catch(() => null)) as ImageStudioSlotRecord | { error?: string } | null;
-    if (!res.ok || !data || "error" in data) {
-      toast((data && "error" in data && data.error) || "Failed to save screenshot.", { variant: "error" });
-      return;
-    }
-    queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
-      const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
-      const byId = new Map<string, ImageStudioSlotRecord>();
-      current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
-      byId.set(data.id, data as ImageStudioSlotRecord);
-      return { slots: Array.from(byId.values()) };
-    });
-    toast("Screenshot saved to slot.", { variant: "success" });
+          if (!res.ok || !data || "error" in data) {
+            toast((data && "error" in data && data.error) || "Failed to save screenshot.", { variant: "error" });
+            return;
+          }
+          const savedSlot = data as ImageStudioSlotRecord;
+          queryClient.setQueryData(["image-studio", "slots", projectId], (prev: StudioSlotsResponse | undefined) => {
+            const current = Array.isArray(prev?.slots) ? prev?.slots ?? [] : [];
+            const byId = new Map<string, ImageStudioSlotRecord>();
+            current.forEach((slot: ImageStudioSlotRecord) => byId.set(slot.id, slot));
+            byId.set(savedSlot.id, savedSlot);
+            return { slots: Array.from(byId.values()) };
+          });    toast("Screenshot saved to slot.", { variant: "success" });
   }, [projectId, queryClient, selectedSlot, toast]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
@@ -2386,8 +1942,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
         if (!filepath || !filepath.startsWith(prefix)) return null;
         return { id: slot.imageFileId ?? slot.id, filepath };
       })
-      .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
-    return {
+                .filter(
+                  (entry: { id: string; filepath: string } | null): entry is { id: string; filepath: string } => Boolean(entry)
+                );    return {
       projectId: projectId || null,
       asset: selectedSlotRunAsset ?? null,
       referenceAssets,
@@ -2416,7 +1973,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           if (!filepath || !filepath.startsWith(prefix)) return null;
           return { id: slot.imageFileId ?? slot.id, filepath };
         })
-        .filter((entry): entry is { id?: string; filepath: string } => Boolean(entry));
+        .filter((entry: { id: string; filepath: string } | null): entry is { id: string; filepath: string } => Boolean(entry));
 
       const payload = {
         projectId,
@@ -3727,86 +3284,85 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
                 <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
                   <div className="text-[11px] text-gray-400">3D asset</div>
-                  <Asset3DPickerField
-                    value={selectedSlot.asset3dId ?? ""}
-                    onChange={(value) => {
-                      void updateSlotMutation.mutateAsync({
-                        id: selectedSlot.id,
-                        data: { asset3dId: value || null },
-                      });
-                    }}
-                    disabled={slotUpdateBusy}
-                  />
-                  <FileUploadButton
-                    variant="outline"
-                    size="sm"
-                    accept=".glb,.gltf,model/gltf-binary"
-                    disabled={slotUpdateBusy}
-                    onFilesSelected={async (files: File[]) => {
-                      await handleUpload3DAsset(files);
-                    }}
-                  >
-                    <Upload className="mr-2 size-4" />
-                    Upload 3D
-                  </FileUploadButton>
-                </div>
-
-                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] text-gray-400">Composite sources</div>
-                    {compositeAssetIds.length > 0 ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-[10px]"
-                        onClick={() => setCompositeAssetIds([])}
-                      >
-                        Clear
-                      </Button>
-                    ) : null}
-                  </div>
-                  <MultiSelect
-                    options={compositeAssetOptions}
-                    selected={compositeAssetIds}
-                    onChange={(values: string[]) => {
-                      const next = values.filter((id) => id !== selectedSlotId);
-                      setCompositeAssetIds(next);
-                    }}
-                    placeholder="Add slots for compositing"
-                    searchPlaceholder="Search slots..."
-                    disabled={!projectId || compositeAssetOptions.length === 0}
-                    className="text-xs"
-                  />
-                  {compositeAssets.length > 0 ? (
-                    <div className="space-y-1">
-                      {compositeAssets.map((slot: ImageStudioSlotRecord) => {
-                        const folder = slot.folderPath ?? "";
-                        const name = slot.name || slot.id;
-                        const label = folder ? `${folder}/${name}` : name;
-                        return (
-                          <div
-                            key={slot.id}
-                            className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
-                          >
-                            <span className="truncate text-gray-300">{label}</span>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              onClick={() =>
-                                setCompositeAssetIds((prev) => prev.filter((id) => id !== slot.id))
-                              }
-                            >
-                              <X className="size-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-[10px] text-gray-500">Optional. Send up to 16 images total (including base).</div>
+                                      <Asset3DPickerField
+                                        value={selectedSlot.asset3dId ?? ""}
+                                        onChange={(value: string) => {
+                                          void updateSlotMutation.mutateAsync({
+                                            id: selectedSlot.id,
+                                            data: { asset3dId: value || null },
+                                          });
+                                        }}
+                                        disabled={slotUpdateBusy}
+                                      />
+                                      <FileUploadButton
+                                        variant="outline"
+                                        size="sm"
+                                        accept=".glb,.gltf,model/gltf-binary"
+                                        disabled={slotUpdateBusy}
+                                        onFilesSelected={async (files: File[]) => {
+                                          await handleUpload3DAsset(files);
+                                        }}
+                                      >
+                                        <Upload className="mr-2 size-4" />
+                                        Upload 3D
+                                      </FileUploadButton>
+                                    </div>
+                  
+                                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="text-[11px] text-gray-400">Composite sources</div>
+                                        {compositeAssetIds.length > 0 ? (
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 px-2 text-[10px]"
+                                            onClick={() => setCompositeAssetIds([])}
+                                          >
+                                            Clear
+                                          </Button>
+                                        ) : null}
+                                      </div>
+                                      <MultiSelect
+                                        options={compositeAssetOptions}
+                                        selected={compositeAssetIds}
+                                        onChange={(values: string[]) => {
+                                          const next = values.filter((id: string) => id !== selectedSlotId);
+                                          setCompositeAssetIds(next);
+                                        }}
+                                        placeholder="Add slots for compositing"
+                                        searchPlaceholder="Search slots..."
+                                        disabled={!projectId || compositeAssetOptions.length === 0}
+                                        className="text-xs"
+                                      />
+                                      {compositeAssets.length > 0 ? (
+                                        <div className="space-y-1">
+                                          {compositeAssets.map((slot: ImageStudioSlotRecord) => {
+                                            const folder = slot.folderPath ?? "";
+                                            const name = slot.name || slot.id;
+                                            const label = folder ? `${folder}/${name}` : name;
+                                            return (
+                                              <div
+                                                key={slot.id}
+                                                className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
+                                              >
+                                                <span className="truncate text-gray-300">{label}</span>
+                                                <Button
+                                                  type="button"
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  className="h-6 w-6"
+                                                  onClick={() =>
+                                                    setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
+                                                  }
+                                                >
+                                                  <X className="size-3" />
+                                                </Button>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : (                    <div className="text-[10px] text-gray-500">Optional. Send up to 16 images total (including base).</div>
                   )}
                 </div>
 
@@ -3947,7 +3503,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   />
                 </div>
               ) : (
-                <MaskCanvas
+                <VectorCanvas
                   src={selectedSlotImageSrc}
                   tool={tool}
                   shapes={maskShapes}
@@ -3962,148 +3518,51 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 />
               )}
             </div>
-            <SectionPanel
-              className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 shadow-lg"
-              variant="subtle-compact"
-            >
-              <Tooltip content="Select">
-                <Button
-                  type="button"
-                  variant={tool === "select" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("select")}
-                >
-                  <MousePointer2 className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Polygon mask">
-                <Button
-                  type="button"
-                  variant={tool === "polygon" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("polygon")}
-                >
-                  <Pentagon className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Lasso mask">
-                <Button
-                  type="button"
-                  variant={tool === "lasso" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("lasso")}
-                >
-                  <Lasso className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Rectangle mask">
-                <Button
-                  type="button"
-                  variant={tool === "rect" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("rect")}
-                >
-                  <RectangleHorizontal className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Ellipse mask">
-                <Button
-                  type="button"
-                  variant={tool === "ellipse" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("ellipse")}
-                >
-                  <Circle className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Brush mask">
-                <Button
-                  type="button"
-                  variant={tool === "brush" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setTool("brush")}
-                >
-                  <Brush className="size-4" />
-                </Button>
-              </Tooltip>
-              <div className="mx-1 h-6 w-px bg-border" />
-              <Tooltip content="Undo last point">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    if (!activeMaskId) return;
-                    setMaskShapes((prev: MaskShape[]) =>
-                      prev.map((shape: MaskShape) =>
-                        shape.id === activeMaskId
-                          ? { ...shape, points: shape.points.slice(0, -1), closed: false }
-                          : shape
-                      )
-                    );
-                  }}
-                  disabled={!activeMaskId}
-                >
-                  <RotateCcw className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Close polygon">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    if (!activeMaskId) return;
-                    setMaskShapes((prev: MaskShape[]) =>
-                      prev.map((shape: MaskShape) =>
-                        shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
-                      )
-                    );
-                  }}
-                  disabled={!activeMaskId}
-                >
-                  <Check className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Detach polygon">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    if (!activeMaskId) return;
-                    setMaskShapes((prev: MaskShape[]) =>
-                      prev.map((shape: MaskShape) => {
-                        if (shape.id !== activeMaskId) return shape;
-                        if (!shape.closed) return shape;
-                        if (shape.points.length < 3) return { ...shape, closed: false };
-                        if (selectedPointIndex === null) return { ...shape, closed: false };
-                        const pts = shape.points;
-                        const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
-                        return { ...shape, points: rotated, closed: false };
-                      })
-                    );
-                  }}
-                  disabled={!activeMaskId}
-                >
-                  <Unlink className="size-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Clear masks">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setMaskShapes([]);
-                    setActiveMaskId(null);
-                  }}
-                  disabled={maskShapes.length === 0}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </Tooltip>
-            </SectionPanel>
+            <VectorToolbar
+              className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
+              tool={tool}
+              onSelectTool={setTool}
+              onUndo={() => {
+                if (!activeMaskId) return;
+                setMaskShapes((prev: MaskShape[]) =>
+                  prev.map((shape: MaskShape) =>
+                    shape.id === activeMaskId
+                      ? { ...shape, points: shape.points.slice(0, -1), closed: false }
+                      : shape
+                  )
+                );
+              }}
+              onClose={() => {
+                if (!activeMaskId) return;
+                setMaskShapes((prev: MaskShape[]) =>
+                  prev.map((shape: MaskShape) =>
+                    shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
+                  )
+                );
+              }}
+              onDetach={() => {
+                if (!activeMaskId) return;
+                setMaskShapes((prev: MaskShape[]) =>
+                  prev.map((shape: MaskShape) => {
+                    if (shape.id !== activeMaskId) return shape;
+                    if (!shape.closed) return shape;
+                    if (shape.points.length < 3) return { ...shape, closed: false };
+                    if (selectedPointIndex === null) return { ...shape, closed: false };
+                    const pts = shape.points;
+                    const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
+                    return { ...shape, points: rotated, closed: false };
+                  })
+                );
+              }}
+              onClear={() => {
+                setMaskShapes([]);
+                setActiveMaskId(null);
+              }}
+              disableUndo={!activeMaskId}
+              disableClose={!activeMaskId}
+              disableDetach={!activeMaskId}
+              disableClear={maskShapes.length === 0}
+            />
           </div>
 
           {!isFocusMode ? (

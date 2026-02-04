@@ -13,12 +13,15 @@ import {
   assertValidMongoBackupName,
 } from "@/features/database/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, forbiddenError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    if (process.env.NODE_ENV === "production") {
+      throw forbiddenError("Database backups are disabled in production.");
+    }
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const type = formData.get("type") as string | null;

@@ -35,7 +35,7 @@ export async function uploadWithProgress<T>(
     timeoutMs,
   } = options;
 
-  return new Promise((resolve, reject) => {
+  return new Promise<UploadWithProgressResult<T>>((resolve: (value: UploadWithProgressResult<T>) => void, reject: (reason?: Error) => void) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     if (withCredentials) xhr.withCredentials = true;
@@ -44,12 +44,12 @@ export async function uploadWithProgress<T>(
     }
 
     if (headers) {
-      Object.entries(headers).forEach(([key, value]) => {
+      Object.entries(headers).forEach(([key, value]: [string, string]) => {
         xhr.setRequestHeader(key, value);
       });
     }
 
-    xhr.upload.onprogress = (event: ProgressEvent) => {
+    xhr.upload.onprogress = (event: ProgressEvent): void => {
       if (!onProgress) return;
       if (event.lengthComputable) {
         onProgress(event.loaded, event.total);
@@ -58,7 +58,7 @@ export async function uploadWithProgress<T>(
       }
     };
 
-    xhr.onload = () => {
+    xhr.onload = (): void => {
       const raw = typeof xhr.responseText === "string" ? xhr.responseText : "";
       const data = safeJsonParse<T>(raw);
       resolve({
@@ -69,11 +69,11 @@ export async function uploadWithProgress<T>(
       });
     };
 
-    xhr.onerror = () => {
+    xhr.onerror = (): void => {
       reject(new Error("Upload failed"));
     };
 
-    xhr.ontimeout = () => {
+    xhr.ontimeout = (): void => {
       reject(new Error("Upload timed out"));
     };
 

@@ -55,15 +55,18 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return NextResponse.json({
       inventories: inventories.map((inv) => ({ id: inv.id, name: inv.name })),
       count: inventories.length,
-      lastInventoryId: connection.baseLastInventoryId,
+      lastInventoryId: connection.baseLastInventoryId
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.[id].connections.[connectionId].base.inventories.GET",
-      fallbackMessage: "Failed to fetch inventories",
+      fallbackMessage: "Failed to fetch inventories"
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(GET_handler, { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  GET_handler,
+  { source: "integrations.[id].connections.[connectionId].base.inventories.GET", requireCsrf: false }
+);

@@ -24,6 +24,7 @@ export * from "./multi-select";
 export * from "./integration-selector";
 export * from "./image-retry-dropdown";
 export * from "./filters-container";
+export * from "./vector-canvas";
 
 export * from "./badge";
 export * from "./data-table";

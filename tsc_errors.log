@@ -1,0 +1,58 @@
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts(86,192): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts(86,193): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts(177,191): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts(177,192): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts(53,196): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts(53,197): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts(190,193): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts(190,194): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts(258,190): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts(258,191): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts(69,191): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts(69,192): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts(91,191): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts(91,192): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts(192,190): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts(192,191): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(211,187): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(211,188): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(958,182): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(958,183): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/route.ts(170,137): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/route.ts(170,138): error TS1128: Declaration or statement expected.
+src/app/api/integrations/[id]/connections/route.ts(171,140): error TS1005: ',' expected.
+src/app/api/integrations/[id]/connections/route.ts(171,141): error TS1128: Declaration or statement expected.
+src/app/api/integrations/connections/[id]/route.ts(198,137): error TS1005: ',' expected.
+src/app/api/integrations/connections/[id]/route.ts(198,138): error TS1128: Declaration or statement expected.
+src/app/api/integrations/connections/[id]/route.ts(199,146): error TS1005: ',' expected.
+src/app/api/integrations/connections/[id]/route.ts(199,147): error TS1128: Declaration or statement expected.
+src/app/api/integrations/connections/[id]/session/route.ts(57,145): error TS1005: ',' expected.
+src/app/api/integrations/connections/[id]/session/route.ts(57,146): error TS1128: Declaration or statement expected.
+src/app/api/integrations/export-templates/[id]/route.ts(100,138): error TS1005: ',' expected.
+src/app/api/integrations/export-templates/[id]/route.ts(100,139): error TS1128: Declaration or statement expected.
+src/app/api/integrations/export-templates/[id]/route.ts(101,138): error TS1005: ',' expected.
+src/app/api/integrations/export-templates/[id]/route.ts(101,139): error TS1128: Declaration or statement expected.
+src/app/api/integrations/export-templates/[id]/route.ts(102,147): error TS1005: ',' expected.
+src/app/api/integrations/export-templates/[id]/route.ts(102,148): error TS1128: Declaration or statement expected.
+src/app/api/integrations/import-templates/[id]/route.ts(99,138): error TS1005: ',' expected.
+src/app/api/integrations/import-templates/[id]/route.ts(99,139): error TS1128: Declaration or statement expected.
+src/app/api/integrations/import-templates/[id]/route.ts(100,138): error TS1005: ',' expected.
+src/app/api/integrations/import-templates/[id]/route.ts(100,139): error TS1128: Declaration or statement expected.
+src/app/api/integrations/import-templates/[id]/route.ts(101,147): error TS1005: ',' expected.
+src/app/api/integrations/import-templates/[id]/route.ts(101,148): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/export-to-base/route.ts(865,152): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/export-to-base/route.ts(865,153): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts(134,194): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts(134,195): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/purge/route.ts(34,189): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/purge/route.ts(34,190): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(88,183): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(88,184): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(89,180): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/route.ts(89,181): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts(53,106): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts(54,1): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/route.ts(114,143): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/route.ts(114,144): error TS1128: Declaration or statement expected.
+src/app/api/integrations/products/[id]/listings/route.ts(115,146): error TS1005: ',' expected.
+src/app/api/integrations/products/[id]/listings/route.ts(115,147): error TS1128: Declaration or statement expected.

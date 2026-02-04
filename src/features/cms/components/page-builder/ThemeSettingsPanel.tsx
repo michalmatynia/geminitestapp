@@ -15,8 +15,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
+  UnifiedSelect,
   FileUploadButton,
   FileUploadTrigger,
+  useToast,
 } from "@/shared/ui";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
@@ -31,6 +34,9 @@ import {
   TextField,
   ImagePickerField,
 } from "./shared-fields";
+import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
+import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/useAgentTeaching";
+import type { ChatMessage } from "@/shared/types/chatbot";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -57,6 +63,9 @@ const THEME_SECTIONS = [
   "Custom CSS",
   "Theme Style",
 ];
+
+const toSectionId = (section: string): string =>
+  `cms-theme-section-${section.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
 const FONT_OPTIONS = [
   { label: "Inter", value: "Inter, sans-serif" },
@@ -103,6 +112,53 @@ const parseCssNumber = (value?: string | null): number | null => {
   if (!value) return null;
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const extractJsonBlock = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]) return fenced[1].trim();
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    return trimmed.slice(first, last + 1);
+  }
+  return null;
+};
+
+const normalizeAiString = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
+};
+
+const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
+  if (!payload || typeof payload !== "object") return null;
+  const raw = payload as Record<string, unknown>;
+  const name =
+    normalizeAiString(raw.name) ??
+    normalizeAiString(raw.schemeName) ??
+    normalizeAiString(raw.title);
+  const colorsSource =
+    (raw.colors as Record<string, unknown>) ||
+    (raw.palette as Record<string, unknown>) ||
+    (raw.scheme as Record<string, unknown>) ||
+    raw;
+
+  if (!colorsSource || typeof colorsSource !== "object") return null;
+
+  const colors = colorsSource as Record<string, unknown>;
+  const parsed: Partial<ColorSchemeColors> = {
+    background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
+    surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
+    text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground),
+    accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary),
+    border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
+  };
+
+  if (!Object.values(parsed).some(Boolean) && !name) return null;
+  return { name, colors: parsed };
 };
 
 const applySavedThemePreset = (
@@ -375,13 +431,39 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 
 export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
   const { theme, setTheme, update } = useThemeSettings();
+  const { toast } = useToast();
   const [schemeView, setSchemeView] = useState<"list" | "edit">("list");
   const [editingSchemeId, setEditingSchemeId] = useState<string | null>(null);
   const [newSchemeName, setNewSchemeName] = useState("");
   const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
+  const [schemeAiProvider, setSchemeAiProvider] = useState<"model" | "agent">("model");
+  const [schemeAiModelId, setSchemeAiModelId] = useState<string>("");
+  const [schemeAiAgentId, setSchemeAiAgentId] = useState<string>("");
+  const [schemeAiPrompt, setSchemeAiPrompt] = useState<string>("");
+  const [schemeAiOutput, setSchemeAiOutput] = useState<string>("");
+  const [schemeAiError, setSchemeAiError] = useState<string | null>(null);
+  const [schemeAiLoading, setSchemeAiLoading] = useState<boolean>(false);
+  const schemeAiAbortRef = useRef<AbortController | null>(null);
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
   const themesQuery = useCmsThemes();
   const savedThemes = useMemo((): CmsTheme[] => themesQuery.data ?? [], [themesQuery.data]);
+  const modelsQuery = useChatbotModels({ enabled: schemeView === "edit" });
+  const teachingAgentsQuery = useTeachingAgents();
+  const modelOptions = useMemo((): string[] => {
+    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+    return Array.from(new Set(fromApi));
+  }, [modelsQuery.data]);
+  const agentOptions = useMemo(
+    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    [teachingAgentsQuery.data]
+  );
+  const schemeProviderOptions = useMemo(
+    () => [
+      { label: "AI model", value: "model" },
+      { label: "Deepthinking agent", value: "agent" },
+    ],
+    []
+  );
 
   // Logo-specific state (file picker)
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -470,6 +552,58 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     };
   }, []);
 
+  useEffect((): (() => void) => {
+    return (): void => {
+      if (schemeAiAbortRef.current) {
+        schemeAiAbortRef.current.abort();
+        schemeAiAbortRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect((): void => {
+    if (schemeView !== "list") return;
+    if (schemeAiAbortRef.current) {
+      schemeAiAbortRef.current.abort();
+      schemeAiAbortRef.current = null;
+    }
+    setSchemeAiLoading(false);
+    setSchemeAiError(null);
+    setSchemeAiOutput("");
+  }, [schemeView]);
+
+  useEffect((): void => {
+    if (schemeAiProvider !== "model") return;
+    if (schemeAiModelId.trim().length) return;
+    if (!modelOptions.length) return;
+    setSchemeAiModelId(modelOptions[0]!);
+  }, [schemeAiProvider, schemeAiModelId, modelOptions]);
+
+  useEffect((): (() => void) | void => {
+    if (typeof window === "undefined") return undefined;
+    const handler = (event: Event): void => {
+      const detail = (event as CustomEvent).detail ?? {};
+      const section = typeof detail.section === "string" ? detail.section : "Colors";
+      setUserOpenSections((prev: Set<string> | null) => {
+        const current = prev ?? initialOpenSections;
+        const next = new Set(current);
+        next.add(section);
+        return next;
+      });
+      if (section === "Colors" && detail.action === "createScheme") {
+        startAddScheme();
+      }
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(toSectionId(section));
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    };
+    window.addEventListener("cms-theme-open", handler as EventListener);
+    return (): void => {
+      window.removeEventListener("cms-theme-open", handler as EventListener);
+    };
+  }, [initialOpenSections, startAddScheme]);
+
   const toggleSection = useCallback((section: string): void => {
     setUserOpenSections((prev: Set<string> | null) => {
       const current = prev ?? initialOpenSections;
@@ -484,12 +618,23 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     return theme.colorSchemes.find((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0]!;
   }, [theme.colorSchemes, theme.activeColorSchemeId]);
 
+  const resetSchemeAiState = useCallback((): void => {
+    if (schemeAiAbortRef.current) {
+      schemeAiAbortRef.current.abort();
+      schemeAiAbortRef.current = null;
+    }
+    setSchemeAiLoading(false);
+    setSchemeAiError(null);
+    setSchemeAiOutput("");
+  }, []);
+
   const startAddScheme = useCallback((): void => {
     setNewSchemeName("");
     setNewSchemeColors(activeScheme?.colors ?? DEFAULT_SCHEME_COLORS);
     setEditingSchemeId(null);
     setSchemeView("edit");
-  }, [activeScheme]);
+    resetSchemeAiState();
+  }, [activeScheme, resetSchemeAiState]);
 
   const startEditScheme = useCallback((schemeId: string): void => {
     const scheme = theme.colorSchemes.find((item: { id: string }) => item.id === schemeId);
@@ -498,7 +643,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setNewSchemeName(scheme.name);
     setNewSchemeColors({ ...scheme.colors });
     setSchemeView("edit");
-  }, [theme.colorSchemes]);
+    resetSchemeAiState();
+  }, [theme.colorSchemes, resetSchemeAiState]);
 
   const handleSaveScheme = useCallback((): void => {
     const trimmed = newSchemeName.trim();
@@ -600,6 +746,226 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
 
   const toggleGlobalPalette = useCallback((): void => {
     setIsGlobalPaletteOpen((prev: boolean): boolean => !prev);
+  }, []);
+
+  const schemeContext = useMemo((): string => {
+    const context = {
+      activeScheme: activeScheme ? { name: activeScheme.name, colors: activeScheme.colors } : null,
+      globalPalette: {
+        primary: theme.primaryColor,
+        secondary: theme.secondaryColor,
+        accent: theme.accentColor,
+        background: theme.backgroundColor,
+        surface: theme.surfaceColor,
+        text: theme.textColor,
+        muted: theme.mutedTextColor,
+        border: theme.borderColor,
+      },
+    };
+    return JSON.stringify(context, null, 2);
+  }, [activeScheme, theme]);
+
+  const buildSchemeAiPrompt = useCallback((): string => {
+    const basePrompt = schemeAiPrompt.trim();
+    const defaultPrompt =
+      "Create a cohesive UI color scheme. Keep strong contrast between background and text, and provide a clear accent.";
+    const promptBody = basePrompt.length ? basePrompt : defaultPrompt;
+    const hasPlaceholder = /{{\s*theme_context\s*}}/i.test(promptBody);
+    const resolved = promptBody.replace(/{{\s*theme_context\s*}}/gi, schemeContext);
+    if (hasPlaceholder) return resolved;
+    return `${resolved}\n\nTheme context:\n${schemeContext}`;
+  }, [schemeAiPrompt, schemeContext]);
+
+  const parseSchemeFromText = useCallback((text: string): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    const jsonBlock = extractJsonBlock(trimmed);
+    if (jsonBlock) {
+      try {
+        const payload = JSON.parse(jsonBlock) as unknown;
+        const parsed = parseColorSchemePayload(payload);
+        if (parsed) return parsed;
+      } catch {
+        // fall through to regex parsing
+      }
+    }
+
+    const pickFromText = (labels: string[]): string | undefined => {
+      for (const label of labels) {
+        const regex = new RegExp(`${label}\\s*[:=]\\s*["']?([^"'\n]+)`, "i");
+        const match = trimmed.match(regex);
+        if (match?.[1]) {
+          const normalized = normalizeAiString(match[1]);
+          if (normalized) return normalized;
+        }
+      }
+      return undefined;
+    };
+
+    const colors: Partial<ColorSchemeColors> = {
+      background: pickFromText(["background", "bg"]),
+      surface: pickFromText(["surface", "card", "layer"]),
+      text: pickFromText(["text", "foreground"]),
+      accent: pickFromText(["accent", "primary"]),
+      border: pickFromText(["border", "outline"]),
+    };
+    const name = pickFromText(["name", "scheme", "title"]);
+
+    if (!Object.values(colors).some(Boolean) && !name) return null;
+    return { name, colors };
+  }, []);
+
+  const schemeAiPreview = useMemo(
+    () => (schemeAiOutput ? parseSchemeFromText(schemeAiOutput) : null),
+    [schemeAiOutput, parseSchemeFromText]
+  );
+
+  const applySchemeFromAi = useCallback((parsed: { name?: string; colors: Partial<ColorSchemeColors> }): void => {
+    setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => {
+      const next = { ...prev };
+      (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach((key) => {
+        const value = parsed.colors[key];
+        if (typeof value === "string" && value.trim().length) {
+          next[key] = value.trim();
+        }
+      });
+      return next;
+    });
+    if (parsed.name) {
+      setNewSchemeName((prev: string): string => (prev.trim().length ? prev : parsed.name ?? prev));
+    }
+  }, []);
+
+  const handleGenerateScheme = useCallback(async (): Promise<void> => {
+    if (schemeAiLoading) return;
+    setSchemeAiError(null);
+    setSchemeAiOutput("");
+    setSchemeAiLoading(true);
+    try {
+      const prompt = buildSchemeAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error("Prompt is empty.");
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content:
+            "You are a UI color assistant. Return only a JSON object: {\"name\":\"...\",\"colors\":{\"background\":\"#...\",\"surface\":\"#...\",\"text\":\"#...\",\"accent\":\"#...\",\"border\":\"#...\"}}. No markdown or explanations.",
+        },
+        { role: "user", content: prompt },
+      ];
+
+      const controller = new AbortController();
+      schemeAiAbortRef.current = controller;
+
+      const provider = schemeAiProvider;
+      const modelId = schemeAiProvider === "model" ? (schemeAiModelId.trim() || modelOptions[0] || "") : "";
+      const agentId = schemeAiProvider === "agent" ? schemeAiAgentId.trim() : "";
+      if (provider === "model" && !modelId) {
+        throw new Error("Select an AI model first.");
+      }
+      if (provider === "agent" && !agentId) {
+        throw new Error("Select a Deepthinking agent first.");
+      }
+
+      const res = await fetch("/api/cms/css-ai/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Streaming request failed.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split("\n").map((line) => line.trim());
+        const dataLine = lines.find((line) => line.startsWith("data:"));
+        if (!dataLine) return;
+        const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
+          delta?: string;
+          done?: boolean;
+          error?: string;
+        };
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.delta) {
+          accumulated += payload.delta;
+          setSchemeAiOutput(accumulated);
+        }
+        if (payload.done) {
+          doneSignal = true;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const parsed = parseSchemeFromText(accumulated);
+      if (!parsed || !Object.values(parsed.colors).some(Boolean)) {
+        throw new Error("AI response did not include a color scheme.");
+      }
+      applySchemeFromAi(parsed);
+      toast(`Scheme generated from ${provider}.`, { variant: "success" });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setSchemeAiError("Generation cancelled.");
+        toast("Generation cancelled.", { variant: "info" });
+      } else {
+        const message = error instanceof Error ? error.message : "Failed to generate scheme.";
+        setSchemeAiError(message);
+        toast(message, { variant: "error" });
+      }
+    } finally {
+      setSchemeAiLoading(false);
+      schemeAiAbortRef.current = null;
+    }
+  }, [
+    schemeAiLoading,
+    buildSchemeAiPrompt,
+    schemeAiProvider,
+    schemeAiModelId,
+    schemeAiAgentId,
+    modelOptions,
+    parseSchemeFromText,
+    applySchemeFromAi,
+    toast,
+  ]);
+
+  const handleCancelSchemeAi = useCallback((): void => {
+    if (schemeAiAbortRef.current) {
+      schemeAiAbortRef.current.abort();
+      schemeAiAbortRef.current = null;
+    }
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -848,6 +1214,116 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                         value={newSchemeColors.border}
                         onChange={updateSchemeColor("border")}
                       />
+                    </div>
+                    <div className="rounded border border-border/40 bg-gray-900/40 p-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+                          AI scheme generator
+                        </Label>
+                        <span className="text-[10px] text-gray-500">On demand</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-400">Provider</Label>
+                        <UnifiedSelect
+                          value={schemeAiProvider}
+                          onValueChange={(value: string): void => setSchemeAiProvider(value as "model" | "agent")}
+                          options={schemeProviderOptions}
+                          placeholder="Select provider"
+                        />
+                      </div>
+                      {schemeAiProvider !== "agent" ? (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-gray-400">Model</Label>
+                          <UnifiedSelect
+                            value={schemeAiModelId}
+                            onValueChange={(value: string): void => setSchemeAiModelId(value)}
+                            options={modelOptions.map((model: string) => ({ value: model, label: model }))}
+                            placeholder={modelOptions.length ? "Select model" : "No models available"}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+                          <UnifiedSelect
+                            value={schemeAiAgentId}
+                            onValueChange={(value: string): void => setSchemeAiAgentId(value)}
+                            options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
+                            placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-400">Prompt</Label>
+                        <Textarea
+                          value={schemeAiPrompt}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setSchemeAiPrompt(e.target.value)}
+                          placeholder="Describe the theme you want (e.g. cinematic dark with neon accents)."
+                          className="min-h-[90px] text-xs"
+                          spellCheck={false}
+                        />
+                      </div>
+                      <div className="text-[11px] text-gray-500">
+                        Use <span className="font-mono text-gray-300">{"{{theme_context}}"}</span> to inject current theme context.
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={(): void => void handleGenerateScheme()}
+                          disabled={schemeAiLoading}
+                        >
+                          {schemeAiLoading ? "Generating…" : "Generate scheme"}
+                        </Button>
+                        {schemeAiLoading && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={handleCancelSchemeAi}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                      {schemeAiError && (
+                        <div className="text-xs text-red-400">{schemeAiError}</div>
+                      )}
+                      {schemeAiOutput && (
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-400">AI output</Label>
+                          <Textarea
+                            value={schemeAiOutput}
+                            readOnly
+                            className="min-h-[90px] text-xs font-mono text-gray-300"
+                          />
+                        </div>
+                      )}
+                      {schemeAiPreview && (
+                        <div className="rounded border border-border/40 bg-gray-950/40 p-2">
+                          <div className="flex items-center justify-between text-[11px] text-gray-400">
+                            <span>Preview</span>
+                            {schemeAiPreview.name ? (
+                              <span className="text-gray-300">{schemeAiPreview.name}</span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 grid grid-cols-5 gap-2">
+                            {(["background", "surface", "text", "accent", "border"] as Array<keyof ColorSchemeColors>).map((key) => {
+                              const value =
+                                schemeAiPreview.colors[key] ??
+                                newSchemeColors[key];
+                              return (
+                                <div key={key} className="space-y-1 text-[10px] text-gray-500">
+                                  <div
+                                    className="h-6 rounded border border-border/60"
+                                    style={{ backgroundColor: value }}
+                                  />
+                                  <span className="block truncate">{key}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1648,7 +2124,11 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           {THEME_SECTIONS.map((section: string): React.JSX.Element => {
             const isOpen = openSections.has(section);
             return (
-              <div key={section} className="rounded border border-border/40 bg-gray-900/60">
+              <div
+                key={section}
+                id={toSectionId(section)}
+                className="rounded border border-border/40 bg-gray-900/60"
+              >
                 <button
                   type="button"
                   onClick={(): void => toggleSection(section)}

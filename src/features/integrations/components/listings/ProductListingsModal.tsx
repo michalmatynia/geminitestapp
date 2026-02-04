@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  UnifiedSelect,
   Label,
   useToast,
   StatusBadge,
@@ -21,7 +20,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { ProductWithImages } from "@/features/products/types";
-import type { ProductListingWithDetails, ProductListingExportEvent, IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
+import type { ProductListingWithDetails, ProductListingExportEvent } from "@/features/integrations/types/listings";
 import { SyncDirection } from "@/features/products/types";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -79,7 +78,6 @@ export function ProductListingsModal({
     loading: _loadingIntegrations,
     selectedIntegrationId,
     selectedConnectionId,
-    selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useIntegrationSelection();
@@ -650,7 +648,7 @@ export function ProductListingsModal({
                 <div className="flex flex-wrap items-center gap-2">
                   <ImageRetryDropdown
                     presets={imageRetryPresets}
-                    onRetry={(preset) => void handleImageRetry(preset)}
+                    onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
                     disabled={Boolean(exportingListing)}
                   />
                   <span className="text-xs text-red-200/80">

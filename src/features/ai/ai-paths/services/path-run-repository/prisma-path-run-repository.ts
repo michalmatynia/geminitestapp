@@ -208,11 +208,31 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       orderBy: { createdAt: "asc" },
     })) as Record<string, unknown> | null;
     if (!run) return null;
-    const updated = await prismaAny.aiPathRun!.update({
-      where: { id: run.id },
+    const updated = await prismaAny.aiPathRun!.updateMany({
+      where: { id: run.id as string, status: "queued" },
       data: { status: "running", startedAt: new Date() },
     });
-    return mapRun(updated);
+    if (!updated.count) return null;
+    const fresh = await prismaAny.aiPathRun!.findUnique({ where: { id: run.id as string } });
+    return fresh ? mapRun(fresh) : null;
+  },
+
+  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+    ensureModels();
+    const now = new Date();
+    const where = {
+      status: "queued",
+      OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+    };
+    const [queuedCount, oldest] = await Promise.all([
+      prismaAny.aiPathRun!.count({ where }),
+      prismaAny.aiPathRun!.findFirst({
+        where,
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true },
+      }) as Promise<{ createdAt: Date } | null>,
+    ]);
+    return { queuedCount, oldestQueuedAt: oldest?.createdAt ?? null };
   },
 
   async createRunNodes(runId: string, nodes: AiNode[]): Promise<void> {

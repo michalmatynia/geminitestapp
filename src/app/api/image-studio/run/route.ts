@@ -59,7 +59,7 @@ const runSchema = z.object({
     .optional(),
   prompt: z.string().min(1),
   mask: maskSchema.nullable().optional(),
-  studioSettings: z.unknown().optional(),
+  studioSettings: z.record(z.string(), z.unknown()).optional(),
 });
 
 const sanitizeProjectId = (value: string): string =>
@@ -265,10 +265,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const inputImages = [createReadStream(diskPath), ...referencePaths.map((ref) => createReadStream(ref))];
+    // This is a workaround due to OpenAI SDK not properly typing image/images in ImageEditParamsNonStreaming
+    // when it expects either a single Uploadable or an array of Uploadable.
+    // The specific error is "Namespace ... has no exported member 'Uploadable'".
+    // Casting to any for now to bypass the build error.
+    const imagePayload = inputImages.length === 1 ? inputImages[0]! : inputImages;
+
     const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
       model: settings.targetAi.openai.model,
       prompt: parsed.data.prompt,
-      image: inputImages.length === 1 ? inputImages[0] : inputImages,
+      image: imagePayload as any,
       output_format: format,
       response_format: "b64_json",
     };

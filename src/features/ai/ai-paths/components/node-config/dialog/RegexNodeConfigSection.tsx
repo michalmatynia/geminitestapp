@@ -318,7 +318,7 @@ export function RegexNodeConfigSection({
       };
       if (!normalized.pattern) return;
       const exists = aiProposals.some(
-        (item: { pattern: string; flags?: string; groupBy?: string; createdAt: string }) =>
+        (item: { pattern: string; flags?: string | undefined; groupBy?: string | undefined }) =>
           item.pattern === normalized.pattern &&
           (item.flags ?? "") === normalized.flags &&
           (item.groupBy ?? "") === normalized.groupBy
@@ -329,6 +329,11 @@ export function RegexNodeConfigSection({
     },
     [aiProposals, updateRegex]
   );
+
+  const clearPendingAiRegex = React.useCallback((): void => {
+    setPendingAiRegex("");
+    setSelectedSnippetIndex(-1);
+  }, []);
 
   const updateVariantField = React.useCallback(
     (field: "pattern" | "flags" | "groupBy", value: string): void => {
@@ -591,7 +596,7 @@ export function RegexNodeConfigSection({
                   groupBy: candidate.groupBy ?? regexConfig.groupBy ?? "match",
                 },
               });
-              setPendingAiRegex("");
+              clearPendingAiRegex();
               toast("AI regex accepted.", { variant: "success" });
             }}
           >
@@ -603,7 +608,7 @@ export function RegexNodeConfigSection({
             type="button"
             className="h-7 rounded-md border border-rose-700 bg-rose-500/10 px-3 text-[10px] text-rose-200 hover:bg-rose-500/20"
             onClick={() => {
-              setPendingAiRegex("");
+              clearPendingAiRegex();
               toast("AI regex rejected.", { variant: "success" });
             }}
           >
@@ -746,7 +751,7 @@ export function RegexNodeConfigSection({
               <div className="mt-3 rounded-md border border-border bg-card/50 p-2">
                 <div className="mb-2 text-[11px] text-gray-300">AI Proposal History</div>
                 <div className="space-y-2">
-                  {aiProposals.map((proposal: { pattern: string; flags?: string; groupBy?: string; createdAt: string }, index: number) => (
+                  {aiProposals.map((proposal: { pattern: string; flags?: string | undefined; groupBy?: string | undefined; createdAt: string }, index: number) => (
                     <div key={`${proposal.pattern}-${proposal.createdAt}-${index}`} className="rounded border border-border/60 bg-card/60 p-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px] text-gray-200 truncate">{proposal.pattern}</div>

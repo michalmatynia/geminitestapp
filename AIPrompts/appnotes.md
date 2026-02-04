@@ -1,3 +1,15 @@
+   - Regex Grouper manual-only AI suggestions path + output retention
+  - JSON Mapper node input/output changes
+  - Node state autosave (selections + UI)
+  - Node UI/UX improvements (modal, validation, extractor)
+ Runtime performance/queue handling
+  1. Regex node: proposal modal + accept/decline behavior
+  2. Extractor modal: validation/extraction controls + results UI
+  3. JSON Mapper node: input/output fields + result routing
+  4. Node config modal: layout/scroll/sections improvements
+  5. Validation patterns UI: lock/edit/export/import flows
+  
+
 AI Paths need to be tested, w IMage studio image upload nie chce cos dzialac i CMS widok obrazów jest nie teges
 
 * In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily

@@ -3,7 +3,15 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/shared/errors/resolve-error";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, forbiddenError, payloadTooLargeError, validationError } from "@/shared/errors/app-error";
+import { enforceRateLimit, type RateLimiterKey } from "@/shared/lib/api/rate-limit";
+import {
+  CSRF_SAFE_METHODS,
+  getCsrfTokenFromHeaders,
+  getCsrfTokenFromRequest,
+  isSameOriginRequest,
+} from "@/shared/lib/security/csrf";
+import type { ZodSchema } from "zod";
 import type { SystemLogLevel } from "@/shared/types/system-logs";
 import type {
   ApiHandlerOptions,
@@ -50,6 +58,80 @@ export type {
   ApiRouteHandlerWithParams,
 };
 
+type ParsedBodyResult = {
+  body: unknown;
+};
+
+const DEFAULT_JSON_BODY_BYTES = 1_000_000;
+
+const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
+  const method = request.method.toUpperCase();
+  if (CSRF_SAFE_METHODS.has(method)) return;
+  const shouldRequire = options.requireCsrf !== false;
+  if (!shouldRequire) return;
+  if (!isSameOriginRequest(request)) {
+    throw forbiddenError("Invalid request origin.");
+  }
+  const cookieToken = getCsrfTokenFromRequest(request);
+  const headerToken = getCsrfTokenFromHeaders(request);
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    throw forbiddenError("Invalid CSRF token.");
+  }
+};
+
+const isJsonRequest = (request: NextRequest): boolean => {
+  const contentType = request.headers.get("content-type") ?? "";
+  return contentType.includes("application/json");
+};
+
+const parseJsonBody = async (
+  request: NextRequest,
+  options: { maxBodyBytes: number; schema?: ZodSchema | undefined }
+): Promise<ParsedBodyResult> => {
+  if (!isJsonRequest(request)) {
+    return { body: undefined };
+  }
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && Number(contentLength) > options.maxBodyBytes) {
+    throw payloadTooLargeError("Payload too large", { limit: options.maxBodyBytes });
+  }
+
+  const clone = request.clone();
+  const text = await clone.text();
+  if (text.length > options.maxBodyBytes) {
+    throw payloadTooLargeError("Payload too large", { limit: options.maxBodyBytes });
+  }
+
+  if (!text.trim()) {
+    return { body: undefined };
+  }
+
+  let parsed: unknown = undefined;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw badRequestError("Invalid JSON payload");
+  }
+
+  if (options.schema) {
+    const validation = options.schema.safeParse(parsed);
+    if (!validation.success) {
+      throw validationError("Validation failed", { issues: validation.error.flatten() });
+    }
+    return { body: validation.data };
+  }
+
+  return { body: parsed };
+};
+
+const applySecurityHeaders = (response: Response): void => {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+};
+
 /**
  * Wraps an API route handler with automatic error handling, logging, and request tracking.
  *
@@ -76,6 +158,12 @@ export function apiHandler(
   options: ApiHandlerOptions
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
+    if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
+      const response = NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+      applySecurityHeaders(response);
+      return response;
+    }
+
     const requestId = request.headers.get("x-request-id") ?? randomUUID();
     const startTime = performance.now();
 
@@ -86,6 +174,24 @@ export function apiHandler(
     };
 
     try {
+      enforceCsrf(request, options);
+
+      let rateLimitHeaders: Record<string, string> | undefined;
+      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? "api");
+      if (rateKey) {
+        const rateResult = enforceRateLimit(request, rateKey);
+        rateLimitHeaders = rateResult.headers;
+        context.rateLimitHeaders = rateLimitHeaders;
+      }
+
+      if (options.parseJsonBody) {
+        const parsed = await parseJsonBody(request, {
+          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+          schema: options.bodySchema,
+        });
+        context.body = parsed.body;
+      }
+
       const response = await handler(request, context);
 
       // Log successful requests if configured
@@ -107,10 +213,23 @@ export function apiHandler(
       if (!response.headers.has("x-request-id")) {
         response.headers.set("x-request-id", requestId);
       }
+      if (context.rateLimitHeaders) {
+        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
       applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
-      return createErrorResponseWithTiming(error, request, context, options);
+      const response = createErrorResponseWithTiming(error, request, context, options);
+      if (context.rateLimitHeaders) {
+        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      return response;
     }
   };
 }
@@ -129,7 +248,7 @@ export function apiHandler(
  * );
  * ```
  */
-export function apiHandlerWithParams<P extends Record<string, string>>(
+export function apiHandlerWithParams<P extends Record<string, string | string[]>>(
   handler: ApiRouteHandlerWithParams<P>,
   options: ApiHandlerOptions
 ): (
@@ -137,6 +256,12 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
   context: { params: Promise<P> }
 ) => Promise<Response> {
   return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
+    if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
+      const response = NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+      applySecurityHeaders(response);
+      return response;
+    }
+
     const requestId = request.headers.get("x-request-id") ?? randomUUID();
     const startTime = performance.now();
 
@@ -147,6 +272,24 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
     };
 
     try {
+      enforceCsrf(request, options);
+
+      let rateLimitHeaders: Record<string, string> | undefined;
+      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? "api");
+      if (rateKey) {
+        const rateResult = enforceRateLimit(request, rateKey);
+        rateLimitHeaders = rateResult.headers;
+        handlerContext.rateLimitHeaders = rateLimitHeaders;
+      }
+
+      if (options.parseJsonBody) {
+        const parsed = await parseJsonBody(request, {
+          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+          schema: options.bodySchema,
+        });
+        handlerContext.body = parsed.body;
+      }
+
       const params = await routeContext.params;
       const response = await handler(request, handlerContext, params);
 
@@ -168,15 +311,28 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
       if (!response.headers.has("x-request-id")) {
         response.headers.set("x-request-id", requestId);
       }
+      if (handlerContext.rateLimitHeaders) {
+        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
       applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
-      return createErrorResponseWithTiming(
+      const response = createErrorResponseWithTiming(
         error,
         request,
         handlerContext,
         options
       );
+      if (handlerContext.rateLimitHeaders) {
+        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      return response;
     }
   };
 }

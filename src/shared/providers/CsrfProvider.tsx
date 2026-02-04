@@ -1,0 +1,50 @@
+"use client";
+
+import { useEffect } from "react";
+import {
+  CSRF_HEADER_NAME,
+  CSRF_SAFE_METHODS,
+  getClientCsrfToken,
+  isSameOriginUrl,
+} from "@/shared/lib/security/csrf-client";
+
+export const CsrfProvider = (): null => {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const patched = (window as { __csrfFetchPatched?: boolean }).__csrfFetchPatched;
+    if (patched) return;
+    (window as { __csrfFetchPatched?: boolean }).__csrfFetchPatched = true;
+
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): Promise<Response> => {
+      const baseMethod =
+        init?.method ??
+        (input instanceof Request ? input.method : "GET");
+      const method = baseMethod.toUpperCase();
+      if (!CSRF_SAFE_METHODS.has(method) && isSameOriginUrl(input)) {
+        const token = getClientCsrfToken();
+        if (token) {
+          const existingHeaders =
+            init?.headers ??
+            (input instanceof Request ? input.headers : undefined);
+          const headers = new Headers(existingHeaders);
+          if (!headers.has(CSRF_HEADER_NAME)) {
+            headers.set(CSRF_HEADER_NAME, token);
+          }
+          if (input instanceof Request && !init) {
+            return originalFetch(new Request(input, { headers }));
+          }
+          return originalFetch(input, { ...init, headers });
+        }
+      }
+      return originalFetch(input, init);
+    };
+  }, []);
+
+  return null;
+};
+
+export default CsrfProvider;

@@ -29,7 +29,7 @@ const updatePreferencesSchema = z.object({
   adminMenuFavorites: z.array(z.string()).optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
   adminMenuCustomEnabled: z.boolean().optional().nullable(),
-  adminMenuCustomNav: z.array(z.unknown()).optional().nullable(),
+  adminMenuCustomNav: z.array(z.record(z.string(), z.unknown())).optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
   cmsActiveDomainId: z.string().optional().nullable(),
   cmsThemeOpenSections: z.array(z.string()).optional().nullable(),

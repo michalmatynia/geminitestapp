@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Fragment, useMemo, useState } from "react";
-import type { AnalyticsScope, AnalyticsSummaryDto } from "@/shared/types";
+import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from "@/shared/types";
 import {
   Button,
   Card,
@@ -25,6 +25,7 @@ import {
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { fetchAnalyticsSummary, type AnalyticsRange } from "../api";
+import { useToast } from "@/shared/ui";
 
 const ranges: Array<{ value: AnalyticsRange; label: string }> = [
   { value: "24h", label: "Last 24h" },
@@ -49,10 +50,43 @@ const formatCount = (value: number): string => {
 export default function AdminAnalyticsPage(): React.JSX.Element {
   const [range, setRange] = useState<AnalyticsRange>("24h");
   const [scope, setScope] = useState<AnalyticsScope | "all">("all");
+  const { toast } = useToast();
 
   const summaryQuery = useQuery({
     queryKey: ["analytics", "summary", range, scope],
     queryFn: () => fetchAnalyticsSummary({ range, scope }),
+  });
+
+  const insightsQuery = useQuery({
+    queryKey: ["analytics", "insights"],
+    queryFn: async () => {
+      const res = await fetch("/api/analytics/insights?limit=5");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Failed to load AI insights.");
+      }
+      return (await res.json()) as { insights: AiInsightRecord[] };
+    },
+  });
+
+  const runInsightMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/analytics/insights", { method: "POST" });
+      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to generate insight.");
+      }
+      return data?.insight ?? null;
+    },
+    onSuccess: (insight) => {
+      if (insight) {
+        toast("AI analytics insight generated.", { variant: "success" });
+        void insightsQuery.refetch();
+      }
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : "Failed to generate insight.", { variant: "error" });
+    },
   });
 
   const summary = summaryQuery.data;
@@ -142,6 +176,63 @@ export default function AdminAnalyticsPage(): React.JSX.Element {
           <p className="text-xs text-gray-500">Window: {fromToLabel}</p>
         ) : null}
       </div>
+
+      <SectionPanel className="mb-6 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-white">AI Insights</h2>
+            <p className="text-xs text-gray-400">
+              Automated overview of interactions and possible issues.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runInsightMutation.mutate()}
+            disabled={runInsightMutation.isPending}
+          >
+            {runInsightMutation.isPending ? "Running..." : "Run AI Insight"}
+          </Button>
+        </div>
+        {insightsQuery.isLoading ? (
+          <p className="mt-3 text-xs text-gray-500">Loading AI insights…</p>
+        ) : insightsQuery.error ? (
+          <p className="mt-3 text-xs text-red-400">{insightsQuery.error.message}</p>
+        ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
+          <p className="mt-3 text-xs text-gray-500">No insights yet.</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {insightsQuery.data?.insights.map((insight) => (
+              <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase text-gray-500">
+                    {new Date(insight.createdAt).toLocaleString()}
+                  </span>
+                  <span
+                    className={`rounded border px-2 py-0.5 text-[10px] ${
+                      insight.status === "ok"
+                        ? "border-emerald-500/40 text-emerald-200"
+                        : insight.status === "warning"
+                          ? "border-amber-500/40 text-amber-200"
+                          : "border-rose-500/40 text-rose-200"
+                    }`}
+                  >
+                    {insight.status}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-white">{insight.summary}</div>
+                {insight.warnings.length > 0 ? (
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                    {insight.warnings.map((warning, index) => (
+                      <li key={`${insight.id}-warn-${index}`}>{warning}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionPanel>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {([

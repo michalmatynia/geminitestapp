@@ -58,6 +58,12 @@ next-env.d.ts
 
 # Database
 /mongo/backups
+/prisma/backups
+/backups
+*.dump
+*.archive
+*.sql
+*.bak
 
 # Docker
 compose.yaml

@@ -10,21 +10,24 @@ import {
   Layers,
   MousePointer2,
   MousePointerClick,
+  PenLine,
   RotateCw,
   Square,
+  Trash2,
 } from "lucide-react";
 import {
   Button,
   Checkbox,
   Label,
   Input,
-  Textarea,
   Tooltip,
   UnifiedSelect,
   SectionPanel,
   RadioGroup,
   RadioGroupItem,
+  type VectorShape,
 } from "@/shared/ui";
+import { RangeField, SelectField } from "./shared-fields";
 import type {
   GsapAnimationConfig,
   AnimationPreset,
@@ -56,28 +59,277 @@ import {
   OBSERVER_TYPES,
   VELOCITY_EFFECTS,
 } from "@/features/gsap";
+import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 
 interface AnimationConfigPanelProps {
   value: GsapAnimationConfig | undefined;
   onChange: (config: GsapAnimationConfig) => void;
 }
 
+function ColorPickerField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}): React.JSX.Element {
+  const resolved = value || "#ffffff";
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        {label}
+      </Label>
+      <div className="flex items-center gap-2">
+        <label className="relative flex size-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50">
+          <input
+            type="color"
+            value={resolved}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+          />
+          <div className="size-full rounded" style={{ backgroundColor: resolved }} />
+        </label>
+        <div className="text-xs text-gray-400">{resolved}</div>
+      </div>
+    </div>
+  );
+}
+
+type VisualFilterType =
+  | "none"
+  | "blur"
+  | "brightness"
+  | "contrast"
+  | "saturate"
+  | "hue"
+  | "grayscale"
+  | "sepia"
+  | "invert"
+  | "opacity";
+
+type VisualClipType =
+  | "none"
+  | "wipe-top"
+  | "wipe-right"
+  | "wipe-bottom"
+  | "wipe-left"
+  | "inset";
+
+interface VisualShadowValues {
+  x: number;
+  y: number;
+  blur: number;
+  spread: number;
+  color: string;
+  opacity: number;
+}
+
+const FILTER_OPTIONS: Array<{ label: string; value: VisualFilterType }> = [
+  { label: "None", value: "none" },
+  { label: "Blur", value: "blur" },
+  { label: "Brightness", value: "brightness" },
+  { label: "Contrast", value: "contrast" },
+  { label: "Saturation", value: "saturate" },
+  { label: "Hue", value: "hue" },
+  { label: "Grayscale", value: "grayscale" },
+  { label: "Sepia", value: "sepia" },
+  { label: "Invert", value: "invert" },
+  { label: "Opacity", value: "opacity" },
+];
+
+const FILTER_META: Record<VisualFilterType, { unit: string; min: number; max: number; step: number; defaultFrom: number; defaultTo: number }> = {
+  none: { unit: "", min: 0, max: 100, step: 1, defaultFrom: 0, defaultTo: 0 },
+  blur: { unit: "px", min: 0, max: 30, step: 1, defaultFrom: 0, defaultTo: 10 },
+  brightness: { unit: "%", min: 0, max: 200, step: 5, defaultFrom: 60, defaultTo: 100 },
+  contrast: { unit: "%", min: 0, max: 200, step: 5, defaultFrom: 60, defaultTo: 100 },
+  saturate: { unit: "%", min: 0, max: 200, step: 5, defaultFrom: 0, defaultTo: 100 },
+  hue: { unit: "deg", min: 0, max: 360, step: 5, defaultFrom: 0, defaultTo: 90 },
+  grayscale: { unit: "%", min: 0, max: 100, step: 5, defaultFrom: 100, defaultTo: 0 },
+  sepia: { unit: "%", min: 0, max: 100, step: 5, defaultFrom: 100, defaultTo: 0 },
+  invert: { unit: "%", min: 0, max: 100, step: 5, defaultFrom: 100, defaultTo: 0 },
+  opacity: { unit: "%", min: 0, max: 100, step: 5, defaultFrom: 0, defaultTo: 100 },
+};
+
+const CLIP_OPTIONS: Array<{ label: string; value: VisualClipType }> = [
+  { label: "None", value: "none" },
+  { label: "Wipe Top", value: "wipe-top" },
+  { label: "Wipe Right", value: "wipe-right" },
+  { label: "Wipe Bottom", value: "wipe-bottom" },
+  { label: "Wipe Left", value: "wipe-left" },
+  { label: "Inset (Uniform)", value: "inset" },
+];
+
+const DEFAULT_SHADOW: VisualShadowValues = {
+  x: 0,
+  y: 16,
+  blur: 32,
+  spread: 0,
+  color: "#000000",
+  opacity: 35,
+};
+
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+const parseNumber = (value: string, fallback: number): number => {
+  const match = value.match(/-?\d+(?:\.\d+)?/);
+  if (!match) return fallback;
+  const parsed = Number.parseFloat(match[0]);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseFilterString = (value: string): { type: VisualFilterType; amount: number } | null => {
+  const match = value.match(/(blur|brightness|contrast|saturate|hue-rotate|grayscale|sepia|invert|opacity)\(([-\d.]+)(deg|px|%)?\)/i);
+  if (!match?.[1] || !match[2]) return null;
+  const rawType = match[1].toLowerCase();
+  const type: VisualFilterType = rawType === "hue-rotate" ? "hue" : (rawType as VisualFilterType);
+  const amount = Number.parseFloat(match[2]);
+  if (!Number.isFinite(amount)) return null;
+  return { type, amount };
+};
+
+const buildFilterString = (type: VisualFilterType, amount: number): string => {
+  if (type === "none") return "";
+  const meta = FILTER_META[type];
+  const func = type === "hue" ? "hue-rotate" : type;
+  const value = clampNumber(amount, meta.min, meta.max);
+  return `${func}(${value}${meta.unit})`;
+};
+
+const parseClipString = (value: string): { type: VisualClipType; amount: number } | null => {
+  const match = value.match(/inset\(([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\)/i);
+  if (!match?.[1] || !match[2] || !match[3] || !match[4]) return null;
+  const top = Number.parseFloat(match[1]);
+  const right = Number.parseFloat(match[2]);
+  const bottom = Number.parseFloat(match[3]);
+  const left = Number.parseFloat(match[4]);
+  if ([top, right, bottom, left].some((val: number) => !Number.isFinite(val))) return null;
+  if (right === 0 && bottom === 0 && left === 0) return { type: "wipe-top", amount: top };
+  if (top === 0 && bottom === 0 && left === 0) return { type: "wipe-right", amount: right };
+  if (top === 0 && right === 0 && left === 0) return { type: "wipe-bottom", amount: bottom };
+  if (top === 0 && right === 0 && bottom === 0) return { type: "wipe-left", amount: left };
+  if (top === right && right === bottom && bottom === left) {
+    return { type: "inset", amount: top };
+  }
+  return null;
+};
+
+const buildClipString = (type: VisualClipType, amount: number): string => {
+  if (type === "none") return "";
+  const value = clampNumber(amount, 0, 100);
+  switch (type) {
+    case "wipe-top":
+      return `inset(${value}% 0% 0% 0%)`;
+    case "wipe-right":
+      return `inset(0% ${value}% 0% 0%)`;
+    case "wipe-bottom":
+      return `inset(0% 0% ${value}% 0%)`;
+    case "wipe-left":
+      return `inset(0% 0% 0% ${value}%)`;
+    case "inset":
+      return `inset(${value}% ${value}% ${value}% ${value}%)`;
+    default:
+      return "";
+  }
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const normalized = hex.replace("#", "").trim();
+  if (![3, 6].includes(normalized.length)) return null;
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((c: string) => c + c).join("")
+    : normalized;
+  const int = Number.parseInt(expanded, 16);
+  if (Number.isNaN(int)) return null;
+  return {
+    r: (int >> 16) & 255,
+    g: (int >> 8) & 255,
+    b: int & 255,
+  };
+};
+
+const rgbToHex = (r: number, g: number, b: number): string =>
+  `#${[r, g, b].map((val: number) => clampNumber(Math.round(val), 0, 255).toString(16).padStart(2, "0")).join("")}`;
+
+const parseColor = (value: string): { color: string; opacity: number } => {
+  if (!value) return { color: DEFAULT_SHADOW.color, opacity: DEFAULT_SHADOW.opacity };
+  const rgbaMatch = value.match(/rgba?\(([^)]+)\)/i);
+  if (rgbaMatch && rgbaMatch[1]) {
+    const parts = rgbaMatch[1].split(",").map((part: string) => part.trim());
+    const r = Number.parseFloat(parts[0] ?? "0");
+    const g = Number.parseFloat(parts[1] ?? "0");
+    const b = Number.parseFloat(parts[2] ?? "0");
+    const a = parts[3] !== undefined ? Number.parseFloat(parts[3]) : 1;
+    if ([r, g, b].every(Number.isFinite)) {
+      return {
+        color: rgbToHex(r, g, b),
+        opacity: clampNumber(Number.isFinite(a) ? a * 100 : 100, 0, 100),
+      };
+    }
+  }
+  const hexMatch = value.match(/#([0-9a-f]{3,8})/i);
+  if (hexMatch && hexMatch[1]) {
+    return { color: `#${hexMatch[1].slice(0, 6)}`, opacity: 100 };
+  }
+  return { color: DEFAULT_SHADOW.color, opacity: DEFAULT_SHADOW.opacity };
+};
+
+const parseShadow = (value: string): VisualShadowValues => {
+  if (!value) return { ...DEFAULT_SHADOW };
+  const match = value.match(/(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+(.+)$/i);
+  if (!match) return { ...DEFAULT_SHADOW };
+  const x = Number.parseFloat(match[1] ?? "0");
+  const y = Number.parseFloat(match[2] ?? "0");
+  const blur = Number.parseFloat(match[3] ?? "0");
+  const spread = match[4] !== undefined ? Number.parseFloat(match[4]) : 0;
+  const { color, opacity } = parseColor(match[5] ?? "");
+  return {
+    x: Number.isFinite(x) ? x : DEFAULT_SHADOW.x,
+    y: Number.isFinite(y) ? y : DEFAULT_SHADOW.y,
+    blur: Number.isFinite(blur) ? blur : DEFAULT_SHADOW.blur,
+    spread: Number.isFinite(spread) ? spread : DEFAULT_SHADOW.spread,
+    color,
+    opacity,
+  };
+};
+
+const buildShadow = (values: VisualShadowValues): string => {
+  const rgb = hexToRgb(values.color) ?? hexToRgb(DEFAULT_SHADOW.color) ?? { r: 0, g: 0, b: 0 };
+  const alpha = clampNumber(values.opacity, 0, 100) / 100;
+  return `${values.x}px ${values.y}px ${values.blur}px ${values.spread}px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+};
+
+const EMPTY_SHAPES: VectorShape[] = [];
+
 export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelProps): React.ReactNode {
+  const { openVectorOverlay } = usePageBuilder();
   const config = value ?? DEFAULT_ANIMATION_CONFIG;
   const selectorValue = config.selector ?? "";
   const parallaxPresetValue = config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? "none";
+  const parallaxSelectorValue = config.parallaxSelector ?? DEFAULT_ANIMATION_CONFIG.parallaxSelector ?? "";
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? "y";
   const parallaxOffsetValue =
     config.parallaxOffset ?? PARALLAX_DEFAULTS[parallaxPresetValue]?.offset ?? DEFAULT_ANIMATION_CONFIG.parallaxOffset ?? 0;
   const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
   const parallaxStartValue = config.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? "top bottom";
   const parallaxEndValue = config.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? "bottom top";
+  const parallaxEaseValue = config.parallaxEase ?? DEFAULT_ANIMATION_CONFIG.parallaxEase ?? "sine.inOut";
   const parallaxPatternValue = config.parallaxPattern ?? DEFAULT_ANIMATION_CONFIG.parallaxPattern ?? "uniform";
   const parallaxReverseValue = config.parallaxReverse ?? DEFAULT_ANIMATION_CONFIG.parallaxReverse ?? false;
   const parallaxChildStepValue = config.parallaxChildStep ?? DEFAULT_ANIMATION_CONFIG.parallaxChildStep ?? 16;
   const parallaxLayerStrengthValue = config.parallaxLayerStrength ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerStrength ?? 0.35;
   const parallaxLayerScaleStepValue = config.parallaxLayerScaleStep ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerScaleStep ?? 0.015;
   const parallaxRandomSeedValue = config.parallaxRandomSeed ?? DEFAULT_ANIMATION_CONFIG.parallaxRandomSeed ?? 7;
+  const parallaxScaleFromValue = config.parallaxScaleFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleFrom ?? 1;
+  const parallaxScaleToValue = config.parallaxScaleTo ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleTo ?? 1;
+  const parallaxRotateFromValue = config.parallaxRotateFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateFrom ?? 0;
+  const parallaxRotateToValue = config.parallaxRotateTo ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateTo ?? 0;
+  const parallaxOpacityFromValue = config.parallaxOpacityFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityFrom ?? 1;
+  const parallaxOpacityToValue = config.parallaxOpacityTo ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityTo ?? 1;
+  const parallaxBlurFromValue = config.parallaxBlurFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurFrom ?? 0;
+  const parallaxBlurToValue = config.parallaxBlurTo ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurTo ?? 0;
   const timelineModeValue = config.timelineMode ?? DEFAULT_ANIMATION_CONFIG.timelineMode ?? "none";
   const timelineGapValue = config.timelineGap ?? DEFAULT_ANIMATION_CONFIG.timelineGap ?? 0.15;
   const timelineOverlapValue = config.timelineOverlap ?? DEFAULT_ANIMATION_CONFIG.timelineOverlap ?? 0.2;
@@ -107,13 +359,17 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const motionPathEndValue = config.motionPathEnd ?? DEFAULT_ANIMATION_CONFIG.motionPathEnd ?? 1;
   const motionPathFollowValue = config.motionPathFollow ?? DEFAULT_ANIMATION_CONFIG.motionPathFollow ?? false;
   const motionPathSpacingValue = config.motionPathSpacing ?? DEFAULT_ANIMATION_CONFIG.motionPathSpacing ?? 0.08;
+  const motionPathShapesValue = config.motionPathShapes ?? DEFAULT_ANIMATION_CONFIG.motionPathShapes ?? EMPTY_SHAPES;
   const svgDrawEnabledValue = config.svgDrawEnabled ?? DEFAULT_ANIMATION_CONFIG.svgDrawEnabled ?? false;
   const svgDrawSelectorValue = config.svgDrawSelector ?? DEFAULT_ANIMATION_CONFIG.svgDrawSelector ?? "path";
   const svgDrawFromValue = config.svgDrawFrom ?? DEFAULT_ANIMATION_CONFIG.svgDrawFrom ?? 0;
   const svgDrawToValue = config.svgDrawTo ?? DEFAULT_ANIMATION_CONFIG.svgDrawTo ?? 100;
+  const svgDrawPathValue = config.svgDrawPath ?? DEFAULT_ANIMATION_CONFIG.svgDrawPath ?? "";
+  const svgDrawShapesValue = config.svgDrawShapes ?? DEFAULT_ANIMATION_CONFIG.svgDrawShapes ?? EMPTY_SHAPES;
   const svgMorphEnabledValue = config.svgMorphEnabled ?? DEFAULT_ANIMATION_CONFIG.svgMorphEnabled ?? false;
   const svgMorphSelectorValue = config.svgMorphSelector ?? DEFAULT_ANIMATION_CONFIG.svgMorphSelector ?? "path";
   const svgMorphToValue = config.svgMorphTo ?? DEFAULT_ANIMATION_CONFIG.svgMorphTo ?? "";
+  const svgMorphShapesValue = config.svgMorphShapes ?? DEFAULT_ANIMATION_CONFIG.svgMorphShapes ?? EMPTY_SHAPES;
   const textEffectValue = config.textEffect ?? DEFAULT_ANIMATION_CONFIG.textEffect ?? "none";
   const textStaggerValue = config.textStagger ?? DEFAULT_ANIMATION_CONFIG.textStagger ?? 0.05;
   const textScrambleCharsValue = config.textScrambleChars ?? DEFAULT_ANIMATION_CONFIG.textScrambleChars ?? "";
@@ -155,6 +411,33 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const magnetRadiusValue = config.magnetRadius ?? DEFAULT_ANIMATION_CONFIG.magnetRadius ?? 140;
   const magnetAxisValue = config.magnetAxis ?? DEFAULT_ANIMATION_CONFIG.magnetAxis ?? "x,y";
   const magnetReturnValue = config.magnetReturn ?? DEFAULT_ANIMATION_CONFIG.magnetReturn ?? 0.35;
+
+  const resolvedFilterFrom = parseFilterString(visualFilterFromValue);
+  const resolvedFilterTo = parseFilterString(visualFilterToValue);
+  const filterTypeValue = resolvedFilterFrom?.type ?? resolvedFilterTo?.type ?? "none";
+  const filterMeta = FILTER_META[filterTypeValue];
+  const filterFromAmount = clampNumber(
+    resolvedFilterFrom?.amount ?? filterMeta.defaultFrom,
+    filterMeta.min,
+    filterMeta.max
+  );
+  const filterToAmount = clampNumber(
+    resolvedFilterTo?.amount ?? filterMeta.defaultTo,
+    filterMeta.min,
+    filterMeta.max
+  );
+
+  const resolvedClipFrom = parseClipString(visualClipFromValue);
+  const resolvedClipTo = parseClipString(visualClipToValue);
+  const clipTypeValue = resolvedClipFrom?.type ?? resolvedClipTo?.type ?? "none";
+  const clipFromAmount = clampNumber(resolvedClipFrom?.amount ?? 100, 0, 100);
+  const clipToAmount = clampNumber(resolvedClipTo?.amount ?? 0, 0, 100);
+
+  const radiusFromAmount = clampNumber(parseNumber(visualRadiusFromValue, 0), 0, 200);
+  const radiusToAmount = clampNumber(parseNumber(visualRadiusToValue, 0), 0, 200);
+
+  const shadowFromValues = parseShadow(visualShadowFromValue);
+  const shadowToValues = parseShadow(visualShadowToValue);
 
   const quickSelectors: Array<{ label: string; value: string; icon: React.ElementType }> = [
     { label: "Self", value: "", icon: Square },
@@ -284,11 +567,23 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     (value: string): void => {
       const preset = value as ParallaxPreset;
       const defaults = PARALLAX_DEFAULTS[preset];
-      onChange({
+      const next: GsapAnimationConfig = {
         ...config,
         parallaxPreset: preset,
         parallaxOffset: preset === "none" ? 0 : defaults?.offset ?? config.parallaxOffset,
-      });
+      };
+      if (preset === "depth" && defaults?.scale) {
+        next.parallaxScaleFrom = defaults.scale;
+        next.parallaxScaleTo = 1;
+      }
+      onChange(next);
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxSelectorChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      onChange({ ...config, parallaxSelector: e.target.value });
     },
     [config, onChange]
   );
@@ -330,6 +625,13 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const handleParallaxEndChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange({ ...config, parallaxEnd: e.target.value });
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxEaseChange = useCallback(
+    (value: string) => {
+      onChange({ ...config, parallaxEase: value as AnimationEasing });
     },
     [config, onChange]
   );
@@ -502,11 +804,26 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleMotionPathPathChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange({ ...config, motionPathPath: e.target.value });
     },
     [config, onChange]
   );
+
+  const handleMotionPathDraw = useCallback((): void => {
+    openVectorOverlay({
+      title: "Motion Path",
+      description: "Draw the motion path directly on the preview canvas.",
+      initialShapes: motionPathShapesValue,
+      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+        onChange({ ...config, motionPathEnabled: true, motionPathPath: path, motionPathShapes: shapes });
+      },
+    });
+  }, [config, motionPathShapesValue, onChange, openVectorOverlay]);
+
+  const handleMotionPathClear = useCallback((): void => {
+    onChange({ ...config, motionPathPath: "", motionPathShapes: [] });
+  }, [config, onChange]);
 
   const handleMotionPathAlignChange = useCallback(
     (checked: boolean | "indeterminate") => {
@@ -603,6 +920,28 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
+  const handleSvgDrawPathChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange({ ...config, svgDrawPath: e.target.value });
+    },
+    [config, onChange]
+  );
+
+  const handleSvgDrawCanvas = useCallback((): void => {
+    openVectorOverlay({
+      title: "SVG Draw Path",
+      description: "Draw a custom SVG path to animate stroke drawing.",
+      initialShapes: svgDrawShapesValue,
+      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+        onChange({ ...config, svgDrawEnabled: true, svgDrawPath: path, svgDrawShapes: shapes });
+      },
+    });
+  }, [config, onChange, openVectorOverlay, svgDrawShapesValue]);
+
+  const handleSvgDrawClear = useCallback((): void => {
+    onChange({ ...config, svgDrawPath: "", svgDrawShapes: [] });
+  }, [config, onChange]);
+
   const handleSvgMorphEnabledChange = useCallback(
     (checked: boolean | "indeterminate") => {
       onChange({ ...config, svgMorphEnabled: checked === true });
@@ -618,11 +957,26 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleSvgMorphToChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange({ ...config, svgMorphTo: e.target.value });
     },
     [config, onChange]
   );
+
+  const handleSvgMorphDraw = useCallback((): void => {
+    openVectorOverlay({
+      title: "SVG Morph Target",
+      description: "Draw the target path for morphing.",
+      initialShapes: svgMorphShapesValue,
+      onApply: ({ shapes, path }: { shapes: VectorShape[]; path: string }) => {
+        onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
+      },
+    });
+  }, [config, onChange, openVectorOverlay, svgMorphShapesValue]);
+
+  const handleSvgMorphClear = useCallback((): void => {
+    onChange({ ...config, svgMorphTo: "", svgMorphShapes: [] });
+  }, [config, onChange]);
 
   const handleTextEffectChange = useCallback(
     (value: string) => {
@@ -695,72 +1049,110 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
-  const handleVisualFilterFromChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualFilterFrom: e.target.value });
+  const handleVisualFilterTypeChange = useCallback(
+    (value: string): void => {
+      const type = value as VisualFilterType;
+      if (type === "none") {
+        onChange({ ...config, visualFilterFrom: "", visualFilterTo: "" });
+        return;
+      }
+      const meta = FILTER_META[type];
+      const from = clampNumber(resolvedFilterFrom?.amount ?? meta.defaultFrom, meta.min, meta.max);
+      const to = clampNumber(resolvedFilterTo?.amount ?? meta.defaultTo, meta.min, meta.max);
+      onChange({
+        ...config,
+        visualFilterFrom: buildFilterString(type, from),
+        visualFilterTo: buildFilterString(type, to),
+      });
     },
-    [config, onChange]
+    [config, onChange, resolvedFilterFrom, resolvedFilterTo]
+  );
+
+  const handleVisualFilterFromChange = useCallback(
+    (value: number): void => {
+      if (filterTypeValue === "none") return;
+      onChange({ ...config, visualFilterFrom: buildFilterString(filterTypeValue, value) });
+    },
+    [config, onChange, filterTypeValue]
   );
 
   const handleVisualFilterToChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualFilterTo: e.target.value });
+    (value: number): void => {
+      if (filterTypeValue === "none") return;
+      onChange({ ...config, visualFilterTo: buildFilterString(filterTypeValue, value) });
     },
-    [config, onChange]
+    [config, onChange, filterTypeValue]
+  );
+
+  const handleVisualClipTypeChange = useCallback(
+    (value: string): void => {
+      const type = value as VisualClipType;
+      if (type === "none") {
+        onChange({ ...config, visualClipFrom: "", visualClipTo: "" });
+        return;
+      }
+      onChange({
+        ...config,
+        visualClipFrom: buildClipString(type, clipFromAmount),
+        visualClipTo: buildClipString(type, clipToAmount),
+      });
+    },
+    [config, onChange, clipFromAmount, clipToAmount]
   );
 
   const handleVisualClipFromChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualClipFrom: e.target.value });
+    (value: number): void => {
+      if (clipTypeValue === "none") return;
+      onChange({ ...config, visualClipFrom: buildClipString(clipTypeValue, value) });
     },
-    [config, onChange]
+    [config, onChange, clipTypeValue]
   );
 
   const handleVisualClipToChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualClipTo: e.target.value });
+    (value: number): void => {
+      if (clipTypeValue === "none") return;
+      onChange({ ...config, visualClipTo: buildClipString(clipTypeValue, value) });
     },
-    [config, onChange]
+    [config, onChange, clipTypeValue]
   );
 
   const handleVisualRadiusFromChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualRadiusFrom: e.target.value });
+    (value: number): void => {
+      onChange({ ...config, visualRadiusFrom: `${clampNumber(value, 0, 200)}px` });
     },
     [config, onChange]
   );
 
   const handleVisualRadiusToChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualRadiusTo: e.target.value });
+    (value: number): void => {
+      onChange({ ...config, visualRadiusTo: `${clampNumber(value, 0, 200)}px` });
     },
     [config, onChange]
   );
 
-  const handleVisualShadowFromChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualShadowFrom: e.target.value });
+  const updateShadowValue = useCallback(
+    (target: "from" | "to", partial: Partial<VisualShadowValues>): void => {
+      const current = target === "from" ? shadowFromValues : shadowToValues;
+      const next = { ...current, ...partial };
+      const shadow = buildShadow(next);
+      onChange({
+        ...config,
+        [target === "from" ? "visualShadowFrom" : "visualShadowTo"]: shadow,
+      });
     },
-    [config, onChange]
-  );
-
-  const handleVisualShadowToChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualShadowTo: e.target.value });
-    },
-    [config, onChange]
+    [config, onChange, shadowFromValues, shadowToValues]
   );
 
   const handleVisualBackgroundFromChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualBackgroundFrom: e.target.value });
+    (value: string): void => {
+      onChange({ ...config, visualBackgroundFrom: value });
     },
     [config, onChange]
   );
 
   const handleVisualBackgroundToChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, visualBackgroundTo: e.target.value });
+    (value: string): void => {
+      onChange({ ...config, visualBackgroundTo: value });
     },
     [config, onChange]
   );
@@ -983,6 +1375,86 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
+  const handleParallaxScaleFromChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxScaleFrom: Math.max(0.2, Math.min(3, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxScaleToChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxScaleTo: Math.max(0.2, Math.min(3, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxRotateFromChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxRotateFrom: Math.max(-180, Math.min(180, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxRotateToChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxRotateTo: Math.max(-180, Math.min(180, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxOpacityFromChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxOpacityFrom: Math.max(0, Math.min(1, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxOpacityToChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxOpacityTo: Math.max(0, Math.min(1, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxBlurFromChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxBlurFrom: Math.max(0, Math.min(30, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
+  const handleParallaxBlurToChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        onChange({ ...config, parallaxBlurTo: Math.max(0, Math.min(30, val)) });
+      }
+    },
+    [config, onChange]
+  );
+
   return (
     <div className="space-y-4">
       {/* Preset selector */}
@@ -1001,7 +1473,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               Node animation
             </Label>
             <div className="grid grid-cols-3 gap-2 place-items-center">
-              {nodeTargetOptions.map((option) => {
+              {nodeTargetOptions.map((option: { value: string; label: string; icon: React.ElementType }) => {
                 const Icon = option.icon;
                 const isActive = resolvedNodeTarget === option.value;
                 return (
@@ -1014,7 +1486,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                       className="h-8 w-10 p-0"
                       aria-label={option.label}
                     >
-                      <Icon className="size-4" />
+                      {React.createElement(Icon, { className: "size-4" })}
                     </Button>
                   </Tooltip>
                 );
@@ -1042,7 +1514,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               className="text-sm"
             />
             <div className="flex flex-wrap gap-1.5">
-              {quickSelectors.map((option) => {
+              {quickSelectors.map((option: { value: string; label: string; icon: React.ElementType }) => {
                 const Icon = option.icon;
                 const isActive = selectorValue === option.value;
                 return (
@@ -1510,6 +1982,154 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     />
                   </div>
                 </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Target selector
+                    </Label>
+                    <Input
+                      value={parallaxSelectorValue}
+                      onChange={handleParallaxSelectorChange}
+                      placeholder=":scope > *"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Ease
+                    </Label>
+                    <UnifiedSelect
+                      value={parallaxEaseValue}
+                      onValueChange={handleParallaxEaseChange}
+                      options={ANIMATION_EASINGS}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Scale from
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0.2}
+                      max={3}
+                      step={0.02}
+                      value={parallaxScaleFromValue}
+                      onChange={handleParallaxScaleFromChange}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Scale to
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0.2}
+                      max={3}
+                      step={0.02}
+                      value={parallaxScaleToValue}
+                      onChange={handleParallaxScaleToChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Rotate from (deg)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={-180}
+                      max={180}
+                      step={1}
+                      value={parallaxRotateFromValue}
+                      onChange={handleParallaxRotateFromChange}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Rotate to (deg)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={-180}
+                      max={180}
+                      step={1}
+                      value={parallaxRotateToValue}
+                      onChange={handleParallaxRotateToChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Opacity from
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={parallaxOpacityFromValue}
+                      onChange={handleParallaxOpacityFromChange}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Opacity to
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={parallaxOpacityToValue}
+                      onChange={handleParallaxOpacityToChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Blur from (px)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={30}
+                      step={1}
+                      value={parallaxBlurFromValue}
+                      onChange={handleParallaxBlurFromChange}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      Blur to (px)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={30}
+                      step={1}
+                      value={parallaxBlurToValue}
+                      onChange={handleParallaxBlurToChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
                 {parallaxPatternValue === "increment" && (
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -1595,12 +2215,40 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
 
             {motionPathEnabledValue && (
               <>
-                <Textarea
-                  value={motionPathPathValue}
-                  onChange={handleMotionPathPathChange}
-                  placeholder="SVG path data or selector (#path)"
-                  className="text-xs"
-                />
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Path / Selector
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={motionPathPathValue}
+                      onChange={handleMotionPathPathChange}
+                      placeholder="SVG path data or selector (#path)"
+                      className="flex-1 text-xs font-mono"
+                    />
+                    <Tooltip content="Draw path on canvas">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        onClick={handleMotionPathDraw}
+                      >
+                        <PenLine className="size-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Clear path">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleMotionPathClear}
+                        disabled={!motionPathPathValue && motionPathShapesValue.length === 0}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -1695,12 +2343,42 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               </label>
               {svgDrawEnabledValue && (
                 <>
-                  <Input
-                    value={svgDrawSelectorValue}
-                    onChange={handleSvgDrawSelectorChange}
-                    placeholder="path, line, circle"
-                    className="text-sm"
-                  />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target selector</Label>
+                    <Input
+                      value={svgDrawSelectorValue}
+                      onChange={handleSvgDrawSelectorChange}
+                      placeholder="path, line, circle"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Custom path</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={svgDrawPathValue}
+                        onChange={handleSvgDrawPathChange}
+                        placeholder="Draw or paste SVG path"
+                        className="flex-1 text-xs font-mono"
+                      />
+                      <Tooltip content="Draw path on canvas">
+                        <Button type="button" size="icon" variant="outline" onClick={handleSvgDrawCanvas}>
+                          <PenLine className="size-4" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Clear path">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={handleSvgDrawClear}
+                          disabled={!svgDrawPathValue && svgDrawShapesValue.length === 0}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">From %</Label>
@@ -1736,18 +2414,42 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               </label>
               {svgMorphEnabledValue && (
                 <>
-                  <Input
-                    value={svgMorphSelectorValue}
-                    onChange={handleSvgMorphSelectorChange}
-                    placeholder="path"
-                    className="text-sm"
-                  />
-                  <Textarea
-                    value={svgMorphToValue}
-                    onChange={handleSvgMorphToChange}
-                    placeholder="Target path data or selector (#path)"
-                    className="text-xs"
-                  />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target selector</Label>
+                    <Input
+                      value={svgMorphSelectorValue}
+                      onChange={handleSvgMorphSelectorChange}
+                      placeholder="path"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target path</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={svgMorphToValue}
+                        onChange={handleSvgMorphToChange}
+                        placeholder="Target path data or selector (#path)"
+                        className="flex-1 text-xs font-mono"
+                      />
+                      <Tooltip content="Draw path on canvas">
+                        <Button type="button" size="icon" variant="outline" onClick={handleSvgMorphDraw}>
+                          <PenLine className="size-4" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Clear path">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={handleSvgMorphClear}
+                          disabled={!svgMorphToValue && svgMorphShapesValue.length === 0}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
@@ -1870,67 +2572,222 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Visual FX
             </Label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                value={visualFilterFromValue}
-                onChange={handleVisualFilterFromChange}
-                placeholder="Filter from (e.g. hue-rotate(0deg))"
-                className="text-sm"
-              />
-              <Input
-                value={visualFilterToValue}
-                onChange={handleVisualFilterToChange}
-                placeholder="Filter to (e.g. hue-rotate(90deg))"
-                className="text-sm"
-              />
-              <Input
-                value={visualClipFromValue}
-                onChange={handleVisualClipFromChange}
-                placeholder="Clip-path from (inset(100% 0 0 0))"
-                className="text-sm"
-              />
-              <Input
-                value={visualClipToValue}
-                onChange={handleVisualClipToChange}
-                placeholder="Clip-path to (inset(0 0 0 0))"
-                className="text-sm"
-              />
-              <Input
-                value={visualRadiusFromValue}
-                onChange={handleVisualRadiusFromChange}
-                placeholder="Radius from (0px)"
-                className="text-sm"
-              />
-              <Input
-                value={visualRadiusToValue}
-                onChange={handleVisualRadiusToChange}
-                placeholder="Radius to (999px)"
-                className="text-sm"
-              />
-              <Input
-                value={visualShadowFromValue}
-                onChange={handleVisualShadowFromChange}
-                placeholder="Shadow from"
-                className="text-sm"
-              />
-              <Input
-                value={visualShadowToValue}
-                onChange={handleVisualShadowToChange}
-                placeholder="Shadow to"
-                className="text-sm"
-              />
-              <Input
-                value={visualBackgroundFromValue}
-                onChange={handleVisualBackgroundFromChange}
-                placeholder="Background from"
-                className="text-sm"
-              />
-              <Input
-                value={visualBackgroundToValue}
-                onChange={handleVisualBackgroundToChange}
-                placeholder="Background to"
-                className="text-sm"
-              />
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3">
+                <SelectField
+                  label="Filter type"
+                  value={filterTypeValue}
+                  onChange={handleVisualFilterTypeChange}
+                  options={FILTER_OPTIONS}
+                />
+                {filterTypeValue !== "none" && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <RangeField
+                      label="Filter from"
+                      value={filterFromAmount}
+                      onChange={handleVisualFilterFromChange}
+                      min={filterMeta.min}
+                      max={filterMeta.max}
+                      step={filterMeta.step}
+                      suffix={filterMeta.unit}
+                    />
+                    <RangeField
+                      label="Filter to"
+                      value={filterToAmount}
+                      onChange={handleVisualFilterToChange}
+                      min={filterMeta.min}
+                      max={filterMeta.max}
+                      step={filterMeta.step}
+                      suffix={filterMeta.unit}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3">
+                <SelectField
+                  label="Clip path"
+                  value={clipTypeValue}
+                  onChange={handleVisualClipTypeChange}
+                  options={CLIP_OPTIONS}
+                />
+                {clipTypeValue !== "none" && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <RangeField
+                      label="Clip from"
+                      value={clipFromAmount}
+                      onChange={handleVisualClipFromChange}
+                      min={0}
+                      max={100}
+                      step={1}
+                      suffix="%"
+                    />
+                    <RangeField
+                      label="Clip to"
+                      value={clipToAmount}
+                      onChange={handleVisualClipToChange}
+                      min={0}
+                      max={100}
+                      step={1}
+                      suffix="%"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <RangeField
+                    label="Radius from"
+                    value={radiusFromAmount}
+                    onChange={handleVisualRadiusFromChange}
+                    min={0}
+                    max={200}
+                    step={1}
+                    suffix="px"
+                  />
+                  <RangeField
+                    label="Radius to"
+                    value={radiusToAmount}
+                    onChange={handleVisualRadiusToChange}
+                    min={0}
+                    max={200}
+                    step={1}
+                    suffix="px"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500">Shadow</div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-3">
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500">From</div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <RangeField
+                        label="Offset X"
+                        value={shadowFromValues.x}
+                        onChange={(value: number) => updateShadowValue("from", { x: value })}
+                        min={-60}
+                        max={60}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Offset Y"
+                        value={shadowFromValues.y}
+                        onChange={(value: number) => updateShadowValue("from", { y: value })}
+                        min={-60}
+                        max={60}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Blur"
+                        value={shadowFromValues.blur}
+                        onChange={(value: number) => updateShadowValue("from", { blur: value })}
+                        min={0}
+                        max={120}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Spread"
+                        value={shadowFromValues.spread}
+                        onChange={(value: number) => updateShadowValue("from", { spread: value })}
+                        min={-40}
+                        max={40}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Opacity"
+                        value={shadowFromValues.opacity}
+                        onChange={(value: number) => updateShadowValue("from", { opacity: value })}
+                        min={0}
+                        max={100}
+                        step={1}
+                        suffix="%"
+                      />
+                    </div>
+                    <ColorPickerField
+                      label="Color"
+                      value={shadowFromValues.color}
+                      onChange={(value: string) => updateShadowValue("from", { color: value })}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500">To</div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <RangeField
+                        label="Offset X"
+                        value={shadowToValues.x}
+                        onChange={(value: number) => updateShadowValue("to", { x: value })}
+                        min={-60}
+                        max={60}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Offset Y"
+                        value={shadowToValues.y}
+                        onChange={(value: number) => updateShadowValue("to", { y: value })}
+                        min={-60}
+                        max={60}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Blur"
+                        value={shadowToValues.blur}
+                        onChange={(value: number) => updateShadowValue("to", { blur: value })}
+                        min={0}
+                        max={120}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Spread"
+                        value={shadowToValues.spread}
+                        onChange={(value: number) => updateShadowValue("to", { spread: value })}
+                        min={-40}
+                        max={40}
+                        step={1}
+                        suffix="px"
+                      />
+                      <RangeField
+                        label="Opacity"
+                        value={shadowToValues.opacity}
+                        onChange={(value: number) => updateShadowValue("to", { opacity: value })}
+                        min={0}
+                        max={100}
+                        step={1}
+                        suffix="%"
+                      />
+                    </div>
+                    <ColorPickerField
+                      label="Color"
+                      value={shadowToValues.color}
+                      onChange={(value: string) => updateShadowValue("to", { color: value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ColorPickerField
+                    label="Background from"
+                    value={visualBackgroundFromValue}
+                    onChange={handleVisualBackgroundFromChange}
+                  />
+                  <ColorPickerField
+                    label="Background to"
+                    value={visualBackgroundToValue}
+                    onChange={handleVisualBackgroundToChange}
+                  />
+                </div>
+              </div>
             </div>
           </SectionPanel>
 

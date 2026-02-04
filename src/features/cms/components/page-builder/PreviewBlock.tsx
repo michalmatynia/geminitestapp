@@ -9,7 +9,9 @@ import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/co
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
 import { GsapAnimationWrapper } from "../frontend/GsapAnimationWrapper";
+import { CssAnimationWrapper } from "../frontend/CssAnimationWrapper";
 import type { GsapAnimationConfig } from "@/features/gsap";
+import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
 import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
 import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 
@@ -486,6 +488,7 @@ export function PreviewSection({
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = resolveNodeLabel(section.type, section.settings["label"]);
   const animConfig = section.settings["gsapAnimation"] as Partial<GsapAnimationConfig> | undefined;
+  const cssAnimConfig = section.settings["cssAnimation"] as CssAnimationConfig | undefined;
   // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
   const inspectorActive = isInspecting;
   const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
@@ -558,9 +561,11 @@ export function PreviewSection({
       className="w-full"
     >
       <GsapAnimationWrapper config={animConfig}>
-        <EventEffectsWrapper settings={section.settings} disableClick>
-          {node}
-        </EventEffectsWrapper>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          <EventEffectsWrapper settings={section.settings} disableClick>
+            {node}
+          </EventEffectsWrapper>
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     </InspectorHover>
   );
@@ -1465,6 +1470,13 @@ export function PreviewSection({
   if (section.type === "Model3DElement" || section.type === "Model3D") {
     const assetId = (section.settings["assetId"] as string) || "";
     const height = getSpacingValue(section.settings["height"]) || 360;
+    const sectionStyles = getSectionStyles(section.settings, colorSchemes);
+    if ("width" in sectionStyles) {
+      delete sectionStyles.width;
+    }
+    if ("maxWidth" in sectionStyles) {
+      delete sectionStyles.maxWidth;
+    }
     const hasAsset = assetId.trim().length > 0;
     if (!hasAsset && !showEditorChrome) {
       return null;
@@ -1482,7 +1494,7 @@ export function PreviewSection({
             onKeyDown={(e: React.KeyboardEvent): void => {
               if (e.key === "Enter" || e.key === " ") handleSelect();
             }}
-            style={getSectionStyles(section.settings, colorSchemes)}
+            style={sectionStyles}
             className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
           >
             {renderSectionActions()}
@@ -1527,7 +1539,7 @@ export function PreviewSection({
           onKeyDown={(e: React.KeyboardEvent): void => {
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
-          style={getSectionStyles(section.settings, colorSchemes)}
+          style={sectionStyles}
           className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
@@ -2288,6 +2300,10 @@ function PreviewBlockItem({
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const animConfig = block.settings["gsapAnimation"] as Partial<GsapAnimationConfig> | undefined;
+  const cssAnimConfig = block.settings["cssAnimation"] as CssAnimationConfig | undefined;
+  const allowInlineCustomCss = !["Block", "Row", "Column"].includes(block.type);
+  const inlineCustomCss = allowInlineCustomCss ? block.settings["customCss"] : undefined;
+  const inlineCustomNodeId = allowInlineCustomCss ? block.id : undefined;
   const selectedBorderClass = isInspecting
     ? "ring-2 ring-inset ring-blue-500/40"
     : "ring-1 ring-inset ring-blue-400/30";
@@ -2364,9 +2380,16 @@ function PreviewBlockItem({
       className={stretchClass}
     >
       <GsapAnimationWrapper config={animConfig}>
-        <EventEffectsWrapper settings={block.settings} disableClick>
-          {node}
-        </EventEffectsWrapper>
+        <CssAnimationWrapper config={cssAnimConfig}>
+          <EventEffectsWrapper
+            settings={block.settings}
+            disableClick
+            nodeId={inlineCustomNodeId}
+            customCss={inlineCustomCss}
+          >
+            {node}
+          </EventEffectsWrapper>
+        </CssAnimationWrapper>
       </GsapAnimationWrapper>
     </InspectorHover>
   );

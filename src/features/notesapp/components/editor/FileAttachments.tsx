@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Label, FileUploadTrigger } from "@/shared/ui";
+import { Button, Label, FileUploadTrigger, type FileUploadHelpers } from "@/shared/ui";
 
 import Image from "next/image";
 import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
@@ -16,7 +16,7 @@ interface FileAttachmentsProps {
   uploadingSlots: Set<number>;
   getNextAvailableSlot: () => number | null;
   onFileUpload: (slotIndex: number, file: File) => Promise<void>;
-  onMultiFileUpload: (files: FileList | File[], helpers?: { setProgress: (value: number) => void }) => Promise<void>;
+  onMultiFileUpload: (files: FileList | File[], helpers?: FileUploadHelpers) => Promise<void>;
   onFileDelete: (slotIndex: number) => Promise<void>;
   onInsertFileReference: (file: NoteFileRecord) => void;
   formatFileSize: (bytes: number) => string;
@@ -79,7 +79,7 @@ export function FileAttachments({
                   <FileUploadTrigger
                     multiple
                     asChild
-                    onFilesSelected={(files: File[], helpers) => onMultiFileUpload(files, helpers)}
+                    onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => onMultiFileUpload(files, helpers)}
                   >
                     <span className="flex h-full w-full flex-col items-center justify-center">
                       <Upload size={14} />

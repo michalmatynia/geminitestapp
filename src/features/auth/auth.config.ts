@@ -6,6 +6,9 @@ const secret =
   process.env.AUTH_SECRET ||
   process.env.NEXTAUTH_SECRET ||
   (process.env.NODE_ENV === "development" ? devFallbackSecret : undefined);
+const isProd = process.env.NODE_ENV === "production";
+const securePrefix = isProd ? "__Secure-" : "";
+const hostPrefix = isProd ? "__Host-" : "";
 
 if (
   process.env.NODE_ENV === "development" &&
@@ -58,6 +61,62 @@ export const authConfig = {
   },
   trustHost: true,
   ...(secret ? { secret } : {}),
+  cookies: {
+    sessionToken: {
+      name: `${securePrefix}authjs.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    callbackUrl: {
+      name: `${securePrefix}authjs.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    csrfToken: {
+      name: `${hostPrefix}authjs.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    pkceCodeVerifier: {
+      name: `${securePrefix}authjs.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    state: {
+      name: `${securePrefix}authjs.state`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    nonce: {
+      name: `${securePrefix}authjs.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+  },
   session: { strategy: "jwt" },
   callbacks: {
     authorized({

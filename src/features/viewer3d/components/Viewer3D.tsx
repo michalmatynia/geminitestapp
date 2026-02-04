@@ -361,7 +361,7 @@ function ScreenshotCapture({
 }): React.JSX.Element | null {
   const { gl } = useThree();
   useEffect(() => {
-    captureRef.current = () => {
+    captureRef.current = (): string | null => {
       try {
         return gl.domElement.toDataURL("image/png");
       } catch {

@@ -1,13 +1,14 @@
 "use client";
 
 import { Button, Input, UnifiedSelect, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, FiltersContainer } from "@/shared/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
 import { useClearLogsMutation, useRebuildIndexesMutation } from "@/features/observability/hooks/useLogMutations";
 
 import { RefreshCcw, Trash2, Copy } from "lucide-react";
-import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
+import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from "@/shared/types";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -80,6 +81,7 @@ export default function SystemLogsPage(): React.JSX.Element {
 
   const [isClearLogsConfirmOpen, setIsClearLogsConfirmOpen] = useState(false);
   const [isRebuildIndexesConfirmOpen, setIsRebuildIndexesConfirmOpen] = useState(false);
+  const [logInterpretations, setLogInterpretations] = useState<Record<string, AiInsightRecord>>({});
 
   const [page, setPage] = useState(1);
   const pageSize = 50;
@@ -106,6 +108,63 @@ export default function SystemLogsPage(): React.JSX.Element {
   const logsQuery = useSystemLogs(filters);
   const metricsQuery = useSystemLogMetrics(metricsFilters);
   const mongoDiagnosticsQuery = useMongoDiagnostics();
+  const insightsQuery = useQuery({
+    queryKey: ["system", "logs", "insights"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/logs/insights?limit=5");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Failed to load log insights.");
+      }
+      return (await res.json()) as { insights: AiInsightRecord[] };
+    },
+  });
+
+  const runInsightMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/system/logs/insights", { method: "POST" });
+      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to generate log insight.");
+      }
+      return data?.insight ?? null;
+    },
+    onSuccess: (insight) => {
+      if (insight) {
+        toast("AI log insight generated.", { variant: "success" });
+        void insightsQuery.refetch();
+      }
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : "Failed to generate log insight.", { variant: "error" });
+    },
+  });
+
+  const interpretLogMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      const res = await fetch("/api/system/logs/interpret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logId }),
+      });
+      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to interpret log.");
+      }
+      return data?.insight ?? null;
+    },
+    onSuccess: (insight) => {
+      if (!insight) return;
+      setLogInterpretations((prev: Record<string, AiInsightRecord>) => ({
+        ...prev,
+        [String(insight.context?.logId ?? insight.id)]: insight,
+      }));
+      toast("AI interpretation added.", { variant: "success" });
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : "Failed to interpret log.", { variant: "error" });
+    },
+  });
 
   // Mutations
   const clearLogsMutation = useClearLogsMutation();
@@ -520,6 +579,66 @@ export default function SystemLogsPage(): React.JSX.Element {
             )}
           </SectionPanel>
 
+          <SectionPanel variant="subtle" className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">AI Log Interpreter</h2>
+                <p className="text-xs text-gray-400">
+                  Summarizes error patterns and potential causes using your configured AI model or agent.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => runInsightMutation.mutate()}
+                disabled={runInsightMutation.isPending}
+              >
+                {runInsightMutation.isPending ? "Running..." : "Run AI Interpretation"}
+              </Button>
+            </div>
+            {insightsQuery.isLoading ? (
+              <div className="mt-3 text-xs text-gray-400">Loading AI insights...</div>
+            ) : insightsQuery.error ? (
+              <div className="mt-3 text-xs text-red-400">{insightsQuery.error.message}</div>
+            ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
+              <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {insightsQuery.data?.insights.map((insight) => (
+                  <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] uppercase text-gray-500">
+                        {formatTimestamp(insight.createdAt)}
+                      </span>
+                      <span
+                        className={`rounded border px-2 py-0.5 text-[10px] ${
+                          insight.status === "ok"
+                            ? "border-emerald-500/40 text-emerald-200"
+                            : insight.status === "warning"
+                              ? "border-amber-500/40 text-amber-200"
+                              : "border-rose-500/40 text-rose-200"
+                        }`}
+                      >
+                        {insight.status}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-white">{insight.summary}</div>
+                    {insight.warnings.length > 0 ? (
+                      <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                        {insight.warnings.map((warning, index) => (
+                          <li key={`${insight.id}-warn-${index}`}>{warning}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 text-[10px] text-gray-500">
+              Configure the AI model/agent in Settings → AI.
+            </div>
+          </SectionPanel>
+
           <SectionPanel variant="subtle" className="p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
               <span>
@@ -551,9 +670,20 @@ export default function SystemLogsPage(): React.JSX.Element {
                           {formatTimestamp(log.createdAt)}
                         </span>
                       </div>
-                      {log.source ? (
-                        <span className="text-xs text-gray-500">{log.source}</span>
-                      ) : null}
+                      <div className="flex items-center gap-2">
+                        {log.source ? (
+                          <span className="text-xs text-gray-500">{log.source}</span>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => interpretLogMutation.mutate(log.id)}
+                          disabled={interpretLogMutation.isPending}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          Interpret
+                        </Button>
+                      </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-200">{log.message}</div>
                     {(log.path || log.method || log.statusCode) && (
@@ -576,6 +706,21 @@ export default function SystemLogsPage(): React.JSX.Element {
                         <summary className="cursor-pointer hover:text-gray-200">
                           Details
                         </summary>
+                        {logInterpretations[log.id] ? (
+                          <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
+                            <div className="font-semibold text-gray-200">AI Interpretation</div>
+                            <div className="mt-2 text-gray-300">
+                              {logInterpretations[log.id]?.summary}
+                            </div>
+                            {logInterpretations[log.id]?.warnings?.length ? (
+                              <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                                {logInterpretations[log.id].warnings.map((warning, index) => (
+                                  <li key={`${log.id}-ai-${index}`}>{warning}</li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </SectionPanel>
+                        ) : null}
                         {log.source === "client" && log.context ? (
                           <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
                             <div className="font-semibold text-gray-200">Client context</div>

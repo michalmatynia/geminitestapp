@@ -20,7 +20,7 @@ import {
   getMongoDumpCommand,
   execFileAsync as mongoExecFileAsync,
 } from "@/features/database/utils/mongo";
-import { operationFailedError } from "@/shared/errors/app-error";
+import { forbiddenError, operationFailedError } from "@/shared/errors/app-error";
 
 export type DatabaseBackupResult = {
   message: string;
@@ -29,7 +29,14 @@ export type DatabaseBackupResult = {
   warning?: string | undefined;
 };
 
+const assertBackupsAllowed = (): void => {
+  if (process.env.NODE_ENV === "production") {
+    throw forbiddenError("Database backups are disabled in production.");
+  }
+};
+
 export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
+  assertBackupsAllowed();
   const mongoUri = getMongoConnectionUrl();
   const databaseName = getMongoDatabaseName();
   await ensureMongoBackupsDir();
@@ -94,6 +101,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
 };
 
 export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
+  assertBackupsAllowed();
   const databaseUrl = getPgConnectionUrl();
   const databaseName = getDatabaseName(databaseUrl);
   await ensurePgBackupsDir();
@@ -151,6 +159,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
 };
 
 export const createFullDatabaseBackup = async (): Promise<{ mongo: DatabaseBackupResult; postgres: DatabaseBackupResult }> => {
+  assertBackupsAllowed();
   const mongo = await createMongoBackup();
   const postgres = await createPostgresBackup();
   return { mongo, postgres };

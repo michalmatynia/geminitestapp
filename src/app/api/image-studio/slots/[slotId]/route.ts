@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 import prisma from "@/shared/lib/db/prisma";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -28,7 +29,7 @@ const patchSchema = z.object({
   imageFileId: z.string().trim().optional().nullable(),
   asset3dId: z.string().trim().optional().nullable(),
   screenshotFileId: z.string().trim().optional().nullable(),
-  metadata: z.record(z.string(), z.any()).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 async function PATCH_handler(
@@ -59,7 +60,7 @@ async function PATCH_handler(
 
     const updated = await prisma.imageStudioSlot.update({
       where: { id: slotId },
-      data,
+      data: data as Prisma.ImageStudioSlotUpdateInput,
       include: {
         imageFile: true,
         screenshotFile: true,

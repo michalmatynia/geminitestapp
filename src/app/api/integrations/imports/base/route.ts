@@ -21,7 +21,7 @@ import {
   fetchBaseWarehousesDebug,
   fetchBaseProducts,
   fetchBaseProductIds,
-  fetchBaseProductDetails,
+  fetchBaseProductDetails
 } from "@/features/integrations/services/imports/base-client";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
@@ -49,7 +49,7 @@ const requestSchema = z.object({
   imageMode: z.enum(["links", "download"]).optional(),
   uniqueOnly: z.boolean().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
-  selectedIds: z.array(z.string().trim().min(1)).optional(),
+  selectedIds: z.array(z.string().trim().min(1)).optional()
 });
 
 type BaseRecord = {
@@ -174,8 +174,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         raw: {
           inventory: inventoryResult,
           inventories: inventoriesResult,
-          all: allResult,
-        },
+          all: allResult
+        }
       });
     }
 
@@ -193,7 +193,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const productRepository = await getProductRepository();
       const allProducts = await productRepository.getProducts({
         pageSize: "10000", // Get all products
-        page: "0",
+        page: "0"
       });
       const existingIds = new Set(
         allProducts
@@ -208,7 +208,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
               const listItems = allBaseIds.map((id: string) => ({
                 id,
-                exists: existingIds.has(id),
+                exists: existingIds.has(id)
               }));
       const filteredItems = data.uniqueOnly
         ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
@@ -228,7 +228,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
           page,
           pageSize,
-          totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize)),
+          totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize))
         });
       }
 
@@ -281,7 +281,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             description: description.slice(0, 100),
             price: mapped.price ?? 0,
             stock: mapped.stock ?? 0,
-            image: images[0] ?? null,
+            image: images[0] ?? null
           };
         })
         .filter((item) => Boolean(item.baseProductId && item.sku));
@@ -305,7 +305,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         skuDuplicates: skuDuplicateCount, // New stat
         page,
         pageSize,
-        totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize)),
+        totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize))
       });
     }
 
@@ -323,7 +323,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           : fetchBaseProducts(token, data.inventoryId, data.limit),
         getCatalogRepository(),
         getProductRepository(),
-        getImageFileRepository(),
+        getImageFileRepository()
       ]);
 
     let productsToImport = products;
@@ -334,7 +334,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (data.uniqueOnly || !allowDuplicateSku) {
       const allProducts = await productRepository.getProducts({
         pageSize: "10000",
-        page: "0",
+        page: "0"
       });
 
       if (data.uniqueOnly) {
@@ -409,7 +409,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           })()
         : prisma.priceGroup.findFirst({
             where: { isDefault: true },
-            select: { id: true },
+            select: { id: true }
           });
     const resolvedDefault = (await defaultPriceGroup) as { id: string } | null;
     if (!resolvedDefault?.id) {
@@ -470,7 +470,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         filename,
         filepath: publicPath,
         mimetype: contentType,
-        size: buffer.length,
+        size: buffer.length
       });
     };
 
@@ -492,7 +492,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         const payload = productCreateSchema.parse({
           ...mapped,
           defaultPriceGroupId: resolvedDefault.id,
-          imageLinks: imageUrls,
+          imageLinks: imageUrls
         });
         const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
         if (!created && payload.sku) {
@@ -505,7 +505,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         }
         if (created) {
           await productRepository.replaceProductCatalogs(created.id, [
-            targetCatalog.id,
+            targetCatalog.id
           ]);
         }
 
@@ -524,7 +524,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
                   filename,
                   filepath: url,
                   mimetype: guessMimeType(url),
-                  size: 0,
+                  size: 0
                 });
                 imageFileIds.push(file.id);
               }
@@ -556,12 +556,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
               ...mapped,
               sku: fallbackSku,
               defaultPriceGroupId: resolvedDefault.id,
-              imageLinks: imageUrls,
+              imageLinks: imageUrls
             });
             const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
             if (created) {
               await productRepository.replaceProductCatalogs(created.id, [
-                targetCatalog.id,
+                targetCatalog.id
               ]);
             }
 
@@ -584,7 +584,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
                       filename,
                       filepath: url,
                       mimetype: guessMimeType(url),
-                      size: 0,
+                      size: 0
                     });
                     imageFileIds.push(file.id);
                   }
@@ -623,17 +623,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       failed,
       skipped, // Products skipped due to duplicate SKU
       errors,
-      total: productsToImport.length,
+      total: productsToImport.length
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.POST",
-      fallbackMessage: "Failed to import from Base.com",
+      fallbackMessage: "Failed to import from Base.com"
     });
   }
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.POST" });
+ { source: "products.imports.base.POST", requireCsrf: false });

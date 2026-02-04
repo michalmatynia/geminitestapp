@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/features/auth/server";
-import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { authError, validationError } from "@/shared/errors/app-error";
+import { authError, badRequestError, validationError } from "@/shared/errors/app-error";
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/server";
 import { decryptAuthSecret } from "@/features/auth/server";
 import { hashRecoveryCode, verifyTotpToken } from "@/features/auth/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ const payloadSchema = z.object({
   recoveryCode: z.string().trim().optional(),
 });
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -25,18 +25,28 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       throw authError("Unauthorized.");
     }
 
-    const parsed = await parseJsonBody(req, payloadSchema, {
-      logPrefix: "auth.mfa.disable.POST",
+    const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
+    if (!data) {
+      throw badRequestError("Invalid payload");
+    }
+    await logAuthEvent({
+      req,
+      action: "auth.mfa.disable",
+      stage: "start",
+      userId,
+      body: {
+        hasToken: Boolean(data?.token?.trim()),
+        hasRecoveryCode: Boolean(data?.recoveryCode?.trim()),
+      },
     });
-    if (!parsed.ok) return parsed.response;
 
     const profile = await getAuthSecurityProfile(userId);
     if (!profile.mfaEnabled) {
       return NextResponse.json({ ok: true, message: "MFA already disabled." });
     }
 
-    const token = parsed.data?.token?.trim() ?? "";
-    const recovery = parsed.data?.recoveryCode?.trim() ?? "";
+    const token = data?.token?.trim() ?? "";
+    const recovery = data?.recoveryCode?.trim() ?? "";
     if (!token && !recovery) {
       throw validationError("Provide a token or recovery code.");
     }
@@ -61,6 +71,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       recoveryCodes: [],
     });
 
+    await logAuthEvent({
+      req,
+      action: "auth.mfa.disable",
+      stage: "success",
+      userId,
+      status: 200,
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return createErrorResponse(error, {
@@ -73,4 +90,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "auth.mfa.disable.POST" });
+ {
+   source: "auth.mfa.disable.POST",
+   parseJsonBody: true,
+   bodySchema: payloadSchema,
+   rateLimitKey: "auth",
+   maxBodyBytes: 10_000,
+   allowedMethods: ["POST"],
+   requireCsrf: false,
+ });

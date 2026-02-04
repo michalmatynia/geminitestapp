@@ -5,13 +5,13 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { normalizeAuthEmail } from "@/features/auth/server";
 import { auth } from "@/features/auth/server";
-import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
+import { authError, badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import type { AuthUserDto } from "@/shared/dtos/auth";
 import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -40,14 +40,19 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (!hasAccess) {
       throw authError("Unauthorized.");
     }
-    const parsed = await parseJsonBody(req, updateSchema, {
-      logPrefix: "auth.users.PATCH",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
+    const data = ctx.body as z.infer<typeof updateSchema> | undefined;
+    if (!data) {
+      throw badRequestError("Invalid payload");
     }
+    await logAuthEvent({
+      req,
+      action: "auth.users.update",
+      stage: "start",
+      userId: session?.user?.id ?? null,
+      body: { targetUserId: params.id },
+    });
 
-    const { name, email, emailVerified } = parsed.data;
+    const { name, email, emailVerified } = data;
     if (name === undefined && email === undefined && emailVerified === undefined) {
       return NextResponse.json(
         { error: "No updates provided." },
@@ -119,6 +124,14 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
         createdAt: nowIso,
         updatedAt: nowIso,
       };
+      await logAuthEvent({
+        req,
+        action: "auth.users.update",
+        stage: "success",
+        userId: session?.user?.id ?? null,
+        body: { targetUserId: params.id },
+        status: 200,
+      });
       return NextResponse.json(payload);
     }
 
@@ -181,6 +194,14 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
       createdAt: updated.createdAt?.toISOString() ?? new Date().toISOString(),
       updatedAt: updated.updatedAt?.toISOString() ?? new Date().toISOString(),
     };
+    await logAuthEvent({
+      req,
+      action: "auth.users.update",
+      stage: "success",
+      userId: session?.user?.id ?? null,
+      body: { targetUserId: params.id },
+      status: 200,
+    });
     return NextResponse.json(payload);
   } catch (error) {
     return createErrorResponse(error, {
@@ -191,4 +212,12 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
   }
 }
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "auth.users.[id].PATCH" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
+  source: "auth.users.[id].PATCH",
+  parseJsonBody: true,
+  bodySchema: updateSchema,
+  rateLimitKey: "write",
+  maxBodyBytes: 20_000,
+  allowedMethods: ["PATCH"],
+  requireCsrf: false,
+});

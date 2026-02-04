@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
-import { Prisma } from "@prisma/client";
+import { Prisma, type FileUploadEvent } from "@prisma/client";
 import { ObjectId } from "mongodb";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -275,7 +275,7 @@ export async function listFileUploadEvents(
       }),
     ]);
 
-    const events = rows.map((row) =>
+    const events = rows.map((row: FileUploadEvent) =>
       normalizeRecord({
         id: row.id,
         status: row.status as "success" | "error",

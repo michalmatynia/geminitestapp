@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   getExportDefaultConnectionId,
-  setExportDefaultConnectionId,
+  setExportDefaultConnectionId
 } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -12,7 +12,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const postSchema = z.object({
-  connectionId: z.string().nullable(),
+  connectionId: z.string().nullable()
 });
 
 /**
@@ -27,7 +27,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.default-connection.GET",
-      fallbackMessage: "Failed to get default connection ID",
+      fallbackMessage: "Failed to get default connection ID"
     });
   }
 }
@@ -39,7 +39,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, postSchema, {
-      logPrefix: "exports.base.default-connection.POST",
+      logPrefix: "exports.base.default-connection.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -51,14 +51,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.default-connection.POST",
-      fallbackMessage: "Failed to set default connection ID",
+      fallbackMessage: "Failed to set default connection ID"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.exports.base.default-connection.GET" });
+ { source: "products.exports.base.default-connection.GET", requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.exports.base.default-connection.POST" });
+ { source: "products.exports.base.default-connection.POST", requireCsrf: false });

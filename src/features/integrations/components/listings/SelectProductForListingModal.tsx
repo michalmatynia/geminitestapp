@@ -201,7 +201,7 @@ export default function SelectProductForListingModal({
                 <div className="flex flex-wrap items-center gap-2">
                   <ImageRetryDropdown
                     presets={imageRetryPresets}
-                    onRetry={(preset) => void handleImageRetry(preset)}
+                    onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
                     disabled={exportMutation.isPending || createListingMutation.isPending}
                   />
                   <span className="text-xs text-red-200/80">

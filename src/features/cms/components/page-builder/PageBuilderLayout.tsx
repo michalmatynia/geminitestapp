@@ -71,6 +71,24 @@ function PageBuilderInner(): React.ReactNode {
     };
   }, [dispatch, state.rightPanelCollapsed]);
 
+  useEffect((): (() => void) | void => {
+    if (typeof window === "undefined") return undefined;
+    const handler = (event: Event): void => {
+      const detail = (event as CustomEvent).detail ?? {};
+      if (state.leftPanelCollapsed) {
+        dispatch({ type: "TOGGLE_LEFT_PANEL" });
+      }
+      setLeftPanelMode("theme");
+      window.requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent("cms-theme-open", { detail }));
+      });
+    };
+    window.addEventListener("cms-builder-open-theme", handler as EventListener);
+    return (): void => {
+      window.removeEventListener("cms-builder-open-theme", handler as EventListener);
+    };
+  }, [dispatch, state.leftPanelCollapsed]);
+
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white">
       <div className="relative flex flex-1 overflow-hidden">

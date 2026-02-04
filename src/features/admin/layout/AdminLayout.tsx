@@ -2,14 +2,15 @@
 
 import { Button } from "@/shared/ui";
 import Link from "next/link";
-import { ChevronLeftIcon } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { ChevronLeftIcon, SparklesIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
+import { AiInsightsNotificationsDrawer } from "@/features/admin/components/AiInsightsNotificationsDrawer";
 
 import Menu from "@/features/admin/components/Menu";
 
@@ -27,6 +28,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const programmaticCollapsedRef = useRef(false);
   const hydratedUserRef = useRef<string | null>(null);
   const menuCookieKey = "adminMenuCollapsed";
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferencesMutation();
@@ -115,10 +117,22 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       <div className="relative flex-1 flex flex-col min-w-0">
         <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
           <div className="pointer-events-auto">
-            <UserNav />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2"
+                onClick={() => setAiDrawerOpen(true)}
+              >
+                <SparklesIcon className="size-4" />
+                AI Warnings
+              </Button>
+              <UserNav />
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+        <AiInsightsNotificationsDrawer open={aiDrawerOpen} onClose={() => setAiDrawerOpen(false)} />
       </div>
     </div>
   );

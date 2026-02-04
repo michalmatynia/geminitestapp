@@ -28,7 +28,7 @@ export const setDragData = (
     effectAllowed?: DataTransfer["effectAllowed"];
   }
 ): void => {
-  Object.entries(data).forEach(([key, value]) => {
+  Object.entries(data).forEach(([key, value]: [string, string | number | null | undefined]) => {
     if (value === undefined || value === null) return;
     dataTransfer.setData(key, String(value));
   });
@@ -59,7 +59,7 @@ export const getFirstDragValue = (
 
 export const hasDragType = (dataTransfer: DataTransfer, keys: string[]): boolean => {
   const types = Array.from(dataTransfer.types ?? []);
-  return keys.some((key) => types.includes(key));
+  return keys.some((key: string) => types.includes(key));
 };
 
 export const parseDragIndex = (rawIndex?: string | null): number | null => {

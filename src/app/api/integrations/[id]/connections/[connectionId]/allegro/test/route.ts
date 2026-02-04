@@ -44,7 +44,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       step,
       status,
       detail,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   };
 
@@ -58,8 +58,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   };
 
@@ -124,8 +124,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.allegro.public.v1+json",
-        },
+          Accept: "application/vnd.allegro.public.v1+json"
+        }
       });
 
     const refreshAccessToken = async (): Promise<string> => {
@@ -135,15 +135,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
       const body = new URLSearchParams({
         grant_type: "refresh_token",
-        refresh_token: refreshToken,
+        refresh_token: refreshToken
       });
       const tokenRes = await fetch(tokenUrl, {
         method: "POST",
         headers: {
           Authorization: `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        body,
+        body
       });
       if (!tokenRes.ok) {
         const payload = await tokenRes.text();
@@ -169,7 +169,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         allegroTokenType: payload.token_type ?? null,
         allegroScope: payload.scope ?? null,
         allegroExpiresAt: expiresAt,
-        allegroTokenUpdatedAt: new Date(),
+        allegroTokenUpdatedAt: new Date()
       });
       return payload.access_token;
     };
@@ -207,7 +207,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     );
 
     await repo.updateConnection(connection.id, {
-      allegroTokenUpdatedAt: new Date(),
+      allegroTokenUpdatedAt: new Date()
     });
 
     let profile: unknown = raw;
@@ -220,7 +220,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return NextResponse.json({
       ok: true,
       steps,
-      profile,
+      profile
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -228,7 +228,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const appError = createAppError(error.message, {
         code: AppErrorCodes.badRequest,
         httpStatus: 400,
-        expected: false,
+        expected: false
       });
       return createErrorResponse(appError, {
         request: req,
@@ -237,8 +237,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         extra: {
           steps,
           integrationId,
-          connectionId: integrationConnectionId,
-        },
+          connectionId: integrationConnectionId
+        }
       });
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
@@ -249,10 +249,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].allegro.test.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  {
+    source: "integrations.[id].connections.[connectionId].allegro.test.POST", requireCsrf: false
+  }
+);

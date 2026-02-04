@@ -22,6 +22,7 @@ import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { PageSelectorBar } from "./PageSelectorBar";
+import { VectorOverlay } from "./VectorOverlay";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
@@ -31,7 +32,7 @@ const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 2000;
 
 export function PagePreviewPanel(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
+  const { state, dispatch, vectorOverlay, closeVectorOverlay } = usePageBuilder();
   const { theme } = useThemeSettings();
   const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
@@ -171,6 +172,7 @@ export function PagePreviewPanel(): React.ReactNode {
   );
 
   const effectiveHoveredNodeId = state.inspectorEnabled ? hoveredNodeId : null;
+  const isVectorOverlayOpen = Boolean(vectorOverlay);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
@@ -626,7 +628,7 @@ export function PagePreviewPanel(): React.ReactNode {
               <div
                 data-cms-canvas="true"
                 ref={canvasRef}
-                className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
+                className={`cms-hover-scope relative mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
                   state.inspectorEnabled ? "cursor-crosshair" : ""
                 }`}
                 style={{
@@ -636,7 +638,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   ...scaledCanvasStyle,
                 }}
               >
-                <div style={contentStyle}>
+                <div style={contentStyle} className={isVectorOverlayOpen ? "pointer-events-none" : ""}>
                   {ZONE_ORDER.map((zone: PageZone) => {
                     const zoneSections = sectionsByZone[zone];
                     if (zoneSections.length === 0) return null;
@@ -673,6 +675,9 @@ export function PagePreviewPanel(): React.ReactNode {
                     );
                   })}
                 </div>
+                {vectorOverlay ? (
+                  <VectorOverlay request={vectorOverlay} onClose={closeVectorOverlay} />
+                ) : null}
               </div>
             </div>
           </>

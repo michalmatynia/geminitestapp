@@ -2,6 +2,8 @@
 // GSAP animation configuration types
 // ---------------------------------------------------------------------------
 
+import type { VectorShape } from "@/shared/ui";
+
 export type AnimationPreset =
   | "none"
   | "fadeIn"
@@ -96,17 +98,27 @@ export interface GsapAnimationConfig {
   staggerAmount?: number;
   staggerFrom?: StaggerFrom;
   parallaxPreset?: ParallaxPreset;
+  parallaxSelector?: string;
   parallaxAxis?: ParallaxAxis;
   parallaxOffset?: number;
   parallaxScrub?: number;
   parallaxStart?: string;
   parallaxEnd?: string;
+  parallaxEase?: AnimationEasing;
   parallaxPattern?: ParallaxPattern;
   parallaxReverse?: boolean;
   parallaxChildStep?: number;
   parallaxLayerStrength?: number;
   parallaxLayerScaleStep?: number;
   parallaxRandomSeed?: number;
+  parallaxScaleFrom?: number;
+  parallaxScaleTo?: number;
+  parallaxRotateFrom?: number;
+  parallaxRotateTo?: number;
+  parallaxOpacityFrom?: number;
+  parallaxOpacityTo?: number;
+  parallaxBlurFrom?: number;
+  parallaxBlurTo?: number;
   motionPathEnabled?: boolean;
   motionPathPath?: string;
   motionPathAlign?: boolean;
@@ -116,13 +128,17 @@ export interface GsapAnimationConfig {
   motionPathEnd?: number;
   motionPathFollow?: boolean;
   motionPathSpacing?: number;
+  motionPathShapes?: VectorShape[];
   svgDrawEnabled?: boolean;
   svgDrawSelector?: string;
   svgDrawFrom?: number;
   svgDrawTo?: number;
+  svgDrawPath?: string;
+  svgDrawShapes?: VectorShape[];
   svgMorphEnabled?: boolean;
   svgMorphSelector?: string;
   svgMorphTo?: string;
+  svgMorphShapes?: VectorShape[];
   textEffect?: TextEffect;
   textStagger?: number;
   textScrambleChars?: string;
@@ -199,17 +215,27 @@ export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
   staggerAmount: 0,
   staggerFrom: "start",
   parallaxPreset: "none",
+  parallaxSelector: "",
   parallaxAxis: "y",
   parallaxOffset: 0,
   parallaxScrub: 0.6,
   parallaxStart: "top bottom",
   parallaxEnd: "bottom top",
+  parallaxEase: "sine.inOut",
   parallaxPattern: "uniform",
   parallaxReverse: false,
   parallaxChildStep: 16,
   parallaxLayerStrength: 0.35,
   parallaxLayerScaleStep: 0.015,
   parallaxRandomSeed: 7,
+  parallaxScaleFrom: 1,
+  parallaxScaleTo: 1,
+  parallaxRotateFrom: 0,
+  parallaxRotateTo: 0,
+  parallaxOpacityFrom: 1,
+  parallaxOpacityTo: 1,
+  parallaxBlurFrom: 0,
+  parallaxBlurTo: 0,
   motionPathEnabled: false,
   motionPathPath: "",
   motionPathAlign: true,
@@ -219,13 +245,17 @@ export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
   motionPathEnd: 1,
   motionPathFollow: false,
   motionPathSpacing: 0.08,
+  motionPathShapes: [],
   svgDrawEnabled: false,
   svgDrawSelector: "path, line, circle, rect, polyline, polygon",
   svgDrawFrom: 0,
   svgDrawTo: 100,
+  svgDrawPath: "",
+  svgDrawShapes: [],
   svgMorphEnabled: false,
   svgMorphSelector: "path",
   svgMorphTo: "",
+  svgMorphShapes: [],
   textEffect: "none",
   textStagger: 0.05,
   textScrambleChars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",

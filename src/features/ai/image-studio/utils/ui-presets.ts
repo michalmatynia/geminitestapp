@@ -17,13 +17,13 @@ export type ImageStudioUiPreset = {
   updatedAt: string;
 };
 
-const uiPresetSchema: z.ZodType<ImageStudioUiPreset> = z.object({
+const uiPresetSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().nullable().optional(),
-  params: z.record(z.any()),
-  paramSpecs: z.record(z.any()).optional(),
-  paramUiOverrides: z.record(z.any()).optional(),
+  params: z.record(z.string(), z.any()),
+  paramSpecs: z.record(z.string(), z.any()).optional(),
+  paramUiOverrides: z.record(z.string(), z.any()).optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 });

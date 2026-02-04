@@ -15,6 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 import { runsApi } from "@/features/ai/ai-paths/lib";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -42,6 +43,14 @@ type QueueStatus = {
   concurrency: number;
   lastPollTime: number;
   timeSinceLastPoll: number;
+  queuedCount: number;
+  oldestQueuedAt: number | null;
+  queueLagMs: number | null;
+  completedLastMinute: number;
+  throughputPerMinute: number;
+  avgRuntimeMs: number | null;
+  p50RuntimeMs: number | null;
+  p95RuntimeMs: number | null;
 };
 
 type StreamMessageEvent = Event & { data: string };
@@ -50,6 +59,7 @@ const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 const AUTO_REFRESH_ENABLED_KEY = "ai-paths-job-queue-auto-refresh-enabled";
 const AUTO_REFRESH_INTERVAL_KEY = "ai-paths-job-queue-auto-refresh-interval";
+const QUEUE_LAG_THRESHOLD_KEY = "ai_paths_queue_lag_threshold_ms";
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
   { id: "queued", label: "Queued" },
@@ -119,6 +129,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
+  const settingsMapQuery = useSettingsMap();
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
@@ -200,6 +211,29 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = runsQuery.data?.runs ?? [];
   const queueStatus = queueStatusQuery.data?.status;
+  const [queueHistory, setQueueHistory] = React.useState<Array<{ ts: number; queued: number; lagMs: number | null; throughput: number | null }>>([]);
+  const [showMetricsPanel, setShowMetricsPanel] = React.useState(false);
+  const lagThresholdMs = React.useMemo(() => {
+    const raw = settingsMapQuery.data?.get(QUEUE_LAG_THRESHOLD_KEY);
+    const parsed = raw ? Number(raw) : Number.NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60_000;
+  }, [settingsMapQuery.data]);
+
+  React.useEffect(() => {
+    if (!queueStatus) return;
+    setQueueHistory((prev: Array<{ ts: number; queued: number; lagMs: number | null; throughput: number | null }>) => {
+      const next = [
+        ...prev,
+        {
+          ts: Date.now(),
+          queued: queueStatus.queuedCount ?? 0,
+          lagMs: queueStatus.queueLagMs ?? null,
+          throughput: queueStatus.throughputPerMinute ?? null,
+        },
+      ];
+      return next.slice(-120);
+    });
+  }, [queueStatus?.queuedCount]);
 
   React.useEffect(() => {
     const sources = streamSourcesRef.current;
@@ -472,7 +506,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Worker</div>
           <div className="mt-1 text-sm text-white">
@@ -520,6 +554,125 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             </div>
           )}
         </div>
+        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
+          <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
+          <div className="mt-1 text-sm text-white">
+            {queueStatus?.queuedCount ?? 0} queued
+          </div>
+          <div className="mt-1 text-[11px] text-gray-400">
+            Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+          </div>
+          <div className="mt-2 h-10 w-full rounded bg-slate-900/50 px-1 py-1">
+            <div className="flex h-full items-end gap-[2px]">
+              {queueHistory.length === 0 ? (
+                <div className="text-[10px] text-gray-500">No samples</div>
+              ) : (
+                queueHistory.slice(-30).map((entry: { ts: number; queued: number }, index: number) => {
+                  const max = Math.max(1, ...queueHistory.slice(-30).map((item) => item.queued));
+                  const height = Math.max(8, Math.round((entry.queued / max) * 100));
+                  return (
+                    <div
+                      key={`${entry.ts}-${index}`}
+                      className="w-[6px] rounded bg-sky-400/60"
+                      style={{ height: `${height}%` }}
+                      title={`${entry.queued} queued`}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400">
+            <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
+            <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
+            <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+          </div>
+        </div>
+      </div>
+
+      {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
+        <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
+        </div>
+      ) : null}
+
+      <div className="mt-4 rounded-md border border-border/60 bg-card/40 p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-gray-200">Queue Metrics (History)</div>
+            <div className="text-[11px] text-gray-500">
+              Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : "off"}
+              {queueHistory.length > 0
+                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1].ts).toLocaleTimeString()}`
+                : ""}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={() => setShowMetricsPanel((prev: boolean) => !prev)}
+            >
+              {showMetricsPanel ? "Hide" : "Show"}
+            </Button>
+            <Button
+              type="button"
+              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={() => setQueueHistory([])}
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+        {showMetricsPanel ? (
+          <div className="mt-3 space-y-3">
+            <div className="h-24 w-full rounded bg-slate-900/60 px-2 py-2">
+              <div className="flex h-full items-end gap-[2px]">
+                {queueHistory.length === 0 ? (
+                  <div className="text-[10px] text-gray-500">No samples</div>
+                ) : (
+                  queueHistory.map((entry, index) => {
+                    const max = Math.max(1, ...queueHistory.map((item) => item.queued));
+                    const height = Math.max(6, Math.round((entry.queued / max) * 100));
+                    return (
+                      <div
+                        key={`${entry.ts}-${index}`}
+                        className="w-[5px] rounded bg-emerald-400/60"
+                        style={{ height: `${height}%` }}
+                        title={`${entry.queued} queued @ ${new Date(entry.ts).toLocaleTimeString()}`}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
+            <div className="grid gap-2 md:grid-cols-3">
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
+                <div className="mt-1 text-sm text-white">{queueStatus?.queuedCount ?? 0}</div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+                </div>
+              </div>
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Throughput</div>
+                <div className="mt-1 text-sm text-white">{queueStatus?.throughputPerMinute ?? 0}/min</div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
+                </div>
+              </div>
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Runtime</div>
+                <div className="mt-1 text-sm text-white">
+                  avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
+                </div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95 {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">

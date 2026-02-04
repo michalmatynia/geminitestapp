@@ -12,7 +12,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   try {
     await requireAiPathsAccess();
     startAiPathRunQueue();
-    const status = getAiPathRunQueueStatus();
+    const status = await getAiPathRunQueueStatus();
     return NextResponse.json({ status });
   } catch (error) {
     return createErrorResponse(error, {

@@ -10,6 +10,7 @@ import ClientErrorReporter from "@/features/observability";
 import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 import { AppFontProvider } from "@/shared/providers/AppFontProvider";
+import { CsrfProvider } from "@/shared/providers/CsrfProvider";
 import PageAnalyticsTracker from "@/features/analytics/components/PageAnalyticsTracker";
 
 import "./fonts.css";
@@ -39,6 +40,7 @@ export default function RootLayout({
                   enableSystem
                   disableTransitionOnChange
                 >
+                  <CsrfProvider />
                   <Suspense fallback={null}>
                     <ClientErrorReporter />
                   </Suspense>

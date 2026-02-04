@@ -1,5 +1,4 @@
-import { Button, Input, Label, UnifiedSelect, SectionPanel, MultiSelect } from "@/shared/ui";
-import { useMemo } from "react";
+import { Input, Label, UnifiedSelect, SectionPanel, MultiSelect } from "@/shared/ui";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 
@@ -238,8 +237,8 @@ export default function ProductFormOther(): React.JSX.Element {
           selected={selectedCatalogIds}
           onChange={(values: string[]) => {
             // Find which one changed
-            const added = values.find(id => !selectedCatalogIds.includes(id));
-            const removed = selectedCatalogIds.find(id => !values.includes(id));
+            const added = values.find((id: string) => !selectedCatalogIds.includes(id));
+            const removed = selectedCatalogIds.find((id: string) => !values.includes(id));
             if (added) toggleCatalog(added);
             if (removed) toggleCatalog(removed);
           }}
@@ -272,8 +271,8 @@ export default function ProductFormOther(): React.JSX.Element {
           options={tags.map((t: ProductTag) => ({ value: t.id, label: t.name }))}
           selected={selectedTagIds}
           onChange={(values: string[]) => {
-            const added = values.find(id => !selectedTagIds.includes(id));
-            const removed = selectedTagIds.find(id => !values.includes(id));
+            const added = values.find((id: string) => !selectedTagIds.includes(id));
+            const removed = selectedTagIds.find((id: string) => !values.includes(id));
             if (added) toggleTag(added);
             if (removed) toggleTag(removed);
           }}
@@ -290,8 +289,8 @@ export default function ProductFormOther(): React.JSX.Element {
           options={producers.map((p: Producer) => ({ value: p.id, label: p.name }))}
           selected={selectedProducerIds}
           onChange={(values: string[]) => {
-            const added = values.find(id => !selectedProducerIds.includes(id));
-            const removed = selectedProducerIds.find(id => !values.includes(id));
+            const added = values.find((id: string) => !selectedProducerIds.includes(id));
+            const removed = selectedProducerIds.find((id: string) => !values.includes(id));
             if (added) toggleProducer(added);
             if (removed) toggleProducer(removed);
           }}

@@ -7,7 +7,7 @@ import { decryptSecret } from "@/features/integrations/server";
 import { callBaseApi } from "@/features/integrations/server";
 import {
   getImportParameterCache,
-  setImportParameterCache,
+  setImportParameterCache
 } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -27,7 +27,7 @@ const optionalIdSchema = z.preprocess(
 const requestSchema = z.object({
   inventoryId: optionalIdSchema,
   productId: optionalIdSchema,
-  clearOnly: z.boolean().optional(),
+  clearOnly: z.boolean().optional()
 });
 
 const extractProductRecord = (payload: unknown, productId: string): Record<string, unknown> | null => {
@@ -150,7 +150,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
     product.features,
     product.text_fields,
     (product.text_fields as Record<string, unknown> | undefined)?.features,
-    (product.text_fields as Record<string, unknown> | undefined)?.["features|en"],
+    (product.text_fields as Record<string, unknown> | undefined)?.["features|en"]
   ];
   for (const bucket of parameterBuckets) {
     if (!bucket) continue;
@@ -214,7 +214,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
       product.features,
       product.text_fields,
       (product.text_fields as Record<string, unknown> | undefined)?.features,
-      (product.text_fields as Record<string, unknown> | undefined)?.["features|en"],
+      (product.text_fields as Record<string, unknown> | undefined)?.["features|en"]
     ];
     let resolved = directValue;
     if (resolved === undefined) {
@@ -260,7 +260,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.parameters.POST",
+      logPrefix: "imports.base.parameters.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -272,7 +272,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         inventoryId: null,
         productId: null,
         keys: [],
-        values: {},
+        values: {}
       });
       return NextResponse.json({ ok: true });
     }
@@ -297,12 +297,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const token = decryptSecret(connection.baseApiToken);
     const payload = await callBaseApi(token, "getInventoryProductsData", {
       inventory_id: data.inventoryId,
-      products: [data.productId],
+      products: [data.productId]
     });
     const product = extractProductRecord(payload, data.productId);
     if (!product || typeof product !== "object") {
       throw notFoundError("Product not found in response.", {
-        productId: data.productId,
+        productId: data.productId
       });
     }
     
@@ -330,7 +330,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         inventoryId: data.inventoryId,
         productId: data.productId,
         keys,
-        values,
+        values
       });
     } catch (cacheError) {
       try {
@@ -350,7 +350,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.parameters.POST",
-      fallbackMessage: "Failed to load parameters",
+      fallbackMessage: "Failed to load parameters"
     });
   }
 }
@@ -364,7 +364,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
             inventoryId: cache.inventoryId,
             productId: cache.productId,
             keys: cache.keys,
-            values: cache.values,
+            values: cache.values
           }
         : { keys: [], values: {} }
     );
@@ -372,14 +372,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.parameters.GET",
-      fallbackMessage: "Failed to load cached parameters.",
+      fallbackMessage: "Failed to load cached parameters."
     });
   }
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.parameters.POST" });
+ { source: "products.imports.base.parameters.POST", requireCsrf: false });
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.imports.base.parameters.GET" });
+ { source: "products.imports.base.parameters.GET", requireCsrf: false });

@@ -3,7 +3,9 @@
 
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
+import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
+import { CssAnimationWrapper } from "../CssAnimationWrapper";
 import { getBlockTypographyStyles } from "../theme-styles";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { useMediaStyles } from "../media-styles-context";
@@ -21,6 +23,7 @@ interface FrontendBlockRendererProps {
 
 export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockRendererProps): React.ReactNode {
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const cssAnimConfig = block.settings["cssAnimation"] as CssAnimationConfig | undefined;
   const mediaStyles = useMediaStyles();
   const content = renderBlockContent(block, mediaStyles, stretch);
 
@@ -28,9 +31,15 @@ export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockR
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      <EventEffectsWrapper settings={block.settings}>
-        {content}
-      </EventEffectsWrapper>
+      <CssAnimationWrapper config={cssAnimConfig}>
+        <EventEffectsWrapper
+          settings={block.settings}
+          nodeId={block.id}
+          customCss={block.settings["customCss"]}
+        >
+          {content}
+        </EventEffectsWrapper>
+      </CssAnimationWrapper>
     </GsapAnimationWrapper>
   );
 }

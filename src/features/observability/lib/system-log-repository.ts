@@ -425,6 +425,40 @@ export async function listSystemLogs(
   }
 }
 
+export async function getSystemLogById(id: string): Promise<SystemLogRecord | null> {
+  const provider = await getAppDbProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+      .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
+    if (!doc) return null;
+    return normalizeLogRecord(toSystemLogRecord(doc));
+  }
+
+  try {
+    const row = await prisma.systemLog.findUnique({
+      where: { id },
+    });
+    if (!row) return null;
+    return normalizeLogRecord({
+      ...row,
+      level: row.level as SystemLogLevel,
+      context: (row.context as Record<string, unknown> | null) ?? null,
+    } as SystemLogRecord);
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const mongo = await getMongoDb();
+      const doc = await mongo
+        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+        .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
+      if (!doc) return null;
+      return normalizeLogRecord(toSystemLogRecord(doc));
+    }
+    throw error;
+  }
+}
+
 export async function getSystemLogMetrics(
   input: ListSystemLogsInput,
 ): Promise<SystemLogMetrics> {

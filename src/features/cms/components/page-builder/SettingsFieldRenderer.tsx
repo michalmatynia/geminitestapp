@@ -13,7 +13,7 @@ import {
   UnifiedSelect,
   SectionPanel,
 } from "@/shared/ui";
-import { Link2, Search } from "lucide-react";
+import { Link2, Search, Palette } from "lucide-react";
 import type { SettingsField, SettingsFieldOption } from "../../types/page-builder";
 import { useCmsSlugs } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
@@ -131,6 +131,14 @@ export function SettingsFieldRenderer({
   );
 
   const imageValue = typeof value === "string" ? value : "";
+  const openColorSchemeCreator = useCallback((): void => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("cms-builder-open-theme", {
+        detail: { section: "Colors", action: "createScheme" },
+      })
+    );
+  }, []);
 
   return (
     <div className="space-y-1.5">
@@ -263,13 +271,28 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === "color-scheme" && (
-        <SelectField
-          label={field.label}
-          value={(value as string) ?? "scheme-1"}
-          onChange={handleChange}
-          options={colorSchemeOptions}
-          disabled={isDisabled}
-        />
+        <div className="space-y-2">
+          <SelectField
+            label={field.label}
+            value={(value as string) ?? "scheme-1"}
+            onChange={handleChange}
+            options={colorSchemeOptions}
+            disabled={isDisabled}
+          />
+          <div className="flex items-center justify-between text-[11px] text-gray-500">
+            <span>Need a new scheme?</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={openColorSchemeCreator}
+              className="h-6 px-2 text-[11px] text-blue-300 hover:text-blue-200"
+            >
+              <Palette className="mr-1 size-3" />
+              Create scheme
+            </Button>
+          </div>
+        </div>
       )}
 
       {field.type === "color" && (

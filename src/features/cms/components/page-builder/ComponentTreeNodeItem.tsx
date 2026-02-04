@@ -1920,7 +1920,7 @@ function BlockNodeItem({
         const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
         const blockDrag = readBlockDragData(e.dataTransfer, {
           id: draggedBlockId,
-          type: _draggedBlockType,
+          ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
         });
         const dragId = blockDrag.id;
         if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id) return;
@@ -1940,10 +1940,10 @@ function BlockNodeItem({
         setIsDragOver(false);
         const blockDrag = readBlockDragData(e.dataTransfer, {
           id: draggedBlockId,
-          type: _draggedBlockType,
+          ...(_draggedBlockType !== undefined ? { type: _draggedBlockType } : {}),
           fromSectionId: draggedFromSectionId,
-          fromColumnId: draggedFromColumnId,
-          fromParentBlockId: draggedFromParentBlockId,
+          ...(draggedFromColumnId !== undefined ? { fromColumnId: draggedFromColumnId } : {}),
+          ...(draggedFromParentBlockId !== undefined ? { fromParentBlockId: draggedFromParentBlockId } : {}),
         });
         const dragId = blockDrag.id;
         if (!dragId || dragId === block.id) return;

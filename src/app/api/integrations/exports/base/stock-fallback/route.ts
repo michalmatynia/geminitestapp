@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   getExportStockFallbackEnabled,
-  setExportStockFallbackEnabled,
+  setExportStockFallbackEnabled
 } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -12,7 +12,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
-  enabled: z.boolean(),
+  enabled: z.boolean()
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -23,7 +23,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.stock-fallback.GET",
-      fallbackMessage: "Failed to fetch stock fallback setting.",
+      fallbackMessage: "Failed to fetch stock fallback setting."
     });
   }
 }
@@ -31,7 +31,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "exports.base.stock-fallback.POST",
+      logPrefix: "exports.base.stock-fallback.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -43,14 +43,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.stock-fallback.POST",
-      fallbackMessage: "Failed to save setting",
+      fallbackMessage: "Failed to save setting"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.exports.base.stock-fallback.GET" });
+ { source: "products.exports.base.stock-fallback.GET", requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.exports.base.stock-fallback.POST" });
+ { source: "products.exports.base.stock-fallback.POST", requireCsrf: false });

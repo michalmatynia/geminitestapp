@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from "react";
 import { cn } from "@/shared/utils";
+import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 import {
   getEventClassName,
   getEventEffectsConfig,
@@ -13,6 +14,8 @@ import type { CmsEventEffectsConfig } from "@/features/cms/types/event-effects";
 interface EventEffectsWrapperProps {
   settings: Record<string, unknown>;
   disableClick?: boolean;
+  nodeId?: string;
+  customCss?: unknown;
   children: React.ReactNode;
 }
 
@@ -37,6 +40,8 @@ const normalizeScrollTarget = (value: string): string => {
 export function EventEffectsWrapper({
   settings,
   disableClick = false,
+  nodeId,
+  customCss,
   children,
 }: EventEffectsWrapperProps): React.ReactNode {
   const config = useMemo<CmsEventEffectsConfig>(
@@ -51,6 +56,12 @@ export function EventEffectsWrapper({
     () => getEventClassName(config, { disableClick }),
     [config, disableClick]
   );
+  const customCssSelector = nodeId ? getCustomCssSelector(nodeId) : null;
+  const scopedCustomCss = useMemo(
+    () => buildScopedCustomCss(customCss, customCssSelector),
+    [customCss, customCssSelector]
+  );
+  const customClassName = nodeId ? `cms-node-${nodeId}` : "";
   const clickEnabled = isEventClickEnabled(config, disableClick);
   const childIsInteractive = isInteractiveElement(children);
 
@@ -99,37 +110,43 @@ export function EventEffectsWrapper({
   if (children === null || children === undefined) return children;
 
   if (!React.isValidElement(children)) {
-    if (!eventClassName && Object.keys(hoverStyle).length === 0) {
+    if (!eventClassName && Object.keys(hoverStyle).length === 0 && !scopedCustomCss && !customClassName) {
       return children;
     }
 
     return (
-      <div
-        className={eventClassName}
-        style={hoverStyle}
-        onClick={clickEnabled ? handleClick : undefined}
-        onKeyDown={clickEnabled ? handleKeyDown : undefined}
-        role={clickEnabled ? "button" : undefined}
-        tabIndex={clickEnabled ? 0 : undefined}
-      >
-        {children}
-      </div>
+      <>
+        {scopedCustomCss ? <style data-cms-custom-css={nodeId}>{scopedCustomCss}</style> : null}
+        <div
+          className={cn(eventClassName, customClassName)}
+          style={hoverStyle}
+          onClick={clickEnabled ? handleClick : undefined}
+          onKeyDown={clickEnabled ? handleKeyDown : undefined}
+          role={clickEnabled ? "button" : undefined}
+          tabIndex={clickEnabled ? 0 : undefined}
+        >
+          {children}
+        </div>
+      </>
     );
   }
 
   const existingClassName = (children.props as { className?: string }).className;
   const existingStyle = (children.props as { style?: React.CSSProperties }).style;
-  const mergedClassName = cn(existingClassName, eventClassName);
+  const isFragment = children.type === React.Fragment;
+  const mergedClassName = cn(existingClassName, eventClassName, customClassName);
   const mergedStyle = Object.keys(hoverStyle).length
     ? { ...(existingStyle ?? {}), ...hoverStyle }
     : existingStyle;
 
-  const nextProps: Record<string, unknown> = {
-    className: mergedClassName,
-    style: mergedStyle,
-  };
+  const nextProps: Record<string, unknown> = isFragment
+    ? {}
+    : {
+        className: mergedClassName,
+        style: mergedStyle,
+      };
 
-  if (clickEnabled) {
+  if (clickEnabled && !isFragment) {
     const existingOnClick = (children.props as { onClick?: (event: React.MouseEvent) => void }).onClick;
     const existingOnKeyDown = (children.props as { onKeyDown?: (event: React.KeyboardEvent) => void }).onKeyDown;
     nextProps.onClick = (event: React.MouseEvent): void => {
@@ -146,5 +163,28 @@ export function EventEffectsWrapper({
     }
   }
 
-  return React.cloneElement(children, nextProps);
+  if (isFragment) {
+    return (
+      <>
+        {scopedCustomCss ? <style data-cms-custom-css={nodeId}>{scopedCustomCss}</style> : null}
+        <div
+          className={cn(eventClassName, customClassName)}
+          style={hoverStyle}
+          onClick={clickEnabled ? handleClick : undefined}
+          onKeyDown={clickEnabled ? handleKeyDown : undefined}
+          role={clickEnabled ? "button" : undefined}
+          tabIndex={clickEnabled ? 0 : undefined}
+        >
+          {children}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {scopedCustomCss ? <style data-cms-custom-css={nodeId}>{scopedCustomCss}</style> : null}
+      {React.cloneElement(children, nextProps)}
+    </>
+  );
 }

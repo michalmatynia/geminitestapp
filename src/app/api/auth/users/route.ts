@@ -9,6 +9,7 @@ import { authError, internalError } from "@/shared/errors/app-error";
 import type { AuthUserDto } from "@/shared/dtos/auth";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     if (!hasAccess) {
       throw authError("Unauthorized.");
     }
+    await logAuthEvent({
+      req,
+      action: "auth.users.list",
+      stage: "start",
+      userId: session?.user?.id ?? null,
+    });
     const provider = requireAuthProvider(await getAuthDataProvider());
     if (provider === "prisma") {
       if (!process.env.DATABASE_URL) {
@@ -58,6 +65,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         createdAt: nowIso,
         updatedAt: nowIso,
       }));
+      await logAuthEvent({
+        req,
+        action: "auth.users.list",
+        stage: "success",
+        userId: session?.user?.id ?? null,
+        status: 200,
+        extra: { count: users.length },
+      });
       return NextResponse.json({ provider, users });
     }
 
@@ -85,6 +100,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
     }));
 
+    await logAuthEvent({
+      req,
+      action: "auth.users.list",
+      stage: "success",
+      userId: session?.user?.id ?? null,
+      status: 200,
+      extra: { count: users.length },
+    });
     return NextResponse.json({ provider: "mongodb", users });
   } catch (error) {
     return createErrorResponse(error, {
@@ -97,4 +120,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "auth.users.GET" });
+ { source: "auth.users.GET", requireCsrf: false });

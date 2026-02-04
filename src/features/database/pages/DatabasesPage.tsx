@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable, Button, useToast, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton } from "@/shared/ui";
+import { DataTable, Button, useToast, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton, type FileUploadHelpers } from "@/shared/ui";
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
@@ -27,6 +27,7 @@ export default function DatabasesPage(): React.JSX.Element {
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isProd = process.env.NODE_ENV === "production";
 
   const backupsQuery = useDatabaseBackups(activeTab);
   const data = backupsQuery.data ?? [];
@@ -145,7 +146,7 @@ export default function DatabasesPage(): React.JSX.Element {
     }
   };
 
-  const handleUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+  const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     const file = files[0];
     if (!file) return;
 
@@ -226,6 +227,8 @@ export default function DatabasesPage(): React.JSX.Element {
         actions={
           <>
             <Button
+              disabled={isProd}
+              title={isProd ? "Disabled in production" : undefined}
               onClick={(): void => {
                 void handleBackup();
               }}
@@ -233,8 +236,10 @@ export default function DatabasesPage(): React.JSX.Element {
               Create Backup
             </Button>
             <FileUploadButton
-              onFilesSelected={(files: File[], helpers) => handleUpload(files, helpers)}
+              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
               accept={activeTab === "postgresql" ? ".dump" : ".archive"}
+              disabled={isProd}
+              title={isProd ? "Disabled in production" : undefined}
             >
               Upload Backup
             </FileUploadButton>
@@ -245,6 +250,11 @@ export default function DatabasesPage(): React.JSX.Element {
         }
         className="mb-6"
       />
+      {isProd ? (
+        <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Backups are disabled in production. Create or upload backups in a non-production environment.
+        </div>
+      ) : null}
       <SectionPanel className="p-6">
         <DataTable
           columns={getDatabaseColumns({

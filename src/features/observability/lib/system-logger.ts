@@ -141,7 +141,7 @@ export type SystemLogInput = {
   context?: Record<string, unknown> | null;
   error?: unknown;
   request?: Request;
-  statusCode?: number;
+  statusCode?: number | undefined;
   userId?: string | null;
   requestId?: string | null;
   critical?: boolean;

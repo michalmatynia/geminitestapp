@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   getExportWarehouseId,
-  setExportWarehouseId,
+  setExportWarehouseId
 } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
   warehouseId: z.string().trim().min(1).nullable().optional(),
-  inventoryId: z.string().trim().min(1).nullable().optional(),
+  inventoryId: z.string().trim().min(1).nullable().optional()
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -26,7 +26,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.export-warehouse.GET",
-      fallbackMessage: "Failed to fetch warehouse.",
+      fallbackMessage: "Failed to fetch warehouse."
     });
   }
 }
@@ -34,7 +34,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.export-warehouse.POST",
+      logPrefix: "imports.base.export-warehouse.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -49,14 +49,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.export-warehouse.POST",
-      fallbackMessage: "Failed to save warehouse",
+      fallbackMessage: "Failed to save warehouse"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.imports.base.export-warehouse.GET" });
+ { source: "products.imports.base.export-warehouse.GET", requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.export-warehouse.POST" });
+ { source: "products.imports.base.export-warehouse.POST", requireCsrf: false });

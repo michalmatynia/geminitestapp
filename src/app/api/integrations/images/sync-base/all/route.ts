@@ -42,7 +42,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "integrations.images.sync-base.all.POST",
-      fallbackMessage: "Failed to enqueue Base.com image sync job",
+      fallbackMessage: "Failed to enqueue Base.com image sync job"
     });
   }
 }
@@ -50,5 +50,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
     POST_handler(req, ctx),
-  { source: "integrations.images.sync-base.all.POST" }
+  { source: "integrations.images.sync-base.all.POST", requireCsrf: false }
 );

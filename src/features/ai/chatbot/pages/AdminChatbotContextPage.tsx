@@ -308,7 +308,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
               <FileUploadTrigger
                 accept="application/pdf"
                 disabled={loading || saving || uploading}
-                onFilesSelected={async (files: File[], helpers: FileUploadHelpers) => {
+                onFilesSelected={async (files: File[], helpers?: FileUploadHelpers) => {
                   const file = files[0];
                   if (!file) return;
                   await handlePdfUpload(file, helpers);

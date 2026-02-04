@@ -1,6 +1,6 @@
 import React from "react";
 import { Upload, X } from "lucide-react";
-import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton } from "@/shared/ui";
+import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton, type FileUploadHelpers } from "@/shared/ui";
 import dynamic from "next/dynamic";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 import { useUploadCmsMedia } from "../../hooks/useCmsQueries";
@@ -16,6 +16,7 @@ interface MediaLibraryPanelProps {
   onSelect: (filepaths: string[]) => void;
   selectionMode?: "single" | "multiple";
   autoConfirmSelection?: boolean;
+  onFilesSelected?: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
 }
 
 export function MediaLibraryPanel({
@@ -24,7 +25,8 @@ export function MediaLibraryPanel({
   onSelect,
   selectionMode = "single",
   autoConfirmSelection,
-}: MediaLibraryPanelProps): React.ReactNode {
+  onFilesSelected,
+}: MediaLibraryPanelProps): React.JSX.Element {
   const { toast } = useToast();
   const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === "single";
 
@@ -39,7 +41,7 @@ export function MediaLibraryPanel({
     }
   };
 
-  const handleUpload = async (files: File[], helpers?: { reportProgress: (loaded: number, total?: number) => void; setProgress: (value: number) => void }): Promise<void> => {
+  const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     if (!files || files.length === 0) return;
 
     try {
@@ -95,7 +97,9 @@ export function MediaLibraryPanel({
             accept="image/*"
             multiple
             disabled={uploadMutation.isPending}
-            onFilesSelected={(files: File[], helpers) => handleUpload(files, helpers)}
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
+              onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
+            }
           >
             <Upload className="mr-2 size-4" />
             {uploadMutation.isPending ? "Uploading..." : "Upload images"}

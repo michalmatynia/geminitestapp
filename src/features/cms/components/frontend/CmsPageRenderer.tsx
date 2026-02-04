@@ -2,6 +2,7 @@ import type { PageComponent } from "../../types";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
+import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
 import { FrontendAnnouncementBarSection } from "./sections/FrontendAnnouncementBarSection";
 import { FrontendBlockSection } from "./sections/FrontendBlockSection";
 import { FrontendHeroSection } from "./sections/FrontendHeroSection";
@@ -15,6 +16,7 @@ import { FrontendSlideshowSection } from "./sections/FrontendSlideshowSection";
 import { FrontendNewsletterSection } from "./sections/FrontendNewsletterSection";
 import { FrontendContactFormSection } from "./sections/FrontendContactFormSection";
 import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
+import { CssAnimationWrapper } from "./CssAnimationWrapper";
 import { getHoverEffectVars } from "./theme-styles";
 import { MediaStylesProvider } from "./media-styles-context";
 import { FrontendTextElementSection } from "./sections/FrontendTextElementSection";
@@ -85,16 +87,20 @@ export function CmsPageRenderer({
                 key={section.key}
                 config={section.settings["gsapAnimation"] as Partial<GsapAnimationConfig> | undefined}
               >
-                <EventEffectsWrapper settings={section.settings}>
-                  <SectionRenderer
-                    type={section.type}
-                    sectionId={section.id}
-                    settings={section.settings}
-                    blocks={section.blocks}
-                    colorSchemes={colorSchemes ?? {}}
-                    layout={layout ?? {}}
-                  />
-                </EventEffectsWrapper>
+                <CssAnimationWrapper
+                  config={section.settings["cssAnimation"] as CssAnimationConfig | undefined}
+                >
+                  <EventEffectsWrapper settings={section.settings}>
+                    <SectionRenderer
+                      type={section.type}
+                      sectionId={section.id}
+                      settings={section.settings}
+                      blocks={section.blocks}
+                      colorSchemes={colorSchemes ?? {}}
+                      layout={layout ?? {}}
+                    />
+                  </EventEffectsWrapper>
+                </CssAnimationWrapper>
               </GsapAnimationWrapper>
             );
           })

@@ -10,7 +10,7 @@ import type {
   Browser,
   BrowserContext,
   Page,
-  BrowserContextOptions,
+  BrowserContextOptions
 } from "playwright";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
@@ -40,7 +40,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       step,
       status,
       detail,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   };
 
@@ -54,8 +54,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   };
 
@@ -91,7 +91,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       return NextResponse.json(
         {
           error: `Please use the Base.com-specific test endpoint: POST ${baseTestUrl}`,
-          redirectUrl: baseTestUrl,
+          redirectUrl: baseTestUrl
         },
         { status: 400 }
       );
@@ -228,10 +228,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
               proxy: {
                 server: proxyServer,
                 ...(proxyUsername && { username: proxyUsername }),
-                ...(proxyPassword && { password: proxyPassword }),
-              },
+                ...(proxyPassword && { password: proxyPassword })
+              }
             }
-          : {}),
+          : {})
       });
 
       const deviceContextOptions: BrowserContextOptions = deviceProfile
@@ -240,7 +240,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
       const contextOptions: BrowserContextOptions = {
         ...deviceContextOptions,
-        ...(storedState ? { storageState: storedState } : {}),
+        ...(storedState ? { storageState: storedState } : {})
       };
 
       context = await browser.newContext(contextOptions);
@@ -443,7 +443,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         'button[aria-label*="Account"]',
         'button[aria-label*="Profile"]',
         'a[href*="/profile"]',
-        'a[href*="/my"]',
+        'a[href*="/my"]'
       ].join(", ");
       const errorSelector = [
         '[data-testid*="error"]',
@@ -452,7 +452,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         ".alert",
         ".form-error",
         ".error",
-        ".text-red-500",
+        ".text-red-500"
       ].join(", ");
 
       let sessionReused = false;
@@ -463,7 +463,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
             "https://www.tradera.com/en",
             {
               waitUntil: "domcontentloaded",
-              timeout: 30000,
+              timeout: 30000
             },
             "Session check"
           );
@@ -492,7 +492,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const loginUrls = [
         "https://www.tradera.com/login",
         "https://www.tradera.com/en/login",
-        "https://www.tradera.com/en",
+        "https://www.tradera.com/en"
       ];
       const openLoginPage = async () => {
         for (const url of loginUrls) {
@@ -531,7 +531,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const formSelector = [
         "#sign-in-form",
         'form[data-sign-in-form="true"]',
-        'form[data-sentry-component="LoginForm"]',
+        'form[data-sentry-component="LoginForm"]'
       ].join(", ");
       const emailSelector = '#email, input[name="email"], input[type="email"]';
       const passwordSelector =
@@ -588,7 +588,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
                 'a[href*="/login"]',
                 'a[href*="login"]',
                 'button[aria-label*="Sign in"]',
-                'button[aria-label*="Logga in"]',
+                'button[aria-label*="Logga in"]'
               ].join(", ")
             )
             .first();
@@ -655,12 +655,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         const usernameSelectors = [
           "#email",
           'input[name="email"]',
-          'input[type="email"]',
+          'input[type="email"]'
         ];
         const passwordSelectors = [
           "#password",
           'input[type="password"]',
-          'input[name="password"]',
+          'input[name="password"]'
         ];
 
         const findInputInForm = async (selectors: string[]) => {
@@ -733,7 +733,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           'button[data-login-submit="true"]',
           '#sign-in-form button[type="submit"]',
           'button:has-text("Sign in")',
-          'button:has-text("Logga in")',
+          'button:has-text("Logga in")'
         ];
         const submitButton = await findInput(submitSelectors);
         if (!submitButton) {
@@ -746,9 +746,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           await Promise.allSettled([
             page.waitForNavigation({
               waitUntil: "domcontentloaded",
-              timeout: 15000,
+              timeout: 15000
             }),
-            humanizedClick(submitButton.locator),
+            humanizedClick(submitButton.locator)
           ]);
           await humanizedPause();
         } catch (error) {
@@ -784,7 +784,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           "captcha",
           "recaptcha",
           "fylla i captcha",
-          "captcha:n",
+          "captcha:n"
         ];
         try {
           const postSubmitErrorLower = (
@@ -812,7 +812,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
                 form,
                 { state: "hidden", timeout: 120000 },
                 "Captcha form hide"
-              ).then(() => "form-hidden"),
+              ).then(() => "form-hidden")
             ]).catch(() => "timeout");
 
             if (captchaResult === "timeout") {
@@ -855,7 +855,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
               page.locator(errorSelector).first(),
               { state: "visible", timeout: 12000 },
               "Login error"
-            ).then(() => "error"),
+            ).then(() => "error")
           ]).catch(() => "timeout");
 
           if (result === "error") {
@@ -901,7 +901,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         const storageState = await page.context().storageState();
         await repo.updateConnection(connection.id, {
           playwrightStorageState: encryptSecret(JSON.stringify(storageState)),
-          playwrightStorageStateUpdatedAt: new Date(),
+          playwrightStorageStateUpdatedAt: new Date()
         });
         pushStep("Saving session", "ok", "Session stored for reuse");
       } catch (error) {
@@ -928,7 +928,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const appError = createAppError(error.message, {
         code: AppErrorCodes.badRequest,
         httpStatus: 400,
-        expected: false,
+        expected: false
       });
       return createErrorResponse(appError, {
         request: req,
@@ -937,8 +937,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         extra: {
           steps,
           integrationId,
-          connectionId: integrationConnectionId,
-        },
+          connectionId: integrationConnectionId
+        }
       });
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
@@ -949,10 +949,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].test.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].test.POST", requireCsrf: false }
+);

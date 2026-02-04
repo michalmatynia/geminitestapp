@@ -89,6 +89,7 @@ export type AiPathRunRepository = {
   findRunById(runId: string): Promise<AiPathRunRecord | null>;
   listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;
   claimNextQueuedRun(): Promise<AiPathRunRecord | null>;
+  getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
   createRunNodes(runId: string, nodes: AiNode[]): Promise<void>;
   upsertRunNode(
     runId: string,

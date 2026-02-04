@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 import prisma from "@/shared/lib/db/prisma";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -92,9 +93,19 @@ async function POST_handler(
     }
 
     const baseName = Date.now().toString();
-    const slotsToCreate = (incomingSlots.length > 0 ? incomingSlots : new Array(maxCreate).fill({}))
+    type SlotInput = {
+      name?: string;
+      folderPath?: string;
+      imageUrl?: string;
+      imageBase64?: string;
+      imageFileId?: string;
+      asset3dId?: string;
+      metadata?: Record<string, unknown>;
+    };
+
+    const slotsToCreate = (incomingSlots.length > 0 ? (incomingSlots as SlotInput[]) : new Array<SlotInput>(maxCreate).fill({}))
       .slice(0, maxCreate)
-      .map((slot, index) => ({
+      .map((slot: SlotInput, index: number) => ({
         projectId,
         name: slot.name?.trim() || `Slot ${baseName}-${index + 1}`,
         folderPath: slot.folderPath ? sanitizeFolderPath(slot.folderPath) : "",
@@ -102,13 +113,13 @@ async function POST_handler(
         imageBase64: slot.imageBase64?.trim() || null,
         imageFileId: slot.imageFileId?.trim() || null,
         asset3dId: slot.asset3dId?.trim() || null,
-        metadata: slot.metadata ?? null,
+        metadata: (slot.metadata as Prisma.JsonValue) ?? null,
       }));
 
     const created = await prisma.$transaction(
       slotsToCreate.map((slot) =>
         prisma.imageStudioSlot.create({
-          data: slot,
+          data: slot as Prisma.ImageStudioSlotCreateInput,
           include: {
             imageFile: true,
             screenshotFile: true,

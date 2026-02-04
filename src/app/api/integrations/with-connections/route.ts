@@ -20,11 +20,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "integrations.with-connections.GET",
-      fallbackMessage: "Failed to fetch integrations",
+      fallbackMessage: "Failed to fetch integrations"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "integrations.with-connections.GET" });
+ { source: "integrations.with-connections.GET", requireCsrf: false });

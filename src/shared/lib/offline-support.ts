@@ -1,5 +1,5 @@
 import { QueryClient, type Query } from "@tanstack/react-query";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
+import { persistQueryClient, type PersistedClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 export function setupOfflineSupport(queryClient: QueryClient): void {
@@ -7,6 +7,24 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
 
   const persister = createSyncStoragePersister({
     storage: window.localStorage,
+    deserialize: (cachedString: string): PersistedClient => {
+      const parsed = JSON.parse(cachedString) as {
+        clientState?: { queries?: Array<Record<string, unknown>> };
+      };
+      const queries = parsed?.clientState?.queries;
+      if (Array.isArray(queries)) {
+        parsed.clientState!.queries = queries
+          .filter((query: Record<string, unknown>) => query?.state && (query.state as { status?: string }).status === "success")
+          .map((query: Record<string, unknown>) => {
+            if (query && typeof query === "object" && "promise" in query) {
+              const { promise: _ignored, ...rest } = query;
+              return rest;
+            }
+            return query;
+          });
+      }
+      return parsed as unknown as PersistedClient;
+    },
   });
 
   const [, restorePromise] = persistQueryClient({
@@ -14,7 +32,8 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
     persister,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     dehydrateOptions: {
-      shouldDehydrateQuery: (query: { queryKey: unknown }) => Array.isArray(query.queryKey),
+      shouldDehydrateQuery: (query: Query) =>
+        Array.isArray(query.queryKey) && query.state.status === "success",
     },
   });
 

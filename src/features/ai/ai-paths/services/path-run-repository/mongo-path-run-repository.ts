@@ -314,6 +314,26 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return toRunRecord(result);
   },
 
+  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const now = new Date();
+    const filter = {
+      status: "queued",
+      $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }],
+    };
+    const [queuedCount, oldest] = await Promise.all([
+      db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
+      db
+        .collection<RunDocument>(RUNS_COLLECTION)
+        .find(filter, { projection: { createdAt: 1 } })
+        .sort({ createdAt: 1 })
+        .limit(1)
+        .next(),
+    ]);
+    return { queuedCount, oldestQueuedAt: oldest?.createdAt ?? null };
+  },
+
   async createRunNodes(runId: string, nodes: AiNode[]) {
     await ensureIndexes();
     if (!nodes || nodes.length === 0) return;

@@ -35,7 +35,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       step,
       status,
       detail,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   };
 
@@ -49,8 +49,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   };
 
@@ -132,7 +132,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         try {
           await repo.updateConnection(connection.id, {
             baseApiToken: encryptSecret(baseToken),
-            baseTokenUpdatedAt: new Date(),
+            baseTokenUpdatedAt: new Date()
           });
           pushStep("Storing token", "ok", "API token saved to connection");
         } catch (error) {
@@ -142,7 +142,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       } else {
         // Update the token timestamp
         await repo.updateConnection(connection.id, {
-          baseTokenUpdatedAt: new Date(),
+          baseTokenUpdatedAt: new Date()
         });
       }
 
@@ -151,7 +151,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         pushStep("Storing default inventory", "pending", "Setting default inventory");
         try {
           await repo.updateConnection(connection.id, {
-            baseLastInventoryId: inventories[0]!.id,
+            baseLastInventoryId: inventories[0]!.id
           });
           pushStep(
             "Storing default inventory",
@@ -169,7 +169,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         ok: true,
         steps,
         inventories: inventories.map((inv) => ({ id: inv.id, name: inv.name })),
-        inventoryCount: inventories.length,
+        inventoryCount: inventories.length
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -181,7 +181,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       const appError = createAppError(error.message, {
         code: AppErrorCodes.badRequest,
         httpStatus: 400,
-        expected: false,
+        expected: false
       });
       return createErrorResponse(appError, {
         request: req,
@@ -190,8 +190,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         extra: {
           steps,
           integrationId,
-          connectionId: integrationConnectionId,
-        },
+          connectionId: integrationConnectionId
+        }
       });
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
@@ -202,10 +202,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       extra: {
         steps,
         integrationId,
-        connectionId: integrationConnectionId,
-      },
+        connectionId: integrationConnectionId
+      }
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].base.test.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].base.test.POST", requireCsrf: false }
+);

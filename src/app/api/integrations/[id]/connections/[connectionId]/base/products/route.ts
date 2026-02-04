@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),
-  limit: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional()
 });
 
 /**
@@ -28,7 +28,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
 
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "integrations.base.products.POST",
+      logPrefix: "integrations.base.products.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -70,22 +70,25 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     // Update the last used inventory ID
     if (connection.baseLastInventoryId !== data.inventoryId) {
       await repo.updateConnection(connection.id, {
-        baseLastInventoryId: data.inventoryId,
+        baseLastInventoryId: data.inventoryId
       });
     }
 
     return NextResponse.json({
       products,
       count: products.length,
-      inventoryId: data.inventoryId,
+      inventoryId: data.inventoryId
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.[id].connections.[connectionId].base.products.POST",
-      fallbackMessage: "Failed to fetch products",
+      fallbackMessage: "Failed to fetch products"
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].base.products.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].base.products.POST", requireCsrf: false }
+);

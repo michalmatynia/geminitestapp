@@ -48,9 +48,9 @@ export default function FileUploadEventsPage(): React.JSX.Element {
       page,
       pageSize,
       status,
-      category: category.trim() || undefined,
-      projectId: projectId.trim() || undefined,
-      query: query.trim() || undefined,
+      ...(category.trim() ? { category: category.trim() } : {}),
+      ...(projectId.trim() ? { projectId: projectId.trim() } : {}),
+      ...(query.trim() ? { query: query.trim() } : {}),
       from: fromDate || null,
       to: toDate || null,
     }),
@@ -97,7 +97,7 @@ export default function FileUploadEventsPage(): React.JSX.Element {
           <UnifiedSelect
             value={status}
             onValueChange={(value: string) => setStatus(value as typeof status)}
-            options={statusOptions.map(opt => ({ value: opt.value, label: opt.label }))}
+            options={statusOptions.map((opt: { value: string; label: string }) => ({ value: opt.value, label: opt.label }))}
             placeholder="Status"
             triggerClassName="h-9 mt-1"
           />

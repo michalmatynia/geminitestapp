@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, useToast } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
@@ -13,6 +13,10 @@ import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
+import { CssAnimationConfigPanel } from "./CssAnimationConfigPanel";
+import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
+import type { CustomCssAiConfig } from "@/features/cms/types/custom-css-ai";
+import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from "@/features/cms/types/custom-css-ai";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
@@ -26,6 +30,9 @@ import {
   EVENT_SCROLL_BEHAVIOR_OPTIONS,
   getEventEffectsConfig,
 } from "@/features/cms/utils/event-effects";
+import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
+import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/useAgentTeaching";
+import type { ChatMessage } from "@/shared/types/chatbot";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
@@ -146,12 +153,22 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [gridTemplateName, setGridTemplateName] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "events" | "connections" | "customCss">("settings");
+  const [cssAiAppend, setCssAiAppend] = useState<boolean>(true);
+  const [cssAiAutoApply, setCssAiAutoApply] = useState<boolean>(false);
+  const [cssAiLoading, setCssAiLoading] = useState<boolean>(false);
+  const [cssAiError, setCssAiError] = useState<string | null>(null);
+  const [cssAiOutput, setCssAiOutput] = useState<string>("");
+  const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
+  const [contextPreviewOpen, setContextPreviewOpen] = useState<boolean>(false);
+  const [contextPreviewTab, setContextPreviewTab] = useState<"page" | "element">("page");
+  const [contextPreviewFull, setContextPreviewFull] = useState<boolean>(false);
+  const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
+  const cssAiAbortRef = useRef<AbortController | null>(null);
+  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
   const isGridSection = selectedSection?.type === "Grid";
   const isBlockSection = selectedSection?.type === "Block";
-  const isBlockBlock = selectedBlock?.type === "Block";
-  const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || isRowBlock || isBlockBlock);
+  const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || selectedBlock);
   const customCssValue = useMemo((): string => {
     if (selectedSection && (isGridSection || isBlockSection)) {
       return (selectedSection.settings["customCss"] as string) || "";
@@ -159,11 +176,165 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (selectedColumn) {
       return (selectedColumn.settings["customCss"] as string) || "";
     }
-    if (selectedBlock && (isRowBlock || isBlockBlock)) {
+    if (selectedBlock) {
       return (selectedBlock.settings["customCss"] as string) || "";
     }
     return "";
-  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection, isRowBlock, isBlockBlock]);
+  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
+  const customCssAiRaw = useMemo((): CustomCssAiConfig | undefined => {
+    if (selectedSection && (isGridSection || isBlockSection)) {
+      return selectedSection.settings["customCssAi"] as CustomCssAiConfig | undefined;
+    }
+    if (selectedColumn) {
+      return selectedColumn.settings["customCssAi"] as CustomCssAiConfig | undefined;
+    }
+    if (selectedBlock) {
+      return selectedBlock.settings["customCssAi"] as CustomCssAiConfig | undefined;
+    }
+    return undefined;
+  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
+  const customCssAiConfig = useMemo(
+    (): CustomCssAiConfig => ({ ...DEFAULT_CUSTOM_CSS_AI_CONFIG, ...(customCssAiRaw ?? {}) }),
+    [customCssAiRaw]
+  );
+  useEffect((): void => {
+    if (cssAiLoading && cssAiAbortRef.current) {
+      cssAiAbortRef.current.abort();
+      cssAiAbortRef.current = null;
+    }
+    setCssAiOutput("");
+    setCssAiError(null);
+  }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, cssAiLoading]);
+
+  useEffect(() => {
+    return () => {
+      if (cssAiAbortRef.current) {
+        cssAiAbortRef.current.abort();
+        cssAiAbortRef.current = null;
+      }
+    };
+  }, []);
+  const modelsQuery = useChatbotModels({ enabled: showCustomCssTab });
+  const teachingAgentsQuery = useTeachingAgents();
+  const modelOptions = useMemo((): string[] => {
+    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+    return Array.from(new Set(fromApi));
+  }, [modelsQuery.data]);
+  const agentOptions = useMemo(
+    () => (teachingAgentsQuery.data ?? []).map((agent) => ({ label: agent.name, value: agent.id })),
+    [teachingAgentsQuery.data]
+  );
+  const providerOptions = useMemo(
+    () => [
+      { label: "AI model", value: "model" },
+      { label: "Deepthinking agent", value: "agent" },
+    ],
+    []
+  );
+  const contextPlaceholder = "{{page_context}}\n{{element_context}}";
+  const PAGE_CONTEXT_LIMIT = 6000;
+  const ELEMENT_CONTEXT_LIMIT = 2500;
+
+  const stringifyContext = useCallback((value: unknown, limit?: number | null): string => {
+    try {
+      const json = JSON.stringify(value, null, 2);
+      if (limit == null) return json;
+      if (json.length <= limit) return json;
+      return `${json.slice(0, limit)}\n...truncated...`;
+    } catch {
+      const fallback = String(value ?? "");
+      if (limit == null) return fallback;
+      return fallback.length <= limit ? fallback : `${fallback.slice(0, limit)}...`;
+    }
+  }, []);
+
+  const serializeBlock = useCallback((block: BlockInstance): Record<string, unknown> => ({
+    id: block.id,
+    type: block.type,
+    settings: block.settings ?? {},
+    blocks: (block.blocks ?? []).map(serializeBlock),
+  }), []);
+
+  const buildPageContext = useCallback((limit?: number | null): string => {
+    const resolvedLimit = limit === undefined ? PAGE_CONTEXT_LIMIT : limit;
+    if (!state.currentPage) return "No page loaded.";
+    const pageContext = {
+      page: {
+        id: state.currentPage.id,
+        name: state.currentPage.name,
+        status: state.currentPage.status,
+        themeId: state.currentPage.themeId,
+        publishedAt: state.currentPage.publishedAt,
+        slugs: state.currentPage.slugs ?? [],
+        slugIds: state.currentPage.slugIds ?? [],
+      },
+      sections: state.sections.map((section: SectionInstance) => ({
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        settings: section.settings ?? {},
+        blocks: (section.blocks ?? []).map(serializeBlock),
+      })),
+    };
+    return stringifyContext(pageContext, resolvedLimit);
+  }, [state.currentPage, state.sections, stringifyContext, serializeBlock]);
+
+  const buildElementContext = useCallback((limit?: number | null): string => {
+    const resolvedLimit = limit === undefined ? ELEMENT_CONTEXT_LIMIT : limit;
+    if (selectedSection && !selectedBlock && !selectedColumn) {
+      return stringifyContext(
+        {
+          kind: "section",
+          id: selectedSection.id,
+          type: selectedSection.type,
+          zone: selectedSection.zone,
+          settings: selectedSection.settings ?? {},
+          blocks: (selectedSection.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    if (selectedColumn) {
+      return stringifyContext(
+        {
+          kind: "column",
+          id: selectedColumn.id,
+          sectionId: selectedColumnParentSection?.id,
+          rowId: selectedGridRow?.id,
+          settings: selectedColumn.settings ?? {},
+          blocks: (selectedColumn.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    if (selectedBlock) {
+      return stringifyContext(
+        {
+          kind: selectedBlock.type === "Row" ? "row" : "block",
+          id: selectedBlock.id,
+          type: selectedBlock.type,
+          sectionId: selectedParentSection?.id,
+          columnId: selectedParentColumn?.id,
+          parentBlockId: selectedParentBlock?.id,
+          settings: selectedBlock.settings ?? {},
+          blocks: (selectedBlock.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    return "No element selected.";
+  }, [
+    selectedSection,
+    selectedBlock,
+    selectedColumn,
+    selectedParentSection,
+    selectedParentColumn,
+    selectedParentBlock,
+    selectedColumnParentSection,
+    selectedGridRow,
+    stringifyContext,
+    serializeBlock,
+  ]);
   const rowCount = useMemo((): number => {
     if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
     return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row").length;
@@ -357,7 +528,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         handleColumnSettingChange("customCss", value);
         return;
       }
-      if (selectedBlock && (isRowBlock || isBlockBlock)) {
+      if (selectedBlock) {
         handleBlockSettingChange("customCss", value);
       }
     },
@@ -367,13 +538,306 @@ export function ComponentSettingsPanel(): React.ReactNode {
       selectedBlock,
       isGridSection,
       isBlockSection,
-      isRowBlock,
-      isBlockBlock,
       handleSectionSettingChange,
       handleColumnSettingChange,
       handleBlockSettingChange,
     ]
   );
+
+  const handleCustomCssAiChange = useCallback(
+    (patch: Partial<CustomCssAiConfig>): void => {
+      const next: CustomCssAiConfig = { ...customCssAiConfig, ...patch };
+      if (selectedSection && (isGridSection || isBlockSection)) {
+        handleSectionSettingChange("customCssAi", next);
+        return;
+      }
+      if (selectedColumn) {
+        handleColumnSettingChange("customCssAi", next);
+        return;
+      }
+      if (selectedBlock) {
+        handleBlockSettingChange("customCssAi", next);
+      }
+    },
+    [
+      customCssAiConfig,
+      selectedSection,
+      selectedColumn,
+      selectedBlock,
+      isGridSection,
+      isBlockSection,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+    ]
+  );
+
+  const extractCssFromResponse = useCallback((raw: string): string => {
+    const trimmed = raw.trim();
+    if (!trimmed) return "";
+    const fenceMatch = trimmed.match(/```(?:css)?\s*([\s\S]*?)```/i);
+    if (fenceMatch?.[1]) {
+      return fenceMatch[1].trim();
+    }
+    return trimmed.replace(/```/g, "").trim();
+  }, []);
+
+  const buildDiffLines = useCallback(
+    (
+      prev: string,
+      next: string,
+      limit: number = 220
+    ): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
+      const prevLines = prev.split("\n");
+      const nextLines = next.split("\n");
+      const max = Math.max(prevLines.length, nextLines.length);
+      const lines: Array<{ type: "add" | "remove" | "same"; text: string }> = [];
+      let truncated = false;
+      for (let index = 0; index < max; index += 1) {
+        const prevLine = prevLines[index];
+        const nextLine = nextLines[index];
+        if (prevLine === nextLine) {
+          if (prevLine !== undefined) {
+            lines.push({ type: "same", text: prevLine });
+          }
+        } else {
+          if (prevLine !== undefined) {
+            lines.push({ type: "remove", text: prevLine });
+          }
+          if (nextLine !== undefined) {
+            lines.push({ type: "add", text: nextLine });
+          }
+        }
+        if (lines.length >= limit) {
+          truncated = true;
+          break;
+        }
+      }
+      return { lines, truncated };
+    },
+    []
+  );
+
+  const cssDiff = useMemo(() => {
+    if (!cssAiOutput) return null;
+    return buildDiffLines(customCssValue, cssAiOutput);
+  }, [cssAiOutput, customCssValue, buildDiffLines]);
+
+  const cssDiffLines = useMemo(() => {
+    if (!cssDiff) return [];
+    return cssAiDiffOnly ? cssDiff.lines.filter((line) => line.type !== "same") : cssDiff.lines;
+  }, [cssDiff, cssAiDiffOnly]);
+
+  const cssDiffStats = useMemo(() => {
+    if (!cssDiff) return { added: 0, removed: 0, same: 0 };
+    return cssDiff.lines.reduce(
+      (acc, line) => {
+        if (line.type === "add") acc.added += 1;
+        else if (line.type === "remove") acc.removed += 1;
+        else acc.same += 1;
+        return acc;
+      },
+      { added: 0, removed: 0, same: 0 }
+    );
+  }, [cssDiff]);
+
+  const pageContextPreview = useMemo(() => {
+    if (!contextPreviewOpen) return "";
+    return buildPageContext(contextPreviewFull ? null : undefined);
+  }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
+
+  const elementContextPreview = useMemo(() => {
+    if (!contextPreviewOpen) return "";
+    return buildElementContext(contextPreviewFull ? null : undefined);
+  }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);
+
+  const handleCopyContext = useCallback(
+    async (value: string): Promise<void> => {
+      try {
+        await navigator.clipboard.writeText(value);
+        toast("Context copied.", { variant: "success" });
+      } catch (error) {
+        toast("Failed to copy context.", { variant: "error" });
+        logClientError(error, { context: { source: "ComponentSettingsPanel", action: "copyContext" } });
+      }
+    },
+    [toast]
+  );
+
+  const buildCssAiPrompt = useCallback((): string => {
+    const basePrompt = (customCssAiConfig.prompt ?? "").trim();
+    const pageContext = buildPageContext();
+    const elementContext = buildElementContext();
+    const defaultPrompt =
+      "Generate a CSS snippet for the selected element. Return only CSS without explanations.";
+    const promptBody = basePrompt.length > 0 ? basePrompt : defaultPrompt;
+    const hasPagePlaceholder = /{{\s*page_context\s*}}/i.test(promptBody);
+    const hasElementPlaceholder = /{{\s*element_context\s*}}/i.test(promptBody);
+    const resolved = promptBody
+      .replace(/{{\s*page_context\s*}}/gi, pageContext)
+      .replace(/{{\s*element_context\s*}}/gi, elementContext);
+    if (hasPagePlaceholder || hasElementPlaceholder) {
+      return resolved;
+    }
+    return `${resolved}\n\nPage context:\n${pageContext}\n\nElement context:\n${elementContext}`;
+  }, [customCssAiConfig.prompt, buildPageContext, buildElementContext]);
+
+  const handleGenerateCss = useCallback(async (): Promise<void> => {
+    if (cssAiLoading) return;
+    setCssAiError(null);
+    setCssAiLoading(true);
+    setCssAiOutput("");
+    try {
+      const prompt = buildCssAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error("Prompt is empty.");
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content: "You are a CSS assistant. Return only valid CSS without code fences or explanations.",
+        },
+        { role: "user", content: prompt },
+      ];
+
+      const controller = new AbortController();
+      cssAiAbortRef.current = controller;
+
+      const provider = customCssAiConfig.provider ?? "model";
+      const modelId = (customCssAiConfig.modelId ?? "").trim() || modelOptions[0] || "";
+      const agentId = (customCssAiConfig.agentId ?? "").trim();
+      if (provider === "model" && !modelId) {
+        throw new Error("Select an AI model first.");
+      }
+      if (provider === "agent" && !agentId) {
+        throw new Error("Select a Deepthinking agent first.");
+      }
+
+      const res = await fetch("/api/cms/css-ai/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Streaming request failed.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split("\n").map((line) => line.trim());
+        const dataLine = lines.find((line) => line.startsWith("data:"));
+        if (!dataLine) return;
+        try {
+          const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
+            delta?: string;
+            done?: boolean;
+            error?: string;
+          };
+          if (payload.error) {
+            throw new Error(payload.error);
+          }
+          if (payload.delta) {
+            accumulated += payload.delta;
+            setCssAiOutput(accumulated);
+          }
+          if (payload.done) {
+            doneSignal = true;
+          }
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const finalCss = extractCssFromResponse(accumulated);
+      if (!finalCss) throw new Error("No CSS returned.");
+      setCssAiOutput(finalCss);
+      if (cssAiAutoApply) {
+        const nextCss = cssAiAppend
+          ? [customCssValue.trim(), finalCss].filter(Boolean).join("\n\n")
+          : finalCss;
+        handleCustomCssChange(nextCss);
+        toast(`CSS generated and applied (${provider}).`, { variant: "success" });
+      } else {
+        toast(`CSS generated from ${provider}.`, { variant: "success" });
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setCssAiError("Generation cancelled.");
+        toast("Generation cancelled.", { variant: "info" });
+      } else {
+        const message = error instanceof Error ? error.message : "Failed to generate CSS.";
+        setCssAiError(message);
+        toast(message, { variant: "error" });
+      }
+    } finally {
+      setCssAiLoading(false);
+      cssAiAbortRef.current = null;
+    }
+  }, [
+    cssAiLoading,
+    buildCssAiPrompt,
+    customCssAiConfig.provider,
+    customCssAiConfig.agentId,
+    customCssAiConfig.modelId,
+    modelOptions,
+    extractCssFromResponse,
+    cssAiAppend,
+    cssAiAutoApply,
+    customCssValue,
+    handleCustomCssChange,
+    toast,
+  ]);
+
+  const handleApplyGeneratedCss = useCallback(
+    (mode: "append" | "replace"): void => {
+      if (!cssAiOutput) return;
+      const nextCss =
+        mode === "append"
+          ? [customCssValue.trim(), cssAiOutput].filter(Boolean).join("\n\n")
+          : cssAiOutput;
+      handleCustomCssChange(nextCss);
+      toast(mode === "append" ? "CSS appended." : "CSS replaced.", { variant: "success" });
+    },
+    [cssAiOutput, customCssValue, handleCustomCssChange, toast]
+  );
+
+  const handleCancelCss = useCallback((): void => {
+    if (cssAiAbortRef.current) {
+      cssAiAbortRef.current.abort();
+      cssAiAbortRef.current = null;
+    }
+  }, []);
 
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
@@ -529,6 +993,32 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
     if (selectedBlock) {
       return selectedBlock.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+    }
+    return undefined;
+  }, [selectedSection, selectedBlock, selectedColumn]);
+
+  const handleCssAnimationChange = useCallback(
+    (config: CssAnimationConfig): void => {
+      if (selectedSection && !selectedBlock && !selectedColumn) {
+        handleSectionSettingChange("cssAnimation", config);
+      } else if (selectedColumn) {
+        handleColumnSettingChange("cssAnimation", config);
+      } else if (selectedBlock) {
+        handleBlockSettingChange("cssAnimation", config);
+      }
+    },
+    [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]
+  );
+
+  const currentCssAnimationConfig = useMemo((): CssAnimationConfig | undefined => {
+    if (selectedSection && !selectedBlock && !selectedColumn) {
+      return selectedSection.settings["cssAnimation"] as CssAnimationConfig | undefined;
+    }
+    if (selectedColumn) {
+      return selectedColumn.settings["cssAnimation"] as CssAnimationConfig | undefined;
+    }
+    if (selectedBlock) {
+      return selectedBlock.settings["cssAnimation"] as CssAnimationConfig | undefined;
     }
     return undefined;
   }, [selectedSection, selectedBlock, selectedColumn]);
@@ -846,13 +1336,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab(value as "settings" | "animation" | "events" | "connections" | "customCss")
+            setActiveTab(value as "settings" | "animation" | "cssAnimation" | "events" | "connections" | "customCss")
           }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
             <TabsTrigger value="animation" className="flex-1 text-xs">Animation</TabsTrigger>
+            <TabsTrigger value="cssAnimation" className="flex-1 text-xs">CSS Anim</TabsTrigger>
             {showCustomCssTab && (
               <TabsTrigger value="customCss" className="flex-1 text-xs">CSS</TabsTrigger>
             )}
@@ -1116,6 +1607,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
               onChange={handleAnimationChange}
             />
           </TabsContent>
+          {/* ---- CSS Animation tab ---- */}
+          <TabsContent value="cssAnimation" className="flex-1 overflow-y-auto p-4 mt-0">
+            <CssAnimationConfigPanel
+              value={currentCssAnimationConfig}
+              onChange={handleCssAnimationChange}
+            />
+          </TabsContent>
           {showCustomCssTab && (
             <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0">
               <div className="space-y-3">
@@ -1129,6 +1627,293 @@ export function ComponentSettingsPanel(): React.ReactNode {
                         : selectedBlock?.type ?? "Item"}
                   </span>
                 </div>
+                <SectionPanel variant="subtle-compact" className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-wider text-gray-400">
+                      CSS AI Assistant
+                    </Label>
+                    <span className="text-[10px] text-gray-500">Optional</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-400">Provider</Label>
+                    <UnifiedSelect
+                      value={customCssAiConfig.provider ?? "model"}
+                      onValueChange={(value: string): void =>
+                        handleCustomCssAiChange({ provider: value as CustomCssAiConfig["provider"] })
+                      }
+                      options={providerOptions}
+                      placeholder="Select provider"
+                    />
+                  </div>
+                  {customCssAiConfig.provider !== "agent" ? (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-400">Model</Label>
+                      <UnifiedSelect
+                        value={customCssAiConfig.modelId ?? ""}
+                        onValueChange={(value: string): void =>
+                          handleCustomCssAiChange({ modelId: value })
+                        }
+                        options={modelOptions.map((model: string) => ({ value: model, label: model }))}
+                        placeholder={modelOptions.length ? "Select model" : "No models available"}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+                      <UnifiedSelect
+                        value={customCssAiConfig.agentId ?? ""}
+                        onValueChange={(value: string): void =>
+                          handleCustomCssAiChange({ agentId: value })
+                        }
+                        options={
+                          agentOptions.length
+                            ? agentOptions
+                            : [{ label: "No agents configured", value: "" }]
+                        }
+                        placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-400">Prompt</Label>
+                    <Textarea
+                      value={customCssAiConfig.prompt ?? ""}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                        handleCustomCssAiChange({ prompt: e.target.value })
+                      }
+                      placeholder={`Describe the CSS you want.\n\nContext:\n${contextPlaceholder}`}
+                      className="min-h-[120px] text-xs"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] text-gray-500">Context placeholders</div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={(): void => {
+                        const current = (customCssAiConfig.prompt ?? "").trim();
+                        const nextPrompt = current.length
+                          ? `${current}\n\n${contextPlaceholder}`
+                          : contextPlaceholder;
+                        handleCustomCssAiChange({ prompt: nextPrompt });
+                      }}
+                    >
+                      Insert placeholders
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={contextPlaceholder}
+                    readOnly
+                    className="min-h-[64px] text-xs font-mono text-gray-300"
+                  />
+                  <div className="text-[11px] text-gray-500">
+                    <span className="font-mono text-gray-300">page_context</span> = full page UI context,{" "}
+                    <span className="font-mono text-gray-300">element_context</span> = selected element details.
+                  </div>
+                  <div className="rounded border border-border/40 bg-gray-900/40 p-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Label className="text-xs text-gray-400">Context preview</Label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex items-center gap-2 text-[11px] text-gray-300">
+                          <Switch
+                            checked={contextPreviewFull}
+                            onCheckedChange={(value: boolean | "indeterminate"): void =>
+                              setContextPreviewFull(value === true)
+                            }
+                          />
+                          Full context
+                        </label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(): void => setContextPreviewNonce((prev) => prev + 1)}
+                        >
+                          Refresh
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(): void => setContextPreviewOpen((prev) => !prev)}
+                        >
+                          {contextPreviewOpen ? "Hide" : "Show"}
+                        </Button>
+                      </div>
+                    </div>
+                    {contextPreviewOpen ? (
+                      <Tabs
+                        value={contextPreviewTab}
+                        onValueChange={(value: string): void =>
+                          setContextPreviewTab(value as "page" | "element")
+                        }
+                        className="mt-3"
+                      >
+                        <TabsList className="w-full">
+                          <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
+                          <TabsTrigger value="element" className="flex-1 text-xs">Element</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="page" className="mt-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-gray-400">Full page context</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={(): void => void handleCopyContext(pageContextPreview)}
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <Textarea
+                            value={pageContextPreview}
+                            readOnly
+                            className="min-h-[160px] text-xs font-mono text-gray-300"
+                          />
+                        </TabsContent>
+                        <TabsContent value="element" className="mt-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-gray-400">Selected element context</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={(): void => void handleCopyContext(elementContextPreview)}
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <Textarea
+                            value={elementContextPreview}
+                            readOnly
+                            className="min-h-[160px] text-xs font-mono text-gray-300"
+                          />
+                        </TabsContent>
+                      </Tabs>
+                    ) : (
+                      <div className="mt-2 text-[11px] text-gray-500">
+                        Preview the raw context payloads used for AI prompts.
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 text-xs text-gray-300">
+                      <Switch
+                        checked={cssAiAutoApply}
+                        onCheckedChange={(value: boolean | "indeterminate"): void =>
+                          setCssAiAutoApply(value === true)
+                        }
+                      />
+                      Auto-apply on generate
+                    </label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={(): void => void handleGenerateCss()}
+                      disabled={cssAiLoading}
+                    >
+                      {cssAiLoading ? "Generating…" : "Generate CSS"}
+                    </Button>
+                    {cssAiLoading && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelCss}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                  {cssAiAutoApply && (
+                    <label className="flex items-center gap-2 text-xs text-gray-300">
+                      <Switch
+                        checked={cssAiAppend}
+                        onCheckedChange={(value: boolean | "indeterminate"): void =>
+                          setCssAiAppend(value === true)
+                        }
+                      />
+                      Append when auto-applying
+                    </label>
+                  )}
+                  {cssAiError && (
+                    <div className="text-xs text-red-400">{cssAiError}</div>
+                  )}
+                  {cssAiOutput && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-400">Last generated CSS</Label>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(): void => handleApplyGeneratedCss("append")}
+                          >
+                            Apply append
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(): void => handleApplyGeneratedCss("replace")}
+                          >
+                            Apply replace
+                          </Button>
+                        </div>
+                      </div>
+                      <Textarea
+                        value={cssAiOutput}
+                        readOnly
+                        className="min-h-[120px] text-xs font-mono text-gray-300"
+                      />
+                      <div className="rounded border border-border/40 bg-gray-900/40 p-2">
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <div className="flex items-center gap-3">
+                            <span>Diff</span>
+                            <span className="text-emerald-300">+{cssDiffStats.added}</span>
+                            <span className="text-rose-300">-{cssDiffStats.removed}</span>
+                            <span className="text-gray-500">={cssDiffStats.same}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={(): void => setCssAiDiffOnly((prev) => !prev)}
+                          >
+                            {cssAiDiffOnly ? "Changes only" : "Show all"}
+                          </Button>
+                        </div>
+                        <div className="mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]">
+                          {cssDiffLines.length > 0 ? (
+                            cssDiffLines.map((line, index) => {
+                              const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
+                              const colorClass =
+                                line.type === "add"
+                                  ? "text-emerald-300"
+                                  : line.type === "remove"
+                                    ? "text-rose-300"
+                                    : "text-gray-300";
+                              return (
+                                <div key={`${line.type}-${index}`} className={`whitespace-pre ${colorClass}`}>
+                                  {prefix}
+                                  {line.text}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="text-gray-500">No differences yet.</div>
+                          )}
+                          {cssDiff?.truncated ? (
+                            <div className="mt-1 text-gray-500">Diff truncated…</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </SectionPanel>
                 <div className="text-[11px] text-gray-500">
                   Use <span className="font-mono text-gray-300">parent</span> to target this element and{" "}
                   <span className="font-mono text-gray-300">children</span> to target its direct children.

@@ -1404,6 +1404,10 @@ export function PreviewSection({
     const src = (section.settings["src"] as string) || "";
     const alt = (section.settings["alt"] as string) || "Image";
     const presentation = buildImageElementPresentation(section.settings, mediaStyles);
+    const sectionStyles = getSectionStyles(section.settings, colorSchemes);
+    if ("width" in section.settings) {
+      delete sectionStyles.width;
+    }
     const hasSrc = Boolean(src);
     if (!hasSrc && !showEditorChrome) {
       return null;
@@ -1418,7 +1422,7 @@ export function PreviewSection({
           onKeyDown={(e: React.KeyboardEvent): void => {
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
-          style={getSectionStyles(section.settings, colorSchemes)}
+          style={sectionStyles}
           className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}

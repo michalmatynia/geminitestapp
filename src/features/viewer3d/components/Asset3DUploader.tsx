@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Input, Label, FileUploadTrigger } from "@/shared/ui";
 import { Upload, Loader2, Plus, X } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { validate3DFile, SUPPORTED_3D_FORMATS } from "../utils/validateAsset3d";
 import { uploadAsset3DFile } from "../api";
 import type { Asset3DRecord } from "../types";
@@ -33,7 +33,6 @@ export function Asset3DUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = useCallback((selectedFile: File): void => {
     const validation = validate3DFile(selectedFile);
@@ -108,6 +107,14 @@ export function Asset3DUploader({
     <div className={className}>
       {/* File Drop Zone */}
       {!file ? (
+        <FileUploadTrigger
+          accept=".glb,.gltf"
+          onFilesSelected={(files: File[]) => {
+            const selectedFile = files[0];
+            if (selectedFile) handleFileSelect(selectedFile);
+          }}
+          asChild
+        >
         <div
           className={cn(
             "relative flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors",
@@ -124,7 +131,6 @@ export function Asset3DUploader({
             setIsDragOver(false);
           }}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center gap-2">
             <Upload className="h-8 w-8 text-gray-500" />
@@ -133,18 +139,8 @@ export function Asset3DUploader({
             </span>
             <span className="text-xs text-gray-500">or click to browse</span>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".glb,.gltf"
-            className="hidden"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-              const selectedFile = e.target.files?.[0];
-              if (selectedFile) handleFileSelect(selectedFile);
-              e.target.value = "";
-            }}
-          />
         </div>
+        </FileUploadTrigger>
       ) : (
         <div className="space-y-4">
           {/* Selected File */}

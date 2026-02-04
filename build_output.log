@@ -6,10 +6,12 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 263ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 374ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
 
-⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/lock, is another instance of next build running?
-  Suggestion: If you intended to restart next build, terminate the other process, and then try again.
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel } from "@/shared/ui";
+import React, { useState } from "react";
+import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel, FileUploadButton } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import NextImage from "next/image";
 import { Upload, FolderOpen, Loader2 } from "lucide-react";
@@ -27,13 +27,11 @@ export function ImagePickerField({
   disabled,
 }: FieldProps<string>): React.JSX.Element {
   const [open, setOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const uploadMutation = useUploadCmsMedia();
   const { toast } = useToast();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  const handleFileUpload = async (files: File[]): Promise<void> => {
+    const file = files[0];
     if (!file) return;
 
     try {
@@ -76,25 +74,18 @@ export function ImagePickerField({
           </div>
         )}
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleFileUpload(e); }}
-      />
       <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
+        <FileUploadButton
           size="sm"
           variant="outline"
           className="text-xs"
-          onClick={(): void => fileInputRef.current?.click()}
+          accept="image/*"
           disabled={disabled || isUploading}
+          onFilesSelected={(files: File[]) => handleFileUpload(files)}
         >
           <Upload className="mr-1.5 size-3" />
           {value ? "Replace" : "Upload"}
-        </Button>
+        </FileUploadButton>
         <Button
           type="button"
           size="sm"

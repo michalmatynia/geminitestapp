@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
 import { uploadFile } from "@/features/files/utils/fileUploader";
-import { getImageFileRepository } from "@/features/files/server";
+import { createFileUploadEvent, getImageFileRepository } from "@/features/files/server";
+import { ErrorSystem } from "@/features/observability/services/error-system";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -45,7 +46,13 @@ function normalizeStudioPublicPath(filepath: string | null | undefined): string 
   return normalized;
 }
 
-type UploadedFileLike = File;
+type UploadedFileLike = File | (Blob & { name?: string });
+
+function isFileLike(value: unknown): value is UploadedFileLike {
+  if (!value || typeof value !== "object") return false;
+  const blob = value as Blob;
+  return typeof blob.arrayBuffer === "function";
+}
 
 function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
   const candidates = [
@@ -54,7 +61,7 @@ function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
     ...formData.getAll("file"),
   ];
 
-  return candidates.filter((value): value is File => value instanceof File);
+  return candidates.filter((value): value is UploadedFileLike => isFileLike(value));
 }
 
 async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRecord[]> {
@@ -193,27 +200,76 @@ async function POST_handler(
     const formData = await req.formData();
     const folder = formData.get("folder");
     const files = extractUploadedFiles(formData);
+    const requestId = req.headers.get("x-request-id") ?? undefined;
 
     if (files.length === 0) {
+      void createFileUploadEvent({
+        status: "error",
+        category: "studio",
+        projectId,
+        folder: typeof folder === "string" ? folder : null,
+        source: "image-studio.upload",
+        errorMessage: "No files provided",
+        requestId,
+      }).catch(() => {});
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
     const uploaded: ImageFileRecord[] = [];
+    const failures: Array<{ filename: string; error: string }> = [];
 
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index]!;
-      uploaded.push(
-        await uploadFile(file, {
+      const fileName = typeof (file as File).name === "string" ? (file as File).name : "upload.bin";
+      try {
+        const record = await uploadFile(file as File, {
           category: "studio",
           projectId,
           folder: typeof folder === "string" ? folder : null,
           allowOrphanRecord: true,
-          filenameOverride: file.name,
-        })
-      );
+          filenameOverride: fileName,
+        });
+        uploaded.push(record);
+        void createFileUploadEvent({
+          status: "success",
+          category: "studio",
+          projectId,
+          folder: typeof folder === "string" ? folder : null,
+          filename: record.filename ?? fileName,
+          filepath: record.filepath ?? null,
+          mimetype: record.mimetype ?? (file as File).type ?? null,
+          size: typeof record.size === "number" ? record.size : (file as File).size,
+          source: "image-studio.upload",
+          requestId,
+        }).catch(() => {});
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed";
+        failures.push({ filename: fileName, error: message });
+        void createFileUploadEvent({
+          status: "error",
+          category: "studio",
+          projectId,
+          folder: typeof folder === "string" ? folder : null,
+          filename: fileName,
+          mimetype: (file as File).type ?? null,
+          size: (file as File).size,
+          source: "image-studio.upload",
+          errorMessage: message,
+          requestId,
+        }).catch(() => {});
+        void ErrorSystem.captureException(error, {
+          service: "image-studio.upload",
+          projectId,
+          filename: fileName,
+        });
+      }
     }
 
-    return NextResponse.json({ uploaded }, { status: 201 });
+    if (uploaded.length === 0) {
+      return NextResponse.json({ error: "Upload failed", failures }, { status: 400 });
+    }
+
+    return NextResponse.json({ uploaded, failures }, { status: 201 });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

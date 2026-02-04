@@ -15,6 +15,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  FileUploadButton,
+  FileUploadTrigger,
 } from "@/shared/ui";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
@@ -385,7 +387,6 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoWidth, setLogoWidth] = useState<number>(180);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
   // Accordion open-state persistence
@@ -533,9 +534,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setNewSchemeName("");
   }, [editingSchemeId, newSchemeColors, newSchemeName, theme.colorSchemes, setTheme]);
 
-  const handlePickLogo = useCallback((): void => { fileInputRef.current?.click(); }, []);
-  const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0] ?? null;
+  const handleLogoSelect = useCallback((files: File[]): void => {
+    const file = files[0] ?? null;
     setLogoFile(file);
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
@@ -548,7 +548,6 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     } else {
       setLogoPreviewUrl(null);
     }
-    event.target.value = "";
   }, []);
 
   const themePresetOptions = useMemo(() => {
@@ -634,14 +633,21 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               </div>
               <RangeField label="Desktop logo width" value={logoWidth} onChange={setLogoWidth} min={50} max={300} suffix="px" />
               <div className="space-y-2">
-                <button type="button" onClick={handlePickLogo} className="flex w-full items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40">
-                  Image upload box
-                </button>
+                <FileUploadTrigger
+                  accept="image/*"
+                  onFilesSelected={(files: File[]) => handleLogoSelect(files)}
+                  asChild
+                >
+                  <button type="button" className="flex w-full items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40">
+                    Image upload box
+                  </button>
+                </FileUploadTrigger>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={handlePickLogo}>Choose file</Button>
+                  <FileUploadButton size="sm" variant="outline" accept="image/*" onFilesSelected={(files: File[]) => handleLogoSelect(files)}>
+                    Choose file
+                  </FileUploadButton>
                   <span className="flex-1 truncate text-[11px] text-gray-500">{logoFile?.name ?? "No file selected"}</span>
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
               </div>
             </div>
           );
@@ -1604,8 +1610,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     [
       activeScheme,
       handleSaveScheme,
-      handleLogoChange,
-      handlePickLogo,
+      handleLogoSelect,
       editingSchemeId,
       logoFile?.name,
       logoPreviewUrl,

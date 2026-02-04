@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag } from "@/shared/ui";
+import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger } from "@/shared/ui";
 import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
 import Link from "next/link";
 import React, { Suspense, useEffect, useRef, useState } from "react";
@@ -302,23 +302,20 @@ function ChatbotContextPageInner(): React.JSX.Element {
               >
                 <PlusIcon className="size-5" />
               </Button>
-              <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
-                {uploading ? "Uploading..." : "Upload PDF"}
-                <Input
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  disabled={loading || saving || uploading}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    void (async (): Promise<void> => {
-                      const file: File | undefined = event.target.files?.[0];
-                      if (!file) return;
-                      await handlePdfUpload(file);
-                      event.target.value = "";
-                    })();
-                  }}
-                />
-              </Label>
+              <FileUploadTrigger
+                accept="application/pdf"
+                disabled={loading || saving || uploading}
+                onFilesSelected={async (files: File[]) => {
+                  const file = files[0];
+                  if (!file) return;
+                  await handlePdfUpload(file);
+                }}
+                asChild
+              >
+                <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
+                  {uploading ? "Uploading..." : "Upload PDF"}
+                </Label>
+              </FileUploadTrigger>
               <Button
                 type="button"
                 variant="outline"

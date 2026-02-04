@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
+import React from "react";
 import { Upload, X } from "lucide-react";
-import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
+import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton } from "@/shared/ui";
 import dynamic from "next/dynamic";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 import { useUploadCmsMedia } from "../../hooks/useCmsQueries";
@@ -25,7 +25,6 @@ export function MediaLibraryPanel({
   selectionMode = "single",
   autoConfirmSelection,
 }: MediaLibraryPanelProps): React.ReactNode {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
   const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === "single";
 
@@ -40,15 +39,12 @@ export function MediaLibraryPanel({
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const files = event.target.files;
-    event.target.value = "";
+  const handleUpload = async (files: File[]): Promise<void> => {
     if (!files || files.length === 0) return;
 
     try {
-      const list = Array.from(files);
       const uploaded: ImageFileRecord[] = [];
-      for (const file of list) {
+      for (const file of files) {
         const result = await uploadMutation.mutateAsync(file);
         uploaded.push(result);
       }
@@ -83,24 +79,17 @@ export function MediaLibraryPanel({
         </DialogHeader>
 
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
+          <FileUploadButton
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
+            accept="image/*"
+            multiple
             disabled={uploadMutation.isPending}
+            onFilesSelected={(files: File[]) => handleUpload(files)}
           >
             <Upload className="mr-2 size-4" />
             {uploadMutation.isPending ? "Uploading..." : "Upload images"}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { void handleUpload(e); }}
-          />
+          </FileUploadButton>
           <p className="text-xs text-gray-500">Supported formats: images</p>
         </div>
 

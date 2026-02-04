@@ -72,6 +72,29 @@ model SystemLog {
   @@index([createdAt])
 }
 
+model FileUploadEvent {
+  id           String   @id @default(cuid())
+  status       String
+  category     String?
+  projectId    String?
+  folder       String?
+  filename     String?
+  filepath     String?
+  mimetype     String?
+  size         Int?
+  source       String?
+  errorMessage String?
+  requestId    String?
+  userId       String?
+  meta         Json?
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+  @@index([category])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
 model ChatbotSettings {
   id        String   @id @default(cuid())
   key       String   @unique

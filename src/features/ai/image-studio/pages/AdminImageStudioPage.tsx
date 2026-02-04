@@ -18,10 +18,30 @@ import {
   Tabs,
   TabsContent,
   Textarea,
+  Tooltip,
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { Folder, Image as ImageIcon, Maximize2, Minimize2, MousePointer2, Pentagon, RefreshCcw, Sparkles, Upload, Wand2 } from "lucide-react";
+import {
+  Brush,
+  Check,
+  Circle,
+  Folder,
+  Image as ImageIcon,
+  Lasso,
+  Maximize2,
+  Minimize2,
+  MousePointer2,
+  Pentagon,
+  RectangleHorizontal,
+  RefreshCcw,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+  Unlink,
+  Upload,
+  Wand2,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -55,6 +75,7 @@ type MaskShape = {
 type StudioProjectsResponse = { projects: string[] };
 type StudioAssetsResponse = { assets: ImageFileRecord[]; folders?: string[] };
 type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
+type StudioUploadResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filename: string; error: string }> };
 type StudioRunResponse = { outputs: ImageFileRecord[] };
 type UiSuggestion = {
   path: string;
@@ -1086,7 +1107,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (payload: { files: File[]; folder: string }): Promise<void> => {
+    mutationFn: async (payload: { files: File[]; folder: string }): Promise<StudioUploadResponse> => {
       if (!projectId) throw new Error("Select or create a project first.");
       const formData = new FormData();
       payload.files.forEach((file: File) => formData.append("files", file));
@@ -1097,15 +1118,35 @@ export function AdminImageStudioPage(): React.JSX.Element {
         method: "POST",
         body: formData,
       });
+      const data = (await res.json().catch(() => null)) as StudioUploadResponse | { error?: string; errorId?: string } | null;
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Upload failed");
+        const errorId = data && "errorId" in data ? data.errorId : undefined;
+        throw new Error(`${(data && "error" in data && data.error) || "Upload failed"}${errorId ? ` (Error ID: ${errorId})` : ""}`);
       }
+      return (data ?? { uploaded: [], failures: [] }) as StudioUploadResponse;
     },
-    onSuccess: async (): Promise<void> => {
+    onSuccess: async (data: StudioUploadResponse): Promise<void> => {
+      if (data.uploaded?.length) {
+        queryClient.setQueryData(["image-studio", "assets", projectId], (prev: StudioAssetsResponse | undefined) => {
+          const current = Array.isArray(prev?.assets) ? prev?.assets ?? [] : [];
+          const byId = new Map<string, ImageFileRecord>();
+          current.forEach((asset: ImageFileRecord) => byId.set(asset.id, asset));
+          data.uploaded.forEach((asset: ImageFileRecord) => {
+            if (!byId.has(asset.id)) byId.set(asset.id, asset);
+          });
+          return {
+            assets: Array.from(byId.values()),
+            folders: prev?.folders ?? [],
+          };
+        });
+      }
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
       await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
-      toast("Upload complete.", { variant: "success" });
+      if (data.failures?.length) {
+        toast(`Uploaded ${data.uploaded.length} file(s). ${data.failures.length} failed.`, { variant: "info" });
+      } else {
+        toast("Upload complete.", { variant: "success" });
+      }
     },
     onError: (error: unknown): void => {
       toast(error instanceof Error ? error.message : "Upload failed.", { variant: "error" });
@@ -2633,28 +2674,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
 
   return (
-    <div className="container mx-auto max-w-none space-y-6 py-10">
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={() => {
-            void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
-          }}
-        >
-          <RefreshCcw className="mr-2 size-4" />
-          Refresh
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setIsFocusMode((prev: boolean) => !prev)}
-        >
-          {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
-          {isFocusMode ? "Edit" : "Show"}
-        </Button>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsContent value="studio">
+    <div className="container mx-auto max-w-none flex min-h-[calc(100vh-5rem)] flex-col gap-4 py-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex min-h-0 flex-1 flex-col gap-4">
+        <TabsContent value="studio" className="mt-0 flex min-h-0 flex-1 flex-col gap-4">
 
       <SharedModal
         open={driveImportOpen}
@@ -2965,193 +2987,36 @@ export function AdminImageStudioPage(): React.JSX.Element {
       </SharedModal>
 
 
-      <div
-        className={cn(
-          "grid transition-[grid-template-columns] duration-300 ease-in-out",
-          isFocusMode ? "grid-cols-[56px_0px_1fr_0px] gap-0" : "grid-cols-[56px_300px_1fr_420px] gap-4"
-        )}
-      >
-        {/* Toolbar */}
-        <SectionPanel className="flex flex-col items-center gap-2 p-2" variant="subtle-compact">
-          <Button
-            type="button"
-            variant={tool === "select" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("select")}
-            title="Select"
-          >
-            <MousePointer2 className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={tool === "polygon" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("polygon")}
-            title="Polygon mask"
-          >
-            <Pentagon className="size-4" />
-          </Button>
-          <Select
-            value={maskGenMode}
-            onValueChange={(value: string) => {
-              if (value === "ai-bbox" || value === "threshold" || value === "edges") {
-                setMaskGenMode(value);
-                return;
-              }
-              setMaskGenMode("ai-polygon");
-            }}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ai-polygon">AI polygon</SelectItem>
-              <SelectItem value="ai-bbox">AI bbox</SelectItem>
-              <SelectItem value="threshold">Threshold</SelectItem>
-              <SelectItem value="edges">Edges</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => void handleGenerateMask(maskGenMode)}
-            disabled={maskGenLoading}
-            title="Generate mask"
-          >
-            {maskGenLoading ? "Generating..." : "Generate"}
-          </Button>
-          <Button
-            type="button"
-            variant={tool === "lasso" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("lasso")}
-            title="Lasso mask"
-          >
-            Lasso
-          </Button>
-          <Button
-            type="button"
-            variant={tool === "rect" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("rect")}
-            title="Rectangle mask"
-          >
-            Rect
-          </Button>
-          <Button
-            type="button"
-            variant={tool === "ellipse" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("ellipse")}
-            title="Ellipse mask"
-          >
-            Ellipse
-          </Button>
-          <Button
-            type="button"
-            variant={tool === "brush" ? "default" : "outline"}
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setTool("brush")}
-            title="Brush mask"
-          >
-            Brush
-          </Button>
-          <div className="mt-2 h-px w-full bg-border" />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => {
-              if (!activeMaskId) return;
-              setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape: MaskShape) =>
-                  shape.id === activeMaskId
-                    ? { ...shape, points: shape.points.slice(0, -1), closed: false }
-                    : shape
-                )
-              );
-            }}
-            disabled={!activeMaskId}
-            title="Undo last point"
-          >
-            Undo
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => {
-              if (!activeMaskId) return;
-              setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape: MaskShape) =>
-                  shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
-                )
-              );
-            }}
-            disabled={!activeMaskId}
-            title="Close polygon"
-          >
-            Close
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => {
-              if (!activeMaskId) return;
-              setMaskShapes((prev: MaskShape[]) =>
-                prev.map((shape: MaskShape) => {
-                  if (shape.id !== activeMaskId) return shape;
-                  if (!shape.closed) return shape;
-                  if (shape.points.length < 3) return { ...shape, closed: false };
-                  if (selectedPointIndex === null) return { ...shape, closed: false };
-                  const pts = shape.points;
-                  const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
-                  return { ...shape, points: rotated, closed: false };
-                })
-              );
-            }}
-            disabled={!activeMaskId}
-            title="Detach polygon (open at selected point)"
-          >
-            Detach
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => {
-              setMaskShapes([]);
-              setActiveMaskId(null);
-            }}
-            disabled={maskShapes.length === 0}
-            title="Clear all masks"
-          >
-            Clear
-          </Button>
-        </SectionPanel>
-
-        {/* Project + Assets */}
+      <div className="relative flex min-h-0 flex-1">
+        <div
+          className={cn(
+            "grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out",
+            isFocusMode ? "grid-cols-[0px_1fr_0px] gap-0" : "grid-cols-[300px_1fr_420px] gap-4"
+          )}
+        >
+          {/* Project + Assets */}
         <SectionPanel
           className={cn(
-            "flex h-[72vh] flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
             isFocusMode && "pointer-events-none opacity-0 -translate-x-2"
           )}
           variant="subtle"
           aria-hidden={isFocusMode}
         >
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs text-gray-400">Project & Assets</div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
+              }}
+              title="Refresh studio data"
+            >
+              <RefreshCcw className="mr-2 size-4" />
+              Refresh
+            </Button>
+          </div>
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
             <div className="flex items-center gap-2">
@@ -3320,33 +3185,220 @@ export function AdminImageStudioPage(): React.JSX.Element {
         </SectionPanel>
 
         {/* Preview */}
-        <SectionPanel className="relative flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
-          {!isFocusMode ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <div className="text-xs text-gray-400">Preview</div>
+        <SectionPanel className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-hidden" variant="subtle">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-xs text-gray-400">Preview</div>
+              {!isFocusMode ? (
                 <div className="truncate text-sm text-gray-100">{selectedAsset?.filename || "—"}</div>
-              </div>
-              <div className="text-[11px] text-gray-400">
-                Masks: {maskShapes.length}
-              </div>
+              ) : null}
             </div>
-          ) : null}
+            <div className="flex items-center gap-2">
+              {!isFocusMode ? (
+                <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
+              ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+              >
+                {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+                {isFocusMode ? "Edit" : "Show"}
+              </Button>
+            </div>
+          </div>
 
-          <div className="flex-1 overflow-hidden">
-            <MaskCanvas
-              src={selectedAsset?.filepath ?? null}
-              tool={tool}
-              shapes={maskShapes}
-              activeShapeId={activeMaskId}
-              selectedPointIndex={selectedPointIndex}
-              onSelectShape={setActiveMaskId}
-              onSelectPoint={setSelectedPointIndex}
-              onChange={(nextShapes: MaskShape[]) => {
-                setMaskShapes(nextShapes);
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-[11px] text-gray-400">Mask generator</div>
+            <Select
+              value={maskGenMode}
+              onValueChange={(value: string) => {
+                if (value === "ai-bbox" || value === "threshold" || value === "edges") {
+                  setMaskGenMode(value);
+                  return;
+                }
+                setMaskGenMode("ai-polygon");
               }}
-              brushRadius={brushRadius}
-            />
+            >
+              <SelectTrigger className="h-8 w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ai-polygon">AI polygon</SelectItem>
+                <SelectItem value="ai-bbox">AI bbox</SelectItem>
+                <SelectItem value="threshold">Threshold</SelectItem>
+                <SelectItem value="edges">Edges</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void handleGenerateMask(maskGenMode)}
+              disabled={maskGenLoading}
+            >
+              {maskGenLoading ? "Generating..." : "Generate"}
+            </Button>
+          </div>
+
+          <div className="relative flex-1">
+            <div className="h-full overflow-hidden">
+              <MaskCanvas
+                src={selectedAsset?.filepath ?? null}
+                tool={tool}
+                shapes={maskShapes}
+                activeShapeId={activeMaskId}
+                selectedPointIndex={selectedPointIndex}
+                onSelectShape={setActiveMaskId}
+                onSelectPoint={setSelectedPointIndex}
+                onChange={(nextShapes: MaskShape[]) => {
+                  setMaskShapes(nextShapes);
+                }}
+                brushRadius={brushRadius}
+              />
+            </div>
+            <SectionPanel
+              className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 shadow-lg"
+              variant="subtle-compact"
+            >
+              <Tooltip content="Select">
+                <Button
+                  type="button"
+                  variant={tool === "select" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("select")}
+                >
+                  <MousePointer2 className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Polygon mask">
+                <Button
+                  type="button"
+                  variant={tool === "polygon" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("polygon")}
+                >
+                  <Pentagon className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Lasso mask">
+                <Button
+                  type="button"
+                  variant={tool === "lasso" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("lasso")}
+                >
+                  <Lasso className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Rectangle mask">
+                <Button
+                  type="button"
+                  variant={tool === "rect" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("rect")}
+                >
+                  <RectangleHorizontal className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Ellipse mask">
+                <Button
+                  type="button"
+                  variant={tool === "ellipse" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("ellipse")}
+                >
+                  <Circle className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Brush mask">
+                <Button
+                  type="button"
+                  variant={tool === "brush" ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => setTool("brush")}
+                >
+                  <Brush className="size-4" />
+                </Button>
+              </Tooltip>
+              <div className="mx-1 h-6 w-px bg-border" />
+              <Tooltip content="Undo last point">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    if (!activeMaskId) return;
+                    setMaskShapes((prev: MaskShape[]) =>
+                      prev.map((shape: MaskShape) =>
+                        shape.id === activeMaskId
+                          ? { ...shape, points: shape.points.slice(0, -1), closed: false }
+                          : shape
+                      )
+                    );
+                  }}
+                  disabled={!activeMaskId}
+                >
+                  <RotateCcw className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Close polygon">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    if (!activeMaskId) return;
+                    setMaskShapes((prev: MaskShape[]) =>
+                      prev.map((shape: MaskShape) =>
+                        shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
+                      )
+                    );
+                  }}
+                  disabled={!activeMaskId}
+                >
+                  <Check className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Detach polygon">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    if (!activeMaskId) return;
+                    setMaskShapes((prev: MaskShape[]) =>
+                      prev.map((shape: MaskShape) => {
+                        if (shape.id !== activeMaskId) return shape;
+                        if (!shape.closed) return shape;
+                        if (shape.points.length < 3) return { ...shape, closed: false };
+                        if (selectedPointIndex === null) return { ...shape, closed: false };
+                        const pts = shape.points;
+                        const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
+                        return { ...shape, points: rotated, closed: false };
+                      })
+                    );
+                  }}
+                  disabled={!activeMaskId}
+                >
+                  <Unlink className="size-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Clear masks">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setMaskShapes([]);
+                    setActiveMaskId(null);
+                  }}
+                  disabled={maskShapes.length === 0}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </Tooltip>
+            </SectionPanel>
           </div>
 
           {!isFocusMode ? (
@@ -3572,7 +3624,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         {/* Prompt + Params */}
         <SectionPanel
           className={cn(
-            "flex h-[72vh] flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
             isFocusMode && "pointer-events-none opacity-0 translate-x-2"
           )}
           variant="subtle"
@@ -3782,6 +3834,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
             </div>
           </div>
         </SectionPanel>
+        </div>
+
       </div>
         </TabsContent>
 

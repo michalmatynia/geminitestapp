@@ -1,7 +1,7 @@
 "use client";
 
-import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger } from "@/shared/ui";
-import { useState, useRef, useCallback } from "react";
+import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton } from "@/shared/ui";
+import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
 
@@ -20,7 +20,6 @@ import {
 
 export default function DatabasesPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState("");
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
@@ -146,8 +145,8 @@ export default function DatabasesPage(): React.JSX.Element {
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
+  const handleUpload = async (files: File[]): Promise<void> => {
+    const file = files[0];
     if (!file) return;
 
     try {
@@ -160,13 +159,7 @@ export default function DatabasesPage(): React.JSX.Element {
     } catch (error: unknown) {
       logClientError(error, { context: { source: "DatabasesPage", action: "uploadBackup", filename: file.name, dbType: activeTab } });
       toast("An error occurred during upload.", { variant: "error" });
-    } finally {
-      event.target.value = "";
     }
-  };
-
-  const triggerFileUpload = (): void => {
-    fileInputRef.current?.click();
   };
 
   const handlePreview = (backupName: string): void => {
@@ -235,17 +228,15 @@ export default function DatabasesPage(): React.JSX.Element {
             >
               Create Backup
             </Button>
-            <Button onClick={triggerFileUpload}>Upload Backup</Button>
+            <FileUploadButton
+              onFilesSelected={(files: File[]) => handleUpload(files)}
+              accept={activeTab === "postgresql" ? ".dump" : ".archive"}
+            >
+              Upload Backup
+            </FileUploadButton>
             <Button variant="secondary" onClick={handlePreviewCurrent}>
               Preview Current DB
             </Button>
-            <Input
-              type="file"
-              ref={fileInputRef}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleUpload(e); }}
-              className="hidden"
-              accept={activeTab === "postgresql" ? ".dump" : ".archive"}
-            />
           </>
         }
         className="mb-6"

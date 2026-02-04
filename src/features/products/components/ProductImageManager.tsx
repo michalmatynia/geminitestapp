@@ -9,9 +9,10 @@ import {
   DropdownMenuTrigger,
   Input,
   Alert,
+  FileUploadTrigger,
 } from "@/shared/ui";
 import NextImage from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 
 
@@ -37,9 +38,6 @@ export default function ProductImageManager(): React.JSX.Element {
     uploadError,
     setImagesReordering,
   } = useProductFormContext();
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentSlotIndexRef = useRef<number | null>(null);
 
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
@@ -123,57 +121,30 @@ export default function ProductImageManager(): React.JSX.Element {
     });
   };
 
-  const triggerFileInput = (index: number): void => {
-    if (index < 0 || index >= imageSlots.length) {
-      pushDebug({
-        action: "trigger-file-input",
-        message: "Invalid slot index",
-        slotIndex: index,
-      });
-      return;
-    }
-    currentSlotIndexRef.current = index;
-    fileInputRef.current?.click();
-  };
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = e.target.files?.[0];
-
+  const handleSlotFileUpload = (slotIndex: number, files: File[]): void => {
+    const file = files[0];
     if (!file) {
       pushDebug({
         action: "file-change",
         message: "No file selected",
-        slotIndex: currentSlotIndexRef.current ?? undefined,
+        slotIndex,
       });
       return;
     }
 
-    const slotIndex = currentSlotIndexRef.current;
-    if (slotIndex === null) {
+    try {
+      handleSlotImageChange(file, slotIndex);
+    } catch (error: unknown) {
       pushDebug({
         action: "file-change",
-        message: "Slot index was not set",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to assign image to slot",
+        slotIndex,
         filename: file.name,
       });
-    } else {
-      try {
-        handleSlotImageChange(file, slotIndex);
-      } catch (error: unknown) {
-        pushDebug({
-          action: "file-change",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Failed to assign image to slot",
-          slotIndex,
-          filename: file.name,
-        });
-      }
     }
-
-    // Reset file input to allow re-uploading the same file
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    currentSlotIndexRef.current = null;
   };
 
   const triggerFileManager = (index: number): void => {
@@ -615,9 +586,13 @@ export default function ProductImageManager(): React.JSX.Element {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => triggerFileInput(index)}>
-                        Upload image
-                      </DropdownMenuItem>
+                      <FileUploadTrigger
+                        asChild
+                        accept="image/*"
+                        onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
+                      >
+                        <DropdownMenuItem>Upload image</DropdownMenuItem>
+                      </FileUploadTrigger>
                       <DropdownMenuItem onClick={() => triggerFileManager(index)}>
                         Choose existing
                       </DropdownMenuItem>
@@ -742,15 +717,20 @@ export default function ProductImageManager(): React.JSX.Element {
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-gray-500">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => triggerFileInput(index)}
-                        aria-label={`Upload image to slot ${index + 1}`}
+                      <FileUploadTrigger
+                        asChild
+                        accept="image/*"
+                        onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
                       >
-                        <PlusIcon className="h-6 w-6" />
-                      </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Upload image to slot ${index + 1}`}
+                        >
+                          <PlusIcon className="h-6 w-6" />
+                        </Button>
+                      </FileUploadTrigger>
                       <span className="text-xs">Upload</span>
                       <Button
                         type="button"
@@ -787,15 +767,6 @@ export default function ProductImageManager(): React.JSX.Element {
         })}
       </div>
 
-      <Input
-        type="file"
-        ref={fileInputRef}
-        onChange={onFileChange}
-        className="hidden"
-        accept="image/*"
-        multiple={false}
-        aria-label="File uploader for image slot"
-      />
     </div>
   );
 }

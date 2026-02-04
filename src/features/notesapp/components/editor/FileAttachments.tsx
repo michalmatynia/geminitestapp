@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Label, FileUploadTrigger } from "@/shared/ui";
 
 import Image from "next/image";
 import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
@@ -36,8 +36,6 @@ export function FileAttachments({
   formatFileSize,
   isImageFile,
 }: FileAttachmentsProps): React.JSX.Element {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-
   if (!noteId) {
     return (
       <div className="rounded-lg border border-dashed border-border/60 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
@@ -78,26 +76,19 @@ export function FileAttachments({
                 </div>
               ) : (
                 <Label className="flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors">
-                  <Upload size={14} />
-                  <span className="mt-1 text-[10px]">Upload</span>
-                  <span className="mt-0.5 text-[10px] text-gray-400">
-                    {maxSlots - noteFiles.length} left
-                  </span>
-                  <Input
-                    ref={(el: HTMLInputElement | null): void => {
-                      fileInputRefs.current[nextSlot] = el;
-                    }}
-                    type="file"
+                  <FileUploadTrigger
                     multiple
-                    className="hidden"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                      const files = e.target.files;
-                      if (files && files.length > 0) {
-                        void onMultiFileUpload(files);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
+                    asChild
+                    onFilesSelected={(files: File[]) => onMultiFileUpload(files)}
+                  >
+                    <span className="flex h-full w-full flex-col items-center justify-center">
+                      <Upload size={14} />
+                      <span className="mt-1 text-[10px]">Upload</span>
+                      <span className="mt-0.5 text-[10px] text-gray-400">
+                        {maxSlots - noteFiles.length} left
+                      </span>
+                    </span>
+                  </FileUploadTrigger>
                 </Label>
               )}
             </div>

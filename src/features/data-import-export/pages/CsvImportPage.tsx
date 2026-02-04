@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, useToast } from "@/shared/ui";
+import { Button, useToast, FileUploadButton } from "@/shared/ui";
 import React, { useState } from "react";
 import { useCsvImportMutation } from "@/features/data-import-export/hooks/useImportMutations";
 
@@ -9,10 +9,8 @@ const CSVImportPage = (): React.JSX.Element => {
   const [file, setFile] = useState<File | null>(null);
   const importMutation = useCsvImportMutation();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    if (e.target.files) {
-      setFile(e.target.files[0] || null);
-    }
+  const handleFileChange = (files: File[]): void => {
+    setFile(files[0] || null);
   };
 
   const handleSubmit = async (): Promise<void> => {
@@ -34,7 +32,9 @@ const CSVImportPage = (): React.JSX.Element => {
     <div>
       <h1 className="text-2xl font-bold mb-4">Import Products from CSV</h1>
       <div className="flex w-full max-w-sm items-center space-x-2">
-        <Input type="file" onChange={handleFileChange} />
+        <FileUploadButton onFilesSelected={(files: File[]) => handleFileChange(files)} accept=".csv">
+          Choose CSV
+        </FileUploadButton>
         <Button
           onClick={() => {
             void handleSubmit();

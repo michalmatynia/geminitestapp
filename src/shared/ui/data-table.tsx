@@ -34,8 +34,7 @@ interface DataTableProps<TData> {
 }
 
 declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<_TData extends RowData> {
+  interface TableMeta<TData extends RowData> {
     queryClient?: QueryClient;
   }
 }

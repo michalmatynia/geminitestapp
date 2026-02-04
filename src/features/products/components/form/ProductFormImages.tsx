@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Label, FileUploadButton } from "@/shared/ui";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 
 
@@ -15,13 +15,14 @@ export default function ProductFormImages(): React.JSX.Element {
       <div className="mb-4">
         <Label htmlFor="multi-image-upload">Upload Multiple Images</Label>
         <div className="mt-2 flex space-x-4">
-          <Button
-            type="button"
-            onClick={() => document.getElementById("multi-image-upload")?.click()}
+          <FileUploadButton
+            onFilesSelected={(files: File[]) => handleMultiImageChange(files)}
+            accept="image/*"
+            multiple
             aria-label="Upload multiple new images for the product"
           >
             Upload from Drive
-          </Button>
+          </FileUploadButton>
           <Button
             type="button"
             onClick={() => setShowFileManager(true)}
@@ -30,21 +31,6 @@ export default function ProductFormImages(): React.JSX.Element {
             Choose from File Manager
           </Button>
         </div>
-        <Input
-          type="file"
-          id="multi-image-upload"
-          accept="image/*"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files) {
-              // Convert FileList to an array before passing
-              handleMultiImageChange(Array.from(e.target.files));
-              e.target.value = ''; // Clear the input after selection
-            }
-          }}
-          className="hidden"
-          aria-label="Multiple product image upload"
-          multiple
-        />
       </div>
       <ProductImageManager />
     </div>

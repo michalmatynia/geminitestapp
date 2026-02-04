@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Copy, RefreshCcw } from "lucide-react";
 
@@ -18,6 +18,7 @@ import {
   SelectValue,
   Textarea,
   Tooltip,
+  FileUploadButton,
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
@@ -155,8 +156,6 @@ export function AdminImageStudioValidationPatternsPage({
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [learnedDrafts, setLearnedDrafts] = useState<RuleDraft[]>([]);
   const [learnedDirty, setLearnedDirty] = useState<boolean>(false);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
-  const importLearnedInputRef = useRef<HTMLInputElement | null>(null);
 
   if (settingsQuery.isSuccess && initializedAt !== settingsQuery.dataUpdatedAt) {
     setInitializedAt(settingsQuery.dataUpdatedAt);
@@ -354,13 +353,6 @@ export function AdminImageStudioValidationPatternsPage({
     toast("Learned patterns imported. Review and save to apply.", { variant: "success" });
   }, [toast]);
 
-  const handleImportClick = useCallback((): void => {
-    importInputRef.current?.click();
-  }, []);
-
-  const handleImportLearnedClick = useCallback((): void => {
-    importLearnedInputRef.current?.click();
-  }, []);
 
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
@@ -460,12 +452,30 @@ export function AdminImageStudioValidationPatternsPage({
             <Button type="button" variant="outline" onClick={handleExportLearned}>
               Export learned
             </Button>
-            <Button type="button" variant="outline" onClick={handleImportClick}>
+            <FileUploadButton
+              type="button"
+              variant="outline"
+              accept="application/json"
+              onFilesSelected={(files: File[]) => {
+                const file = files[0];
+                if (!file) return;
+                void handleImport(file);
+              }}
+            >
               Import JSON
-            </Button>
-            <Button type="button" variant="outline" onClick={handleImportLearnedClick}>
+            </FileUploadButton>
+            <FileUploadButton
+              type="button"
+              variant="outline"
+              accept="application/json"
+              onFilesSelected={(files: File[]) => {
+                const file = files[0];
+                if (!file) return;
+                void handleImportLearned(file);
+              }}
+            >
               Import learned
-            </Button>
+            </FileUploadButton>
             <Button type="button" variant="outline" onClick={handleAddRule}>
               Add rule
             </Button>
@@ -493,30 +503,6 @@ export function AdminImageStudioValidationPatternsPage({
         }
       />
 
-      <input
-        ref={importInputRef}
-        type="file"
-        accept="application/json"
-        className="hidden"
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          const file = event.target.files?.[0] ?? null;
-          event.target.value = "";
-          if (!file) return;
-          void handleImport(file);
-        }}
-      />
-      <input
-        ref={importLearnedInputRef}
-        type="file"
-        accept="application/json"
-        className="hidden"
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          const file = event.target.files?.[0] ?? null;
-          event.target.value = "";
-          if (!file) return;
-          void handleImportLearned(file);
-        }}
-      />
 
       <SectionPanel variant="subtle">
         <div className="flex flex-wrap items-center justify-between gap-2">

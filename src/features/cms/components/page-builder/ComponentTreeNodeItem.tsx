@@ -157,6 +157,7 @@ interface SectionNodeItemProps {
   draggedSectionZone: PageZone | null;
   setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onDropBlockToSlideshowFrame: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => void;
   onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
@@ -202,6 +203,7 @@ export function SectionNodeItem({
   draggedSectionZone,
   setDraggedSectionZone,
   onDropSectionToColumn,
+  onDropBlockToSlideshowFrame,
   onRemoveBlock,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
@@ -693,6 +695,7 @@ export function SectionNodeItem({
                   onSelect={onSelect}
                   onAddElementToSectionBlock={onAddElementToSectionBlock}
                   onDropBlock={onDropBlock}
+                  onDropBlockToSlideshowFrame={onDropBlockToSlideshowFrame}
                   onRemoveBlock={onRemoveBlock}
                   expandedIds={expandedIds}
                   onToggleExpand={onToggleExpand}
@@ -758,6 +761,7 @@ interface SlideshowFrameNodeItemProps {
   onSelect: (nodeId: string) => void;
   onAddElementToSectionBlock: (sectionId: string, parentBlockId: string, elementType: string) => void;
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
+  onDropBlockToSlideshowFrame: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => void;
   onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
@@ -781,6 +785,7 @@ function SlideshowFrameNodeItem({
   onSelect,
   onAddElementToSectionBlock,
   onDropBlock,
+  onDropBlockToSlideshowFrame,
   onRemoveBlock,
   expandedIds,
   onToggleExpand,
@@ -834,16 +839,16 @@ function SlideshowFrameNodeItem({
           }
         }}
         onDragOver={(e: React.DragEvent) => {
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
           const blockDrag = readBlockDragData(e.dataTransfer, {
             id: draggedBlockId,
             type: draggedBlockType,
           });
-          const dragType = blockDrag.type ?? "";
-          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
-          const isFrameDrag = dragType === "SlideshowFrame";
-          const isBlockDrop =
-            isFrameDrag && ((blockDrag.id && blockDrag.id !== frame.id) || hasBlockPayload);
-          if (!isBlockDrop) return;
+          const dragId = blockDrag.id;
+          console.log("[SlideshowFrame] dragOver:", { dragId, draggedBlockId, draggedBlockType, hasBlockPayload, frameAllowedTypes });
+          // Accept any block drag (type validation happens in onDrop)
+          if (!dragId && !hasBlockPayload) return;
+          if (dragId === frame.id) return; // Don't allow dropping on self
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
@@ -860,13 +865,41 @@ function SlideshowFrameNodeItem({
             id: draggedBlockId,
             type: draggedBlockType,
             fromSectionId: draggedFromSectionId,
+            fromColumnId: draggedFromColumnId,
+            fromParentBlockId: draggedFromParentBlockId,
           });
           const dragType = blockDrag.type ?? "";
-          if (dragType !== "SlideshowFrame") return;
           const dragId = blockDrag.id;
-          const fromSection = blockDrag.fromSectionId ?? sectionId;
-          if (!dragId || dragId === frame.id) return;
-          onDropBlock(dragId, fromSection, sectionId, index);
+          // Debug: log raw dataTransfer values
+          console.log("[SlideshowFrame] drop raw:", {
+            blockId: e.dataTransfer.getData("blockId"),
+            blockType: e.dataTransfer.getData("blockType"),
+            textPlain: e.dataTransfer.getData("text/plain"),
+            types: Array.from(e.dataTransfer.types),
+          });
+          console.log("[SlideshowFrame] drop:", { dragId, dragType, frameAllowedTypes, isAllowed: frameAllowedTypes.includes(dragType) });
+          if (!dragId) return;
+
+          // Handle SlideshowFrame reordering
+          if (dragType === "SlideshowFrame") {
+            console.log("[SlideshowFrame] reordering frame");
+            if (dragId === frame.id) return;
+            const fromSection = blockDrag.fromSectionId ?? sectionId;
+            onDropBlock(dragId, fromSection, sectionId, index);
+          }
+          // Handle dropping allowed block types INTO the frame
+          else if (frameAllowedTypes.includes(dragType)) {
+            console.log("[SlideshowFrame] dropping block into frame");
+            const fromSection = blockDrag.fromSectionId ?? sectionId;
+            const fromColumn = blockDrag.fromColumnId ?? undefined;
+            const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
+            const frameBlockCount = (frame.blocks ?? []).length;
+            onDropBlockToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+          } else {
+            console.log("[SlideshowFrame] block type not allowed:", dragType);
+            return;
+          }
+
           setDraggedBlockId(null);
           setDraggedFromSectionId(null);
           if (setDraggedFromColumnId) setDraggedFromColumnId(null);
@@ -892,6 +925,9 @@ function SlideshowFrameNodeItem({
         />
         <Icon className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{blockLabel}</span>
+        {isDragOver && (
+          <span className="text-[10px] text-emerald-300">Drop here</span>
+        )}
         <div
           draggable
           onDragStart={(e: React.DragEvent) => {
@@ -951,7 +987,58 @@ function SlideshowFrameNodeItem({
       </TreeContextMenu>
 
       {isExpanded && (
-        <div className="ml-5 border-l border-border/30 pl-1">
+        <div
+          className="ml-5 border-l border-border/30 pl-1"
+          onDragOver={(e: React.DragEvent) => {
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const blockDrag = readBlockDragData(e.dataTransfer, {
+              id: draggedBlockId,
+              type: draggedBlockType,
+            });
+            const dragId = blockDrag.id;
+            console.log("[SlideshowFrame expanded] dragOver:", { dragId, draggedBlockId, draggedBlockType, hasBlockPayload });
+            if (!dragId && !hasBlockPayload) return;
+            if (dragId === frame.id) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(true);
+          }}
+          onDragLeave={(e: React.DragEvent) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsDragOver(false);
+          }}
+          onDrop={(e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            const blockDrag = readBlockDragData(e.dataTransfer, {
+              id: draggedBlockId,
+              type: draggedBlockType,
+              fromSectionId: draggedFromSectionId,
+              fromColumnId: draggedFromColumnId,
+              fromParentBlockId: draggedFromParentBlockId,
+            });
+            const dragType = blockDrag.type ?? "";
+            const dragId = blockDrag.id;
+            console.log("[SlideshowFrame expanded] drop:", { dragId, dragType, frameAllowedTypes, isAllowed: frameAllowedTypes.includes(dragType) });
+            if (!dragId) return;
+            // Handle dropping allowed block types INTO the frame
+            if (frameAllowedTypes.includes(dragType)) {
+              console.log("[SlideshowFrame expanded] dropping block into frame");
+              const fromSection = blockDrag.fromSectionId ?? sectionId;
+              const fromColumn = blockDrag.fromColumnId ?? undefined;
+              const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
+              const frameBlockCount = (frame.blocks ?? []).length;
+              onDropBlockToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+            } else {
+              console.log("[SlideshowFrame expanded] block type not allowed:", dragType);
+            }
+            setDraggedBlockId(null);
+            setDraggedFromSectionId(null);
+            if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+          }}
+        >
           {hasChildren ? (
             (frame.blocks ?? []).map((child: BlockInstance, childIndex: number) => (
               <BlockNodeItem
@@ -978,8 +1065,14 @@ function SlideshowFrameNodeItem({
               />
             ))
           ) : (
-            <div className="mt-1 rounded border border-dashed border-border/40 px-2 py-1 text-[11px] text-gray-500">
-              Add elements to this frame
+            <div
+              className={`mt-1 flex min-h-[36px] items-center gap-2 rounded border border-dashed px-2 py-1 text-[11px] transition ${
+                isDragOver
+                  ? "border-emerald-500/70 bg-emerald-500/10 text-emerald-200"
+                  : "border-border/30 text-gray-500"
+              }`}
+            >
+              {isDragOver ? "Drop here" : "Add elements to this frame"}
             </div>
           )}
         </div>
@@ -2114,6 +2207,7 @@ function BlockNodeItem({
           onDragStart={(e: React.DragEvent) => {
             if (!canDrag) return;
             e.stopPropagation();
+            console.log("[BlockNodeItem] dragStart:", { id: block.id, type: block.type, sectionId });
             setBlockDragData(e.dataTransfer, {
               id: block.id,
               type: block.type,
@@ -2123,6 +2217,7 @@ function BlockNodeItem({
             });
             // Defer state updates to prevent re-render from cancelling drag
             setTimeout(() => {
+              console.log("[BlockNodeItem] setting state:", { id: block.id, type: block.type });
               setDraggedBlockId(block.id);
               if (setDraggedBlockType) setDraggedBlockType(block.type);
               setDraggedFromSectionId(sectionId);

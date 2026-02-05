@@ -207,8 +207,9 @@ export function PollNodeConfigSection({
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="auto">Auto</SelectItem>
+                  <SelectItem value="auto">Auto (legacy)</SelectItem>
                   <SelectItem value="mongodb">MongoDB</SelectItem>
+                  <SelectItem value="prisma">Prisma</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -522,7 +523,7 @@ export function PollNodeConfigSection({
             </div>
           </div>
           <p className="text-[11px] text-gray-500">
-            Polls MongoDB using the query settings. Use Success path/value to
+            Polls the selected provider using the query settings. Use Success path/value to
             stop polling when a record matches.
           </p>
         </div>

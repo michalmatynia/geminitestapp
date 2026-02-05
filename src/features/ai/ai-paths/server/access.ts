@@ -1,11 +1,29 @@
 import "server-only";
 
 import { auth } from "@/features/auth/server";
+import type { NextRequest } from "next/server";
 import { forbiddenError, authError, rateLimitedError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import type { AiPathRunRecord, AiPathRunStatus } from "@/shared/types/ai-paths";
 
 export const AI_PATHS_PERMISSION = "ai_paths.manage";
+const AI_PATHS_RUNNER_PERMISSION = "products.manage";
+const DEV_INTERNAL_TOKEN = "dev-secret-change-me";
+
+const getInternalToken = (): string | null => {
+  if (process.env.AI_PATHS_INTERNAL_TOKEN) return process.env.AI_PATHS_INTERNAL_TOKEN;
+  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+  if (process.env.NODE_ENV === "development") return DEV_INTERNAL_TOKEN;
+  return null;
+};
+
+export const isAiPathsInternalRequest = (request: NextRequest): boolean => {
+  const token = getInternalToken();
+  if (!token) return false;
+  const header = request.headers.get("x-ai-paths-internal");
+  return Boolean(header && header === token);
+};
 
 export type AiPathsAccessContext = {
   userId: string;
@@ -57,6 +75,46 @@ export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
     userId: session.user.id,
     permissions,
     isElevated,
+  };
+};
+
+export const requireAiPathsRunAccess = async (): Promise<AiPathsAccessContext> => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw authError("Unauthorized.");
+  }
+  const permissions = session.user.permissions ?? [];
+  const isElevated = Boolean(session.user.isElevated);
+  const hasAccess =
+    isElevated ||
+    permissions.includes(AI_PATHS_PERMISSION) ||
+    permissions.includes(AI_PATHS_RUNNER_PERMISSION);
+  if (!hasAccess) {
+    throw forbiddenError("Forbidden.");
+  }
+  return {
+    userId: session.user.id,
+    permissions,
+    isElevated,
+  };
+};
+
+export const requireAiPathsAccessOrInternal = async (
+  request: NextRequest
+): Promise<{ access: AiPathsAccessContext; isInternal: boolean }> => {
+  if (isAiPathsInternalRequest(request)) {
+    return {
+      access: {
+        userId: "system",
+        permissions: [AI_PATHS_PERMISSION],
+        isElevated: true,
+      },
+      isInternal: true,
+    };
+  }
+  return {
+    access: await requireAiPathsAccess(),
+    isInternal: false,
   };
 };
 

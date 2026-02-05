@@ -173,13 +173,18 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       andFilters.push({ status: options.status });
     }
     if (source) {
-      const aiPathsSources = ["ai_paths_ui", "trigger_button"];
+      const aiPathsSources = ["ai_paths_ui", "trigger_button", "product_panel"];
+      const aiPathsTabs = ["product", "note"];
       if (sourceMode === "exclude") {
         if (source === "ai_paths_ui") {
           andFilters.push({
             AND: [
               { NOT: { meta: { path: ["source"], equals: "ai_paths_ui" } } },
               { NOT: { meta: { path: ["source"], equals: "trigger_button" } } },
+              { NOT: { meta: { path: ["source"], equals: "product_panel" } } },
+              ...aiPathsTabs.map((tab) => ({
+                NOT: { meta: { path: ["source", "tab"], equals: tab } },
+              })),
               { NOT: { meta: { equals: Prisma.DbNull } } },
               { NOT: { meta: { equals: Prisma.JsonNull } } },
             ],
@@ -198,6 +203,9 @@ export const prismaPathRunRepository: AiPathRunRepository = {
           OR: [
             ...aiPathsSources.map((value) => ({
               meta: { path: ["source"], equals: value },
+            })),
+            ...aiPathsTabs.map((tab) => ({
+              meta: { path: ["source", "tab"], equals: tab },
             })),
             { meta: { equals: Prisma.DbNull } },
             { meta: { equals: Prisma.JsonNull } },

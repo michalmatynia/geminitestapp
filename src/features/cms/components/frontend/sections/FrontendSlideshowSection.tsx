@@ -24,8 +24,24 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
   const showDots = (settings["showDots"] as string) !== "no";
   const heightMode = (settings["heightMode"] as string) || "auto";
   const height = (settings["height"] as number) || 360;
+  // Default element animation settings from Slideshow
+  const elementAnimationType = (settings["elementAnimationType"] as string) || "fade-in";
+  const elementAnimationDuration = (settings["elementAnimationDuration"] as number) || 400;
+  const elementAnimationDelay = (settings["elementAnimationDelay"] as number) || 0;
+  const elementAnimationEasing = (settings["elementAnimationEasing"] as string) || "ease-out";
+  const elementAnimationStagger = (settings["elementAnimationStagger"] as number) || 100;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  // Track animation trigger count per frame to re-trigger animations on frame change
+  const [animTrigger, setAnimTrigger] = useState<Record<number, number>>({});
+
+  // Increment trigger when active frame changes to re-trigger animations
+  useEffect(() => {
+    setAnimTrigger((prev) => ({
+      ...prev,
+      [activeIndex]: (prev[activeIndex] ?? 0) + 1,
+    }));
+  }, [activeIndex]);
 
   const frames = useMemo((): BlockInstance[] => {
     const frameBlocks = blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
@@ -119,6 +135,20 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
               justifyContent,
             };
 
+            // Get animation settings with inheritance from Slideshow defaults
+            const frameAnimType = frameSettings["animationType"] as string | undefined;
+            const animationType = frameAnimType === "inherit" || !frameAnimType
+              ? elementAnimationType
+              : frameAnimType;
+            const animationDuration = (frameSettings["animationDuration"] as number) ?? elementAnimationDuration;
+            const animationDelay = (frameSettings["animationDelay"] as number) ?? elementAnimationDelay;
+            const frameAnimEasing = frameSettings["animationEasing"] as string | undefined;
+            const animationEasing = frameAnimEasing === "inherit" || !frameAnimEasing
+              ? elementAnimationEasing
+              : frameAnimEasing;
+            const stagger = elementAnimationStagger;
+            const isActiveFrame = idx === currentActiveIndex;
+
             const frameBlocks = frame.blocks ?? [];
 
             return (
@@ -140,9 +170,21 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
             >
               <div className="flex h-full w-full flex-col" style={frameStyle}>
                 {frameBlocks.length > 0 ? (
-                  frameBlocks.map((block: BlockInstance) => (
-                    <FrontendBlockRenderer key={block.id} block={block} />
-                  ))
+                  frameBlocks.map((block: BlockInstance, blockIdx: number) => {
+                    const blockDelay = animationDelay + (blockIdx * stagger);
+                    const animationStyle: React.CSSProperties = isActiveFrame && animationType !== "none"
+                      ? {
+                          animation: `cms-anim-${animationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                        }
+                      : {};
+                    // Use trigger count in key to re-mount and re-trigger animation
+                    const triggerKey = `${block.id}-${animTrigger[idx] ?? 0}`;
+                    return (
+                      <div key={triggerKey} style={animationStyle}>
+                        <FrontendBlockRenderer block={block} />
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
                     Empty slide

@@ -26,6 +26,7 @@ type UseAiPathsCanvasInteractionsArgs = {
   isPathLocked: boolean;
   selectedNodeId: string | null;
   setSelectedNodeId: (value: string | null) => void;
+  confirmNodeSwitch?: (nextNodeId: string) => boolean;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
   toast: ToastFn;
@@ -81,6 +82,7 @@ export function useAiPathsCanvasInteractions({
   isPathLocked,
   selectedNodeId,
   setSelectedNodeId,
+  confirmNodeSwitch,
   clearRuntimeInputsForEdges,
   reportAiPathsError,
   toast,
@@ -805,6 +807,8 @@ export function useAiPathsCanvasInteractions({
   };
 
   const handleSelectNode = (nodeId: string): void => {
+    if (nodeId === selectedNodeId) return;
+    if (confirmNodeSwitch && !confirmNodeSwitch(nodeId)) return;
     setSelectedEdgeId(null);
     setSelectedNodeId(nodeId);
   };

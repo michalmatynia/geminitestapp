@@ -5,10 +5,11 @@ import { Button, Textarea, Select, SelectContent, SelectItem, SelectTrigger, Sel
 
 
 
-import type { DatabaseAction, DatabaseActionCategory } from "@/features/ai/ai-paths/lib";
+import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from "@/features/ai/ai-paths/lib";
 import type { QueryValidationResult } from "./query-utils";
 
 type DatabaseQueryInputControlsProps = {
+  provider: DbQueryConfig["provider"];
   actionCategory: DatabaseActionCategory;
   action: DatabaseAction;
   actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
@@ -36,6 +37,7 @@ type DatabaseQueryInputControlsProps = {
 };
 
 export function DatabaseQueryInputControls({
+  provider,
   actionCategory,
   action,
   actionCategoryOptions,
@@ -61,6 +63,11 @@ export function DatabaseQueryInputControls({
   onRunQuery,
   onQueryChange,
 }: DatabaseQueryInputControlsProps): React.JSX.Element {
+  const isPrismaProvider = provider === "prisma";
+  const filterLabel = isPrismaProvider ? "Where" : "Filter";
+  const filterHint = isPrismaProvider ? "Matches records" : "Matches documents";
+  const updateLabel = isPrismaProvider ? "Update Data" : "Update Document";
+  const updateHint = isPrismaProvider ? "Applies to matched records" : "Applies to matched docs";
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -153,9 +160,9 @@ export function DatabaseQueryInputControls({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wide text-gray-500">
-              Filter
+              {filterLabel}
             </span>
-            <span className="text-[9px] text-gray-500">Matches documents</span>
+            <span className="text-[9px] text-gray-500">{filterHint}</span>
           </div>
           <Textarea
             className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
@@ -169,9 +176,9 @@ export function DatabaseQueryInputControls({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wide text-gray-500">
-              Update Document
+              {updateLabel}
             </span>
-            <span className="text-[9px] text-gray-500">Applies to matched docs</span>
+            <span className="text-[9px] text-gray-500">{updateHint}</span>
           </div>
           <Textarea
             ref={queryTemplateRef}

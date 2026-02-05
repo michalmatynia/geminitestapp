@@ -29,7 +29,7 @@ const COMMON_RUNTIME_FIELDS: NodeConfigDocField[] = [
 ];
 
 const dbQueryFields = (prefix: string): NodeConfigDocField[] => [
-  { path: `${prefix}.provider`, description: "Database provider.", defaultValue: "mongodb" },
+  { path: `${prefix}.provider`, description: "Database provider (mongodb|prisma).", defaultValue: "mongodb" },
   { path: `${prefix}.collection`, description: "Collection to query (example: products).", defaultValue: '"products"' },
   { path: `${prefix}.mode`, description: "preset uses a predefined query; custom uses queryTemplate.", defaultValue: "preset" },
   { path: `${prefix}.preset`, description: "Preset query shape (by_id/by_productId/by_entityId/by_field).", defaultValue: "by_id" },

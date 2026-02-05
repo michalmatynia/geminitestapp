@@ -148,6 +148,7 @@ export function AiPathsSettingsView({
     viewportRef,
     canvasRef,
     configOpen,
+    setNodeConfigDirty,
     modelOptions,
     parserSamples,
     setParserSamples,
@@ -600,6 +601,7 @@ export function AiPathsSettingsView({
         selectedNode={selectedNode ?? null}
         nodes={nodes}
         edges={edges}
+        isPathLocked={isPathLocked}
         modelOptions={modelOptions}
         parserSamples={parserSamples}
         setParserSamples={setParserSamples}
@@ -618,7 +620,7 @@ export function AiPathsSettingsView({
         handleRunSimulation={(node) => void handleRunSimulation(node.id)}
         clearRuntimeForNode={clearRuntimeForNode}
         clearNodeHistory={handleClearNodeHistory}
-        onSendToAi={(id, prompt) => handleSendToAi({ nodeId: id, prompt })}
+        onSendToAi={(id, prompt) => handleSendToAi(id, prompt)}
         sendingToAi={sendingToAi}
         dbQueryPresets={dbQueryPresets}
         setDbQueryPresets={setDbQueryPresets}
@@ -627,6 +629,7 @@ export function AiPathsSettingsView({
         setDbNodePresets={setDbNodePresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
+        onDirtyChange={setNodeConfigDirty}
       />
       <RunDetailDialog
         open={runDetailOpen}

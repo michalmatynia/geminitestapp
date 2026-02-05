@@ -11,7 +11,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { enqueuePathRun } from "@/features/ai/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { enforceAiPathsRunRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from "@/features/ai/ai-paths/server";
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -31,7 +31,7 @@ const enqueueSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const access = await requireAiPathsAccess();
+    const access = await requireAiPathsRunAccess();
     await enforceAiPathsRunRateLimit(access);
     const parsed = await parseJsonBody(req, enqueueSchema, {
       logPrefix: "ai-paths.runs.enqueue",
@@ -40,6 +40,21 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     const data = parsed.data;
     const { nodes, edges, ...rest } = data;
+    let normalizedMeta = rest.meta ?? null;
+    if (normalizedMeta && typeof normalizedMeta === "object") {
+      const metaRecord = normalizedMeta as Record<string, unknown>;
+      const sourceValue = metaRecord.source;
+      if (sourceValue && typeof sourceValue === "object") {
+        const triggerEventId = typeof metaRecord.triggerEventId === "string"
+          ? metaRecord.triggerEventId
+          : null;
+        normalizedMeta = {
+          ...metaRecord,
+          sourceInfo: sourceValue,
+          source: triggerEventId ? "trigger_button" : "ai_paths_ui",
+        };
+      }
+    }
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
       throw badRequestError("Nodes and edges are required to enqueue a run.");
     }
@@ -58,7 +73,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
       ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
       ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
-      meta: rest.meta ?? null,
+      meta: normalizedMeta,
     });
     startAiPathRunQueue();
     return NextResponse.json({ run });

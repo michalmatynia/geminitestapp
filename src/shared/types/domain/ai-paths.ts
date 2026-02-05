@@ -255,7 +255,7 @@ export type HttpConfig = {
 };
 
 export type DbQueryConfig = {
-  provider: "auto" | "mongodb";
+  provider: "auto" | "mongodb" | "prisma";
   collection: string;
   mode: "preset" | "custom";
   preset: "by_id" | "by_productId" | "by_entityId" | "by_field";

@@ -1044,6 +1044,84 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
+      const resolveEntityId = (): string | null => {
+        const entityIdValue =
+          typeof resolvedInputs.entityId === "string"
+            ? resolvedInputs.entityId
+            : typeof resolvedInputs.productId === "string"
+              ? resolvedInputs.productId
+              : null;
+        if (entityIdValue && entityIdValue.trim()) return entityIdValue;
+        const filterId =
+          typeof resolvedFilter.id === "string"
+            ? resolvedFilter.id
+            : typeof resolvedFilter._id === "string"
+              ? resolvedFilter._id
+              : null;
+        return filterId && filterId.trim() ? filterId : null;
+      };
+      const shouldUseEntityUpdate =
+        collection === "products" && action === "updateOne";
+      if (shouldUseEntityUpdate) {
+        const updateDocRecord =
+          updateDoc && typeof updateDoc === "object" && !Array.isArray(updateDoc)
+            ? (updateDoc as Record<string, unknown>)
+            : null;
+        const updateSet =
+          updateDocRecord &&
+          updateDocRecord.$set &&
+          typeof updateDocRecord.$set === "object" &&
+          !Array.isArray(updateDocRecord.$set)
+            ? (updateDocRecord.$set as Record<string, unknown>)
+            : null;
+        const updatePlain =
+          updateDocRecord && !Object.keys(updateDocRecord).some((key) => key.startsWith("$"))
+            ? updateDocRecord
+            : null;
+        const updatesForEntity =
+          updateSet ?? updatePlain ?? updates;
+        if (!updatesForEntity || Object.keys(updatesForEntity).length === 0) {
+          return prevOutputs;
+        }
+        const entityIdValue = resolveEntityId();
+        if (!entityIdValue) {
+          return prevOutputs;
+        }
+        const updateResult = await entityApi.update({
+          entityType: "product",
+          entityId: entityIdValue,
+          updates: updatesForEntity,
+          mode: dbConfig.mode ?? "replace",
+        });
+        executed.updater.add(node.id);
+        if (!updateResult.ok) {
+          reportAiPathsError(
+            new Error(updateResult.error),
+            { action: "updateEntity", collection, nodeId: node.id },
+            "Database update failed:",
+          );
+          toast("Database update failed.", { variant: "error" });
+          return {
+            result: null,
+            bundle: { error: "Update failed" },
+            debugPayload,
+            aiPrompt,
+          };
+        }
+        toast("Update completed.", { variant: "success" });
+        const primaryValue: unknown = updates[primaryTarget];
+        return {
+          content_en:
+            primaryTarget === "content_en"
+              ? ((primaryValue as string | undefined) ??
+                (nodeInputs.content_en as string | undefined))
+              : (nodeInputs.content_en as string | undefined),
+          result: updateResult.data,
+          bundle: updateResult.data as Record<string, unknown>,
+          debugPayload,
+          aiPrompt,
+        };
+      }
       const updateResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,

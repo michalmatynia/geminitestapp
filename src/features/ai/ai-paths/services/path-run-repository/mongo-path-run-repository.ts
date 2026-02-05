@@ -260,10 +260,12 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const source = options.source?.trim();
     const sourceMode = options.sourceMode ?? "include";
     if (source) {
-      const aiPathsSources = ["ai_paths_ui", "trigger_button"];
+      const aiPathsSources = ["ai_paths_ui", "trigger_button", "product_panel"];
+      const aiPathsTabs = ["product", "note"];
       if (sourceMode === "exclude") {
         if (source === "ai_paths_ui") {
           andFilters.push({ "meta.source": { $nin: aiPathsSources } });
+          andFilters.push({ "meta.source.tab": { $nin: aiPathsTabs } });
           andFilters.push({ "meta.source": { $exists: true } });
         } else {
           andFilters.push({ "meta.source": { $ne: source } });
@@ -273,6 +275,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
         andFilters.push({
           $or: [
             { "meta.source": { $in: aiPathsSources } },
+            { "meta.source.tab": { $in: aiPathsTabs } },
             { meta: { $exists: false } },
             { meta: null },
           ],

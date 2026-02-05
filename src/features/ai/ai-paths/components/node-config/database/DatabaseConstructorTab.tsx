@@ -32,7 +32,22 @@ import type {
   UpdaterSampleState,
 } from "@/features/ai/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
-import { TEMPLATE_SNIPPETS, SORT_PRESETS, PROJECTION_PRESETS, READ_QUERY_TYPES, QUERY_OPERATOR_GROUPS, UPDATE_OPERATOR_GROUPS, AGGREGATION_STAGE_SNIPPETS } from "@/features/ai/ai-paths/config/query-presets";
+import {
+  TEMPLATE_SNIPPETS,
+  PRISMA_TEMPLATE_SNIPPETS,
+  SORT_PRESETS,
+  PRISMA_SORT_PRESETS,
+  PROJECTION_PRESETS,
+  PRISMA_PROJECTION_PRESETS,
+  READ_QUERY_TYPES,
+  PRISMA_READ_QUERY_TYPES,
+  QUERY_OPERATOR_GROUPS,
+  PRISMA_QUERY_OPERATOR_GROUPS,
+  UPDATE_OPERATOR_GROUPS,
+  PRISMA_UPDATE_OPERATOR_GROUPS,
+  AGGREGATION_STAGE_SNIPPETS,
+  PRISMA_AGGREGATION_STAGE_SNIPPETS,
+} from "@/features/ai/ai-paths/config/query-presets";
 import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema, SchemaData } from "./types";
 
 type DatabaseConstructorTabProps = {
@@ -130,6 +145,17 @@ export function DatabaseConstructorTab({
 }: DatabaseConstructorTabProps): React.JSX.Element {
   const isUpdateAction =
     databaseConfig.useMongoActions && databaseConfig.actionCategory === "update";
+  const isPrismaProvider = queryConfig.provider === "prisma";
+  const providerLabel = isPrismaProvider ? "Prisma" : "MongoDB";
+  const templateSnippets = isPrismaProvider ? PRISMA_TEMPLATE_SNIPPETS : TEMPLATE_SNIPPETS;
+  const readQueryTypes = isPrismaProvider ? PRISMA_READ_QUERY_TYPES : READ_QUERY_TYPES;
+  const queryOperatorGroups = isPrismaProvider ? PRISMA_QUERY_OPERATOR_GROUPS : QUERY_OPERATOR_GROUPS;
+  const updateOperatorGroups = isPrismaProvider ? PRISMA_UPDATE_OPERATOR_GROUPS : UPDATE_OPERATOR_GROUPS;
+  const aggregationStageSnippets = isPrismaProvider
+    ? PRISMA_AGGREGATION_STAGE_SNIPPETS
+    : AGGREGATION_STAGE_SNIPPETS;
+  const sortPresets = isPrismaProvider ? PRISMA_SORT_PRESETS : SORT_PRESETS;
+  const projectionPresets = isPrismaProvider ? PRISMA_PROJECTION_PRESETS : PROJECTION_PRESETS;
   // State for code snippet navigation in AI responses
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   // State for template snippets modal
@@ -574,7 +600,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Templates</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {TEMPLATE_SNIPPETS.map((snippet: { label: string; value: string }): React.JSX.Element => (
+                {templateSnippets.map((snippet: { label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
                     type="button"
@@ -600,7 +626,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Read Query Types</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {READ_QUERY_TYPES.map((snippet: { label: string; value: string; disabled?: boolean; note?: string }): React.JSX.Element => (
+                {readQueryTypes.map((snippet: { label: string; value: string; disabled?: boolean; note?: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
                     type="button"
@@ -630,7 +656,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Operators</Label>
               <div className="space-y-3">
-                {QUERY_OPERATOR_GROUPS.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
+                {queryOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
                   <div key={group.label} className="space-y-1">
                     <div className="text-[10px] text-gray-500">{group.label}</div>
                     <div className="flex flex-wrap gap-2">
@@ -657,7 +683,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Update Operators</Label>
               <div className="space-y-3">
-                {UPDATE_OPERATOR_GROUPS.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
+                {updateOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
                   <div key={group.label} className="space-y-1">
                     <div className="text-[10px] text-gray-500">{group.label}</div>
                     <div className="flex flex-wrap gap-2">
@@ -683,28 +709,36 @@ export function DatabaseConstructorTab({
             {/* Aggregation Stages */}
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Aggregation Stages</Label>
-              <div className="flex flex-wrap gap-2">
-                {AGGREGATION_STAGE_SNIPPETS.map((stage: { label: string; value: string }): React.JSX.Element => (
-                  <Button
-                    key={stage.label}
-                    type="button"
-                    className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
-                    onClick={(): void => {
-                      insertTemplateSnippet(stage.value);
-                      toast(`Inserted ${stage.label}`, { variant: "success" });
-                    }}
-                  >
-                    {stage.label}
-                  </Button>
-                ))}
-              </div>
+              {aggregationStageSnippets.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {aggregationStageSnippets.map((stage: { label: string; value: string }): React.JSX.Element => (
+                    <Button
+                      key={stage.label}
+                      type="button"
+                      className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
+                      onClick={(): void => {
+                        insertTemplateSnippet(stage.value);
+                        toast(`Inserted ${stage.label}`, { variant: "success" });
+                      }}
+                    >
+                      {stage.label}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[10px] text-amber-200/80">
+                  Aggregation pipelines are MongoDB-only.
+                </div>
+              )}
             </div>
 
             {/* Sort Presets */}
             <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Sort Options</Label>
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+                {isPrismaProvider ? "Order By Options" : "Sort Options"}
+              </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {SORT_PRESETS.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
+                {sortPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
                     type="button"
@@ -727,9 +761,11 @@ export function DatabaseConstructorTab({
 
             {/* Projection Presets */}
             <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Projection (Fields)</Label>
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+                {isPrismaProvider ? "Select (Fields)" : "Projection (Fields)"}
+              </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {PROJECTION_PRESETS.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
+                {projectionPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
                     type="button"
@@ -776,7 +812,7 @@ export function DatabaseConstructorTab({
               }
             }
           }}
-          placeholder="Write a MongoDB query that finds products where... (Ctrl+Enter to send)"
+          placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
         />
         <div className="flex flex-wrap gap-2">
           <div className="text-[11px] text-gray-400">Context placeholders:</div>

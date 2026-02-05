@@ -167,6 +167,28 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleDropBlockToSlideshowFrame = useCallback(
+    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => {
+      dispatch({
+        type: "MOVE_BLOCK_TO_SLIDESHOW_FRAME",
+        blockId,
+        fromSectionId,
+        ...(fromColumnId && { fromColumnId }),
+        ...(fromParentBlockId && { fromParentBlockId }),
+        toSectionId,
+        toFrameId,
+        toIndex,
+      });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
+        next.add(toFrameId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
   const handleAddGridRow = useCallback(
     (sectionId: string) => {
       dispatch({ type: "ADD_GRID_ROW", sectionId });
@@ -449,6 +471,7 @@ export function ComponentTreePanel(): React.ReactNode {
               onDropBlockToSection={handleDropBlockToSection}
               onAddBlockToColumn={handleAddBlockToColumn}
               onDropBlockToColumn={handleDropBlockToColumn}
+              onDropBlockToSlideshowFrame={handleDropBlockToSlideshowFrame}
               onAddGridRow={handleAddGridRow}
               onRemoveGridRow={handleRemoveGridRow}
               onAddColumnToRow={handleAddColumnToRow}
@@ -514,6 +537,7 @@ interface ZoneGroupProps {
   onDropBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onDropBlockToSlideshowFrame: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => void;
   onAddGridRow: (sectionId: string) => void;
   onRemoveGridRow: (sectionId: string, rowId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
@@ -569,6 +593,7 @@ function ZoneGroup({
   onDropBlockToSection,
   onAddBlockToColumn,
   onDropBlockToColumn,
+  onDropBlockToSlideshowFrame,
   onAddGridRow,
   onRemoveGridRow,
   onAddColumnToRow,
@@ -727,6 +752,7 @@ function ZoneGroup({
                     draggedSectionZone={draggedSectionZone}
                     setDraggedSectionZone={setDraggedSectionZone}
                     onDropSectionToColumn={onDropSectionToColumn}
+                    onDropBlockToSlideshowFrame={onDropBlockToSlideshowFrame}
                     onConvertSectionToBlock={onConvertSectionToBlock}
                     onRemoveBlock={onRemoveBlock}
                   />

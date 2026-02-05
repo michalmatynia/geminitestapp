@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
 import { NodeConfigurationSections } from "./NodeConfigurationSections"; // Import the new component
 
@@ -14,6 +15,7 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from "@/features/ai/ai-paths/lib";
+import { stableStringify } from "@/features/ai/ai-paths/lib";
 import { NodeHistoryTab } from "./node-config/dialog/NodeHistoryTab"; // Keep NodeHistoryTab import
 
 type NodeConfigDialogProps = {
@@ -22,6 +24,7 @@ type NodeConfigDialogProps = {
   selectedNode: AiNode | null;
   nodes: AiNode[];
   edges: Edge[];
+  isPathLocked: boolean;
   modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
@@ -47,6 +50,7 @@ type NodeConfigDialogProps = {
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 export function NodeConfigDialog({
@@ -55,6 +59,7 @@ export function NodeConfigDialog({
   selectedNode,
   nodes,
   edges,
+  isPathLocked,
   modelOptions,
   parserSamples,
   setParserSamples,
@@ -80,11 +85,114 @@ export function NodeConfigDialog({
   setDbNodePresets,
   saveDbNodePresets,
   toast,
+  onDirtyChange,
 }: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
   const isScheduledTrigger =
     selectedNode.type === "trigger" &&
     selectedNode.config?.trigger?.event === "scheduled_run";
+  const cloneNode = useCallback((node: AiNode): AiNode => {
+    if (typeof structuredClone === "function") {
+      return structuredClone(node);
+    }
+    return JSON.parse(JSON.stringify(node)) as AiNode;
+  }, []);
+  const mergeConfigPatch = useCallback(
+    (current: NodeConfig | undefined, patch: Partial<NodeConfig>): NodeConfig => {
+      const base = current ?? {};
+      const merged = { ...base } as Record<string, unknown>;
+      for (const key of Object.keys(patch) as Array<keyof NodeConfig>) {
+        const patchValue = patch[key];
+        const currentValue = base[key];
+        if (
+          patchValue &&
+          typeof patchValue === "object" &&
+          !Array.isArray(patchValue) &&
+          currentValue &&
+          typeof currentValue === "object" &&
+          !Array.isArray(currentValue)
+        ) {
+          merged[key as string] = { ...(currentValue as object), ...(patchValue as object) };
+        } else {
+          merged[key as string] = patchValue as unknown;
+        }
+      }
+      return merged as NodeConfig;
+    },
+    []
+  );
+  const [draftNode, setDraftNode] = useState<AiNode | null>(null);
+
+  useEffect((): void => {
+    if (!configOpen || !selectedNode) {
+      setDraftNode(null);
+      return;
+    }
+    setDraftNode((prev: AiNode | null) => {
+      if (!prev || prev.id !== selectedNode.id) {
+        return cloneNode(selectedNode);
+      }
+      return prev;
+    });
+  }, [configOpen, selectedNode?.id, cloneNode]);
+
+  const draftSelectedNode = draftNode ?? selectedNode;
+  const nodesForConfig = useMemo((): AiNode[] => {
+    if (!draftNode) return nodes;
+    return nodes.map((node: AiNode): AiNode =>
+      node.id === draftNode.id ? draftNode : node
+    );
+  }, [nodes, draftNode]);
+
+  const updateDraftNode = useCallback(
+    (patch: Partial<AiNode>): void => {
+      setDraftNode((prev: AiNode | null) => {
+        const base = prev ?? (selectedNode ? cloneNode(selectedNode) : null);
+        if (!base) return prev;
+        const next: AiNode = { ...base, ...patch };
+        if (patch.config) {
+          next.config = mergeConfigPatch(base.config, patch.config);
+        }
+        return next;
+      });
+    },
+    [cloneNode, mergeConfigPatch, selectedNode]
+  );
+
+  const updateDraftConfig = useCallback(
+    (patch: Partial<NodeConfig>): void => {
+      updateDraftNode({ config: patch });
+    },
+    [updateDraftNode]
+  );
+
+  const hasUnsavedChanges = useMemo((): boolean => {
+    if (!draftNode || !selectedNode) return false;
+    return stableStringify(draftNode) !== stableStringify(selectedNode);
+  }, [draftNode, selectedNode]);
+
+  useEffect((): (() => void) | void => {
+    if (!onDirtyChange) return;
+    onDirtyChange(hasUnsavedChanges);
+    return (): void => onDirtyChange(false);
+  }, [hasUnsavedChanges, onDirtyChange]);
+
+  const handleUpdateNode = useCallback((): void => {
+    if (!draftNode) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to save node settings.", { variant: "info" });
+      return;
+    }
+    updateSelectedNode(draftNode);
+    setDraftNode(null);
+    toast("Node settings updated.", { variant: "success" });
+  }, [draftNode, isPathLocked, toast, updateSelectedNode]);
+
+  const handleDiscardChanges = useCallback((): void => {
+    if (!hasUnsavedChanges) return;
+    setDraftNode(null);
+    toast("Changes discarded.", { variant: "success" });
+  }, [hasUnsavedChanges, toast]);
 
   return (
     <Dialog open={configOpen} onOpenChange={setConfigOpen}>
@@ -115,10 +223,37 @@ export function NodeConfigDialog({
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           <TabsContent value="settings">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2">
+              <div className="text-[11px] text-gray-400">
+                {hasUnsavedChanges
+                  ? "Unsaved changes (manual update required)."
+                  : "All changes saved for this node."}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                  disabled={!hasUnsavedChanges}
+                  onClick={handleDiscardChanges}
+                >
+                  Discard Changes
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50"
+                  disabled={!hasUnsavedChanges || isPathLocked}
+                  onClick={handleUpdateNode}
+                >
+                  Update Node
+                </Button>
+              </div>
+            </div>
             {/* Render the new consolidated component here */}
             <NodeConfigurationSections
-              selectedNode={selectedNode}
-              nodes={nodes}
+              selectedNode={draftSelectedNode}
+              nodes={nodesForConfig}
               edges={edges}
               modelOptions={modelOptions}
               parserSamples={parserSamples}
@@ -129,8 +264,8 @@ export function NodeConfigDialog({
               updaterSampleLoading={updaterSampleLoading}
               runtimeState={runtimeState}
               pathDebugSnapshot={pathDebugSnapshot}
-              updateSelectedNode={updateSelectedNode}
-              updateSelectedNodeConfig={updateSelectedNodeConfig}
+              updateSelectedNode={updateDraftNode}
+              updateSelectedNodeConfig={updateDraftConfig}
               handleFetchParserSample={handleFetchParserSample}
               handleFetchUpdaterSample={handleFetchUpdaterSample}
               handleRunSimulation={handleRunSimulation}

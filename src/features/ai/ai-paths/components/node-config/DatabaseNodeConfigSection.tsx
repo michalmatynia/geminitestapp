@@ -61,6 +61,7 @@ import { DatabaseQueryValidatorPanel } from "./database/DatabaseQueryValidatorPa
 import { DatabaseSaveQueryPresetDialog } from "./database/DatabaseSaveQueryPresetDialog";
 import { DatabaseSettingsTab } from "./database/DatabaseSettingsTab";
 import {
+  buildJsonQueryValidation,
   buildMongoQueryValidation,
   formatAndFixMongoQuery,
   getQueryPlaceholderByAction,
@@ -330,7 +331,6 @@ export function DatabaseNodeConfigSection({
                   query: {
                     ...defaultQuery,
                     ...(persistedDatabase?.query ?? {}),
-                    provider: "mongodb",
                   } as DbQueryConfig,
                   writeSource: persistedDatabase?.writeSource ?? "bundle",
                   writeSourcePath: persistedDatabase?.writeSourcePath ?? "",
@@ -782,19 +782,57 @@ export function DatabaseNodeConfigSection({
                   ? queryConfig.collection
                   : "custom";
                 const normalizePresetValue = (value?: string): string => (value ?? "").trim();
-                const resolvedSortPresetId = SORT_PRESETS.some(
+                const isPrismaProvider = queryConfig.provider === "prisma";
+                const toPrismaSortPresetValue = (value: string): string => {
+                  try {
+                    const parsed = JSON.parse(value) as Record<string, unknown>;
+                    const next: Record<string, "asc" | "desc"> = {};
+                    Object.entries(parsed).forEach(([key, val]) => {
+                      if (val === -1 || val === "desc") next[key] = "desc";
+                      if (val === 1 || val === "asc") next[key] = "asc";
+                    });
+                    return JSON.stringify(next);
+                  } catch {
+                    return value;
+                  }
+                };
+                const toPrismaProjectionPresetValue = (value: string): string => {
+                  try {
+                    const parsed = JSON.parse(value) as Record<string, unknown>;
+                    const next: Record<string, boolean> = {};
+                    Object.entries(parsed).forEach(([key, val]) => {
+                      if (val === 1 || val === true) next[key] = true;
+                    });
+                    return JSON.stringify(next);
+                  } catch {
+                    return value;
+                  }
+                };
+                const sortPresets = isPrismaProvider
+                  ? SORT_PRESETS.map((preset) => ({
+                      ...preset,
+                      value: toPrismaSortPresetValue(preset.value),
+                    }))
+                  : SORT_PRESETS;
+                const projectionPresets = isPrismaProvider
+                  ? PROJECTION_PRESETS.map((preset) => ({
+                      ...preset,
+                      value: toPrismaProjectionPresetValue(preset.value),
+                    }))
+                  : PROJECTION_PRESETS;
+                const resolvedSortPresetId = sortPresets.some(
                   (preset: { id: string }) => preset.id === queryConfig.sortPresetId
                 )
                   ? queryConfig.sortPresetId
                   : undefined;
-                const resolvedProjectionPresetId = PROJECTION_PRESETS.some(
+                const resolvedProjectionPresetId = projectionPresets.some(
                   (preset: { id: string }) => preset.id === queryConfig.projectionPresetId
                 )
                   ? queryConfig.projectionPresetId
                   : undefined;
                 const sortPresetId =
                   resolvedSortPresetId ??
-                  SORT_PRESETS.find(
+                  sortPresets.find(
                     (preset: { value: string }) =>
                       normalizePresetValue(preset.value) ===
                       normalizePresetValue(queryConfig.sort)
@@ -802,7 +840,7 @@ export function DatabaseNodeConfigSection({
                   "custom";
                 const projectionPresetId =
                   resolvedProjectionPresetId ??
-                  PROJECTION_PRESETS.find(
+                  projectionPresets.find(
                     (preset: { value: string }) =>
                       normalizePresetValue(preset.value) ===
                       normalizePresetValue(queryConfig.projection)
@@ -974,37 +1012,62 @@ export function DatabaseNodeConfigSection({
                   setNewQueryPresetName("");
                   setSaveQueryPresetModalOpen(true);
                 };
-                const actionCategoryOptions = [
-                  { value: "create", label: "Create" },
-                  { value: "read", label: "Read" },
-                  { value: "update", label: "Update" },
-                  { value: "delete", label: "Delete" },
-                  { value: "aggregate", label: "Aggregate" },
-                ] as const;
-                const actionOptionsByCategory = {
-                  create: [
-                    { value: "insertOne", label: "insertOne" },
-                    { value: "insertMany", label: "insertMany" },
-                  ],
-                  read: [
-                    { value: "find", label: "find" },
-                    { value: "findOne", label: "findOne" },
-                    { value: "countDocuments", label: "countDocuments" },
-                    { value: "distinct", label: "distinct" },
-                  ],
-                  update: [
-                    { value: "updateOne", label: "updateOne" },
-                    { value: "updateMany", label: "updateMany" },
-                    { value: "replaceOne", label: "replaceOne" },
-                    { value: "findOneAndUpdate", label: "findOneAndUpdate" },
-                  ],
-                  delete: [
-                    { value: "deleteOne", label: "deleteOne" },
-                    { value: "deleteMany", label: "deleteMany" },
-                    { value: "findOneAndDelete", label: "findOneAndDelete" },
-                  ],
-                  aggregate: [{ value: "aggregate", label: "aggregate" }],
-                } as const;
+                const actionCategoryOptions = isPrismaProvider
+                  ? ([
+                      { value: "create", label: "Create" },
+                      { value: "read", label: "Read" },
+                      { value: "update", label: "Update" },
+                      { value: "delete", label: "Delete" },
+                    ] as const)
+                  : ([
+                      { value: "create", label: "Create" },
+                      { value: "read", label: "Read" },
+                      { value: "update", label: "Update" },
+                      { value: "delete", label: "Delete" },
+                      { value: "aggregate", label: "Aggregate" },
+                    ] as const);
+                const actionOptionsByCategory = isPrismaProvider
+                  ? ({
+                      create: [
+                        { value: "insertOne", label: "insertOne" },
+                      ],
+                      read: [
+                        { value: "find", label: "find" },
+                        { value: "findOne", label: "findOne" },
+                      ],
+                      update: [
+                        { value: "updateOne", label: "updateOne" },
+                        { value: "updateMany", label: "updateMany" },
+                      ],
+                      delete: [
+                        { value: "deleteOne", label: "deleteOne" },
+                      ],
+                      aggregate: [],
+                    } as const)
+                  : ({
+                      create: [
+                        { value: "insertOne", label: "insertOne" },
+                        { value: "insertMany", label: "insertMany" },
+                      ],
+                      read: [
+                        { value: "find", label: "find" },
+                        { value: "findOne", label: "findOne" },
+                        { value: "countDocuments", label: "countDocuments" },
+                        { value: "distinct", label: "distinct" },
+                      ],
+                      update: [
+                        { value: "updateOne", label: "updateOne" },
+                        { value: "updateMany", label: "updateMany" },
+                        { value: "replaceOne", label: "replaceOne" },
+                        { value: "findOneAndUpdate", label: "findOneAndUpdate" },
+                      ],
+                      delete: [
+                        { value: "deleteOne", label: "deleteOne" },
+                        { value: "deleteMany", label: "deleteMany" },
+                        { value: "findOneAndDelete", label: "findOneAndDelete" },
+                      ],
+                      aggregate: [{ value: "aggregate", label: "aggregate" }],
+                    } as const);
                 const actionOptions =
                   actionOptionsByCategory[
                     actionCategory as keyof typeof actionOptionsByCategory
@@ -1022,9 +1085,36 @@ export function DatabaseNodeConfigSection({
                 const isUpdateAction =
                   actionCategory === "update" &&
                   ["updateOne", "updateMany", "replaceOne", "findOneAndUpdate"].includes(action);
-                const queryPlaceholder = getQueryPlaceholderByAction(action);
+                const sortExample = isPrismaProvider
+                  ? '{ "createdAt": "desc" }'
+                  : '{ "createdAt": -1 }';
+                const projectionExample = isPrismaProvider
+                  ? '{ "title": true, "price": true }'
+                  : '{ "title": 1, "price": 1 }';
+                const sortLabel = isPrismaProvider ? "Order by (JSON)" : "Sort (JSON)";
+                const sortPresetLabel = isPrismaProvider ? "Order by preset" : "Sort preset";
+                const projectionLabel = isPrismaProvider ? "Select (JSON)" : "Projection (JSON)";
+                const projectionPresetLabel = isPrismaProvider ? "Select preset" : "Projection preset";
+                const getPrismaQueryPlaceholder = (dbAction: DatabaseAction): string => {
+                  switch (dbAction) {
+                    case "insertOne":
+                    case "insertMany":
+                      return '{\n  "name_en": "value"\n}';
+                    case "aggregate":
+                      return "{\n  \n}";
+                    default:
+                      return '{\n  "id": "{{value}}"\n}';
+                  }
+                };
+                const getPrismaUpdatePlaceholder = (): string =>
+                  '{\n  "description_en": "{{result}}"\n}';
+                const queryPlaceholder = isPrismaProvider
+                  ? getPrismaQueryPlaceholder(action)
+                  : getQueryPlaceholderByAction(action);
                 const updateTemplateValue = databaseConfig.updateTemplate ?? "";
-                const updatePlaceholder = getUpdatePlaceholderByAction(action);
+                const updatePlaceholder = isPrismaProvider
+                  ? getPrismaUpdatePlaceholder()
+                  : getUpdatePlaceholderByAction(action);
                 const activeQueryValue = isUpdateAction
                   ? updateTemplateValue
                   : queryTemplateValue;
@@ -1032,7 +1122,9 @@ export function DatabaseNodeConfigSection({
                   ? updatePlaceholder
                   : queryPlaceholder;
                 const queryValidation = queryValidatorEnabled
-                  ? buildMongoQueryValidation(activeQueryValue)
+                  ? isPrismaProvider
+                    ? buildJsonQueryValidation(activeQueryValue)
+                    : buildMongoQueryValidation(activeQueryValue)
                   : null;
                 const applyActionConfig = (
                   nextCategory: DatabaseActionCategory,
@@ -1072,9 +1164,9 @@ export function DatabaseNodeConfigSection({
                   updateSelectedNodeConfig({
                     database: {
                       ...databaseConfig,
-                      useMongoActions: true,
-                      actionCategory: nextCategory,
-                      action: nextAction,
+                      useMongoActions: !isPrismaProvider,
+                      actionCategory: isPrismaProvider ? undefined : nextCategory,
+                      action: isPrismaProvider ? undefined : nextAction,
                       operation: nextOperation,
                       updateStrategy: nextUpdateStrategy,
                       query: {
@@ -1566,6 +1658,7 @@ export function DatabaseNodeConfigSection({
                 // Shared query input controls (used in both Query and Constructor tabs)
                 const queryInputControls = (
                   <DatabaseQueryInputControls
+                    provider={queryConfig.provider ?? "mongodb"}
                     actionCategory={actionCategory}
                     action={action}
                                       actionCategoryOptions={[...actionCategoryOptions]}
@@ -1649,12 +1742,32 @@ export function DatabaseNodeConfigSection({
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <Label className="text-xs text-gray-400">Provider</Label>
-                        <Select value="mongodb" disabled>
+                        <Select
+                          value={queryConfig.provider ?? "mongodb"}
+                          onValueChange={(value: string) => {
+                            const nextProvider = value as DbQueryConfig["provider"];
+                            const prismaProvider = nextProvider === "prisma";
+                            updateSelectedNodeConfig({
+                              database: {
+                                ...databaseConfig,
+                                useMongoActions: prismaProvider ? false : databaseConfig.useMongoActions,
+                                actionCategory: prismaProvider ? undefined : databaseConfig.actionCategory,
+                                action: prismaProvider ? undefined : databaseConfig.action,
+                                query: {
+                                  ...queryConfig,
+                                  provider: nextProvider,
+                                },
+                              },
+                            });
+                          }}
+                        >
                           <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                             <SelectValue placeholder="Select provider" />
                           </SelectTrigger>
                           <SelectContent className="border-border bg-gray-900">
+                            <SelectItem value="auto">Auto (legacy)</SelectItem>
                             <SelectItem value="mongodb">MongoDB</SelectItem>
+                            <SelectItem value="prisma">Prisma</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1708,15 +1821,38 @@ export function DatabaseNodeConfigSection({
                         />
                       </div>
                     )}
+                    {isPrismaProvider && (
+                      <div className="rounded-md border border-cyan-900/40 bg-cyan-500/5 p-3 text-[11px] text-cyan-100">
+                        <div className="font-medium text-cyan-200">Prisma query tips</div>
+                        <div className="mt-1 text-cyan-100/90">
+                          Use a Prisma `where` object for filters and a `select` object for projections.
+                        </div>
+                        <div className="mt-2 text-cyan-100/90">
+                          Where example: <span className="font-mono">{`{ "id": "{{value}}" }`}</span>
+                        </div>
+                        <div className="mt-1 text-cyan-100/90">
+                          Update data example:{" "}
+                          <span className="font-mono">{`{ "description_en": "{{result}}" }`}</span>
+                        </div>
+                        <div className="mt-2 text-cyan-100/90">
+                          Mongo Actions are MongoDB-only. For Prisma, use Query/Insert/Update/Delete operations.
+                        </div>
+                        {actionCategory === "aggregate" && (
+                          <div className="mt-2 text-amber-200/90">
+                            Aggregate actions are MongoDB-only in this node.
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {showSort && (
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <Label className="text-xs text-gray-400">Sort preset</Label>
+                          <Label className="text-xs text-gray-400">{sortPresetLabel}</Label>
                           <Select
                             value={sortPresetId}
                             onValueChange={(value: string) => {
                               if (value === "custom") return;
-                              const preset = SORT_PRESETS.find((item: { id: string }) => item.id === value);
+                              const preset = sortPresets.find((item: { id: string }) => item.id === value);
                               if (!preset) return;
                               updateQueryConfig({
                                 sort: preset.value,
@@ -1729,14 +1865,14 @@ export function DatabaseNodeConfigSection({
                             </SelectTrigger>
                             <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
-                              {SORT_PRESETS.map((preset: { id: string; label: string }) => (
+                              {sortPresets.map((preset: { id: string; label: string }) => (
                                 <SelectItem key={preset.id} value={preset.id}>
                                   {preset.label}
                                 </SelectItem>
                               ))}
-                            </SelectContent>
+                              </SelectContent>
                           </Select>
-                          <Label className="mt-3 text-xs text-gray-400">Sort (JSON)</Label>
+                          <Label className="mt-3 text-xs text-gray-400">{sortLabel}</Label>
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.sort}
@@ -1749,17 +1885,17 @@ export function DatabaseNodeConfigSection({
                           />
                           <p className="mt-2 text-[11px] text-gray-500">
                             Example:{" "}
-                            <span className="text-gray-300">{`{ "createdAt": -1 }`}</span>
+                            <span className="text-gray-300">{sortExample}</span>
                           </p>
                         </div>
                         {showProjection && (
                         <div>
-                          <Label className="text-xs text-gray-400">Projection preset</Label>
+                          <Label className="text-xs text-gray-400">{projectionPresetLabel}</Label>
                           <Select
                             value={projectionPresetId}
                             onValueChange={(value: string) => {
                               if (value === "custom") return;
-                              const preset = PROJECTION_PRESETS.find((item: { id: string }) => item.id === value);
+                              const preset = projectionPresets.find((item: { id: string }) => item.id === value);
                               if (!preset) return;
                               updateQueryConfig({
                                 projection: preset.value,
@@ -1772,15 +1908,15 @@ export function DatabaseNodeConfigSection({
                             </SelectTrigger>
                             <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
-                              {PROJECTION_PRESETS.map((preset: { id: string; label: string }) => (
+                              {projectionPresets.map((preset: { id: string; label: string }) => (
                                 <SelectItem key={preset.id} value={preset.id}>
                                   {preset.label}
                                 </SelectItem>
                               ))}
-                            </SelectContent>
+                              </SelectContent>
                           </Select>
                           <Label className="mt-3 text-xs text-gray-400">
-                            Projection (JSON)
+                            {projectionLabel}
                           </Label>
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
@@ -1794,7 +1930,7 @@ export function DatabaseNodeConfigSection({
                           />
                           <p className="mt-2 text-[11px] text-gray-500">
                             Example:{" "}
-                            <span className="text-gray-300">{`{ "title": 1, "price": 1 }`}</span>
+                            <span className="text-gray-300">{projectionExample}</span>
                           </p>
                         </div>
                         )}
@@ -1802,12 +1938,12 @@ export function DatabaseNodeConfigSection({
                     )}
                     {showProjection && !showSort && (
                       <div>
-                        <Label className="text-xs text-gray-400">Projection preset</Label>
+                        <Label className="text-xs text-gray-400">{projectionPresetLabel}</Label>
                         <Select
                           value={projectionPresetId}
                           onValueChange={(value: string) => {
                             if (value === "custom") return;
-                            const preset = PROJECTION_PRESETS.find((item: { id: string }) => item.id === value);
+                            const preset = projectionPresets.find((item: { id: string }) => item.id === value);
                             if (!preset) return;
                             updateQueryConfig({
                               projection: preset.value,
@@ -1820,7 +1956,7 @@ export function DatabaseNodeConfigSection({
                           </SelectTrigger>
                           <SelectContent className="border-border bg-gray-900">
                             <SelectItem value="custom">Custom</SelectItem>
-                            {PROJECTION_PRESETS.map((preset: { id: string; label: string }) => (
+                            {projectionPresets.map((preset: { id: string; label: string }) => (
                               <SelectItem key={preset.id} value={preset.id}>
                                 {preset.label}
                               </SelectItem>
@@ -1828,7 +1964,7 @@ export function DatabaseNodeConfigSection({
                           </SelectContent>
                         </Select>
                         <Label className="mt-3 text-xs text-gray-400">
-                          Projection (JSON)
+                          {projectionLabel}
                         </Label>
                         <Textarea
                           className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
@@ -1842,7 +1978,7 @@ export function DatabaseNodeConfigSection({
                         />
                         <p className="mt-2 text-[11px] text-gray-500">
                           Example:{" "}
-                          <span className="text-gray-300">{`{ "title": 1, "price": 1 }`}</span>
+                          <span className="text-gray-300">{projectionExample}</span>
                         </p>
                       </div>
                     )}

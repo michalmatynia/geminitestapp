@@ -625,6 +625,17 @@ export function basePageBuilderReducer(
           normalizeTextAtomText(settings["text"]),
           undefined
         );
+      } else if (action.sectionType === "Slideshow") {
+        // Auto-create Frame 1 when adding a Slideshow
+        const frameDef = getBlockDefinition("SlideshowFrame");
+        if (frameDef) {
+          initialBlocks = [{
+            id: uid(),
+            type: "SlideshowFrame",
+            settings: { ...frameDef.defaultSettings },
+            blocks: [],
+          }];
+        }
       }
 
       const newSection: SectionInstance = {
@@ -1153,6 +1164,75 @@ export function basePageBuilderReducer(
         const nextBlocks = [...s.blocks];
         nextBlocks.splice(action.toIndex, 0, removal.moved!);
         return { ...s, blocks: nextBlocks };
+      });
+      return { ...state, sections: sectionsAfterInsert };
+    }
+
+    case "MOVE_BLOCK_TO_SLIDESHOW_FRAME": {
+      // Remove block from source (similar to MOVE_BLOCK_TO_SECTION)
+      const removeFromSource = (
+        sections: SectionInstance[],
+        fromSectionId: string,
+        fromColumnId?: string,
+        fromParentBlockId?: string
+      ): { sections: SectionInstance[]; moved: BlockInstance | null } => {
+        let moved: BlockInstance | null = null;
+        const nextSections = sections.map((s: SectionInstance) => {
+          if (s.id !== fromSectionId) return s;
+          if (fromColumnId) {
+            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            if (result.moved) moved = result.moved;
+            return { ...s, blocks: result.blocks };
+          }
+          // Remove from section's direct blocks (including from SlideshowFrames)
+          const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
+            return blocks.map((b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return null as unknown as BlockInstance;
+              }
+              if (b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+                }
+                return { ...b, blocks: removeFromBlocks(b.blocks) };
+              }
+              return b;
+            }).filter(Boolean);
+          };
+          return { ...s, blocks: removeFromBlocks(s.blocks) };
+        });
+        return { sections: nextSections, moved };
+      };
+
+      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      if (!removal.moved) {
+        const found = findBlock(state.sections, action.blockId);
+        if (!found) return state;
+        removal = removeFromSource(
+          state.sections,
+          found.section.id,
+          found.parentColumn?.id,
+          found.parentBlock?.id
+        );
+      }
+      if (!removal.moved) return state;
+
+      // Insert into target SlideshowFrame
+      const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        return {
+          ...s,
+          blocks: s.blocks.map((b: BlockInstance) => {
+            if (b.id !== action.toFrameId) return b;
+            const frameBlocks = [...(b.blocks ?? [])];
+            frameBlocks.splice(action.toIndex, 0, removal.moved!);
+            return { ...b, blocks: frameBlocks };
+          }),
+        };
       });
       return { ...state, sections: sectionsAfterInsert };
     }

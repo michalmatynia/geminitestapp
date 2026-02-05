@@ -21,7 +21,7 @@ import type {
 import {
   evaluateGraphWithIteratorAutoContinue,
 } from "@/features/ai/ai-paths/lib/core/runtime/engine";
-import { appendLocalRun } from "@/features/ai/ai-paths/lib";
+import { appendLocalRun, runsApi } from "@/features/ai/ai-paths/lib";
 import {
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
@@ -325,6 +325,32 @@ export function useAiPathTrigger(): {
         id: selectedConfig.id,
         name: selectedConfig.name,
       });
+      const executionMode = selectedConfig.executionMode === "local" ? "local" : "server";
+      if (executionMode === "server") {
+        const enqueueResult = await runsApi.enqueue({
+          pathId: selectedConfig.id ?? "path",
+          pathName: selectedConfig.name ?? undefined,
+          nodes,
+          edges,
+          triggerEvent,
+          triggerNodeId: triggerNode.id,
+          triggerContext,
+          entityId: product.id,
+          entityType: "product",
+          meta: {
+            source: "product_panel",
+            triggerLabel: "Path Generate Description",
+          },
+        });
+        if (!enqueueResult.ok) {
+          toast(enqueueResult.error || "Failed to enqueue AI Path run.", {
+            variant: "error",
+          });
+          return;
+        }
+        toast("AI Path run queued.", { variant: "success" });
+        return;
+      }
       startedAt = new Date().toISOString();
       startedAtMs = Date.now();
       localRunContext = {

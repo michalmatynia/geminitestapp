@@ -508,57 +508,80 @@ export default function ProductAiJobsPanel({
                 </div>
               )}
 
-              {selectedJob.type === "graph_model" && (
-                <div className="rounded-md border border-border bg-card/40 p-4">
-                  <div className="text-gray-400 font-bold text-xs uppercase mb-3">
-                    Graph Model Inputs
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
-                      <div className="text-white text-sm font-mono">
-                        {(selectedJob.payload as JobPayload | null)?.modelId ||
-                          "Unknown"}
+              {selectedJob.type === "graph_model" && (() => {
+                const result =
+                  selectedJob.result && typeof selectedJob.result === "object"
+                    ? (selectedJob.result as Record<string, unknown>)
+                    : null;
+                const resultText =
+                  typeof result?.result === "string" ? (result.result as string) : "";
+                const resultJson =
+                  resultText || result ? JSON.stringify(result, null, 2) : "";
+                return (
+                  <div className="space-y-4">
+                    <div className="rounded-md border border-border bg-card/40 p-4">
+                      <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                        Graph Model Inputs
                       </div>
-                      <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
-                        Vision Enabled
-                      </div>
-                      <div className="text-white text-sm">
-                        {(selectedJob.payload as JobPayload | null)?.vision
-                          ? "Yes"
-                          : "No"}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
-                      {Array.isArray(
-                        (selectedJob.payload as JobPayload | null)?.imageUrls
-                      ) &&
-                      (selectedJob.payload as JobPayload | null)?.imageUrls
-                        ?.length ? (
-                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                          {(selectedJob.payload as JobPayload | null)?.imageUrls?.map(
-                            (url: string, index: number) => (
-                              <div key={`${url}-${index}`} className="truncate">
-                                {url}
-                              </div>
-                            )
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
+                          <div className="text-white text-sm font-mono">
+                            {(selectedJob.payload as JobPayload | null)?.modelId ||
+                              "Unknown"}
+                          </div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
+                            Vision Enabled
+                          </div>
+                          <div className="text-white text-sm">
+                            {(selectedJob.payload as JobPayload | null)?.vision
+                              ? "Yes"
+                              : "No"}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
+                          {Array.isArray(
+                            (selectedJob.payload as JobPayload | null)?.imageUrls
+                          ) &&
+                          (selectedJob.payload as JobPayload | null)?.imageUrls
+                            ?.length ? (
+                            <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
+                              {(selectedJob.payload as JobPayload | null)?.imageUrls?.map(
+                                (url: string, index: number) => (
+                                  <div key={`${url}-${index}`} className="truncate">
+                                    {url}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-gray-500">No image URLs in payload.</div>
                           )}
                         </div>
-                      ) : (
-                        <div className="text-[11px] text-gray-500">No image URLs in payload.</div>
-                      )}
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
+                        <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
+                          {(selectedJob.payload as JobPayload | null)?.prompt ||
+                            "No prompt provided."}
+                        </pre>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-border bg-card/40 p-4">
+                      <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                        Graph Model Output
+                      </div>
+                      <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
+                        {resultText
+                          ? resultText
+                          : resultJson || "No result stored yet."}
+                      </pre>
                     </div>
                   </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
-                    <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
-                      {(selectedJob.payload as JobPayload | null)?.prompt ||
-                        "No prompt provided."}
-                    </pre>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in (selectedJob.result as object) ? (
                 <div className="space-y-4">

@@ -580,7 +580,7 @@ export function useAiPathTriggerEvent(): {
           source: "trigger_button",
           triggerEventId,
           triggerLabel: args.triggerLabel ?? null,
-          ...(args.source ? { source: args.source } : {}),
+          ...(args.source ? { sourceInfo: args.source } : {}),
           ...(args.extras ?? {}),
         },
       });

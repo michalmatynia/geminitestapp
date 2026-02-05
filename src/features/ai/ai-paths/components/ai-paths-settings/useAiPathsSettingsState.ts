@@ -237,6 +237,7 @@ export interface UseAiPathsSettingsStateReturn {
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   configOpen: boolean;
+  setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
   modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<
@@ -262,7 +263,7 @@ export interface UseAiPathsSettingsStateReturn {
   ) => Promise<void>;
   handleRunSimulation: (nodeId: string) => void;
   clearRuntimeForNode: (nodeId: string) => void;
-  handleSendToAi: (options: { nodeId: string; prompt: string }) => Promise<void>;
+  handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
@@ -339,6 +340,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   );
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
+  const [nodeConfigDirty, setNodeConfigDirty] = useState(false);
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<string | null>(
     null
   );
@@ -381,6 +383,23 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     }
     return null;
   }, [nodes, runtimeState.outputs]);
+
+  const confirmNodeSwitch = useCallback(
+    (nextNodeId: string): boolean => {
+      if (!configOpen || !nodeConfigDirty) return true;
+      if (nextNodeId === selectedNodeId) return true;
+      const confirmed = window.confirm(
+        "You have unsaved changes for this node. Discard them and switch?"
+      );
+      if (!confirmed) {
+        toast("Kept current node.", { variant: "info" });
+        return false;
+      }
+      setNodeConfigDirty(false);
+      return true;
+    },
+    [configOpen, nodeConfigDirty, selectedNodeId, toast]
+  );
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
@@ -764,6 +783,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setEdges,
     selectedNodeId,
     setSelectedNodeId,
+    confirmNodeSwitch,
     clearRuntimeInputsForEdges,
     reportAiPathsError,
     toast,
@@ -1644,6 +1664,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     viewportRef,
     canvasRef,
     configOpen,
+    setNodeConfigDirty,
     modelOptions,
     parserSamples,
     setParserSamples,

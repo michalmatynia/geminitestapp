@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsActionRateLimit, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
 
 const actionSchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
@@ -124,8 +124,10 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const access = await requireAiPathsAccess();
-    enforceAiPathsActionRateLimit(access, "db-action");
+    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+    if (!isInternal) {
+      enforceAiPathsActionRateLimit(access, "db-action");
+    }
     const parsed = await parseJsonBody(req, actionSchema, {
       logPrefix: "ai-paths.db-action",
     });

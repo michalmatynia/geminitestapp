@@ -165,6 +165,15 @@ const generateServerCsrfToken = (): string => {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 };
 
+const getServerInternalToken = (): string | null => {
+  if (typeof window !== "undefined") return null;
+  if (process.env.AI_PATHS_INTERNAL_TOKEN) return process.env.AI_PATHS_INTERNAL_TOKEN;
+  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+  if (process.env.NODE_ENV === "development") return "dev-secret-change-me";
+  return null;
+};
+
 const withCsrfHeadersCompat = async (headers?: HeadersInit): Promise<Headers> => {
   if (typeof window === "undefined") {
     const token = generateServerCsrfToken();
@@ -175,6 +184,10 @@ const withCsrfHeadersCompat = async (headers?: HeadersInit): Promise<Headers> =>
     const cookieValue = `csrf-token=${encodeURIComponent(token)}`;
     const existingCookie = next.get("cookie");
     next.set("cookie", existingCookie ? `${existingCookie}; ${cookieValue}` : cookieValue);
+    const internalToken = getServerInternalToken();
+    if (internalToken && !next.has("x-ai-paths-internal")) {
+      next.set("x-ai-paths-internal", internalToken);
+    }
     return next;
   }
   const { withCsrfHeaders } = await import("@/shared/lib/security/csrf-client");

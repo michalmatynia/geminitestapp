@@ -98,7 +98,7 @@ export const appendLocalRun = async (
   };
 
   try {
-    const settings = await fetchSettingsCached({ scope: "heavy" });
+    const settings = await fetchSettingsCached({ scope: "heavy", bypassCache: true });
     const map = new Map(settings.map((item) => [item.key, item.value]));
     const existing = parseLocalRuns(map.get(AI_PATHS_LOCAL_RUNS_KEY));
     const next = [normalized, ...existing].slice(0, MAX_LOCAL_RUNS);

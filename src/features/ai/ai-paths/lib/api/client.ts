@@ -8,8 +8,6 @@
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from "@/shared/types/agent-teaching";
-import type { ProductAiJobType } from "@/shared/types/jobs";
-import type { ProductFormData } from "@/features/products/types/forms";
 
 // ============================================================================
 // Types
@@ -160,24 +158,50 @@ async function apiFetch<T>(
   }
 }
 
+const generateServerCsrfToken = (): string => {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID().replace(/-/g, "");
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+};
+
+const withCsrfHeadersCompat = async (headers?: HeadersInit): Promise<Headers> => {
+  if (typeof window === "undefined") {
+    const token = generateServerCsrfToken();
+    const next = new Headers(headers);
+    if (!next.has("x-csrf-token")) {
+      next.set("x-csrf-token", token);
+    }
+    const cookieValue = `csrf-token=${encodeURIComponent(token)}`;
+    const existingCookie = next.get("cookie");
+    next.set("cookie", existingCookie ? `${existingCookie}; ${cookieValue}` : cookieValue);
+    return next;
+  }
+  const { withCsrfHeaders } = await import("@/shared/lib/security/csrf-client");
+  return withCsrfHeaders(headers);
+};
+
 async function apiPost<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+  const headers = await withCsrfHeadersCompat({ "Content-Type": "application/json" });
   return apiFetch<T>(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
 
 async function apiPatch<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+  const headers = await withCsrfHeadersCompat({ "Content-Type": "application/json" });
   return apiFetch<T>(url, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
 
 async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
-  return apiFetch<T>(url, { method: "DELETE" });
+  const headers = await withCsrfHeadersCompat();
+  return apiFetch<T>(url, { method: "DELETE", headers });
 }
 
 // ============================================================================
@@ -415,23 +439,29 @@ export const aiJobsApi = {
     type: string;
     payload: unknown;
   }): Promise<ApiResponse<{ jobId: string }>> {
+    const url = "/api/products/ai-jobs/enqueue";
     if (typeof window === "undefined") {
-      try {
-        const { enqueueProductAiJob } = await import("@/features/jobs/services/productAiService");
-        const job = await enqueueProductAiJob(
-          payload.productId,
-          payload.type as ProductAiJobType,
-          payload.payload
-        );
-        return { ok: true, data: { jobId: job.id } };
-      } catch (error) {
-        return {
-          ok: false,
-          error: error instanceof Error ? error.message : "Failed to enqueue AI job",
-        };
-      }
+      const token = (() => {
+        if (globalThis.crypto?.randomUUID) {
+          return globalThis.crypto.randomUUID().replace(/-/g, "");
+        }
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+      })();
+      const headers = new Headers({ "Content-Type": "application/json" });
+      headers.set("x-csrf-token", token);
+      headers.set("cookie", `csrf-token=${encodeURIComponent(token)}`);
+      return apiFetch<{ jobId: string }>(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
     }
-    return apiPost<{ jobId: string }>("/api/products/ai-jobs/enqueue", payload);
+    const { withCsrfHeaders } = await import("@/shared/lib/security/csrf-client");
+    return apiFetch<{ jobId: string }>(url, {
+      method: "POST",
+      headers: withCsrfHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(payload),
+    });
   },
 
   /**
@@ -475,29 +505,6 @@ export const aiGenerationApi = {
     imageUrls: string[];
     descriptionConfig?: Record<string, unknown>;
   }): Promise<ApiResponse<{ description?: string }>> {
-    if (typeof window === "undefined") {
-      try {
-        const { generateProductDescription } = await import(
-          "@/features/products/services/aiDescriptionService"
-        );
-        const result = await generateProductDescription({
-          productData: body.entityJson as ProductFormData,
-          imageUrls: body.imageUrls ?? [],
-          visionOutputEnabled: body.descriptionConfig?.visionOutputEnabled as
-            | boolean
-            | undefined,
-          generationOutputEnabled: body.descriptionConfig?.generationOutputEnabled as
-            | boolean
-            | undefined,
-        });
-        return { ok: true, data: { description: result.description } };
-      } catch (error) {
-        return {
-          ok: false,
-          error: error instanceof Error ? error.message : "Failed to generate description",
-        };
-      }
-    }
     return apiPost<{ description?: string }>("/api/generate-description", body);
   },
 
@@ -508,23 +515,6 @@ export const aiGenerationApi = {
     productId: string,
     description: string
   ): Promise<ApiResponse<Record<string, unknown>>> {
-    if (typeof window === "undefined") {
-      try {
-        const { updateProduct } = await import("@/features/products/server");
-        const formData = new FormData();
-        formData.append("description_en", description);
-        const updated = await updateProduct(productId, formData);
-        if (!updated) {
-          return { ok: false, error: "Product not found" };
-        }
-        return { ok: true, data: updated as Record<string, unknown> };
-      } catch (error) {
-        return {
-          ok: false,
-          error: error instanceof Error ? error.message : "Failed to update description",
-        };
-      }
-    }
     try {
       const formData = new FormData();
       formData.append("description_en", description);
@@ -610,6 +600,8 @@ export const runsApi = {
 
   async list(options?: {
     pathId?: string;
+    source?: string;
+    sourceMode?: "include" | "exclude";
     status?: string;
     query?: string;
     limit?: number;
@@ -617,6 +609,8 @@ export const runsApi = {
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
     const params = new URLSearchParams();
     if (options?.pathId) params.set("pathId", options.pathId);
+    if (options?.source) params.set("source", options.source);
+    if (options?.sourceMode) params.set("sourceMode", options.sourceMode);
     if (options?.status) params.set("status", options.status);
     if (options?.query) params.set("query", options.query);
     if (typeof options?.limit === "number") params.set("limit", String(options.limit));

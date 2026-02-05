@@ -15,18 +15,28 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
         />
         <div className="mt-6">
           <Tabs defaultValue="paths" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="paths">AI Paths Runs</TabsTrigger>
+              <TabsTrigger value="paths-external">External Server Runs</TabsTrigger>
               <TabsTrigger value="local">Local Runs</TabsTrigger>
+              <TabsTrigger value="local-external">External Local Runs</TabsTrigger>
               <TabsTrigger value="jobs">AI Jobs</TabsTrigger>
             </TabsList>
 
             <TabsContent value="paths" className="space-y-4">
-              <JobQueuePanel />
+              <JobQueuePanel sourceFilter="ai_paths_ui" />
+            </TabsContent>
+
+            <TabsContent value="paths-external" className="space-y-4">
+              <JobQueuePanel sourceFilter="ai_paths_ui" sourceMode="exclude" />
             </TabsContent>
 
             <TabsContent value="local" className="space-y-4">
-              <LocalRunsPanel />
+              <LocalRunsPanel sourceFilter="ai_paths_ui" />
+            </TabsContent>
+
+            <TabsContent value="local-external" className="space-y-4">
+              <LocalRunsPanel sourceFilter="ai_paths_ui" sourceMode="exclude" />
             </TabsContent>
 
             <TabsContent value="jobs" className="space-y-4">

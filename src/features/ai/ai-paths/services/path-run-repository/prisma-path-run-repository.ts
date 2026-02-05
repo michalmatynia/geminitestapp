@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/shared/lib/db/prisma";
+import { Prisma } from "@prisma/client";
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -150,6 +151,8 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     ensureModels();
     const query = options.query?.trim();
     const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+    const source = options.source?.trim();
+    const sourceMode = options.sourceMode ?? "include";
     const parseDate = (value: Date | string | null | undefined): Date | null => {
       if (!value) return null;
       const date = typeof value === "string" ? new Date(value) : value;
@@ -157,34 +160,73 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     };
     const createdAfter = parseDate(options.createdAfter);
     const createdBefore = parseDate(options.createdBefore);
-    const where = {
-      ...(options.userId ? { userId: options.userId } : {}),
-      ...(options.pathId ? { pathId: options.pathId } : {}),
-      ...(statuses.length > 0
-        ? { status: { in: statuses } }
-        : options.status
-          ? { status: options.status }
-          : {}),
-      ...((createdAfter || createdBefore)
-        ? {
-            createdAt: {
-              ...(createdAfter ? { gte: createdAfter } : {}),
-              ...(createdBefore ? { lte: createdBefore } : {}),
-            },
-          }
-        : {}),
-      ...(query
-        ? {
-            OR: [
-              { id: { contains: query, mode: "insensitive" } },
-              { pathId: { contains: query, mode: "insensitive" } },
-              { pathName: { contains: query, mode: "insensitive" } },
-              { entityId: { contains: query, mode: "insensitive" } },
-              { errorMessage: { contains: query, mode: "insensitive" } },
+    const andFilters: Prisma.AiPathRunWhereInput[] = [];
+    if (options.userId) {
+      andFilters.push({ userId: options.userId });
+    }
+    if (options.pathId) {
+      andFilters.push({ pathId: options.pathId });
+    }
+    if (statuses.length > 0) {
+      andFilters.push({ status: { in: statuses } });
+    } else if (options.status) {
+      andFilters.push({ status: options.status });
+    }
+    if (source) {
+      const aiPathsSources = ["ai_paths_ui", "trigger_button"];
+      if (sourceMode === "exclude") {
+        if (source === "ai_paths_ui") {
+          andFilters.push({
+            AND: [
+              { NOT: { meta: { path: ["source"], equals: "ai_paths_ui" } } },
+              { NOT: { meta: { path: ["source"], equals: "trigger_button" } } },
+              { NOT: { meta: { equals: Prisma.DbNull } } },
+              { NOT: { meta: { equals: Prisma.JsonNull } } },
             ],
-          }
-        : {}),
-    };
+          });
+        } else {
+          andFilters.push({
+            AND: [
+              { NOT: { meta: { path: ["source"], equals: source } } },
+              { NOT: { meta: { equals: Prisma.DbNull } } },
+              { NOT: { meta: { equals: Prisma.JsonNull } } },
+            ],
+          });
+        }
+      } else if (source === "ai_paths_ui") {
+        andFilters.push({
+          OR: [
+            ...aiPathsSources.map((value) => ({
+              meta: { path: ["source"], equals: value },
+            })),
+            { meta: { equals: Prisma.DbNull } },
+            { meta: { equals: Prisma.JsonNull } },
+          ],
+        });
+      } else {
+        andFilters.push({ meta: { path: ["source"], equals: source } });
+      }
+    }
+    if (createdAfter || createdBefore) {
+      andFilters.push({
+        createdAt: {
+          ...(createdAfter ? { gte: createdAfter } : {}),
+          ...(createdBefore ? { lte: createdBefore } : {}),
+        },
+      });
+    }
+    if (query) {
+      andFilters.push({
+        OR: [
+          { id: { contains: query, mode: "insensitive" } },
+          { pathId: { contains: query, mode: "insensitive" } },
+          { pathName: { contains: query, mode: "insensitive" } },
+          { entityId: { contains: query, mode: "insensitive" } },
+          { errorMessage: { contains: query, mode: "insensitive" } },
+        ],
+      });
+    }
+    const where = andFilters.length > 0 ? { AND: andFilters } : {};
     const [runs, total] = await Promise.all([
       prismaAny.aiPathRun!.findMany({
         where,

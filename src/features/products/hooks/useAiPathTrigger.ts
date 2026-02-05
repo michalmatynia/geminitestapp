@@ -21,6 +21,7 @@ import type {
 import {
   evaluateGraphWithIteratorAutoContinue,
 } from "@/features/ai/ai-paths/lib/core/runtime/engine";
+import { appendLocalRun } from "@/features/ai/ai-paths/lib";
 import {
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
@@ -178,6 +179,17 @@ export function useAiPathTrigger(): {
       });
       return;
     }
+    let localRunContext: {
+      pathId?: string | null;
+      pathName?: string | null;
+      triggerEvent?: string | null;
+      triggerLabel?: string | null;
+      entityType?: string | null;
+      entityId?: string | null;
+      nodeCount?: number | null;
+    } | null = null;
+    let startedAt: string | null = null;
+    let startedAtMs: number | null = null;
     try {
       let settingsData: Array<{ key: string; value: string }> = [];
       try {
@@ -313,7 +325,17 @@ export function useAiPathTrigger(): {
         id: selectedConfig.id,
         name: selectedConfig.name,
       });
-      const runAt = new Date().toISOString();
+      startedAt = new Date().toISOString();
+      startedAtMs = Date.now();
+      localRunContext = {
+        pathId: selectedConfig.id ?? null,
+        pathName: selectedConfig.name ?? null,
+        triggerEvent,
+        triggerLabel: "Path Generate Description",
+        entityType: "product",
+        entityId: product.id,
+        nodeCount: nodes.length,
+      };
       const runtimeState: RuntimeState = await evaluateGraphWithIteratorAutoContinue({
         nodes,
         edges,
@@ -340,6 +362,23 @@ export function useAiPathTrigger(): {
         },
         toast,
       });
+      const runAt = new Date().toISOString();
+      if (localRunContext && startedAt && startedAtMs !== null) {
+        void appendLocalRun({
+          pathId: localRunContext.pathId ?? null,
+          pathName: localRunContext.pathName ?? null,
+          triggerEvent: localRunContext.triggerEvent ?? null,
+          triggerLabel: localRunContext.triggerLabel ?? null,
+          entityType: localRunContext.entityType ?? null,
+          entityId: localRunContext.entityId ?? null,
+          status: "success",
+          startedAt,
+          finishedAt: runAt,
+          durationMs: Date.now() - startedAtMs,
+          nodeCount: localRunContext.nodeCount ?? null,
+          source: "product_panel",
+        });
+      }
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["products-count"] });
       try {
@@ -429,6 +468,23 @@ export function useAiPathTrigger(): {
         logClientError(error, { context: { source: "useAiPathTrigger", action: "persistRuntimeState", pathId: selectedConfig.id } });
       }
     } catch (error) {
+      if (localRunContext && startedAt && startedAtMs !== null) {
+        void appendLocalRun({
+          pathId: localRunContext.pathId ?? null,
+          pathName: localRunContext.pathName ?? null,
+          triggerEvent: localRunContext.triggerEvent ?? null,
+          triggerLabel: localRunContext.triggerLabel ?? null,
+          entityType: localRunContext.entityType ?? null,
+          entityId: localRunContext.entityId ?? null,
+          status: "error",
+          startedAt,
+          finishedAt: new Date().toISOString(),
+          durationMs: Date.now() - startedAtMs,
+          nodeCount: localRunContext.nodeCount ?? null,
+          error: error instanceof Error ? error.message : "Local run failed",
+          source: "product_panel",
+        });
+      }
       logClientError(error, { context: { source: "useAiPathTrigger", action: "runPathTrigger", productId: product.id } });
       toast("Failed to run AI Path trigger.", { variant: "error" });
     }

@@ -97,7 +97,6 @@ export function useProductOperations(
     if (!info?.queued && editingProduct) {
       setLastEditedId(editingProduct.id);
     }
-    setEditingProduct(null);
     if (!info?.queued) {
       setRefreshTrigger((prev) => prev + 1);
       toast("Product updated successfully.", { variant: "success" });

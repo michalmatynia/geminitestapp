@@ -28,10 +28,42 @@ const formatEntity = (run: AiPathLocalRunRecord): string => {
   return run.entityType ?? run.entityId ?? "-";
 };
 
-export function LocalRunsPanel(): React.JSX.Element {
+const AI_PATHS_SOURCES = new Set(["ai_paths_ui", "trigger_button", "product_panel"]);
+
+type LocalRunsPanelProps = {
+  sourceFilter?: string | null;
+  sourceMode?: "include" | "exclude";
+};
+
+const shouldIncludeRun = (
+  run: AiPathLocalRunRecord,
+  sourceFilter?: string | null,
+  sourceMode?: "include" | "exclude"
+): boolean => {
+  if (!sourceFilter) return true;
+  const sourceValue = run.source ?? null;
+  if (sourceMode === "exclude") {
+    if (sourceFilter === "ai_paths_ui") {
+      return sourceValue !== null && !AI_PATHS_SOURCES.has(sourceValue);
+    }
+    return sourceValue !== sourceFilter;
+  }
+  if (sourceFilter === "ai_paths_ui") {
+    return sourceValue === null || (sourceValue !== null && AI_PATHS_SOURCES.has(sourceValue));
+  }
+  return sourceValue === sourceFilter;
+};
+
+export function LocalRunsPanel({
+  sourceFilter,
+  sourceMode,
+}: LocalRunsPanelProps): React.JSX.Element {
   const settingsQuery = useSettingsMap({ scope: "heavy" });
   const rawRuns = settingsQuery.data?.get(AI_PATHS_LOCAL_RUNS_KEY) ?? null;
-  const runs = React.useMemo(() => parseLocalRuns(rawRuns), [rawRuns]);
+  const runs = React.useMemo(() => {
+    const parsed = parseLocalRuns(rawRuns);
+    return parsed.filter((run) => shouldIncludeRun(run, sourceFilter, sourceMode));
+  }, [rawRuns, sourceFilter, sourceMode]);
 
   if (settingsQuery.isLoading) {
     return <div className="text-sm text-gray-400">Loading local runs...</div>;

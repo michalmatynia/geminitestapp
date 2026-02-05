@@ -8,6 +8,7 @@ import { InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import { logClientError } from "@/features/observability";
 import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from "@/shared/api/settings-client";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 
 const STATIC_VISION_MODELS = [
   { value: "gpt-4o", label: "GPT-4o", description: "OpenAI" },
@@ -183,7 +184,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
       // Create a job for the test
       const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           productId: product.id,
           type: "description_generation",
@@ -228,7 +229,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           try {
             await fetch("/api/settings", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: withCsrfHeaders({ "Content-Type": "application/json" }),
               body: JSON.stringify({
                 key: "ai_description_last_test_result",
                 value: JSON.stringify(newTestResult)

@@ -244,30 +244,56 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
-    const filter: Record<string, unknown> = {};
+    const andFilters: Record<string, unknown>[] = [];
     if (options.userId) {
-      filter.userId = options.userId;
+      andFilters.push({ userId: options.userId });
     }
     if (options.pathId) {
-      filter.pathId = options.pathId;
+      andFilters.push({ pathId: options.pathId });
     }
     const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
     if (statuses.length > 0) {
-      filter.status = { $in: statuses };
+      andFilters.push({ status: { $in: statuses } });
     } else if (options.status) {
-      filter.status = options.status;
+      andFilters.push({ status: options.status });
+    }
+    const source = options.source?.trim();
+    const sourceMode = options.sourceMode ?? "include";
+    if (source) {
+      const aiPathsSources = ["ai_paths_ui", "trigger_button"];
+      if (sourceMode === "exclude") {
+        if (source === "ai_paths_ui") {
+          andFilters.push({ "meta.source": { $nin: aiPathsSources } });
+          andFilters.push({ "meta.source": { $exists: true } });
+        } else {
+          andFilters.push({ "meta.source": { $ne: source } });
+          andFilters.push({ "meta.source": { $exists: true } });
+        }
+      } else if (source === "ai_paths_ui") {
+        andFilters.push({
+          $or: [
+            { "meta.source": { $in: aiPathsSources } },
+            { meta: { $exists: false } },
+            { meta: null },
+          ],
+        });
+      } else {
+        andFilters.push({ "meta.source": source });
+      }
     }
     const query = options.query?.trim();
     if (query) {
       const regex = new RegExp(escapeRegex(query), "i");
-      filter.$or = [
-        { id: { $regex: regex } },
-        { _id: { $regex: regex } },
-        { pathId: { $regex: regex } },
-        { pathName: { $regex: regex } },
-        { entityId: { $regex: regex } },
-        { errorMessage: { $regex: regex } },
-      ];
+      andFilters.push({
+        $or: [
+          { id: { $regex: regex } },
+          { _id: { $regex: regex } },
+          { pathId: { $regex: regex } },
+          { pathName: { $regex: regex } },
+          { entityId: { $regex: regex } },
+          { errorMessage: { $regex: regex } },
+        ],
+      });
     }
     const parseDate = (value: Date | string | null | undefined): Date | null => {
       if (!value) return null;
@@ -277,11 +303,14 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const createdAfter = parseDate(options.createdAfter);
     const createdBefore = parseDate(options.createdBefore);
     if (createdAfter || createdBefore) {
-      filter.createdAt = {
-        ...(createdAfter ? { $gte: createdAfter } : {}),
-        ...(createdBefore ? { $lte: createdBefore } : {}),
-      };
+      andFilters.push({
+        createdAt: {
+          ...(createdAfter ? { $gte: createdAfter } : {}),
+          ...(createdBefore ? { $lte: createdBefore } : {}),
+        },
+      });
     }
+    const filter = andFilters.length > 0 ? { $and: andFilters } : {};
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter)

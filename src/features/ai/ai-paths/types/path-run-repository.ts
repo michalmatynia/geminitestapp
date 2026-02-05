@@ -69,6 +69,8 @@ export type AiPathRunEventListOptions = {
 export type AiPathRunListOptions = {
   userId?: string | null;
   pathId?: string;
+  source?: string;
+  sourceMode?: "include" | "exclude";
   status?: AiPathRunStatus;
   statuses?: AiPathRunStatus[];
   query?: string;

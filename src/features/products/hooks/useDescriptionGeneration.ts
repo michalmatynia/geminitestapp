@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductImageSlot } from "@/features/products/types/products-ui";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 
 interface UseDescriptionGenerationProps {
   productId?: string;
@@ -28,7 +29,7 @@ export function useDescriptionGeneration({ productId, onSuccess, onError }: UseD
     mutationFn: async (payload: { productId: string; type: string; payload: Record<string, unknown> }): Promise<{ jobId: string }> => {
       const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
       const enqueueData = (await enqueueRes.json()) as { error?: string; jobId?: string };

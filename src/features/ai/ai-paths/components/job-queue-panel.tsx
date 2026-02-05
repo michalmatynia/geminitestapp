@@ -34,6 +34,8 @@ type QueueHistoryEntry = {
 
 type JobQueuePanelProps = {
   activePathId?: string | null;
+  sourceFilter?: string | null;
+  sourceMode?: "include" | "exclude";
 };
 
 type RunDetail = {
@@ -116,7 +118,11 @@ const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null 
   return max > 0 ? new Date(max).toISOString() : null;
 };
 
-export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.Element {
+export function JobQueuePanel({
+  activePathId,
+  sourceFilter,
+  sourceMode,
+}: JobQueuePanelProps): React.JSX.Element {
   const [pathFilter, setPathFilter] = React.useState(activePathId ?? "");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
@@ -141,6 +147,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
+  const normalizedSourceFilter = sourceFilter?.trim() || "";
   const offset = (page - 1) * pageSize;
 
   React.useEffect(() => {
@@ -182,6 +189,8 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     queryKey: [
       "ai-paths-job-queue",
       normalizedPathFilter,
+      normalizedSourceFilter,
+      sourceMode ?? "include",
       normalizedQuery,
       statusFilter,
       page,
@@ -190,6 +199,8 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     queryFn: async () => {
       const response = await runsApi.list({
         ...(normalizedPathFilter ? { pathId: normalizedPathFilter } : {}),
+        ...(normalizedSourceFilter ? { source: normalizedSourceFilter } : {}),
+        ...(normalizedSourceFilter ? { sourceMode: sourceMode ?? "include" } : {}),
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
         ...(statusFilter !== "all" ? { status: statusFilter } : {}),
         limit: pageSize,

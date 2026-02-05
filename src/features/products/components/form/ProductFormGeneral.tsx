@@ -59,7 +59,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
       )}
 
       {hasCatalogs && languagesReady && (
-        <FormSection title="Localized Content" description="Titles and descriptions for each enabled language.">
+        <FormSection>
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="w-full">
             <TabsList className="mb-4">
               {filteredLanguages.map((language: { name: string; code: string }) => {

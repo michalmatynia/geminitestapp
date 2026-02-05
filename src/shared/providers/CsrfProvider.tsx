@@ -11,6 +11,8 @@ import {
 export const CsrfProvider = (): null => {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Ensure CSRF cookie is set early so non-fetch uploads (XHR) pass CSRF checks.
+    getClientCsrfToken();
     const patched = (window as { __csrfFetchPatched?: boolean }).__csrfFetchPatched;
     if (patched) return;
     (window as { __csrfFetchPatched?: boolean }).__csrfFetchPatched = true;

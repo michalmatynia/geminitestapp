@@ -2,7 +2,7 @@
 
 import { Button, Input, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, SettingsPageLayout, PromptGenerationSection } from "@/shared/ui";
 import { useState, useEffect } from "react";
-import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";

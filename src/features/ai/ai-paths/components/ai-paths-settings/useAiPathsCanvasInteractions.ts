@@ -447,18 +447,7 @@ export function useAiPathsCanvasInteractions({
     ]
   );
 
-  // Create a stable key based only on edge-relevant node data (position, ports)
-  // This prevents edge recalculation when only config/title changes occur
-  const nodePositionsKey = useMemo(
-    (): string =>
-      nodes
-        .map(
-          (n: AiNode): string =>
-            `${n.id}:${n.position.x}:${n.position.y}:${n.inputs.length}:${n.outputs.length}`
-        )
-        .join("|"),
-    [nodes]
-  );
+
 
   const edgePaths = useMemo((): { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined }[] => {
     const nodeMap = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));

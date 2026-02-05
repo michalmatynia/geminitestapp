@@ -8,7 +8,7 @@
     "postinstall": "prisma generate",
     "build": "prisma generate && next build",
     "start": "NODE_ENV=production node server.cjs",
-    "lint": "eslint .",
+    "lint": "eslint src __tests__ scripts",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
     "cleanup:db-providers": "tsx scripts/cleanup/cleanup-db-provider-settings.ts",

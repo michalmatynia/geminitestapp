@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products/server";
+import type { ProductParameterValue } from "@/shared/types/domain/products";
 
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";

@@ -1448,6 +1448,18 @@ export function PreviewSection({
           className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
+          {showEditorChrome && onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia({ kind: "section", sectionId: section.id, key: "src" });
+              }}
+              className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
           {divider}
           {hasSrc ? (
             <div className="relative" style={presentation.wrapperStyles}>

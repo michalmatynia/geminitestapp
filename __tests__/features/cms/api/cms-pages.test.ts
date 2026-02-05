@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GET as GET_pages, POST } from "@/app/api/cms/pages/route";
+import { GET as GET_pages, POST as POST_pages } from "@/app/api/cms/pages/route";
 import { GET as GET_page, PUT as PUT_page, DELETE as DELETE_page } from "@/app/api/cms/pages/[id]/route";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import type { Page } from "@/features/cms/types";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, useToast, Input, Label, SectionHeader, SectionPanel, SearchInput } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -115,10 +115,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       <div className="max-w-3xl space-y-6">
         <SectionPanel className="p-6">
           <SectionHeader title="Search" size="sm" className="mb-4" />
-          <Input
-            type="text"
+          <SearchInput
             value={searchQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+            onClear={() => setSearchQuery("")}
             placeholder="Search tags..."
             className="w-full"
           />

@@ -7,17 +7,17 @@ import { cn } from "@/shared/utils";
 
 type AppModalProps = {
   open: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void | undefined;
+  onClose?: (() => void) | undefined;
   title: string;
-  titleHidden?: boolean;
-  header?: React.ReactNode;
-  headerActions?: React.ReactNode; // Added headerActions prop
-  footer?: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
-  showClose?: boolean;
-  closeOnOutside?: boolean;
-  closeOnEscape?: boolean;
+  titleHidden?: boolean | undefined;
+  header?: React.ReactNode | undefined;
+  headerActions?: React.ReactNode | undefined; // Added headerActions prop
+  footer?: React.ReactNode | undefined;
+  size?: "sm" | "md" | "lg" | "xl" | undefined;
+  showClose?: boolean | undefined;
+  closeOnOutside?: boolean | undefined;
+  closeOnEscape?: boolean | undefined;
   children: React.ReactNode;
   className?: string | undefined;
   contentClassName?: string | undefined;

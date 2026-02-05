@@ -55,7 +55,10 @@ export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100"
+        >
           <Avatar className="h-10 w-10">
             <AvatarImage src={session.user?.image ?? ""} alt={session.user?.name ?? ""} />
             <AvatarFallback>{session.user?.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>

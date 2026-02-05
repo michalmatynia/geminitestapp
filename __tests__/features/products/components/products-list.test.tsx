@@ -31,6 +31,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
     get: vi.fn(),
   }),
+  usePathname: () => "/",
 }));
 
 const mockProducts = [

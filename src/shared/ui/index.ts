@@ -59,6 +59,7 @@ export { default as MissingImagePlaceholder } from "./missing-image-placeholder"
 export * from "./AdminPageLayout";
 export * from "./CardWithActions";
 export * from "./FormModal";
+export * from "./form-section";
 export * from "./SettingsPageLayout";
 export * from "./ResourceCard";
 export * from "./DynamicFilters";

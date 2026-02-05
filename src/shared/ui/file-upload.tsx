@@ -105,10 +105,10 @@ export function FileUploadButton({
   };
 
   const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const list = event.target.files;
+    const list = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!list || list.length === 0) return;
-    await handleSelectedFiles(Array.from(list));
+    if (list.length === 0) return;
+    await handleSelectedFiles(list);
   };
 
   const handleDrop = async (event: React.DragEvent<HTMLButtonElement>): Promise<void> => {
@@ -238,10 +238,10 @@ export function FileUploadTrigger({
   };
 
   const handleChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const list = event.target.files;
+    const list = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!list || list.length === 0) return;
-    await handleSelectedFiles(Array.from(list));
+    if (list.length === 0) return;
+    await handleSelectedFiles(list);
   };
 
   const handleDrop = async (event: React.DragEvent<HTMLElement>): Promise<void> => {

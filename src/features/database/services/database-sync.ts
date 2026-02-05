@@ -58,7 +58,7 @@ const toJsonValue = (value: unknown): Prisma.JsonValue => {
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();
   if (Array.isArray(value)) {
-    return value.map((entry: any) => toJsonValue(entry)) as Prisma.JsonValue;
+    return value.map((entry: unknown) => toJsonValue(entry)) as Prisma.JsonValue;
   }
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
@@ -162,7 +162,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("settings");
     const docs = await mongo.collection("settings").find({}).toArray();
     const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
-    docs.forEach((doc: any) => {
+    docs.forEach((doc: Record<string, unknown>) => {
       const key =
         (doc as { key?: string }).key ??
         (doc as unknown as { _id?: ObjectId | string })._id?.toString() ??
@@ -190,7 +190,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("users");
     const docs = await mongo.collection("users").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -212,7 +212,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("accounts");
     const docs = await mongo.collection("accounts").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const userIdRaw = (doc as { userId?: string | ObjectId }).userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? "");
@@ -242,7 +242,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("sessions");
     const docs = await mongo.collection("sessions").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const userIdRaw = (doc as { userId?: string | ObjectId }).userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? "");
@@ -266,7 +266,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("verification_tokens");
     const docs = await mongo.collection("verification_tokens").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const identifier = (doc as { identifier?: string }).identifier;
         const token = (doc as { token?: string }).token;
         const expires = toDate((doc as { expires?: Date | string }).expires);
@@ -283,7 +283,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("auth_security_profiles");
     const docs = await mongo.collection("auth_security_profiles").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const userId = (doc as { userId?: string }).userId ?? id;
         if (!userId) return null;
@@ -310,7 +310,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("auth_login_challenges");
     const docs = await mongo.collection("auth_login_challenges").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -330,7 +330,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("auth_security_attempts");
     const docs = await mongo.collection("auth_security_attempts").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -354,7 +354,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     );
     const docs = await mongo.collection("user_preferences").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const userId = (doc as { userId?: string }).userId;
         if (!userId || !existingUserIds.has(userId)) return null;
@@ -392,7 +392,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("system_logs");
     const docs = await mongo.collection("system_logs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         return {
           ...(id ? { id } : null),
@@ -420,7 +420,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("file_upload_events").find({}).toArray();
     const warnings: string[] = [];
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const status = (doc as { status?: string }).status;
@@ -461,7 +461,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_configurations");
     const docs = await mongo.collection("ai_configurations").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -490,7 +490,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("chatbot_sessions");
     const docs = await mongo.collection("chatbot_sessions").find({}).toArray();
     const sessions = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -542,7 +542,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("chatbot_jobs");
     const docs = await mongo.collection("chatbot_jobs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const sessionId = (doc as { sessionId?: string }).sessionId;
         if (!id || !sessionId) return null;
@@ -573,7 +573,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("currencies").find({}).toArray();
     const warnings: string[] = [];
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const code = String((doc as { code?: string }).code ?? "").toUpperCase();
         if (!currencyCodes.has(code)) {
           warnings.push(`Skipped currency code: ${code || "unknown"}`);
@@ -605,7 +605,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("countries").find({}).toArray();
     const warnings: string[] = [];
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const code = String((doc as { code?: string }).code ?? "").toUpperCase();
         if (!countryCodes.has(code)) {
           warnings.push(`Skipped country code: ${code || "unknown"}`);
@@ -657,7 +657,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     await prisma.catalog.deleteMany();
     const docs = await mongo.collection("languages").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const code = String((doc as { code?: string }).code ?? "").toUpperCase();
         if (!code) return null;
         return {
@@ -709,11 +709,11 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("price_groups").find({}).toArray();
     const availableGroupIds = new Set<string>(
       docs
-        .map((doc: any) => normalizeId(doc as Record<string, unknown>))
+        .map((doc: Record<string, unknown>) => normalizeId(doc as Record<string, unknown>))
         .filter((id: string | null): id is string => Boolean(id))
     );
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const rawCurrencyId = (doc as { currencyId?: string }).currencyId ?? "PLN";
@@ -772,7 +772,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const docs = await mongo.collection("catalogs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const rawDefaultLanguageId = (doc as { defaultLanguageId?: string | null }).defaultLanguageId ?? null;
@@ -842,7 +842,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_categories");
     const docs = await mongo.collection("product_categories").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -866,7 +866,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_tags");
     const docs = await mongo.collection("product_tags").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -888,7 +888,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_parameters");
     const docs = await mongo.collection("product_parameters").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -913,10 +913,10 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenNames = new Set<string>();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
-        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name.trim() : "";
+        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name?.trim() ?? "" : "";
         const name = rawName || id;
         const nameKey = name.toLowerCase();
         if (seenNames.has(nameKey)) {
@@ -948,7 +948,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("image_files");
     const docs = await mongo.collection("image_files").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -983,7 +983,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("image_studio_slots").find({}).toArray();
     const warnings: string[] = [];
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const projectId = (doc as { projectId?: string }).projectId ?? "";
@@ -1043,7 +1043,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const docs = await mongo.collection("products").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const producers = Array.isArray((doc as { producers?: unknown[] }).producers)
@@ -1224,12 +1224,12 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenSlugs = new Set<string>();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
-        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name.trim() : "";
+        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name?.trim() ?? "" : "";
         const name = rawName || id;
-        const rawSlug = typeof (doc as { slug?: string }).slug === "string" ? (doc as { slug?: string }).slug.trim() : "";
+        const rawSlug = typeof (doc as { slug?: string }).slug === "string" ? (doc as { slug?: string }).slug?.trim() ?? "" : "";
         const fallbackSlug = name
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
@@ -1275,7 +1275,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("integration_connections").find({}).toArray();
     const warnings: string[] = [];
     const byIntegration = new Map<string, { doc: any; updatedAt: Date }>();
-    docs.forEach((doc: any) => {
+    docs.forEach((doc: Record<string, unknown>) => {
       const id = normalizeId(doc as Record<string, unknown>);
       const integrationId = (doc as { integrationId?: string }).integrationId ?? "";
       if (!id || !integrationId) {
@@ -1361,7 +1361,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection("product_listings").find({}).toArray();
     const warnings: string[] = [];
     const byKey = new Map<string, { doc: any; updatedAt: Date }>();
-    docs.forEach((doc: any) => {
+    docs.forEach((doc: Record<string, unknown>) => {
       const id = normalizeId(doc as Record<string, unknown>);
       const productId = (doc as { productId?: string }).productId ?? "";
       const connectionId = (doc as { connectionId?: string }).connectionId ?? "";
@@ -1424,7 +1424,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_drafts");
     const docs = await mongo.collection("product_drafts").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1475,7 +1475,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_slugs");
     const docs = await mongo.collection("cms_slugs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1496,7 +1496,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_themes");
     const docs = await mongo.collection("cms_themes").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1520,7 +1520,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_pages");
     const docs = await mongo.collection("cms_pages").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1574,7 +1574,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_page_slugs");
     const docs = await mongo.collection("cms_page_slugs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const pageId = (doc as { pageId?: string }).pageId;
         const slugId = (doc as { slugId?: string }).slugId;
         if (!pageId || !slugId) return null;
@@ -1594,7 +1594,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_domains");
     const docs = await mongo.collection("cms_domains").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1615,7 +1615,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_domain_slugs");
     const docs = await mongo.collection("cms_domain_slugs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const domainId = (doc as { domainId?: string }).domainId;
         const slugId = (doc as { slugId?: string }).slugId;
         if (!domainId || !slugId) return null;
@@ -1639,7 +1639,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenNames = new Set<string>();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
@@ -1677,7 +1677,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const docs = await mongo.collection("themes").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
@@ -1725,7 +1725,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenTags = new Set<string>();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
@@ -1774,7 +1774,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const raw = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1863,7 +1863,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const docs = await mongo.collection("notes").find({}).toArray();
     const rawNotes = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -2022,7 +2022,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const noteId = (doc as { noteId?: string }).noteId;
         if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
@@ -2050,7 +2050,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_ai_jobs");
     const docs = await mongo.collection("product_ai_jobs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const productId = (doc as { productId?: string }).productId;
         if (!id || !productId) return null;
@@ -2077,7 +2077,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_runs");
     const docs = await mongo.collection("ai_path_runs").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -2117,7 +2117,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_run_nodes");
     const docs = await mongo.collection("ai_path_run_nodes").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
@@ -2148,7 +2148,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_run_events");
     const docs = await mongo.collection("ai_path_run_events").find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
@@ -2216,7 +2216,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("settings", async () => {
     const rows = await prisma.setting.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.key,
       key: row.key,
       value: row.value,
@@ -2231,7 +2231,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("users", async () => {
     const rows = await prisma.user.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       name: row.name ?? null,
@@ -2261,7 +2261,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("accounts", async () => {
     const rows = await prisma.account.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       userId: toObjectIdMaybe(row.userId),
@@ -2284,7 +2284,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("sessions", async () => {
     const rows = await prisma.session.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       sessionToken: row.sessionToken,
@@ -2299,7 +2299,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("verification_tokens", async () => {
     const rows = await prisma.verificationToken.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       identifier: row.identifier,
       token: row.token,
       expires: row.expires,
@@ -2312,7 +2312,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("auth_security_profiles", async () => {
     const rows = await prisma.authSecurityProfile.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       userId: row.userId,
@@ -2369,7 +2369,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("user_preferences", async () => {
     const rows = await prisma.userPreferences.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       userId: row.userId,
       productListNameLocale: row.productListNameLocale,
@@ -2397,7 +2397,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("system_logs", async () => {
     const rows = await prisma.systemLog.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       level: row.level,
@@ -2420,7 +2420,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("file_upload_events", async () => {
     const rows = await prisma.fileUploadEvent.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       status: row.status,
@@ -2446,7 +2446,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_configurations", async () => {
     const rows = await prisma.aiConfiguration.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       type: row.type ?? null,
@@ -2492,7 +2492,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("chatbot_jobs", async () => {
     const rows = await prisma.chatbotJob.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       sessionId: row.sessionId,
       status: row.status,
@@ -2512,7 +2512,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("currencies", async () => {
     const rows = await prisma.currency.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
@@ -2529,7 +2529,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("countries", async () => {
     const rows = await prisma.country.findMany({ include: { currencies: true } });
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
@@ -2546,7 +2546,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("languages", async () => {
     const rows = await prisma.language.findMany({ include: { countries: { include: { country: true } } } });
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
@@ -2571,7 +2571,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("price_groups", async () => {
     const rows = await prisma.priceGroup.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       groupId: row.groupId,
@@ -2595,7 +2595,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("catalogs", async () => {
     const rows = await prisma.catalog.findMany({ include: { languages: true } });
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2618,7 +2618,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_categories", async () => {
     const rows = await prisma.productCategory.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2637,7 +2637,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_tags", async () => {
     const rows = await prisma.productTag.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2654,7 +2654,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_producers", async () => {
     const rows = await prisma.producer.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2670,7 +2670,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_parameters", async () => {
     const rows = await prisma.productParameter.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       catalogId: row.catalogId,
@@ -2688,7 +2688,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("image_files", async () => {
     const rows = await prisma.imageFile.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       filename: row.filename,
@@ -2709,7 +2709,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("image_studio_slots", async () => {
     const rows = await prisma.imageStudioSlot.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       projectId: row.projectId,
@@ -2848,7 +2848,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("integrations", async () => {
     const rows = await prisma.integration.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2864,7 +2864,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("integration_connections", async () => {
     const rows = await prisma.integrationConnection.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       integrationId: row.integrationId,
@@ -2912,7 +2912,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_listings", async () => {
     const rows = await prisma.productListing.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       productId: row.productId,
@@ -2934,7 +2934,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_drafts", async () => {
     const rows = await prisma.productDraft.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2978,7 +2978,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_slugs", async () => {
     const rows = await prisma.slug.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       slug: row.slug,
@@ -2994,7 +2994,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_themes", async () => {
     const rows = await prisma.cmsTheme.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3013,7 +3013,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_pages", async () => {
     const rows = await prisma.page.findMany({ include: { components: true } });
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3043,7 +3043,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_page_slugs", async () => {
     const rows = await prisma.pageSlug.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       pageId: row.pageId,
       slugId: row.slugId,
       assignedAt: row.assignedAt,
@@ -3056,7 +3056,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_domains", async () => {
     const rows = await prisma.cmsDomain.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       domain: row.domain,
@@ -3072,7 +3072,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("cms_domain_slugs", async () => {
     const rows = await prisma.cmsDomainSlug.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: new ObjectId(),
       domainId: row.domainId,
       slugId: row.slugId,
@@ -3218,7 +3218,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("tags", async () => {
     const rows = await prisma.tag.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3235,7 +3235,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("categories", async () => {
     const rows = await prisma.category.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3256,7 +3256,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("notebooks", async () => {
     const rows = await prisma.notebook.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3273,7 +3273,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("themes", async () => {
     const rows = await prisma.theme.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -3299,7 +3299,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_ai_jobs", async () => {
     const rows = await prisma.productAiJob.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       productId: row.productId,
@@ -3320,7 +3320,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_path_runs", async () => {
     const rows = await prisma.aiPathRun.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       userId: row.userId ?? null,
@@ -3353,7 +3353,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_path_run_nodes", async () => {
     const rows = await prisma.aiPathRunNode.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       runId: row.runId,
@@ -3378,7 +3378,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_path_run_events", async () => {
     const rows = await prisma.aiPathRunEvent.findMany();
-    const docs = rows.map((row: any) => ({
+    const docs = rows.map((row) => ({
       _id: row.id,
       id: row.id,
       runId: row.runId,

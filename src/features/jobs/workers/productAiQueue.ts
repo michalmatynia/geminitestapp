@@ -27,6 +27,7 @@ import { getInternationalizationProvider } from "@/features/internationalization
 
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
+import type { ProductFormData } from "@/features/products/types/forms";
 import type { ImageFileRecord } from "@/features/files/server";
 import { runDatabaseSync, type DatabaseSyncDirection } from "@/features/database/server";
 import { listBaseListingsForSync, syncBaseImagesForListing } from "@/features/integrations/services/base-image-sync";

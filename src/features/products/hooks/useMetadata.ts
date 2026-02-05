@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, type UseQueryResult } from "@tanstack/react-query";
 import type { Language } from "@/shared/types/internationalization";
 import type {
   CatalogRecord,
@@ -13,7 +13,7 @@ import type {
   ProductParameter,
 } from "@/features/products/types";
 
-export function useCatalogs(): ReturnType<typeof useQuery<CatalogRecord[], Error, CatalogRecord[], (string | undefined)[]>> {
+export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({
     queryKey: ["catalogs"],
     queryFn: async () => {
@@ -24,7 +24,7 @@ export function useCatalogs(): ReturnType<typeof useQuery<CatalogRecord[], Error
   });
 }
 
-export function useLanguages(): ReturnType<typeof useQuery<Language[], Error, Language[], (string | undefined)[]>> {
+export function useLanguages(): UseQueryResult<Language[]> {
   return useQuery({
     queryKey: ["languages"],
     queryFn: async () => {
@@ -35,7 +35,7 @@ export function useLanguages(): ReturnType<typeof useQuery<Language[], Error, La
   });
 }
 
-export function usePriceGroups(): ReturnType<typeof useQuery<PriceGroupWithDetails[], Error, PriceGroupWithDetails[], (string | undefined)[]>> {
+export function usePriceGroups(): UseQueryResult<PriceGroupWithDetails[]> {
   return useQuery({
     queryKey: ["price-groups"],
     queryFn: async () => {
@@ -46,7 +46,7 @@ export function usePriceGroups(): ReturnType<typeof useQuery<PriceGroupWithDetai
   });
 }
 
-export function useCategories(catalogId?: string): ReturnType<typeof useQuery<ProductCategory[], Error, ProductCategory[], (string | undefined)[]>> {
+export function useCategories(catalogId?: string): UseQueryResult<ProductCategory[]> {
   return useQuery({
     queryKey: ["categories", catalogId],
     queryFn: async () => {
@@ -61,7 +61,7 @@ export function useCategories(catalogId?: string): ReturnType<typeof useQuery<Pr
   });
 }
 
-export function useMultiCategories(catalogIds: string[]) {
+export function useMultiCategories(catalogIds: string[]): UseQueryResult<ProductCategory[]>[] {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["categories", catalogId],
@@ -76,7 +76,7 @@ export function useMultiCategories(catalogIds: string[]) {
   });
 }
 
-export function useTags(catalogId?: string): ReturnType<typeof useQuery<ProductTag[], Error, ProductTag[], (string | undefined)[]>> {
+export function useTags(catalogId?: string): UseQueryResult<ProductTag[]> {
   return useQuery({
     queryKey: ["tags", catalogId],
     queryFn: async () => {
@@ -89,7 +89,7 @@ export function useTags(catalogId?: string): ReturnType<typeof useQuery<ProductT
   });
 }
 
-export function useMultiTags(catalogIds: string[]) {
+export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>[] {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["tags", catalogId],
@@ -102,7 +102,7 @@ export function useMultiTags(catalogIds: string[]) {
   });
 }
 
-export function useParameters(catalogId?: string): ReturnType<typeof useQuery<ProductParameter[], Error, ProductParameter[], (string | undefined)[]>> {
+export function useParameters(catalogId?: string): UseQueryResult<ProductParameter[]> {
   return useQuery({
     queryKey: ["parameters", catalogId],
     queryFn: async () => {
@@ -117,7 +117,7 @@ export function useParameters(catalogId?: string): ReturnType<typeof useQuery<Pr
   });
 }
 
-export function useMultiParameters(catalogIds: string[]) {
+export function useMultiParameters(catalogIds: string[]): UseQueryResult<ProductParameter[]>[] {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["parameters", catalogId],

@@ -12,11 +12,7 @@ import {
   RadioGroup,
   RadioGroupItem,
   useToast,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
 } from "@/shared/ui";
 import { FormModal } from "@/shared/ui";
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
@@ -160,24 +156,18 @@ export function PriceGroupModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="pg-currency">Currency</Label>
-            <Select
+            <UnifiedSelect
               value={form.currencyId}
               onValueChange={(v) =>
                 setForm((p) => ({ ...p, currencyId: v }))
               }
+              options={currencyOptions.map((opt) => ({
+                value: opt.id,
+                label: `${opt.code} · ${opt.name}`,
+              }))}
+              placeholder="Select currency"
               disabled={loadingCurrencies}
-            >
-              <SelectTrigger id="pg-currency" className="w-full bg-gray-900 border-border text-white">
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {currencyOptions.map((opt) => (
-                  <SelectItem key={opt.id} value={opt.id}>
-                    {opt.code} · {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
         </div>
 
@@ -218,25 +208,20 @@ export function PriceGroupModal({
           <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pg-source">Source Price Group</Label>
-              <Select
+              <UnifiedSelect
                 value={form.sourceGroupId}
                 onValueChange={(v) =>
                   setForm((p) => ({ ...p, sourceGroupId: v }))
                 }
-              >
-                <SelectTrigger id="pg-source" className="w-full bg-gray-900 border-border text-white">
-                  <SelectValue placeholder="Select source..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceGroups
-                    .filter((g) => g.id !== priceGroup?.id)
-                    .map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.name} ({g.groupId})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                options={priceGroups
+                  .filter((g) => g.id !== priceGroup?.id)
+                  .map((g) => ({
+                    value: g.id,
+                    label: g.name,
+                    description: g.groupId,
+                  }))}
+                placeholder="Select source..."
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">

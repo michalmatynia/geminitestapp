@@ -19,7 +19,7 @@ export async function parseJsonBody<T>(
     } else {
       return {
         ok: false,
-        response: createErrorResponse(badRequestError("Invalid JSON payload"), {
+        response: await createErrorResponse(badRequestError("Invalid JSON payload"), {
           request: req,
           source: logPrefix,
         }),
@@ -34,7 +34,7 @@ export async function parseJsonBody<T>(
     });
     return {
       ok: false,
-      response: createErrorResponse(error, { request: req, source: logPrefix }),
+      response: await createErrorResponse(error, { request: req, source: logPrefix }),
     };
   }
 

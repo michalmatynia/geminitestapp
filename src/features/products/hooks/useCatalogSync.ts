@@ -62,7 +62,20 @@ async function fetchCurrencies(): Promise<CurrencyRecord[]> {
   return res.json() as Promise<CurrencyRecord[]>;
 }
 
-export function useCatalogSync(catalogFilter: string): { catalogs: Catalog[]; catalogsLoading: boolean; catalogsError: string | null; currencyCode: string; setCurrencyCode: (action: string | ((prev: string) => string)) => void; currencyOptions: string[]; priceGroups: PriceGroupWithDetails[]; catalogFilterInitialized: React.MutableRefObject<boolean>; languageOptions: LanguageOption[]; fallbackNameLocale: "name_en" | "name_pl" | "name_de" | undefined; } {
+export interface UseCatalogSyncResult {
+  catalogs: Catalog[];
+  catalogsLoading: boolean;
+  catalogsError: string | null;
+  currencyCode: string;
+  setCurrencyCode: (action: string | ((prev: string) => string)) => void;
+  currencyOptions: string[];
+  priceGroups: PriceGroupWithDetails[];
+  catalogFilterInitialized: React.MutableRefObject<boolean>;
+  languageOptions: LanguageOption[];
+  fallbackNameLocale: "name_en" | "name_pl" | "name_de" | undefined;
+}
+
+export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
@@ -201,7 +214,7 @@ export function useCatalogSync(catalogFilter: string): { catalogs: Catalog[]; ca
       ? userCurrencyCode
       : fallbackCode;
 
-  const setCurrencyCode = (action: string | ((prev: string) => string)) => {
+  const setCurrencyCode = (action: string | ((prev: string) => string)): void => {
     // Wrap the setter to handle functional updates correctly with the derived value
     if (typeof action === "function") {
       setUserCurrencyCode((_prev) => {

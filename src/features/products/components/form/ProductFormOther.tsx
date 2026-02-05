@@ -1,4 +1,6 @@
-import { Input, Label, UnifiedSelect, SectionPanel, MultiSelect } from "@/shared/ui";
+"use client";
+
+import { Input, UnifiedSelect, FormSection, FormField, MultiSelect } from "@/shared/ui";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 
@@ -53,7 +55,7 @@ export default function ProductFormOther(): React.JSX.Element {
         ...group,
         calculatedPrice: group.id === selectedDefaultPriceGroupId ? basePrice : null,
         isCalculated: false,
-        sourceGroupName: undefined as string | undefined,
+        sourceGroupName: undefined,
       };
     }
 
@@ -65,7 +67,7 @@ export default function ProductFormOther(): React.JSX.Element {
         ...group,
         calculatedPrice: null,
         isCalculated: true,
-        sourceGroupName: undefined as string | undefined,
+        sourceGroupName: undefined,
       };
     }
 
@@ -77,41 +79,35 @@ export default function ProductFormOther(): React.JSX.Element {
       ...group,
       calculatedPrice,
       isCalculated: true,
-      sourceGroupName: sourceGroup.name as string | undefined,
+      sourceGroupName: sourceGroup.name,
     };
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {!hasCatalogs && (
-        <SectionPanel variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          Select a catalog to set pricing and price groups.
-        </SectionPanel>
+        <FormSection variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 text-amber-100">
+          <p className="text-sm">Select a catalog to set pricing and price groups.</p>
+        </FormSection>
       )}
+
       {hasCatalogs && (
-        <>
-          <div className="mb-4">
-            <Label htmlFor="price">Base Price</Label>
+        <FormSection title="Pricing" gridClassName="md:grid-cols-2">
+          <FormField label="Base Price" error={errors.price?.message} id="price">
             <Input
               id="price"
               type="number"
               step="0.01"
               {...register("price", { valueAsNumber: true })}
-              aria-invalid={errors.price ? "true" : "false"}
+              placeholder="0.00"
             />
-            {errors.price && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.price.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <Label htmlFor="defaultPriceGroupId">
-              Default Price Group
-              {isPriceGroupAutoAssigned && (
-                <span className="ml-2 text-xs text-muted-foreground">(Auto-assigned from catalog)</span>
-              )}
-            </Label>
+          </FormField>
+
+          <FormField 
+            label="Default Price Group" 
+            id="defaultPriceGroupId"
+            description={isPriceGroupAutoAssigned ? "Auto-assigned from catalog" : undefined}
+          >
             <UnifiedSelect
               onValueChange={(value: string) => setValue("defaultPriceGroupId", value)}
               value={selectedDefaultPriceGroupId || ""}
@@ -123,17 +119,18 @@ export default function ProductFormOther(): React.JSX.Element {
               placeholder="Select default price group"
               triggerClassName={isPriceGroupAutoAssigned ? "cursor-not-allowed opacity-60" : ""}
             />
-          </div>
+          </FormField>
+
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
-            <div className="mb-4">
-              <Label className="mb-2 block">Price Groups Overview</Label>
-              <SectionPanel variant="subtle" className="p-0 overflow-hidden">
-                <table className="w-full text-sm">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Price Groups Overview</label>
+              <div className="rounded-md border border-border bg-card/40 overflow-hidden">
+                <table className="w-full text-xs">
                   <thead className="border-b bg-muted/50">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium">Price Group</th>
-                      <th className="px-3 py-2 text-left font-medium">Currency</th>
-                      <th className="px-3 py-2 text-right font-medium">Price</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-400">Price Group</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-400">Currency</th>
+                      <th className="px-3 py-2 text-right font-medium text-gray-400">Price</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -141,164 +138,124 @@ export default function ProductFormOther(): React.JSX.Element {
                       <tr key={group.id} className="border-b last:border-0 border-border/50">
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
-                            <span className={group.id === selectedDefaultPriceGroupId ? "font-semibold" : ""}>
+                            <span className={group.id === selectedDefaultPriceGroupId ? "font-semibold text-white" : "text-gray-300"}>
                               {group.name}
                             </span>
                             {group.id === selectedDefaultPriceGroupId && (
-                              <span className="text-xs text-muted-foreground">(Selected)</span>
+                              <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-tighter">Selected</span>
                             )}
                             {group.isCalculated && group.sourceGroupName && (
-                              <span className="text-xs text-muted-foreground">
-                                (from {group.sourceGroupName} × {group.priceMultiplier})
+                              <span className="text-[10px] text-gray-500 italic">
+                                ({group.sourceGroupName} × {group.priceMultiplier})
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-gray-400">{group.currency?.code ?? group.currencyCode}</td>
+                        <td className="px-3 py-2 text-gray-500">{group.currency?.code ?? group.currencyCode}</td>
                         <td className="px-3 py-2 text-right font-mono">
                           {group.calculatedPrice !== null ? (
                             <span className={group.isCalculated ? "text-blue-400" : "text-white"}>
                               {group.calculatedPrice.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="text-gray-600">-</span>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </SectionPanel>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Blue prices are calculated based on the selected default price group and multipliers.
+              </div>
+              <p className="text-[10px] text-gray-500 italic">
+                Blue prices are automatically calculated based on the default group.
               </p>
             </div>
           )}
-        </>
+        </FormSection>
       )}
-      <div className="mb-4">
-        <Label htmlFor="supplierName">Supplier Name</Label>
-        <Input
-          id="supplierName"
-          {...register("supplierName")}
-          aria-invalid={errors.supplierName ? "true" : "false"}
-        />
-        {errors.supplierName && (
-          <p className="text-red-500 text-sm mt-1" role="alert">
-            {errors.supplierName.message}
-          </p>
-        )}
-      </div>
-      <div className="mb-4">
-        <Label htmlFor="supplierLink">Supplier Link</Label>
-        <Input
-          id="supplierLink"
-          {...register("supplierLink")}
-          aria-invalid={errors.supplierLink ? "true" : "false"}
-        />
-        {errors.supplierLink && (
-          <p className="text-red-500 text-sm mt-1" role="alert">
-            {errors.supplierLink.message}
-          </p>
-        )}
-      </div>
-      <div className="mb-4">
-        <Label htmlFor="priceComment">Price Comment</Label>
-        <Input
-          id="priceComment"
-          {...register("priceComment")}
-          aria-invalid={errors.priceComment ? "true" : "false"}
-        />
-        {errors.priceComment && (
-          <p className="text-red-500 text-sm mt-1" role="alert">
-            {errors.priceComment.message}
-          </p>
-        )}
-      </div>
-      <div className="mb-4">
-        <Label htmlFor="stock">Stock</Label>
-        <Input
-          id="stock"
-          type="number"
-          {...register("stock", { valueAsNumber: true })}
-          aria-invalid={errors.stock ? "true" : "false"}
-        />
-        {errors.stock && (
-          <p className="text-red-500 text-sm mt-1" role="alert">
-            {errors.stock.message}
-          </p>
-        )}
-      </div>
 
-      <div className="mb-4">
-        <MultiSelect
-          label="Catalogs"
-          options={catalogs.map((c: CatalogRecord) => ({ value: c.id, label: c.name }))}
-          selected={selectedCatalogIds}
-          onChange={(values: string[]) => {
-            // Find which one changed
-            const added = values.find((id: string) => !selectedCatalogIds.includes(id));
-            const removed = selectedCatalogIds.find((id: string) => !values.includes(id));
-            if (added) toggleCatalog(added);
-            if (removed) toggleCatalog(removed);
-          }}
-          loading={catalogsLoading}
-          emptyMessage={catalogsError || "No catalogs found"}
-          placeholder="Select catalogs"
-          searchPlaceholder="Search catalogs..."
-        />
-      </div>
+      <FormSection title="Organization" gridClassName="md:grid-cols-2">
+        <FormField label="Supplier Name" error={errors.supplierName?.message} id="supplierName">
+          <Input id="supplierName" {...register("supplierName")} placeholder="e.g. Acme Corp" />
+        </FormField>
 
-      <div className="mb-4">
-        <MultiSelect
-          label="Categories"
-          options={categories.map((c: ProductCategory) => ({ value: c.id, label: c.name }))}
-          selected={selectedCategoryId ? [selectedCategoryId] : []}
-          onChange={(values: string[]) => {
-            setCategoryId(values[0] || null);
-          }}
-          loading={categoriesLoading}
-          disabled={!hasCatalogs}
-          placeholder={hasCatalogs ? "Select category" : "Select a catalog first"}
-          searchPlaceholder="Search categories..."
-          single
-        />
-      </div>
+        <FormField label="Supplier Link" error={errors.supplierLink?.message} id="supplierLink">
+          <Input id="supplierLink" {...register("supplierLink")} placeholder="https://..." />
+        </FormField>
 
-      <div className="mb-4">
-        <MultiSelect
-          label="Tags"
-          options={tags.map((t: ProductTag) => ({ value: t.id, label: t.name }))}
-          selected={selectedTagIds}
-          onChange={(values: string[]) => {
-            const added = values.find((id: string) => !selectedTagIds.includes(id));
-            const removed = selectedTagIds.find((id: string) => !values.includes(id));
-            if (added) toggleTag(added);
-            if (removed) toggleTag(removed);
-          }}
-          loading={tagsLoading}
-          disabled={!hasCatalogs}
-          placeholder={hasCatalogs ? "Select tags" : "Select a catalog first"}
-          searchPlaceholder="Search tags..."
-        />
-      </div>
+        <FormField label="Price Comment" error={errors.priceComment?.message} id="priceComment">
+          <Input id="priceComment" {...register("priceComment")} placeholder="Internal notes about pricing" />
+        </FormField>
 
-      <div className="mb-4">
-        <MultiSelect
-          label="Producers"
-          options={producers.map((p: Producer) => ({ value: p.id, label: p.name }))}
-          selected={selectedProducerIds}
-          onChange={(values: string[]) => {
-            const added = values.find((id: string) => !selectedProducerIds.includes(id));
-            const removed = selectedProducerIds.find((id: string) => !values.includes(id));
-            if (added) toggleProducer(added);
-            if (removed) toggleProducer(removed);
-          }}
-          loading={producersLoading}
-          placeholder="Select producers"
-          searchPlaceholder="Search producers..."
-        />
-      </div>
+        <FormField label="Stock" error={errors.stock?.message} id="stock">
+          <Input id="stock" type="number" {...register("stock", { valueAsNumber: true })} placeholder="0" />
+        </FormField>
+      </FormSection>
+
+      <FormSection title="Relationships" gridClassName="md:grid-cols-2">
+        <div className="space-y-4 md:col-span-2">
+          <MultiSelect
+            label="Catalogs"
+            options={catalogs.map((c: CatalogRecord) => ({ value: c.id, label: c.name }))}
+            selected={selectedCatalogIds}
+            onChange={(values: string[]) => {
+              const added = values.find((id: string) => !selectedCatalogIds.includes(id));
+              const removed = selectedCatalogIds.find((id: string) => !values.includes(id));
+              if (added) toggleCatalog(added);
+              if (removed) toggleCatalog(removed);
+            }}
+            loading={catalogsLoading}
+            emptyMessage={catalogsError || "No catalogs found"}
+            placeholder="Select catalogs"
+            searchPlaceholder="Search catalogs..."
+          />
+
+          <MultiSelect
+            label="Categories"
+            options={categories.map((c: ProductCategory) => ({ value: c.id, label: c.name }))}
+            selected={selectedCategoryId ? [selectedCategoryId] : []}
+            onChange={(values: string[]) => {
+              setCategoryId(values[0] || null);
+            }}
+            loading={categoriesLoading}
+            disabled={!hasCatalogs}
+            placeholder={hasCatalogs ? "Select category" : "Select a catalog first"}
+            searchPlaceholder="Search categories..."
+            single
+          />
+
+          <MultiSelect
+            label="Tags"
+            options={tags.map((t: ProductTag) => ({ value: t.id, label: t.name }))}
+            selected={selectedTagIds}
+            onChange={(values: string[]) => {
+              const added = values.find((id: string) => !selectedTagIds.includes(id));
+              const removed = selectedTagIds.find((id: string) => !values.includes(id));
+              if (added) toggleTag(added);
+              if (removed) toggleTag(removed);
+            }}
+            loading={tagsLoading}
+            disabled={!hasCatalogs}
+            placeholder={hasCatalogs ? "Select tags" : "Select a catalog first"}
+            searchPlaceholder="Search tags..."
+          />
+
+          <MultiSelect
+            label="Producers"
+            options={producers.map((p: Producer) => ({ value: p.id, label: p.name }))}
+            selected={selectedProducerIds}
+            onChange={(values: string[]) => {
+              const added = values.find((id: string) => !selectedProducerIds.includes(id));
+              const removed = selectedProducerIds.find((id: string) => !values.includes(id));
+              if (added) toggleProducer(added);
+              if (removed) toggleProducer(removed);
+            }}
+            loading={producersLoading}
+            placeholder="Select producers"
+            searchPlaceholder="Search producers..."
+          />
+        </div>
+      </FormSection>
     </div>
   );
 }

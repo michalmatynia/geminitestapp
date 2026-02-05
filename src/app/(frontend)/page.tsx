@@ -1,9 +1,9 @@
-import { JSX } from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { productService } from "@/features/products/server";
 import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
@@ -58,32 +58,52 @@ type SettingDocument = {
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
-const getFrontPageSetting = async (): Promise<string | null> => {
-  if (process.env.MONGODB_URI) {
+const readMongoFrontPageSetting = async (): Promise<string | null> => {
+  if (!process.env.MONGODB_URI) return null;
+  try {
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<SettingDocument>("settings")
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
+  } catch {
+    // Mongo unavailable — ignore.
   }
-
-  if (canUsePrismaSettings()) {
-    try {
-      const setting = await prisma.setting.findUnique({
-        where: { key: FRONT_PAGE_SETTING_KEY },
-        select: { value: true },
-      });
-      if (setting?.value) return setting.value;
-    } catch {
-      // Prisma unavailable — ignore.
-    }
-  }
-
   return null;
 };
 
-export default async function Home(): Promise<JSX.Element> {
-  const frontPageApp = await getFrontPageSetting();
+const readPrismaFrontPageSetting = async (): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key: FRONT_PAGE_SETTING_KEY },
+      select: { value: true },
+    });
+    if (setting?.value) return setting.value;
+  } catch {
+    // Prisma unavailable — ignore.
+  }
+  return null;
+};
+
+const getFrontPageSetting = async (): Promise<string | null> => {
+  const provider = await getAppDbProvider();
+  if (provider === "mongodb") {
+    const mongoValue = await readMongoFrontPageSetting();
+    if (mongoValue) return mongoValue;
+    return readPrismaFrontPageSetting();
+  }
+
+  const prismaValue = await readPrismaFrontPageSetting();
+  if (prismaValue) return prismaValue;
+  return readMongoFrontPageSetting();
+};
+
+export default async function Home() {
+  const [frontPageApp, cmsRepository] = await Promise.all([
+    getFrontPageSetting(),
+    getCmsRepository(),
+  ]);
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
     if (frontPageApp === "chatbot") {
@@ -94,13 +114,14 @@ export default async function Home(): Promise<JSX.Element> {
     }
   }
 
-  const cmsRepository = await getCmsRepository();
   const hdrs = await headers();
   const domain = await resolveCmsDomainFromHeaders(hdrs);
-  const slugs = await getSlugsForDomain(domain.id, cmsRepository);
+  const [slugs, themeSettings, menuSettings] = await Promise.all([
+    getSlugsForDomain(domain.id, cmsRepository),
+    getCmsThemeSettings(),
+    getCmsMenuSettings(domain.id),
+  ]);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
-  const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
   type MaybeImages = {
@@ -120,8 +141,10 @@ export default async function Home(): Promise<JSX.Element> {
 
   if (defaultSlug) {
     // Try to load the published CMS page linked to this slug
-    const cmsPage = await cmsRepository.getPageBySlug(defaultSlug.slug);
-    const session = await auth();
+    const [cmsPage, session] = await Promise.all([
+      cmsRepository.getPageBySlug(defaultSlug.slug),
+      auth(),
+    ]);
     const allowDrafts = await canPreviewDrafts(session);
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
 

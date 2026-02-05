@@ -6,9 +6,11 @@ import { AppModal } from "./app-modal";
 export type SharedModalProps = {
   open: boolean;
   onClose: () => void;
-  title?: ReactNode;
+  title: string;
   header?: ReactNode;
+  footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  showClose?: boolean;
   children: ReactNode;
 };
 
@@ -17,13 +19,23 @@ export function SharedModal({
   onClose,
   title,
   header,
+  footer,
   size = "md",
+  showClose,
   children,
 }: SharedModalProps): React.JSX.Element | null {
   if (!open) return null;
 
   return (
-    <AppModal open={open} onClose={onClose} title={title} size={size} header={header}>
+    <AppModal
+      open={open}
+      onClose={onClose}
+      title={title}
+      size={size}
+      header={header}
+      footer={footer}
+      showClose={showClose}
+    >
       {children}
     </AppModal>
   );

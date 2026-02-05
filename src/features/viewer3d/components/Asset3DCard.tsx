@@ -42,7 +42,7 @@ export function Asset3DCard({
     <ResourceCard
       title={displayName}
       description={asset.description ?? ''}
-      className={className}
+      {...(className ? { className } : {})}
       onClick={(): void => onPreview(asset)}
       actions={
         <div className="flex items-center gap-1">

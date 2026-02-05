@@ -41,6 +41,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
+    // eslint-disable-next-line import/no-restricted-paths
     const { getErrorFingerprint: realGetFingerprint } = await import("@/features/observability/server");
     return realGetFingerprint(params as any);
   } catch (error) {
@@ -186,9 +187,10 @@ export const createSimpleErrorResponse = (
 /**
  * Creates a validation error response from field errors.
  */
-export const createValidationErrorResponse = (
+export const createValidationErrorResponse = async (
   fieldErrors: Record<string, string[]>,
   options?: Pick<ApiErrorOptions, "request" | "source" | "requestId">
-): NextResponse => {
+): Promise<NextResponse> => {
   const error = validationError("Validation failed", { fields: fieldErrors });
-      return createErrorResponse(error, options) as NextResponse;};
+  return await createErrorResponse(error, options);
+};

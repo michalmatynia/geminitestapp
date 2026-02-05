@@ -195,6 +195,9 @@ const fetchAndCacheSettings = async (
   const provider = await getAppDbProvider();
   if (timings) timings.provider = performance.now() - totalStart;
   const hasMongo = Boolean(process.env.MONGODB_URI);
+  const envProvider = process.env.APP_DB_PROVIDER?.toLowerCase().trim();
+  const forcePrisma = envProvider === "prisma";
+  const shouldReadMongoSettings = hasMongo && !forcePrisma;
   const prismaSettings: SettingRecord[] = [];
   if (canUsePrismaSettings(provider)) {
     const prismaStart = performance.now();
@@ -205,9 +208,14 @@ const fetchAndCacheSettings = async (
     prismaSettings.push(...applyScopeFilter(settings, scope));
     if (timings) timings.prisma = performance.now() - prismaStart;
   }
-  const mongoStart = performance.now();
-  const mongoSettings = await listMongoSettings(scope);
-  if (timings) timings.mongo = performance.now() - mongoStart;
+  const mongoSettings = shouldReadMongoSettings
+    ? await (async (): Promise<SettingRecord[]> => {
+        const mongoStart = performance.now();
+        const settings = await listMongoSettings(scope);
+        if (timings) timings.mongo = performance.now() - mongoStart;
+        return settings;
+      })()
+    : [];
   const settingsMap = new Map<string, SettingRecord>();
   if (provider === "mongodb") {
     mongoSettings.forEach((setting: SettingRecord) => {

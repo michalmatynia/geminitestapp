@@ -1,4 +1,4 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input, Badge, Alert } from "@/shared/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Badge, Alert, SearchInput } from "@/shared/ui";
 import { MoreVertical } from "lucide-react";
 
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
@@ -140,14 +140,13 @@ export function InternationalizationSettings({
             </Button>
           </div>
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="w-full md:max-w-sm">
-              <Input
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                placeholder="Search countries..."
-                value={countrySearch}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
-              />
-            </div>
+            <SearchInput
+              containerClassName="w-full md:max-w-sm"
+              placeholder="Search countries..."
+              value={countrySearch}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
+              onClear={() => setCountrySearch("")}
+            />
             <p className="text-xs text-gray-500">
               {filteredCountries.length} result(s)
             </p>

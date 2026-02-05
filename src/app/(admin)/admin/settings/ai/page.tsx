@@ -11,11 +11,7 @@ import {
   CardHeader,
   CardTitle,
   Switch,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
+  UnifiedSelect,
 } from "@/shared/ui";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { ChevronLeftIcon, SaveIcon } from "lucide-react";
@@ -469,18 +465,16 @@ export default function AiApiSettingsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-gray-200">Provider</Label>
-                <Select
+                <UnifiedSelect
                   value={analyticsProvider}
                   onValueChange={(value: string) => setAnalyticsProvider(value as "model" | "agent")}
-                >
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue placeholder="Select provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="model">Model</SelectItem>
-                    <SelectItem value="agent">Deepthinking agent</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "model", label: "Model" },
+                    { value: "agent", label: "Deepthinking agent" },
+                  ]}
+                  placeholder="Select provider"
+                  triggerClassName="bg-gray-900 border-gray-700 text-white"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-200">Model ID</Label>
@@ -492,21 +486,16 @@ export default function AiApiSettingsPage() {
                   className="bg-gray-900 border-gray-700 text-white"
                 />
                 <p className="text-[10px] text-gray-500">Used when provider is Model.</p>
-                <Select
+                <UnifiedSelect
                   value=""
                   onValueChange={(value: string) => setAnalyticsModel(value)}
-                >
-                  <SelectTrigger className="mt-2 h-7 border-border bg-gray-900/40 text-[11px] text-gray-200">
-                    <SelectValue placeholder="Pick a preset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modelPresets.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={modelPresets.map((model) => ({
+                    value: model,
+                    label: model,
+                  }))}
+                  placeholder="Pick a preset"
+                  triggerClassName="mt-2 h-7 border-border bg-gray-900/40 text-[11px] text-gray-200"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-200">Agent ID</Label>
@@ -540,18 +529,16 @@ export default function AiApiSettingsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-gray-200">Provider</Label>
-                <Select
+                <UnifiedSelect
                   value={logsProvider}
                   onValueChange={(value: string) => setLogsProvider(value as "model" | "agent")}
-                >
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue placeholder="Select provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="model">Model</SelectItem>
-                    <SelectItem value="agent">Deepthinking agent</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "model", label: "Model" },
+                    { value: "agent", label: "Deepthinking agent" },
+                  ]}
+                  placeholder="Select provider"
+                  triggerClassName="bg-gray-900 border-gray-700 text-white"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-200">Model ID</Label>
@@ -563,21 +550,16 @@ export default function AiApiSettingsPage() {
                   className="bg-gray-900 border-gray-700 text-white"
                 />
                 <p className="text-[10px] text-gray-500">Used when provider is Model.</p>
-                <Select
+                <UnifiedSelect
                   value=""
                   onValueChange={(value: string) => setLogsModel(value)}
-                >
-                  <SelectTrigger className="mt-2 h-7 border-border bg-gray-900/40 text-[11px] text-gray-200">
-                    <SelectValue placeholder="Pick a preset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modelPresets.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={modelPresets.map((model) => ({
+                    value: model,
+                    label: model,
+                  }))}
+                  placeholder="Pick a preset"
+                  triggerClassName="mt-2 h-7 border-border bg-gray-900/40 text-[11px] text-gray-200"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-200">Agent ID</Label>

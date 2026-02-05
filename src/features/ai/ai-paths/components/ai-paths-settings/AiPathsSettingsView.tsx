@@ -16,9 +16,6 @@ import { SimulationDialog } from "../simulation-dialog";
 import type {
   AiNode,
   ClusterPreset,
-  DbNodePreset,
-  DbQueryPreset,
-  NodeConfig,
   NodeDefinition
 } from "@/features/ai/ai-paths/lib";
 import type { PathConfig, PathMeta } from "@/shared/types/ai-paths";
@@ -459,7 +456,7 @@ export function AiPathsSettingsView({
                 onTogglePaletteCollapsed={() => setPaletteCollapsed((prev: boolean) => !prev)}
                 expandedPaletteGroups={expandedPaletteGroups}
                 onTogglePaletteGroup={togglePaletteGroup}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node.type); }}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
                 selectedNode={selectedNode ?? null}
                 nodes={nodes}
                 edges={edges}
@@ -468,7 +465,7 @@ export function AiPathsSettingsView({
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node.id)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node.id)}
                 onOpenSimulation={setSimulationOpenNodeId}
-                onUpdateSelectedNode={(patch: Partial<AiNode>) => void updateSelectedNode(patch as Partial<NodeConfig>)}
+                onUpdateSelectedNode={updateSelectedNode}
                 onOpenNodeConfig={() => setConfigOpen(true)}
                 onDeleteSelectedNode={handleDeleteSelectedNode}
                 onRemoveEdge={handleRemoveEdge}
@@ -526,7 +523,7 @@ export function AiPathsSettingsView({
               onReconnectInput={handleReconnectInput}
               onSelectNode={handleSelectNode}
               onOpenNodeConfig={() => setConfigOpen(true)}
-              onFireTrigger={handleFireTrigger}
+              onFireTrigger={(node) => void handleFireTrigger(node.id)}
               onPointerDownNode={handlePointerDown}
               onPointerMoveNode={handlePointerMove}
               onPointerUpNode={handlePointerUp}
@@ -578,7 +575,7 @@ export function AiPathsSettingsView({
         selectedNode={selectedNode ?? null}
         nodes={nodes}
         edges={edges}
-        modelOptions={modelOptions.map(opt => opt.value)}
+        modelOptions={modelOptions}
         parserSamples={parserSamples}
         setParserSamples={setParserSamples}
         parserSampleLoading={parserSampleLoading}
@@ -593,10 +590,10 @@ export function AiPathsSettingsView({
         updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
-        handleRunSimulation={handleRunSimulation}
+        handleRunSimulation={(node) => void handleRunSimulation(node.id)}
         clearRuntimeForNode={clearRuntimeForNode}
         clearNodeHistory={handleClearNodeHistory}
-        onSendToAi={handleSendToAi}
+        onSendToAi={(id, prompt) => handleSendToAi({ nodeId: id, prompt })}
         sendingToAi={sendingToAi}
         dbQueryPresets={dbQueryPresets}
         setDbQueryPresets={setDbQueryPresets}
@@ -618,10 +615,10 @@ export function AiPathsSettingsView({
         runStreamStatus={runStreamStatus as "connecting" | "live" | "stopped" | "paused"}
         runStreamPaused={runStreamPaused}
         onToggleStreamPause={() => setRunStreamPaused((prev: boolean) => !prev)}
-        runNodeSummary={runNodeSummary as { counts: Record<string, number>; total: number; completed: number; progress: number; }}
+        runNodeSummary={runNodeSummary}
         runEventsOverflow={runEventsOverflow}
         runEventsBatchLimit={runEventsBatchLimit}
-        historyOptions={runDetailHistoryOptions.map((opt: { value: string; label: string; }) => ({ id: opt.value, value: opt.value, label: opt.label }))}
+        historyOptions={runDetailHistoryOptions}
         selectedHistoryNodeId={runDetailSelectedHistoryNodeId}
         onSelectHistoryNode={(value: string) => setRunHistoryNodeId(value)}
         historyEntries={runDetailSelectedHistoryEntries}
@@ -643,7 +640,7 @@ export function AiPathsSettingsView({
         nodes={nodes}
         setNodes={setNodesFromUser}
         isPathLocked={isPathLocked}
-        onRunSimulation={handleRunSimulation}
+        onRunSimulation={(node) => void handleRunSimulation(node.id)}
       />
     </div>
   );

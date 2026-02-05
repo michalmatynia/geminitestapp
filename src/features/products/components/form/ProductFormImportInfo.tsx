@@ -1,8 +1,5 @@
-"use client";
-
-import { Input, Label } from "@/shared/ui";
+import { Input, FormSection, FormField } from "@/shared/ui";
 import { useFormContext } from "react-hook-form";
-
 
 import { ProductFormData } from "@/features/products/types";
 
@@ -10,9 +7,12 @@ export default function ProductFormImportInfo(): React.JSX.Element {
   const { register } = useFormContext<ProductFormData>();
 
   return (
-    <div className="space-y-4">
-      <div className="mb-4">
-        <Label htmlFor="baseProductId">Base ID</Label>
+    <FormSection title="System Information" description="Data imported from external integration platforms.">
+      <FormField 
+        label="Base ID" 
+        id="baseProductId"
+        description="This ID is imported from Base.com and cannot be edited."
+      >
         <Input
           id="baseProductId"
           {...register("baseProductId")}
@@ -21,10 +21,7 @@ export default function ProductFormImportInfo(): React.JSX.Element {
           placeholder="Imported from Base.com"
           aria-readonly="true"
         />
-        <p className="text-muted-foreground text-xs mt-1">
-          This ID is imported from Base.com and cannot be edited.
-        </p>
-      </div>
-    </div>
+      </FormField>
+    </FormSection>
   );
 }

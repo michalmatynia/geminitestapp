@@ -1,3 +1,7 @@
+"use client";
+
+import { CSRF_HEADER_NAME, CSRF_SAFE_METHODS, getClientCsrfToken, isSameOriginUrl } from "@/shared/lib/security/csrf-client";
+
 export type UploadWithProgressOptions = {
   method?: string | undefined;
   formData: FormData;
@@ -43,11 +47,17 @@ export async function uploadWithProgress<T>(
       xhr.timeout = timeoutMs;
     }
 
-    if (headers) {
-      Object.entries(headers).forEach(([key, value]: [string, string]) => {
-        xhr.setRequestHeader(key, value);
-      });
+    const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
+    const methodUpper = method.toUpperCase();
+    if (!CSRF_SAFE_METHODS.has(methodUpper) && isSameOriginUrl(url)) {
+      const token = getClientCsrfToken();
+      if (token && !finalHeaders[CSRF_HEADER_NAME]) {
+        finalHeaders[CSRF_HEADER_NAME] = token;
+      }
     }
+    Object.entries(finalHeaders).forEach(([key, value]: [string, string]) => {
+      xhr.setRequestHeader(key, value);
+    });
 
     xhr.upload.onprogress = (event: ProgressEvent): void => {
       if (!onProgress) return;

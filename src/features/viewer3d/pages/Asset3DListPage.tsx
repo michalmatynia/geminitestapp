@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   Button,
-  Input,
   ListPanel,
   SectionHeader,
   SectionPanel,
@@ -13,18 +12,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
+  SearchInput,
   Alert,
 } from "@/shared/ui";
 import {
   Box,
   Loader2,
   RefreshCw,
-  Search,
   Grid,
   List,
   Eye,
@@ -117,34 +112,30 @@ export function Asset3DListPage(): React.JSX.Element {
       filters={
         <SectionPanel>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-                placeholder="Search assets..."
-                className="h-8 pl-9 text-sm"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery("")}
+              placeholder="Search assets..."
+              className="h-8"
+              containerClassName="flex-1 min-w-[200px] max-w-md"
+            />
 
             {categories.length > 0 && (
               <div className="w-[180px]">
-                <Select
+                <UnifiedSelect
                   value={selectedCategory ?? "__all__"}
                   onValueChange={(v: string): void => setSelectedCategory(v === "__all__" ? null : v)}
-                >
-                  <SelectTrigger className="h-8 border-border bg-background text-sm text-foreground">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">All categories</SelectItem>
-                    {categories.map((cat: string) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "__all__", label: "All categories" },
+                    ...categories.map((cat: string) => ({
+                      value: cat,
+                      label: cat,
+                    })),
+                  ]}
+                  placeholder="All categories"
+                  triggerClassName="h-8"
+                />
               </div>
             )}
 

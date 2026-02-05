@@ -1,10 +1,8 @@
 "use client";
 
-import { Button, Input, Label, useToast } from "@/shared/ui";
+import { Button, Input, useToast, FormSection } from "@/shared/ui";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { useRef } from "react";
-
-
 
 import ProductImageManager from "../ProductImageManager";
 
@@ -14,10 +12,9 @@ export default function ProductFormImages(): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <div className="space-y-4">
-      <div className="mb-4">
-        <Label htmlFor="multi-image-upload">Upload Multiple Images</Label>
-        <div className="mt-2 flex space-x-4">
+    <div className="space-y-6">
+      <FormSection title="Image Source" description="Upload multiple files or select from the platform library.">
+        <div className="flex space-x-4">
           <Input
             ref={inputRef}
             type="file"
@@ -46,13 +43,14 @@ export default function ProductFormImages(): React.JSX.Element {
           </Button>
           <Button
             type="button"
+            variant="outline"
             onClick={() => setShowFileManager(true)}
             aria-label="Choose multiple existing images for the product"
           >
             Choose from File Manager
           </Button>
         </div>
-      </div>
+      </FormSection>
       <ProductImageManager />
     </div>
   );

@@ -76,8 +76,33 @@ const normalizeHost = (hostHeader: string | null): string => {
 const getHostFromRequest = (req: NextRequest): string | null =>
   req.headers.get("x-forwarded-host") ?? req.headers.get("host");
 
-const getHostFromHeaders = (headers: Headers): string | null =>
-  headers.get("x-forwarded-host") ?? headers.get("host");
+const getHostFromHeaders = (
+  headers: Headers | { get?: (key: string) => string | null } | Record<string, unknown> | null | undefined
+): string | null => {
+  if (!headers) return null;
+  if (typeof (headers as Headers).get === "function") {
+    return (headers as Headers).get("x-forwarded-host") ?? (headers as Headers).get("host");
+  }
+  if (typeof headers === "function") {
+    try {
+      // Handle accidental passing of the headers() function itself.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return getHostFromHeaders((headers as any)());
+    } catch {
+      return null;
+    }
+  }
+  if (typeof headers === "object") {
+    const record = headers as Record<string, unknown>;
+    const forwarded =
+      record["x-forwarded-host"] ??
+      record["X-Forwarded-Host"] ??
+      record["host"] ??
+      record["Host"];
+    if (typeof forwarded === "string") return forwarded;
+  }
+  return null;
+};
 
 const canUsePrismaSlugs = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "slug" in prisma;
@@ -120,7 +145,7 @@ export async function resolveCmsDomainFromRequest(req: NextRequest): Promise<Cms
   return resolveCmsDomainByHost(host);
 }
 
-export async function resolveCmsDomainFromHeaders(headers: Headers): Promise<CmsDomain> {
+export async function resolveCmsDomainFromHeaders(headers: Headers | { get?: (key: string) => string | null } | null | undefined): Promise<CmsDomain> {
   const host = getHostFromHeaders(headers);
   return resolveCmsDomainByHost(host);
 }

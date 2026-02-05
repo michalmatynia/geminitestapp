@@ -49,15 +49,13 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   }, [searchQuery, debouncedSearchQuery]);
 
   // Reset page when settings change
-  useEffect((): void => {
+  const [prevSettingsKey, setPrevSettingsKey] = useState("");
+  const currentSettingsKey = `${settings.selectedFolderId ?? ""}-${settings.sortBy ?? ""}-${settings.sortOrder ?? ""}-${settings.selectedNotebookId ?? ""}`;
+  
+  if (currentSettingsKey !== prevSettingsKey) {
+    setPrevSettingsKey(currentSettingsKey);
     setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    settings.selectedFolderId,
-    settings.sortBy,
-    settings.sortOrder,
-    settings.selectedNotebookId,
-  ]);
+  }
 
   // Clear highlight tag
   useEffect((): void | (() => void) => {

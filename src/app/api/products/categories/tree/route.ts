@@ -9,6 +9,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ProductCategoryWithChildren } from "@/shared/types/domain/products";
 
 type CategoryFromDb = {
   id: string;

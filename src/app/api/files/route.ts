@@ -9,6 +9,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import type { ImageFileRecord } from "@/shared/types/files";
+import type { ProductWithImages } from "@/shared/types/domain/products";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
+import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from "lucide-react";
 import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
@@ -1425,6 +1425,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return "";
   }, [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
 
+  const selectedTitle = useMemo((): string => {
+    if (selectedSection) return `Section: ${selectedLabel}`;
+    if (selectedBlock) return `Block: ${selectedLabel}`;
+    if (selectedColumn) return "Column";
+    return "Settings";
+  }, [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
+
   const connectionSettings = useMemo(() => {
     const settings = selectedSection
       ? selectedSection.settings
@@ -1505,7 +1512,10 @@ export function ComponentSettingsPanel(): React.ReactNode {
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
       <PanelHeader
-        title={selectedLabel || "Settings"}
+        title={selectedTitle}
+        className="flex-row-reverse"
+        titleClassName="text-right"
+        actionsClassName="justify-start"
         actions={(
           <div className="flex items-center gap-1">
             <Button
@@ -1563,25 +1573,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
             >
               <Smartphone className="size-3.5" />
             </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })}
+              title={inspectorSettings.showEditorChrome ? "Hide edit chrome" : "Show edit chrome"}
+              aria-label="Toggle edit chrome"
+              className={`h-6 w-6 p-0 ${
+                inspectorSettings.showEditorChrome
+                  ? "text-blue-300 bg-blue-500/10"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <Paintbrush className="size-3.5" />
+            </Button>
           </div>
         )}
       />
-
-      <div className="border-b border-border px-4 py-3">
-        <div className="text-[10px] uppercase tracking-wider text-gray-400">Preview appearance</div>
-        <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
-          <span>Edit chrome</span>
-          <Checkbox
-            checked={inspectorSettings.showEditorChrome}
-            onCheckedChange={(value: boolean | "indeterminate"): void =>
-              updateInspectorSetting({ showEditorChrome: value === true })
-            }
-          />
-        </div>
-        <p className="mt-1 text-[11px] text-gray-500">
-          Turn off for a faithful preview that matches the rendered page.
-        </p>
-      </div>
 
       {state.inspectorEnabled && (
         <div className="border-b border-border px-4 py-3">

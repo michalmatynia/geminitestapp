@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import importPlugin from "eslint-plugin-import";
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -162,10 +164,20 @@ const disableTypeCheckedForConfigFiles = compat
   .map((config) => ({
     ...config,
     files: configFiles,
+    languageOptions: {
+      ...config.languageOptions,
+      parserOptions: {
+        ...config.languageOptions?.parserOptions,
+        project: null,
+      },
+    },
   }));
 
 const apiRouteConfig = {
   files: ["src/app/api/**/route.{ts,tsx}", "src/features/**/api/**/route.{ts,tsx}"],
+  plugins: {
+    "@typescript-eslint": tsPlugin,
+  },
   rules: {
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -194,6 +206,9 @@ const nextRouteConfig = {
     "src/app/**/template.{ts,tsx,js,jsx}",
     "src/app/**/default.{ts,tsx,js,jsx}",
   ],
+  plugins: {
+    "@typescript-eslint": tsPlugin,
+  },
   rules: {
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -229,8 +244,16 @@ const eslintConfig = [
   {
     ignores: [
       ".next/**",
+      "tmp/**",
+      ".gemini-logs/**",
+      "AIReasoning/**",
+      "AIPrompts/**",
       "node_modules/**",
       "lib/generated/prisma/**",
+      "*.log",
+      "*.json",
+      "eslint_report*",
+      "tsc_output*",
       "scripts/backfill-note-colors.mjs",
       "*.py",
       "fix_all_api.cjs",
@@ -245,9 +268,9 @@ const eslintConfig = [
     "prettier"
   ),
   {
-    files: ["**/*.tsx", "**/*.jsx"], // Apply these rules only to JSX/TSX files
+    files: ["**/*.tsx", "**/*.jsx", "**/*.ts", "**/*.js"], // Apply these rules to all JS/TS files
     languageOptions: {
-      parser: (await import("@typescript-eslint/parser")).default,
+      parser: tsParser,
       parserOptions: {
         project: true,
         tsconfigRootDir: __dirname,
@@ -256,6 +279,7 @@ const eslintConfig = [
     },
     plugins: {
       import: importPlugin,
+      "@typescript-eslint": tsPlugin,
     },
     rules: {
       "no-undef": "off",
@@ -264,8 +288,7 @@ const eslintConfig = [
       "react/display-name": "error",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
-      "react/no-unescaped-entities": "off", // Temporarily disable to debug crash
-      // Added to disable specific TypeScript rules
+      "react/no-unescaped-entities": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -279,7 +302,6 @@ const eslintConfig = [
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-call": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",
-      // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
       "no-restricted-syntax": ["warn", ...commonRestrictedSyntax],
     },
@@ -292,10 +314,12 @@ const eslintConfig = [
         node: true,
       },
     },
-
   },
   {
     files: ["src/**/*.{ts,tsx}"],
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
       "@typescript-eslint/typedef": "off",
       "@typescript-eslint/explicit-function-return-type": "error",
@@ -307,6 +331,9 @@ const eslintConfig = [
   nextRouteConfig,
   {
     files: ["src/shared/ui/**/*.{ts,tsx}"],
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -316,13 +343,16 @@ const eslintConfig = [
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],
     languageOptions: {
-      parser: (await import("@typescript-eslint/parser")).default,
+      parser: tsParser,
       parserOptions: {
         project: true,
         tsconfigRootDir: __dirname,
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
     },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
@@ -337,6 +367,9 @@ const eslintConfig = [
   },
   {
     files: ["lib/generated/prisma/**/*.ts", "lib/generated/prisma/**/*.js"],
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
@@ -347,42 +380,34 @@ const eslintConfig = [
       "@typescript-eslint/no-unsafe-function-type": "off",
     },
   },
-
-      {
-
-        files: ["src/app/api/ai-paths/db-action/route.ts"],
-
-        rules: {
-
-          "@typescript-eslint/no-unnecessary-type-assertion": "off",
-
-        },
-
-      },
-
-      {
-
-        rules: {
-
-          "@typescript-eslint/await-thenable": "off", // Temporarily disable to unblock ESLint
-
-          "@typescript-eslint/no-array-delete": "off", // Temporarily disable to unblock ESLint
-
-          "@typescript-eslint/no-base-to-string": "off", // Disable this one too
-
-          "@typescript-eslint/no-duplicate-type-constituents": "off", // Disable this one too
-
-        },
-
-      },
-      {
-        files: ["src/features/viewer3d/components/Viewer3D.tsx", "src/features/viewer3d/components/shaders/DitheringEffect.tsx"],
+  {
+    files: ["src/app/api/ai-paths/db-action/route.ts"],
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    rules: {
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    },
+  },
+  {
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    rules: {
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/no-array-delete": "off",
+      "@typescript-eslint/no-base-to-string": "off",
+      "@typescript-eslint/no-duplicate-type-constituents": "off",
+    },
+  },
+  {
+    files: ["src/features/viewer3d/components/Viewer3D.tsx", "src/features/viewer3d/components/shaders/DitheringEffect.tsx"],
         rules: {
           "react/no-unknown-property": "off",
         },
       },
+      ...disableTypeCheckedForConfigFiles,
     ];
-
     
-
     export default eslintConfig;
+    

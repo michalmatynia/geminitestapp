@@ -48,10 +48,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     });
   };
 
-  const fail = (step: string, detail: string, status: number = 400): Response => {
+  const fail = async (step: string, detail: string, status: number = 400): Promise<Response> => {
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
-    return createErrorResponse(mapStatusToAppError(safeDetail, status), {
+    return await createErrorResponse(mapStatusToAppError(safeDetail, status), {
       request: req,
       source: "integrations.[id].connections.[connectionId].allegro.test.POST",
       fallbackMessage: safeDetail,
@@ -68,7 +68,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     integrationId = id;
     integrationConnectionId = connectionId;
     if (!integrationId || !integrationConnectionId) {
-      return fail("Loading connection", "Integration id and connection id are required", 400);
+      return await fail("Loading connection", "Integration id and connection id are required", 400);
     }
 
     pushStep("Loading connection", "pending", "Fetching stored credentials");
@@ -79,18 +79,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     );
 
     if (!connection) {
-      return fail("Loading connection", "Connection not found", 404);
+      return await fail("Loading connection", "Connection not found", 404);
     }
     pushStep("Loading connection", "ok", "Connection loaded");
 
     const integration = await repo.getIntegrationById(id);
 
     if (!integration) {
-      return fail("Loading integration", "Integration not found", 404);
+      return await fail("Loading integration", "Integration not found", 404);
     }
 
     if (integration.slug !== "allegro") {
-      return fail(
+      return await fail(
         "Connection test",
         `This endpoint is for Allegro connections only. Got: ${integration.name}`,
         400
@@ -98,7 +98,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
 
     if (!connection.allegroAccessToken) {
-      return fail(
+      return await fail(
         "Token validation",
         "Allegro access token not configured. Connect first."
       );
@@ -188,14 +188,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         response = await buildRequest(accessToken);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return fail("Refreshing token", message);
+        return await fail("Refreshing token", message);
       }
     }
 
     const raw = await response.text();
     if (!response.ok) {
       const detail = raw || `${response.status} ${response.statusText}`.trim();
-      return fail("Testing API connection", detail, response.status);
+      return await fail("Testing API connection", detail, response.status);
     }
 
     pushStep(
@@ -230,7 +230,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         httpStatus: 400,
         expected: false
       });
-      return createErrorResponse(appError, {
+      return await createErrorResponse(appError, {
         request: req,
         source: "integrations.[id].connections.[connectionId].allegro.test.POST",
         fallbackMessage: "Failed to test connection",
@@ -242,7 +242,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       });
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
-    return createErrorResponse(error, {
+    return await createErrorResponse(error, {
       request: req,
       source: "integrations.[id].connections.[connectionId].allegro.test.POST",
       fallbackMessage: "Failed to test connection",

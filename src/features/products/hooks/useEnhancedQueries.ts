@@ -5,6 +5,7 @@ import { useNormalizedQuery, useComposedQuery } from "@/shared/hooks/useQueryCom
 import { useQueryScheduler, useBackgroundQueries } from "@/shared/hooks/useQueryScheduler";
 import { useAdaptiveQuery } from "@/shared/hooks/query/useSmartCache";
 import { useEffect } from "react";
+import type { ProductDto, ProductCategoryDto, ProductTagDto } from "@/shared/dtos";
 
 // Enhanced product queries with normalization and composition
 export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
@@ -13,9 +14,9 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
   // Normalized products query
   const productsQuery = useNormalizedQuery(
     ['products', 'enhanced'],
-    async (): Promise<any[]> => {
+    async (): Promise<ProductDto[]> => {
       const res = await fetch('/api/products');
-      return res.json() as Promise<any[]>;
+      return res.json() as Promise<ProductDto[]>;
     }
   );
 
@@ -23,25 +24,25 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
   const productStats = useComposedQuery(
     {
       queryKey: ['products', 'enhanced'],
-      queryFn: async (): Promise<any[]> => {
+      queryFn: async (): Promise<ProductDto[]> => {
         const res = await fetch('/api/products');
-        return res.json() as Promise<any[]>;
+        return res.json() as Promise<ProductDto[]>;
       },
     },
-    (products: any[]): { total: number; published: number; categories: number; avgPrice: number; } => ({
+    (products: ProductDto[]): { total: number; published: number; categories: number; avgPrice: number; } => ({
       total: products.length,
-      published: products.filter((p: any) => p.published).length,
-      categories: [...new Set(products.map((p: any) => p.category))].length,
-      avgPrice: products.reduce((sum: number, p: any) => sum + (p.price || 0), 0) / products.length,
+      published: products.filter((p: ProductDto) => p.published).length,
+      categories: [...new Set(products.map((p: ProductDto) => p.categoryId))].length,
+      avgPrice: products.reduce((sum: number, p: ProductDto) => sum + (p.price || 0), 0) / products.length,
     })
   );
 
   // Schedule related queries
-  useEffect(() => {
+  useEffect((): void => {
     scheduler.scheduleQuery(
       'product-categories',
       ['products', 'categories'],
-      async () => {
+      async (): Promise<ProductCategoryDto[]> => {
         const catalogsRes = await fetch("/api/catalogs");
         if (!catalogsRes.ok) return [];
         const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
@@ -51,7 +52,7 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
         );
         if (!res.ok) return [];
-        return res.json();
+        return res.json() as Promise<ProductCategoryDto[]>;
       },
       { priority: 'medium', delay: 2000 }
     );
@@ -59,9 +60,9 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
     scheduler.scheduleQuery(
       'product-tags',
       ['products', 'tags'],
-      async () => {
+      async (): Promise<ProductTagDto[]> => {
         const res = await fetch('/api/products/tags');
-        return res.json();
+        return res.json() as Promise<ProductTagDto[]>;
       },
       { priority: 'low', delay: 5000 }
     );
@@ -71,9 +72,9 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
   useBackgroundQueries([
     {
       queryKey: ['products', 'count'],
-      queryFn: async () => {
+      queryFn: async (): Promise<{ count: number }> => {
         const res = await fetch('/api/products/count');
-        return res.json();
+        return res.json() as Promise<{ count: number }>;
       },
       interval: 60000, // 1 minute
     },

@@ -10,6 +10,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ProductWithImages } from "@/shared/types/domain/products";
 
 
 const bulkJobSchema = z.object({

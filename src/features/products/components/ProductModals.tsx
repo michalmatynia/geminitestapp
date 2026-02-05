@@ -245,6 +245,7 @@ function ProductFormModal({
       onClose={onClose}
       title={title} 
       header={header}
+      className="md:min-w-[52rem] max-w-[55rem]"
     >
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />

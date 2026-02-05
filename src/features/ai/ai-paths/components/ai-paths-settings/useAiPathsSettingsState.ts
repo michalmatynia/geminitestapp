@@ -77,7 +77,7 @@ export interface UseAiPathsSettingsStateReturn {
   saving: boolean;
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
-  handleSave: (options?: { notify?: boolean }) => Promise<void>;
+  handleSave: (options?: { silent?: boolean; includeNodeConfig?: boolean; force?: boolean }) => Promise<void>;
   handleReset: () => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   activePathId: string | null;
@@ -157,7 +157,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleFireTrigger: (triggerId: string) => Promise<void>;
   handleFireTriggerPersistent: (triggerId: string) => Promise<void>;
   setSimulationOpenNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  updateSelectedNode: (update: Partial<AiNode>) => void;
+  updateSelectedNode: (update: Partial<AiNode>, options?: { nodeId?: string }) => void;
   setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleDeleteSelectedNode: () => void;
   handleRemoveEdge: (edgeId: string) => void;
@@ -1152,20 +1152,48 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     }
   };
 
-  const updateSelectedNode = (patch: Partial<AiNode>): void => {
-    if (!selectedNodeId) return;
+  const updateSelectedNode = (
+    patch: Partial<AiNode>,
+    options?: { nodeId?: string }
+  ): void => {
+    const targetNodeId = options?.nodeId ?? selectedNodeId;
+    if (!targetNodeId) return;
     if (isPathLocked) {
       toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
       return;
     }
     const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
     setNodes((prev: AiNode[]): AiNode[] => {
-      const next = prev.map((node: AiNode): AiNode =>
-        node.id === selectedNodeId ? { ...node, ...patch } : node
-      );
+      const next = prev.map((node: AiNode): AiNode => {
+        if (node.id !== targetNodeId) return node;
+        const nextNode: AiNode = { ...node, ...patch };
+        if (patch.config) {
+          const currentConfig = node.config ?? {};
+          const mergedConfig = { ...currentConfig };
+          for (const key of Object.keys(patch.config) as Array<keyof NodeConfig>) {
+            const patchValue = patch.config[key];
+            const currentValue = currentConfig[key];
+            if (
+              patchValue &&
+              typeof patchValue === "object" &&
+              !Array.isArray(patchValue) &&
+              currentValue &&
+              typeof currentValue === "object" &&
+              !Array.isArray(currentValue)
+            ) {
+              (mergedConfig as Record<string, unknown>)[key] = { ...currentValue, ...patchValue };
+            } else {
+              (mergedConfig as Record<string, unknown>)[key] = patchValue as unknown;
+            }
+          }
+          nextNode.config = mergedConfig;
+        }
+        return nextNode;
+      });
       if (shouldSanitizeEdges) {
         setEdges((current: Edge[]): Edge[] => sanitizeEdges(next, current));
       }
+      syncNodesRef(next);
       return next;
     });
   };

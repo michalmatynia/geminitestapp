@@ -28,7 +28,7 @@ const formatEntity = (run: AiPathLocalRunRecord): string => {
   return run.entityType ?? run.entityId ?? "-";
 };
 
-const AI_PATHS_SOURCES = new Set(["ai_paths_ui", "trigger_button", "product_panel"]);
+const AI_PATHS_SOURCES = new Set(["ai_paths_ui", "ai_paths_direct", "trigger_button", "product_panel"]);
 
 type LocalRunsPanelProps = {
   sourceFilter?: string | null;
@@ -64,6 +64,16 @@ export function LocalRunsPanel({
     const parsed = parseLocalRuns(rawRuns);
     return parsed.filter((run) => shouldIncludeRun(run, sourceFilter, sourceMode));
   }, [rawRuns, sourceFilter, sourceMode]);
+
+  React.useEffect((): (() => void) => {
+    const handler = (event: Event): void => {
+      const detail = (event as CustomEvent<{ scope?: string }>).detail;
+      if (detail?.scope && detail.scope !== "heavy") return;
+      void settingsQuery.refetch();
+    };
+    window.addEventListener("settings:updated", handler);
+    return (): void => window.removeEventListener("settings:updated", handler);
+  }, [settingsQuery]);
 
   if (settingsQuery.isLoading) {
     return <div className="text-sm text-gray-400">Loading local runs...</div>;

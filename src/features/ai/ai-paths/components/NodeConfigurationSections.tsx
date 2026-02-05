@@ -55,7 +55,7 @@ type NodeConfigurationSectionsProps = {
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
   pathDebugSnapshot?: PathDebugSnapshot | null;
-  updateSelectedNode: (patch: Partial<AiNode>) => void;
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;

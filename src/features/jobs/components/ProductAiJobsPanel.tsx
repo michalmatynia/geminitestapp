@@ -100,6 +100,15 @@ export default function ProductAiJobsPanel({
       : null;
   };
 
+  const visibleJobs = useMemo(() => {
+    if (!jobs.length) return jobs;
+    return jobs.filter((job: ProductAiJob) => {
+      const payload = getPayload(job);
+      const source = typeof payload?.source === "string" ? payload.source : "";
+      return source !== "ai_paths_direct";
+    });
+  }, [jobs]);
+
   const getJobMeta = (job: ProductAiJob): JobMeta => {
     const payload = getPayload(job);
     const graph = payload?.graph as Record<string, unknown> | undefined;
@@ -190,7 +199,7 @@ export default function ProductAiJobsPanel({
     }
   };
 
-  const filteredJobs = jobs.filter((job: ProductAiJob) => {
+  const filteredJobs = visibleJobs.filter((job: ProductAiJob) => {
     const meta = getJobMeta(job);
     const searchStr = query.toLowerCase();
     return [

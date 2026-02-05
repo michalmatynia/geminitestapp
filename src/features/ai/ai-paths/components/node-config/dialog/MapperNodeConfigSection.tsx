@@ -10,7 +10,7 @@ import { formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
 
 type MapperNodeConfigSectionProps = {
   selectedNode: AiNode;
-  updateSelectedNode: (patch: Partial<AiNode>) => void;
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
 };
 

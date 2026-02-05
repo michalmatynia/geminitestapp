@@ -20,6 +20,24 @@
 
 React error overlay ? 
 
+There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings
+
+Validator Extractor should be 
+
+
+IN cMS Folder Tree
+Looking at the code structure: 
+  - At section root level, blocks use BlockNodeItem (lines 714-734)             
+  - Inside Grid columns, blocks of SECTION_BLOCK_TYPES (which includes "Block")
+  use SectionBlockNodeItem (lines 1658-1686)                                    
+   
+  The SectionBlockNodeItem has a dragStart handler but it doesn't have a        
+  console.log. Let me add debug logging to verify which component is actually
+  handling the drag.                                                            
+                                    
+									
+
+Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
 
 I need user profiles, that will store KEYS to user settings for each segment of the system
 

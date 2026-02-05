@@ -34,7 +34,7 @@ type NodeConfigDialogProps = {
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
   pathDebugSnapshot?: PathDebugSnapshot | null;
-  updateSelectedNode: (patch: Partial<AiNode>) => void;
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
@@ -51,6 +51,7 @@ type NodeConfigDialogProps = {
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  savePathConfig?: (options?: { silent?: boolean; includeNodeConfig?: boolean; force?: boolean }) => Promise<void>;
 };
 
 export function NodeConfigDialog({
@@ -86,6 +87,7 @@ export function NodeConfigDialog({
   saveDbNodePresets,
   toast,
   onDirtyChange,
+  savePathConfig,
 }: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
   const isScheduledTrigger =
@@ -183,10 +185,11 @@ export function NodeConfigDialog({
       toast("This path is locked. Unlock it to save node settings.", { variant: "info" });
       return;
     }
-    updateSelectedNode(draftNode);
+    updateSelectedNode(draftNode, { nodeId: draftNode.id });
+    void savePathConfig?.({ silent: true, includeNodeConfig: true, force: true });
     setDraftNode(null);
     toast("Node settings updated.", { variant: "success" });
-  }, [draftNode, isPathLocked, toast, updateSelectedNode]);
+  }, [draftNode, isPathLocked, savePathConfig, toast, updateSelectedNode]);
 
   const handleDiscardChanges = useCallback((): void => {
     if (!hasUnsavedChanges) return;
@@ -195,7 +198,25 @@ export function NodeConfigDialog({
   }, [hasUnsavedChanges, toast]);
 
   return (
-    <Dialog open={configOpen} onOpenChange={setConfigOpen}>
+    <Dialog
+      open={configOpen}
+      onOpenChange={(open: boolean): void => {
+        if (open) {
+          setConfigOpen(true);
+          return;
+        }
+        if (!hasUnsavedChanges) {
+          setConfigOpen(false);
+          return;
+        }
+        const confirmed = window.confirm(
+          "You have unsaved changes for this node. Discard them and close?"
+        );
+        if (!confirmed) return;
+        handleDiscardChanges();
+        setConfigOpen(false);
+      }}
+    >
       <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -211,7 +232,18 @@ export function NodeConfigDialog({
               type="button"
               size="sm"
               className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
-              onClick={() => setConfigOpen(false)}
+              onClick={() => {
+                if (!hasUnsavedChanges) {
+                  setConfigOpen(false);
+                  return;
+                }
+                const confirmed = window.confirm(
+                  "You have unsaved changes for this node. Discard them and close?"
+                );
+                if (!confirmed) return;
+                handleDiscardChanges();
+                setConfigOpen(false);
+              }}
             >
               Close
             </Button>

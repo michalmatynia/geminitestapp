@@ -109,8 +109,14 @@ export const appendLocalRun = async (
       body: JSON.stringify({ key: AI_PATHS_LOCAL_RUNS_KEY, value: payload }),
     });
     invalidateSettingsCache();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("settings:updated", { detail: { scope: "heavy" } })
+      );
+    }
     return normalized;
-  } catch {
+  } catch (error) {
+    console.warn("[ai-paths] Failed to append local run.", error);
     return null;
   }
 };

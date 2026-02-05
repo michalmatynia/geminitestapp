@@ -630,6 +630,7 @@ export function AiPathsSettingsView({
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
         onDirtyChange={setNodeConfigDirty}
+        savePathConfig={handleSave}
       />
       <RunDetailDialog
         open={runDetailOpen}

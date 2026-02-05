@@ -1044,6 +1044,9 @@ export function useAiPathsRuntime({
       maxTokens: 800,
       vision: false,
     };
+    const startedAt = new Date().toISOString();
+    const startedAtMs = Date.now();
+    let directJobId: string | null = null;
     setSendingToAi(true);
     try {
       const payload = {
@@ -1065,6 +1068,7 @@ export function useAiPathsRuntime({
         type: "graph_model",
         payload,
       })) as { jobId: string };
+      directJobId = enqueueData.jobId;
       toast("AI job queued. Waiting for result...", { variant: "success" });
       const result = await pollGraphJob(enqueueData.jobId);
       // Update runtime state with the result
@@ -1153,6 +1157,18 @@ export function useAiPathsRuntime({
         };
       });
       toast("AI response received.", { variant: "success" });
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: "node_ai_prompt",
+        triggerLabel: "Node AI Prompt",
+        status: "success",
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: 2,
+        source: "ai_paths_direct",
+      });
     } catch (error) {
       reportAiPathsError(
         error,
@@ -1160,7 +1176,25 @@ export function useAiPathsRuntime({
         "Send to AI failed:"
       );
       toast("Send to AI failed.", { variant: "error" });
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: "node_ai_prompt",
+        triggerLabel: "Node AI Prompt",
+        status: "error",
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: 2,
+        error: error instanceof Error ? error.message : "Send to AI failed",
+        source: "ai_paths_direct",
+      });
     } finally {
+      if (directJobId) {
+        void fetch(`/api/products/ai-jobs/${encodeURIComponent(directJobId)}`, {
+          method: "DELETE",
+        }).catch(() => undefined);
+      }
       setSendingToAi(false);
     }
   };

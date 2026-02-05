@@ -33,7 +33,7 @@ type ParserNodeConfigSectionProps = {
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;
-  updateSelectedNode: (patch: Partial<AiNode>) => void;
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;

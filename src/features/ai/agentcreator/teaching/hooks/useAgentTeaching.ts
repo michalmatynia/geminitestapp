@@ -14,10 +14,19 @@ export function useTeachingAgents(): UseQueryResult<AgentTeachingAgentRecord[], 
   return useQuery({
     queryKey: agentTeachingKeys.agents(),
     queryFn: async (): Promise<AgentTeachingAgentRecord[]> => {
-      const res = await fetch("/api/agentcreator/teaching/agents");
-      if (!res.ok) throw new Error("Failed to load learner agents.");
-      const data = (await res.json()) as { agents?: AgentTeachingAgentRecord[] };
-      return data.agents ?? [];
+      try {
+        const res = await fetch("/api/agentcreator/teaching/agents");
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+          console.warn("[learner-agents] Failed to load learner agents", payload?.error ?? res.status);
+          return [];
+        }
+        const data = (await res.json()) as { agents?: AgentTeachingAgentRecord[] };
+        return data.agents ?? [];
+      } catch (error) {
+        console.warn("[learner-agents] Failed to load learner agents", error);
+        return [];
+      }
     },
   });
 }

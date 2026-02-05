@@ -125,7 +125,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             : ["value", "result"];
       return {
         ...node,
-        inputs: ensureUniquePorts(node.inputs ?? [], ["context", "result"]),
+        inputs: ensureUniquePorts(node.inputs ?? [], ["context", "result", "bundle", "value"]),
         outputs,
         config: {
           ...node.config,

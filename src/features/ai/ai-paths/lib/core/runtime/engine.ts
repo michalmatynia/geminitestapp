@@ -51,6 +51,21 @@ import {
 
 type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
+export class GraphExecutionError extends Error {
+  state: RuntimeState;
+  nodeId?: string | null;
+
+  constructor(message: string, state: RuntimeState, nodeId?: string | null, cause?: unknown) {
+    super(message);
+    this.name = "GraphExecutionError";
+    this.state = state;
+    this.nodeId = nodeId ?? null;
+    if (cause && typeof (this as { cause?: unknown }).cause === "undefined") {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
 export type EvaluateGraphOptions = {
   nodes: AiNode[];
   edges: Edge[];
@@ -738,7 +753,18 @@ export async function evaluateGraph({
           if (onNodeError) {
             await onNodeError({ node, nodeInputs, prevOutputs, error, iteration });
           }
-          throw error;
+          const historySnapshot =
+            recordHistory && history.size
+              ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
+              : undefined;
+          const errorState: RuntimeState = {
+            inputs: cloneValue(nextInputs) as Record<string, RuntimePortValues>,
+            outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
+            hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+            history: historySnapshot,
+          };
+          const message = error instanceof Error ? error.message : String(error);
+          throw new GraphExecutionError(message, errorState, node.id, error);
         }
       } else {
         // Default behavior for unknown nodes or if no outputs changed

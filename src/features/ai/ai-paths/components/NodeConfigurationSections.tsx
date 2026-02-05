@@ -148,6 +148,7 @@ export function NodeConfigurationSections({
       />
       <MapperNodeConfigSection
         selectedNode={selectedNode}
+        runtimeState={runtimeState}
         updateSelectedNode={updateSelectedNode}
         updateSelectedNodeConfig={updateSelectedNodeConfig}
       />

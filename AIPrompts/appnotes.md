@@ -20,11 +20,16 @@
 
 React error overlay ? 
 
+Node Schema Matrix
+Node Notes and make the canvas bigger
+
 There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings
 
 Validator Extractor should be 
 
 
+Regex grouper PReset (for the whole regex Persona)
+Each node should have an ID so that I can reference them easily
 IN cMS Folder Tree
 Looking at the code structure: 
   - At section root level, blocks use BlockNodeItem (lines 714-734)             
@@ -35,7 +40,7 @@ Looking at the code structure:
   console.log. Let me add debug logging to verify which component is actually
   handling the drag.                                                            
                                     
-									
+This confuses  AIs and I constantly have problems adding elements that can be draggable and droppable to folders.
 
 Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
 

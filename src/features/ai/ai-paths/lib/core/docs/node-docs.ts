@@ -159,7 +159,8 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     {
       path: "regex.matchMode",
-      description: "first = one match per input string; all = all matches per input string.",
+      description:
+        "first = one match per input string; first_overall = stop after the first match across all inputs; all = all matches per input string.",
       defaultValue: "first",
     },
     {

@@ -441,44 +441,112 @@ export function RegexNodeConfigSection({
     }
 
     const compiled = regexValidation.regex;
-    const nonGlobalRegex = compiled && matchMode === "first" && compiled.flags.includes("g")
-      ? new RegExp(compiled.source, compiled.flags.replace("g", ""))
-      : compiled;
+    const nonGlobalRegex =
+      compiled && matchMode !== "all" && compiled.flags.includes("g")
+        ? new RegExp(compiled.source, compiled.flags.replace("g", ""))
+        : compiled;
 
-    sampleLines.forEach((input: string) => {
-      if (matchMode === "all" && compiled) {
-        const flagsWithG = compiled.flags.includes("g") ? compiled.flags : `${compiled.flags}g`;
-        const regexAll = new RegExp(compiled.source, flagsWithG);
-        let found = false;
-        let match: RegExpExecArray | null;
-        while ((match = regexAll.exec(input)) !== null) {
-          found = true;
-          const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-          const groups =
-            match.groups && typeof match.groups === "object"
-              ? (Object.fromEntries(
-                  Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
-                ) as Record<string, string>)
-              : null;
-          const extracted = shouldParse
-            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
-            : resolveRegexSelection(match, groupBy);
-          const record: RegexPreviewRecord = {
-            input,
-            match: match[0] ?? null,
-            index: typeof match.index === "number" ? match.index : null,
-            captures: match.slice(1).map((value: string | undefined) => value ?? ""),
-            groups,
-            key,
-            extracted,
-          };
-          matches.push(record);
-          pushGrouped(key, record);
-          if (match[0] === "") {
-            regexAll.lastIndex = Math.min(input.length, regexAll.lastIndex + 1);
+    if (matchMode === "first_overall") {
+      let found = false;
+      for (const input of sampleLines) {
+        if (!nonGlobalRegex) break;
+        nonGlobalRegex.lastIndex = 0;
+        const match = nonGlobalRegex.exec(input);
+        if (!match) continue;
+        found = true;
+        const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
+        const groups =
+          match.groups && typeof match.groups === "object"
+            ? (Object.fromEntries(
+                Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
+              ) as Record<string, string>)
+            : null;
+        const extracted = shouldParse
+          ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+          : resolveRegexSelection(match, groupBy);
+        const record: RegexPreviewRecord = {
+          input,
+          match: match[0] ?? null,
+          index: typeof match.index === "number" ? match.index : null,
+          captures: match.slice(1).map((value: string | undefined) => value ?? ""),
+          groups,
+          key,
+          extracted,
+        };
+        matches.push(record);
+        pushGrouped(key, record);
+        break;
+      }
+
+      if (!found && includeUnmatched && sampleLines.length > 0) {
+        const record: RegexPreviewRecord = {
+          input: sampleLines[0] ?? "",
+          match: null,
+          index: null,
+          captures: [],
+          groups: null,
+          key: unmatchedKey,
+          extracted: null,
+        };
+        matches.push(record);
+        pushGrouped(unmatchedKey, record);
+      }
+    } else {
+      sampleLines.forEach((input: string) => {
+        if (matchMode === "all" && compiled) {
+          const flagsWithG = compiled.flags.includes("g") ? compiled.flags : `${compiled.flags}g`;
+          const regexAll = new RegExp(compiled.source, flagsWithG);
+          let found = false;
+          let match: RegExpExecArray | null;
+          while ((match = regexAll.exec(input)) !== null) {
+            found = true;
+            const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
+            const groups =
+              match.groups && typeof match.groups === "object"
+                ? (Object.fromEntries(
+                    Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
+                  ) as Record<string, string>)
+                : null;
+            const extracted = shouldParse
+              ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+              : resolveRegexSelection(match, groupBy);
+            const record: RegexPreviewRecord = {
+              input,
+              match: match[0] ?? null,
+              index: typeof match.index === "number" ? match.index : null,
+              captures: match.slice(1).map((value: string | undefined) => value ?? ""),
+              groups,
+              key,
+              extracted,
+            };
+            matches.push(record);
+            pushGrouped(key, record);
+            if (match[0] === "") {
+              regexAll.lastIndex = Math.min(input.length, regexAll.lastIndex + 1);
+            }
           }
+          if (!found && includeUnmatched) {
+            const record: RegexPreviewRecord = {
+              input,
+              match: null,
+              index: null,
+              captures: [],
+              groups: null,
+              key: unmatchedKey,
+              extracted: null,
+            };
+            matches.push(record);
+            pushGrouped(unmatchedKey, record);
+          }
+          return;
         }
-        if (!found && includeUnmatched) {
+
+        if (nonGlobalRegex) {
+          nonGlobalRegex.lastIndex = 0;
+        }
+        const match = nonGlobalRegex ? nonGlobalRegex.exec(input) : null;
+        if (!match) {
+          if (!includeUnmatched) return;
           const record: RegexPreviewRecord = {
             input,
             match: null,
@@ -490,48 +558,31 @@ export function RegexNodeConfigSection({
           };
           matches.push(record);
           pushGrouped(unmatchedKey, record);
+          return;
         }
-        return;
-      }
-
-      const match = nonGlobalRegex ? nonGlobalRegex.exec(input) : null;
-      if (!match) {
-        if (!includeUnmatched) return;
+        const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
+        const groups =
+          match.groups && typeof match.groups === "object"
+            ? (Object.fromEntries(
+                Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
+              ) as Record<string, string>)
+            : null;
+        const extracted = shouldParse
+          ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+          : resolveRegexSelection(match, groupBy);
         const record: RegexPreviewRecord = {
           input,
-          match: null,
-          index: null,
-          captures: [],
-          groups: null,
-          key: unmatchedKey,
-          extracted: null,
+          match: match[0] ?? null,
+          index: typeof match.index === "number" ? match.index : null,
+          captures: match.slice(1).map((value: string | undefined) => value ?? ""),
+          groups,
+          key,
+          extracted,
         };
         matches.push(record);
-        pushGrouped(unmatchedKey, record);
-        return;
-      }
-      const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-      const groups =
-        match.groups && typeof match.groups === "object"
-          ? (Object.fromEntries(
-              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
-            ) as Record<string, string>)
-          : null;
-      const extracted = shouldParse
-        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
-        : resolveRegexSelection(match, groupBy);
-      const record: RegexPreviewRecord = {
-        input,
-        match: match[0] ?? null,
-        index: typeof match.index === "number" ? match.index : null,
-        captures: match.slice(1).map((value: string | undefined) => value ?? ""),
-        groups,
-        key,
-        extracted,
-      };
-      matches.push(record);
-      pushGrouped(key, record);
-    });
+        pushGrouped(key, record);
+      });
+    }
 
     const groupedObject = Object.fromEntries(groupedMap.entries());
     const grouped =
@@ -858,9 +909,13 @@ export function RegexNodeConfigSection({
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="first">First match</SelectItem>
+                <SelectItem value="first_overall">First overall</SelectItem>
                 <SelectItem value="all">All matches</SelectItem>
               </SelectContent>
             </Select>
+            <p className="mt-1 text-[11px] text-gray-500">
+              First overall stops after the first match across all inputs.
+            </p>
           </div>
           <div>
             <Label className="text-xs text-gray-400">Grouped Output Mode</Label>

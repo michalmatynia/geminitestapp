@@ -1,7 +1,25 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/ui";
 import { NodeConfigurationSections } from "./NodeConfigurationSections"; // Import the new component
 
 import type {
@@ -51,7 +69,12 @@ type NodeConfigDialogProps = {
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
   onDirtyChange?: (dirty: boolean) => void;
-  savePathConfig?: (options?: { silent?: boolean; includeNodeConfig?: boolean; force?: boolean }) => Promise<void>;
+  savePathConfig?: (options?: {
+    silent?: boolean;
+    includeNodeConfig?: boolean;
+    force?: boolean;
+    nodesOverride?: AiNode[];
+  }) => Promise<void>;
 };
 
 export function NodeConfigDialog({
@@ -124,6 +147,7 @@ export function NodeConfigDialog({
     []
   );
   const [draftNode, setDraftNode] = useState<AiNode | null>(null);
+  const [closePromptOpen, setClosePromptOpen] = useState(false);
 
   useEffect((): void => {
     if (!configOpen || !selectedNode) {
@@ -185,11 +209,19 @@ export function NodeConfigDialog({
       toast("This path is locked. Unlock it to save node settings.", { variant: "info" });
       return;
     }
+    const nextNodes = nodes.map((node: AiNode): AiNode =>
+      node.id === draftNode.id ? draftNode : node
+    );
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
-    void savePathConfig?.({ silent: true, includeNodeConfig: true, force: true });
+    void savePathConfig?.({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodesOverride: nextNodes,
+    });
     setDraftNode(null);
     toast("Node settings updated.", { variant: "success" });
-  }, [draftNode, isPathLocked, savePathConfig, toast, updateSelectedNode]);
+  }, [draftNode, isPathLocked, nodes, savePathConfig, toast, updateSelectedNode]);
 
   const handleDiscardChanges = useCallback((): void => {
     if (!hasUnsavedChanges) return;
@@ -197,26 +229,38 @@ export function NodeConfigDialog({
     toast("Changes discarded.", { variant: "success" });
   }, [hasUnsavedChanges, toast]);
 
+  const requestClose = useCallback((): void => {
+    if (!hasUnsavedChanges) {
+      setConfigOpen(false);
+      return;
+    }
+    setClosePromptOpen(true);
+  }, [hasUnsavedChanges, setConfigOpen]);
+
+  const handleSaveAndClose = useCallback((): void => {
+    handleUpdateNode();
+    setClosePromptOpen(false);
+    setConfigOpen(false);
+  }, [handleUpdateNode, setConfigOpen]);
+
+  const handleDiscardAndClose = useCallback((): void => {
+    handleDiscardChanges();
+    setClosePromptOpen(false);
+    setConfigOpen(false);
+  }, [handleDiscardChanges, setConfigOpen]);
+
   return (
-    <Dialog
-      open={configOpen}
-      onOpenChange={(open: boolean): void => {
-        if (open) {
-          setConfigOpen(true);
-          return;
-        }
-        if (!hasUnsavedChanges) {
-          setConfigOpen(false);
-          return;
-        }
-        const confirmed = window.confirm(
-          "You have unsaved changes for this node. Discard them and close?"
-        );
-        if (!confirmed) return;
-        handleDiscardChanges();
-        setConfigOpen(false);
-      }}
-    >
+    <>
+      <Dialog
+        open={configOpen}
+        onOpenChange={(open: boolean): void => {
+          if (open) {
+            setConfigOpen(true);
+            return;
+          }
+          requestClose();
+        }}
+      >
       <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -232,18 +276,7 @@ export function NodeConfigDialog({
               type="button"
               size="sm"
               className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
-              onClick={() => {
-                if (!hasUnsavedChanges) {
-                  setConfigOpen(false);
-                  return;
-                }
-                const confirmed = window.confirm(
-                  "You have unsaved changes for this node. Discard them and close?"
-                );
-                if (!confirmed) return;
-                handleDiscardChanges();
-                setConfigOpen(false);
-              }}
+              onClick={requestClose}
             >
               Close
             </Button>
@@ -323,5 +356,39 @@ export function NodeConfigDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+      <AlertDialog open={closePromptOpen} onOpenChange={setClosePromptOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes for this node. Save before closing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setClosePromptOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event): void => {
+                event.preventDefault();
+                handleDiscardAndClose();
+              }}
+              className="bg-muted text-gray-200 hover:bg-muted/80"
+            >
+              Discard
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={(event): void => {
+                event.preventDefault();
+                handleSaveAndClose();
+              }}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Save & Close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

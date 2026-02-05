@@ -128,13 +128,20 @@ export const buildPersistedRuntimeState = (
   return safe ? JSON.stringify(safe) : "";
 };
 
-export const sanitizePathConfig = (config: PathConfig): PathConfig => ({
-  ...config,
-  runtimeState: buildPersistedRuntimeState(
-    parseRuntimeState(config.runtimeState),
-    config.nodes
-  ),
-});
+export const sanitizePathConfig = (config: PathConfig): PathConfig => {
+  const uiState = config.uiState ? { ...config.uiState } : undefined;
+  if (uiState && "configOpen" in uiState) {
+    delete (uiState as { configOpen?: boolean }).configOpen;
+  }
+  return {
+    ...config,
+    uiState,
+    runtimeState: buildPersistedRuntimeState(
+      parseRuntimeState(config.runtimeState),
+      config.nodes
+    ),
+  };
+};
 
 export const sanitizePathConfigs = (configs: Record<string, PathConfig>): Record<string, PathConfig> =>
   Object.fromEntries(

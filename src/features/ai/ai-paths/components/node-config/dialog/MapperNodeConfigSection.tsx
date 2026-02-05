@@ -4,18 +4,20 @@
 
 
 import { Input, Label, Textarea } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { createParserMappings, parsePathList } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
+import { createParserMappings, formatRuntimeValue, parsePathList } from "@/features/ai/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
 
 type MapperNodeConfigSectionProps = {
   selectedNode: AiNode;
+  runtimeState: RuntimeState;
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
 };
 
 export function MapperNodeConfigSection({
   selectedNode,
+  runtimeState,
   updateSelectedNode,
   updateSelectedNodeConfig,
 }: MapperNodeConfigSectionProps): React.JSX.Element | null {
@@ -32,9 +34,41 @@ export function MapperNodeConfigSection({
     : selectedNode.outputs.length
       ? selectedNode.outputs
       : ["value"];
+  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const contextInput =
+    runtimeInputs.context ??
+    runtimeInputs.result ??
+    runtimeInputs.bundle ??
+    runtimeInputs.value ??
+    null;
+  const runtimeOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+  const hasRuntimeOutput = Object.keys(runtimeOutputs).length > 0;
 
   return (
     <div className="space-y-4">
+      <div className="rounded-md border border-border bg-card/50 p-3">
+        <div className="text-[11px] text-gray-400">Runtime Preview</div>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <Label className="text-xs text-gray-400">Context Input</Label>
+            <Textarea
+              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              value={contextInput !== null ? formatRuntimeValue(contextInput) : ""}
+              readOnly
+              placeholder="Run the path or simulation to see the latest context input."
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-400">Mapped Output</Label>
+            <Textarea
+              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              value={hasRuntimeOutput ? formatRuntimeValue(runtimeOutputs) : ""}
+              readOnly
+              placeholder="No mapper output yet."
+            />
+          </div>
+        </div>
+      </div>
       <div>
         <Label className="text-xs text-gray-400">
           Outputs (one per line)

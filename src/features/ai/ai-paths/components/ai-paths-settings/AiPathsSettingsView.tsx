@@ -488,8 +488,8 @@ export function AiPathsSettingsView({
                 edges={edges}
                 selectedEdgeId={selectedEdgeId}
                 onSelectEdge={handleSelectEdge}
-                onFireTrigger={(node: AiNode) => void handleFireTrigger(node.id)}
-                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node.id)}
+                onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
+                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
                 onOpenSimulation={setSimulationOpenNodeId}
                 onUpdateSelectedNode={updateSelectedNode}
                 onOpenNodeConfig={() => setConfigOpen(true)}
@@ -549,7 +549,7 @@ export function AiPathsSettingsView({
               onReconnectInput={handleReconnectInput}
               onSelectNode={handleSelectNode}
               onOpenNodeConfig={() => setConfigOpen(true)}
-              onFireTrigger={(node) => void handleFireTrigger(node.id)}
+              onFireTrigger={(node) => void handleFireTrigger(node)}
               onPointerDownNode={handlePointerDown}
               onPointerMoveNode={handlePointerMove}
               onPointerUpNode={handlePointerUp}

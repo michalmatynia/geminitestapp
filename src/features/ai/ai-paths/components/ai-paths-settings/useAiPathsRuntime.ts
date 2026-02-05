@@ -27,6 +27,7 @@ import {
   entityApi,
   evaluateGraph,
   evaluateGraphWithIteratorAutoContinue,
+  GraphExecutionError,
   runsApi,
 } from "@/features/ai/ai-paths/lib";
 import { extractImageUrls } from "@/features/ai/ai-paths/lib/core/runtime/utils";
@@ -537,6 +538,26 @@ export function useAiPathsRuntime({
       });
     } catch (error) {
       const finishedAt = new Date().toISOString();
+      const errorState =
+        error instanceof GraphExecutionError
+          ? error.state
+          : typeof error === "object" && error && "state" in error
+            ? (error as { state?: RuntimeState }).state
+            : undefined;
+      if (errorState) {
+        setRuntimeState(errorState);
+        setLastRunAt(finishedAt);
+        if (activePathId) {
+          setPathConfigs((prev: Record<string, PathConfig>) => ({
+            ...prev,
+            [activePathId]: {
+              ...(prev[activePathId] ?? buildActivePathConfig(finishedAt)),
+              runtimeState: errorState,
+              lastRunAt: finishedAt,
+            },
+          }));
+        }
+      }
       void appendLocalRun({
         pathId: activePathId ?? null,
         pathName: pathName ?? null,
@@ -550,7 +571,7 @@ export function useAiPathsRuntime({
         error: error instanceof Error ? error.message : "Local run failed",
         source: "ai_paths_ui",
       });
-      throw error;
+      return;
     }
 
   }, [isPathActive, buildTriggerContext, nodes, edges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
@@ -818,34 +839,63 @@ export function useAiPathsRuntime({
         entityType,
         ...(entityType === "product" ? { productId: entityId } : {}),
         ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
-        ...(entity ? { entity } : {}),
+        ...(entity
+          ? {
+              entity,
+              entityJson: entity,
+              ...(entityType === "product" ? { product: entity } : {}),
+            }
+          : {}),
       };
       pendingSimulationContextRef.current = simulationContext;
       let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "manual";
       if (!triggerEvent) {
-        const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
-          if (
-            edge.from === simulationNode.id &&
-            (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-          ) {
-            return [edge.to];
-          }
-          if (
-            edge.to === simulationNode.id &&
-            (!edge.toPort || edge.toPort === "trigger")
-          ) {
-            return [edge.from];
-          }
-          return [];
+        const adjacency = new Map<string, Set<string>>();
+        edges.forEach((edge: Edge) => {
+          if (!edge.from || !edge.to) return;
+          const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+          fromSet.add(edge.to);
+          adjacency.set(edge.from, fromSet);
+          const toSet = adjacency.get(edge.to) ?? new Set<string>();
+          toSet.add(edge.from);
+          adjacency.set(edge.to, toSet);
         });
-        const triggerNode = nodes.find(
+        const connected = new Set<string>();
+        const queue = [simulationNode.id];
+        connected.add(simulationNode.id);
+        while (queue.length) {
+          const current = queue.shift();
+          if (!current) continue;
+          const neighbors = adjacency.get(current);
+          if (!neighbors) continue;
+          neighbors.forEach((neighbor: string) => {
+            if (connected.has(neighbor)) return;
+            connected.add(neighbor);
+            queue.push(neighbor);
+          });
+        }
+        const connectedTriggerIds = nodes
+          .filter((node: AiNode): boolean => node.type === "trigger" && connected.has(node.id))
+          .map((node: AiNode) => node.id);
+        let triggerNode = nodes.find(
           (node: AiNode): boolean =>
             node.type === "trigger" && connectedTriggerIds.includes(node.id)
         );
-        if (triggerNode) {
-          eventName = triggerNode.config?.trigger?.event ?? eventName;
-          await runGraphForTrigger(triggerNode, undefined, simulationContext);
+        if (!triggerNode) {
+          const triggerCandidates = nodes.filter((node: AiNode): boolean => node.type === "trigger");
+          if (triggerCandidates.length === 1) {
+            triggerNode = triggerCandidates[0] ?? null;
+            toast("No Trigger node connected; using the only Trigger in this path.", {
+              variant: "info",
+            });
+          }
         }
+        if (!triggerNode) {
+          toast("Connect a Trigger node to run the simulation.", { variant: "error" });
+          return;
+        }
+        eventName = triggerNode.config?.trigger?.event ?? eventName;
+        await runGraphForTrigger(triggerNode, undefined, simulationContext);
       }
       dispatchTrigger(eventName, entityId, entityType);
       if (!entity) {
@@ -861,41 +911,59 @@ export function useAiPathsRuntime({
   );
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
-    if (executionMode === "server") {
-      void handleFireTriggerPersistent(triggerNode, event);
-      return;
-    }
     void (async (): Promise<void> => {
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
       const isScheduled = triggerEvent === "scheduled_run";
-      const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
-        if (
-          edge.to === triggerNode.id &&
-          (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
-          (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-        ) {
-          return [edge.from];
-        }
-        if (
-          edge.from === triggerNode.id &&
-          (!edge.fromPort || edge.fromPort === "trigger") &&
-          (!edge.toPort || edge.toPort === "trigger")
-        ) {
-          return [edge.to];
-        }
-        return [];
+      const adjacency = new Map<string, Set<string>>();
+      edges.forEach((edge: Edge) => {
+        if (!edge.from || !edge.to) return;
+        const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+        fromSet.add(edge.to);
+        adjacency.set(edge.from, fromSet);
+        const toSet = adjacency.get(edge.to) ?? new Set<string>();
+        toSet.add(edge.from);
+        adjacency.set(edge.to, toSet);
       });
-      const simulationNodes = nodes.filter(
+      const connected = new Set<string>();
+      const queue = [triggerNode.id];
+      connected.add(triggerNode.id);
+      while (queue.length) {
+        const current = queue.shift();
+        if (!current) continue;
+        const neighbors = adjacency.get(current);
+        if (!neighbors) continue;
+        neighbors.forEach((neighbor: string) => {
+          if (connected.has(neighbor)) return;
+          connected.add(neighbor);
+          queue.push(neighbor);
+        });
+      }
+      const connectedSimulationIds = nodes
+        .filter((node: AiNode): boolean => node.type === "simulation" && connected.has(node.id))
+        .map((node: AiNode) => node.id);
+      let simulationNodes = nodes.filter(
         (node: AiNode): boolean =>
           node.type === "simulation" && connectedSimulationIds.includes(node.id)
       );
       if (simulationNodes.length === 0) {
-        if (!isScheduled) {
+        const fallbackSimulationNodes = nodes.filter(
+          (node: AiNode): boolean => node.type === "simulation"
+        );
+        if (fallbackSimulationNodes.length === 1) {
+          if (!isScheduled) {
+            toast("Simulation node isn't wired to the trigger. Using it anyway.", {
+              variant: "info",
+            });
+          }
+          simulationNodes = fallbackSimulationNodes;
+        } else if (!isScheduled) {
           toast("Connect a Simulation node to the Trigger context input.", {
             variant: "error",
           });
           return;
         }
+      }
+      if (simulationNodes.length === 0) {
         await runGraphForTrigger(triggerNode, event);
         return;
       }
@@ -912,34 +980,56 @@ export function useAiPathsRuntime({
   ): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === "scheduled_run";
-    const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
-      if (
-        edge.to === triggerNode.id &&
-        (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
-        (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-      ) {
-        return [edge.from];
-      }
-      if (
-        edge.from === triggerNode.id &&
-        (!edge.fromPort || edge.fromPort === "trigger") &&
-        (!edge.toPort || edge.toPort === "trigger")
-      ) {
-        return [edge.to];
-      }
-      return [];
+    const adjacency = new Map<string, Set<string>>();
+    edges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.to) return;
+      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+      fromSet.add(edge.to);
+      adjacency.set(edge.from, fromSet);
+      const toSet = adjacency.get(edge.to) ?? new Set<string>();
+      toSet.add(edge.from);
+      adjacency.set(edge.to, toSet);
     });
-    const simulationNodes = nodes.filter(
+    const connected = new Set<string>();
+    const queue = [triggerNode.id];
+    connected.add(triggerNode.id);
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current) continue;
+      const neighbors = adjacency.get(current);
+      if (!neighbors) continue;
+      neighbors.forEach((neighbor: string) => {
+        if (connected.has(neighbor)) return;
+        connected.add(neighbor);
+        queue.push(neighbor);
+      });
+    }
+    const connectedSimulationIds = nodes
+      .filter((node: AiNode): boolean => node.type === "simulation" && connected.has(node.id))
+      .map((node: AiNode) => node.id);
+    let simulationNodes = nodes.filter(
       (node: AiNode): boolean =>
         node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
-      if (!isScheduled) {
+      const fallbackSimulationNodes = nodes.filter(
+        (node: AiNode): boolean => node.type === "simulation"
+      );
+      if (fallbackSimulationNodes.length === 1) {
+        if (!isScheduled) {
+          toast("Simulation node isn't wired to the trigger. Using it anyway.", {
+            variant: "info",
+          });
+        }
+        simulationNodes = fallbackSimulationNodes;
+      } else if (!isScheduled) {
         toast("Connect a Simulation node to the Trigger context input.", {
           variant: "error",
         });
         return;
       }
+    }
+    if (simulationNodes.length === 0) {
       const triggerContext = buildTriggerContext(triggerNode, triggerEvent ?? "", event);
       const enqueueResult = await runsApi.enqueue({
         pathId: activePathId ?? "default",

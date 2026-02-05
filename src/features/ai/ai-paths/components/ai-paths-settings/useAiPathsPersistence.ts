@@ -72,7 +72,6 @@ type UseAiPathsPersistenceArgs = {
   paths: PathMeta[];
   executionMode: PathExecutionMode;
   selectedNodeId: string | null;
-  configOpen: boolean;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
@@ -126,7 +125,12 @@ type AiPathsUiState = {
 type UseAiPathsPersistenceResult = {
   autoSaveAt: string | null;
   autoSaveStatus: "idle" | "saving" | "saved" | "error";
-  handleSave: (options?: { silent?: boolean; includeNodeConfig?: boolean; force?: boolean }) => Promise<void>;
+  handleSave: (options?: {
+    silent?: boolean;
+    includeNodeConfig?: boolean;
+    force?: boolean;
+    nodesOverride?: AiNode[];
+  }) => Promise<void>;
   persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
@@ -153,7 +157,6 @@ export function useAiPathsPersistence({
   paths,
   executionMode,
   selectedNodeId,
-  configOpen,
   runtimeState,
   updaterSamples,
   normalizeDbNodePreset,
@@ -226,7 +229,6 @@ export function useAiPathsPersistence({
   const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const currentLastRunAtRef = useRef<string | null>(null);
   const currentSelectedNodeIdRef = useRef<string | null>(null);
-  const currentConfigOpenRef = useRef(false);
 
   const syncNodesRef = useCallback((next: AiNode[]): void => {
     currentNodesRef.current = next;
@@ -525,8 +527,7 @@ export function useAiPathsPersistence({
             ? preferredNodeId
             : normalizedNodes[0]?.id ?? null;
         setSelectedNodeId(resolvedNodeId);
-        const shouldOpenConfig = Boolean(activeConfig.uiState?.configOpen) && Boolean(resolvedNodeId);
-        setConfigOpen(shouldOpenConfig);
+        setConfigOpen(false);
         if (loadedLastError?.message === "Failed to load AI Paths settings") {
           setLastError(null);
           void persistLastError(null);
@@ -602,12 +603,13 @@ export function useAiPathsPersistence({
     []
   );
 
-  const buildNodesForAutoSave = useCallback((): AiNode[] => {
+  const buildNodesForAutoSave = useCallback(
+    (baseNodes: AiNode[] = nodes): AiNode[] => {
     const savedNodes = activePathId ? pathConfigs[activePathId]?.nodes ?? [] : [];
     const savedConfigById = new Map(
       savedNodes.map((node: AiNode): [string, NodeConfig | undefined] => [node.id, node.config])
     );
-    return nodes.map((node: AiNode): AiNode => {
+    return baseNodes.map((node: AiNode): AiNode => {
       if (savedConfigById.has(node.id)) {
         return { ...node, config: savedConfigById.get(node.id) };
       }
@@ -627,7 +629,6 @@ export function useAiPathsPersistence({
         isActive: isPathActive,
         uiState: {
           selectedNodeId,
-          configOpen,
         },
         nodes: stripNodeConfig([...nodes]).sort((a: AiNode, b: AiNode): number =>
           a.id.localeCompare(b.id)
@@ -647,7 +648,6 @@ export function useAiPathsPersistence({
       isPathLocked,
       isPathActive,
       selectedNodeId,
-      configOpen,
       nodes,
       edges,
       stripNodeConfig,
@@ -677,7 +677,6 @@ export function useAiPathsPersistence({
       lastRunAt,
       uiState: {
         selectedNodeId,
-        configOpen,
       },
     }),
     [
@@ -695,7 +694,6 @@ export function useAiPathsPersistence({
       runtimeState,
       lastRunAt,
       selectedNodeId,
-      configOpen,
     ]
   );
 
@@ -704,6 +702,7 @@ export function useAiPathsPersistence({
       silent?: boolean;
       force?: boolean;
       includeNodeConfig?: boolean;
+      nodesOverride?: AiNode[];
     }): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
@@ -718,7 +717,10 @@ export function useAiPathsPersistence({
       if (!silent) setSaving(true);
       try {
         const updatedAt = new Date().toISOString();
-        const nodesForSave = includeNodeConfig ? nodes : buildNodesForAutoSave();
+        const baseNodes = options?.nodesOverride ?? nodes;
+        const nodesForSave = includeNodeConfig
+          ? baseNodes
+          : buildNodesForAutoSave(baseNodes);
         const config = buildActivePathConfig(updatedAt, nodesForSave);
         const nextPaths = paths.map((path: PathMeta): PathMeta =>
           path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
@@ -772,12 +774,14 @@ export function useAiPathsPersistence({
       silent?: boolean;
       includeNodeConfig?: boolean;
       force?: boolean;
+      nodesOverride?: AiNode[];
     }): Promise<void> => {
       const silent = options?.silent ?? false;
       const ok = await persistPathConfig({
         force: options?.force ?? true,
         silent,
         includeNodeConfig: options?.includeNodeConfig,
+        nodesOverride: options?.nodesOverride,
       });
       if (silent) return;
       if (ok) {
@@ -793,7 +797,8 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     if (loading || !activePathId) return;
     lastSavedSnapshotRef.current = buildPathSnapshot();
-  }, [activePathId, loading, buildPathSnapshot]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePathId, loading]);
 
   useEffect((): void | (() => void) => {
     if (loading || !activePathId) return;
@@ -834,6 +839,8 @@ export function useAiPathsPersistence({
     activePathId,
     activeTrigger,
     executionMode,
+    isPathLocked,
+    isPathActive,
     edges,
     loading,
     nodes,
@@ -891,9 +898,6 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     currentSelectedNodeIdRef.current = selectedNodeId;
   }, [selectedNodeId]);
-  useEffect((): void => {
-    currentConfigOpenRef.current = configOpen;
-  }, [configOpen]);
 
   // Save immediately when page is about to unload or tab loses focus
   useEffect((): void | (() => void) => {
@@ -955,7 +959,6 @@ export function useAiPathsPersistence({
         lastRunAt: currentLastRunAtRef.current,
         uiState: {
           selectedNodeId: currentSelectedNodeIdRef.current,
-          configOpen: currentConfigOpenRef.current,
         },
       };
       const currentPaths = currentPathsRef.current;

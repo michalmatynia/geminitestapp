@@ -21,7 +21,9 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
               return rest;
             }
             return query;
-          });
+          })
+          // Drop any persisted queries with non-array keys (legacy v3 format)
+          .filter((query: Record<string, unknown>) => Array.isArray(query?.queryKey));
       }
       return parsed as unknown as PersistedClient;
     },

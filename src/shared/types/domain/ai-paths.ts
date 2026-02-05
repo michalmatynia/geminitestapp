@@ -180,7 +180,7 @@ export type TemplateConfig = {
   template: string;
 };
 
-export type RegexMatchMode = "first" | "all";
+export type RegexMatchMode = "first" | "first_overall" | "all";
 export type RegexGroupOutputMode = "object" | "array";
 export type RegexMode = "group" | "extract" | "extract_json";
 

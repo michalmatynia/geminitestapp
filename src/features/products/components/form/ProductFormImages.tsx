@@ -1,7 +1,8 @@
 "use client";
 
-import { Button, Label, FileUploadButton } from "@/shared/ui";
+import { Button, Input, Label, useToast } from "@/shared/ui";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
+import { useRef } from "react";
 
 
 
@@ -9,20 +10,40 @@ import ProductImageManager from "../ProductImageManager";
 
 export default function ProductFormImages(): React.JSX.Element {
   const { setShowFileManager, handleMultiImageChange } = useProductFormContext();
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div className="space-y-4">
       <div className="mb-4">
         <Label htmlFor="multi-image-upload">Upload Multiple Images</Label>
         <div className="mt-2 flex space-x-4">
-          <FileUploadButton
-            onFilesSelected={(files: File[]) => handleMultiImageChange(files)}
+          <Input
+            ref={inputRef}
+            type="file"
             accept="image/*"
             multiple
+            className="hidden"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              const list = event.target.files;
+              event.target.value = "";
+              if (!list || list.length === 0) return;
+              const files = Array.from(list);
+              try {
+                handleMultiImageChange(files);
+                toast(`Added ${files.length} image(s) to slots.`, { variant: "success" });
+              } catch (error: unknown) {
+                toast(error instanceof Error ? error.message : "Failed to add images.", { variant: "error" });
+              }
+            }}
+          />
+          <Button
+            type="button"
             aria-label="Upload multiple new images for the product"
+            onClick={() => inputRef.current?.click()}
           >
-            Upload from Drive
-          </FileUploadButton>
+            Upload images
+          </Button>
           <Button
             type="button"
             onClick={() => setShowFileManager(true)}

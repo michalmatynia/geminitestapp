@@ -412,7 +412,7 @@ function NavTree({
                         prefetch={false}
                         {...(item.onClick ? { onClick: item.onClick } : {})}
                         className={cn(
-                          "flex items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                          "flex items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer",
                           sectionStyle ? sectionStyle.border : "border-transparent",
                           active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
                         )}
@@ -435,7 +435,7 @@ function NavTree({
                           if (!item.href && hasChildren) onToggleOpen(item.id);
                         }}
                         className={cn(
-                          "flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                          "flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer",
                           sectionStyle ? sectionStyle.border : "border-transparent",
                           active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
                         )}

@@ -75,6 +75,7 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
 const Select: React.FC<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
 > = (allProps) => {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const { value, defaultValue, onValueChange: onValueChangeProp, disabled, children, ...props } = allProps
   const useNativeSelect = useNativeSelectMode()
   

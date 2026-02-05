@@ -31,10 +31,10 @@ const parseEnabled = (value: string | undefined, fallback: boolean): boolean => 
 };
 
 const parseIntervalSeconds = (value: string | undefined): number => {
-  if (!value) return 60;
+  if (!value) return 300;
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 60;
-  return Math.min(Math.max(parsed, 10), 3600);
+  if (!Number.isFinite(parsed)) return 300;
+  return Math.min(Math.max(parsed, 60), 3600);
 };
 
 export function BackgroundSyncProvider({ children }: { children: React.ReactNode }): React.JSX.Element {

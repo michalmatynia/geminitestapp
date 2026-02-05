@@ -1,0 +1,94 @@
+(node:15461) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:15527) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1457.002819ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 497.287494ms...
+Attempt 2 failed: You have exhausted your capacity on this model. Your quota will reset after 5s.. Retrying after 5841.473599000001ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2951.193488ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1790.053401ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1194.733627ms...
+{
+  "session_id": "0cccd0fb-e734-40d3-b425-38daca40ec01",
+  "response": "",
+  "stats": {
+    "models": {
+      "gemini-3-flash-preview": {
+        "api": {
+          "totalRequests": 12,
+          "totalErrors": 6,
+          "totalLatencyMs": 65330
+        },
+        "tokens": {
+          "input": 29669,
+          "prompt": 84560,
+          "candidates": 299,
+          "total": 85567,
+          "cached": 54891,
+          "thoughts": 708,
+          "tool": 0
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 6,
+      "totalSuccess": 6,
+      "totalFail": 0,
+      "totalDurationMs": 97605,
+      "totalDecisions": {
+        "accept": 6,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 3,
+          "success": 3,
+          "fail": 0,
+          "durationMs": 12,
+          "decisions": {
+            "accept": 3,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "run_shell_command": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 97447,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "search_file_content": {
+          "count": 2,
+          "success": 2,
+          "fail": 0,
+          "durationMs": 146,
+          "decisions": {
+            "accept": 2,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}

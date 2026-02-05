@@ -60,20 +60,25 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     if (!enabled || !isOnline) return (): void => {};
 
     const syncCriticalData = (): void => {
-      const canRefetch = (query: { queryKey: unknown; options?: { queryFn?: unknown } }): boolean =>
-        Array.isArray(query.queryKey) && typeof query.options?.queryFn === "function";
+      const canRefetch = (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }): boolean =>
+        Array.isArray(query.queryKey) &&
+        typeof query.options?.queryFn === "function" &&
+        (typeof query.isStale !== "function" || query.isStale());
 
       // Sync job statuses
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "jobs",
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "jobs",
       });
       // Sync user preferences
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "user-preferences",
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "user-preferences",
       });
       // Sync settings
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "settings",
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "settings",
       });
       
       setLastSync(new Date());

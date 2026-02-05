@@ -118,7 +118,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
         ? options.extraInvalidateKeys(variables)
         : options.extraInvalidateKeys;
     },
-    [options.extraInvalidateKeys, options]
+    [options]
   );
 
   return useMutation({

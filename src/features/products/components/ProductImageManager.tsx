@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   Input,
   Alert,
-  FileUploadTrigger,
 } from "@/shared/ui";
 import NextImage from "next/image";
 import React, { useEffect, useState } from "react";
@@ -53,6 +52,7 @@ export default function ProductImageManager(): React.JSX.Element {
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
   const [externalBaseInput, setExternalBaseInput] = useState(externalBaseSetting);
   const currentSlotIndexRef = React.useRef<number | null>(null);
+  const fileInputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     setExternalBaseInput(externalBaseSetting);
@@ -148,6 +148,10 @@ export default function ProductImageManager(): React.JSX.Element {
         filename: file.name,
       });
     }
+  };
+
+  const openSlotFilePicker = (slotIndex: number): void => {
+    fileInputRefs.current[slotIndex]?.click();
   };
 
   const triggerFileManager = (index: number): void => {
@@ -476,6 +480,21 @@ export default function ProductImageManager(): React.JSX.Element {
 
           return (
             <div key={slotKey} className="flex flex-col items-center gap-1">
+              <input
+                ref={(node: HTMLInputElement | null) => {
+                  fileInputRefs.current[index] = node;
+                }}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  const files = Array.from(event.target.files ?? []);
+                  handleSlotFileUpload(index, files);
+                  event.currentTarget.value = "";
+                }}
+                aria-hidden="true"
+                tabIndex={-1}
+              />
               <div className="flex w-full items-center justify-between gap-2">
                 <div className="flex items-center gap-1 text-[10px] text-gray-400">
                   <span
@@ -589,13 +608,9 @@ export default function ProductImageManager(): React.JSX.Element {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <FileUploadTrigger
-                        asChild
-                        accept="image/*"
-                        onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
-                      >
-                        <DropdownMenuItem>Upload image</DropdownMenuItem>
-                      </FileUploadTrigger>
+                      <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
+                        Upload image
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => triggerFileManager(index)}>
                         Choose existing
                       </DropdownMenuItem>
@@ -720,20 +735,15 @@ export default function ProductImageManager(): React.JSX.Element {
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-gray-500">
-                      <FileUploadTrigger
-                        asChild
-                        accept="image/*"
-                        onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Upload image to slot ${index + 1}`}
+                        onClick={() => openSlotFilePicker(index)}
                       >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Upload image to slot ${index + 1}`}
-                        >
-                          <PlusIcon className="h-6 w-6" />
-                        </Button>
-                      </FileUploadTrigger>
+                        <PlusIcon className="h-6 w-6" />
+                      </Button>
                       <span className="text-xs">Upload</span>
                       <Button
                         type="button"

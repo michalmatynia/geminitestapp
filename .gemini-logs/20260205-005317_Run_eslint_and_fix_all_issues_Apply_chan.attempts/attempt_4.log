@@ -1,0 +1,43 @@
+(node:17110) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:17208) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2723.8005639999997ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1866.376238ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1859.990405ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1886.191413ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2199.09719ms...
+Attempt 2 failed: You have exhausted your capacity on this model. Your quota will reset after 5s.. Retrying after 5100.367172ms...
+Attempt 3 failed: You have exhausted your capacity on this model. Your quota will reset after 5s.. Max attempts reached
+Error when talking to Gemini API Full report available at: /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/gemini-client-error-Turn.run-sendMessageStream-2026-02-05T00-09-31-687Z.json RetryableQuotaError: You have exhausted your capacity on this model. Your quota will reset after 5s.
+    at classifyGoogleError (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/googleQuotaErrors.js:211:28)
+    at retryWithBackoff (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/retry.js:131:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiChat.makeApiCallAndProcessStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:421:32)
+    at async GeminiChat.streamWithRetries (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:253:40)
+    at async Turn.run (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/turn.js:66:30)
+    at async GeminiClient.processTurn (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:459:26)
+    at async GeminiClient.sendMessageStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:558:20)
+    at async GeminiClient.processTurn (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:498:24)
+    at async GeminiClient.sendMessageStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:558:20) {
+  cause: {
+    code: 429,
+    message: 'You have exhausted your capacity on this model. Your quota will reset after 5s.',
+    details: [ [Object], [Object] ]
+  },
+  retryDelayMs: 5318.071876
+}
+{
+  "session_id": "6612b8c4-5528-4153-b95c-0a8f4f6dff52",
+  "error": {
+    "type": "Error",
+    "message": "[object Object]",
+    "code": 1
+  }
+}

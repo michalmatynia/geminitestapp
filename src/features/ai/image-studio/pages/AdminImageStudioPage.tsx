@@ -568,7 +568,7 @@ function SlotTree({
   return (
     <div
       className="h-full overflow-auto rounded border border-border bg-card/40 p-2"
-        onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
         e.preventDefault();
         setDragOverPath("");
@@ -592,84 +592,13 @@ function SlotTree({
         }
       }}
     >
-      <TreeRow
-        asChild
-        depth={0}
-        baseIndent={8}
-        indent={10}
-        tone="subtle"
-        selected={selectedFolder === ""}
-        dragOver={dragOverPath === ""}
-        className="text-xs"
-      >
-        <button
-          type="button"
-          className="w-full text-left cursor-grab active:cursor-grabbing"
-          onClick={() => onSelectFolder("")}
-          onDoubleClick={() => toggle("root")}
-          title={projectId || "Project root"}
-          draggable
-          onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
-            setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: "" }, { effectAllowed: "move" });
-            setDraggedFolderPath("");
-          }}
-          onDragEnd={() => {
-            setDraggedFolderPath(null);
-            setDragOverPath(null);
-          }}
-          onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-            if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
-            e.preventDefault();
-            e.stopPropagation();
-            setDragOverPath("");
-            e.dataTransfer.dropEffect = "move";
-          }}
-          onDragLeave={() => {
-            if (dragOverPath === "") setDragOverPath(null);
-          }}
-          onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            e.stopPropagation();
-            const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
-            const folderPath =
-              getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
-            setDragOverPath(null);
-            if (slotId) {
-              const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-              if (slot) onMoveSlot(slot, "");
-              return;
-            }
-            if (folderPath !== null) {
-              onMoveFolder(folderPath, "");
-            }
-          }}
-        >
-          <TreeCaret
-            isOpen={rootOpen}
-            hasChildren={tree.children.length > 0}
-            ariaLabel={rootOpen ? "Collapse root" : "Expand root"}
-            onToggle={() => toggle("root")}
-            className="text-gray-400"
-            buttonClassName="hover:bg-gray-700"
-            placeholderClassName="w-4"
-          />
-          <Folder className="size-4 text-gray-400" />
-          <span className="truncate">{projectId || "Project"}</span>
-        </button>
-      </TreeRow>
-      {dragOverPath === "" ? (
-        <div className="ml-7 mt-1 rounded border border-dashed border-emerald-500/60 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200">
-          Drop to move here
-        </div>
-      ) : null}
-
       {tree.children.length === 0 ? (
         <div className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">
           No folders yet. Create a folder or add slots here.
         </div>
       ) : rootOpen ? (
         <div>
-          {tree.children.map((child: TreeNode) => renderNode(child, 1))}
+          {tree.children.map((child: TreeNode) => renderNode(child, 0))}
         </div>
       ) : null}
     </div>
@@ -710,6 +639,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
   const [virtualFolders, setVirtualFolders] = useState<string[]>([]);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
+  const [driveImportMode, setDriveImportMode] = useState<"create" | "replace">("create");
+  const [driveImportTargetId, setDriveImportTargetId] = useState<string | null>(null);
   const [slotCreateOpen, setSlotCreateOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [slotImageUrlDraft, setSlotImageUrlDraft] = useState<string>("");
@@ -728,6 +659,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [brushRadius, setBrushRadius] = useState<number>(8);
 
   const [promptText, setPromptText] = useState<string>("");
+  const [extractReviewOpen, setExtractReviewOpen] = useState<boolean>(false);
+  const [extractDraftPrompt, setExtractDraftPrompt] = useState<string>("");
+  const [extractPreviewUiOverrides, setExtractPreviewUiOverrides] = useState<Record<string, ParamUiControl>>({});
   const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
   const [paramsState, setParamsState] = useState<Record<string, unknown> | null>(null);
   const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
@@ -1343,6 +1277,64 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return Array.from(unique).sort((a: string, b: string) => a.localeCompare(b));
   }, [folders]);
   const maxSlotsReached = useMemo(() => slots.length >= 100, [slots.length]);
+  const selectedSlot = useMemo(() => {
+    if (!selectedSlotId) return null;
+    return slots.find((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId) ?? null;
+  }, [slots, selectedSlotId]);
+  const workingSlot = useMemo(() => {
+    if (!workingSlotId) return null;
+    return slots.find((slot: ImageStudioSlotRecord) => slot.id === workingSlotId) ?? null;
+  }, [slots, workingSlotId]);
+
+  const handleReplaceUpload = useCallback(
+    async (files: File[]): Promise<void> => {
+      if (!projectId) {
+        toast("Select or create a project first.", { variant: "error" });
+        return;
+      }
+      if (!selectedSlot) {
+        toast("Select a slot first.", { variant: "error" });
+        return;
+      }
+      if (files.length === 0) return;
+      try {
+        setSlotUpdateBusy(true);
+        const formData = new FormData();
+        files.forEach((file: File) => formData.append("files", file));
+        const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = (await res.json().catch(() => null)) as StudioUploadResponse | { error?: string; errorId?: string } | null;
+        if (!res.ok) {
+          const errorId = data && "errorId" in data ? data.errorId : undefined;
+          throw new Error(`${(data && "error" in data && data.error) || "Upload failed"}${errorId ? ` (Error ID: ${errorId})` : ""}`);
+        }
+        const uploaded = data && "uploaded" in data ? data.uploaded : undefined;
+        const file = (Array.isArray(uploaded) && uploaded.length > 0) ? uploaded[0] as ImageFileRecord : undefined;
+        if (!file) {
+          toast("No files uploaded.", { variant: "error" });
+          return;
+        }
+        const sourceFile = files[0];
+        const dataUrl = sourceFile ? await fileToDataUrl(sourceFile) : null;
+        await updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: {
+            imageFileId: file.id,
+            imageUrl: normalizePublicPath(file.filepath),
+            imageBase64: dataUrl,
+          },
+        });
+        toast("Slot image replaced.", { variant: "success" });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : "Upload failed.", { variant: "error" });
+      } finally {
+        setSlotUpdateBusy(false);
+      }
+    },
+    [projectId, selectedSlot, toast, updateSlotMutation]
+  );
 
   const handleCreateSlot = useCallback(async (): Promise<void> => {
     if (!projectId) return;
@@ -1368,14 +1360,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return list.filter((id: string) => id.toLowerCase().includes(term));
   }, [projectSearch, projectsQuery.data]);
 
-  const selectedSlot = useMemo(() => {
-    if (!selectedSlotId) return null;
-    return slots.find((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId) ?? null;
-  }, [slots, selectedSlotId]);
-  const workingSlot = useMemo(() => {
-    if (!workingSlotId) return null;
-    return slots.find((slot: ImageStudioSlotRecord) => slot.id === workingSlotId) ?? null;
-  }, [slots, workingSlotId]);
   useEffect(() => {
     setSlotInlineEditOpen(false);
   }, [selectedSlotId]);
@@ -1486,13 +1470,53 @@ export function AdminImageStudioPage(): React.JSX.Element {
     async (files: ImageFileSelection[]): Promise<void> => {
       setDriveImportOpen(false);
       if (files.length === 0) return;
+      if (driveImportMode === "replace" && driveImportTargetId) {
+        if (!projectId) {
+          toast("Select or create a project first.", { variant: "error" });
+          return;
+        }
+        try {
+          setSlotUpdateBusy(true);
+          const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ files, folder: selectedFolder }),
+          });
+          const data = (await res.json().catch(() => null)) as StudioImportResponse | { error?: string } | null;
+          if (!res.ok) {
+            throw new Error((data && "error" in data && data.error) || "Import failed");
+          }
+          const uploaded = data && "uploaded" in data ? data.uploaded : undefined;
+          const file = (Array.isArray(uploaded) && uploaded.length > 0) ? uploaded[0] as ImageFileRecord : undefined;
+          if (!file) {
+            toast("No files imported.", { variant: "error" });
+            return;
+          }
+          const dataUrl = await fetchBase64FromUrl(file.filepath).catch(() => null);
+          await updateSlotMutation.mutateAsync({
+            id: driveImportTargetId,
+            data: {
+              imageFileId: file.id,
+              imageUrl: normalizePublicPath(file.filepath),
+              imageBase64: dataUrl,
+            },
+          });
+          toast("Slot image replaced.", { variant: "success" });
+        } catch (error) {
+          toast(error instanceof Error ? error.message : "Import failed.", { variant: "error" });
+        } finally {
+          setSlotUpdateBusy(false);
+        }
+        return;
+      }
+
       try {
         await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
       } catch {
         // Errors are surfaced via toast in onError
       }
     },
-    [importFromDriveMutation, selectedFolder]
+    [driveImportMode, driveImportTargetId, importFromDriveMutation, projectId, selectedFolder, toast, updateSlotMutation]
   );
 
   const applyProgrammaticExtraction = useCallback((sourcePrompt: string, options?: { toast?: boolean }): ExtractParamsResult => {
@@ -1512,9 +1536,62 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return result;
   }, [toast]);
 
-  const runProgrammaticExtraction = useCallback((): void => {
-    applyProgrammaticExtraction(promptText);
-  }, [applyProgrammaticExtraction, promptText]);
+
+
+  const extractPreviewResult = useMemo(() => {
+    if (!extractReviewOpen) return null;
+    if (!extractDraftPrompt.trim()) return null;
+    return extractParamsFromPrompt(extractDraftPrompt);
+  }, [extractDraftPrompt, extractReviewOpen]);
+
+  const extractPreviewLeaves = useMemo(() => {
+    if (!extractPreviewResult || !extractPreviewResult.ok) return [];
+    return flattenParams(extractPreviewResult.params);
+  }, [extractPreviewResult]);
+
+  const extractPreviewSpec = useMemo(() => {
+    if (!extractPreviewResult || !extractPreviewResult.ok) return null;
+    return inferParamSpecs(extractPreviewResult.params, extractPreviewResult.rawObjectText);
+  }, [extractPreviewResult]);
+
+  const extractPreviewIssues = useMemo(() => {
+    if (!extractPreviewResult || !extractPreviewResult.ok) return [];
+    return validateImageStudioParams(extractPreviewResult.params, extractPreviewSpec ?? undefined);
+  }, [extractPreviewResult, extractPreviewSpec]);
+
+  const extractPreviewIssuesByPath = useMemo(() => {
+    const map: Record<string, ParamIssue[]> = {};
+    extractPreviewIssues.forEach((issue: ParamIssue) => {
+      if (!map[issue.path]) map[issue.path] = [];
+      map[issue.path].push(issue);
+    });
+    return map;
+  }, [extractPreviewIssues]);
+
+  useEffect(() => {
+    if (!extractReviewOpen) return;
+    if (!extractPreviewResult || !extractPreviewResult.ok) {
+      setExtractPreviewUiOverrides({});
+      return;
+    }
+    setExtractPreviewUiOverrides((prev: Record<string, ParamUiControl>) => {
+      const next: Record<string, ParamUiControl> = {};
+      extractPreviewLeaves.forEach((leaf: ParamLeaf) => {
+        if (prev[leaf.path]) next[leaf.path] = prev[leaf.path];
+      });
+      return next;
+    });
+  }, [extractReviewOpen, extractPreviewLeaves, extractPreviewResult]);
+
+  const extractPreviewValidationSummary = useMemo(() => {
+    let errors = 0;
+    let warnings = 0;
+    extractPreviewIssues.forEach((issue: ParamIssue) => {
+      if (issue.severity === "error") errors += 1;
+      if (issue.severity === "warning") warnings += 1;
+    });
+    return { errors, warnings };
+  }, [extractPreviewIssues]);
 
   const autoFormatPrompt = useCallback((): void => {
     if (!promptText.trim()) return;
@@ -3030,6 +3107,453 @@ export function AdminImageStudioPage(): React.JSX.Element {
       </SharedModal>
 
       <SharedModal
+        open={extractReviewOpen}
+        onClose={() => setExtractReviewOpen(false)}
+        title="Review parameter extraction"
+        size="lg"
+      >
+        <div className="space-y-4 text-sm text-gray-200">
+          <div className="space-y-2">
+            <div className="text-[11px] text-gray-400">Prompt to extract from</div>
+            <Textarea
+              value={extractDraftPrompt}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(e.target.value)}
+              className="h-36 font-mono text-[11px]"
+              placeholder="Paste or edit your prompt before extracting parameters."
+            />
+          </div>
+
+          {extractDraftPrompt.trim() ? (
+            extractPreviewResult ? (
+              extractPreviewResult.ok ? (
+                <div className="space-y-3 rounded border border-border bg-card/60 p-3">
+                  <div className="flex items-center justify-between gap-3 text-[11px]">
+                    <div className="text-gray-400">
+                      Proposed params: <span className="text-gray-200">{extractPreviewLeaves.length}</span>
+                    </div>
+                    <div className="text-gray-500">
+                      Validation:{" "}
+                      {extractPreviewValidationSummary.errors === 0 && extractPreviewValidationSummary.warnings === 0 ? (
+                        <span className="text-emerald-300">OK</span>
+                      ) : (
+                        <>
+                          {extractPreviewValidationSummary.errors > 0 ? (
+                            <span className="text-red-300">{extractPreviewValidationSummary.errors} error(s)</span>
+                          ) : (
+                            <span className="text-gray-400">0 errors</span>
+                          )}
+                          {" • "}
+                          {extractPreviewValidationSummary.warnings > 0 ? (
+                            <span className="text-yellow-300">{extractPreviewValidationSummary.warnings} warning(s)</span>
+                          ) : (
+                            <span className="text-gray-400">0 warnings</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="max-h-72 space-y-2 overflow-auto text-[11px] text-gray-300">
+                    {extractPreviewLeaves.length === 0 ? (
+                      <div className="text-gray-400">No parameters detected.</div>
+                    ) : (
+                      extractPreviewLeaves.map((leaf: ParamLeaf) => {
+                        const spec = extractPreviewSpec?.[leaf.path];
+                        const rec = recommendParamUiControl(leaf.value, spec);
+                        const selectedOverride = extractPreviewUiOverrides[leaf.path] ?? "auto";
+                        const issues = extractPreviewIssuesByPath[leaf.path] ?? [];
+                        const errors = issues.filter((issue: ParamIssue) => issue.severity === "error");
+                        const warnings = issues.filter((issue: ParamIssue) => issue.severity === "warning");
+                        return (
+                          <div key={leaf.path} className="rounded border border-border/60 bg-background/40 p-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="min-w-0 truncate font-mono text-gray-200">{leaf.path}</div>
+                              <div className="text-gray-500">
+                                Type:{" "}
+                                <span className="text-gray-300">
+                                  {Array.isArray(leaf.value) ? "array" : leaf.value === null ? "null" : typeof leaf.value}
+                                </span>
+                                {spec?.kind ? (
+                                  <>
+                                    {" • "}
+                                    Kind: <span className="text-gray-300">{spec.kind}</span>
+                                  </>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="mt-1 text-gray-400">
+                              Value: <span className="text-gray-300">{safeJsonStringify(leaf.value)}</span>
+                            </div>
+
+                            <div className="mt-1 text-gray-500">
+                              Suggested control:{" "}
+                              <span className="text-gray-300">{paramUiControlLabel(rec.recommended)}</span>
+                              {rec.reason ? (
+                                <>
+                                  {" • "}
+                                  <span className="text-gray-400">{rec.reason}</span>
+                                </>
+                              ) : null}
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                              <div className="text-gray-500">Selector:</div>
+                              <Select
+                                value={selectedOverride}
+                                onValueChange={(next: string) => {
+                                  if (!isParamUiControl(next)) return;
+                                  setExtractPreviewUiOverrides((prev: Record<string, ParamUiControl>) => {
+                                    if (next === "auto") {
+                                      if (!(leaf.path in prev)) return prev;
+                                      const { [leaf.path]: _removed, ...rest } = prev;
+                                      return rest;
+                                    }
+                                    return { ...prev, [leaf.path]: next };
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-7 w-[140px] px-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {rec.options.map((opt: ParamUiControl) => (
+                                    <SelectItem key={opt} value={opt}>
+                                      {opt === "auto" ? `Auto (${paramUiControlLabel(rec.recommended)})` : paramUiControlLabel(opt)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {spec ? (
+                              <div className="mt-1 text-gray-500">
+                                {spec.hint ? (
+                                  <span>
+                                    Hint: <span className="text-gray-400">{spec.hint}</span>
+                                  </span>
+                                ) : null}
+                                {(spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? (
+                                  <span>
+                                    {spec.hint ? " • " : ""}
+                                    Range:{" "}
+                                    <span className="text-gray-400">
+                                      {spec.min ?? "?"}..{spec.max ?? "?"} step {spec.step ?? "?"}
+                                    </span>
+                                  </span>
+                                ) : null}
+                                {spec.enumOptions ? (
+                                  <span>
+                                    {(spec.hint || spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? " • " : ""}
+                                    Enum: <span className="text-gray-400">{spec.enumOptions.join(", ")}</span>
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : null}
+
+                            {errors.length > 0 || warnings.length > 0 ? (
+                              <div className="mt-2 space-y-1">
+                                {errors.map((issue: ParamIssue) => (
+                                  <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
+                                    {issue.message}
+                                  </div>
+                                ))}
+                                {warnings.map((issue: ParamIssue) => (
+                                  <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
+                                    {issue.message}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[11px] text-gray-500">Raw extracted JSON</div>
+                    <Textarea
+                      value={extractPreviewResult.ok ? safeJsonStringify(extractPreviewResult.params) : ""}
+                      readOnly
+                      className="h-28 font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded border border-red-500/40 bg-red-500/10 p-3 text-[11px] text-red-200">
+                  {String(extractPreviewResult.error)}
+                </div>
+              )
+            ) : (
+              <div className="text-[11px] text-gray-400">No preview available yet.</div>
+            )
+          ) : (
+            <div className="text-[11px] text-gray-400">Add a prompt to preview extracted parameters.</div>
+          )}
+
+          {studioSettings.promptExtraction.mode !== "programmatic" ? (
+            <div className="rounded border border-border bg-card/60 p-3 text-[11px] text-gray-300">
+              AI extraction is not wired yet. Selected model:{" "}
+              <span className="text-gray-200">{studioSettings.promptExtraction.gpt.model}</span>. Configure at
+              {" "}
+              <span className="text-gray-200">/admin/settings/ai</span>.
+            </div>
+          ) : null}
+
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => setExtractReviewOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!extractDraftPrompt.trim()) return;
+                if (studioSettings.promptExtraction.mode !== "programmatic") {
+                  toast(
+                    `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
+                    { variant: "info" }
+                  );
+                  return;
+                }
+                setPromptText(extractDraftPrompt);
+                applyProgrammaticExtraction(extractDraftPrompt);
+                setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+                  if (!extractPreviewUiOverrides || Object.keys(extractPreviewUiOverrides).length === 0) return prev;
+                  return { ...prev, ...extractPreviewUiOverrides };
+                });
+                setExtractReviewOpen(false);
+              }}
+              disabled={!extractDraftPrompt.trim()}
+            >
+              Extract params
+            </Button>
+          </div>
+        </div>
+      </SharedModal>
+
+      <SharedModal
+        open={slotInlineEditOpen && Boolean(selectedSlot)}
+        onClose={() => setSlotInlineEditOpen(false)}
+        title="Edit slot"
+        size="lg"
+      >
+        {selectedSlot ? (
+          <div className="space-y-4 text-sm text-gray-200">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <Select
+                value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
+                onValueChange={(value: string) => {
+                  setMoveTargetFolder(value === "__root__" ? "" : value);
+                }}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Move to folder" />
+                </SelectTrigger>
+                <SelectContent>
+                  {folderOptions.map((folder: string) => (
+                    <SelectItem key={folder || "__root__"} value={folder || "__root__"}>
+                      {folder || "(root)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={moveSlotMutation.isPending || (selectedSlot.folderPath ?? "") === moveTargetFolder}
+                onClick={() => {
+                  void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
+                }}
+              >
+                Move
+              </Button>
+            </div>
+
+            {!isImageSlot ? (
+              <>
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="text-[11px] text-gray-400">Slot image</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setDriveImportMode("replace");
+                        setDriveImportTargetId(selectedSlot.id);
+                        setDriveImportOpen(true);
+                      }}
+                      disabled={slotUpdateBusy || importFromDriveMutation.isPending}
+                    >
+                      <Folder className="mr-2 size-4" />
+                      Replace from Drive
+                    </Button>
+                    <FileUploadButton
+                      variant="outline"
+                      size="sm"
+                      accept="image/*"
+                      disabled={slotUpdateBusy}
+                      onFilesSelected={handleReplaceUpload}
+                    >
+                      <Upload className="mr-2 size-4" />
+                      Replace from Upload
+                    </FileUploadButton>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={slotImageUrlDraft}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
+                      placeholder="Paste image URL"
+                      className="h-8"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void handleApplyImageUrl()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Use URL
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={slotBase64Draft}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
+                    placeholder="Paste base64 data URL"
+                    className="min-h-[80px] text-xs"
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void handleApplyBase64()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Use Base64
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void handleClearSlotMedia()}
+                      disabled={slotUpdateBusy}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="text-[11px] text-gray-400">3D asset</div>
+                  <Asset3DPickerField
+                    value={selectedSlot.asset3dId ?? ""}
+                    onChange={(value: string) => {
+                      void updateSlotMutation.mutateAsync({
+                        id: selectedSlot.id,
+                        data: { asset3dId: value || null },
+                      });
+                    }}
+                    disabled={slotUpdateBusy}
+                  />
+                  <FileUploadButton
+                    variant="outline"
+                    size="sm"
+                    accept=".glb,.gltf,model/gltf-binary"
+                    disabled={slotUpdateBusy}
+                    onFilesSelected={async (files: File[]) => {
+                      await handleUpload3DAsset(files);
+                    }}
+                  >
+                    <Upload className="mr-2 size-4" />
+                    Upload 3D
+                  </FileUploadButton>
+                </div>
+
+                <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] text-gray-400">Composite sources</div>
+                    {compositeAssetIds.length > 0 ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[10px]"
+                        onClick={() => setCompositeAssetIds([])}
+                      >
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                  <MultiSelect
+                    options={compositeAssetOptions}
+                    selected={compositeAssetIds}
+                    onChange={(values: string[]) => {
+                      const baseId = workingSlotId ?? selectedSlotId;
+                      const next = values.filter((id: string) => id !== baseId);
+                      setCompositeAssetIds(next);
+                    }}
+                    placeholder="Add slots for compositing"
+                    searchPlaceholder="Search slots..."
+                    disabled={!projectId || compositeAssetOptions.length === 0}
+                    className="text-xs"
+                  />
+                  {compositeAssets.length > 0 ? (
+                    <div className="space-y-1">
+                      {compositeAssets.map((slot: ImageStudioSlotRecord) => {
+                        const folder = slot.folderPath ?? "";
+                        const name = slot.name || slot.id;
+                        const label = folder ? `${folder}/${name}` : name;
+                        return (
+                          <div
+                            key={slot.id}
+                            className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
+                          >
+                            <span className="truncate text-gray-300">{label}</span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() =>
+                                setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
+                              }
+                            >
+                              <X className="size-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-gray-500">
+                      Optional. Send up to 16 images total (including base).
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : null}
+
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full text-red-300 hover:text-red-200"
+              disabled={deleteSlotMutation.isPending}
+              onClick={() => {
+                const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
+                if (!confirmed) return;
+                void deleteSlotMutation.mutateAsync(selectedSlot.id);
+              }}
+            >
+              Delete slot
+            </Button>
+          </div>
+        ) : null}
+      </SharedModal>
+
+      <SharedModal
         open={slotCreateOpen}
         onClose={() => setSlotCreateOpen(false)}
         title="New slot"
@@ -3052,15 +3576,17 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Plus className="mr-2 size-4" />
               Create empty slot
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setSlotCreateOpen(false);
-                setDriveImportOpen(true);
-              }}
-              disabled={!projectId || importFromDriveMutation.isPending}
-            >
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSlotCreateOpen(false);
+                  setDriveImportMode("create");
+                  setDriveImportTargetId(null);
+                  setDriveImportOpen(true);
+                }}
+                disabled={!projectId || importFromDriveMutation.isPending}
+              >
               <Folder className="mr-2 size-4" />
               Import from Drive
             </Button>
@@ -3396,22 +3922,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
           variant="subtle"
           aria-hidden={isFocusMode}
         >
-          <PanelHeader
-            title="Project & Slots"
-            actions={(
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void queryClient.invalidateQueries({ queryKey: ["image-studio"] });
-                }}
-                title="Refresh studio data"
-              >
-                <RefreshCcw className="mr-2 size-4" />
-                Refresh
-              </Button>
-            )}
-          />
           <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
@@ -3427,7 +3937,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   <SelectValue placeholder={projectsQuery.isLoading ? "Loading..." : "Select project"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">No project</SelectItem>
                   {(projectsQuery.data ?? []).map((id: string) => (
                     <SelectItem key={id} value={id}>
                       {id}
@@ -3435,14 +3944,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { void projectsQuery.refetch(); }}
-                title="Reload projects"
-              >
-                <RefreshCcw className="size-4" />
-              </Button>
             </div>
             {!projectId ? (
               <div className="text-[11px] text-amber-200">
@@ -3465,23 +3966,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] text-gray-400">
-                Folder: <span className="text-gray-200">{selectedFolder || "(root)"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSlotCreateOpen(true)}
-                  disabled={!projectId || maxSlotsReached}
-                  title={maxSlotsReached ? "Max 100 slots per project" : "Create a new slot"}
-                >
-                  <Plus className="mr-2 size-4" />
-                  New slot
-                </Button>
-              </div>
+            <div className="text-[11px] text-gray-400">
+              Folder: <span className="text-gray-200">{selectedFolder || "(root)"}</span>
             </div>
             <div className="flex items-center gap-2">
               <Input
@@ -3500,254 +3986,36 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 Create folder
               </Button>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSlotCreateOpen(true)}
+              disabled={!projectId || maxSlotsReached}
+            >
+              New Slot
+            </Button>
             {selectedSlot ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      title="New slot"
-                      onClick={() => setSlotCreateOpen(true)}
-                      disabled={!projectId || maxSlotsReached}
-                    >
-                      <Plus className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      title="Import from Drive"
-                      onClick={() => setDriveImportOpen(true)}
-                      disabled={!projectId || importFromDriveMutation.isPending}
-                    >
-                      <Folder className="size-4" />
-                    </Button>
-                    <FileUploadButton
-                      variant="outline"
-                      size="icon"
-                      title="Upload images"
-                      accept="image/*"
-                      multiple
-                      disabled={!projectId || uploadMutation.isPending}
-                      onFilesSelected={async (files: File[]) => {
-                        await uploadMutation.mutateAsync({ files, folder: selectedFolder });
-                      }}
-                    >
-                      <Upload className="size-4" />
-                    </FileUploadButton>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={workingSlotId === selectedSlot.id ? "secondary" : "outline"}
-                      onClick={() => setWorkingSlotId(selectedSlot.id)}
-                    >
-                      {workingSlotId === selectedSlot.id ? "Loaded" : "Load to preview"}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={slotInlineEditOpen ? "secondary" : "outline"}
-                      onClick={() => setSlotInlineEditOpen((prev: boolean) => !prev)}
-                    >
-                      {slotInlineEditOpen ? "Close edit" : "Edit"}
-                    </Button>
-                  </div>
-                </div>
-                {slotInlineEditOpen ? (
-                  <div className="grid grid-cols-[1fr_auto] gap-2">
-                    <Select
-                      value={moveTargetFolder === "" ? "__root__" : moveTargetFolder}
-                      onValueChange={(value: string) => {
-                        setMoveTargetFolder(value === "__root__" ? "" : value);
-                      }}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Move to folder" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {folderOptions.map((folder: string) => (
-                          <SelectItem key={folder || "__root__"} value={folder || "__root__"}>
-                            {folder || "(root)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        moveSlotMutation.isPending ||
-                        (selectedSlot.folderPath ?? "") === moveTargetFolder
-                      }
-                      onClick={() => {
-                        void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
-                      }}
-                    >
-                      Move
-                    </Button>
-                  </div>
-                ) : null}
-
-                {slotInlineEditOpen && !isImageSlot ? (
-                  <>
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="text-[11px] text-gray-400">Slot image</div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={slotImageUrlDraft}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
-                          placeholder="Paste image URL"
-                          className="h-8"
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void handleApplyImageUrl()}
-                          disabled={slotUpdateBusy}
-                        >
-                          Use URL
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={slotBase64Draft}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
-                        placeholder="Paste base64 data URL"
-                        className="min-h-[80px] text-xs"
-                      />
-                      <div className="flex items-center justify-between gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void handleApplyBase64()}
-                          disabled={slotUpdateBusy}
-                        >
-                          Use Base64
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => void handleClearSlotMedia()}
-                          disabled={slotUpdateBusy}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="text-[11px] text-gray-400">3D asset</div>
-                      <Asset3DPickerField
-                        value={selectedSlot.asset3dId ?? ""}
-                        onChange={(value: string) => {
-                          void updateSlotMutation.mutateAsync({
-                            id: selectedSlot.id,
-                            data: { asset3dId: value || null },
-                          });
-                        }}
-                        disabled={slotUpdateBusy}
-                      />
-                      <FileUploadButton
-                        variant="outline"
-                        size="sm"
-                        accept=".glb,.gltf,model/gltf-binary"
-                        disabled={slotUpdateBusy}
-                        onFilesSelected={async (files: File[]) => {
-                          await handleUpload3DAsset(files);
-                        }}
-                      >
-                        <Upload className="mr-2 size-4" />
-                        Upload 3D
-                      </FileUploadButton>
-                    </div>
-
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-gray-400">Composite sources</div>
-                        {compositeAssetIds.length > 0 ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-[10px]"
-                            onClick={() => setCompositeAssetIds([])}
-                          >
-                            Clear
-                          </Button>
-                        ) : null}
-                      </div>
-                      <MultiSelect
-                        options={compositeAssetOptions}
-                        selected={compositeAssetIds}
-                                        onChange={(values: string[]) => {
-                                          const baseId = workingSlotId ?? selectedSlotId;
-                                          const next = values.filter((id: string) => id !== baseId);
-                                          setCompositeAssetIds(next);
-                                        }}
-                        placeholder="Add slots for compositing"
-                        searchPlaceholder="Search slots..."
-                        disabled={!projectId || compositeAssetOptions.length === 0}
-                        className="text-xs"
-                      />
-                      {compositeAssets.length > 0 ? (
-                        <div className="space-y-1">
-                          {compositeAssets.map((slot: ImageStudioSlotRecord) => {
-                            const folder = slot.folderPath ?? "";
-                            const name = slot.name || slot.id;
-                            const label = folder ? `${folder}/${name}` : name;
-                            return (
-                              <div
-                                key={slot.id}
-                                className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
-                              >
-                                <span className="truncate text-gray-300">{label}</span>
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6"
-                                  onClick={() =>
-                                    setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
-                                  }
-                                >
-                                  <X className="size-3" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-[10px] text-gray-500">
-                          Optional. Send up to 16 images total (including base).
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : null}
-
-                {slotInlineEditOpen ? (
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    className="w-full text-red-300 hover:text-red-200"
-                    disabled={deleteSlotMutation.isPending}
-                    onClick={() => {
-                      const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
-                      if (!confirmed) return;
-                      void deleteSlotMutation.mutateAsync(selectedSlot.id);
-                    }}
+                    variant={workingSlotId === selectedSlot.id ? "secondary" : "outline"}
+                    onClick={() => setWorkingSlotId(selectedSlot.id)}
                   >
-                    Delete slot
+                    {workingSlotId === selectedSlot.id ? "Loaded" : "Load to preview"}
                   </Button>
-                ) : null}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    title="Edit slot"
+                    onClick={() => setSlotInlineEditOpen(true)}
+                  >
+                    <Settings2 className="size-4" />
+                  </Button>
+                </div>
               </div>
             ) : null}
           </div>
@@ -4171,14 +4439,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   title="AI extract"
                   onClick={() => {
                     if (!promptText.trim()) return;
-                    if (studioSettings.promptExtraction.mode === "programmatic") {
-                      runProgrammaticExtraction();
-                      return;
-                    }
-                    toast(
-                      `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
-                      { variant: "info" }
-                    );
+                    setExtractDraftPrompt(promptText);
+                    setExtractReviewOpen(true);
                   }}
                   disabled={!promptText.trim()}
                 >
@@ -4215,7 +4477,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   variant="outline"
                   size="icon"
                   title="Extract params"
-                  onClick={runProgrammaticExtraction}
+                  onClick={() => {
+                    if (!promptText.trim()) return;
+                    setExtractDraftPrompt(promptText);
+                    setExtractReviewOpen(true);
+                  }}
                   disabled={!promptText.trim()}
                 >
                   <Settings2 className="size-4" />

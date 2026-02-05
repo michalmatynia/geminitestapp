@@ -7,6 +7,7 @@ import { Button, Label, Textarea } from "@/shared/ui";
 import type { AiNode, Edge, NodeConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
 import { createViewerOutputs, formatRuntimeValue } from "@/features/ai/ai-paths/lib";
 import { extractImageUrls, formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
+import Image from "next/image";
 
 type ViewerNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -183,12 +184,13 @@ export function ViewerNodeConfigSection({
                           key={`${url}-${index}`}
                           className="overflow-hidden rounded border border-emerald-500/30 bg-black/30"
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={url}
                             alt={`Image ${index + 1}`}
                             className="h-20 w-full object-cover"
                             loading="lazy"
+                            width={80}
+                            height={80}
                           />
                         </div>
                       ))}

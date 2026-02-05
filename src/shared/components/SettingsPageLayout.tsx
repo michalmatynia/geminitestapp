@@ -20,7 +20,12 @@ export function SettingsPageLayout({
 }: SettingsPageLayoutProps): React.JSX.Element {
   return (
     <div className="container mx-auto py-10">
-      <SectionHeader title={title} description={description} actions={actions} className="mb-6" />
+      <SectionHeader
+        title={title}
+        className="mb-6"
+        {...(description ? { description } : {})}
+        {...(actions ? { actions } : {})}
+      />
       <SectionPanel className="p-6">
         {children}
       </SectionPanel>

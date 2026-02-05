@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 "use client";
 
 import { useQuery, useQueries } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ import type {
   ProductParameter,
 } from "@/features/products/types";
 
-export function useCatalogs() {
+export function useCatalogs(): ReturnType<typeof useQuery<CatalogRecord[], Error, CatalogRecord[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["catalogs"],
     queryFn: async () => {
@@ -24,7 +24,7 @@ export function useCatalogs() {
   });
 }
 
-export function useLanguages() {
+export function useLanguages(): ReturnType<typeof useQuery<Language[], Error, Language[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["languages"],
     queryFn: async () => {
@@ -35,7 +35,7 @@ export function useLanguages() {
   });
 }
 
-export function usePriceGroups() {
+export function usePriceGroups(): ReturnType<typeof useQuery<PriceGroupWithDetails[], Error, PriceGroupWithDetails[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["price-groups"],
     queryFn: async () => {
@@ -46,7 +46,7 @@ export function usePriceGroups() {
   });
 }
 
-export function useCategories(catalogId?: string) {
+export function useCategories(catalogId?: string): ReturnType<typeof useQuery<ProductCategory[], Error, ProductCategory[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["categories", catalogId],
     queryFn: async () => {
@@ -65,7 +65,7 @@ export function useMultiCategories(catalogIds: string[]) {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["categories", catalogId],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductCategory[]> => {
         const res = await fetch(
           `/api/products/categories?catalogId=${catalogId}`,
         );
@@ -76,7 +76,7 @@ export function useMultiCategories(catalogIds: string[]) {
   });
 }
 
-export function useTags(catalogId?: string) {
+export function useTags(catalogId?: string): ReturnType<typeof useQuery<ProductTag[], Error, ProductTag[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["tags", catalogId],
     queryFn: async () => {
@@ -93,7 +93,7 @@ export function useMultiTags(catalogIds: string[]) {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["tags", catalogId],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductTag[]> => {
         const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
         if (!res.ok) throw new Error("Failed to fetch tags");
         return (await res.json()) as ProductTag[];
@@ -102,7 +102,7 @@ export function useMultiTags(catalogIds: string[]) {
   });
 }
 
-export function useParameters(catalogId?: string) {
+export function useParameters(catalogId?: string): ReturnType<typeof useQuery<ProductParameter[], Error, ProductParameter[], (string | undefined)[]>> {
   return useQuery({
     queryKey: ["parameters", catalogId],
     queryFn: async () => {
@@ -121,7 +121,7 @@ export function useMultiParameters(catalogIds: string[]) {
   return useQueries({
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["parameters", catalogId],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductParameter[]> => {
         const res = await fetch(
           `/api/products/parameters?catalogId=${catalogId}`,
         );

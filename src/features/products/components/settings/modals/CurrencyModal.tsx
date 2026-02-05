@@ -1,15 +1,14 @@
 import React from "react";
 import {
-  Button,
   Input,
   Label,
-  SharedModal,
   useToast,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  FormModal,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
@@ -72,38 +71,17 @@ export function CurrencyModal({
     }
   };
 
-  const header: React.JSX.Element = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={(): void => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : currency ? "Update" : "Add"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {currency ? "Edit Currency" : "Add Currency"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
       title={currency ? "Edit Currency" : "Add Currency"}
-      header={header}
+      onSave={(): void => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={currency ? "Update" : "Add"}
+      cancelText="Close"
       size="md"
     >
       <div className="space-y-4">
@@ -145,6 +123,6 @@ export function CurrencyModal({
           />
         </div>
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

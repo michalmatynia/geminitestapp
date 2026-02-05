@@ -344,7 +344,7 @@ const collectActiveGroupIds = (
     const isFavoriteLeaf = !node.children?.length && favoriteIds.has(node.id);
     const nonFavoriteActive = (selfActive && !isFavoriteLeaf) || childNonFavorite;
     if ((selfActive || childActive) && node.children && node.children.length > 0) {
-      const shouldOpen = node.id === "favorites" ? true : nonFavoriteActive;
+      const shouldOpen = node.id === "favorites" ? false : nonFavoriteActive;
       if (shouldOpen) {
         active.add(node.id);
       }
@@ -880,20 +880,8 @@ export default function Menu(): React.ReactNode {
   const router = useRouter();
   const pathname = usePathname();
 
-      const [userOpenIds, setUserOpenIds] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      const raw = window.localStorage.getItem(OPEN_KEY);
-      if (!raw) return new Set();
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        return new Set(parsed.filter((id: unknown): id is string => typeof id === "string"));
-      }
-    } catch {
-      // ignore
-    }
-    return new Set();
-  });
+  const [userOpenIds, setUserOpenIds] = useState<Set<string>>(new Set());
+  const [openIdsLoaded, setOpenIdsLoaded] = useState(false);
   const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -901,11 +889,28 @@ export default function Menu(): React.ReactNode {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      const raw = window.localStorage.getItem(OPEN_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        setUserOpenIds(new Set(parsed.filter((id: unknown): id is string => typeof id === "string")));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setOpenIdsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!openIdsLoaded) return;
+    if (typeof window === "undefined") return;
+    try {
       window.localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(userOpenIds)));
     } catch {
       // ignore
     }
-  }, [userOpenIds]);
+  }, [openIdsLoaded, userOpenIds]);
 
   const handleOpenChat = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     if (typeof window === "undefined") return;
@@ -1092,9 +1097,15 @@ export default function Menu(): React.ReactNode {
       className={cn("flex flex-col gap-3", isMenuCollapsed ? "items-stretch" : "")}
     >
       {!isMenuCollapsed ? (
-        <TreeHeader
-          title="Navigation"
-          actions={(
+        <TreeHeader>
+          <div className="flex items-center gap-2">
+            <SearchInput
+              value={query}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+              placeholder="Search admin pages…"
+              className="h-9 flex-1 bg-gray-900/40"
+              onClear={() => setQuery("")}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -1105,16 +1116,6 @@ export default function Menu(): React.ReactNode {
             >
               {isAnyFolderOpen ? "Collapse all" : "Expand all"}
             </Button>
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <SearchInput
-              value={query}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-              placeholder="Search admin pages…"
-              className="h-9 bg-gray-900/40"
-              onClear={() => setQuery("")}
-            />
           </div>
           {normalizedQuery ? (
             <div className="text-[11px] text-gray-500">

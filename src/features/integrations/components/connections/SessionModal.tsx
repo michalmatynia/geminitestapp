@@ -27,7 +27,7 @@ type SessionModalProps = {
   onClose: () => void;
 };
 
-import { SharedModal, Badge } from "@/shared/ui";
+import { AppModal, Badge } from "@/shared/ui";
 
 export function SessionModal({
   loading,
@@ -38,7 +38,7 @@ export function SessionModal({
   onClose,
 }: SessionModalProps): React.JSX.Element {
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title="Session cookies"
@@ -122,6 +122,6 @@ export function SessionModal({
             )}
         </div>
       )}
-    </SharedModal>
+    </AppModal>
   );
 }

@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useToast, ConfirmDialog } from "@/shared/ui";
+import { useToast, ConfirmDialog, AdminPageLayout, Button } from "@/shared/ui";
+import { PlusIcon, Package } from "lucide-react";
+import { ICON_LIBRARY_MAP } from "@/features/icons";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
 import {
   useProductData,

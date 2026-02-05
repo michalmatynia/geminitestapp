@@ -186,8 +186,7 @@ export function useAiPathsRunHistory({
       source.close();
       setRunStreamStatus("stopped");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused]);
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events]);
 
   useEffect(() => {
     setRunEventsOverflow(false);

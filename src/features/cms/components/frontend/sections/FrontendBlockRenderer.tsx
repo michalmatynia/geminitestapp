@@ -11,6 +11,7 @@ import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/co
 import { useMediaStyles } from "../media-styles-context";
 import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
 import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
+import Image from "next/image";
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -429,6 +430,7 @@ function ImageElementBlock({
     opacity: opacity / 100,
     filter: filters.length ? filters.join(" ") : undefined,
     transform: transforms.length ? transforms.join(" ") : undefined,
+    display: "block",
   };
 
   const overlayStyles: React.CSSProperties = {};
@@ -454,19 +456,13 @@ function ImageElementBlock({
     );
   }
 
-  const useFill = stretch || height > 0 || aspectRatio !== "auto";
-
   return (
     <div className="relative" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={src}
         alt={alt}
-        style={{
-          ...imageStyles,
-          display: "block",
-          height: useFill ? "100%" : "auto",
-        }}
+        fill
+        style={imageStyles}
       />
       {overlayType !== "none" && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
@@ -517,8 +513,7 @@ function ImageBlock({
 
   return (
     <div className="cms-media" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className={imageClassName} />
+      <Image src={src} alt={alt} fill className={imageClassName} />
     </div>
   );
 }

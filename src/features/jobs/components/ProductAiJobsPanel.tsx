@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SectionPanel, SharedModal, ConfirmDialog, SearchInput } from "@/shared/ui";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SharedModal, ConfirmDialog, DynamicFilters, ListPanel, RefreshButton, type FilterField } from "@/shared/ui";
 import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -222,21 +222,28 @@ export default function ProductAiJobsPanel({
     );
   }
 
+  const filterFields: FilterField[] = [
+    { key: "query", label: "Search", type: "search", placeholder: "Search by ID, entity, path, or model..." },
+  ];
+
   const aiContent = (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <SearchInput
-          placeholder="Search by ID, entity, path, or model..."
-          value={query}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setQuery(e.target.value)}
-          onClear={() => setQuery("")}
-          className="max-w-md bg-gray-900 border-border text-white"
+    <ListPanel
+      variant="flat"
+      filters={
+        <DynamicFilters
+          fields={filterFields}
+          values={{ query }}
+          onChange={(_, value) => setQuery(value)}
+          onReset={() => setQuery("")}
+          hasActiveFilters={Boolean(query)}
         />
+      }
+      actions={
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={(): void => { void jobsQuery.refetch(); }} disabled={isFetching}>
-            <RefreshCcw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <RefreshButton
+            onRefresh={(): void => { void jobsQuery.refetch(); }}
+            isRefreshing={isFetching}
+          />
           <Button variant="destructive" size="sm" onClick={(): void => setIsClearCompletedConfirmOpen(true)} disabled={clearMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear Finished
@@ -246,8 +253,8 @@ export default function ProductAiJobsPanel({
             Clear All
           </Button>
         </div>
-      </div>
-
+      }
+    >
       <JobTable
         data={filteredJobs.map((job: ProductAiJob): JobRowData => {
           const meta = getJobMeta(job);
@@ -273,7 +280,7 @@ export default function ProductAiJobsPanel({
         {...(actionMutation.isPending ? { isCancelling: (id: string): boolean => actionMutation.isPending && actionMutation.variables?.jobId === id } : {})}
         {...(deleteMutation.isPending ? { isDeleting: (id: string): boolean => deleteMutation.isPending && deleteMutation.variables === id } : {})}
       />
-    </>
+    </ListPanel>
   );
 
   return (

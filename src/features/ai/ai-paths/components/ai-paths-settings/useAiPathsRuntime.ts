@@ -239,7 +239,7 @@ export function useAiPathsRuntime({
     ]
   );
 
-  const getDomSelector = (element: Element | null): string | null => {
+  const getDomSelector = useCallback((element: Element | null): string | null => {
     if (!element) return null;
     const selectorEscape = (val: string): string => {
       if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
@@ -281,9 +281,9 @@ export function useAiPathsRuntime({
       current = parent as Element;
     }
     return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
-  };
+  }, []);
 
-  const getTargetInfo = (event?: React.MouseEvent): Record<string, unknown> | null => {
+  const getTargetInfo = useCallback((event?: React.MouseEvent): Record<string, unknown> | null => {
     const target = event?.target as Element | null;
     if (!target) return null;
     const element =
@@ -316,7 +316,7 @@ export function useAiPathsRuntime({
       },
       dataset: dataset ? { ...dataset } : undefined,
     };
-  };
+  }, [getDomSelector]);
 
   const buildDebugSnapshot = useCallback(
     (pathId: string | null, runAt: string, state: RuntimeState): PathDebugSnapshot | null => {
@@ -365,7 +365,7 @@ export function useAiPathsRuntime({
     [buildDebugSnapshot, updateSettingMutation, setPathDebugSnapshots]
   );
 
-  const buildTriggerContext = (
+  const buildTriggerContext = useCallback((
     triggerNode: AiNode,
     triggerEvent: string,
     event?: React.MouseEvent
@@ -451,7 +451,7 @@ export function useAiPathsRuntime({
         triggerLabel: activeTrigger,
       },
     };
-  };
+  }, [getTargetInfo, sessionUser, activePathId, pathName, activeTab, activeTrigger]);
 
   const runGraphForTrigger = useCallback(async (
     triggerNode: AiNode,
@@ -505,8 +505,7 @@ export function useAiPathsRuntime({
       }));
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, activePathId, pathName, fetchEntityByType, isPathActive, toast]);
+  }, [isPathActive, buildTriggerContext, nodes, edges, activePathId, pathName, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
 
   const runPollUpdate = useCallback(
     async (

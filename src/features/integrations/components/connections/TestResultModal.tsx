@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal } from "@/shared/ui";
+import { AppModal } from "@/shared/ui";
 import * as React from "react";
 
 type TestResultModalProps = {
@@ -42,7 +42,7 @@ export function TestResultModal({
   );
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title={success ? "Playwright Test Success" : "Playwright Test Error"}
@@ -80,6 +80,6 @@ export function TestResultModal({
           </pre>
         )}
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

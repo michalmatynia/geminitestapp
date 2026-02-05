@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SharedModal } from "@/shared/ui";
+import { AppModal } from "@/shared/ui/app-modal";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -11,15 +11,22 @@ type LogModalProps = {
 };
 
 export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element => (
-  <SharedModal
+  <AppModal
     open={true}
     onClose={onClose}
     title="Operation Log"
     size="md"
-    footer={<Button onClick={onClose}>Close</Button>}
   >
-    <SyntaxHighlighter language="bash" style={atomDark}>
+    <SyntaxHighlighter 
+      language="bash" 
+      style={atomDark}
+      customStyle={{
+        margin: 0,
+        borderRadius: '0.5rem',
+        fontSize: '0.875rem'
+      }}
+    >
       {content}
     </SyntaxHighlighter>
-  </SharedModal>
+  </AppModal>
 );

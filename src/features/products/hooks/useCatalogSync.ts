@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 "use client";
 
 import { useState, useRef, useMemo } from "react";
@@ -62,7 +62,7 @@ async function fetchCurrencies(): Promise<CurrencyRecord[]> {
   return res.json() as Promise<CurrencyRecord[]>;
 }
 
-export function useCatalogSync(catalogFilter: string) {
+export function useCatalogSync(catalogFilter: string): { catalogs: Catalog[]; catalogsLoading: boolean; catalogsError: string | null; currencyCode: string; setCurrencyCode: (action: string | ((prev: string) => string)) => void; currencyOptions: string[]; priceGroups: PriceGroupWithDetails[]; catalogFilterInitialized: React.MutableRefObject<boolean>; languageOptions: LanguageOption[]; fallbackNameLocale: "name_en" | "name_pl" | "name_de" | undefined; } {
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
@@ -139,7 +139,7 @@ export function useCatalogSync(catalogFilter: string) {
   );
 
   // Memoize currency options to prevent unnecessary re-renders
-  const { codes, fallbackCode } = useMemo(() => {
+  const { codes, fallbackCode } = useMemo((): { codes: string[]; fallbackCode: string } => {
     if (currencyPriceGroups.length === 0)
       return { codes: [] as string[], fallbackCode: "" };
 
@@ -214,7 +214,7 @@ export function useCatalogSync(catalogFilter: string) {
     }
   };
 
-  const { languageOptions, fallbackNameLocale } = useMemo(() => {
+  const { languageOptions, fallbackNameLocale } = useMemo((): { languageOptions: LanguageOption[]; fallbackNameLocale: "name_en" | "name_pl" | "name_de" | undefined } => {
     const options: LanguageOption[] = [];
     const isCatalogScoped =
       catalogFilter !== "all" && catalogFilter !== "unassigned";

@@ -1,5 +1,5 @@
 "use client";
-import { SharedModal, Button } from "@/shared/ui";
+import { AppModal, Button } from "@/shared/ui";
 import dynamic from "next/dynamic";
 
 const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
@@ -109,7 +109,7 @@ export function ProductModals({
         </ProductFormProvider>
       )}
 
-      <SharedModal
+      <AppModal
         open={!!integrationsProduct && !showListProductModal}
         onClose={onCloseIntegrations}
         title="Product Listings"
@@ -123,9 +123,9 @@ export function ProductModals({
             onListingsUpdated={onListingsUpdated}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!integrationsProduct && showListProductModal}
         onClose={onCloseListProduct}
         title="List Product"
@@ -140,9 +140,9 @@ export function ProductModals({
             initialConnectionId={listProductPreset?.connectionId ?? null}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!exportSettingsProduct && !!onCloseExportSettings}
         onClose={() => onCloseExportSettings?.()}
         title="Export Settings"
@@ -156,9 +156,9 @@ export function ProductModals({
             onListingsUpdated={onListingsUpdated}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
         onClose={() => onCloseMassList?.()}
         title="Mass List Products"
@@ -173,7 +173,7 @@ export function ProductModals({
             onSuccess={onMassListSuccess}
           />
         )}
-      </SharedModal>
+      </AppModal>
     </>
   );
 }
@@ -240,7 +240,7 @@ function ProductFormModal({
   );
 
   return (
-    <SharedModal 
+    <AppModal 
       open={open}
       onClose={onClose}
       title={title} 
@@ -251,6 +251,6 @@ function ProductFormModal({
       ) : (
         <ProductForm submitButtonText={submitButtonText} />
       )}
-    </SharedModal>
+    </AppModal>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal, Button, SectionHeader } from "@/shared/ui";
+import { AppModal, Button, SectionHeader } from "@/shared/ui";
 import { useRef, useState } from "react";
 import { DraftList } from "../components/DraftList";
 import { DraftCreator } from "../components/DraftCreator";
@@ -74,7 +74,7 @@ export function AdminDraftsPage(): React.JSX.Element {
         onCreateNew={handleCreateNew}
       />
 
-      <SharedModal
+      <AppModal
         open={isCreatorOpen}
         onClose={handleCloseCreator}
         title={title}
@@ -86,7 +86,7 @@ export function AdminDraftsPage(): React.JSX.Element {
             onSaveSuccess={handleSaveSuccess}
             onCancel={handleCloseCreator}
           />
-      </SharedModal>
+      </AppModal>
     </div>
   );
 }

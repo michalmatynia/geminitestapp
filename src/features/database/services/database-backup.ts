@@ -29,6 +29,8 @@ export type DatabaseBackupResult = {
   warning?: string | undefined;
 };
 
+const shouldSkipBackups = (): boolean => process.env.SKIP_DB_BACKUP === "true";
+
 const assertBackupsAllowed = (): void => {
   if (process.env.NODE_ENV === "production") {
     throw forbiddenError("Database backups are disabled in production.");
@@ -159,6 +161,15 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
 };
 
 export const createFullDatabaseBackup = async (): Promise<{ mongo: DatabaseBackupResult; postgres: DatabaseBackupResult }> => {
+  if (shouldSkipBackups()) {
+    const timestamp = Date.now();
+    const message = "Backup skipped (SKIP_DB_BACKUP=true)";
+    const log = `Skipped backup at ${new Date(timestamp).toISOString()}`;
+    return {
+      mongo: { message, backupName: `skipped-mongo-${timestamp}`, log },
+      postgres: { message, backupName: `skipped-postgres-${timestamp}`, log },
+    };
+  }
   assertBackupsAllowed();
   const mongo = await createMongoBackup();
   const postgres = await createPostgresBackup();

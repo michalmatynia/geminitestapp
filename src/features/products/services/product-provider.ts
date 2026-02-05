@@ -5,7 +5,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
 
-type ProductDbProvider = "prisma" | "mongodb";
+export type ProductDbProvider = "prisma" | "mongodb";
 
 const normalizeProvider = (value?: string | null): ProductDbProvider | null => {
   if (!value) return null;

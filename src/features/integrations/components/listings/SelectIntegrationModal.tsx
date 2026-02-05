@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal, Button, SectionPanel, IntegrationSelector } from "@/shared/ui";
+import { AppModal, Button, SectionPanel, IntegrationSelector } from "@/shared/ui";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import Link from "next/link";
 
@@ -29,13 +29,13 @@ export default function SelectIntegrationModal({
   };
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title="Select Marketplace / Integration"
       size="md"
     >
-        <div className="space-y-4">
+      <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
         ) : integrations.length === 0 ? (
@@ -76,7 +76,7 @@ export default function SelectIntegrationModal({
             </div>
           </>
         )}
-        </div>
-    </SharedModal>
+      </div>
+    </AppModal>
   );
 }

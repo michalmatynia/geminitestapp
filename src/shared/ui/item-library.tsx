@@ -6,7 +6,7 @@ import { SectionHeader } from "./section-header";
 import { SectionPanel } from "./section-panel";
 import { EmptyState } from "./empty-state";
 import { ConfirmDialog } from "./confirm-dialog";
-import { SharedModal } from "./shared-modal";
+import { AppModal } from "./app-modal";
 import { Input } from "./input";
 import { Label } from "./label";
 import { Textarea } from "./textarea";
@@ -210,7 +210,7 @@ export function ItemLibrary<T extends LibraryItem>({
         variant="destructive"
       />
 
-      <SharedModal
+      <AppModal
         open={modalOpen}
         onClose={closeModal}
         title={editingItem ? `Edit ${entityName}` : `New ${entityName}`}
@@ -248,7 +248,7 @@ export function ItemLibrary<T extends LibraryItem>({
 
           {renderExtraFields && renderExtraFields(draft as T, (updates) => setDraft({ ...draft, ...updates }))}
         </div>
-      </SharedModal>
+      </AppModal>
     </div>
   );
 }

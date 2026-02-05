@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, useToast, Input, Label, SectionPanel, SectionHeader, AdminPageLayout } from "@/shared/ui";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { MoreVertical } from "lucide-react";
 import { logClientError } from "@/features/observability";
@@ -115,14 +115,14 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     }
   };
 
-  return (
-    <div className="container mx-auto py-10">
-      <SectionHeader
-        title="Notebooks"
-        description="Create and manage notebooks. Notes, folders, and tags are scoped per notebook."
-        className="mb-6"
-      />
+  if (loading) return <div className="text-sm text-gray-400">Loading notebooks...</div>;
 
+
+  return (
+    <AdminPageLayout
+      title="Notebooks"
+      description="Create and manage notebooks. Notes, folders, and tags are scoped per notebook."
+    >
       <div className="max-w-3xl space-y-6">
         <SectionPanel className="p-6">
           <SectionHeader title="Create Notebook" size="sm" className="mb-4" />
@@ -300,6 +300,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           )}
         </SectionPanel>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

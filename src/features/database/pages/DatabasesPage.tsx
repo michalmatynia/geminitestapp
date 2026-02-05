@@ -1,6 +1,15 @@
 "use client";
 
-import { DataTable, Button, useToast, SectionHeader, SectionPanel, ConfirmDialog, Tabs, TabsList, TabsTrigger, FileUploadButton, type FileUploadHelpers } from "@/shared/ui";
+import {
+  DataTable,
+  Button,
+  useToast,
+  SectionPanel,
+  ConfirmDialog,
+  FileUploadButton,
+  type FileUploadHelpers,
+  AdminPageLayout,
+} from "@/shared/ui"; // SectionHeader, Tabs, TabsList, TabsTrigger removed
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
@@ -179,7 +188,46 @@ export default function DatabasesPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <AdminPageLayout
+      title={`Databases - ${activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}`}
+      description={
+        activeTab === "postgresql"
+          ? "PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema."
+          : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."
+      }
+      mainActions={
+        <>
+          <Button
+            disabled={isProd}
+            title={isProd ? "Disabled in production" : undefined}
+            onClick={(): void => {
+              void handleBackup();
+            }}
+          >
+            Create Backup
+          </Button>
+          <FileUploadButton
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+            accept={activeTab === "postgresql" ? ".dump" : ".archive"}
+            disabled={isProd}
+            title={isProd ? "Disabled in production" : undefined}
+          >
+            Upload Backup
+          </FileUploadButton>
+          <Button variant="secondary" onClick={handlePreviewCurrent}>
+            Preview Current DB
+          </Button>
+        </>
+      }
+      tabs={{
+        activeTab: activeTab,
+        onTabChange: (value: string) => setActiveTab(value as DatabaseType),
+        tabsList: [
+          { value: "postgresql", label: "PostgreSQL" },
+          { value: "mongodb", label: "MongoDB" },
+        ],
+      }}
+    >
       {isLogModalOpen && (
         <LogModal content={logModalContent} onClose={closeLogModal} />
       )}
@@ -205,51 +253,6 @@ export default function DatabasesPage(): React.JSX.Element {
         variant="destructive"
       />
 
-      {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={(value: string): void => setActiveTab(value as DatabaseType)}
-        className="mb-6"
-      >
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="postgresql">PostgreSQL</TabsTrigger>
-          <TabsTrigger value="mongodb">MongoDB</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <SectionHeader
-        title={`Databases - ${activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}`}
-        description={
-          activeTab === "postgresql"
-            ? "PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema."
-            : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."
-        }
-        actions={
-          <>
-            <Button
-              disabled={isProd}
-              title={isProd ? "Disabled in production" : undefined}
-              onClick={(): void => {
-                void handleBackup();
-              }}
-            >
-              Create Backup
-            </Button>
-            <FileUploadButton
-              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
-              accept={activeTab === "postgresql" ? ".dump" : ".archive"}
-              disabled={isProd}
-              title={isProd ? "Disabled in production" : undefined}
-            >
-              Upload Backup
-            </FileUploadButton>
-            <Button variant="secondary" onClick={handlePreviewCurrent}>
-              Preview Current DB
-            </Button>
-          </>
-        }
-        className="mb-6"
-      />
       {isProd ? (
         <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           Backups are disabled in production. Create or upload backups in a non-production environment.
@@ -267,6 +270,6 @@ export default function DatabasesPage(): React.JSX.Element {
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
       </SectionPanel>
-    </div>
+    </AdminPageLayout>
   );
 }

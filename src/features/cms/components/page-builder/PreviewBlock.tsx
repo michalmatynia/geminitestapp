@@ -1439,14 +1439,17 @@ export function PreviewSection({
           {divider}
           {hasSrc ? (
             <div className="relative" style={presentation.wrapperStyles}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <NextImage
                 src={src}
                 alt={alt}
+                fill
                 style={{
-                  ...presentation.imageStyles,
+                  objectFit: presentation.imageStyles.objectFit,
+                  objectPosition: presentation.imageStyles.objectPosition,
+                  opacity: presentation.imageStyles.opacity,
+                  filter: presentation.imageStyles.filter,
+                  transform: presentation.imageStyles.transform,
                   display: "block",
-                  height: presentation.useFill ? "100%" : "auto",
                 }}
               />
               {presentation.hasOverlay && (
@@ -2805,10 +2808,10 @@ function PreviewBlockItem({
         >
           {hasSrc ? (
             <div className="relative" style={wrapperStyles}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <NextImage
                 src={src}
                 alt={alt}
+                fill
                 style={{
                   ...presentation.imageStyles,
                   display: "block",
@@ -3079,9 +3082,14 @@ function PreviewBlockItem({
           >
             {src ? (
               <div className="cms-media relative" style={wrapperStyles}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={alt} className={imageClassName} />
-              </div>
+                      <NextImage
+                        src={src}
+                        alt={alt}
+                        fill
+                        className={imageClassName}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        unoptimized
+                      />              </div>
             ) : showEditorChrome ? (
               <div
                 className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
@@ -4299,8 +4307,7 @@ function renderBackgroundImageLayer(
 
   return (
     <div className="absolute inset-0 z-0" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} style={imageStyles} />
+      <NextImage src={src} alt={alt} fill style={imageStyles} />
       {presentation.hasOverlay && (
         <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
       )}

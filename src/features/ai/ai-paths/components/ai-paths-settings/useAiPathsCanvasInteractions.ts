@@ -507,8 +507,7 @@ export function useAiPathsCanvasInteractions({
         };
       })
       .filter(Boolean) as { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined }[];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [edges, nodePositionsKey]);
+  }, [edges, getPortPosition, nodes]);
 
   const handlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>,

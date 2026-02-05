@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
-import { SharedModal, Button } from "@/shared/ui";
+import { AppModal, Button } from "@/shared/ui";
 import type { BlockInstance, PageZone, SectionDefinition } from "../../types/page-builder";
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
@@ -143,7 +143,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
         <Plus className="size-3.5" />
         Add section
       </Button>
-      <SharedModal
+      <AppModal
         open={isOpen}
         onClose={() => setIsOpen(false)}
         title="Add a section"
@@ -286,7 +286,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
           </div>
           )}
           </div>
-      </SharedModal>
+      </AppModal>
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 
 import * as React from "react";
 
@@ -8,7 +8,6 @@ import {
   Button,
   Input,
   Label,
-  SharedModal,
   Checkbox,
   Textarea,
   RadioGroup,
@@ -20,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui";
+import { FormModal } from "@/shared/components/FormModal";
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSavePriceGroupMutation } from "@/features/products/hooks/useProductSettingsQueries";
@@ -43,7 +43,7 @@ export function PriceGroupModal({
   currencyOptions,
   loadingCurrencies,
   priceGroups,
-}: PriceGroupModalProps) {
+}: PriceGroupModalProps): React.JSX.Element {
   const { toast } = useToast();
   const saveMutation = useSavePriceGroupMutation();
   const [form, setForm] = React.useState({
@@ -90,7 +90,7 @@ export function PriceGroupModal({
     }
   }, [priceGroup, currencyOptions]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!form.groupId.trim() || !form.name.trim() || !form.currencyId) {
       toast("Required fields missing.", { variant: "error" });
       return;
@@ -123,38 +123,17 @@ export function PriceGroupModal({
     }
   };
 
-  const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : priceGroup ? "Update" : "Create"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {priceGroup ? "Edit Price Group" : "Create Price Group"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
       title={priceGroup ? "Edit Price Group" : "Create Price Group"}
-      header={header}
+      onSave={() => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={priceGroup ? "Update" : "Create"}
+      cancelText="Close"
       size="lg"
     >
       <div className="space-y-4">
@@ -294,6 +273,6 @@ export function PriceGroupModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

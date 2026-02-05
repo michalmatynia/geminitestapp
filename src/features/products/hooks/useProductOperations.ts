@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 "use client";
 
 import { useToast } from "@/shared/ui";
@@ -11,7 +11,22 @@ import type { ProductDraft } from "@/features/products/types/drafts";
 
 export function useProductOperations(
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
-) {
+): {
+  isCreateOpen: boolean;
+  setIsCreateOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  initialSku: string;
+  setInitialSku: React.Dispatch<React.SetStateAction<string>>;
+  editingProduct: ProductWithImages | null;
+  setEditingProduct: React.Dispatch<React.SetStateAction<ProductWithImages | null>>;
+  lastEditedId: string | null;
+  actionError: string | null;
+  setActionError: React.Dispatch<React.SetStateAction<string | null>>;
+  handleOpenCreateModal: () => Promise<void>;
+  handleOpenCreateFromDraft: (draft: ProductDraft) => void;
+  handleCreateSuccess: (info?: { queued?: boolean }) => void;
+  handleEditSuccess: (info?: { queued?: boolean }) => void;
+  handleEditSave: (savedProduct: ProductWithImages) => void;
+} {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -23,7 +38,7 @@ export function useProductOperations(
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleOpenCreateModal = async () => {
+  const handleOpenCreateModal = async (): Promise<void> => {
     const skuInput = window.prompt("Enter a new unique SKU:");
     if (skuInput === null) return;
     const sku = skuInput.trim().toUpperCase();
@@ -62,14 +77,14 @@ export function useProductOperations(
     setIsCreateOpen(true);
   };
 
-  const handleOpenCreateFromDraft = (draft: ProductDraft) => {
+  const handleOpenCreateFromDraft = (draft: ProductDraft): void => {
     const draftSku =
       typeof draft.sku === "string" ? draft.sku.trim().toUpperCase() : "";
     setInitialSku(draftSku);
     setIsCreateOpen(true);
   };
 
-  const handleCreateSuccess = (info?: { queued?: boolean }) => {
+  const handleCreateSuccess = (info?: { queued?: boolean }): void => {
     setIsCreateOpen(false);
     setInitialSku("");
     if (!info?.queued) {
@@ -78,7 +93,7 @@ export function useProductOperations(
     }
   };
 
-  const handleEditSuccess = (info?: { queued?: boolean }) => {
+  const handleEditSuccess = (info?: { queued?: boolean }): void => {
     if (!info?.queued && editingProduct) {
       setLastEditedId(editingProduct.id);
     }
@@ -89,7 +104,7 @@ export function useProductOperations(
     }
   };
 
-  const handleEditSave = (savedProduct: ProductWithImages) => {
+  const handleEditSave = (savedProduct: ProductWithImages): void => {
     setLastEditedId(savedProduct.id);
     setRefreshTrigger((prev) => prev + 1);
   };

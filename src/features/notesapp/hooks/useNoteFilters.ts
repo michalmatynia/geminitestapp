@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { UseNoteFiltersProps } from "@/features/notesapp/types/notes-hooks";
 import type { NoteWithRelations } from "@/shared/types/notes";
 
-export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): {
+export type UseNoteFiltersResult = {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   debouncedSearchQuery: string;
@@ -22,7 +22,9 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   setPageSize: (s: number) => void;
   handleFilterByTag: (tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
   handleToggleFavoritesFilter: (setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
-} {
+};
+
+export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): UseNoteFiltersResult {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
@@ -45,7 +47,7 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
 
   // Reset page when filters change
   useEffect((): void => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setPage(1);
   }, [
     debouncedSearchQuery,

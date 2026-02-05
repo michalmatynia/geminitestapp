@@ -161,24 +161,28 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
   await syncCollection("settings", async () => {
     handledCollections.add("settings");
     const docs = await mongo.collection("settings").find({}).toArray();
-    const data = docs
-      .map((doc: any) => {
-        const key =
-          (doc as { key?: string }).key ??
-          (doc as unknown as { _id?: ObjectId | string })._id?.toString() ??
-          "";
-        if (!key) return null;
-        const value = (doc as { value?: string }).value;
-        return {
-          key,
-          value: typeof value === "string" ? value : JSON.stringify(value ?? ""),
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-        };
-      })
-      .filter(Boolean) as Array<{ key: string; value: string; createdAt: Date; updatedAt: Date }>;
+    const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
+    docs.forEach((doc: any) => {
+      const key =
+        (doc as { key?: string }).key ??
+        (doc as unknown as { _id?: ObjectId | string })._id?.toString() ??
+        "";
+      if (!key) return;
+      const value = (doc as { value?: string }).value;
+      const entry = {
+        key,
+        value: typeof value === "string" ? value : JSON.stringify(value ?? ""),
+        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+      };
+      const existing = byKey.get(key);
+      if (!existing || entry.updatedAt > existing.updatedAt) {
+        byKey.set(key, entry);
+      }
+    });
+    const data = Array.from(byKey.values());
     const deleted = await prisma.setting.deleteMany();
-    const created = data.length ? await prisma.setting.createMany({ data }) : { count: 0 };
+    const created = data.length ? await prisma.setting.createMany({ data, skipDuplicates: true }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
   });
 
@@ -344,12 +348,16 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("user_preferences", async () => {
     handledCollections.add("user_preferences");
+    const existingUserIds = new Set<string>(
+      (await prisma.user.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
     const docs = await mongo.collection("user_preferences").find({}).toArray();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const userId = (doc as { userId?: string }).userId;
-        if (!userId) return null;
+        if (!userId || !existingUserIds.has(userId)) return null;
         return {
           id: id || userId,
           userId,
@@ -517,6 +525,9 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("currencies", async () => {
     handledCollections.add("currencies");
+    // Clear dependent data so currency deletes don't fail on FK constraints.
+    await prisma.product.deleteMany();
+    await prisma.priceGroup.deleteMany();
     const docs = await mongo.collection("currencies").find({}).toArray();
     const warnings: string[] = [];
     const data = docs
@@ -600,6 +611,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("languages", async () => {
     handledCollections.add("languages");
+    // Clear catalogs so defaultLanguage FK doesn't block language deletes.
+    await prisma.catalog.deleteMany();
     const docs = await mongo.collection("languages").find({}).toArray();
     const data = docs
       .map((doc: any) => {
@@ -646,21 +659,47 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("price_groups", async () => {
     handledCollections.add("price_groups");
+    const availableCurrencyIds = new Set<string>(
+      (await prisma.currency.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const warnings: string[] = [];
     const docs = await mongo.collection("price_groups").find({}).toArray();
+    const availableGroupIds = new Set<string>(
+      docs
+        .map((doc: any) => normalizeId(doc as Record<string, unknown>))
+        .filter((id: string | null): id is string => Boolean(id))
+    );
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const rawCurrencyId = (doc as { currencyId?: string }).currencyId ?? "PLN";
+        const resolvedCurrencyId = availableCurrencyIds.has(rawCurrencyId)
+          ? rawCurrencyId
+          : availableCurrencyIds.has("PLN")
+          ? "PLN"
+          : null;
+        if (!resolvedCurrencyId) {
+          warnings.push(`Skipped price group ${id}: missing currency ${rawCurrencyId}`);
+          return null;
+        }
+        const rawSourceGroupId = (doc as { sourceGroupId?: string | null }).sourceGroupId ?? null;
+        const resolvedSourceGroupId =
+          rawSourceGroupId && availableGroupIds.has(rawSourceGroupId) ? rawSourceGroupId : null;
+        if (rawSourceGroupId && !resolvedSourceGroupId) {
+          warnings.push(`Price group ${id}: missing source group ${rawSourceGroupId}`);
+        }
         return {
           id,
           groupId: (doc as { groupId?: string }).groupId ?? id,
           isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
           name: (doc as { name?: string }).name ?? id,
           description: (doc as { description?: string | null }).description ?? null,
-          currencyId: (doc as { currencyId?: string }).currencyId ?? "PLN",
+          currencyId: resolvedCurrencyId,
           type: (doc as { type?: string }).type ?? "standard",
           basePriceField: (doc as { basePriceField?: string }).basePriceField ?? "price",
-          sourceGroupId: (doc as { sourceGroupId?: string | null }).sourceGroupId ?? null,
+          sourceGroupId: resolvedSourceGroupId,
           priceMultiplier: (doc as { priceMultiplier?: number }).priceMultiplier ?? 1,
           addToPrice: (doc as { addToPrice?: number }).addToPrice ?? 0,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
@@ -670,27 +709,63 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       .filter(Boolean) as any;
     const deleted = await prisma.priceGroup.deleteMany();
     const created = data.length ? await prisma.priceGroup.createMany({ data }) : { count: 0 };
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("catalogs", async () => {
     handledCollections.add("catalogs");
+    const availableLanguageIds = new Set<string>(
+      (await prisma.language.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const availablePriceGroupIds = new Set<string>(
+      (await prisma.priceGroup.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const warnings: string[] = [];
     const docs = await mongo.collection("catalogs").find({}).toArray();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const rawDefaultLanguageId = (doc as { defaultLanguageId?: string | null }).defaultLanguageId ?? null;
+        const resolvedDefaultLanguageId =
+          rawDefaultLanguageId && availableLanguageIds.has(rawDefaultLanguageId) ? rawDefaultLanguageId : null;
+        if (rawDefaultLanguageId && !resolvedDefaultLanguageId) {
+          warnings.push(`Catalog ${id}: missing default language ${rawDefaultLanguageId}`);
+        }
+        const rawDefaultPriceGroupId = (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null;
+        const resolvedDefaultPriceGroupId =
+          rawDefaultPriceGroupId && availablePriceGroupIds.has(rawDefaultPriceGroupId) ? rawDefaultPriceGroupId : null;
+        if (rawDefaultPriceGroupId && !resolvedDefaultPriceGroupId) {
+          warnings.push(`Catalog ${id}: missing default price group ${rawDefaultPriceGroupId}`);
+        }
+        const rawLanguageIds = (doc as { languageIds?: string[] }).languageIds ?? [];
+        const languageIds = rawLanguageIds.filter((languageId) => availableLanguageIds.has(languageId));
+        if (rawLanguageIds.length !== languageIds.length) {
+          warnings.push(`Catalog ${id}: filtered ${rawLanguageIds.length - languageIds.length} missing languages`);
+        }
+        const rawPriceGroupIds = (doc as { priceGroupIds?: string[] }).priceGroupIds ?? [];
+        const priceGroupIds = rawPriceGroupIds.filter((priceGroupId) => availablePriceGroupIds.has(priceGroupId));
+        if (rawPriceGroupIds.length !== priceGroupIds.length) {
+          warnings.push(`Catalog ${id}: filtered ${rawPriceGroupIds.length - priceGroupIds.length} missing price groups`);
+        }
         return {
           id,
           name: (doc as { name?: string }).name ?? id,
           description: (doc as { description?: string | null }).description ?? null,
           isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
-          defaultLanguageId: (doc as { defaultLanguageId?: string | null }).defaultLanguageId ?? null,
-          defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
-          priceGroupIds: (doc as { priceGroupIds?: string[] }).priceGroupIds ?? [],
+          defaultLanguageId: resolvedDefaultLanguageId,
+          defaultPriceGroupId: resolvedDefaultPriceGroupId,
+          priceGroupIds,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          languageIds: (doc as { languageIds?: string[] }).languageIds ?? [],
+          languageIds,
         };
       })
       .filter(Boolean) as Array<{ id: string; name: string; description: string | null; isDefault: boolean; defaultLanguageId: string | null; defaultPriceGroupId: string | null; priceGroupIds: string[]; createdAt: Date; updatedAt: Date; languageIds: string[] }>;
@@ -713,7 +788,12 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       await prisma.catalogLanguage.createMany({ data: catalogLanguages });
     }
 
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("product_categories", async () => {
@@ -1173,13 +1253,21 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
   await syncCollection("notebooks", async () => {
     handledCollections.add("notebooks");
     const docs = await mongo.collection("notebooks").find({}).toArray();
+    const warnings: string[] = [];
+    const seenNames = new Set<string>();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const name = (doc as { name?: string }).name ?? id;
+        if (seenNames.has(name)) {
+          warnings.push(`Skipped duplicate notebook name: ${name}`);
+          return null;
+        }
+        seenNames.add(name);
         return {
           id,
-          name: (doc as { name?: string }).name ?? id,
+          name,
           color: (doc as { color?: string | null }).color ?? null,
           defaultThemeId: (doc as { defaultThemeId?: string | null }).defaultThemeId ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
@@ -1189,20 +1277,36 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       .filter(Boolean) as any;
     const deleted = await prisma.notebook.deleteMany();
     const created = data.length ? await prisma.notebook.createMany({ data }) : { count: 0 };
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("themes", async () => {
     handledCollections.add("themes");
+    const availableNotebookIds = new Set<string>(
+      (await prisma.notebook.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const warnings: string[] = [];
     const docs = await mongo.collection("themes").find({}).toArray();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
+        const resolvedNotebookId =
+          rawNotebookId && availableNotebookIds.has(rawNotebookId) ? rawNotebookId : null;
+        if (rawNotebookId && !resolvedNotebookId) {
+          warnings.push(`Theme ${id}: missing notebook ${rawNotebookId}`);
+        }
         return {
           id,
           name: (doc as { name?: string }).name ?? id,
-          notebookId: (doc as { notebookId?: string | null }).notebookId ?? null,
+          notebookId: resolvedNotebookId,
           textColor: (doc as { textColor?: string }).textColor ?? "#e5e7eb",
           backgroundColor: (doc as { backgroundColor?: string }).backgroundColor ?? "#111827",
           markdownHeadingColor: (doc as { markdownHeadingColor?: string }).markdownHeadingColor ?? "#ffffff",
@@ -1220,21 +1324,45 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       .filter(Boolean) as any;
     const deleted = await prisma.theme.deleteMany();
     const created = data.length ? await prisma.theme.createMany({ data }) : { count: 0 };
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("tags", async () => {
     handledCollections.add("tags");
+    const availableNotebookIds = new Set<string>(
+      (await prisma.notebook.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
     const docs = await mongo.collection("tags").find({}).toArray();
+    const warnings: string[] = [];
+    const seenTags = new Set<string>();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const name = (doc as { name?: string }).name ?? id;
+        const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
+        const resolvedNotebookId =
+          rawNotebookId && availableNotebookIds.has(rawNotebookId) ? rawNotebookId : null;
+        if (rawNotebookId && !resolvedNotebookId) {
+          warnings.push(`Tag ${id}: missing notebook ${rawNotebookId}`);
+        }
+        const key = `${resolvedNotebookId ?? "none"}::${name}`;
+        if (seenTags.has(key)) {
+          warnings.push(`Skipped duplicate tag: ${name} (${resolvedNotebookId ?? "no-notebook"})`);
+          return null;
+        }
+        seenTags.add(key);
         return {
           id,
-          name: (doc as { name?: string }).name ?? id,
+          name,
           color: (doc as { color?: string | null }).color ?? null,
-          notebookId: (doc as { notebookId?: string | null }).notebookId ?? null,
+          notebookId: resolvedNotebookId,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
@@ -1242,13 +1370,27 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       .filter(Boolean) as any;
     const deleted = await prisma.tag.deleteMany();
     const created = data.length ? await prisma.tag.createMany({ data }) : { count: 0 };
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("categories", async () => {
     handledCollections.add("categories");
     const docs = await mongo.collection("categories").find({}).toArray();
-    const data = docs
+    const warnings: string[] = [];
+    const availableNotebookIds = new Set<string>(
+      (await prisma.notebook.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const availableThemeIds = new Set<string>(
+      (await prisma.theme.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const raw = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
@@ -1265,16 +1407,79 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter(Boolean) as Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      color: string | null;
+      parentId: string | null;
+      themeId: string | null;
+      notebookId: string | null;
+      sortIndex: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
+    const seenCategories = new Set<string>();
+    const deduped = raw.filter((entry) => {
+      const key = `${entry.notebookId ?? "none"}::${entry.name}`;
+      if (seenCategories.has(key)) {
+        warnings.push(`Skipped duplicate category: ${entry.name} (${entry.notebookId ?? "no-notebook"})`);
+        return false;
+      }
+      seenCategories.add(key);
+      return true;
+    });
+    const availableCategoryIds = new Set(deduped.map((entry) => entry.id));
+    const data = deduped.map((entry) => {
+      const resolvedParentId =
+        entry.parentId && availableCategoryIds.has(entry.parentId) ? entry.parentId : null;
+      if (entry.parentId && !resolvedParentId) {
+        warnings.push(`Category ${entry.id}: missing parent ${entry.parentId}`);
+      }
+      const resolvedNotebookId =
+        entry.notebookId && availableNotebookIds.has(entry.notebookId) ? entry.notebookId : null;
+      if (entry.notebookId && !resolvedNotebookId) {
+        warnings.push(`Category ${entry.id}: missing notebook ${entry.notebookId}`);
+      }
+      const resolvedThemeId =
+        entry.themeId && availableThemeIds.has(entry.themeId) ? entry.themeId : null;
+      if (entry.themeId && !resolvedThemeId) {
+        warnings.push(`Category ${entry.id}: missing theme ${entry.themeId}`);
+      }
+      return {
+        ...entry,
+        parentId: resolvedParentId,
+        notebookId: resolvedNotebookId,
+        themeId: resolvedThemeId,
+      };
+    });
     const deleted = await prisma.category.deleteMany();
     const created = data.length ? await prisma.category.createMany({ data }) : { count: 0 };
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("notes", async () => {
     handledCollections.add("notes");
+    const availableNotebookIds = new Set<string>(
+      (await prisma.notebook.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const availableTagIds = new Set<string>(
+      (await prisma.tag.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const availableCategoryIds = new Set<string>(
+      (await prisma.category.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const warnings: string[] = [];
     const docs = await mongo.collection("notes").find({}).toArray();
-    const notes = docs
+    const rawNotes = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
@@ -1317,6 +1522,41 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         categories: Array<{ categoryId: string; assignedAt?: Date }>;
         relationsFrom: Array<{ targetNoteId: string; assignedAt?: Date }>;
       }>;
+    const normalizedNotes = rawNotes.map((note) => {
+      const resolvedNotebookId =
+        note.notebookId && availableNotebookIds.has(note.notebookId) ? note.notebookId : null;
+      if (note.notebookId && !resolvedNotebookId) {
+        warnings.push(`Note ${note.id}: missing notebook ${note.notebookId}`);
+      }
+      const filteredTags = note.tags.filter((tag) => availableTagIds.has(tag.tagId));
+      if (filteredTags.length !== note.tags.length) {
+        warnings.push(`Note ${note.id}: filtered ${note.tags.length - filteredTags.length} missing tags`);
+      }
+      const filteredCategories = note.categories.filter((category) => availableCategoryIds.has(category.categoryId));
+      if (filteredCategories.length !== note.categories.length) {
+        warnings.push(
+          `Note ${note.id}: filtered ${note.categories.length - filteredCategories.length} missing categories`
+        );
+      }
+      return {
+        ...note,
+        notebookId: resolvedNotebookId,
+        tags: filteredTags,
+        categories: filteredCategories,
+      };
+    });
+    const availableNoteIds = new Set(normalizedNotes.map((note) => note.id));
+    const notes = normalizedNotes.map((note) => {
+      const filteredRelations = note.relationsFrom.filter((relation) =>
+        availableNoteIds.has(relation.targetNoteId)
+      );
+      if (filteredRelations.length !== note.relationsFrom.length) {
+        warnings.push(
+          `Note ${note.id}: filtered ${note.relationsFrom.length - filteredRelations.length} missing relations`
+        );
+      }
+      return { ...note, relationsFrom: filteredRelations };
+    });
 
     await prisma.noteRelation.deleteMany();
     await prisma.noteTag.deleteMany();
@@ -1329,50 +1569,80 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         })
       : { count: 0 };
 
-    const noteTags = notes.flatMap((note) =>
-      note.tags.map((tag) => ({
-        noteId: note.id,
-        tagId: tag.tagId,
-        assignedAt: tag.assignedAt ?? note.createdAt,
-      }))
-    ) as Prisma.NoteTagCreateManyInput[];
+    const noteTags: Prisma.NoteTagCreateManyInput[] = [];
+    const noteTagKeys = new Set<string>();
+    notes.forEach((note) => {
+      note.tags.forEach((tag) => {
+        const key = `${note.id}::${tag.tagId}`;
+        if (noteTagKeys.has(key)) return;
+        noteTagKeys.add(key);
+        noteTags.push({
+          noteId: note.id,
+          tagId: tag.tagId,
+          assignedAt: tag.assignedAt ?? note.createdAt,
+        });
+      });
+    });
     if (noteTags.length) {
       await prisma.noteTag.createMany({ data: noteTags });
     }
 
-    const noteCategories = notes.flatMap((note) =>
-      note.categories.map((category) => ({
-        noteId: note.id,
-        categoryId: category.categoryId,
-        assignedAt: category.assignedAt ?? note.createdAt,
-      }))
-    ) as Prisma.NoteCategoryCreateManyInput[];
+    const noteCategories: Prisma.NoteCategoryCreateManyInput[] = [];
+    const noteCategoryKeys = new Set<string>();
+    notes.forEach((note) => {
+      note.categories.forEach((category) => {
+        const key = `${note.id}::${category.categoryId}`;
+        if (noteCategoryKeys.has(key)) return;
+        noteCategoryKeys.add(key);
+        noteCategories.push({
+          noteId: note.id,
+          categoryId: category.categoryId,
+          assignedAt: category.assignedAt ?? note.createdAt,
+        });
+      });
+    });
     if (noteCategories.length) {
       await prisma.noteCategory.createMany({ data: noteCategories });
     }
 
-    const noteRelations = notes.flatMap((note) =>
-      note.relationsFrom.map((relation) => ({
-        sourceNoteId: note.id,
-        targetNoteId: relation.targetNoteId,
-        assignedAt: relation.assignedAt ?? note.createdAt,
-      }))
-    ) as Prisma.NoteRelationCreateManyInput[];
+    const noteRelations: Prisma.NoteRelationCreateManyInput[] = [];
+    const noteRelationKeys = new Set<string>();
+    notes.forEach((note) => {
+      note.relationsFrom.forEach((relation) => {
+        const key = `${note.id}::${relation.targetNoteId}`;
+        if (noteRelationKeys.has(key)) return;
+        noteRelationKeys.add(key);
+        noteRelations.push({
+          sourceNoteId: note.id,
+          targetNoteId: relation.targetNoteId,
+          assignedAt: relation.assignedAt ?? note.createdAt,
+        });
+      });
+    });
     if (noteRelations.length) {
       await prisma.noteRelation.createMany({ data: noteRelations });
     }
 
-    return { sourceCount: notes.length, targetDeleted: deleted.count, targetInserted: created.count };
+    return {
+      sourceCount: notes.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("note_files", async () => {
     handledCollections.add("noteFiles");
     const docs = await mongo.collection("noteFiles").find({}).toArray();
+    const availableNoteIds = new Set<string>(
+      (await prisma.note.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         const noteId = (doc as { noteId?: string }).noteId;
-        if (!id || !noteId) return null;
+        if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
         return {
           id,
           noteId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, UnifiedSelect, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, FiltersContainer } from "@/shared/ui";
+import { Button, Input, DynamicFilters, useToast, Label, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, AdminPageLayout, RefreshButton, type FilterField } from "@/shared/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
@@ -239,60 +239,81 @@ export default function SystemLogsPage(): React.JSX.Element {
 
   const levels = metrics?.levels ?? { error: 0, warn: 0, info: 0 };
 
+  const filterFields: FilterField[] = [
+    { key: "level", label: "Level", type: "select", options: [...levelOptions] },
+    { key: "query", label: "Search", type: "text", placeholder: "Message or source" },
+    { key: "source", label: "Source", type: "text", placeholder: "api/products, auth, etc." },
+    { key: "fromDate", label: "From", type: "date" },
+    { key: "toDate", label: "To", type: "date" },
+  ];
+
+  const handleFilterChange = (key: string, value: any): void => {
+    setPage(1);
+    if (key === "level") setLevel(value);
+    if (key === "query") setQuery(value);
+    if (key === "source") setSource(value);
+    if (key === "fromDate") setFromDate(value);
+    if (key === "toDate") setToDate(value);
+  };
+
+  const handleResetFilters = (): void => {
+    setLevel("all");
+    setQuery("");
+    setSource("");
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
   return (
-    <div className="container mx-auto py-10">
-      <ListPanel
-        header={
-          <SectionHeader
-            title="System Logs"
-            description="Centralized error and warning events captured across the platform."
-            actions={
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.location.assign("/admin/settings/logging")}
-                >
-                  Client Logging Settings
-                </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(): void => {
-                                      void logsQuery.refetch();
-                                      void metricsQuery.refetch();
-                                    }}
-                                    disabled={logsQuery.isFetching || metricsQuery.isFetching}
-                                  >                  <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
-                  Refresh
-                </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                    disabled={logs.length === 0}
-                                    onClick={(): void => {
-                                      void navigator.clipboard.writeText(logsJson).then(() => {
-                                        toast("Copied to clipboard", { variant: "success" });
-                                      });
-                                    }}
-                                  >                  <Copy className="h-4 w-4" />
-                  Copy
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsClearLogsConfirmOpen(true)}
-                  className="border-red-500/40 text-red-200 hover:bg-red-500/10"
-                  disabled={logs.length === 0 || clearLogsMutation.isPending}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {clearLogsMutation.isPending ? "Clearing..." : "Clear Logs"}
-                </Button>
-              </>
-            }
+    <AdminPageLayout
+      title="System Logs"
+      description="Centralized error and warning events captured across the platform."
+      mainActions={
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.assign("/admin/settings/logging")}
+          >
+            Client Logging Settings
+          </Button>
+          <RefreshButton
+            onRefresh={(): void => {
+              void logsQuery.refetch();
+              void metricsQuery.refetch();
+            }}
+            isRefreshing={logsQuery.isFetching || metricsQuery.isFetching}
           />
-        }
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={logs.length === 0}
+            onClick={(): void => {
+              void navigator.clipboard.writeText(logsJson).then(() => {
+                toast("Copied to clipboard", { variant: "success" });
+              });
+            }}
+          >
+            <Copy className="h-4 w-4" />
+            Copy
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsClearLogsConfirmOpen(true)}
+            className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+            disabled={logs.length === 0 || clearLogsMutation.isPending}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {clearLogsMutation.isPending ? "Clearing..." : "Clear Logs"}
+          </Button>
+        </>
+      }
+    >
+      <ListPanel
+        variant="flat"
         alerts={
           <>
             <ConfirmDialog
@@ -330,12 +351,15 @@ export default function SystemLogsPage(): React.JSX.Element {
                       ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
                       : "—"}
                   </span>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={(): void => { void mongoDiagnosticsQuery.refetch(); }}
-                                        disabled={mongoDiagnosticsQuery.isFetching}
-                                      >                    Refresh
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(): void => {
+                      void mongoDiagnosticsQuery.refetch();
+                    }}
+                    disabled={mongoDiagnosticsQuery.isFetching}
+                  >
+                    Refresh
                   </Button>
                   <Button
                     variant="outline"
@@ -348,168 +372,100 @@ export default function SystemLogsPage(): React.JSX.Element {
                   </Button>
                 </div>
               </div>
-            {mongoDiagnosticsQuery.isLoading ? (
-              <div className="text-sm text-gray-400">Loading diagnostics...</div>
-            ) : diagnostics.length === 0 ? (
-              <div className="text-sm text-gray-400">No diagnostics available.</div>
-            ) : (
-              <div className="rounded-md border border-border/70 bg-card/60">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/60">
-                      <TableHead className="text-xs text-gray-400">Collection</TableHead>
-                      <TableHead className="text-xs text-gray-400">Expected</TableHead>
-                      <TableHead className="text-xs text-gray-400">Missing</TableHead>
-                      <TableHead className="text-xs text-gray-400">Extra</TableHead>
-                      <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {diagnostics.map((collection: MongoCollectionIndexStatus) => {
-                      const missingCount = collection.missing.length;
-                      const extraCount = collection.extra.length;
-                      const statusLabel = collection.error
-                        ? "Error"
-                        : missingCount === 0
-                          ? "OK"
-                          : "Missing";
-                      return (
-                        <TableRow key={collection.name} className="border-border/50">
-                          <TableCell className="font-mono text-xs text-gray-200">
-                            {collection.name}
-                          </TableCell>
-                          <TableCell className="text-xs text-gray-300">
-                            {collection.expected.length}
-                          </TableCell>
-                          <TableCell className="text-xs text-gray-300">
-                            {collection.error ? (
-                              <div className="space-y-1 text-rose-200">
-                                <div>—</div>
-                                <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
-                                  {collection.error}
+              {mongoDiagnosticsQuery.isLoading ? (
+                <div className="text-sm text-gray-400">Loading diagnostics...</div>
+              ) : diagnostics.length === 0 ? (
+                <div className="text-sm text-gray-400">No diagnostics available.</div>
+              ) : (
+                <div className="rounded-md border border-border/70 bg-card/60">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/60">
+                        <TableHead className="text-xs text-gray-400">Collection</TableHead>
+                        <TableHead className="text-xs text-gray-400">Expected</TableHead>
+                        <TableHead className="text-xs text-gray-400">Missing</TableHead>
+                        <TableHead className="text-xs text-gray-400">Extra</TableHead>
+                        <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {diagnostics.map((collection: MongoCollectionIndexStatus) => {
+                        const missingCount = collection.missing.length;
+                        const extraCount = collection.extra.length;
+                        const statusLabel = collection.error
+                          ? "Error"
+                          : missingCount === 0
+                            ? "OK"
+                            : "Missing";
+                        return (
+                          <TableRow key={collection.name} className="border-border/50">
+                            <TableCell className="font-mono text-xs text-gray-200">
+                              {collection.name}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-300">
+                              {collection.expected.length}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-300">
+                              {collection.error ? (
+                                <div className="space-y-1 text-rose-200">
+                                  <div>—</div>
+                                  <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
+                                    {collection.error}
+                                  </div>
                                 </div>
-                              </div>
-                            ) : missingCount === 0 ? (
-                              "0"
-                            ) : (
-                              <div className="space-y-1">
-                                <div className="text-amber-200">{missingCount}</div>
-                                <div className="space-y-1 text-[10px] text-amber-200">
-                                  {collection.missing.map((item: MongoIndexInfo) => (
-                                    <div
-                                      key={JSON.stringify(item.key)}
-                                      className="rounded bg-amber-500/10 px-2 py-1"
-                                    >
-                                      {JSON.stringify(item.key)}
-                                    </div>
-                                  ))}
+                              ) : missingCount === 0 ? (
+                                "0"
+                              ) : (
+                                <div className="space-y-1">
+                                  <div className="text-amber-200">{missingCount}</div>
+                                  <div className="space-y-1 text-[10px] text-amber-200">
+                                    {collection.missing.map((item: MongoIndexInfo) => (
+                                      <div
+                                        key={JSON.stringify(item.key)}
+                                        className="rounded bg-amber-500/10 px-2 py-1"
+                                      >
+                                        {JSON.stringify(item.key)}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-gray-300">
-                            {extraCount}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span
-                              className={`rounded border px-2 py-0.5 text-xs ${
-                                collection.error
-                                  ? "border-rose-400/40 text-rose-200 bg-rose-500/10"
-                                  : missingCount === 0
-                                  ? "border-emerald-400/40 text-emerald-200 bg-emerald-500/10"
-                                  : "border-amber-400/40 text-amber-200 bg-amber-500/10"
-                              }`}
-                            >
-                              {statusLabel}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </SectionPanel>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-300">
+                              {extraCount}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span
+                                className={`rounded border px-2 py-0.5 text-xs ${
+                                  collection.error
+                                    ? "border-rose-400/40 text-rose-200 bg-rose-500/10"
+                                    : missingCount === 0
+                                      ? "border-emerald-400/40 text-emerald-200 bg-emerald-500/10"
+                                      : "border-amber-400/40 text-amber-200 bg-amber-500/10"
+                                }`}
+                              >
+                                {statusLabel}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </SectionPanel>
           </>
         }
         filters={
-          <FiltersContainer
-            gridClassName="md:grid-cols-4"
-            onReset={() => {
-              setLevel("all");
-              setQuery("");
-              setSource("");
-              setFromDate("");
-              setToDate("");
-              setPage(1);
-            }}
+          <DynamicFilters
+            fields={filterFields}
+            values={{ level, query, source, fromDate, toDate }}
+            onChange={handleFilterChange}
+            onReset={handleResetFilters}
             hasActiveFilters={Boolean(level !== "all" || query || source || fromDate || toDate)}
-          >
-            <div>
-              <Label className="text-xs text-gray-400">Level</Label>
-              <UnifiedSelect
-                value={level}
-                onValueChange={(value: string): void => {
-                  setLevel(value as SystemLogLevel | "all");
-                  setPage(1);
-                }}
-                options={levelOptions}
-                placeholder="All levels"
-                triggerClassName="mt-2"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-400">Search</Label>
-              <Input
-                className="mt-2"
-                placeholder="Message or source"
-                value={query}
-                onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-400">Source</Label>
-              <Input
-                className="mt-2"
-                placeholder="api/products, auth, etc."
-                value={source}
-                onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                  setSource(event.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-gray-400">From</Label>
-                <Input
-                  className="mt-2"
-                  type="date"
-                  value={fromDate}
-                  onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                    setFromDate(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">To</Label>
-                <Input
-                  className="mt-2"
-                  type="date"
-                  value={toDate}
-                  onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                    setToDate(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
-            </div>
-          </FiltersContainer>
+            gridClassName="md:grid-cols-5"
+          />
         }
       >
         <div className="space-y-6">

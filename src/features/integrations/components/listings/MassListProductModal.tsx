@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SharedModal } from "@/shared/ui";
+import { FormModal } from "@/shared/components/FormModal";
 import { useState } from "react";
 import { logClientError } from "@/features/observability";
 import { ExportLogViewer } from "./ExportLogViewer";
@@ -125,36 +125,15 @@ export function MassListProductModal({
   const submitting = exportMutation.isPending || createListingMutation.isPending;
 
   return (
-    <SharedModal
-      open={true}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
       title={`List ${productIds.length} Products to ${selectedIntegration?.name || "Marketplace"}`}
+      onSave={(): void => { void handleSubmit(); }}
+      isSaving={submitting}
+      saveText={isBaseComIntegration ? "Export to Base.com" : "List Products"}
+      cancelText="Cancel"
       size="md"
-      showClose={!submitting}
-      footer={
-        !submitting && (
-            <>
-            <Button
-                variant="outline"
-                onClick={onClose}
-                className="bg-gray-800 text-white hover:bg-gray-700"
-            >
-                Cancel
-            </Button>
-            <Button
-                onClick={(): void => { void handleSubmit(); }}
-                disabled={
-                submitting ||
-                (isBaseComIntegration && !selectedInventoryId)
-                }
-            >
-                {isBaseComIntegration
-                ? "Export to Base.com"
-                : "List Products"}
-            </Button>
-            </>
-        )
-      }
     >
       <div className="space-y-6">
         {error && (
@@ -214,7 +193,7 @@ export function MassListProductModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }
 

@@ -2,7 +2,7 @@
 
 
 import { AiPathsSettingsView } from "./ai-paths-settings/AiPathsSettingsView";
-import { useAiPathsSettingsState } from "./ai-paths-settings/useAiPathsSettingsState";
+import { useAiPathsSettingsState, type AiPathsSettingsState } from "./ai-paths-settings/useAiPathsSettingsState";
 
 type AiPathsSettingsProps = {
   activeTab: "canvas" | "paths" | "docs";
@@ -11,7 +11,7 @@ type AiPathsSettingsProps = {
 };
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): React.JSX.Element {
-  const state = useAiPathsSettingsState({ activeTab });
+  const state: AiPathsSettingsState = useAiPathsSettingsState({ activeTab });
 
   return (
     <AiPathsSettingsView

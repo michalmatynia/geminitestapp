@@ -31,6 +31,7 @@ interface ProductListHeaderProps {
   catalogFilter: string;
   setCatalogFilter: (filter: string) => void;
   catalogs: Catalog[];
+  showHeader?: boolean;
 }
 
 export const ProductListHeader = memo(function ProductListHeader({
@@ -51,6 +52,7 @@ export const ProductListHeader = memo(function ProductListHeader({
   catalogFilter,
   setCatalogFilter,
   catalogs,
+  showHeader = true,
 }: ProductListHeaderProps) {
   const { toast } = useToast();
   const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);
@@ -78,45 +80,47 @@ export const ProductListHeader = memo(function ProductListHeader({
 
   return (
     <div className="space-y-4">
-      <SectionHeader
-        title="Products"
-        actions={
-          <div className="flex items-center gap-3">
-            <TriggerButtonBar location="product_list" entityType="product" />
-          </div>
-        }
-        eyebrow={
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <Button
-              onClick={onCreateProduct}
-              className="h-14 w-14 rounded-full border border-white/20 p-0 hover:border-white/40"
-              aria-label="Create new product"
-            >
-              <PlusIcon className="h-6 w-6" />
-            </Button>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {activeDrafts.map((draft: ProductDraft) => {
-                const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
-                return (
-                  <Button
-                    key={draft.id}
-                    onClick={() => onCreateFromDraft?.(draft.id)}
-                    className="h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white hover:border-white/40 hover:bg-white/10"
-                    aria-label={`Create product from ${draft.name}`}
-                    title={draft.name}
-                  >
-                    {IconComponent ? (
-                      <IconComponent className="h-3.5 w-3.5" />
-                    ) : (
-                      <Package className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                );
-              })}
+      {showHeader && (
+        <SectionHeader
+          title="Products"
+          actions={
+            <div className="flex items-center gap-3">
+              <TriggerButtonBar location="product_list" entityType="product" />
             </div>
-          </div>
-        }
-      />
+          }
+          eyebrow={
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Button
+                onClick={onCreateProduct}
+                className="h-14 w-14 rounded-full border border-white/20 p-0 hover:border-white/40"
+                aria-label="Create new product"
+              >
+                <PlusIcon className="h-6 w-6" />
+              </Button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {activeDrafts.map((draft: ProductDraft) => {
+                  const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
+                  return (
+                    <Button
+                      key={draft.id}
+                      onClick={() => onCreateFromDraft?.(draft.id)}
+                      className="h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white hover:border-white/40 hover:bg-white/10"
+                      aria-label={`Create product from ${draft.name}`}
+                      title={draft.name}
+                    >
+                      {IconComponent ? (
+                        <IconComponent className="h-3.5 w-3.5" />
+                      ) : (
+                        <Package className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          }
+        />
+      )}
 
       {/* Controls section */}
       <SectionPanel className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">

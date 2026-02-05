@@ -14,6 +14,7 @@ import {
   Table as ReactTable,
   RowSelectionState,
   OnChangeFn,
+  RowData,
 } from "@tanstack/react-table";
 import { useQueryClient, QueryClient } from "@tanstack/react-query";
 
@@ -33,7 +34,7 @@ interface DataTableProps<TData> {
 }
 
 declare module "@tanstack/react-table" {
-  interface TableMeta<_TData> {
+  interface TableMeta<TData extends RowData> {
     queryClient?: QueryClient;
   }
 }

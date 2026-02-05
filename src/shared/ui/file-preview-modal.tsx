@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal } from "@/shared/ui";
+import { AppModal } from "@/shared/ui";
 import Image from "next/image";
 
 export interface FilePreviewData {
@@ -28,7 +28,7 @@ export default function FilePreviewModal({
   children,
 }: FilePreviewModalProps) {
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title={file.filename}
@@ -95,6 +95,6 @@ export default function FilePreviewModal({
             {children}
           </div>
         </div>
-    </SharedModal>
+    </AppModal>
   );
 }

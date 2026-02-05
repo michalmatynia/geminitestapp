@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/ui";
-import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -94,12 +93,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           isMenuCollapsed ? "w-20" : "w-64"
         }`}
       >
-        <div className="flex items-center justify-between mb-4">
-          {!isMenuCollapsed && (
-            <h1 className="text-2xl font-bold">
-              <Link href="/admin">Admin</Link>
-            </h1>
-          )}
+        <div className={`flex items-center mb-4 ${isMenuCollapsed ? "justify-center" : "justify-end"}`}>
           <Button
             onClick={handleToggleCollapse}
             className="p-2 rounded-full hover:bg-gray-700"

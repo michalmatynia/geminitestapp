@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal, Button, Label, UnifiedSelect, Input, SectionPanel } from "@/shared/ui";
+import { AppModal, Button, Label, UnifiedSelect, Input, SectionPanel } from "@/shared/ui";
 import { Viewer3D, type LightingPreset, type EnvironmentPreset } from "./Viewer3D";
 import {
   Download,
@@ -197,7 +197,7 @@ export function Asset3DPreviewModal({
   };
 
   return (
-    <SharedModal open={open} onClose={onClose} title={asset.filename}>
+    <AppModal open={open} onClose={onClose} title={asset.filename}>
       <div className="bg-gray-900 rounded-lg shadow-2xl w-[95vw] max-w-6xl border border-gray-700 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
@@ -786,6 +786,6 @@ export function Asset3DPreviewModal({
           </div>
         </div>
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

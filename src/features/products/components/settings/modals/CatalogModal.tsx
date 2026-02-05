@@ -1,11 +1,9 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 import React from "react";
 
 import {
-  SharedModal,
-  Button,
   Input,
   Label,
   Textarea,
@@ -18,6 +16,7 @@ import {
   SelectValue,
   Badge,
   Alert,
+  FormModal,
 } from "@/shared/ui";
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
@@ -48,7 +47,7 @@ export function CatalogModal({
   priceGroups,
   loadingGroups,
   defaultGroupId,
-}: CatalogModalProps) {
+}: CatalogModalProps): React.JSX.Element {
   const { toast } = useToast();
   const saveMutation = useSaveCatalogMutation();
   const [error, setError] = React.useState<string | null>(null);
@@ -107,7 +106,7 @@ export function CatalogModal({
     setLanguageQuery("");
   }, [catalog, defaultGroupId]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (saveMutation.isPending) return;
     const name = form.name.trim();
     if (!name) {
@@ -159,7 +158,7 @@ export function CatalogModal({
     }
   };
 
-  const availableLanguages = React.useMemo(() => {
+  const availableLanguages = React.useMemo((): Language[] => {
     const query = languageQuery.trim().toLowerCase();
     return languages.filter(
       (l) =>
@@ -170,7 +169,7 @@ export function CatalogModal({
     );
   }, [languages, selectedLanguageIds, languageQuery]);
 
-  const toggleLanguage = (id: string) => {
+  const toggleLanguage = (id: string): void => {
     setSelectedLanguageIds((prev) => {
       const next = prev.includes(id)
         ? prev.filter((i) => i !== id)
@@ -181,7 +180,7 @@ export function CatalogModal({
     });
   };
 
-  const moveLanguage = (id: string, direction: "up" | "down") => {
+  const moveLanguage = (id: string, direction: "up" | "down"): void => {
     setSelectedLanguageIds((prev) => {
       const idx = prev.indexOf(id);
       if (idx === -1) return prev;
@@ -193,7 +192,7 @@ export function CatalogModal({
     });
   };
 
-  const togglePriceGroup = (id: string) => {
+  const togglePriceGroup = (id: string): void => {
     setCatalogPriceGroupIds((prev) => {
       const next = prev.includes(id)
         ? prev.filter((i) => i !== id)
@@ -204,38 +203,17 @@ export function CatalogModal({
     });
   };
 
-  const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : catalog ? "Update" : "Create"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {catalog ? "Edit Catalog" : "Create Catalog"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
       title={catalog ? "Edit Catalog" : "Create Catalog"}
-      header={header}
+      onSave={() => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={catalog ? "Update" : "Create"}
+      cancelText="Close"
       size="lg"
     >
       <div className="space-y-6">
@@ -478,6 +456,6 @@ export function CatalogModal({
           )}
         </div>
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

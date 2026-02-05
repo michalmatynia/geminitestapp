@@ -1,10 +1,7 @@
 "use client";
 
-import { Button, Label, Checkbox, SharedModal } from "@/shared/ui";
+import { Label, Checkbox, FormModal } from "@/shared/ui";
 import { useState } from "react";
-
-
-
 
 type RestoreModalProps = {
   backupName: string;
@@ -20,24 +17,14 @@ export const RestoreModal = ({
   const [truncate, setTruncate] = useState(true);
 
   return (
-    <SharedModal
-      open={true}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
       title="Restore Database"
+      onSave={(): void => onConfirm(truncate)}
+      saveText="Restore"
+      cancelText="Cancel"
       size="sm"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => onConfirm(truncate)}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Restore
-          </Button>
-        </>
-      }
     >
       <p className="mb-4 text-gray-300">
         Are you sure you want to restore backup <strong>{backupName}</strong>?
@@ -52,6 +39,6 @@ export const RestoreModal = ({
           Truncate (delete) existing data before restore
         </span>
       </Label>
-    </SharedModal>
+    </FormModal>
   );
 };

@@ -46,7 +46,7 @@ export function AppModal({
   className,
   contentClassName,
   bodyClassName,
-}: AppModalProps) {
+}: AppModalProps): React.JSX.Element {
   const handleOpenChange = (isOpen: boolean): void => {
     onOpenChange?.(isOpen);
     if (!isOpen) onClose?.();

@@ -64,12 +64,12 @@ const readSettingValue = async (key: string): Promise<string | null> => {
   return readPrismaSetting(key);
 };
 
-const parseBoolean = (value: string | null | undefined, fallback = false) => {
+const parseBoolean = (value: string | null | undefined, fallback = false): boolean => {
   if (typeof value !== "string") return fallback;
   return value.trim().toLowerCase() === "true";
 };
 
-const parseNumber = (value: string | null | undefined, fallback: number) => {
+const parseNumber = (value: string | null | undefined, fallback: number): number => {
   if (typeof value !== "string") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -133,7 +133,7 @@ const getThrottleCache = (): Map<string, number> => {
   return globalAny.__criticalErrorNotificationCache;
 };
 
-const buildSignature = (log: SystemLogRecord) => {
+const buildSignature = (log: SystemLogRecord): string => {
   const hash = createHash("sha256");
   hash.update(log.message ?? "");
   hash.update(String(log.source ?? ""));
@@ -142,7 +142,7 @@ const buildSignature = (log: SystemLogRecord) => {
   return hash.digest("hex");
 };
 
-const shouldThrottle = (signature: string, throttleSeconds: number) => {
+const shouldThrottle = (signature: string, throttleSeconds: number): boolean => {
   const cache = getThrottleCache();
   const now = Date.now();
   const previous = cache.get(signature);
@@ -153,7 +153,7 @@ const shouldThrottle = (signature: string, throttleSeconds: number) => {
   return false;
 };
 
-const buildPayload = (log: SystemLogRecord, critical: boolean) => ({
+const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, unknown> => ({
   event: "critical_error",
   critical,
   level: log.level,

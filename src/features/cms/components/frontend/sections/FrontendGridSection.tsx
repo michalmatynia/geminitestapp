@@ -13,6 +13,7 @@ import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 import { CssAnimationWrapper } from "../CssAnimationWrapper";
 import { buildScopedCustomCss, getCustomCssSelector } from "@/features/cms/utils/custom-css";
 import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
+import Image from "next/image";
 
 // Section-type blocks that need special rendering inside columns
 const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"]);
@@ -215,8 +216,7 @@ function renderBackgroundImageLayer(settings?: Record<string, unknown>): React.R
 
   return (
     <div className="absolute inset-0 z-0" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} style={imageStyles} />
+      <Image src={src} alt={alt} fill style={imageStyles} />
       {presentation.hasOverlay && (
         <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
       )}

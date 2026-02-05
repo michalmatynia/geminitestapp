@@ -18,22 +18,11 @@ import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogOut, LogIn, SparklesIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } = {}): React.ReactNode {
-  const [mounted, setMounted] = useState(false);
   const { data: session } = useSession();
   const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
     if (value === undefined) return fallback;

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 "use client";
 
 import { useNormalizedQuery, useComposedQuery } from "@/shared/hooks/useQueryComposition";
@@ -28,7 +28,7 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
         return res.json() as Promise<any[]>;
       },
     },
-    (products: any[]) => ({
+    (products: any[]): { total: number; published: number; categories: number; avgPrice: number; } => ({
       total: products.length,
       published: products.filter((p: any) => p.published).length,
       categories: [...new Set(products.map((p: any) => p.category))].length,
@@ -88,7 +88,7 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
 }
 
 // Enhanced user management with adaptive caching
-export function useEnhancedUsers() {
+export function useEnhancedUsers(): { users: ReturnType<typeof useAdaptiveQuery>; permissions: ReturnType<typeof useAdaptiveQuery>; activity: ReturnType<typeof useAdaptiveQuery>; } {
   // User list with long-term caching
   const users = useAdaptiveQuery(
     ['users', 'list'],
@@ -123,7 +123,7 @@ export function useEnhancedUsers() {
 }
 
 // Enhanced settings with composition
-export function useEnhancedSettings() {
+export function useEnhancedSettings(): ReturnType<typeof useComposedQuery> {
   // Compose all settings into a single object
   const settings = useComposedQuery(
     {

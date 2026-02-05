@@ -11,6 +11,7 @@ import {
 } from "@/features/products/validations";
 import { getDiskPathFromPublicPath, uploadFile } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/services/product-repository";
+import { getProductDataProvider, type ProductDbProvider } from "@/features/products/services/product-provider";
 import type {
   ProductFilters,
   ProductRepository,
@@ -24,9 +25,12 @@ import type {
   ProductImageRecord,
   ProductRecord,
 } from "@/features/products/types";
+import { performanceMonitor } from "@/features/products/performance";
 
-const resolveProductRepository = async (): Promise<ProductRepository> =>
-  getProductRepository();
+const resolveProductRepository = async (
+  providerOverride?: ProductDbProvider
+): Promise<ProductRepository> =>
+  getProductRepository(providerOverride);
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository();
 
@@ -35,13 +39,31 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
  * @param filters - The filter criteria.
  * @returns A list of products.
  */
+const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === "true";
+
+type ProductQueryTimings = Record<string, number | null | undefined>;
+
 async function getProducts(
   filters: ProductFilters,
+  options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
 ): Promise<ProductWithImages[]> {
-  const productRepository = await resolveProductRepository();
-  const products = await productRepository.getProducts(filters);
+  const timings = options?.timings;
+  const totalStart = performance.now();
+  const provider = options?.provider ?? await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
 
-  return Promise.all(
+  const repoStart = performance.now();
+  const products = await productRepository.getProducts(filters);
+  const repoMs = performance.now() - repoStart;
+  if (timings) {
+    timings.repo = repoMs;
+  }
+  performanceMonitor.record("db.query", repoMs, { operation: "getProducts", provider });
+
+  const imagesStart = performance.now();
+  let fsChecks = 0;
+
+  const result = await Promise.all(
     products.map(
       async (product: ProductWithImages): Promise<ProductWithImages> => {
         if (!product.images?.length) {
@@ -63,6 +85,7 @@ async function getProducts(
               }
 
               try {
+                fsChecks += 1;
                 await fs.access(getDiskPathFromPublicPath(filepath));
                 return image;
               } catch {
@@ -82,6 +105,22 @@ async function getProducts(
       },
     ),
   );
+  const imagesMs = performance.now() - imagesStart;
+  if (timings) {
+    timings.images = imagesMs;
+    timings.fsChecks = fsChecks;
+    timings.total = performance.now() - totalStart;
+  }
+  if (shouldLogTiming()) {
+    console.log("[timing] productService.getProducts", {
+      provider,
+      repoMs: Math.round(repoMs),
+      imagesMs: Math.round(imagesMs),
+      fsChecks,
+      totalMs: Math.round(performance.now() - totalStart),
+    });
+  }
+  return result;
 }
 
 /**

@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 
 export type JsonValue =

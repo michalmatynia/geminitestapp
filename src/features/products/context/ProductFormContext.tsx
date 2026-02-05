@@ -244,10 +244,7 @@ export function ProductFormProvider({
     () => (Array.isArray(product?.noteIds) ? product.noteIds : [])
   );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedNoteIds(Array.isArray(product?.noteIds) ? product.noteIds : []);
-  }, [product?.id, product?.noteIds]);
+
 
   const toggleNote = (noteId: string): void => {
     const id = noteId.trim();
@@ -277,10 +274,7 @@ export function ProductFormProvider({
     () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
   );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setParameterValues(normalizeParameterValues(product?.parameters ?? draft?.parameters ?? []));
-  }, [product?.id, draft?.id, product?.parameters, draft?.parameters]);
+
 
   useEffect((): (() => void) => {
     return (): void => {

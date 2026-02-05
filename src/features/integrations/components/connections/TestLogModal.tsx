@@ -1,6 +1,6 @@
 "use client";
 
-import { SharedModal } from "@/shared/ui";
+import { AppModal } from "@/shared/ui";
 import { TestLogEntry } from "@/features/integrations/types/integrations-ui";
 
 
@@ -13,7 +13,7 @@ export function TestLogModal({ selectedStep, onClose }: TestLogModalProps): Reac
   if (!selectedStep) return null;
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title="Playwright Log"
@@ -43,6 +43,6 @@ export function TestLogModal({ selectedStep, onClose }: TestLogModalProps): Reac
             : "Playwright stopped after this step due to a failure."}
         </div>
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SharedModal, Input, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge, UnifiedSelect } from "@/shared/ui";
+import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -163,17 +163,10 @@ export default function ProductListingJobsPanel({
       size="md"
       actions={
         <>
-          <Button
-            onClick={() => void jobsQuery.refetch()}
-            disabled={jobsQuery.isFetching}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw
-              className={`mr-2 size-4 ${jobsQuery.isFetching ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+          <RefreshButton
+            onRefresh={() => void jobsQuery.refetch()}
+            isRefreshing={jobsQuery.isFetching}
+          />
           {showBackToProducts && (
             <Button asChild variant="outline" size="sm">
               <Link href="/admin/products">Back to Products</Link>
@@ -184,58 +177,34 @@ export default function ProductListingJobsPanel({
     />
   );
 
+  const filterFields: FilterField[] = [
+    { key: "query", label: "Search", type: "search", placeholder: "Search by product, SKU, integration, or ID..." },
+  ];
+
   const filters = !jobsQuery.isLoading && !jobsQuery.error ? (
-    <SectionPanel>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-          <Input
-            placeholder="Search by product, SKU, integration, or ID..."
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-            className="h-8 text-sm sm:max-w-md"
-          />
-      </div>
-    </SectionPanel>
+    <DynamicFilters
+      fields={filterFields}
+      values={{ query }}
+      onChange={(_, value) => setQuery(value)}
+      onReset={() => setQuery("")}
+      hasActiveFilters={Boolean(query)}
+    />
   ) : null;
 
   const footer = !jobsQuery.isLoading && !jobsQuery.error ? (
-    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-      <div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+      <div className="text-xs text-gray-400">
         Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
       </div>
-      <div className="flex items-center gap-2">
-        <Label htmlFor="exportJobsPageSize">Rows</Label>
-        <UnifiedSelect
-          value={String(pageSize)}
-          onValueChange={(value: string): void => {
-            setPageSize(Number(value));
-            setPage(1);
-          }}
-          options={[10, 25, 50, 100].map((size: number) => ({ value: String(size), label: String(size) }))}
-          className="w-20"
-          triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(): void => setPage((current: number) => Math.max(1, current - 1))}
-          disabled={clampedPage <= 1}
-          className="border bg-gray-800 hover:bg-gray-700"
-        >
-          Prev
-        </Button>
-        <span className="min-w-[72px] text-center">
-          {clampedPage} / {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(): void => setPage((current: number) => Math.min(totalPages, current + 1))}
-          disabled={clampedPage >= totalPages}
-          className="border bg-gray-800 hover:bg-gray-700"
-        >
-          Next
-        </Button>
-      </div>
+      <Pagination
+        page={clampedPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        showPageSize
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        variant="compact"
+      />
     </div>
   ) : null;
 

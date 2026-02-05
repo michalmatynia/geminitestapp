@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { MenuSettings } from "@/features/cms/types/menu-settings";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
@@ -276,13 +277,12 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
             const content = (
               <>
                 {menu.showItemImages && item.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={item.imageUrl}
                     alt=""
                     width={menu.itemImageSize}
                     height={menu.itemImageSize}
-                    style={{ width: menu.itemImageSize, height: menu.itemImageSize, objectFit: "cover", borderRadius: 6 }}
+                    style={{ objectFit: "cover", borderRadius: 6 }}
                   />
                 )}
                 <span>{item.label}</span>

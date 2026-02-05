@@ -1,5 +1,5 @@
 "use client";
-import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal, SectionPanel } from "@/shared/ui";
+import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel } from "@/shared/ui";
 import { useState } from "react";
 import { logClientError } from "@/features/observability";
 
@@ -164,40 +164,15 @@ export function ListProductModal({
   );
 
   return (
-    <SharedModal
-      open={true}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
       title={`List Product - ${productName}`}
+      onSave={(): void => { void handleSubmit(); }}
+      isSaving={submitting}
+      saveText={isBaseComIntegration ? "Export to Base.com" : "List Product"}
+      cancelText="Cancel"
       size="md"
-      showClose={false}
-      footer={
-        <>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-gray-800 text-white hover:bg-gray-700"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={(): void => { void handleSubmit(); }}
-            disabled={
-              submitting ||
-              !selectedIntegrationId ||
-              !selectedConnectionId ||
-              (isBaseComIntegration && !selectedInventoryId)
-            }
-          >
-            {submitting
-              ? isBaseComIntegration
-                ? "Exporting..."
-                : "Listing..."
-              : isBaseComIntegration
-              ? "Export to Base.com"
-              : "List Product"}
-          </Button>
-        </>
-      }
     >
       <div className="space-y-6">
         {error && (
@@ -326,7 +301,7 @@ export function ListProductModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }
 

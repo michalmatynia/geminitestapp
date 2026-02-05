@@ -378,9 +378,12 @@ const eslintConfig = [
         },
 
       },
-
-      
-
+      {
+        files: ["src/features/viewer3d/components/Viewer3D.tsx", "src/features/viewer3d/components/shaders/DitheringEffect.tsx"],
+        rules: {
+          "react/no-unknown-property": "off",
+        },
+      },
     ];
 
     

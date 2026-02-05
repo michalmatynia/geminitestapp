@@ -4,10 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   SectionHeader,
   SectionPanel,
-  Input,
-  Label,
-  UnifiedSelect,
-  FiltersContainer,
+  DynamicFilters,
   Table,
   TableBody,
   TableCell,
@@ -17,6 +14,7 @@ import {
   Pagination,
   StatusBadge,
   useToast,
+  type FilterField,
 } from "@/shared/ui";
 import { useFileUploadEvents, type FileUploadEventRecord } from "@/features/files/hooks/useFileUploadEvents";
 
@@ -71,6 +69,35 @@ export default function FileUploadEventsPage(): React.JSX.Element {
   const total = eventsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const filterFields: FilterField[] = [
+    { key: "status", label: "Status", type: "select", options: [...statusOptions] },
+    { key: "category", label: "Category", type: "text", placeholder: "studio, cms, products…" },
+    { key: "projectId", label: "Project ID", type: "text", placeholder: "studio project id…" },
+    { key: "query", label: "Search", type: "text", placeholder: "filename, error, source…" },
+    { key: "fromDate", label: "From", type: "date" },
+    { key: "toDate", label: "To", type: "date" },
+  ];
+
+  const handleFilterChange = (key: string, value: any): void => {
+    setPage(1);
+    if (key === "status") setStatus(value);
+    if (key === "category") setCategory(value);
+    if (key === "projectId") setProjectId(value);
+    if (key === "query") setQuery(value);
+    if (key === "fromDate") setFromDate(value);
+    if (key === "toDate") setToDate(value);
+  };
+
+  const handleResetFilters = (): void => {
+    setStatus("all");
+    setCategory("");
+    setProjectId("");
+    setQuery("");
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
   return (
     <div className="container mx-auto py-10">
       <SectionHeader
@@ -79,78 +106,19 @@ export default function FileUploadEventsPage(): React.JSX.Element {
         className="mb-6"
       />
 
-      <FiltersContainer
-        gridClassName="md:grid-cols-4"
-        onReset={() => {
-          setStatus("all");
-          setCategory("");
-          setProjectId("");
-          setQuery("");
-          setFromDate("");
-          setToDate("");
-          setPage(1);
-        }}
-        hasActiveFilters={Boolean(status !== "all" || category || projectId || query || fromDate || toDate)}
-      >
-        <div>
-          <Label className="text-[11px] text-gray-400">Status</Label>
-          <UnifiedSelect
-            value={status}
-            onValueChange={(value: string) => setStatus(value as typeof status)}
-            options={statusOptions.map((opt: { value: string; label: string }) => ({ value: opt.value, label: opt.label }))}
-            placeholder="Status"
-            triggerClassName="h-9 mt-1"
-          />
+      <div className="relative">
+        <DynamicFilters
+          fields={filterFields}
+          values={{ status, category, projectId, query, fromDate, toDate }}
+          onChange={handleFilterChange}
+          onReset={handleResetFilters}
+          hasActiveFilters={Boolean(status !== "all" || category || projectId || query || fromDate || toDate)}
+          gridClassName="md:grid-cols-4 lg:grid-cols-6"
+        />
+        <div className="absolute right-4 top-3 text-[10px] text-gray-500 pointer-events-none">
+          Total: <span className="text-gray-300">{total}</span>
         </div>
-        <div>
-          <Label className="text-[11px] text-gray-400">Category</Label>
-          <Input
-            value={category}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategory(e.target.value)}
-            className="h-9 mt-1"
-            placeholder="studio, cms, products…"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400">Project ID</Label>
-          <Input
-            value={projectId}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectId(e.target.value)}
-            className="h-9 mt-1"
-            placeholder="studio project id…"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400">Search</Label>
-          <Input
-            value={query}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-            className="h-9 mt-1"
-            placeholder="filename, error, source…"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400">From</Label>
-          <Input
-            type="date"
-            value={fromDate}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFromDate(e.target.value)}
-            className="h-9 mt-1"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] text-gray-400">To</Label>
-          <Input
-            type="date"
-            value={toDate}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setToDate(e.target.value)}
-            className="h-9 mt-1"
-          />
-        </div>
-        <div className="flex items-end text-xs text-gray-400 pb-2">
-          Total: <span className="ml-2 text-gray-200">{total}</span>
-        </div>
-      </FiltersContainer>
+      </div>
 
       <SectionPanel className="p-0">
         <Table>

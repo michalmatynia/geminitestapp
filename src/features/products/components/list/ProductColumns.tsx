@@ -1,11 +1,12 @@
 "use client";
 
-import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge, Badge } from "@/shared/ui";
+import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
 import { ArrowUpDown, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
+import { cn } from "@/shared/utils";
 
 
 
@@ -20,6 +21,37 @@ import type { PriceGroupForCalculation, ProductWithImages } from "@/features/pro
 export type Product = ProductWithImages;
 
 type ProductNameKey = "name_en" | "name_pl" | "name_de";
+
+type CircleIconButtonProps = {
+  onClick?: () => void;
+  ariaLabel: string;
+  title?: string;
+  className?: string;
+  children: React.ReactNode;
+};
+
+const CircleIconButton = ({
+  onClick,
+  ariaLabel,
+  title,
+  className,
+  children,
+}: CircleIconButtonProps): React.JSX.Element => (
+  <Button
+    type="button"
+    onClick={onClick}
+    variant="ghost"
+    size="icon"
+    aria-label={ariaLabel}
+    title={title}
+    className={cn(
+      "size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent",
+      className
+    )}
+  >
+    {children}
+  </Button>
+);
 
 /**
  * Calculates the price for a product in the specified currency.
@@ -610,42 +642,43 @@ export const getProductColumns = (
       const showMarketplaceBadge: boolean =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
       const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "not_started";
+      const getStatusToneClass = (value: string): string => {
+        const normalized = value.toLowerCase();
+        if (["active", "success", "completed", "listed", "ok"].includes(normalized)) {
+          return "border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100";
+        }
+        if (["warning", "pending", "queued", "processing", "in_progress"].includes(normalized)) {
+          return "border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100";
+        }
+        if (["failed", "error"].includes(normalized)) {
+          return "border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100";
+        }
+        return "border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200";
+      };
       const baseIcon = (
-        <span aria-hidden="true" className="text-[11px] font-black leading-none">
-          B
+        <span aria-hidden="true" className="text-[9px] font-black uppercase leading-none tracking-tight">
+          BL
         </span>
       );
 
       return (
         <div className="inline-flex items-center gap-1">
-          <Button
-            type="button"
+          <CircleIconButton
             onClick={(): void => handleClick(product)}
-            variant="ghost"
-            size="icon"
-            className="size-8 cursor-pointer rounded-full text-muted-foreground hover:bg-transparent hover:text-foreground"
-            aria-label="View integrations"
+            ariaLabel="View integrations"
+            className="text-muted-foreground hover:text-foreground"
           >
             <PlusCircle className="size-5" />
-          </Button>
+          </CircleIconButton>
           {showMarketplaceBadge && (
-            <Button
-              type="button"
+            <CircleIconButton
               onClick={(): void => handleExportClick?.(product)}
-              variant="ghost"
-              size="icon"
-              className="p-0 h-auto w-auto"
+              ariaLabel={`Base.com export settings - status: ${status}`}
               title={`Base.com export status: ${status} - Click for export settings`}
-              aria-label={`Base.com export settings - status: ${status}`}
+              className={getStatusToneClass(status)}
             >
-              <StatusBadge
-                status={status}
-                icon={baseIcon}
-                hideLabel
-                className="size-7 rounded-full p-0"
-                title={`Base.com export status: ${status}`}
-              />
-            </Button>
+              {baseIcon}
+            </CircleIconButton>
           )}
         </div>
       );

@@ -9,6 +9,7 @@ import type {
   DatabaseRestoreResponse,
   DatabaseType,
 } from "../types";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -50,6 +51,7 @@ export const fetchDatabaseBackups = async (
 export const createDatabaseBackup = async (dbType: DatabaseType): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const res = await fetch(`/api/databases/backup?type=${dbType}`, {
     method: "POST",
+    headers: withCsrfHeaders(),
   });
   const payload = await safeJson<DatabaseBackupResponse>(res);
   return { ok: res.ok, payload };
@@ -61,7 +63,7 @@ export const restoreDatabaseBackup = async (
 ): Promise<{ ok: boolean; payload: DatabaseRestoreResponse }> => {
   const res = await fetch(`/api/databases/restore?type=${dbType}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: withCsrfHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       backupName: input.backupName,
       truncateBeforeRestore: input.truncateBeforeRestore,
@@ -93,7 +95,7 @@ export const deleteDatabaseBackup = async (
 ): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const res = await fetch("/api/databases/delete", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: withCsrfHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ backupName, type: dbType }),
   });
   const payload = await safeJson<DatabaseBackupResponse>(res);
@@ -109,7 +111,7 @@ export const fetchDatabasePreview = async (input: {
 }): Promise<{ ok: boolean; payload: DatabasePreviewPayload }> => {
   const res = await fetch("/api/databases/preview", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: withCsrfHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       backupName: input.backupName,
       mode: input.mode,

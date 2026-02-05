@@ -52,7 +52,6 @@ import {
 } from "@/features/ai/ai-paths/lib";
 import {
   parseRuntimeState,
-  serializePathConfigs,
 } from "../AiPathsSettingsUtils";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 import type { ClusterPresetDraft } from "../cluster-presets-panel";
@@ -824,7 +823,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     autoSaveAt,
     handleSave,
     persistPathSettings,
-    persistPreferences,
     persistSettingsBulk,
     savePathIndex,
     syncNodesRef,
@@ -973,11 +971,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
     setPathConfigs(nextConfigs);
     try {
-      const safeConfigs = serializePathConfigs(nextConfigs);
-      await persistPreferences({
-        aiPathsPathIndex: paths,
-        aiPathsPathConfigs: safeConfigs,
-      });
       await persistPathSettings(paths, activePathId, config);
       toast("Wires cleared.", { variant: "success" });
     } catch (error) {
@@ -1018,11 +1011,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
     setPathConfigs(nextConfigs);
     try {
-      const safeConfigs = serializePathConfigs(nextConfigs);
-      await persistPreferences({
-        aiPathsPathIndex: paths,
-        aiPathsPathConfigs: safeConfigs,
-      });
       await persistPathSettings(paths, activePathId, config);
       toast("Connector data cleared for current path.", { variant: "success" });
     } catch (error) {
@@ -1073,11 +1061,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
     setPathConfigs(nextConfigs);
     try {
-      const safeConfigs = serializePathConfigs(nextConfigs);
-      await persistPreferences({
-        aiPathsPathIndex: paths,
-        aiPathsPathConfigs: safeConfigs,
-      });
       await persistPathSettings(paths, activePathId, config);
       toast("History cleared for the current path.", { variant: "success" });
     } catch (error) {
@@ -1130,11 +1113,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
     setPathConfigs(nextConfigs);
     try {
-      const safeConfigs = serializePathConfigs(nextConfigs);
-      await persistPreferences({
-        aiPathsPathIndex: paths,
-        aiPathsPathConfigs: safeConfigs,
-      });
       await persistPathSettings(paths, activePathId, config);
       toast("Node history cleared.", { variant: "success" });
     } catch (error) {
@@ -1417,11 +1395,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setActivePathId(null);
     }
     try {
-      const safeConfigs = serializePathConfigs(nextConfigs);
-      await persistPreferences({
-        aiPathsPathIndex: nextPaths,
-        aiPathsPathConfigs: safeConfigs,
-      });
       if (nextId) {
         const nextConfig = nextConfigs[nextId] ?? createDefaultPathConfig(nextId);
         await persistPathSettings(nextPaths, nextId, nextConfig);

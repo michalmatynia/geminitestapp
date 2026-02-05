@@ -7,12 +7,24 @@ import { useAdaptiveQuery } from "@/shared/hooks/query/useSmartCache";
 import { useEffect } from "react";
 import type { ProductDto, ProductCategoryDto, ProductTagDto } from "@/shared/dtos";
 
+interface EnhancedProductsQueryResult {
+  products: ReturnType<typeof useNormalizedQuery<ProductDto[]>>;
+  stats: {
+    total: number;
+    published: number;
+    categories: number;
+    avgPrice: number;
+  };
+  selectById: (id: string) => ProductDto | undefined;
+  selectMany: (ids: string[]) => ProductDto[];
+}
+
 // Enhanced product queries with normalization and composition
-export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
+export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const scheduler = useQueryScheduler();
 
   // Normalized products query
-  const productsQuery = useNormalizedQuery(
+  const productsQuery = useNormalizedQuery<ProductDto[]>(
     ['products', 'enhanced'],
     async (): Promise<ProductDto[]> => {
       const res = await fetch('/api/products');
@@ -45,8 +57,9 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
       async (): Promise<ProductCategoryDto[]> => {
         const catalogsRes = await fetch("/api/catalogs");
         if (!catalogsRes.ok) return [];
-        const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
-        const catalogId = Array.isArray(catalogs) ? catalogs[0]?.id : undefined;
+        type Catalog = { id: string };
+        const catalogs = (await catalogsRes.json()) as Catalog[];
+        const catalogId = Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0].id : undefined;
         if (!catalogId) return [];
         const res = await fetch(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`

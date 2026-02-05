@@ -102,6 +102,41 @@ interface MongoUserPreferencesDoc {
   updatedAt?: Date | string;
 }
 
+interface MongoUserPreferencesDoc {
+  _id?: ObjectId;
+  id?: string;
+  userId?: string;
+  productListNameLocale?: string | null;
+  productListCatalogFilter?: string | null;
+  productListCurrencyCode?: string | null;
+  productListPageSize?: number | null;
+  productListThumbnailSource?: string | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[];
+  aiPathsPaletteCollapsed?: boolean | null;
+  aiPathsPathIndex?: unknown;
+  aiPathsPathConfigs?: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+interface MongoUserPreferencesDoc {
+  _id?: ObjectId;
+  userId?: string;
+  productListNameLocale?: string | null;
+  productListCatalogFilter?: string | null;
+  productListCurrencyCode?: string | null;
+  productListPageSize?: number | null;
+  productListThumbnailSource?: string | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[];
+  aiPathsPaletteCollapsed?: boolean | null;
+  aiPathsPathIndex?: unknown;
+  aiPathsPathConfigs?: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
 interface MongoSystemLogDoc {
   _id?: ObjectId;
   level?: string;
@@ -770,8 +805,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
           aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
           aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? null,
-          aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
-          aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
+          aiPathsPathIndex: toJsonValue(doc.aiPathsPathIndex ?? null),
+          aiPathsPathConfigs: toJsonValue(doc.aiPathsPathConfigs ?? null),
           createdAt: toDate(doc.createdAt) ?? new Date(),
           updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
@@ -800,7 +835,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           level: doc.level ?? "error",
           message: doc.message ?? "",
           source: doc.source ?? null,
-          context: doc.context ?? null,
+          context: toJsonValue(doc.context ?? null),
           stack: doc.stack ?? null,
           path: doc.path ?? null,
           method: doc.method ?? null,
@@ -843,7 +878,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           errorMessage: doc.errorMessage ?? null,
           requestId: doc.requestId ?? null,
           userId: doc.userId ?? null,
-          meta: doc.meta ?? null,
+          meta: toJsonValue(doc.meta ?? null),
           createdAt: toDate(doc.createdAt) ?? new Date(),
         };
       })
@@ -956,7 +991,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           sessionId,
           status: doc.status ?? "pending",
           model: doc.model ?? null,
-          payload: doc.payload ?? null,
+          payload: toJsonValue(doc.payload ?? null),
           resultText: doc.resultText ?? null,
           errorMessage: doc.errorMessage ?? null,
           createdAt: toDate(doc.createdAt) ?? new Date(),

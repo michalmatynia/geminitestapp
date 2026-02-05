@@ -7,6 +7,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from "@/shared/api/settings-client";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 import { jobKeys } from "@/features/jobs/hooks/useJobQueries";
 
 import type {
@@ -23,6 +24,8 @@ import {
   normalizeNodes,
   sanitizeEdges,
   createDefaultPathConfig,
+  safeParseJson,
+  AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
@@ -32,7 +35,6 @@ import {
 type TriggerEventEntityType = "product" | "note" | "custom";
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
-const AI_PATHS_PREFS_STALE_MS = 5_000;
 const AI_PATHS_ENTITY_STALE_MS = 10_000;
 
 export type FireAiPathTriggerEventArgs = {
@@ -288,60 +290,31 @@ export function useAiPathTriggerEvent(): {
     }
 
     try {
-      const prefs = await queryClient.fetchQuery({
-        queryKey: ["user-preferences"],
-        queryFn: async () => {
-          const prefsRes = await fetch("/api/user/preferences");
-          if (!prefsRes.ok) {
-            throw new Error("Failed to load AI Paths preferences.");
-          }
-          return (await prefsRes.json()) as {
-            aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-            aiPathsPathIndex?: Array<{ id?: string }> | null;
-            aiPathsActivePathId?: string | null;
-          };
-        },
-        staleTime: AI_PATHS_PREFS_STALE_MS,
-      });
-
-      let configs: Record<string, PathConfig> = {};
-      let settingsPathOrder: string[] = [];
-
-      if (typeof prefs.aiPathsPathConfigs === "string") {
-        try {
-          const parsed = JSON.parse(prefs.aiPathsPathConfigs) as Record<string, PathConfig>;
-          configs = parsed && typeof parsed === "object" ? parsed : {};
-        } catch {
-          configs = {};
-        }
-      } else if (prefs.aiPathsPathConfigs && typeof prefs.aiPathsPathConfigs === "object") {
-        configs = prefs.aiPathsPathConfigs;
+      let settingsData: Array<{ key: string; value: string }> = [];
+      try {
+        settingsData = await queryClient.fetchQuery({
+          queryKey: ["settings", "heavy"],
+          queryFn: async () => {
+            return await fetchSettingsCached({ scope: "heavy" });
+          },
+          staleTime: AI_PATHS_SETTINGS_STALE_MS,
+        });
+      } catch {
+        settingsData = await fetchSettingsCached({ scope: "heavy" });
       }
 
-      if (!configs || Object.keys(configs).length === 0) {
-        let settingsData: Array<{ key: string; value: string }> | null = null;
-        try {
-          settingsData = await queryClient.fetchQuery({
-            queryKey: ["settings", "heavy"],
-            queryFn: async () => {
-              return await fetchSettingsCached({ scope: "heavy" });
-            },
-            staleTime: AI_PATHS_SETTINGS_STALE_MS,
-          });
-        } catch {
-          settingsData = null;
-        }
-        const fallback = await loadPathConfigsFromSettings(settingsData ?? undefined);
-        configs = fallback.configs;
-        settingsPathOrder = fallback.settingsPathOrder;
-      }
-
+      const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
       const configsList: PathConfig[] = Object.values(configs);
-      const pathOrder: string[] = Array.isArray(prefs.aiPathsPathIndex)
-        ? prefs.aiPathsPathIndex
-            .map((item: { id?: string }) => item?.id)
-            .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0)
-        : settingsPathOrder;
+      const pathOrder: string[] = settingsPathOrder;
+      const map = new Map<string, string>(
+        settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
+      );
+      const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
+      const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
+      const uiState =
+        uiStateParsed && typeof uiStateParsed === "object"
+          ? (uiStateParsed as Record<string, unknown>)
+          : null;
 
       const orderedConfigs: PathConfig[] = pathOrder.length
         ? pathOrder
@@ -369,8 +342,8 @@ export function useAiPathTriggerEvent(): {
       }
 
       const activePathId =
-        typeof prefs.aiPathsActivePathId === "string" && prefs.aiPathsActivePathId.trim().length > 0
-          ? prefs.aiPathsActivePathId.trim()
+        typeof uiState?.activePathId === "string" && uiState.activePathId.trim().length > 0
+          ? uiState.activePathId.trim()
           : null;
 
       const selectedConfig: PathConfig =
@@ -590,43 +563,45 @@ export function useAiPathTriggerEvent(): {
 
         configs[updatedConfig.id] = updatedConfig;
         const orderedIds: string[] = pathOrder.length ? pathOrder : orderedConfigs.map((config: PathConfig) => config.id);
-        const safeConfigs: string = safeJsonStringify(configs);
-
-        await fetch("/api/user/preferences", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            aiPathsPathConfigs: safeConfigs || configs,
-            aiPathsActivePathId: updatedConfig.id,
-            ...(orderedIds.length > 0 && { aiPathsPathIndex: orderedIds.map((id: string) => ({ id })) }),
-          }),
-        });
 
         try {
+          const csrfHeaders = withCsrfHeaders({ "Content-Type": "application/json" });
           const configValue = safeJsonStringify(updatedConfig);
           const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
           const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : "";
+          const nextUiState = {
+            ...(uiState && typeof uiState === "object" ? uiState : {}),
+            activePathId: updatedConfig.id,
+          };
           if (configValue) {
             await fetch("/api/settings", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: csrfHeaders,
               body: JSON.stringify({ key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`, value: configValue }),
             });
           }
           if (debugValue) {
             await fetch("/api/settings", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: csrfHeaders,
               body: JSON.stringify({ key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`, value: debugValue }),
             });
           }
           if (orderedIds.length > 0) {
             await fetch("/api/settings", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: csrfHeaders,
               body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
             });
           }
+          await fetch("/api/settings", {
+            method: "POST",
+            headers: csrfHeaders,
+            body: JSON.stringify({
+              key: AI_PATHS_UI_STATE_KEY,
+              value: JSON.stringify(nextUiState),
+            }),
+          });
           invalidateSettingsCache();
         } catch (error) {
           logger.error("Failed to persist AI Paths settings snapshot", error);

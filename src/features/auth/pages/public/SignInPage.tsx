@@ -2,7 +2,7 @@
 
 import { Button, Input, Label, Alert } from "@/shared/ui";
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
@@ -14,7 +14,11 @@ import { useSettingsMap } from "@/shared/hooks/use-settings";
 
 
 function SignInPageLoader(): React.JSX.Element {
-  const [isClient] = useState(typeof window !== 'undefined');
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const settingsQuery = useSettingsMap({ enabled: isClient });
 

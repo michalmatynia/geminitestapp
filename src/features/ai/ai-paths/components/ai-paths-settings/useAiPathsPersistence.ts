@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import {
   fetchSettingsCached,
@@ -23,6 +23,7 @@ import type {
 } from "@/features/ai/ai-paths/lib";
 import {
   AI_PATHS_LAST_ERROR_KEY,
+  AI_PATHS_UI_STATE_KEY,
   CLUSTER_PRESETS_KEY,
   DB_NODE_PRESETS_KEY,
   DB_QUERY_PRESETS_KEY,
@@ -44,7 +45,6 @@ import {
   buildPersistedRuntimeState,
   parseRuntimeState,
   sanitizePathConfig,
-  serializePathConfigs,
 } from "../AiPathsSettingsUtils";
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
@@ -113,13 +113,17 @@ type UseAiPathsPersistenceArgs = {
 };
 
 type PersistSettingsPayload = Array<{ key: string; value: string }>;
+type AiPathsUiState = {
+  activePathId?: string | null;
+  expandedGroups?: string[];
+  paletteCollapsed?: boolean;
+};
 
 type UseAiPathsPersistenceResult = {
   autoSaveAt: string | null;
   autoSaveStatus: "idle" | "saving" | "saved" | "error";
   handleSave: () => Promise<void>;
   persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
-  persistPreferences: (payload: Record<string, unknown>) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   saving: boolean;
@@ -178,27 +182,7 @@ export function useAiPathsPersistence({
   setUpdaterSamples,
   toast,
 }: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
-  const queryClient = useQueryClient();
   const updateSettingsBulkMutation = useUpdateSettingsBulk();
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: Record<string, unknown>): Promise<boolean> => {
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update preferences.");
-      }
-      return true;
-    },
-    onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["user-preferences"] });
-    },
-    onError: (error: Error): void => {
-      console.warn("[AI Paths] Failed to persist preferences.", error);
-    },
-  });
   const settingsQuery = useQuery({
     queryKey: ["settings", "heavy"],
     queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
@@ -206,42 +190,17 @@ export function useAiPathsPersistence({
     },
     enabled: false,
   });
-  const preferencesQuery = useQuery({
-    queryKey: ["user-preferences"],
-    queryFn: async (): Promise<{
-      aiPathsActivePathId?: string | null;
-      aiPathsExpandedGroups?: string[] | null;
-      aiPathsPaletteCollapsed?: boolean | null;
-      aiPathsPathIndex?: PathMeta[] | null;
-      aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-    }> => {
-      const res = await fetch("/api/user/preferences");
-      if (!res.ok) {
-        throw new Error("Failed to load user preferences.");
-      }
-      return (await res.json()) as {
-        aiPathsActivePathId?: string | null;
-        aiPathsExpandedGroups?: string[] | null;
-        aiPathsPaletteCollapsed?: boolean | null;
-        aiPathsPathIndex?: PathMeta[] | null;
-        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-      };
-    },
-    enabled: false,
-  });
-
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
-  const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [uiStateLoaded, setUiStateLoaded] = useState(false);
 
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
-  const lastPrefsPayloadRef = useRef<string>("");
-  const lastPathSavePayloadRef = useRef<string>("");
+  const lastUiStatePayloadRef = useRef<string>("");
   const lastSettingsPayloadRef = useRef<string>("");
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
@@ -275,29 +234,18 @@ export function useAiPathsPersistence({
     []
   );
 
-  const buildPathConfigsHash = useCallback(
-    (configs: Record<string, PathConfig>): string => {
-      const normalizedConfigs = Object.fromEntries(
-        Object.entries(configs).map(([key, config]: [string, PathConfig]) => [
-          key,
-          normalizeConfigForHash(sanitizePathConfig(config)),
-        ])
-      );
-      return stableStringify(normalizedConfigs);
-    },
-    [normalizeConfigForHash]
-  );
-
-  const persistPreferences = useCallback(
-    async (payload: Record<string, unknown>): Promise<void> => {
-      await updatePreferencesMutation.mutateAsync(payload);
-    },
-    [updatePreferencesMutation]
-  );
-
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
       await updateSettingsBulkMutation.mutateAsync(payload);
+    },
+    [updateSettingsBulkMutation]
+  );
+
+  const persistUiState = useCallback(
+    async (payload: AiPathsUiState): Promise<void> => {
+      await updateSettingsBulkMutation.mutateAsync([
+        { key: AI_PATHS_UI_STATE_KEY, value: JSON.stringify(payload) },
+      ]);
     },
     [updateSettingsBulkMutation]
   );
@@ -315,57 +263,37 @@ export function useAiPathsPersistence({
           throw settingsResult.error ?? new Error("Failed to load AI Paths settings.");
         }
         const data = settingsResult.data as Array<{ key: string; value: string }>;
-        let preferredPathId: string | null = null;
-        let preferredGroups: string[] | null = null;
-        let preferredPathIndex: PathMeta[] | null = null;
-        let preferredPathConfigs: Record<string, PathConfig> | null = null;
-        try {
-          const prefsResult = await preferencesQuery.refetch();
-          if (prefsResult.data) {
-            const prefs = prefsResult.data as {
-              aiPathsActivePathId?: string | null;
-              aiPathsExpandedGroups?: string[] | null;
-              aiPathsPaletteCollapsed?: boolean | null;
-              aiPathsPathIndex?: PathMeta[] | null;
-              aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-            };
-            preferredPathId =
-              typeof prefs.aiPathsActivePathId === "string"
-                ? prefs.aiPathsActivePathId
-                : null;
-            preferredGroups = Array.isArray(prefs.aiPathsExpandedGroups)
-              ? prefs.aiPathsExpandedGroups
-              : null;
-            preferredPathIndex =
-              Array.isArray(prefs.aiPathsPathIndex) && prefs.aiPathsPathIndex.length > 0
-                ? prefs.aiPathsPathIndex
-                : null;
-            if (typeof prefs.aiPathsPathConfigs === "string") {
-              const parsedConfigs = safeParseJson(prefs.aiPathsPathConfigs).value;
-              preferredPathConfigs =
-                parsedConfigs && typeof parsedConfigs === "object"
-                  ? (parsedConfigs as Record<string, PathConfig>)
-                  : null;
-            } else if (
-              prefs.aiPathsPathConfigs &&
-              typeof prefs.aiPathsPathConfigs === "object"
-            ) {
-              preferredPathConfigs = prefs.aiPathsPathConfigs;
-            } else {
-              preferredPathConfigs = null;
-            }
-            if (typeof prefs.aiPathsPaletteCollapsed === "boolean") {
-              setPaletteCollapsed(prefs.aiPathsPaletteCollapsed);
-            }
-          } else if (prefsResult.error) {
-            console.warn("[AI Paths] Failed to load user preferences.", prefsResult.error);
-          }
-        } catch (error) {
-          console.warn("[AI Paths] Failed to load user preferences.", error);
-        }
         const map = new Map(
-          data.map((item: { key: string; value: string }): [string, string] => [item.key, item.value])
+          data.map((item: { key: string; value: string }): [string, string] => [
+            item.key,
+            item.value,
+          ])
         );
+        const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
+        const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
+        const uiState =
+          uiStateParsed && typeof uiStateParsed === "object"
+            ? (uiStateParsed as Record<string, unknown>)
+            : null;
+        const preferredPathId =
+          typeof uiState?.activePathId === "string" ? uiState.activePathId : null;
+        const preferredGroups = Array.isArray(uiState?.expandedGroups)
+          ? uiState.expandedGroups.filter(
+              (value: unknown): value is string =>
+                typeof value === "string" && value.trim().length > 0
+            )
+          : null;
+        const preferredPaletteCollapsed =
+          typeof uiState?.paletteCollapsed === "boolean"
+            ? uiState.paletteCollapsed
+            : null;
+        const hasStoredUiState = Boolean(uiState);
+        if (preferredGroups) {
+          setExpandedPaletteGroups(new Set(preferredGroups));
+        }
+        if (typeof preferredPaletteCollapsed === "boolean") {
+          setPaletteCollapsed(preferredPaletteCollapsed);
+        }
         const debugSnapshots: Record<string, PathDebugSnapshot> = {};
         map.forEach((value: string, key: string) => {
           if (!key.startsWith(PATH_DEBUG_PREFIX)) return;
@@ -477,70 +405,9 @@ export function useAiPathsPersistence({
           });
         }
 
-        const shouldPreferPrefs =
-          preferredPathConfigs &&
-          Object.keys(preferredPathConfigs).length > 0 &&
-          (settingsMetas.length === 0 ||
-            Object.keys(preferredPathConfigs).some((id: string): boolean => {
-              if (!settingsConfigs[id]) return true;
-              const prefUpdated =
-                typeof preferredPathConfigs[id]?.updatedAt === "string"
-                  ? preferredPathConfigs[id]?.updatedAt
-                  : "";
-              const settingsUpdated =
-                typeof settingsConfigs[id]?.updatedAt === "string"
-                  ? settingsConfigs[id]?.updatedAt
-                  : "";
-              if (!settingsUpdated && prefUpdated) return true;
-              if (!prefUpdated) return false;
-              return prefUpdated > settingsUpdated;
-            }));
-
-        if (!shouldPreferPrefs && settingsMetas.length > 0) {
+        if (settingsMetas.length > 0) {
           Object.assign(configs, settingsConfigs);
           metas = settingsMetas;
-        } else if (
-          shouldPreferPrefs &&
-          preferredPathConfigs &&
-          Object.keys(preferredPathConfigs).length > 0
-        ) {
-          Object.entries(preferredPathConfigs).forEach(([id, config]: [string, PathConfig]) => {
-            const fallback = createDefaultPathConfig(id);
-            configs[id] = {
-              ...fallback,
-              ...config,
-              id,
-              name: config?.name || fallback.name,
-              nodes: Array.isArray(config?.nodes) ? config.nodes : fallback.nodes,
-              edges: Array.isArray(config?.edges) ? config.edges : fallback.edges,
-              parserSamples: config?.parserSamples ?? fallback.parserSamples ?? {},
-              updaterSamples: config?.updaterSamples ?? fallback.updaterSamples ?? {},
-              runtimeState: parseRuntimeState(config?.runtimeState ?? fallback.runtimeState),
-              lastRunAt: config?.lastRunAt ?? fallback.lastRunAt ?? null,
-              updatedAt: config?.updatedAt ?? fallback.updatedAt,
-            };
-          });
-          metas =
-            preferredPathIndex && preferredPathIndex.length > 0
-              ? preferredPathIndex.filter((meta: PathMeta): boolean => !!configs[meta.id])
-              : Object.values(configs).map((c: PathConfig): PathMeta => createPathMeta(c));
-          if (metas.length > 0) {
-            try {
-              const settingsPayloads = metas.map(
-                (meta: PathMeta): { key: string; value: string } => ({
-                  key: `${PATH_CONFIG_PREFIX}${meta.id}`,
-                  value: JSON.stringify(sanitizePathConfig(configs[meta.id]!)),
-                })
-              );
-              settingsPayloads.push({
-                key: PATH_INDEX_KEY,
-                value: JSON.stringify(metas),
-              });
-              await updateSettingsBulkMutation.mutateAsync(settingsPayloads);
-            } catch (error) {
-              console.warn("[AI Paths] Failed to migrate path configs to settings.", error);
-            }
-          }
         } else {
           const legacyRaw = map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
           if (legacyRaw) {
@@ -602,9 +469,6 @@ export function useAiPathsPersistence({
             await updateSettingsBulkMutation.mutateAsync([
               { key: PATH_INDEX_KEY, value: JSON.stringify(normalizedMetas) },
             ]);
-            await updatePreferencesMutation.mutateAsync({
-              aiPathsPathIndex: normalizedMetas,
-            });
           } catch (error) {
             console.warn("[AI Paths] Failed to persist normalized path names.", error);
           }
@@ -612,14 +476,6 @@ export function useAiPathsPersistence({
 
         setPaths(normalizedMetas);
         setPathConfigs(configs);
-        const initialConfigsHash = buildPathConfigsHash(configs);
-        lastPathSavePayloadRef.current = stableStringify({
-          aiPathsPathIndex: normalizedMetas,
-          aiPathsPathConfigs: initialConfigsHash,
-        });
-        if (preferredGroups !== null) {
-          setExpandedPaletteGroups(new Set(preferredGroups));
-        }
         const firstPathCandidate = normalizedMetas[0]?.id ?? Object.keys(configs)[0] ?? "default";
         const firstPath =
           preferredPathId && configs[preferredPathId] ? preferredPathId : firstPathCandidate;
@@ -629,6 +485,16 @@ export function useAiPathsPersistence({
             index: normalizedMetas,
             configId: firstPath,
             config: normalizeConfigForHash(sanitizePathConfig(firstConfigForSettings)),
+          });
+        }
+        if (hasStoredUiState) {
+          lastUiStatePayloadRef.current = stableStringify({
+            activePathId: firstPath,
+            expandedGroups: preferredGroups ?? Array.from(expandedPaletteGroups),
+            paletteCollapsed:
+              typeof preferredPaletteCollapsed === "boolean"
+                ? preferredPaletteCollapsed
+                : paletteCollapsed,
           });
         }
         setActivePathId(firstPath);
@@ -657,7 +523,7 @@ export function useAiPathsPersistence({
           setLastError(null);
           void persistLastError(null);
         }
-        setPrefsLoaded(true);
+        setUiStateLoaded(true);
       } catch (error) {
         reportAiPathsError(error, { action: "loadConfig" }, "Failed to load AI Paths settings:");
         toast("Failed to load AI Paths settings.", { variant: "error" });
@@ -673,30 +539,30 @@ export function useAiPathsPersistence({
     reportAiPathsError,
     loadNonce,
     settingsQuery,
-    preferencesQuery,
     updateSettingsBulkMutation,
     normalizeConfigForHash,
-    buildPathConfigsHash,
     persistLastError,
     setLoading,
   ]);
 
   useEffect((): void | (() => void) => {
-    if (!prefsLoaded) return;
+    if (!uiStateLoaded) return;
     const expandedGroups = Array.from(expandedPaletteGroups).sort();
-    const payload = {
-      aiPathsActivePathId: activePathId,
-      aiPathsExpandedGroups: expandedGroups,
-      aiPathsPaletteCollapsed: paletteCollapsed,
+    const payload: AiPathsUiState = {
+      activePathId,
+      expandedGroups,
+      paletteCollapsed,
     };
     const payloadKey = stableStringify(payload);
-    if (payloadKey === lastPrefsPayloadRef.current) return;
-    lastPrefsPayloadRef.current = payloadKey;
+    if (payloadKey === lastUiStatePayloadRef.current) return;
+    lastUiStatePayloadRef.current = payloadKey;
     const timeout = setTimeout((): void => {
-      updatePreferencesMutation.mutate(payload);
+      void persistUiState(payload).catch((error: unknown) => {
+        console.warn("[AI Paths] Failed to persist UI state.", error);
+      });
     }, 200);
     return (): void => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, prefsLoaded, updatePreferencesMutation]);
+  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, persistUiState]);
 
   const persistPathSettings = useCallback(
     async (nextPaths: PathMeta[], configId: string, config: PathConfig): Promise<void> => {
@@ -817,19 +683,6 @@ export function useAiPathsPersistence({
         const nextConfigs = { ...pathConfigs, [activePathId]: config };
         setPathConfigs(nextConfigs);
         setPaths(nextPaths);
-        const safeConfigs = serializePathConfigs(nextConfigs);
-        const safeConfigsHash = buildPathConfigsHash(nextConfigs);
-        const payloadKey = stableStringify({
-          aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: safeConfigsHash,
-        });
-        if (payloadKey !== lastPathSavePayloadRef.current) {
-          await persistPreferences({
-            aiPathsPathIndex: nextPaths,
-            aiPathsPathConfigs: safeConfigs,
-          });
-          lastPathSavePayloadRef.current = payloadKey;
-        }
         await persistPathSettings(nextPaths, activePathId, config);
         setLastError(null);
         void persistLastError(null);
@@ -860,8 +713,6 @@ export function useAiPathsPersistence({
       buildActivePathConfig,
       persistPathSettings,
       buildPathSnapshot,
-      buildPathConfigsHash,
-      persistPreferences,
       reportAiPathsError,
       persistLastError,
       setLastError,
@@ -1038,26 +889,10 @@ export function useAiPathsPersistence({
       const nextPaths = currentPaths.map((path: PathMeta): PathMeta =>
         path.id === pathId ? { ...path, name: currentPathNameRef.current, updatedAt } : path
       );
-      const nextConfigs = { ...currentPathConfigsRef.current, [pathId]: config };
-      const safeConfigs = serializePathConfigs(nextConfigs);
 
       const csrfHeaders = withCsrfHeaders({ "Content-Type": "application/json" });
 
-      // Use keepalive fetch so CSRF headers are included (sendBeacon can't set headers)
-      const prefsPayload = JSON.stringify({
-        aiPathsPathIndex: nextPaths,
-        aiPathsPathConfigs: safeConfigs,
-      });
-
-      // Save to preferences
-      void fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: csrfHeaders,
-        body: prefsPayload,
-        keepalive: true,
-      });
-
-      // Also save to settings (the primary storage)
+      // Save to settings (the primary storage)
       const sanitizedConfig = sanitizePathConfig(config);
       const indexPayload = JSON.stringify({ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) });
       const configPayload = JSON.stringify({
@@ -1114,11 +949,6 @@ export function useAiPathsPersistence({
   const savePathIndex = useCallback(
     async (nextPaths: PathMeta[]): Promise<void> => {
       try {
-        const safeConfigs = serializePathConfigs(pathConfigs);
-        await persistPreferences({
-          aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: safeConfigs,
-        });
         if (activePathId) {
           const activeConfig = pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
           await persistPathSettings(nextPaths, activePathId, activeConfig);
@@ -1136,7 +966,6 @@ export function useAiPathsPersistence({
     [
       activePathId,
       pathConfigs,
-      persistPreferences,
       persistPathSettings,
       persistSettingsBulk,
       reportAiPathsError,
@@ -1149,7 +978,6 @@ export function useAiPathsPersistence({
     autoSaveStatus,
     handleSave,
     persistPathSettings,
-    persistPreferences,
     persistSettingsBulk,
     savePathIndex,
     saving,

@@ -404,6 +404,7 @@ export const PATH_DEBUG_PREFIX = "ai_paths_debug_";
 export const CLUSTER_PRESETS_KEY = "ai_paths_cluster_presets";
 export const DB_QUERY_PRESETS_KEY = "ai_paths_db_query_presets";
 export const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
+export const AI_PATHS_UI_STATE_KEY = "ai_paths_ui_state";
 export const STORAGE_VERSION = 1;
 export const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 export const TRIGGER_EVENTS = [

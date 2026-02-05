@@ -1,9 +1,9 @@
 import { JSX } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminLayout } from "@/features/admin/layout/AdminLayout";
 import { SettingsStoreProvider } from "@/shared/providers/SettingsStoreProvider";
 import { auth } from "@/features/auth/server";
-import { getUserPreferences } from "@/features/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +22,10 @@ export default async function Layout({
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect("/auth/signin?error=AccountDisabled");
     }
-    const userId = session?.user?.id ?? "default-user";
-    const preferences = await getUserPreferences(userId);
-    initialMenuCollapsed = Boolean(preferences.adminMenuCollapsed);
+    const cookieValue = cookies().get("adminMenuCollapsed")?.value;
+    if (cookieValue === "true" || cookieValue === "1") {
+      initialMenuCollapsed = true;
+    }
   } catch {
     redirect("/auth/signin");
   }

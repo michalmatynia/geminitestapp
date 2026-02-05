@@ -920,7 +920,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       return;
     }
     if (settingsStore.isLoading || heavySettings.isLoading) return;
-    const parsed = parseJsonSetting<Record<string, boolean>>(paramUiRaw);
+    const parsed = parseJsonSetting<Record<string, boolean>>(paramUiRaw, {});
     setParamFlipMap(parsed ?? {});
   }, [projectId, paramUiKey, paramUiRaw, settingsStore.isLoading, heavySettings.isLoading]);
 
@@ -1131,7 +1131,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           data.uploaded.map((file: ImageFileRecord) => ({
             name: file.filename ?? "Slot",
             folderPath: variables.folder || null,
-          }))
+          } as Partial<ImageStudioSlotRecord>))
         );
         if (slotsCreated.length > 0) {
           setSelectedSlotId(slotsCreated[0]!.id);
@@ -1229,7 +1229,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
           data.uploaded.map((file: ImageFileRecord) => ({
             name: file.filename ?? "Slot",
             folderPath: selectedFolder || null,
-          }))
+          } as Partial<ImageStudioSlotRecord>))
         );
         if (slots.length > 0) {
           setSelectedSlotId(slots[0]!.id);
@@ -1346,7 +1346,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       {
         name: `Slot ${slots.length + 1}`,
         folderPath: selectedFolder || null,
-      },
+      } as Partial<ImageStudioSlotRecord>,
     ]);
     if (created.length > 0) {
       setSelectedSlotId(created[0]!.id);
@@ -1556,14 +1556,21 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   const extractPreviewIssues = useMemo(() => {
     if (!extractPreviewResult || !extractPreviewResult.ok) return [];
-    return validateImageStudioParams(extractPreviewResult.params, extractPreviewSpec ?? undefined);
+    const spec = extractPreviewSpec;
+    if (!spec) return [];
+    const validResult = extractPreviewResult as { ok: true; params: Record<string, unknown>; rawObjectText: string; }; // Explicit assertion
+    return validateImageStudioParams(validResult.params, spec);
   }, [extractPreviewResult, extractPreviewSpec]);
 
   const extractPreviewIssuesByPath = useMemo(() => {
     const map: Record<string, ParamIssue[]> = {};
     extractPreviewIssues.forEach((issue: ParamIssue) => {
-      if (!map[issue.path]) map[issue.path] = [];
-      map[issue.path].push(issue);
+      let issuesForPath = map[issue.path];
+      if (!issuesForPath) {
+        issuesForPath = [];
+        map[issue.path] = issuesForPath;
+      }
+      issuesForPath.push(issue);
     });
     return map;
   }, [extractPreviewIssues]);
@@ -1577,7 +1584,10 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setExtractPreviewUiOverrides((prev: Record<string, ParamUiControl>) => {
       const next: Record<string, ParamUiControl> = {};
       extractPreviewLeaves.forEach((leaf: ParamLeaf) => {
-        if (prev[leaf.path]) next[leaf.path] = prev[leaf.path];
+        const control = prev[leaf.path];
+        if (control !== undefined) {
+          next[leaf.path] = control;
+        }
       });
       return next;
     });
@@ -2331,7 +2341,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
             folderPath: selectedFolder || null,
             imageFileId: output.id,
             imageUrl: normalizePublicPath(output.filepath),
-          },
+          } as Partial<ImageStudioSlotRecord>,
         ]);
         if (created.length > 0) {
           setSelectedSlotId(created[0]!.id);
@@ -3794,12 +3804,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       </div>
                       <Select
                         value={selected}
-                        onValueChange={(value: string) =>
+                        onValueChange={(newValue: string) =>
                           setUiSuggestionRows((prev: UiSuggestionRow[]) =>
                             prev.map((item: UiSuggestionRow) =>
-                              item.path === row.path && isParamUiControl(value)
-                                ? { ...item, selected: value }
-                                : item
+                                                              item.path === row.path
+                                                                ? { ...item, selected: newValue as ParamUiControl }                                : item
                             )
                           )
                         }

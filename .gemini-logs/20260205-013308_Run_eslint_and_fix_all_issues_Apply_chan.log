@@ -47,3 +47,71 @@ Error when talking to Gemini API Full report available at: /var/folders/g5/jgnr8
 [gemini] Capacity exhausted on model: gemini-3-pro-preview
 [gemini] Auto-switching to next model: gemini-3-flash-preview
 [gemini] Attempt 2/50 (model: gemini-3-flash-preview)...
+
+==================== attempt 2 (model: gemini-3-flash-preview) rc=1 ====================
+(node:26834) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:26902) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 3s.. Retrying after 3043.7007980000003ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=28s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=43s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=58s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=73s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=88s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=103s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=118s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 4s.. Retrying after 4229.32888ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=135s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=150s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=165s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=180s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=195s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=210s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 869.404249ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=234s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=249s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=265s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=280s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=295s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=310s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 107.757642ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1708.455472ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 3s.. Retrying after 3128.9389619999997ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2940.108617ms...
+Attempt 2 failed: You have exhausted your capacity on this model. Your quota will reset after 5s.. Retrying after 5825.960512ms...
+Attempt 3 failed: You have exhausted your capacity on this model. Your quota will reset after 5s.. Max attempts reached
+Error when talking to Gemini API Full report available at: /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/gemini-client-error-Turn.run-sendMessageStream-2026-02-05T00-38-58-540Z.json RetryableQuotaError: You have exhausted your capacity on this model. Your quota will reset after 5s.
+    at classifyGoogleError (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/googleQuotaErrors.js:211:28)
+    at retryWithBackoff (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/retry.js:131:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiChat.makeApiCallAndProcessStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:421:32)
+    at async GeminiChat.streamWithRetries (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:253:40)
+    at async Turn.run (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/turn.js:66:30)
+    at async GeminiClient.processTurn (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:459:26)
+    at async GeminiClient.sendMessageStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:558:20)
+    at async file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/dist/src/nonInteractiveCli.js:189:34
+    at async main (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/dist/src/gemini.js:488:9) {
+  cause: {
+    code: 429,
+    message: 'You have exhausted your capacity on this model. Your quota will reset after 5s.',
+    details: [ [Object], [Object] ]
+  },
+  retryDelayMs: 5464.078466
+}
+{
+  "session_id": "a9765e84-e07b-41f9-aba6-f4e29b99cc01",
+  "error": {
+    "type": "Error",
+    "message": "[object Object]",
+    "code": 1
+  }
+}==================== end attempt 2 ================================================
+
+[gemini] No JSON found in output (rc=1). See log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.gemini-logs/20260205-013308_Run_eslint_and_fix_all_issues_Apply_chan.log

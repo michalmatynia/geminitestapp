@@ -231,6 +231,7 @@ const eslintConfig = [
       "*.py",
       "fix_all_api.cjs",
       "fix_simple.cjs",
+      "playwright.config.ts",
     ],
   },
   ...compat.extends(
@@ -240,11 +241,13 @@ const eslintConfig = [
     "prettier"
   ),
   {
+    files: ["**/*.tsx", "**/*.jsx"], // Apply these rules only to JSX/TSX files
     languageOptions: {
       parser: (await import("@typescript-eslint/parser")).default,
       parserOptions: {
         project: true,
         tsconfigRootDir: __dirname,
+        ecmaFeatures: { jsx: true },
       },
     },
     plugins: {
@@ -316,6 +319,15 @@ const eslintConfig = [
   },
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],
+    languageOptions: {
+      parser: (await import("@typescript-eslint/parser")).default,
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
@@ -341,6 +353,12 @@ const eslintConfig = [
   },
   ...disableTypeCheckedForConfigFiles,
   {
+    files: ["src/app/api/ai-paths/db-action/route.ts"],
+    rules: {
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    },
+  },
+  {
     files: configFiles,
     languageOptions: {
       parserOptions: {
@@ -350,12 +368,6 @@ const eslintConfig = [
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
-  {
-    files: ["src/app/api/ai-paths/db-action/route.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
 ];

@@ -252,7 +252,7 @@ export function useAiPathsRunHistory({
     },
     enabled: Boolean(activePathId),
     refetchInterval: (
-      query: Query<unknown, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }>
+      query: Query<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }, readonly unknown[]>
     ): number | false => {
       const d = query.state.data as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }

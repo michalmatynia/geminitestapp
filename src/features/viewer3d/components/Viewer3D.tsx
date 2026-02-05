@@ -136,7 +136,7 @@ function Model3D({
   position,
   rotation,
   scale,
-}: Model3DProps): React.JSX.Element {
+}: Model3DProps): React.JSX.Element | null {
   const replacedTextureRef = useRef(false);
   const { scene } = useGLTF(
     url,
@@ -216,6 +216,7 @@ function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | 
   if (!visible) return null;
 
   /* eslint-disable react/no-unknown-property */
+  /* eslint-disable react/no-unknown-property */
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
@@ -229,6 +230,7 @@ function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | 
       />
     </mesh>
   );
+  /* eslint-enable react/no-unknown-property */
   /* eslint-enable react/no-unknown-property */
 }
 
@@ -269,6 +271,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
   const config = lightConfigs[preset] || lightConfigs.studio;
 
   /* eslint-disable react/no-unknown-property */
+  /* eslint-disable react/no-unknown-property */
   return (
     <>
       <ambientLight intensity={config.ambient * intensity} />
@@ -294,6 +297,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
       />
     </>
   );
+  /* eslint-enable react/no-unknown-property */
   /* eslint-enable react/no-unknown-property */
 }
 

@@ -1,4 +1,3 @@
-import { ToastProvider } from "@/shared/ui";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -7,13 +6,14 @@ import { ThemeProvider } from "@/shared/providers/theme-provider";
 import { QueryProvider } from "@/shared/providers/QueryProvider";
 import { SettingsStoreProvider } from "@/shared/providers/SettingsStoreProvider";
 import { BackgroundSyncProvider } from "@/shared/providers/BackgroundSyncProvider";
-import ClientErrorReporter from "@/features/observability";
+import ClientErrorReporter from "@/features/observability/components/ClientErrorReporter";
 import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 import { AppFontProvider } from "@/shared/providers/AppFontProvider";
 import { CsrfProvider } from "@/shared/providers/CsrfProvider";
 import { UrlGuardProvider } from "@/shared/providers/UrlGuardProvider";
 import PageAnalyticsTracker from "@/features/analytics/components/PageAnalyticsTracker";
+import { ToastProvider } from "@/shared/ui/toast";
 
 import "./fonts.css";
 import "./globals.css";

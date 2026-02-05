@@ -4,6 +4,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from "@/shared/api/settings-client";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 
 export interface SettingRecord {
   key: string;
@@ -38,7 +39,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
     async ({ key, value }: { key: string; value: string }): Promise<SettingRecord> => {
       const res = await fetch("/api/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) throw new Error("Failed to update setting");

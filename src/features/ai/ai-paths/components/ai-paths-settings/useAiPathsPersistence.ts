@@ -7,6 +7,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from "@/shared/api/settings-client";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 import type {
   AiNode,
   ClusterPreset,
@@ -1001,7 +1002,7 @@ export function useAiPathsPersistence({
       });
     };
 
-    // Synchronous save using sendBeacon for beforeunload (async won't complete)
+    // Best-effort save on unload using keepalive fetch (allows CSRF headers)
     // Uses refs to get the LATEST state values, not stale closure values
     const flushPendingSaveSync = (): void => {
       const pathId = currentActivePathIdRef.current;
@@ -1040,26 +1041,21 @@ export function useAiPathsPersistence({
       const nextConfigs = { ...currentPathConfigsRef.current, [pathId]: config };
       const safeConfigs = serializePathConfigs(nextConfigs);
 
-      // Use sendBeacon for reliable delivery during page unload
+      const csrfHeaders = withCsrfHeaders({ "Content-Type": "application/json" });
+
+      // Use keepalive fetch so CSRF headers are included (sendBeacon can't set headers)
       const prefsPayload = JSON.stringify({
         aiPathsPathIndex: nextPaths,
         aiPathsPathConfigs: safeConfigs,
       });
 
       // Save to preferences
-      try {
-        navigator.sendBeacon(
-          "/api/user/preferences",
-          new Blob([prefsPayload], { type: "application/json" })
-        );
-      } catch {
-        void fetch("/api/user/preferences", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: prefsPayload,
-          keepalive: true,
-        });
-      }
+      void fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: csrfHeaders,
+        body: prefsPayload,
+        keepalive: true,
+      });
 
       // Also save to settings (the primary storage)
       const sanitizedConfig = sanitizePathConfig(config);
@@ -1069,29 +1065,18 @@ export function useAiPathsPersistence({
         value: JSON.stringify(sanitizedConfig),
       });
 
-      try {
-        navigator.sendBeacon(
-          "/api/settings",
-          new Blob([indexPayload], { type: "application/json" })
-        );
-        navigator.sendBeacon(
-          "/api/settings",
-          new Blob([configPayload], { type: "application/json" })
-        );
-      } catch {
-        void fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: indexPayload,
-          keepalive: true,
-        });
-        void fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: configPayload,
-          keepalive: true,
-        });
-      }
+      void fetch("/api/settings", {
+        method: "POST",
+        headers: csrfHeaders,
+        body: indexPayload,
+        keepalive: true,
+      });
+      void fetch("/api/settings", {
+        method: "POST",
+        headers: csrfHeaders,
+        body: configPayload,
+        keepalive: true,
+      });
       invalidateSettingsCache();
     };
 

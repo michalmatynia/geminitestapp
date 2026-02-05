@@ -15,6 +15,7 @@ import {
   invalidateSettingsCache,
   type SettingsScope,
 } from "@/shared/api/settings-client";
+import { withCsrfHeaders } from "@/shared/lib/security/csrf-client";
 
 export type { SystemSetting };
 
@@ -102,7 +103,7 @@ export function useUpdateSetting(): UseMutationResult<
     }): Promise<SystemSetting> => {
       const res = await fetch("/api/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) throw new Error("Failed to update setting");
@@ -132,7 +133,7 @@ export function useUpdateSettingsBulk(): UseMutationResult<
         payloads.map((payload) =>
           fetch("/api/settings", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: withCsrfHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify(payload),
           }),
         ),

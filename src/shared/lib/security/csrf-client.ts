@@ -42,6 +42,15 @@ export const getClientCsrfToken = (): string | null => {
   return decodeURIComponent(cookie.split("=").slice(1).join("="));
 };
 
+export const withCsrfHeaders = (headers?: HeadersInit): Headers => {
+  const next = new Headers(headers);
+  const token = getClientCsrfToken();
+  if (token && !next.has(CSRF_HEADER_NAME)) {
+    next.set(CSRF_HEADER_NAME, token);
+  }
+  return next;
+};
+
 export const isSameOriginUrl = (input: RequestInfo | URL): boolean => {
   if (typeof window === "undefined") return true;
   const origin = window.location.origin;

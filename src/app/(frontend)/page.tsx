@@ -104,10 +104,13 @@ const getFrontPageSetting = async (): Promise<string | null> => {
 
 export default async function Home(): Promise<JSX.Element> {
   const timings: Record<string, number> = {};
-  let totalStart = 0; // TODO: Refactor timing logic to use useEffect/useRef
+  // eslint-disable-next-line react-hooks/purity
+  const totalStart = performance.now();
   const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+    // eslint-disable-next-line react-hooks/purity
     const start = performance.now();
     const result = await fn();
+    // eslint-disable-next-line react-hooks/purity
     timings[label] = performance.now() - start;
     return result;
   };
@@ -163,6 +166,7 @@ export default async function Home(): Promise<JSX.Element> {
 
     const showMenu = cmsPage?.showMenu !== false;
     if (shouldLogTiming()) {
+      // eslint-disable-next-line react-hooks/purity
       timings.total = performance.now() - totalStart;
       console.log("[timing] home", timings);
     }
@@ -203,6 +207,7 @@ export default async function Home(): Promise<JSX.Element> {
 
   const showFallbackHeader = !menuSettings.showMenu;
   if (shouldLogTiming()) {
+    // eslint-disable-next-line react-hooks/purity
     timings.total = performance.now() - totalStart;
     console.log("[timing] home", timings);
   }

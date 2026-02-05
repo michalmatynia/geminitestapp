@@ -85,8 +85,98 @@ interface MongoAuthSecurityProfileDoc {
   updatedAt?: Date | string;
 }
 
+interface MongoUserPreferencesDoc {
+  _id?: ObjectId;
+  userId?: string;
+  productListNameLocale?: string | null;
+  productListCatalogFilter?: string | null;
+  productListCurrencyCode?: string | null;
+  productListPageSize?: number | null;
+  productListThumbnailSource?: string | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[];
+  aiPathsPaletteCollapsed?: boolean | null;
+  aiPathsPathIndex?: unknown;
+  aiPathsPathConfigs?: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
 
+interface MongoSystemLogDoc {
+  _id?: ObjectId;
+  level?: string;
+  message?: string;
+  source?: string | null;
+  context?: unknown;
+  stack?: string | null;
+  path?: string | null;
+  method?: string | null;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+  createdAt?: Date | string;
+}
 
+interface MongoFileUploadEventDoc {
+  _id?: ObjectId;
+  status?: string;
+  category?: string | null;
+  projectId?: string | null;
+  folder?: string | null;
+  filename?: string | null;
+  filepath?: string | null;
+  mimetype?: string | null;
+  size?: number;
+  source?: string | null;
+  errorMessage?: string | null;
+  requestId?: string | null;
+  userId?: string | null;
+  meta?: unknown;
+  createdAt?: Date | string;
+}
+
+interface MongoAiConfigurationDoc {
+  _id?: ObjectId;
+  type?: string | null;
+  descriptionGenerationModel?: string | null;
+  generationInputPrompt?: string | null;
+  generationOutputEnabled?: boolean;
+  generationOutputPrompt?: string | null;
+  imageAnalysisModel?: string | null;
+  visionInputPrompt?: string | null;
+  visionOutputEnabled?: boolean;
+  visionOutputPrompt?: string | null;
+  testProductId?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+interface MongoChatbotMessageDoc {
+  role: string;
+  content: string;
+  createdAt?: Date | string;
+}
+
+interface MongoChatbotSessionDoc {
+  _id?: ObjectId;
+  title?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  messages?: MongoChatbotMessageDoc[];
+}
+
+interface MongoChatbotJobDoc {
+  _id?: ObjectId;
+  sessionId?: string;
+  status?: string;
+  model?: string | null;
+  payload?: unknown;
+  resultText?: string | null;
+  errorMessage?: string | null;
+  createdAt?: Date | string;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+}
 
 interface MongoSessionDoc {
   _id?: ObjectId;
@@ -663,9 +753,9 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       (await prisma.user.findMany({ select: { id: true } }))
         .map((entry: { id: string }) => entry.id)
     );
-    const docs = (await mongo.collection("user_preferences").find({}).toArray()) as unknown as MongoUserPreferencesDoc[];
+    const docs: MongoUserPreferencesDoc[] = (await mongo.collection("user_preferences").find({}).toArray());
     const data = docs
-      .map((doc: MongoUserPreferencesDoc): Prisma.UserPreferencesCreateManyInput | null => {
+      .map((doc): Prisma.UserPreferencesCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         const userId = doc.userId;
         if (!userId || !existingUserIds.has(userId)) return null;
@@ -680,10 +770,10 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
           aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
           aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? null,
-          aiPathsPathIndex: toJsonValue(doc.aiPathsPathIndex ?? null),
-          aiPathsPathConfigs: toJsonValue(doc.aiPathsPathConfigs ?? null),
-          createdAt: doc.createdAt ?? new Date(),
-          updatedAt: doc.updatedAt ?? new Date(),
+          aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
+          aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
       })
       .filter((item): item is Prisma.UserPreferencesCreateManyInput => item !== null);
@@ -701,23 +791,23 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("system_logs", async () => {
     handledCollections.add("system_logs");
-    const docs = (await mongo.collection("system_logs").find({}).toArray()) as unknown as MongoSystemLogDoc[];
+    const docs: MongoSystemLogDoc[] = (await mongo.collection("system_logs").find({}).toArray());
     const data = docs
-      .map((doc: MongoSystemLogDoc): Prisma.SystemLogCreateManyInput | null => {
+      .map((doc): Prisma.SystemLogCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         return {
           ...(id ? { id } : null),
           level: doc.level ?? "error",
           message: doc.message ?? "",
           source: doc.source ?? null,
-          context: toJsonValue(doc.context ?? null),
+          context: doc.context ?? null,
           stack: doc.stack ?? null,
           path: doc.path ?? null,
           method: doc.method ?? null,
           statusCode: doc.statusCode ?? null,
           requestId: doc.requestId ?? null,
           userId: doc.userId ?? null,
-          createdAt: doc.createdAt ?? new Date(),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
         };
       })
       .filter((item): item is Prisma.SystemLogCreateManyInput => item !== null);
@@ -728,10 +818,10 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("file_upload_events", async () => {
     handledCollections.add("file_upload_events");
-    const docs = (await mongo.collection("file_upload_events").find({}).toArray()) as unknown as MongoFileUploadEventDoc[];
+    const docs: MongoFileUploadEventDoc[] = (await mongo.collection("file_upload_events").find({}).toArray());
     const warnings: string[] = [];
     const data = docs
-      .map((doc: MongoFileUploadEventDoc): Prisma.FileUploadEventCreateManyInput | null => {
+      .map((doc): Prisma.FileUploadEventCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         const status = doc.status;
@@ -753,7 +843,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           errorMessage: doc.errorMessage ?? null,
           requestId: doc.requestId ?? null,
           userId: doc.userId ?? null,
-          meta: toJsonValue(doc.meta ?? null),
+          meta: doc.meta ?? null,
           createdAt: toDate(doc.createdAt) ?? new Date(),
         };
       })
@@ -770,9 +860,9 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_configurations", async () => {
     handledCollections.add("ai_configurations");
-    const docs = (await mongo.collection("ai_configurations").find({}).toArray()) as unknown as MongoAiConfigurationDoc[];
+    const docs: MongoAiConfigurationDoc[] = (await mongo.collection("ai_configurations").find({}).toArray());
     const data = docs
-      .map((doc: MongoAiConfigurationDoc): Prisma.AiConfigurationCreateManyInput | null => {
+      .map((doc): Prisma.AiConfigurationCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -787,8 +877,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           visionOutputEnabled: Boolean(doc.visionOutputEnabled),
           visionOutputPrompt: doc.visionOutputPrompt ?? null,
           testProductId: doc.testProductId ?? null,
-          createdAt: doc.createdAt ?? new Date(),
-          updatedAt: doc.updatedAt ?? new Date(),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
       })
       .filter((item): item is Prisma.AiConfigurationCreateManyInput => item !== null);
@@ -799,18 +889,22 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("chatbot_sessions", async () => {
     handledCollections.add("chatbot_sessions");
-    const docs = (await mongo.collection("chatbot_sessions").find({}).toArray()) as unknown as MongoChatbotSessionDoc[];
+    const docs: MongoChatbotSessionDoc[] = (await mongo.collection("chatbot_sessions").find({}).toArray());
     const sessions = docs
-      .map((doc: MongoChatbotSessionDoc) => {
+      .map((doc): Prisma.ChatbotSessionCreateManyInput & { messages: MongoChatbotMessageDoc[] } | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
           title: doc.title ?? null,
-          createdAt: doc.createdAt ?? new Date(),
-          updatedAt: doc.updatedAt ?? new Date(),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
           messages: Array.isArray(doc.messages)
-            ? doc.messages ?? []
+            ? doc.messages.map((message) => ({
+                role: message.role,
+                content: message.content,
+                createdAt: toDate(message.createdAt) ?? new Date(),
+              }))
             : [],
         };
       })
@@ -851,9 +945,9 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("chatbot_jobs", async () => {
     handledCollections.add("chatbot_jobs");
-    const docs = (await mongo.collection("chatbot_jobs").find({}).toArray()) as unknown as MongoChatbotJobDoc[];
+    const docs: MongoChatbotJobDoc[] = (await mongo.collection("chatbot_jobs").find({}).toArray());
     const data = docs
-      .map((doc: MongoChatbotJobDoc): Prisma.ChatbotJobCreateManyInput | null => {
+      .map((doc): Prisma.ChatbotJobCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         const sessionId = doc.sessionId;
         if (!id || !sessionId) return null;
@@ -862,10 +956,10 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           sessionId,
           status: doc.status ?? "pending",
           model: doc.model ?? null,
-          payload: toJsonValue(doc.payload ?? null),
+          payload: doc.payload ?? null,
           resultText: doc.resultText ?? null,
           errorMessage: doc.errorMessage ?? null,
-          createdAt: doc.createdAt ?? new Date(),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
           startedAt: toDate(doc.startedAt),
           finishedAt: toDate(doc.finishedAt),
         };
@@ -1503,7 +1597,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenSlugs = new Set<string>();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name?.trim() ?? "" : "";
@@ -1532,7 +1626,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.IntegrationCreateManyInput => item !== null);
     await prisma.productListing.deleteMany();
     await prisma.integrationConnection.deleteMany();
     const deleted = await prisma.integration.deleteMany();
@@ -1703,7 +1797,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_drafts");
     const docs = await mongo.collection("product_drafts").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1744,7 +1838,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProductDraftCreateManyInput => item !== null);
     const deleted = await prisma.productDraft.deleteMany();
     const created = data.length ? await prisma.productDraft.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1754,7 +1848,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_slugs");
     const docs = await mongo.collection("cms_slugs").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.SlugCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1765,7 +1859,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.SlugCreateManyInput => item !== null);
     const deleted = await prisma.slug.deleteMany();
     const created = data.length ? await prisma.slug.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1775,7 +1869,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_themes");
     const docs = await mongo.collection("cms_themes").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1789,7 +1883,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.CmsThemeCreateManyInput => item !== null);
     const deleted = await prisma.cmsTheme.deleteMany();
     const created = data.length ? await prisma.cmsTheme.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1853,7 +1947,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_page_slugs");
     const docs = await mongo.collection("cms_page_slugs").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.PageSlugCreateManyInput | null => {
         const pageId = (doc as { pageId?: string }).pageId;
         const slugId = (doc as { slugId?: string }).slugId;
         if (!pageId || !slugId) return null;
@@ -1863,7 +1957,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           assignedAt: (doc as { assignedAt?: Date }).assignedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.PageSlugCreateManyInput => item !== null);
     const deleted = await prisma.pageSlug.deleteMany();
     const created = data.length ? await prisma.pageSlug.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1873,7 +1967,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_domains");
     const docs = await mongo.collection("cms_domains").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.CmsDomainCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -1884,7 +1978,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.CmsDomainCreateManyInput => item !== null);
     const deleted = await prisma.cmsDomain.deleteMany();
     const created = data.length ? await prisma.cmsDomain.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1894,7 +1988,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("cms_domain_slugs");
     const docs = await mongo.collection("cms_domain_slugs").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.CmsDomainSlugCreateManyInput | null => {
         const domainId = (doc as { domainId?: string }).domainId;
         const slugId = (doc as { slugId?: string }).slugId;
         if (!domainId || !slugId) return null;
@@ -1906,7 +2000,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.CmsDomainSlugCreateManyInput => item !== null);
     const deleted = await prisma.cmsDomainSlug.deleteMany();
     const created = data.length ? await prisma.cmsDomainSlug.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -1918,7 +2012,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenNames = new Set<string>();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
@@ -1936,7 +2030,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.NotebookCreateManyInput => item !== null);
     const deleted = await prisma.notebook.deleteMany();
     const created = data.length ? await prisma.notebook.createMany({ data }) : { count: 0 };
     return {
@@ -1956,7 +2050,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const docs = await mongo.collection("themes").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
@@ -1983,7 +2077,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ThemeCreateManyInput => item !== null);
     const deleted = await prisma.theme.deleteMany();
     const created = data.length ? await prisma.theme.createMany({ data }) : { count: 0 };
     return {
@@ -2004,7 +2098,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const seenTags = new Set<string>();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
@@ -2029,7 +2123,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.TagCreateManyInput => item !== null);
     const deleted = await prisma.tag.deleteMany();
     const created = data.length ? await prisma.tag.createMany({ data }) : { count: 0 };
     return {
@@ -2053,7 +2147,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const raw = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.CategoryCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -2069,18 +2163,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as Array<{
-      id: string;
-      name: string;
-      description: string | null;
-      color: string | null;
-      parentId: string | null;
-      themeId: string | null;
-      notebookId: string | null;
-      sortIndex: number;
-      createdAt: Date;
-      updatedAt: Date;
-    }>;
+      .filter((item): item is Prisma.CategoryCreateManyInput => item !== null);
     const seenCategories = new Set<string>();
     const deduped = raw.filter((entry) => {
       const key = `${entry.notebookId ?? "none"}::${entry.name}`;
@@ -2092,7 +2175,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       return true;
     });
     const availableCategoryIds = new Set(deduped.map((entry) => entry.id));
-    const data = deduped.map((entry) => {
+    const data = deduped.map((entry): Prisma.CategoryCreateManyInput => {
       const resolvedParentId =
         entry.parentId && availableCategoryIds.has(entry.parentId) ? entry.parentId : null;
       if (entry.parentId && !resolvedParentId) {
@@ -2247,7 +2330,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         const noteId = (doc as { noteId?: string }).noteId;
         if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
@@ -2265,7 +2348,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.NoteFileCreateManyInput => item !== null);
     const deleted = await prisma.noteFile.deleteMany();
     const created = data.length ? await prisma.noteFile.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -2275,7 +2358,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("product_ai_jobs");
     const docs = await mongo.collection("product_ai_jobs").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.ProductAiJobCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         const productId = (doc as { productId?: string }).productId;
         if (!id || !productId) return null;
@@ -2292,7 +2375,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProductAiJobCreateManyInput => item !== null);
     const deleted = await prisma.productAiJob.deleteMany();
     const created = data.length ? await prisma.productAiJob.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -2302,7 +2385,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_runs");
     const docs = await mongo.collection("ai_path_runs").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.AiPathRunCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
         return {
@@ -2330,7 +2413,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.AiPathRunCreateManyInput => item !== null);
     await prisma.aiPathRunNode.deleteMany();
     await prisma.aiPathRunEvent.deleteMany();
     const deleted = await prisma.aiPathRun.deleteMany();
@@ -2342,7 +2425,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_run_nodes");
     const docs = await mongo.collection("ai_path_run_nodes").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.AiPathRunNodeCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
@@ -2363,7 +2446,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.AiPathRunNodeCreateManyInput => item !== null);
     const deleted = await prisma.aiPathRunNode.deleteMany();
     const created = data.length ? await prisma.aiPathRunNode.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -2373,7 +2456,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("ai_path_run_events");
     const docs = await mongo.collection("ai_path_run_events").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
+      .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
         const id = normalizeId(doc as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
@@ -2386,7 +2469,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.AiPathRunEventCreateManyInput => item !== null);
     const deleted = await prisma.aiPathRunEvent.deleteMany();
     const created = data.length ? await prisma.aiPathRunEvent.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };

@@ -1,555 +1,3761 @@
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx
-  [null] 107:3 - Unused eslint-disable directive (no problems were reported from 'react-hooks/purity').
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-sync.ts
-  [@typescript-eslint/no-unused-vars] 290:11 - 'MongoIntegrationDoc' is defined but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 299:11 - 'MongoIntegrationConnectionDoc' is defined but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 309:11 - 'MongoAsset3DDoc' is defined but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 322:11 - 'MongoProductDraftDoc' is defined but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 335:11 - 'MongoNoteDoc' is defined but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unsafe-assignment] 623:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 634:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 636:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 636:80 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 637:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 637:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 643:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 654:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 656:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 656:81 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 657:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 657:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 670:15 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 670:28 - Unsafe member access .userId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 673:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 674:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 675:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 675:38 - Unsafe member access .productListNameLocale on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 676:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 676:41 - Unsafe member access .productListCatalogFilter on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 677:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 677:40 - Unsafe member access .productListCurrencyCode on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 678:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 678:36 - Unsafe member access .productListPageSize on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 679:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 679:43 - Unsafe member access .productListThumbnailSource on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 680:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 680:36 - Unsafe member access .aiPathsActivePathId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 681:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 681:38 - Unsafe member access .aiPathsExpandedGroups on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 682:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 682:40 - Unsafe member access .aiPathsPaletteCollapsed on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 683:45 - Unsafe member access .aiPathsPathIndex on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 684:47 - Unsafe member access .aiPathsPathConfigs on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 685:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 685:26 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 686:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 686:26 - Unsafe member access .updatedAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 710:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 710:22 - Unsafe member access .level on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 711:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 711:24 - Unsafe member access .message on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 712:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 712:23 - Unsafe member access .source on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 713:36 - Unsafe member access .context on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 714:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 714:22 - Unsafe member access .stack on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 715:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 715:21 - Unsafe member access .path on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 716:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 716:23 - Unsafe member access .method on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 717:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 717:27 - Unsafe member access .statusCode on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 718:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 718:26 - Unsafe member access .requestId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 719:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 719:23 - Unsafe member access .userId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 720:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 720:26 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 737:15 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 737:28 - Unsafe member access .status on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 738:15 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 744:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 745:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 745:25 - Unsafe member access .category on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 746:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 746:26 - Unsafe member access .projectId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 747:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 747:23 - Unsafe member access .folder on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 748:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 748:25 - Unsafe member access .filename on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 749:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 749:25 - Unsafe member access .filepath on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 750:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 750:25 - Unsafe member access .mimetype on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 751:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 751:28 - Unsafe member access .size on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 751:52 - Unsafe member access .size on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 752:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 752:23 - Unsafe member access .source on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 753:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 753:29 - Unsafe member access .errorMessage on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 754:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 754:26 - Unsafe member access .requestId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 755:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 755:23 - Unsafe member access .userId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 756:33 - Unsafe member access .meta on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 757:33 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 780:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 780:21 - Unsafe member access .type on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 781:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 781:43 - Unsafe member access .descriptionGenerationModel on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 782:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 782:38 - Unsafe member access .generationInputPrompt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 783:48 - Unsafe member access .generationOutputEnabled on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 784:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 784:39 - Unsafe member access .generationOutputPrompt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 785:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 785:35 - Unsafe member access .imageAnalysisModel on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 786:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 786:34 - Unsafe member access .visionInputPrompt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 787:44 - Unsafe member access .visionOutputEnabled on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 788:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 788:35 - Unsafe member access .visionOutputPrompt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 789:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 789:30 - Unsafe member access .testProductId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 790:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 790:26 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 791:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 791:26 - Unsafe member access .updatedAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 809:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 809:22 - Unsafe member access .title on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 810:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 810:26 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 811:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 811:26 - Unsafe member access .updatedAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 812:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 812:39 - Unsafe member access .messages on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 813:19 - Unsafe member access .messages on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 824:7 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 825:7 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 826:7 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-call] 833:7 - Unsafe call of a type that could not be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 833:24 - Unsafe member access .map on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 836:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 836:23 - Unsafe member access .role on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 837:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 837:26 - Unsafe member access .content on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 838:9 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 838:28 - Unsafe member access .createdAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 858:15 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 858:31 - Unsafe member access .sessionId on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 862:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 863:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 863:23 - Unsafe member access .status on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 864:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 864:22 - Unsafe member access .model on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 865:36 - Unsafe member access .payload on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 866:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 866:27 - Unsafe member access .resultText on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 867:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 867:29 - Unsafe member access .errorMessage on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 868:11 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-member-access] 868:26 - Unsafe member access .createdAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 869:33 - Unsafe member access .startedAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 870:34 - Unsafe member access .finishedAt on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-assignment] 1504:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1534:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1538:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1538:73 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1540:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1540:25 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-explicit-any] 1555:50 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1641:42 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 1704:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1731:46 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 1732:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1734:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1736:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1737:46 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1740:46 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1746:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1748:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1748:74 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1749:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1749:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1755:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1767:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1769:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1769:66 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1770:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1770:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1776:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1783:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1783:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 1784:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1784:46 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 1785:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1785:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 1791:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1793:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1793:70 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1794:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1794:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1854:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1865:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1867:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1867:70 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1868:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1868:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1874:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1886:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1888:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1888:71 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1889:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1889:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1895:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1908:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1910:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1910:75 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1911:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1911:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1919:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1938:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1940:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1940:70 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1942:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1942:25 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1957:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 1985:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 1987:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1987:67 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 1989:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 1989:25 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2005:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2031:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2033:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2033:65 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2035:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2035:25 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unused-vars] 2129:11 - 'availableNotebookIds' is assigned a value but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 2132:11 - 'availableTagIds' is assigned a value but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 2135:11 - 'availableCategoryIds' is assigned a value but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unused-vars] 2138:11 - 'warnings' is assigned a value but never used. Allowed unused vars must match /^_/u.
-  [@typescript-eslint/no-unsafe-call] 2147:28 - Unsafe call of a type that could not be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 2147:33 - Unsafe member access .map on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 2147:51 - Unsafe member access .id on an `any` value.
-  [@typescript-eslint/no-unsafe-call] 2148:33 - Unsafe call of a type that could not be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 2148:44 - Unsafe member access .map on a type that cannot be resolved.
-  [@typescript-eslint/no-unsafe-member-access] 2148:72 - Unsafe member access .id on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2152:48 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2153:38 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2155:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2155:25 - Unsafe member access .noteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2156:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2156:24 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2157:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2157:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2160:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2161:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2162:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2163:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2164:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2165:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2167:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2167:27 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2170:59 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2171:48 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2173:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2173:25 - Unsafe member access .noteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2174:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2174:29 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2175:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2175:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2178:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2179:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2180:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2181:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2182:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2183:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2184:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2185:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2186:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2187:17 - Unsafe assignment of an error typed value.
-  [@typescript-eslint/no-unsafe-assignment] 2189:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2189:27 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2192:67 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2193:46 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2195:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2195:31 - Unsafe member access .sourceNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2196:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2196:31 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2197:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2197:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2200:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2200:27 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2237:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2248:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2267:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2269:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2269:70 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2270:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2270:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2276:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2286:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2286:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2287:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2287:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2294:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2296:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2296:74 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2297:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2297:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2303:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2315:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2315:54 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2316:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2316:36 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2317:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2317:50 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2318:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2318:34 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2332:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2336:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2336:71 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2337:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2337:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2343:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2356:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2356:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2357:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2357:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2365:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2367:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2367:75 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2368:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2368:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2374:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2384:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2384:42 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2388:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2390:26 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2390:76 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 2391:14 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2391:32 - Unsafe member access .length on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2452:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2469:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2505:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2520:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2533:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2554:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2572:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2590:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2613:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2641:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2667:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2691:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2713:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2733:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2750:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2767:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2779:94 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 2783:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 2792:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2816:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2839:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2858:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2875:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2891:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2909:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2930:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2954:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2972:33 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2973:17 - Unsafe member access .id on an `any` value.
-  [@typescript-eslint/no-unsafe-call] 2974:9 - Unsafe call of an `any` typed value.
-  [@typescript-eslint/no-unsafe-call] 2974:9 - Unsafe call of an `any` typed value.
-  [@typescript-eslint/no-unsafe-member-access] 2974:17 - Unsafe member access .languages on an `any` value.
-  [@typescript-eslint/no-explicit-any] 2975:21 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 2975:29 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 2975:39 - Unsafe member access .position on an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2975:52 - Unsafe member access .position on an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 2976:12 - Unsafe member access .map on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3027:48 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 3028:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3028:28 - Unsafe member access .productId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3029:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3029:28 - Unsafe member access .catalogId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3030:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3030:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3032:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3032:23 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3033:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3033:25 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3034:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3034:32 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3035:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3035:30 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3036:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3036:38 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3037:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3037:40 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3038:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3038:34 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3039:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3039:30 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3040:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3040:30 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3041:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3041:55 - Unsafe member access .catalog on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3054:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 3055:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3055:28 - Unsafe member access .productId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3056:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3056:24 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3057:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3057:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3059:50 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 3060:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3060:28 - Unsafe member access .productId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3061:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3061:29 - Unsafe member access .producerId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3062:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3062:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3069:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3085:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3133:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3155:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3199:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3215:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3234:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3255:51 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 3257:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 3264:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3277:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3293:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3309:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3331:48 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 3332:38 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3334:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3334:25 - Unsafe member access .noteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3335:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3335:24 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3336:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3336:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3346:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3346:27 - Unsafe member access .tagId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3349:59 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 3350:48 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3352:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3352:25 - Unsafe member access .noteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3353:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3353:29 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3354:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3354:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3368:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3368:27 - Unsafe member access .categoryId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3371:60 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 3372:42 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3374:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3374:31 - Unsafe member access .sourceNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3375:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3375:31 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3376:11 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3376:29 - Unsafe member access .assignedAt on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 3379:17 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 3379:27 - Unsafe member access .targetNoteId on an `any` value.
-  [@typescript-eslint/no-explicit-any] 3417:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3439:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3456:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3477:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3494:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3520:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3541:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3574:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3599:58 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 3616:58 - Unexpected any. Specify a different type.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useEnhancedQueries.ts
-  [@typescript-eslint/no-unsafe-assignment] 15:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 24:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 84:5 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 85:5 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 86:5 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 86:31 - Unsafe member access .selectById on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 87:5 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 87:31 - Unsafe member access .selectMany on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 94:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 104:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 114:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 123:12 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 123:19 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 123:32 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 129:9 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 133:16 - Unsafe array destructuring of a tuple element with an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 133:21 - Unsafe array destructuring of a tuple element with an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 133:27 - Unsafe array destructuring of a tuple element with an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 138:18 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 138:23 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 138:29 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 144:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 145:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 145:24 - Unsafe member access .theme on an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 145:42 - Unsafe member access .defaultTheme on an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 146:7 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 146:27 - Unsafe member access .language on an `any` value.
-  [@typescript-eslint/no-unsafe-member-access] 146:48 - Unsafe member access .defaultLanguage on an `any` value.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductEnhancements.ts
-  [@typescript-eslint/no-unsafe-assignment] 31:13 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 66:15 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-unsafe-assignment] 88:15 - Unsafe assignment of an `any` value.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/query/useQueryBatching.ts
-  [@typescript-eslint/no-explicit-any] 62:70 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-assignment] 68:25 - Unsafe assignment of an `any` value.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/query/useQueryLifecycle.ts
-  [@typescript-eslint/no-unsafe-assignment] 46:58 - Unsafe assignment of an `any` value.
-  [@typescript-eslint/no-explicit-any] 46:80 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 89:30 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 89:35 - Unsafe member access .setOptions on an `any` value.
-  [@typescript-eslint/no-unsafe-call] 90:11 - Unsafe call of an `any` typed value.
-  [@typescript-eslint/no-explicit-any] 90:21 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 90:26 - Unsafe member access .setOptions on an `any` value.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/query/useSmartCache.ts
-  [@typescript-eslint/no-explicit-any] 68:30 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 68:35 - Unsafe member access .setOptions on an `any` value.
-  [@typescript-eslint/no-unsafe-call] 69:11 - Unsafe call of an `any` typed value.
-  [@typescript-eslint/no-explicit-any] 69:21 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-unsafe-member-access] 69:26 - Unsafe member access .setOptions on an `any` value.
-  [@typescript-eslint/no-explicit-any] 141:36 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 145:36 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 159:34 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 177:36 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 207:4 - Unexpected any. Specify a different type.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts
-  [@typescript-eslint/no-explicit-any] 48:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 59:41 - Unexpected any. Specify a different type.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/handle-api-error.ts
-  [@typescript-eslint/no-explicit-any] 35:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 46:41 - Unexpected any. Specify a different type.
-File: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts
-  [@typescript-eslint/no-explicit-any] 18:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 101:31 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 110:26 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 110:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 135:76 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 136:26 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 140:79 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 141:27 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 145:82 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 146:38 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 147:32 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 156:28 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 166:28 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 181:31 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 181:45 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 181:97 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 328:76 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 329:47 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 338:40 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 356:42 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 357:54 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 359:52 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 359:82 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 359:116 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 359:155 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 440:23 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 516:31 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 589:18 - Unexpected any. Specify a different type.
-  [@typescript-eslint/no-explicit-any] 590:16 - Unexpected any. Specify a different type.
+[
+  {
+    "filePath": "./src/app/(frontend)/page.tsx",
+    "errorCount": 4,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 109,
+        "column": 19,
+        "ruleId": "react-hooks/purity",
+        "message": "Error: Cannot call impure function during render\n\n`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).\n\n/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx:109:19\n  107 |   let totalStart = 0; // TODO: Refactor timing logic to use useEffect/useRef\n  108 |   const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {\n> 109 |     const start = performance.now();\n      |                   ^^^^^^^^^^^^^^^^^ Cannot call impure function\n  110 |     const result = await fn();\n  111 |     timings[label] = performance.now() - start;\n  112 |     return result;",
+        "severity": 2
+      },
+      {
+        "line": 111,
+        "column": 22,
+        "ruleId": "react-hooks/purity",
+        "message": "Error: Cannot call impure function during render\n\n`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).\n\n/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx:111:22\n  109 |     const start = performance.now();\n  110 |     const result = await fn();\n> 111 |     timings[label] = performance.now() - start;\n      |                      ^^^^^^^^^^^^^^^^^ Cannot call impure function\n  112 |     return result;\n  113 |   };\n  114 |",
+        "severity": 2
+      },
+      {
+        "line": 166,
+        "column": 23,
+        "ruleId": "react-hooks/purity",
+        "message": "Error: Cannot call impure function during render\n\n`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).\n\n/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx:166:23\n  164 |     const showMenu = cmsPage?.showMenu !== false;\n  165 |     if (shouldLogTiming()) {\n> 166 |       timings.total = performance.now() - totalStart;\n      |                       ^^^^^^^^^^^^^^^^^ Cannot call impure function\n  167 |       console.log(\"[timing] home\", timings);\n  168 |     }\n  169 |     return (",
+        "severity": 2
+      },
+      {
+        "line": 206,
+        "column": 21,
+        "ruleId": "react-hooks/purity",
+        "message": "Error: Cannot call impure function during render\n\n`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).\n\n/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx:206:21\n  204 |   const showFallbackHeader = !menuSettings.showMenu;\n  205 |   if (shouldLogTiming()) {\n> 206 |     timings.total = performance.now() - totalStart;\n      |                     ^^^^^^^^^^^^^^^^^ Cannot call impure function\n  207 |     console.log(\"[timing] home\", timings);\n  208 |   }\n  209 |   return (",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/features/database/services/database-sync.ts",
+    "errorCount": 440,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 670,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 670,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .userId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 673,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 674,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 675,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 675,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productListNameLocale on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 676,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 676,
+        "column": 41,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productListCatalogFilter on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 677,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 677,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productListCurrencyCode on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 678,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 678,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productListPageSize on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 679,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 679,
+        "column": 43,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productListThumbnailSource on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 680,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 680,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .aiPathsActivePathId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 681,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 681,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .aiPathsExpandedGroups on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 682,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 682,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .aiPathsPaletteCollapsed on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 683,
+        "column": 45,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .aiPathsPathIndex on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 684,
+        "column": 47,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .aiPathsPathConfigs on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 685,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 685,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 686,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 686,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .updatedAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 710,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 710,
+        "column": 22,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .level on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 711,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 711,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .message on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 712,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 712,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .source on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 713,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .context on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 714,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 714,
+        "column": 22,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .stack on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 715,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 715,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .path on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 716,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 716,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .method on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 717,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 717,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .statusCode on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 718,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 718,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .requestId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 719,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 719,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .userId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 720,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 720,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 737,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 737,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .status on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 738,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 744,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 745,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 745,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .category on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 746,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 746,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .projectId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 747,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 747,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .folder on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 748,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 748,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .filename on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 749,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 749,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .filepath on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 750,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 750,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .mimetype on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 751,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 751,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .size on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 751,
+        "column": 52,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .size on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 752,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 752,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .source on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 753,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 753,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .errorMessage on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 754,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 754,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .requestId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 755,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 755,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .userId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 756,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .meta on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 757,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 780,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 780,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .type on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 781,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 781,
+        "column": 43,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .descriptionGenerationModel on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 782,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 782,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .generationInputPrompt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 783,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .generationOutputEnabled on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 784,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 784,
+        "column": 39,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .generationOutputPrompt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 785,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 785,
+        "column": 35,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .imageAnalysisModel on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 786,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 786,
+        "column": 34,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .visionInputPrompt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 787,
+        "column": 44,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .visionOutputEnabled on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 788,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 788,
+        "column": 35,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .visionOutputPrompt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 789,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 789,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .testProductId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 790,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 790,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 791,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 791,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .updatedAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 809,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 809,
+        "column": 22,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .title on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 810,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 810,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 811,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 811,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .updatedAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 812,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 812,
+        "column": 39,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .messages on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 813,
+        "column": 19,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .messages on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 824,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 825,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 826,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 833,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 833,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 836,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 836,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .role on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 837,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 837,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .content on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 838,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 838,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 858,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 858,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sessionId on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 862,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 863,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 863,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .status on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 864,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 864,
+        "column": 22,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .model on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 865,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .payload on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 866,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 866,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .resultText on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 867,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 867,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .errorMessage on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 868,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 868,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .createdAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 869,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .startedAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 870,
+        "column": 34,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .finishedAt on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 1505,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1535,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1539,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1539,
+        "column": 73,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1541,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1541,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1556,
+        "column": 50,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1642,
+        "column": 42,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1705,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1732,
+        "column": 46,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1733,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1735,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1737,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1738,
+        "column": 46,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1741,
+        "column": 46,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1747,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1749,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1749,
+        "column": 74,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1750,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1750,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1756,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1768,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1770,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1770,
+        "column": 66,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1771,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1771,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1777,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1784,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1784,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1785,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1785,
+        "column": 46,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1786,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1786,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1792,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1794,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1794,
+        "column": 70,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1795,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1795,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1855,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1866,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1868,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1868,
+        "column": 70,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1869,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1869,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1875,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1887,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1889,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1889,
+        "column": 71,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1890,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1890,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1896,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1909,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1911,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1911,
+        "column": 75,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1912,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1912,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1920,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1939,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1941,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1941,
+        "column": 70,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1943,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1943,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1958,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1986,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 1988,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1988,
+        "column": 67,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1990,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 1990,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2006,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2032,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2034,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2034,
+        "column": 65,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2036,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2036,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2148,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 2148,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 2148,
+        "column": 51,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2149,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 2149,
+        "column": 44,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on a type that cannot be resolved.",
+        "severity": 2
+      },
+      {
+        "line": 2149,
+        "column": 72,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2153,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2154,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2156,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2156,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .noteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2157,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2157,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2158,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2158,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2161,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2162,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2163,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2164,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2165,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2166,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2168,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2168,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2171,
+        "column": 59,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2172,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2174,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2174,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .noteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2175,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2175,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2176,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2176,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2179,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2180,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2181,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2182,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2183,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2184,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2185,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2186,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2187,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2188,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2190,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2190,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2193,
+        "column": 67,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2194,
+        "column": 46,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2196,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2196,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sourceNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2197,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2197,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2198,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2198,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2201,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2201,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2238,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2249,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2268,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2270,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2270,
+        "column": 70,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2271,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2271,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2277,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2287,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2287,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2288,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2288,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2295,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2297,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2297,
+        "column": 74,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2298,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2298,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2304,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2316,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2316,
+        "column": 54,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2317,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2317,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2318,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2318,
+        "column": 50,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2319,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2319,
+        "column": 34,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2333,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2337,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2337,
+        "column": 71,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2338,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2338,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2344,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2357,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2357,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2358,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2358,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2366,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2368,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2368,
+        "column": 75,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2369,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2369,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2375,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2385,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2385,
+        "column": 42,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2389,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2391,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2391,
+        "column": 76,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2392,
+        "column": 14,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2392,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2453,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2470,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2506,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2521,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2534,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2555,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2573,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2591,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2614,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2642,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2668,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2692,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2714,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2734,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2751,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2768,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2780,
+        "column": 94,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2784,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2793,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2817,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2840,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2859,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2876,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2892,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2910,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2931,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2955,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2973,
+        "column": 33,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2974,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2975,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2975,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "severity": 2
+      },
+      {
+        "line": 2975,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .languages on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2976,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2976,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 2976,
+        "column": 39,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .position on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2976,
+        "column": 52,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .position on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 2977,
+        "column": 12,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3028,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3029,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3029,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3030,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3030,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalogId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3031,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3031,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3033,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3033,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3034,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3034,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3035,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3035,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3036,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3036,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3037,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3037,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3038,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3038,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3039,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3039,
+        "column": 34,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3040,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3040,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3041,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3041,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3042,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3042,
+        "column": 55,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .catalog on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3055,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3056,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3056,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3057,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3057,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3058,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3058,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3060,
+        "column": 50,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3061,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3061,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .productId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3062,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3062,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .producerId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3063,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3063,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3070,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3086,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3134,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3156,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3200,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3216,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3235,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3256,
+        "column": 51,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3258,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3265,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3278,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3294,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3310,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3332,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3333,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3335,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3335,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .noteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3336,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3336,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3337,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3337,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3347,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3347,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .tagId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3350,
+        "column": 59,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3351,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3353,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3353,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .noteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3354,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3354,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3355,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3355,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3369,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3369,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .categoryId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3372,
+        "column": 60,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3373,
+        "column": 42,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3375,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3375,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sourceNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3376,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3376,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3377,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3377,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .assignedAt on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3380,
+        "column": 17,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3380,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .targetNoteId on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 3418,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3440,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3457,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3478,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3495,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3521,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3542,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3575,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3600,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 3617,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/features/products/hooks/useEnhancedQueries.ts",
+    "errorCount": 28,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 15,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 24,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 84,
+        "column": 5,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 85,
+        "column": 5,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 86,
+        "column": 5,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 86,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .selectById on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 87,
+        "column": 5,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 87,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .selectMany on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 94,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 104,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 114,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 123,
+        "column": 12,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 123,
+        "column": 19,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 123,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 129,
+        "column": 9,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 133,
+        "column": 16,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe array destructuring of a tuple element with an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 133,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe array destructuring of a tuple element with an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 133,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe array destructuring of a tuple element with an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 138,
+        "column": 18,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 138,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 138,
+        "column": 29,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 144,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 145,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 145,
+        "column": 24,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .theme on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 145,
+        "column": 42,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .defaultTheme on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 146,
+        "column": 7,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 146,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .language on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 146,
+        "column": 48,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .defaultLanguage on an `any` value.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/features/products/hooks/useProductEnhancements.ts",
+    "errorCount": 3,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 31,
+        "column": 13,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 66,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 88,
+        "column": 15,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/shared/hooks/query/useQueryBatching.ts",
+    "errorCount": 2,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 62,
+        "column": 70,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 68,
+        "column": 25,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/shared/hooks/query/useQueryLifecycle.ts",
+    "errorCount": 7,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 46,
+        "column": 58,
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 46,
+        "column": 80,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 89,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 89,
+        "column": 35,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .setOptions on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 90,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "severity": 2
+      },
+      {
+        "line": 90,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 90,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .setOptions on an `any` value.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/shared/hooks/query/useSmartCache.ts",
+    "errorCount": 10,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 68,
+        "column": 30,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 68,
+        "column": 35,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .setOptions on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 69,
+        "column": 11,
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "severity": 2
+      },
+      {
+        "line": 69,
+        "column": 21,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 69,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .setOptions on an `any` value.",
+        "severity": 2
+      },
+      {
+        "line": 141,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 145,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 159,
+        "column": 34,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 177,
+        "column": 36,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 207,
+        "column": 4,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/shared/lib/api/api-handler.ts",
+    "errorCount": 2,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 48,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 59,
+        "column": 41,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./src/shared/lib/api/handle-api-error.ts",
+    "errorCount": 2,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 35,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 46,
+        "column": 41,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      }
+    ]
+  },
+  {
+    "filePath": "./vitest.setup.ts",
+    "errorCount": 29,
+    "warningCount": 0,
+    "messages": [
+      {
+        "line": 18,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 101,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 110,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 110,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 135,
+        "column": 76,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 136,
+        "column": 26,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 140,
+        "column": 79,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 141,
+        "column": 27,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 145,
+        "column": 82,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 146,
+        "column": 38,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 147,
+        "column": 32,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 156,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 166,
+        "column": 28,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 181,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 181,
+        "column": 45,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 181,
+        "column": 97,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 328,
+        "column": 76,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 329,
+        "column": 47,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 338,
+        "column": 40,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 356,
+        "column": 42,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 357,
+        "column": 54,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 359,
+        "column": 52,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 359,
+        "column": 82,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 359,
+        "column": 116,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 359,
+        "column": 155,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 440,
+        "column": 23,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 516,
+        "column": 31,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 589,
+        "column": 18,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      },
+      {
+        "line": 590,
+        "column": 16,
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "severity": 2
+      }
+    ]
+  }
+]

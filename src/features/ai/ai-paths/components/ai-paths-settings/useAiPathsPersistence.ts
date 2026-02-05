@@ -905,12 +905,16 @@ export function useAiPathsPersistence({
         headers: csrfHeaders,
         body: indexPayload,
         keepalive: true,
+      }).catch((error: unknown) => {
+        console.warn("[AI Paths] Failed to persist path index on unload.", error);
       });
       void fetch("/api/settings", {
         method: "POST",
         headers: csrfHeaders,
         body: configPayload,
         keepalive: true,
+      }).catch((error: unknown) => {
+        console.warn("[AI Paths] Failed to persist path config on unload.", error);
       });
       invalidateSettingsCache();
     };

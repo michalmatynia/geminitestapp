@@ -2,7 +2,7 @@
 
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
-import { ArrowUpDown, Download, MoreVertical, PlusCircle } from "lucide-react";
+import { ArrowUpDown, Download, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
@@ -666,9 +666,14 @@ export const getProductColumns = (
           <CircleIconButton
             onClick={(): void => handleClick(product)}
             ariaLabel="View integrations"
-            className="text-muted-foreground hover:text-foreground"
+            className="border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors"
           >
-            <PlusCircle className="size-5" />
+            <span
+              aria-hidden="true"
+              className="inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]"
+            >
+              +
+            </span>
           </CircleIconButton>
           {showMarketplaceBadge && (
             <CircleIconButton

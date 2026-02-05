@@ -22,7 +22,8 @@ export default async function Layout({
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect("/auth/signin?error=AccountDisabled");
     }
-    const cookieValue = cookies().get("adminMenuCollapsed")?.value;
+    const cookieStore = await cookies();
+    const cookieValue = cookieStore.get("adminMenuCollapsed")?.value;
     if (cookieValue === "true" || cookieValue === "1") {
       initialMenuCollapsed = true;
     }

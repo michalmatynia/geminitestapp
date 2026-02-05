@@ -61,14 +61,27 @@ export function useTemplates(scope: "import" | "export"): UseQueryResult<Templat
   });
 }
 
-export function useImportPreference<T>(key: string, endpoint: string): UseQueryResult<T, Error> {
+type ImportPreferenceOptions<T> = {
+  fallback?: T;
+  enabled?: boolean;
+};
+
+export function useImportPreference<T>(
+  key: string,
+  endpoint: string,
+  options?: ImportPreferenceOptions<T>
+): UseQueryResult<T, Error> {
   return useQuery({
     queryKey: importKeys.pref(key),
     queryFn: async (): Promise<T> => {
       const res = await fetch(endpoint);
-      if (!res.ok) throw new Error(`Failed to load preference: ${key}`);
+      if (!res.ok) {
+        if (options?.fallback !== undefined) return options.fallback;
+        throw new Error(`Failed to load preference: ${key}`);
+      }
       return (await res.json()) as T;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

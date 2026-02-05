@@ -9,9 +9,18 @@ import {
 } from "../types";
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
-  const res = await fetch("/api/price-groups");
-  if (!res.ok) throw new Error("Failed to load price groups");
-  return (await res.json()) as PriceGroup[];
+  try {
+    const res = await fetch("/api/price-groups");
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      console.warn("[price-groups] Failed to load price groups", payload?.error ?? res.status);
+      return [];
+    }
+    return (await res.json()) as PriceGroup[];
+  } catch (error) {
+    console.warn("[price-groups] Failed to load price groups", error);
+    return [];
+  }
 }
 
 export async function updatePriceGroup(group: PriceGroup): Promise<PriceGroup> {
@@ -77,10 +86,19 @@ export async function updateCatalog(id: string, data: Partial<Catalog>): Promise
 }
 
 export async function getCategories(catalogId: string | null): Promise<ProductCategoryWithChildren[]> {
-  const url = catalogId ? `/api/products/categories/tree?catalogId=${catalogId}` : "/api/products/categories/tree";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to load categories");
-  return (await res.json()) as ProductCategoryWithChildren[];
+  try {
+    const url = catalogId ? `/api/products/categories/tree?catalogId=${catalogId}` : "/api/products/categories/tree";
+    const res = await fetch(url);
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      console.warn("[categories] Failed to load categories", payload?.error ?? res.status);
+      return [];
+    }
+    return (await res.json()) as ProductCategoryWithChildren[];
+  } catch (error) {
+    console.warn("[categories] Failed to load categories", error);
+    return [];
+  }
 }
 
 export async function createCategory(data: Partial<ProductCategory>): Promise<ProductCategory> {

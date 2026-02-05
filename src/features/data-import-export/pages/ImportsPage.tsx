@@ -188,7 +188,8 @@ export default function ImportsPage(): React.JSX.Element {
   );
   const { data: imageRetryPresetsPref } = useImportPreference<{ presets?: ImageRetryPreset[] }>(
     "image-retry-presets",
-    "/api/integrations/exports/base/image-retry-presets"
+    "/api/integrations/exports/base/image-retry-presets",
+    { fallback: { presets: getDefaultImageRetryPresets() } }
   );
   const { data: sampleProductPref } = useImportPreference<{ productId?: string | null; inventoryId?: string | null }>(
     "sample-product",

@@ -1,12 +1,21 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from "lucide-react";
 
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from "@/shared/ui";
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils";
-import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
+import { useQuery } from "@tanstack/react-query";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import {
+  ADMIN_MENU_CUSTOM_ENABLED_KEY,
+  ADMIN_MENU_CUSTOM_NAV_KEY,
+  ADMIN_MENU_FAVORITES_KEY,
+  ADMIN_MENU_SECTION_COLORS_KEY,
+  parseAdminMenuBoolean,
+  parseAdminMenuJson,
+} from "@/features/admin/constants/admin-menu-settings";
 import {
   ADMIN_MENU_COLOR_MAP,
   ADMIN_MENU_COLORS,
@@ -146,8 +155,8 @@ const stripUsedIds = (
 };
 
 export function AdminMenuSettingsPage(): React.JSX.Element {
-  const { data: preferences } = useUserPreferences();
-  const updatePreferences = useUpdateUserPreferencesMutation();
+  const settingsQuery = useSettingsMap({ scope: "light" });
+  const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
 
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -173,28 +182,130 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   );
 
   const defaultCustomNav = useMemo(() => adminNavToCustomNav(baseNav), [baseNav]);
-  const normalizedPreferenceCustomNav = useMemo(() => {
-    const normalized = normalizeAdminMenuCustomNav(preferences?.adminMenuCustomNav);
-    return normalized.length > 0 ? normalized : defaultCustomNav;
-  }, [defaultCustomNav, preferences?.adminMenuCustomNav]);
   const normalizedCustomNav = useMemo(() => {
     const normalized = normalizeAdminMenuCustomNav(customNav);
     return normalized.length > 0 ? normalized : defaultCustomNav;
   }, [customNav, defaultCustomNav]);
 
-  // Derived state for initialization
-  const [prevPrefs, setPrevPrefs] = useState<unknown>(null);
-  if (preferences && preferences !== prevPrefs && Object.keys(preferences).length > 0) {
-    setPrevPrefs(preferences);
-    setFavorites(Array.isArray(preferences.adminMenuFavorites) ? preferences.adminMenuFavorites : []);
-    setSectionColors(
-      preferences.adminMenuSectionColors && typeof preferences.adminMenuSectionColors === "object"
-        ? preferences.adminMenuSectionColors
-        : {}
+  const settingsValues = useMemo(() => {
+    const map = settingsQuery.data ?? new Map<string, string>();
+    const favoritesRaw = parseAdminMenuJson<unknown[]>(map.get(ADMIN_MENU_FAVORITES_KEY), []);
+    const sectionColorsRaw = parseAdminMenuJson<Record<string, string> | null>(
+      map.get(ADMIN_MENU_SECTION_COLORS_KEY),
+      null
     );
-    setCustomEnabled(Boolean(preferences.adminMenuCustomEnabled));
-    setCustomNav(normalizedPreferenceCustomNav);
-  }
+    const customEnabledValue = parseAdminMenuBoolean(
+      map.get(ADMIN_MENU_CUSTOM_ENABLED_KEY),
+      false
+    );
+    const customNavRaw = parseAdminMenuJson<AdminMenuCustomNode[]>(
+      map.get(ADMIN_MENU_CUSTOM_NAV_KEY),
+      []
+    );
+    return {
+      favorites: favoritesRaw.filter(
+        (id: unknown): id is string => typeof id === "string" && id.length > 0
+      ),
+      sectionColors:
+        sectionColorsRaw && typeof sectionColorsRaw === "object" ? sectionColorsRaw : {},
+      customEnabled: customEnabledValue,
+      customNav: normalizeAdminMenuCustomNav(customNavRaw),
+    };
+  }, [settingsQuery.data]);
+
+  const settingsSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        favorites: settingsValues.favorites,
+        sectionColors: settingsValues.sectionColors,
+        customEnabled: settingsValues.customEnabled,
+        customNav:
+          settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav,
+      }),
+    [defaultCustomNav, settingsValues]
+  );
+
+  const prevSettingsRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!settingsQuery.isFetched) return;
+    if (settingsSnapshot === prevSettingsRef.current) return;
+    prevSettingsRef.current = settingsSnapshot;
+    setFavorites(settingsValues.favorites);
+    setSectionColors(settingsValues.sectionColors);
+    setCustomEnabled(settingsValues.customEnabled);
+    setCustomNav(
+      settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav
+    );
+  }, [defaultCustomNav, settingsQuery.isFetched, settingsSnapshot, settingsValues]);
+
+  const hasAdminMenuSettings = useMemo(() => {
+    const map = settingsQuery.data;
+    if (!map) return false;
+    return Boolean(
+      map.get(ADMIN_MENU_FAVORITES_KEY) ||
+        map.get(ADMIN_MENU_SECTION_COLORS_KEY) ||
+        map.get(ADMIN_MENU_CUSTOM_ENABLED_KEY) ||
+        map.get(ADMIN_MENU_CUSTOM_NAV_KEY)
+    );
+  }, [settingsQuery.data]);
+
+  const legacyPreferencesQuery = useQuery({
+    queryKey: ["user-preferences", "admin-menu-legacy"],
+    queryFn: async (): Promise<{
+      adminMenuFavorites?: string[] | null;
+      adminMenuSectionColors?: Record<string, string> | null;
+      adminMenuCustomEnabled?: boolean | null;
+      adminMenuCustomNav?: AdminMenuCustomNode[] | null;
+    } | null> => {
+      const res = await fetch("/api/user/preferences?include=admin-menu");
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        adminMenuFavorites?: string[] | null;
+        adminMenuSectionColors?: Record<string, string> | null;
+        adminMenuCustomEnabled?: boolean | null;
+        adminMenuCustomNav?: AdminMenuCustomNode[] | null;
+      };
+    },
+    enabled: settingsQuery.isFetched && !hasAdminMenuSettings,
+    staleTime: 0,
+    retry: 1,
+  });
+
+  const migratedLegacyRef = useRef(false);
+  useEffect(() => {
+    if (migratedLegacyRef.current) return;
+    if (!legacyPreferencesQuery.data || hasAdminMenuSettings) return;
+    const legacy = legacyPreferencesQuery.data;
+    const payloads = [
+      {
+        key: ADMIN_MENU_FAVORITES_KEY,
+        value: JSON.stringify(Array.isArray(legacy.adminMenuFavorites) ? legacy.adminMenuFavorites : []),
+      },
+      {
+        key: ADMIN_MENU_SECTION_COLORS_KEY,
+        value: JSON.stringify(
+          legacy.adminMenuSectionColors && typeof legacy.adminMenuSectionColors === "object"
+            ? legacy.adminMenuSectionColors
+            : {}
+        ),
+      },
+      {
+        key: ADMIN_MENU_CUSTOM_ENABLED_KEY,
+        value: JSON.stringify(Boolean(legacy.adminMenuCustomEnabled)),
+      },
+      {
+        key: ADMIN_MENU_CUSTOM_NAV_KEY,
+        value: JSON.stringify(
+          Array.isArray(legacy.adminMenuCustomNav) ? legacy.adminMenuCustomNav : defaultCustomNav
+        ),
+      },
+    ];
+    migratedLegacyRef.current = true;
+    void updateSettingsBulk.mutateAsync(payloads).catch((error: unknown) => {
+      migratedLegacyRef.current = false;
+      console.warn("[admin-menu] Failed to migrate legacy preferences.", error);
+    });
+  }, [defaultCustomNav, hasAdminMenuSettings, legacyPreferencesQuery.data, updateSettingsBulk]);
 
   const menuNav = useMemo(
     () => (customEnabled ? buildAdminMenuFromCustomNav(normalizedCustomNav, baseNav) : baseNav),
@@ -247,12 +358,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const baseline = useMemo(
     () =>
       JSON.stringify({
-        favorites: Array.isArray(preferences?.adminMenuFavorites) ? preferences?.adminMenuFavorites : [],
-        sectionColors: preferences?.adminMenuSectionColors ?? {},
-        customEnabled: Boolean(preferences?.adminMenuCustomEnabled),
-        customNav: normalizedPreferenceCustomNav,
+        favorites: settingsValues.favorites,
+        sectionColors: settingsValues.sectionColors,
+        customEnabled: settingsValues.customEnabled,
+        customNav:
+          settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav,
       }),
-    [normalizedPreferenceCustomNav, preferences?.adminMenuCustomEnabled, preferences?.adminMenuFavorites, preferences?.adminMenuSectionColors]
+    [defaultCustomNav, settingsValues]
   );
 
   const currentPayload = useMemo(
@@ -442,12 +554,12 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       const validSectionColors = Object.fromEntries(
         Object.entries(sectionColors).filter(([sectionId]: [string, string]) => sectionIds.has(sectionId))
       );
-      await updatePreferences.mutateAsync({
-        adminMenuFavorites: validFavorites,
-        adminMenuSectionColors: validSectionColors,
-        adminMenuCustomEnabled: customEnabled,
-        adminMenuCustomNav: normalizedCustomNav,
-      });
+      await updateSettingsBulk.mutateAsync([
+        { key: ADMIN_MENU_FAVORITES_KEY, value: JSON.stringify(validFavorites) },
+        { key: ADMIN_MENU_SECTION_COLORS_KEY, value: JSON.stringify(validSectionColors) },
+        { key: ADMIN_MENU_CUSTOM_ENABLED_KEY, value: JSON.stringify(customEnabled) },
+        { key: ADMIN_MENU_CUSTOM_NAV_KEY, value: JSON.stringify(normalizedCustomNav) },
+      ]);
       toast("Admin menu settings saved.", { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to save admin menu settings.", { variant: "error" });
@@ -862,9 +974,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           onClick={() => {
             void handleSave();
           }}
-          disabled={!isDirty || updatePreferences.isPending}
+          disabled={!isDirty || updateSettingsBulk.isPending}
         >
-          {updatePreferences.isPending ? "Saving..." : "Save Settings"}
+          {updateSettingsBulk.isPending ? "Saving..." : "Save Settings"}
         </Button>
       </div>
     </div>

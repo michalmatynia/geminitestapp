@@ -23,7 +23,15 @@ import {
 } from "lucide-react";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { usePathname, useRouter } from "next/navigation";
-import { useUserPreferences } from "@/features/auth/hooks/useUserPreferences";
+import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
+import {
+  ADMIN_MENU_CUSTOM_ENABLED_KEY,
+  ADMIN_MENU_CUSTOM_NAV_KEY,
+  ADMIN_MENU_FAVORITES_KEY,
+  ADMIN_MENU_SECTION_COLORS_KEY,
+  parseAdminMenuBoolean,
+  parseAdminMenuJson,
+} from "@/features/admin/constants/admin-menu-settings";
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { cn } from "@/shared/utils";
@@ -965,24 +973,29 @@ export default function Menu(): React.ReactNode {
     router.push("/admin/cms/pages/create");
   }, [router, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
-  const { data: preferences } = useUserPreferences();
-  const favoriteIds = useMemo(
-    () =>
-      (preferences?.adminMenuFavorites ?? []).filter(
-        (id: unknown): id is string => typeof id === "string" && id.length > 0
-      ),
-    [preferences]
-  );
+  const settingsStore = useSettingsStore();
+  const favoriteIds = useMemo(() => {
+    const raw = settingsStore.get(ADMIN_MENU_FAVORITES_KEY);
+    const parsed = parseAdminMenuJson<unknown[]>(raw, []);
+    return parsed.filter(
+      (id: unknown): id is string => typeof id === "string" && id.length > 0
+    );
+  }, [settingsStore]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
-  const sectionColors = useMemo(
-    () => preferences?.adminMenuSectionColors ?? {},
-    [preferences?.adminMenuSectionColors]
+  const sectionColors = useMemo(() => {
+    const raw = settingsStore.get(ADMIN_MENU_SECTION_COLORS_KEY);
+    const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  }, [settingsStore]);
+  const customEnabled = useMemo(
+    () => parseAdminMenuBoolean(settingsStore.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
+    [settingsStore]
   );
-  const customEnabled = Boolean(preferences?.adminMenuCustomEnabled);
-  const customNav = useMemo(
-    () => normalizeAdminMenuCustomNav(preferences?.adminMenuCustomNav),
-    [preferences?.adminMenuCustomNav]
-  );
+  const customNav = useMemo(() => {
+    const raw = settingsStore.get(ADMIN_MENU_CUSTOM_NAV_KEY);
+    const parsed = parseAdminMenuJson<AdminMenuCustomNode[]>(raw, []);
+    return normalizeAdminMenuCustomNav(parsed);
+  }, [settingsStore]);
 
   const baseNav = useMemo(
     () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),

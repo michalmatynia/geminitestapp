@@ -1,21 +1,48 @@
 import type { CurrencyOption, CountryOption, Language } from "../../../shared/types/internationalization";
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
-  const res = await fetch("/api/currencies");
-  if (!res.ok) throw new Error("Failed to fetch currencies.");
-  return (await res.json()) as CurrencyOption[];
+  try {
+    const res = await fetch("/api/currencies");
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      console.warn("[currencies] Failed to fetch currencies", payload?.error ?? res.status);
+      return [];
+    }
+    return (await res.json()) as CurrencyOption[];
+  } catch (error) {
+    console.warn("[currencies] Failed to fetch currencies", error);
+    return [];
+  }
 }
 
 export async function getCountries(): Promise<CountryOption[]> {
-  const res = await fetch("/api/countries");
-  if (!res.ok) throw new Error("Failed to fetch countries.");
-  return (await res.json()) as CountryOption[];
+  try {
+    const res = await fetch("/api/countries");
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      console.warn("[countries] Failed to fetch countries", payload?.error ?? res.status);
+      return [];
+    }
+    return (await res.json()) as CountryOption[];
+  } catch (error) {
+    console.warn("[countries] Failed to fetch countries", error);
+    return [];
+  }
 }
 
 export async function getLanguages(): Promise<Language[]> {
-  const res = await fetch("/api/languages");
-  if (!res.ok) throw new Error("Failed to fetch languages.");
-  return (await res.json()) as Language[];
+  try {
+    const res = await fetch("/api/languages");
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      console.warn("[languages] Failed to fetch languages", payload?.error ?? res.status);
+      return [];
+    }
+    return (await res.json()) as Language[];
+  } catch (error) {
+    console.warn("[languages] Failed to fetch languages", error);
+    return [];
+  }
 }
 
 export async function deleteCurrency(id: string): Promise<void> {

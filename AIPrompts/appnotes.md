@@ -21,6 +21,8 @@
 React error overlay ? 
 
 
+I need user profiles, that will store KEYS to user settings for each segment of the system
+
 AI Paths need to be tested, w IMage studio image upload nie chce cos dzialac i CMS widok obrazów jest nie teges
 
 * In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily

@@ -66,10 +66,12 @@ export async function countProducts(filters: {
 
   const res = await fetch(`/api/products/count?${query.toString()}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch product count");
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    console.warn("[products] Failed to fetch product count", payload?.error ?? res.status);
+    return 0;
   }
   const data = (await res.json()) as { count: number };
-  return data.count;
+  return data.count ?? 0;
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {

@@ -66,6 +66,7 @@ export default function ProductAiJobsPanel({
   title = "AI Jobs",
   description = "Monitor AI, import, and export jobs across the platform.",
   showTabs = true,
+  embedded = false,
 }: ProductAiJobsPanelProps): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -208,6 +209,14 @@ export default function ProductAiJobsPanel({
   });
 
   if (!isMounted) {
+    if (embedded) {
+      return (
+        <SectionPanel className="p-6">
+          <div className="text-sm text-gray-400">Loading jobs panel...</div>
+        </SectionPanel>
+      );
+    }
+
     return (
       <div className="container mx-auto py-10">
         <SectionHeader
@@ -283,47 +292,54 @@ export default function ProductAiJobsPanel({
     </ListPanel>
   );
 
+  const body = showTabs ? (
+    <Tabs defaultValue={defaultTab} className="space-y-6">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="ai">AI Jobs</TabsTrigger>
+        <TabsTrigger value="import">Import Jobs</TabsTrigger>
+        <TabsTrigger value="export">Export Jobs</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="ai" className="space-y-4">
+        {aiContent}
+      </TabsContent>
+
+      <TabsContent value="import" className="space-y-4">
+        <SectionPanel className="p-6">
+          <h2 className="text-2xl font-bold text-white">Import Jobs</h2>
+          <p className="mt-2 text-sm text-gray-400">
+            Import jobs will appear here once import tracking is enabled.
+          </p>
+          <div className="mt-4">
+            <Link href="/admin/integrations/imports" className="text-sm text-blue-400 underline">
+              Go to Imports
+            </Link>
+          </div>
+        </SectionPanel>
+      </TabsContent>
+
+      <TabsContent value="export">
+        <ProductListingJobsPanel showBackToProducts={false} />
+      </TabsContent>
+    </Tabs>
+  ) : (
+    <div className="space-y-4">
+      {aiContent}
+    </div>
+  );
+
   return (
-    <div className="container mx-auto py-10">
-      <SectionHeader
-        title={title}
-        description={description}
-        className="mb-6"
-      />
-
-      {showTabs ? (
-        <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="ai">AI Jobs</TabsTrigger>
-            <TabsTrigger value="import">Import Jobs</TabsTrigger>
-            <TabsTrigger value="export">Export Jobs</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="ai" className="space-y-4">
-            {aiContent}
-          </TabsContent>
-
-          <TabsContent value="import" className="space-y-4">
-            <SectionPanel className="p-6">
-              <h2 className="text-2xl font-bold text-white">Import Jobs</h2>
-              <p className="mt-2 text-sm text-gray-400">
-                Import jobs will appear here once import tracking is enabled.
-              </p>
-              <div className="mt-4">
-                <Link href="/admin/integrations/imports" className="text-sm text-blue-400 underline">
-                  Go to Imports
-                </Link>
-              </div>
-            </SectionPanel>
-          </TabsContent>
-
-          <TabsContent value="export">
-            <ProductListingJobsPanel showBackToProducts={false} />
-          </TabsContent>
-        </Tabs>
+    <>
+      {embedded ? (
+        <div className="space-y-4">{body}</div>
       ) : (
-        <div className="space-y-4">
-          {aiContent}
+        <div className="container mx-auto py-10">
+          <SectionHeader
+            title={title}
+            description={description}
+            className="mb-6"
+          />
+          {body}
         </div>
       )}
 
@@ -658,7 +674,7 @@ export default function ProductAiJobsPanel({
             </div>
         </SharedModal>
       )}
-    </div>
+    </>
   );
 }
 

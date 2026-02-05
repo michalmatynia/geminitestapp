@@ -15,27 +15,22 @@ import type {
   Edge,
   PathConfig,
   PathMeta,
-  PathDebugEntry,
-  PathDebugSnapshot,
-  RuntimeState,
 } from "@/shared/types/ai-paths";
 import {
-  evaluateGraphWithIteratorAutoContinue,
   normalizeNodes,
   sanitizeEdges,
   createDefaultPathConfig,
   safeParseJson,
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
-  PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
+  runsApi,
 } from "@/features/ai/ai-paths/lib";
 
 type TriggerEventEntityType = "product" | "note" | "custom";
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
-const AI_PATHS_ENTITY_STALE_MS = 10_000;
 
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
@@ -74,22 +69,6 @@ const safeJsonStringify = (value: unknown): string => {
   } catch {
     return "";
   }
-};
-
-const parseRuntimeState = (value: unknown): RuntimeState => {
-  if (!value) return { inputs: {}, outputs: {} };
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value) as RuntimeState;
-      return parsed && typeof parsed === "object" ? parsed : { inputs: {}, outputs: {} };
-    } catch {
-      return { inputs: {}, outputs: {} };
-    }
-  }
-  if (typeof value === "object") {
-    return value as RuntimeState;
-  }
-  return { inputs: {}, outputs: {} };
 };
 
 const loadPathConfigsFromSettings = async (
@@ -413,8 +392,6 @@ export function useAiPathTriggerEvent(): {
         }).length
       );
       const completed = new Set<string>();
-      let productJobsInvalidated = false;
-
       const reportProgress = (payload: {
         status: "running" | "success" | "error";
         progress: number;
@@ -435,8 +412,6 @@ export function useAiPathTriggerEvent(): {
         });
       };
 
-      reportProgress({ status: "running", progress: 0 });
-
       const entityJson = args.getEntityJson ? args.getEntityJson() : null;
 
       const triggerContext = buildTriggerContext({
@@ -453,80 +428,35 @@ export function useAiPathTriggerEvent(): {
       });
 
       const runAt = new Date().toISOString();
-      const seedState = parseRuntimeState(selectedConfig.runtimeState);
-      let runtimeState: RuntimeState;
-      try {
-        runtimeState = await evaluateGraphWithIteratorAutoContinue({
-          nodes,
-          edges,
-          activePathId: selectedConfig.id ?? "path",
-          activePathName: selectedConfig.name ?? undefined,
-          triggerNodeId: triggerNode.id,
-          triggerEvent: triggerEventId,
-          triggerContext,
-          deferPoll: false,
-          recordHistory: true,
-          historyLimit: 50,
-          seedHistory: seedState.history ?? undefined,
-          onNodeFinish: (payload: { node: AiNode }): void => {
-            const { node } = payload;
-            if (!node || node.type === "simulation") return;
-            if (!connected.has(node.id) && !alwaysActiveTypes.has(node.type)) return;
-            if (!completed.has(node.id)) {
-              completed.add(node.id);
-            }
-            if (
-              !productJobsInvalidated &&
-              args.entityType === "product" &&
-              node.type === "model"
-            ) {
-              productJobsInvalidated = true;
-              void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
-            }
-            reportProgress({ status: "running", progress: completed.size / totalNodes, node });
-          },
-          onNodeError: (payload: { node: AiNode; error: unknown }): void => {
-            const { node, error } = payload;
-            logger.error("AI Paths trigger node failed", error, { nodeId: node.id, nodeType: node.type });
-            reportProgress({ status: "error", progress: completed.size / totalNodes, node });
-          },
-          fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
-            if (!entityId) return null;
-            if (entityType === "product") {
-              return await queryClient.fetchQuery({
-                queryKey: ["products", entityId],
-                queryFn: async () => {
-                  const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`);
-                  if (!res.ok) return null;
-                  return (await res.json()) as Record<string, unknown>;
-                },
-                staleTime: AI_PATHS_ENTITY_STALE_MS,
-              });
-            }
-            if (entityType === "note") {
-              return await queryClient.fetchQuery({
-                queryKey: ["notes", entityId],
-                queryFn: async () => {
-                  const res = await fetch(`/api/notes/${encodeURIComponent(entityId)}`);
-                  if (!res.ok) return null;
-                  return (await res.json()) as Record<string, unknown>;
-                },
-                staleTime: AI_PATHS_ENTITY_STALE_MS,
-              });
-            }
-            return null;
-          },
-          reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
-            logger.error(summary ?? "AI Paths trigger failed", error, meta);
-          },
-          toast,
-        });
-      } catch (error) {
-        reportProgress({ status: "error", progress: completed.size / totalNodes });
-        throw error;
+      reportProgress({ status: "running", progress: 0 });
+
+      const enqueueResult = await runsApi.enqueue({
+        pathId: selectedConfig.id ?? "path",
+        pathName: selectedConfig.name ?? undefined,
+        nodes,
+        edges,
+        triggerEvent: triggerEventId,
+        triggerNodeId: triggerNode.id,
+        triggerContext,
+        entityId: args.entityId ?? null,
+        entityType: args.entityType,
+        meta: {
+          source: "trigger_button",
+          triggerEventId,
+          triggerLabel: args.triggerLabel ?? null,
+          ...(args.source ? { source: args.source } : {}),
+          ...(args.extras ?? {}),
+        },
+      });
+
+      if (!enqueueResult.ok) {
+        reportProgress({ status: "error", progress: 0 });
+        toast(enqueueResult.error || "Failed to enqueue AI Path run.", { variant: "error" });
+        return;
       }
 
       reportProgress({ status: "success", progress: 1 });
+      toast("AI Path run queued.", { variant: "success" });
 
       if (args.entityType === "product") {
         void queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -542,24 +472,9 @@ export function useAiPathTriggerEvent(): {
           ...selectedConfig,
           nodes,
           edges,
-          runtimeState,
           lastRunAt: runAt,
           updatedAt: runAt,
         };
-
-        const debugEntries: PathDebugEntry[] = nodes
-          .filter((node: AiNode) => node.type === "database")
-          .map((node: AiNode): PathDebugEntry | null => {
-            const output = runtimeState.outputs[node.id] as { debugPayload?: unknown } | undefined;
-            const debugPayload = output?.debugPayload;
-            if (debugPayload === undefined || debugPayload === null) return null;
-            return { nodeId: node.id, title: node.title, debug: debugPayload };
-          })
-          .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => Boolean(entry));
-
-        const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
-          ? { pathId: updatedConfig.id, runAt, entries: debugEntries }
-          : null;
 
         configs[updatedConfig.id] = updatedConfig;
         const orderedIds: string[] = pathOrder.length ? pathOrder : orderedConfigs.map((config: PathConfig) => config.id);
@@ -568,7 +483,6 @@ export function useAiPathTriggerEvent(): {
           const csrfHeaders = withCsrfHeaders({ "Content-Type": "application/json" });
           const configValue = safeJsonStringify(updatedConfig);
           const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
-          const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : "";
           const nextUiState = {
             ...(uiState && typeof uiState === "object" ? uiState : {}),
             activePathId: updatedConfig.id,
@@ -578,13 +492,6 @@ export function useAiPathTriggerEvent(): {
               method: "POST",
               headers: csrfHeaders,
               body: JSON.stringify({ key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`, value: configValue }),
-            });
-          }
-          if (debugValue) {
-            await fetch("/api/settings", {
-              method: "POST",
-              headers: csrfHeaders,
-              body: JSON.stringify({ key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`, value: debugValue }),
             });
           }
           if (orderedIds.length > 0) {
@@ -607,7 +514,7 @@ export function useAiPathTriggerEvent(): {
           logger.error("Failed to persist AI Paths settings snapshot", error);
         }
       } catch (error) {
-        logger.error("Failed to persist AI Paths runtime state", error);
+        logger.error("Failed to persist AI Paths run metadata", error);
       }
     } catch (error) {
       logger.error("Failed to run AI Path trigger", error);

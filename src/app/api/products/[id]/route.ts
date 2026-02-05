@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
+import { getProductRepository } from "@/features/products/services/product-repository";
 import { z } from "zod";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
@@ -121,16 +122,12 @@ async function PATCH_handler(
     }
     const data = parsed.data;
 
-    // Use productService to update specific fields
-    const updateData = new FormData();
-    if (data.price !== undefined) {
-      updateData.append("price", String(data.price));
-    }
-    if (data.stock !== undefined) {
-      updateData.append("stock", String(data.stock));
-    }
+    const updateData: { price?: number; stock?: number } = {};
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.stock !== undefined) updateData.stock = data.stock;
 
-    const product = await productService.updateProduct(id, updateData);
+    const productRepository = await getProductRepository();
+    const product = await productRepository.updateProduct(id, updateData);
     if (!product) {
       throw notFoundError("Product not found", { productId: id });
     }

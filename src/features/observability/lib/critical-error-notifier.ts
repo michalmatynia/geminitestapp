@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/typedef */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import "server-only";
 
 import { createHash } from "crypto";

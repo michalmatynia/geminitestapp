@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge, UnifiedSelect, SectionPanel } from "@/shared/ui";
+import { SettingsPageLayout } from "@/shared/components/SettingsPageLayout";
 import { useState, useEffect } from "react";
 import { useUpdateSetting } from "@/shared/hooks/useSettings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";

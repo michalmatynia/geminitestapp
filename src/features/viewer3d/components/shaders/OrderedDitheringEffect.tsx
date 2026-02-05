@@ -132,6 +132,7 @@ export const OrderedDitheringPass = forwardRef<
     [gridSize, luminanceMethod, invertColor, pixelSizeRatio, grayscaleOnly, blendFunction]
   );
 
+   
   // eslint-disable-next-line react/no-unknown-property
   return <primitive ref={ref} object={effect} />;
 });

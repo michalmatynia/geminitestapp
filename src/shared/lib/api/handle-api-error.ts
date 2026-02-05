@@ -31,7 +31,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     // Dynamically import to avoid circular dependency (shared -> features -> shared)
     // eslint-disable-next-line import/no-restricted-paths
     const { logSystemEvent: realLogSystemEvent } = await import("@/features/observability/server");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+     
     await realLogSystemEvent(params as any);
   } catch (error) {
     console.error('Failed to log system event via observability feature:', error);

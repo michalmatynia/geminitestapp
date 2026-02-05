@@ -118,6 +118,9 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+const arraysEqual = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((value: string, index: number) => value === b[index]);
+
 const STUDIO_UPLOAD_PREFIX = "/uploads/studio/";
 const SLOT_TREE_KEY_PREFIX = "image_studio_slot_tree_";
 const PARAM_UI_STATE_KEY_PREFIX = "image_studio_param_ui_state_";
@@ -884,7 +887,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!projectId || !treeKey) {
-      setVirtualFolders([]);
+      setVirtualFolders((prev: string[]) => (prev.length === 0 ? prev : []));
       return;
     }
     if (settingsStore.isLoading) return;
@@ -892,7 +895,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
     const storedFolders = parseSlotFoldersSetting(treeSettingsRaw);
     if (storedFolders.length > 0) {
-      setVirtualFolders(storedFolders);
+      setVirtualFolders((prev: string[]) => (arraysEqual(prev, storedFolders) ? prev : storedFolders));
       return;
     }
 
@@ -901,7 +904,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
         .map((slot: ImageStudioSlotRecord) => slot.folderPath || "")
         .filter(Boolean)
     );
-    setVirtualFolders(derived);
+    setVirtualFolders((prev: string[]) => (arraysEqual(prev, derived) ? prev : derived));
     if (derived.length > 0) {
       updateSetting
         .mutateAsync({

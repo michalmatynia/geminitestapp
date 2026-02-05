@@ -81,6 +81,7 @@ export const DitheringPass = forwardRef<DitheringEffectImpl, DitheringPassProps>
       [intensity, blendFunction]
     );
 
+     
     // eslint-disable-next-line react/no-unknown-property
     return <primitive ref={ref} object={effect} />;
   }

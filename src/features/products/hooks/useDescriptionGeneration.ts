@@ -1,7 +1,7 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/typedef */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+ 
+ 
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

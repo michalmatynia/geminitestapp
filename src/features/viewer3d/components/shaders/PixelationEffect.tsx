@@ -54,6 +54,7 @@ export const PixelationPass = forwardRef<PixelationEffectImpl, PixelationPassPro
       [pixelSize, blendFunction]
     );
 
+     
     // eslint-disable-next-line react/no-unknown-property
     return <primitive ref={ref} object={effect} />;
   }

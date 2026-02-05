@@ -208,6 +208,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  [data-admin-menu] a,
+  [data-admin-menu] button {
+    cursor: pointer;
+  }
   h1,
   h2,
   h3,

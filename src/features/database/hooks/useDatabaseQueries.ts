@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/typedef */
+ 
 "use client";
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";

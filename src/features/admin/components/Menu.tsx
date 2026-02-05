@@ -319,9 +319,14 @@ const collectGroupIds = (items: NavItem[]): Set<string> => {
   return ids;
 };
 
-const collectActiveGroupIds = (items: NavItem[], pathname: string): Set<string> => {
+ 
+const collectActiveGroupIds = (
+  items: NavItem[],
+  pathname: string,
+  favoriteIds: Set<string>
+): Set<string> => {
   const active = new Set<string>();
-  const walk = (node: NavItem): boolean => {
+  const walk = (node: NavItem): { any: boolean; nonFavorite: boolean } => {
     const selfActiveRaw = node.href ? isActiveHref(pathname, node.href, node.exact) : false;
     // Special-case: don't auto-open "section folders" that point to /admin itself.
     // Users expect clicking "Admin" (home) to not expand Workspace unless they explicitly open it.
@@ -333,13 +338,20 @@ const collectActiveGroupIds = (items: NavItem[], pathname: string): Set<string> 
         stripQuery(node.href) === "/admin" &&
         pathname === "/admin"
       );
-    const childActive = (node.children ?? []).some(walk);
+    const childResults: Array<{ any: boolean; nonFavorite: boolean }> = (node.children ?? []).map(walk);
+    const childActive = childResults.some((result) => result.any);
+    const childNonFavorite = childResults.some((result) => result.nonFavorite);
+    const isFavoriteLeaf = !node.children?.length && favoriteIds.has(node.id);
+    const nonFavoriteActive = (selfActive && !isFavoriteLeaf) || childNonFavorite;
     if ((selfActive || childActive) && node.children && node.children.length > 0) {
-      active.add(node.id);
+      const shouldOpen = node.id === "favorites" ? true : nonFavoriteActive;
+      if (shouldOpen) {
+        active.add(node.id);
+      }
     }
-    return selfActive || childActive;
+    return { any: selfActive || childActive, nonFavorite: nonFavoriteActive };
   };
-  items.forEach(walk);
+  items.forEach((item: NavItem) => walk(item));
   return active;
 };
 
@@ -366,7 +378,6 @@ function NavTree({
   pathname,
   isCollapsed,
   openIds,
-  forcedOpenIds,
   onToggleOpen,
 }: {
   items: NavItem[];
@@ -374,7 +385,6 @@ function NavTree({
   pathname: string;
   isCollapsed: boolean;
   openIds: Set<string>;
-  forcedOpenIds: Set<string>;
   onToggleOpen: (id: string) => void;
 }): React.ReactNode {
   return (
@@ -383,7 +393,7 @@ function NavTree({
         const hasChildren = !!item.children?.length;
         // Only highlight leaf links (not folders). Folders get their "current" indicator via being open.
         const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
-        const isOpen = !isCollapsed && hasChildren && (forcedOpenIds.has(item.id) || openIds.has(item.id));
+        const isOpen = !isCollapsed && hasChildren && openIds.has(item.id);
         const contextItems = buildNavContextItems(item, isOpen, hasChildren, onToggleOpen);
         const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
 
@@ -406,7 +416,7 @@ function NavTree({
               <Tooltip content={item.label} side="right">
                 <div>
                   {item.href ? (
-                    <TreeContextMenu items={contextItems}>
+                    <TreeContextMenu items={contextItems} className="cursor-pointer">
                       <Link
                         href={item.href}
                         prefetch={false}
@@ -427,7 +437,7 @@ function NavTree({
                       </Link>
                     </TreeContextMenu>
                   ) : (
-                    <TreeContextMenu items={contextItems}>
+                    <TreeContextMenu items={contextItems} className="cursor-pointer">
                       <button
                         type="button"
                         onClick={(): void => {
@@ -455,7 +465,7 @@ function NavTree({
             ) : (
               <>
                 {hasChildren ? (
-                  <TreeContextMenu items={contextItems}>
+                  <TreeContextMenu items={contextItems} className="cursor-pointer">
                     <button
                       type="button"
                       onClick={(): void => {
@@ -499,7 +509,7 @@ function NavTree({
                     </button>
                   </TreeContextMenu>
                 ) : item.href ? (
-                  <TreeContextMenu items={contextItems}>
+                  <TreeContextMenu items={contextItems} className="cursor-pointer">
                     <Link
                       href={item.href}
                       prefetch={false}
@@ -527,7 +537,7 @@ function NavTree({
                     </Link>
                   </TreeContextMenu>
                 ) : (
-                  <TreeContextMenu items={contextItems}>
+                  <TreeContextMenu items={contextItems} className="cursor-pointer">
                     <button
                       type="button"
                       onClick={(): void => {
@@ -565,7 +575,6 @@ function NavTree({
                       pathname={pathname}
                       isCollapsed={isCollapsed}
                       openIds={openIds}
-                      forcedOpenIds={forcedOpenIds}
                       onToggleOpen={onToggleOpen}
                     />
                   </div>
@@ -585,7 +594,7 @@ export const buildAdminNav = (handlers: {
 }): NavItem[] => ([
   {
     id: "home",
-    label: "Admin",
+    label: "Home",
     href: "/admin",
     icon: <HomeIcon className="size-4" />,
     keywords: ["dashboard", "home"],
@@ -870,41 +879,33 @@ export default function Menu(): React.ReactNode {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  const [userOpenIds, setUserOpenIds] = useState<Set<string>>(new Set());
+
+      const [userOpenIds, setUserOpenIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(OPEN_KEY);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.filter((id: unknown): id is string => typeof id === "string"));
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
   const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(OPEN_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUserOpenIds(new Set(parsed.filter((id: unknown): id is string => typeof id === "string")));
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(userOpenIds)));
     } catch {
       // ignore
     }
-  }, [mounted, userOpenIds]);
+  }, [userOpenIds]);
 
   const handleOpenChat = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     if (typeof window === "undefined") return;
@@ -922,7 +923,7 @@ export default function Menu(): React.ReactNode {
           const data = (await listRes.json()) as {
             sessions?: Array<{ id: string }>;
           };
-          const latestId = data.sessions?.[0]?.id;
+          const latestId: string | undefined = data.sessions?.[0]?.id;
           if (latestId) {
             window.localStorage.setItem("chatbotSessionId", latestId);
             router.push(`/admin/chatbot?session=${latestId}`);
@@ -967,6 +968,7 @@ export default function Menu(): React.ReactNode {
       ),
     [preferences]
   );
+  const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const sectionColors = useMemo(
     () => preferences?.adminMenuSectionColors ?? {},
     [preferences?.adminMenuSectionColors]
@@ -1029,8 +1031,11 @@ export default function Menu(): React.ReactNode {
   const normalizedQuery = normalizeText(deferredQuery);
   const filteredNav = useMemo(() => filterTree(navWithFavorites, normalizedQuery), [navWithFavorites, normalizedQuery]);
   const autoOpenIds = useMemo(
-    () => (normalizedQuery ? collectGroupIds(filteredNav) : collectActiveGroupIds(navWithFavorites, pathname)),
-    [filteredNav, navWithFavorites, normalizedQuery, pathname]
+    () =>
+      normalizedQuery
+        ? collectGroupIds(filteredNav)
+        : collectActiveGroupIds(navWithFavorites, pathname, favoriteIdSet),
+    [favoriteIdSet, filteredNav, navWithFavorites, normalizedQuery, pathname]
   );
   const allGroupIds = useMemo(() => collectGroupIds(navWithFavorites), [navWithFavorites]);
 
@@ -1061,11 +1066,6 @@ export default function Menu(): React.ReactNode {
     return open;
   }, [autoOpenIds, closedAutoIds, normalizedQuery, userOpenIds]);
 
-  const forcedOpenIds = useMemo(() => {
-    const forced = new Set<string>();
-    if (favoriteItems.length > 0) forced.add("favorites");
-    return forced;
-  }, [favoriteItems.length]);
   const isAnyFolderOpen = effectiveOpenIds.size > 0;
 
   const handleToggleAllFolders = useCallback((): void => {
@@ -1084,12 +1084,13 @@ export default function Menu(): React.ReactNode {
     setUserOpenIds(new Set<string>(allGroupIds));
   }, [allGroupIds, autoOpenIds, isAnyFolderOpen, normalizedQuery]);
 
-  if (!mounted) {
-    return <nav className="flex flex-col space-y-2" aria-hidden="true"></nav>;
-  }
+
 
   return (
-    <nav className={cn("flex flex-col gap-3", isMenuCollapsed ? "items-stretch" : "")}>
+    <nav
+      data-admin-menu
+      className={cn("flex flex-col gap-3", isMenuCollapsed ? "items-stretch" : "")}
+    >
       {!isMenuCollapsed ? (
         <TreeHeader
           title="Navigation"
@@ -1143,9 +1144,8 @@ export default function Menu(): React.ReactNode {
         pathname={pathname}
         isCollapsed={isMenuCollapsed}
         openIds={effectiveOpenIds}
-        forcedOpenIds={forcedOpenIds}
-	        onToggleOpen={(id: string): void => {
-	          if (normalizedQuery) return;
+        onToggleOpen={(id: string): void => {
+          if (normalizedQuery) return;
 	          const isOpen = effectiveOpenIds.has(id);
 
 	          if (isOpen) {

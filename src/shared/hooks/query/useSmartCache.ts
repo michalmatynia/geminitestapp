@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 "use client";
 
 import { useQuery, useQueryClient, type Query } from "@tanstack/react-query";

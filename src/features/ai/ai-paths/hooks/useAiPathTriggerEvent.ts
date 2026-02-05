@@ -7,6 +7,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from "@/shared/api/settings-client";
+import { jobKeys } from "@/features/jobs/hooks/useJobQueries";
 
 import type {
   AiNode,
@@ -439,6 +440,7 @@ export function useAiPathTriggerEvent(): {
         }).length
       );
       const completed = new Set<string>();
+      let productJobsInvalidated = false;
 
       const reportProgress = (payload: {
         status: "running" | "success" | "error";
@@ -500,6 +502,14 @@ export function useAiPathTriggerEvent(): {
             if (!completed.has(node.id)) {
               completed.add(node.id);
             }
+            if (
+              !productJobsInvalidated &&
+              args.entityType === "product" &&
+              node.type === "model"
+            ) {
+              productJobsInvalidated = true;
+              void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
+            }
             reportProgress({ status: "running", progress: completed.size / totalNodes, node });
           },
           onNodeError: (payload: { node: AiNode; error: unknown }): void => {
@@ -548,6 +558,7 @@ export function useAiPathTriggerEvent(): {
       if (args.entityType === "product") {
         void queryClient.invalidateQueries({ queryKey: ["products"] });
         void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
       }
       if (args.entityType === "note") {
         void queryClient.invalidateQueries({ queryKey: ["notes"] });

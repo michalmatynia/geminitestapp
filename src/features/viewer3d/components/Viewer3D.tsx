@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 "use client";
 
 import { Canvas, useFrame, useThree, type RootState } from "@react-three/fiber";
@@ -197,7 +198,7 @@ function Model3D({
     );
   }
 
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <primitive
       ref={modelRef}
@@ -208,15 +209,14 @@ function Model3D({
       scale={scale}
     />
   );
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Ground plane with realistic shadows
 function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | null {
   if (!visible) return null;
 
-  /* eslint-disable react/no-unknown-property */
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
@@ -230,8 +230,7 @@ function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | 
       />
     </mesh>
   );
-  /* eslint-enable react/no-unknown-property */
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Scene lighting setup
@@ -270,8 +269,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
 
   const config = lightConfigs[preset] || lightConfigs.studio;
 
-  /* eslint-disable react/no-unknown-property */
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <>
       <ambientLight intensity={config.ambient * intensity} />
@@ -297,8 +295,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
       />
     </>
   );
-  /* eslint-enable react/no-unknown-property */
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Camera auto-framing
@@ -527,9 +524,9 @@ export function Viewer3D({
         dpr={[1, 2]} // Responsive pixel ratio
       >
         {captureRef ? <ScreenshotCapture captureRef={captureRef} /> : null}
-        {/* eslint-disable react/no-unknown-property */}
+        {}
         <color attach="background" args={[backgroundColor]} />
-        {/* eslint-enable react/no-unknown-property */}
+        {}
 
         {/* Lighting */}
         <SceneLighting preset={lighting} intensity={lightIntensity} />

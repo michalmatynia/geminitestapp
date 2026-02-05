@@ -721,14 +721,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const pageContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     contextPreviewNonce;
     return buildPageContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
 
   const elementContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     contextPreviewNonce;
     return buildElementContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);

@@ -9,7 +9,7 @@ type EditableCellProps = {
   value: number | null;
   productId: string;
   field: "price" | "stock";
-  onUpdate: () => void;
+  onUpdate: (nextValue: number) => void;
 };
 
 export const EditableCell = memo(function EditableCell({
@@ -69,7 +69,7 @@ export const EditableCell = memo(function EditableCell({
 
       toast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, { variant: "success" });
       setIsEditing(false);
-      onUpdate();
+      onUpdate(numValue);
     } catch (error) {
       logClientError(error, { context: { source: "EditableCell", action: "save", field, productId } });
       toast(error instanceof Error ? error.message : `Failed to update ${field}`, { variant: "error" });

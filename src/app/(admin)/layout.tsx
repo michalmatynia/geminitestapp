@@ -1,6 +1,6 @@
 import { JSX } from "react";
 import { redirect } from "next/navigation";
-import { AdminLayout } from "@/features/admin";
+import { AdminLayout } from "@/features/admin/layout/AdminLayout";
 import { auth } from "@/features/auth/server";
 import { getUserPreferences } from "@/features/auth/server";
 

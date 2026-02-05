@@ -483,10 +483,25 @@ export const getProductColumns = (
             value={product.price}
             productId={product.id}
             field="price"
-            onUpdate={(): void => {
+            onUpdate={(nextValue: number): void => {
               if (meta?.queryClient) {
-                void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
-                void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
+                meta.queryClient.setQueriesData(
+                  { queryKey: ["products"] },
+                  (old: ProductWithImages[] | undefined) => {
+                    if (!Array.isArray(old)) return old;
+                    let changed = false;
+                    const next = old.map((item: ProductWithImages) => {
+                      if (item.id !== product.id) return item;
+                      changed = true;
+                      return { ...item, price: nextValue };
+                    });
+                    return changed ? next : old;
+                  }
+                );
+                meta.queryClient.setQueriesData(
+                  { queryKey: ["products", product.id] },
+                  (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
+                );
               }
               setRefreshTrigger((prev: number): number => prev + 1);
             }}
@@ -531,10 +546,25 @@ export const getProductColumns = (
           value={product.stock}
           productId={product.id}
           field="stock"
-          onUpdate={(): void => {
+          onUpdate={(nextValue: number): void => {
             if (meta?.queryClient) {
-              void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
-              void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
+              meta.queryClient.setQueriesData(
+                { queryKey: ["products"] },
+                (old: ProductWithImages[] | undefined) => {
+                  if (!Array.isArray(old)) return old;
+                  let changed = false;
+                  const next = old.map((item: ProductWithImages) => {
+                    if (item.id !== product.id) return item;
+                    changed = true;
+                    return { ...item, stock: nextValue };
+                  });
+                  return changed ? next : old;
+                }
+              );
+              meta.queryClient.setQueriesData(
+                { queryKey: ["products", product.id] },
+                (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
+              );
             }
             setRefreshTrigger((prev: number): number => prev + 1);
           }}

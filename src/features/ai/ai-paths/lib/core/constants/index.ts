@@ -415,7 +415,7 @@ export const TRIGGER_EVENTS = [
 ];
 
 export const PORT_COMPATIBILITY: Record<string, string[]> = {
-  entityJson: ["entityJson", "context", "value", "result"],
+  entityJson: ["entityJson", "context", "value", "result", "bundle"],
   productId: ["productId", "entityId", "value", "result"],
   entityId: ["entityId", "productId", "value", "result"],
   entityType: ["entityType", "value", "result"],
@@ -427,7 +427,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   images: ["images", "value", "result"],
   title: ["title", "value", "result", "prompt", "aiPrompt"],
   content_en: ["content_en", "value", "result", "description_en", "prompt", "aiPrompt"],
-  context: ["context", "entityJson", "value", "result"],
+  context: ["context", "entityJson", "value", "result", "bundle"],
   simulation: ["context", "simulation"],
   meta: ["meta", "value", "result"],
   bundle: ["bundle", "context", "value", "result", "callback"],

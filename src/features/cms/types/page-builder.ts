@@ -138,4 +138,5 @@ export type PageBuilderAction =
   | { type: "ADD_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string }
   | { type: "REMOVE_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string; frameId: string }
   | { type: "ADD_ELEMENT_TO_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string; frameId: string; elementType: string }
-  | { type: "MOVE_BLOCK_TO_SLIDESHOW_FRAME"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toFrameId: string; toIndex: number };
+  | { type: "MOVE_BLOCK_TO_SLIDESHOW_FRAME"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toFrameId: string; toIndex: number }
+  | { type: "MOVE_SECTION_TO_SLIDESHOW_FRAME"; sectionId: string; toSectionId: string; toFrameId: string; toIndex: number };

@@ -5,6 +5,7 @@ import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow }
 import { Button, PanelHeader } from "@/shared/ui";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { PageBuilderProvider, usePageBuilder } from "../../hooks/usePageBuilderContext";
+import { DragStateProvider } from "../../hooks/useDragStateContext";
 import { useBuilderKeyboardShortcuts } from "../../hooks/useBuilderKeyboardShortcuts";
 import { ComponentTreePanel } from "./ComponentTreePanel";
 import { PagePreviewPanel } from "./PagePreviewPanel";
@@ -226,9 +227,11 @@ function PageBuilderInner(): React.ReactNode {
 export function PageBuilderLayout(): React.ReactNode {
   return (
     <PageBuilderProvider>
-      <ThemeSettingsProvider>
-        <PageBuilderInner />
-      </ThemeSettingsProvider>
+      <DragStateProvider>
+        <ThemeSettingsProvider>
+          <PageBuilderInner />
+        </ThemeSettingsProvider>
+      </DragStateProvider>
     </PageBuilderProvider>
   );
 }

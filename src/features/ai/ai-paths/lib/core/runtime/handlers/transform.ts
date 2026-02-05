@@ -181,7 +181,9 @@ export const handleMapper: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
     const mapping = mapperConfig.mappings?.[output]?.trim() ?? "";
     const value = mapping
       ? getValueAtMappingPath(contextValue, mapping)
-      : getValueAtMappingPath(contextValue, output);
+      : output === "value"
+        ? contextValue
+        : getValueAtMappingPath(contextValue, output);
     if (value !== undefined) {
       mapped[output] = value;
     }

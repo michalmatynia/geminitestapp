@@ -5,6 +5,8 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 import type { SectionInstance } from "../../types/page-builder";
 import type { PageZone } from "../../types/page-builder";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
+import { useDragState } from "../../hooks/useDragStateContext";
+import { useAutoExpand } from "../../hooks/useAutoExpand";
 import { SectionNodeItem } from "./ComponentTreeNodeItem";
 import { SectionPicker } from "./SectionPicker";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
@@ -34,12 +36,12 @@ export function ComponentTreePanel(): React.ReactNode {
   // Show section drop placeholder by default (true unless explicitly set to "false")
   const showSectionDropPlaceholder = sectionDropPlaceholderValue !== "false";
 
-  // Drag-and-drop state for blocks
-  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
-  const [draggedBlockType, setDraggedBlockType] = useState<string | null>(null);
-  const [draggedFromSectionId, setDraggedFromSectionId] = useState<string | null>(null);
-  const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
-  const [draggedFromParentBlockId, setDraggedFromParentBlockId] = useState<string | null>(null);
+  // Drag-and-drop state from context (ComponentTreePanel is the root,
+  // but drag starts are handled in child components via their own useDragState)
+  useDragState(); // Just ensure the context is available
+
+  // Auto-expand utilities
+  const { autoExpand, toggleExpand } = useAutoExpand(setExpandedIds);
 
   const handleSelectNode = useCallback(
     (nodeId: string) => {
@@ -59,13 +61,9 @@ export function ComponentTreePanel(): React.ReactNode {
     (sectionId: string, blockType: string) => {
       dispatch({ type: "ADD_BLOCK", sectionId, blockType });
       // Auto-expand the section when a block is added
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        return next;
-      });
+      autoExpand(sectionId);
     },
-    [dispatch]
+    [dispatch, autoExpand]
   );
 
   const handleDropBlock = useCallback(
@@ -175,6 +173,25 @@ export function ComponentTreePanel(): React.ReactNode {
         fromSectionId,
         ...(fromColumnId && { fromColumnId }),
         ...(fromParentBlockId && { fromParentBlockId }),
+        toSectionId,
+        toFrameId,
+        toIndex,
+      });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
+        next.add(toFrameId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
+  const handleDropSectionToSlideshowFrame = useCallback(
+    (sectionId: string, toSectionId: string, toFrameId: string, toIndex: number) => {
+      dispatch({
+        type: "MOVE_SECTION_TO_SLIDESHOW_FRAME",
+        sectionId,
         toSectionId,
         toFrameId,
         toIndex,
@@ -354,17 +371,8 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
-  const handleToggleExpand = useCallback((nodeId: string) => {
-    setExpandedIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
-      } else {
-        next.add(nodeId);
-      }
-      return next;
-    });
-  }, []);
+  // Using toggleExpand from useAutoExpand hook
+  const handleToggleExpand = toggleExpand;
 
   const handleToggleZone = useCallback((zone: PageZone) => {
     setCollapsedZones((prev: Set<PageZone>) => {
@@ -398,13 +406,6 @@ export function ComponentTreePanel(): React.ReactNode {
     },
     [dispatch]
   );
-
-
-  // Section drag-and-drop state
-  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
-  const [draggedSectionType, setDraggedSectionType] = useState<string | null>(null);
-  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
-  const [draggedSectionZone, setDraggedSectionZone] = useState<PageZone | null>(null);
 
   const handleDropSectionInZone = useCallback(
     (droppedSectionId: string, zone: PageZone, toIndex: number) => {
@@ -472,6 +473,7 @@ export function ComponentTreePanel(): React.ReactNode {
               onAddBlockToColumn={handleAddBlockToColumn}
               onDropBlockToColumn={handleDropBlockToColumn}
               onDropBlockToSlideshowFrame={handleDropBlockToSlideshowFrame}
+              onDropSectionToSlideshowFrame={handleDropSectionToSlideshowFrame}
               onAddGridRow={handleAddGridRow}
               onRemoveGridRow={handleRemoveGridRow}
               onAddColumnToRow={handleAddColumnToRow}
@@ -484,25 +486,7 @@ export function ComponentTreePanel(): React.ReactNode {
               onRemoveSection={handleRemoveSection}
               expandedIds={expandedIds}
               onToggleExpand={handleToggleExpand}
-              draggedBlockId={draggedBlockId}
-              setDraggedBlockId={setDraggedBlockId}
-              draggedBlockType={draggedBlockType}
-              setDraggedBlockType={setDraggedBlockType}
               onDropBlockToRow={handleDropBlockToRow}
-              draggedFromSectionId={draggedFromSectionId}
-              setDraggedFromSectionId={setDraggedFromSectionId}
-              draggedFromColumnId={draggedFromColumnId}
-              setDraggedFromColumnId={setDraggedFromColumnId}
-              draggedFromParentBlockId={draggedFromParentBlockId}
-              setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-              draggedSectionId={draggedSectionId}
-              setDraggedSectionId={setDraggedSectionId}
-              draggedSectionType={draggedSectionType}
-              setDraggedSectionType={setDraggedSectionType}
-              draggedSectionIndex={draggedSectionIndex}
-              setDraggedSectionIndex={setDraggedSectionIndex}
-              draggedSectionZone={draggedSectionZone}
-              setDraggedSectionZone={setDraggedSectionZone}
               onDropSectionToColumn={handleDropSectionToColumn}
               onConvertSectionToBlock={handleConvertSectionToBlock}
               onPromoteBlockToSection={handlePromoteBlockToSection}
@@ -538,6 +522,7 @@ interface ZoneGroupProps {
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onDropBlockToSlideshowFrame: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => void;
+  onDropSectionToSlideshowFrame: (sectionId: string, toSectionId: string, toFrameId: string, toIndex: number) => void;
   onAddGridRow: (sectionId: string) => void;
   onRemoveGridRow: (sectionId: string, rowId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
@@ -550,25 +535,7 @@ interface ZoneGroupProps {
   onRemoveSection: (sectionId: string) => void;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
-  draggedBlockId: string | null;
-  setDraggedBlockId: (id: string | null) => void;
-  draggedBlockType: string | null;
-  setDraggedBlockType: (type: string | null) => void;
   onDropBlockToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
-  draggedFromSectionId: string | null;
-  setDraggedFromSectionId: (id: string | null) => void;
-  draggedFromColumnId: string | null;
-  setDraggedFromColumnId: (id: string | null) => void;
-  draggedFromParentBlockId: string | null;
-  setDraggedFromParentBlockId: (id: string | null) => void;
-  draggedSectionId: string | null;
-  setDraggedSectionId: (id: string | null) => void;
-  draggedSectionType: string | null;
-  setDraggedSectionType: (type: string | null) => void;
-  draggedSectionIndex: number | null;
-  setDraggedSectionIndex: (index: number | null) => void;
-  draggedSectionZone: PageZone | null;
-  setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
   onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
   onPromoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
@@ -594,6 +561,7 @@ function ZoneGroup({
   onAddBlockToColumn,
   onDropBlockToColumn,
   onDropBlockToSlideshowFrame,
+  onDropSectionToSlideshowFrame,
   onAddGridRow,
   onRemoveGridRow,
   onAddColumnToRow,
@@ -606,25 +574,7 @@ function ZoneGroup({
   onRemoveSection,
   expandedIds,
   onToggleExpand,
-  draggedBlockId,
-  setDraggedBlockId,
-  draggedBlockType,
-  setDraggedBlockType,
   onDropBlockToRow,
-  draggedFromSectionId,
-  setDraggedFromSectionId,
-  draggedFromColumnId,
-  setDraggedFromColumnId,
-  draggedFromParentBlockId,
-  setDraggedFromParentBlockId,
-  draggedSectionId,
-  setDraggedSectionId,
-  draggedSectionType,
-  setDraggedSectionType,
-  draggedSectionIndex,
-  setDraggedSectionIndex,
-  draggedSectionZone,
-  setDraggedSectionZone,
   onDropSectionToColumn,
   onConvertSectionToBlock,
   onPromoteBlockToSection,
@@ -633,6 +583,8 @@ function ZoneGroup({
   onRemoveBlock,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
+  const { state: dragState, endSectionDrag } = useDragState();
+  const draggedSectionId = dragState.section.id;
 
   return (
     <div className="border-b border-border/50">
@@ -675,7 +627,7 @@ function ZoneGroup({
                 setIsZoneDragOver(false);
                 if (!draggedSectionId) return;
                 onDropSectionInZone(draggedSectionId, zone, 0);
-                setDraggedSectionId(null);
+                endSectionDrag();
               }}
               className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
                 isZoneDragOver
@@ -692,21 +644,7 @@ function ZoneGroup({
                   <SectionDropTarget
                     zone={zone}
                     toIndex={index}
-                    draggedSectionId={draggedSectionId}
-                    draggedSectionZone={draggedSectionZone}
-                    draggedSectionIndex={draggedSectionIndex}
-                    setDraggedSectionId={setDraggedSectionId}
                     onDropSectionInZone={onDropSectionInZone}
-                    draggedBlockId={draggedBlockId}
-                    draggedBlockType={draggedBlockType}
-                    draggedFromSectionId={draggedFromSectionId}
-                    draggedFromColumnId={draggedFromColumnId}
-                    draggedFromParentBlockId={draggedFromParentBlockId}
-                    setDraggedBlockId={setDraggedBlockId}
-                    setDraggedBlockType={setDraggedBlockType}
-                    setDraggedFromSectionId={setDraggedFromSectionId}
-                    setDraggedFromColumnId={setDraggedFromColumnId}
-                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                     onPromoteBlockToSection={onPromoteBlockToSection}
                     showExtractPlaceholder={showExtractPlaceholder}
                     showSectionDropPlaceholder={showSectionDropPlaceholder}
@@ -732,27 +670,10 @@ function ZoneGroup({
                     onRemoveSection={onRemoveSection}
                     expandedIds={expandedIds}
                     onToggleExpand={onToggleExpand}
-                    draggedBlockId={draggedBlockId}
-                    setDraggedBlockId={setDraggedBlockId}
-                    draggedBlockType={draggedBlockType}
-                    setDraggedBlockType={setDraggedBlockType}
                     onDropBlockToRow={onDropBlockToRow}
-                    draggedFromSectionId={draggedFromSectionId}
-                    setDraggedFromSectionId={setDraggedFromSectionId}
-                    draggedFromColumnId={draggedFromColumnId}
-                    setDraggedFromColumnId={setDraggedFromColumnId}
-                    draggedFromParentBlockId={draggedFromParentBlockId}
-                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                    draggedSectionId={draggedSectionId}
-                    setDraggedSectionId={setDraggedSectionId}
-                    draggedSectionType={draggedSectionType}
-                    setDraggedSectionType={setDraggedSectionType}
-                    draggedSectionIndex={draggedSectionIndex}
-                    setDraggedSectionIndex={setDraggedSectionIndex}
-                    draggedSectionZone={draggedSectionZone}
-                    setDraggedSectionZone={setDraggedSectionZone}
                     onDropSectionToColumn={onDropSectionToColumn}
                     onDropBlockToSlideshowFrame={onDropBlockToSlideshowFrame}
+                    onDropSectionToSlideshowFrame={onDropSectionToSlideshowFrame}
                     onConvertSectionToBlock={onConvertSectionToBlock}
                     onRemoveBlock={onRemoveBlock}
                   />
@@ -761,21 +682,7 @@ function ZoneGroup({
               <SectionDropTarget
                 zone={zone}
                 toIndex={zoneSections.length}
-                draggedSectionId={draggedSectionId}
-                draggedSectionZone={draggedSectionZone}
-                draggedSectionIndex={draggedSectionIndex}
-                setDraggedSectionId={setDraggedSectionId}
                 onDropSectionInZone={onDropSectionInZone}
-                draggedBlockId={draggedBlockId}
-                draggedBlockType={draggedBlockType}
-                draggedFromSectionId={draggedFromSectionId}
-                draggedFromColumnId={draggedFromColumnId}
-                draggedFromParentBlockId={draggedFromParentBlockId}
-                setDraggedBlockId={setDraggedBlockId}
-                setDraggedBlockType={setDraggedBlockType}
-                setDraggedFromSectionId={setDraggedFromSectionId}
-                setDraggedFromColumnId={setDraggedFromColumnId}
-                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                 onPromoteBlockToSection={onPromoteBlockToSection}
                 showExtractPlaceholder={showExtractPlaceholder}
                 showSectionDropPlaceholder={showSectionDropPlaceholder}
@@ -816,22 +723,7 @@ const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "ButtonElement", 
 interface SectionDropTargetProps {
   zone: PageZone;
   toIndex: number;
-  draggedSectionId: string | null;
-  draggedSectionZone: PageZone | null;
-  draggedSectionIndex: number | null;
-  setDraggedSectionId: (id: string | null) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
-  // Block drag state
-  draggedBlockId: string | null;
-  draggedBlockType: string | null;
-  draggedFromSectionId: string | null;
-  draggedFromColumnId: string | null;
-  draggedFromParentBlockId: string | null;
-  setDraggedBlockId: (id: string | null) => void;
-  setDraggedBlockType: (type: string | null) => void;
-  setDraggedFromSectionId: (id: string | null) => void;
-  setDraggedFromColumnId: (id: string | null) => void;
-  setDraggedFromParentBlockId: (id: string | null) => void;
   onPromoteBlockToSection: (
     blockId: string,
     fromSectionId: string,
@@ -847,26 +739,23 @@ interface SectionDropTargetProps {
 function SectionDropTarget({
   zone,
   toIndex,
-  draggedSectionId,
-  draggedSectionZone,
-  draggedSectionIndex,
-  setDraggedSectionId,
   onDropSectionInZone,
-  draggedBlockId,
-  draggedBlockType,
-  draggedFromSectionId,
-  draggedFromColumnId,
-  draggedFromParentBlockId,
-  setDraggedBlockId,
-  setDraggedBlockType,
-  setDraggedFromSectionId,
-  setDraggedFromColumnId,
-  setDraggedFromParentBlockId,
   onPromoteBlockToSection,
   showExtractPlaceholder,
   showSectionDropPlaceholder,
 }: SectionDropTargetProps): React.ReactNode {
   const [isOver, setIsOver] = useState(false);
+  const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
+
+  const draggedBlockId = dragState.block.id;
+  const draggedBlockType = dragState.block.type;
+  const draggedFromSectionId = dragState.block.fromSectionId;
+  const draggedFromColumnId = dragState.block.fromColumnId;
+  const draggedFromParentBlockId = dragState.block.fromParentBlockId;
+  const draggedSectionId = dragState.section.id;
+  const draggedSectionZone = dragState.section.zone;
+  const draggedSectionIndex = dragState.section.index;
+
   const isDraggingBlock = Boolean(draggedBlockId);
   // Only show section drop placeholder if the setting is enabled
   const isDraggingSection = showSectionDropPlaceholder && Boolean(draggedSectionId);
@@ -930,7 +819,7 @@ function SectionDropTarget({
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
           onDropSectionInZone(dragSectionId, zone, toIndex);
-          setDraggedSectionId(null);
+          endSectionDrag();
           return;
         }
 
@@ -944,11 +833,7 @@ function SectionDropTarget({
             zone,
             toIndex
           );
-          setDraggedBlockId(null);
-          setDraggedBlockType(null);
-          setDraggedFromSectionId(null);
-          setDraggedFromColumnId(null);
-          setDraggedFromParentBlockId(null);
+          endBlockDrag();
         }
       }}
       className={`relative z-10 overflow-hidden transition-[height] ${

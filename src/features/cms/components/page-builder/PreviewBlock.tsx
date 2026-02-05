@@ -4345,8 +4345,10 @@ function renderBackgroundImageLayer(
   const imageStyles: React.CSSProperties = {
     ...presentation.imageStyles,
     display: "block",
-    height: "100%",
   };
+  // Remove height/width when using fill - Next.js Image handles these automatically
+  delete (imageStyles as { height?: string | number }).height;
+  delete (imageStyles as { width?: string | number }).width;
 
   return (
     <div className="absolute inset-0 z-0" style={wrapperStyles}>

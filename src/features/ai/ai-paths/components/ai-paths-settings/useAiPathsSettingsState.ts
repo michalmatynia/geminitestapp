@@ -242,6 +242,7 @@ export interface UseAiPathsSettingsStateReturn {
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   configOpen: boolean;
+  nodeConfigDirty: boolean;
   setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
   modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
@@ -1762,6 +1763,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     viewportRef,
     canvasRef,
     configOpen,
+    nodeConfigDirty,
     setNodeConfigDirty,
     modelOptions,
     parserSamples,

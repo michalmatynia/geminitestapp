@@ -46,6 +46,7 @@ export function AiPathsSettingsView({
     autoSaveLabel,
     autoSaveClasses,
     saving,
+    nodeConfigDirty,
     handleCreatePath,
     handleSave,
     handleReset,
@@ -275,7 +276,16 @@ export function AiPathsSettingsView({
                     </Button>
                     <Button
                       className="rounded-md border text-sm text-white hover:bg-muted/60"
-                      onClick={() => { void handleSave(); }}
+                      onClick={() => {
+                        if (nodeConfigDirty) {
+                          toast(
+                            "You have unsaved node changes. Click Update Node in the config dialog before saving the path.",
+                            { variant: "info" }
+                          );
+                          return;
+                        }
+                        void handleSave();
+                      }}
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save Path"}

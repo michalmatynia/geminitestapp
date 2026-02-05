@@ -98,26 +98,74 @@ export const buildPersistedRuntimeState = (
   state: RuntimeState,
   graphNodes: AiNode[]
 ): string => {
+  const excludedTypes = new Set<string>(["notification", "viewer"]);
+  const trimRuntimeValue = (value: unknown, depth: number = 2): unknown => {
+    if (value === null || value === undefined) return value;
+    if (typeof value === "string") {
+      const trimmed = value.length > 4000 ? `${value.slice(0, 4000)}…` : value;
+      return trimmed;
+    }
+    if (typeof value === "number" || typeof value === "boolean") return value;
+    if (value instanceof Date) return value.toISOString();
+    if (Array.isArray(value)) {
+      if (depth <= 0) return `[Array(${value.length})]`;
+      const slice = value.slice(0, 50).map((entry: unknown) => trimRuntimeValue(entry, depth - 1));
+      if (value.length > 50) {
+        slice.push(`…${value.length - 50} more`);
+      }
+      return slice;
+    }
+    if (typeof value === "object") {
+      if (depth <= 0) return "[Object]";
+      const record = value as Record<string, unknown>;
+      const entries = Object.entries(record);
+      const trimmedEntries = entries.slice(0, 40).map(([key, entryValue]: [string, unknown]) => [
+        key,
+        trimRuntimeValue(entryValue, depth - 1),
+      ]);
+      const result = Object.fromEntries(trimmedEntries) as Record<string, unknown>;
+      if (entries.length > 40) {
+        result.__truncated__ = `…${entries.length - 40} more keys`;
+      }
+      return result;
+    }
+    return value;
+  };
+  const trimRuntimePorts = (ports: RuntimePortValues): RuntimePortValues => {
+    const trimmed: RuntimePortValues = {};
+    Object.entries(ports).forEach(([key, value]: [string, unknown]) => {
+      trimmed[key] = trimRuntimeValue(value, 2);
+    });
+    return trimmed;
+  };
   const historyLimit = 50;
-  const nodeIds = new Set(graphNodes.map((node: AiNode) => node.id));
+  const nodeIds = new Set(
+    graphNodes
+      .filter((node: AiNode): boolean => !excludedTypes.has(node.type))
+      .map((node: AiNode) => node.id)
+  );
   const inputs: Record<string, RuntimePortValues> = {};
   const outputs: Record<string, RuntimePortValues> = {};
   const history: Record<string, RuntimeHistoryEntry[]> = {};
   Object.entries(state.inputs ?? {}).forEach(([key, value]: [string, RuntimePortValues]) => {
     if (nodeIds.has(key)) {
-      inputs[key] = value;
+      inputs[key] = trimRuntimePorts(value);
     }
   });
   Object.entries(state.outputs ?? {}).forEach(([key, value]: [string, RuntimePortValues]) => {
     if (nodeIds.has(key)) {
-      outputs[key] = value;
+      outputs[key] = trimRuntimePorts(value);
     }
   });
   Object.entries(state.history ?? {}).forEach(([key, value]: [string, RuntimeHistoryEntry[]]) => {
     if (!nodeIds.has(key)) return;
     const trimmed = Array.isArray(value) ? value.slice(-historyLimit) : [];
     if (trimmed.length > 0) {
-      history[key] = trimmed;
+      history[key] = trimmed.map((entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
+        ...entry,
+        inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
+        outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
+      }));
     }
   });
   const payload: Record<string, unknown> = { inputs, outputs };

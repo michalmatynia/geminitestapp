@@ -536,7 +536,7 @@ export async function evaluateGraph({
 
   // Pre-calculate simulation nodes
   for (const node of nodes) {
-    if (!isActiveNode(node)) {
+    if (node.type !== "simulation" && !isActiveNode(node)) {
       continue;
     }
     if (node.type === "simulation") {

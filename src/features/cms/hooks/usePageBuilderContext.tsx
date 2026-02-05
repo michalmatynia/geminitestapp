@@ -1237,6 +1237,42 @@ export function basePageBuilderReducer(
       return { ...state, sections: sectionsAfterInsert };
     }
 
+    case "MOVE_SECTION_TO_SLIDESHOW_FRAME": {
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement", "Model3DElement", "Slideshow"];
+      const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
+      if (!sourceSection) return state;
+      if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
+      // Prevent dropping into its own frames
+      if (action.sectionId === action.toSectionId) return state;
+
+      const resolvedBlockType = sourceSection.type === "ButtonElement" ? "Button" : sourceSection.type;
+      const convertedBlock: BlockInstance = {
+        id: uid(),
+        type: resolvedBlockType,
+        settings: { ...sourceSection.settings },
+        blocks: sourceSection.blocks.length > 0 ? [...sourceSection.blocks] : [],
+      };
+
+      // Remove section from sections array
+      const remaining = state.sections.filter((s: SectionInstance) => s.id !== action.sectionId);
+
+      // Insert the converted block into the target SlideshowFrame
+      const updatedSections = remaining.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        return {
+          ...s,
+          blocks: s.blocks.map((b: BlockInstance) => {
+            if (b.id !== action.toFrameId) return b;
+            const frameBlocks = [...(b.blocks ?? [])];
+            frameBlocks.splice(action.toIndex, 0, convertedBlock);
+            return { ...b, blocks: frameBlocks };
+          }),
+        };
+      });
+
+      return { ...state, sections: updatedSections, selectedNodeId: convertedBlock.id };
+    }
+
     case "CONVERT_BLOCK_TO_SECTION": {
       const located = findBlock(state.sections, action.blockId);
       if (!located) return state;
@@ -1271,6 +1307,19 @@ export function basePageBuilderReducer(
             if (block.id !== located.parentRow!.id) return block;
             const hasBlockInRow = (block.blocks ?? []).some((b: BlockInstance) => b.id === action.blockId);
             if (hasBlockInRow) didRemove = true;
+            return {
+              ...block,
+              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId)
+            };
+          });
+          return { ...s, blocks: updatedBlocks };
+        }
+        // Handle blocks inside a parent block (e.g., SlideshowFrame, Carousel, etc.)
+        if (located.parentBlock) {
+          const updatedBlocks = s.blocks.map((block: BlockInstance) => {
+            if (block.id !== located.parentBlock!.id) return block;
+            const hasBlockInParent = (block.blocks ?? []).some((b: BlockInstance) => b.id === action.blockId);
+            if (hasBlockInParent) didRemove = true;
             return {
               ...block,
               blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId)

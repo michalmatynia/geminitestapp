@@ -1,6 +1,5 @@
 "use client";
 
-
 import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
 import { Button, Input, Label, UnifiedSelect, SharedModal } from "@/shared/ui";
@@ -14,7 +13,14 @@ import { PresetsDialog } from "../presets-dialog";
 import { RunDetailDialog } from "../run-detail-dialog";
 import { RunHistoryPanel } from "../run-history-panel";
 import { SimulationDialog } from "../simulation-dialog";
-import type { AiNode } from "@/features/ai/ai-paths/lib";
+import type {
+  AiNode,
+  ClusterPreset,
+  DbNodePreset,
+  DbQueryPreset,
+  NodeConfig,
+  NodeDefinition
+} from "@/features/ai/ai-paths/lib";
 import type { PathConfig, PathMeta } from "@/shared/types/ai-paths";
 import type { AiPathsSettingsState } from "./useAiPathsSettingsState";
 
@@ -451,9 +457,9 @@ export function AiPathsSettingsView({
                 palette={palette}
                 paletteCollapsed={paletteCollapsed}
                 onTogglePaletteCollapsed={() => setPaletteCollapsed((prev: boolean) => !prev)}
-                expandedPaletteGroups={expandedPaletteGroups as Record<string, boolean>}
+                expandedPaletteGroups={expandedPaletteGroups}
                 onTogglePaletteGroup={togglePaletteGroup}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, nodeType: string) => { void handleDragStart(e, nodeType as any); }}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node.type); }}
                 selectedNode={selectedNode ?? null}
                 nodes={nodes}
                 edges={edges}
@@ -469,28 +475,29 @@ export function AiPathsSettingsView({
                 onClearWires={() => void handleClearWires()}
               />
               <ClusterPresetsPanel
-                presetDraft={presetDraft as ClusterPresetDraft}
+                presetDraft={presetDraft}
                 setPresetDraft={setPresetDraft}
                 editingPresetId={editingPresetId}
                 onResetPresetDraft={handleResetPresetDraft}
                 onPresetFromSelection={handlePresetFromSelection}
                 onSavePreset={() => void handleSavePreset()}
-                clusterPresets={clusterPresets as ClusterPreset[]}
-                onLoadPreset={(preset: ClusterPreset) => void handleLoadPreset(preset.id)}
-                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset.id)}
+                clusterPresets={clusterPresets}
+                onLoadPreset={(preset: ClusterPreset) => void handleLoadPreset(preset)}
+                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
                 onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
                 onExportPresets={handleExportPresets}
               />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
               <RunHistoryPanel
-                runs={runList as AiPathRunRecord[]}
-                                isRefreshing={(runsQuery as any).isFetching} onRefresh={() => { void (runsQuery as any).refetch(); }}
-                runFilter={runFilter as RunHistoryFilter}
-                setRunFilter={setRunFilter as React.Dispatch<React.SetStateAction<RunHistoryFilter>>}
+                runs={runList}
+                isRefreshing={runsQuery.isFetching}
+                onRefresh={() => { void runsQuery.refetch(); }}
+                runFilter={runFilter}
+                setRunFilter={setRunFilter}
                 expandedRunHistory={expandedRunHistory}
                 setExpandedRunHistory={setExpandedRunHistory}
-                runHistorySelection={runHistorySelection as Record<string, string>}
-                setRunHistorySelection={setRunHistorySelection as React.Dispatch<React.SetStateAction<Record<string, string>>>}
+                runHistorySelection={runHistorySelection}
+                setRunHistorySelection={setRunHistorySelection}
                 onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
                 onResumeRun={(runId: string, mode: "resume" | "replay") => void handleResumeRun(runId, mode)}
                 onCancelRun={(runId: string) => void handleCancelRun(runId)}
@@ -503,11 +510,16 @@ export function AiPathsSettingsView({
               nodes={nodes}
               edges={edges}
               runtimeState={runtimeState}
-                              edgePaths={edgePaths as EdgePath[]}              view={view}
-                              panState={panState as { startX: number; startY: number; originX: number; originY: number; } | null}              lastDrop={lastDrop}
-                              connecting={connecting as { fromNodeId: string; fromPort: string; start: { x: number; y: number; }; } | null}              connectingPos={connectingPos}
-                              connectingFromNode={connectingFromNode as AiNode | null}              selectedNodeId={selectedNodeId}
-                              draggingNodeId={(dragState as any)?.nodeId ?? null}              selectedEdgeId={selectedEdgeId}
+              edgePaths={edgePaths}
+              view={view}
+              panState={panState}
+              lastDrop={lastDrop}
+              connecting={connecting}
+              connectingPos={connectingPos}
+              connectingFromNode={connectingFromNode}
+              selectedNodeId={selectedNodeId}
+              draggingNodeId={dragState?.nodeId ?? null}
+              selectedEdgeId={selectedEdgeId}
               onSelectEdgeId={handleSelectEdge}
               onRemoveEdge={handleRemoveEdge}
               onDisconnectPort={handleDisconnectPort}
@@ -543,7 +555,8 @@ export function AiPathsSettingsView({
             onTabChange?.("canvas");
           }}
           onDeletePath={(pathId: string): void => {
-                         void handleDeletePath(paths[0]?.id ?? '');          }}
+            void handleDeletePath(pathId);
+          }}
         />
       )}
 
@@ -585,10 +598,10 @@ export function AiPathsSettingsView({
         clearNodeHistory={handleClearNodeHistory}
         onSendToAi={handleSendToAi}
         sendingToAi={sendingToAi}
-        dbQueryPresets={dbQueryPresets as DbQueryPreset[]}
+        dbQueryPresets={dbQueryPresets}
         setDbQueryPresets={setDbQueryPresets}
         saveDbQueryPresets={saveDbQueryPresets}
-        dbNodePresets={dbNodePresets as DbNodePreset[]}
+        dbNodePresets={dbNodePresets}
         setDbNodePresets={setDbNodePresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
@@ -601,7 +614,7 @@ export function AiPathsSettingsView({
           if (!open) setRunDetail(null);
         }}
         runDetailLoading={runDetailLoading}
-        runDetail={runDetail as { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null}
+        runDetail={runDetail}
         runStreamStatus={runStreamStatus as "connecting" | "live" | "stopped" | "paused"}
         runStreamPaused={runStreamPaused}
         onToggleStreamPause={() => setRunStreamPaused((prev: boolean) => !prev)}
@@ -611,14 +624,14 @@ export function AiPathsSettingsView({
         historyOptions={runDetailHistoryOptions.map((opt: { value: string; label: string; }) => ({ id: opt.value, value: opt.value, label: opt.label }))}
         selectedHistoryNodeId={runDetailSelectedHistoryNodeId}
         onSelectHistoryNode={(value: string) => setRunHistoryNodeId(value)}
-        historyEntries={runDetailSelectedHistoryEntries as RuntimeHistoryEntry[]}
+        historyEntries={runDetailSelectedHistoryEntries}
       />
       <PresetsDialog
         open={presetsModalOpen}
         onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}
         presetsJson={presetsJson}
         setPresetsJson={setPresetsJson}
-        clusterPresets={clusterPresets as ClusterPreset[]}
+        clusterPresets={clusterPresets}
         onImportPresets={() => void handleImportPresets("merge")}
         toast={toast}
         reportAiPathsError={reportAiPathsError}

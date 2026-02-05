@@ -43,6 +43,7 @@ type ErrorFingerprintParams = {
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
+    // eslint-disable-next-line import/no-restricted-paths
     const { logSystemEvent: realLogSystemEvent } = await import("@/features/observability/server");
     await realLogSystemEvent(params as any);
   } catch (error) {
@@ -53,6 +54,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
+    // eslint-disable-next-line import/no-restricted-paths
     const { getErrorFingerprint: realGetFingerprint } = await import("@/features/observability/server");
     return realGetFingerprint(params as any);
   } catch (error) {

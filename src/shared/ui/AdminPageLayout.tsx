@@ -1,4 +1,5 @@
-import { SectionHeader, Tabs, TabsList, TabsTrigger } from "@/shared/ui";
+import { SectionHeader } from "./section-header";
+import { Tabs, TabsList, TabsTrigger } from "./tabs";
 import type { ReactNode } from "react";
 
 interface AdminPageLayoutProps {

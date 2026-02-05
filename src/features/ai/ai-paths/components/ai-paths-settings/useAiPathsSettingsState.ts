@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/shared/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
 import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { dbApi, entityApi } from "@/features/ai/ai-paths/lib";
@@ -22,6 +22,13 @@ import type {
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
+  AiPathRunRecord,
+  AiPathRunNodeRecord,
+  AiPathRunEventRecord,
+  RuntimeHistoryEntry,
+  ClusterPreset,
+  DbQueryPreset,
+  DbNodePreset,
 } from "@/features/ai/ai-paths/lib";
 import {
   AI_PATHS_LAST_ERROR_KEY,
@@ -48,6 +55,9 @@ import {
   serializePathConfigs,
 } from "../AiPathsSettingsUtils";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
+import type { ClusterPresetDraft } from "../cluster-presets-panel";
+import type { RunHistoryFilter } from "../run-history-panel";
+import type { HistoryNodeOption } from "../run-history-utils";
 
 type AiPathsSettingsStateOptions = {
   activeTab: "canvas" | "paths" | "docs";
@@ -65,18 +75,18 @@ export interface UseAiPathsSettingsStateReturn {
   autoSaveLabel: string;
   autoSaveClasses: string;
   saving: boolean;
-  handleCreatePath: () => Promise<void>;
-  handleCreateAiDescriptionPath: () => Promise<void>;
+  handleCreatePath: () => void;
+  handleCreateAiDescriptionPath: () => void;
   handleSave: (options?: { notify?: boolean }) => Promise<void>;
   handleReset: () => void;
-  handleDeletePath: () => Promise<void>;
+  handleDeletePath: (pathId?: string) => Promise<void>;
   activePathId: string | null;
   activeTrigger: string;
   triggers: string[];
   isPathLocked: boolean;
   isPathActive: boolean;
-  handleTogglePathLock: () => Promise<void>;
-  handleTogglePathActive: () => Promise<void>;
+  handleTogglePathLock: () => void;
+  handleTogglePathActive: () => void;
   lastError: {
     message: string;
     time: string;
@@ -89,12 +99,14 @@ export interface UseAiPathsSettingsStateReturn {
       pathId?: string | null;
     } | null>
   >;
-  persistLastError: (pathId?: string | null) => Promise<void>;
+  persistLastError: (
+    payload: { message: string; time: string; pathId?: string | null } | null
+  ) => Promise<void>;
   setLoadNonce: React.Dispatch<React.SetStateAction<number>>;
   lastRunAt: string | null;
   pathName: string;
   setPathName: React.Dispatch<React.SetStateAction<string>>;
-  updateActivePathMeta: (meta: Partial<PathMeta>) => void;
+  updateActivePathMeta: (name: string) => void;
   paths: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
   pathFlagsById: Record<string, { isLocked: boolean; isActive: boolean }>;
@@ -104,144 +116,205 @@ export interface UseAiPathsSettingsStateReturn {
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   edges: Edge[];
   runtimeState: RuntimeState;
-  edgePaths: string[];
-  view: unknown;
-  panState: unknown;
-  lastDrop: unknown;
-  connecting: boolean;
-  connectingPos: unknown;
-  connectingFromNode: unknown;
+  edgePaths: {
+    id: string;
+    path: string;
+    label?: string | undefined;
+    arrow?: { x: number; y: number; angle: number } | undefined;
+  }[];
+  view: { x: number; y: number; scale: number };
+  panState: {
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null;
+  lastDrop: { x: number; y: number } | null;
+  connecting: {
+    fromNodeId: string;
+    fromPort: string;
+    start: { x: number; y: number };
+  } | null;
+  connectingPos: { x: number; y: number } | null;
+  connectingFromNode: AiNode | null;
   selectedNodeId: string | null;
-  dragState: unknown;
+  dragState: {
+    nodeId: string;
+    offsetX: number;
+    offsetY: number;
+  } | null;
   selectedEdgeId: string | null;
   palette: NodeDefinition[];
   paletteCollapsed: boolean;
   setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-  expandedPaletteGroups: Record<string, boolean>;
+  expandedPaletteGroups: Set<string>;
   togglePaletteGroup: (group: string) => void;
-  handleDragStart: (e: React.DragEvent, nodeType: string) => void;
-  selectedNode: AiNode | undefined;
+  handleDragStart: (e: React.DragEvent, node: NodeDefinition) => void;
+  selectedNode: AiNode | null;
   handleSelectEdge: (edgeId: string | null) => void;
   handleFireTrigger: (triggerId: string) => Promise<void>;
   handleFireTriggerPersistent: (triggerId: string) => Promise<void>;
   setSimulationOpenNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  updateSelectedNode: (update: Partial<NodeConfig>) => void;
+  updateSelectedNode: (update: Partial<AiNode>) => void;
   setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleDeleteSelectedNode: () => void;
   handleRemoveEdge: (edgeId: string) => void;
-  handleClearWires: () => void;
-  handleClearConnectorData: () => void;
-  handleClearHistory: () => void;
-  handleClearNodeHistory: (nodeId: string) => void;
-  handleDisconnectPort: (nodeId: string, portId: string) => void;
-  handleReconnectInput: (nodeId: string, portId: string) => void;
-  handleSelectNode: (nodeId: string | null) => void;
-  handlePointerDown: (e: React.PointerEvent) => void;
-  handlePointerMove: (e: React.PointerEvent) => void;
-  handlePointerUp: (e: React.PointerEvent) => void;
-  handleStartConnection: (nodeId: string, portId: string, isInput: boolean) => void;
-  handleCompleteConnection: (nodeId: string, portId: string, isInput: boolean) => void;
-  handleDrop: (e: React.DragEvent) => void;
-  handleDragOver: (e: React.DragEvent) => void;
-  handlePanStart: (e: React.PointerEvent) => void;
-  handlePanMove: (e: React.PointerEvent) => void;
-  handlePanEnd: (e: React.PointerEvent) => void;
+  handleClearWires: () => Promise<void>;
+  handleClearConnectorData: () => Promise<void>;
+  handleClearHistory: () => Promise<void>;
+  handleClearNodeHistory: (nodeId: string) => Promise<void>;
+  handleDisconnectPort: (
+    direction: "input" | "output",
+    nodeId: string,
+    port: string
+  ) => void;
+  handleReconnectInput: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    nodeId: string,
+    port: string
+  ) => void;
+  handleSelectNode: (nodeId: string) => void;
+  handlePointerDown: (
+    event: React.PointerEvent<HTMLDivElement>,
+    nodeId: string
+  ) => void;
+  handlePointerMove: (
+    event: React.PointerEvent<HTMLDivElement>,
+    nodeId: string
+  ) => void;
+  handlePointerUp: (
+    event: React.PointerEvent<HTMLDivElement>,
+    nodeId: string
+  ) => void;
+  handleStartConnection: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    node: AiNode,
+    port: string
+  ) => void;
+  handleCompleteConnection: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    node: AiNode,
+    port: string
+  ) => void;
+  handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
+  handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
+  handlePanStart: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePanMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePanEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
   zoomTo: (factor: number) => void;
   fitToNodes: () => void;
   resetView: () => void;
-  presetDraft: unknown;
-  setPresetDraft: React.Dispatch<React.SetStateAction<unknown>>;
+  presetDraft: ClusterPresetDraft;
+  setPresetDraft: React.Dispatch<React.SetStateAction<ClusterPresetDraft>>;
   editingPresetId: string | null;
   handleResetPresetDraft: () => void;
   handlePresetFromSelection: () => void;
-  handleSavePreset: (name: string) => Promise<void>;
-  clusterPresets: (options: {
-    clusters: number;
-    maxIterations: number;
-  }) => Promise<void>;
-  handleLoadPreset: (id: string) => void;
-  handleApplyPreset: (id: string) => void;
-  handleDeletePreset: (id: string) => Promise<void>;
+  handleSavePreset: () => Promise<void>;
+  clusterPresets: ClusterPreset[];
+  handleLoadPreset: (preset: ClusterPreset) => void;
+  handleApplyPreset: (preset: ClusterPreset) => void;
+  handleDeletePreset: (presetId: string) => Promise<void>;
   handleExportPresets: () => void;
   lastGraphModelPayload: unknown;
-  runList: unknown[];
-  runsQuery: unknown;
-  runFilter: string;
-  setRunFilter: React.Dispatch<React.SetStateAction<string>>;
+  runList: AiPathRunRecord[];
+  runsQuery: UseQueryResult<{ ok: boolean; data: { runs: AiPathRunRecord[] } }>;
+  runFilter: RunHistoryFilter;
+  setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
   expandedRunHistory: Record<string, boolean>;
-  setExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  runHistorySelection: Record<string, boolean>;
-  setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  handleOpenRunDetail: (runId: string) => void;
-  handleResumeRun: (runId: string) => Promise<void>;
+  setExpandedRunHistory: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+  runHistorySelection: Record<string, string>;
+  setRunHistorySelection: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+  handleOpenRunDetail: (runId: string) => Promise<void>;
+  handleResumeRun: (runId: string, mode: "resume" | "replay") => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleRequeueDeadLetter: (runId: string) => Promise<void>;
-  viewportRef: React.RefObject<HTMLDivElement>;
-  canvasRef: React.RefObject<HTMLDivElement>;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
   configOpen: boolean;
-  modelOptions: {
-    value: string;
-    label: string;
-  }[];
+  modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
+  setParserSamples: React.Dispatch<
+    React.SetStateAction<Record<string, ParserSampleState>>
+  >;
   parserSampleLoading: boolean;
   updaterSamples: Record<string, UpdaterSampleState>;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
+  setUpdaterSamples: React.Dispatch<
+    React.SetStateAction<Record<string, UpdaterSampleState>>
+  >;
   updaterSampleLoading: boolean;
   pathDebugSnapshots: Record<string, PathDebugSnapshot>;
-  updateSelectedNodeConfig: (config: Partial<NodeConfig>) => void;
-  handleFetchParserSample: (options: {
-    nodeId: string;
-    entityType: string;
-    entityId: string;
-  }) => void;
-  handleFetchUpdaterSample: (options: {
-    nodeId: string;
-    entityType: string;
-    entityId: string;
-  }) => void;
+  updateSelectedNodeConfig: (config: NodeConfig) => void;
+  handleFetchParserSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => Promise<void>;
   handleRunSimulation: (nodeId: string) => void;
   clearRuntimeForNode: (nodeId: string) => void;
-  handleSendToAi: (options: {
-    nodeId: string;
-    prompt: string;
-  }) => Promise<void>;
+  handleSendToAi: (options: { nodeId: string; prompt: string }) => Promise<void>;
   sendingToAi: boolean;
-  dbQueryPresets: unknown[];
-  setDbQueryPresets: React.Dispatch<React.SetStateAction<unknown[]>>;
-  saveDbQueryPresets: () => Promise<void>;
-  dbNodePresets: unknown[];
-  setDbNodePresets: React.Dispatch<React.SetStateAction<unknown[]>>;
-  saveDbNodePresets: () => Promise<void>;
+  dbQueryPresets: DbQueryPreset[];
+  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
+  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
+  dbNodePresets: DbNodePreset[];
+  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
+  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
   runDetailOpen: boolean;
   setRunDetailOpen: React.Dispatch<React.SetStateAction<boolean>>;
   runDetailLoading: boolean;
-  runDetail: unknown;
-  setRunDetail: React.Dispatch<React.SetStateAction<unknown>>;
-  runStreamStatus: string;
+  runDetail: {
+    run: AiPathRunRecord;
+    nodes: AiPathRunNodeRecord[];
+    events: AiPathRunEventRecord[];
+  } | null;
+  setRunDetail: React.Dispatch<
+    React.SetStateAction<{
+      run: AiPathRunRecord;
+      nodes: AiPathRunNodeRecord[];
+      events: AiPathRunEventRecord[];
+    } | null>
+  >;
+  runStreamStatus: "connecting" | "live" | "stopped" | "paused";
   runStreamPaused: boolean;
   setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  runNodeSummary: unknown[];
+  runNodeSummary: {
+    counts: Record<string, number>;
+    total: number;
+    completed: number;
+    progress: number;
+  } | null;
   runEventsOverflow: boolean;
-  runEventsBatchLimit: number;
-  runDetailHistoryOptions: {
-    value: string;
-    label: string;
-  }[];
-  runDetailSelectedHistoryNodeId: string;
-  setRunHistoryNodeId: React.Dispatch<React.SetStateAction<string>>;
-  runDetailSelectedHistoryEntries: unknown[];
+  runEventsBatchLimit: number | null;
+  runDetailHistoryOptions: HistoryNodeOption[];
+  runDetailSelectedHistoryNodeId: string | null;
+  setRunHistoryNodeId: React.Dispatch<React.SetStateAction<string | null>>;
+  runDetailSelectedHistoryEntries: RuntimeHistoryEntry[];
   presetsModalOpen: boolean;
   setPresetsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   presetsJson: string;
   setPresetsJson: React.Dispatch<React.SetStateAction<string>>;
-  handleImportPresets: () => Promise<void>;
+  handleImportPresets: (mode: "merge" | "replace") => Promise<void>;
   simulationOpenNodeId: string | null;
-  reportAiPathsError: (error: Error, context?: Record<string, unknown>) => void;
-  toast: (message: string, options?: {
-    variant?: "info" | "success" | "warning" | "error";
-  }) => void;
+  reportAiPathsError: (
+    error: unknown,
+    context: Record<string, unknown>,
+    fallbackMessage?: string
+  ) => void;
+  toast: (
+    message: string,
+    options?: {
+      variant?: "info" | "success" | "warning" | "error";
+    }
+  ) => void;
 }
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
@@ -1461,8 +1534,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     autoSaveLabel,
     autoSaveClasses,
     saving,
-    handleCreatePath: async () => { /* ... */ },
-    handleCreateAiDescriptionPath: async () => { /* ... */ },
+    handleCreatePath,
+    handleCreateAiDescriptionPath,
     handleSave,
     handleReset,
     handleDeletePath,
@@ -1471,8 +1544,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     triggers,
     isPathLocked,
     isPathActive,
-    handleTogglePathLock: async () => { /* ... */ },
-    handleTogglePathActive: async () => { /* ... */ },
+    handleTogglePathLock,
+    handleTogglePathActive,
     lastError,
     setLastError,
     persistLastError,
@@ -1480,7 +1553,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     lastRunAt,
     pathName,
     setPathName,
-    updateActivePathMeta: async (meta: Partial<PathMeta>) => { /* ... */ },
+    updateActivePathMeta,
     paths,
     pathConfigs,
     pathFlagsById,

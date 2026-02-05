@@ -246,9 +246,9 @@ export default function SystemLogsPage(): React.JSX.Element {
     { key: "toDate", label: "To", type: "date" },
   ];
 
-  const handleFilterChange = (key: string, value: any): void => {
+  const handleFilterChange = (key: string, value: string): void => {
     setPage(1);
-    if (key === "level") setLevel(value);
+    if (key === "level") setLevel(value as SystemLogLevel | "all");
     if (key === "query") setQuery(value);
     if (key === "source") setSource(value);
     if (key === "fromDate") setFromDate(value);

@@ -20,17 +20,12 @@ const featureNames = readdirSync(join(__dirname, "src", "features"), {
 
 const sharedUiRestrictions = [
   {
-    group: ["@/shared/ui/**", "@/shared/components/**"],
-    message: "Import shared UI from '@/shared/ui'.",
+    group: ["@/shared/ui/*/**", "@/shared/ui/!(index)"],
+    message: "Import shared UI components from the central '@/shared/ui' index instead of direct file paths.",
   },
 ];
 
-const sharedUiPathRestrictions = [
-  {
-    name: "@/shared/components",
-    message: "Import shared UI from '@/shared/ui'.",
-  },
-];
+const sharedUiPathRestrictions = [];
 
 const buildRestrictedImportsRule = (extraPatterns = [], extraPaths = []) => [
   "error",
@@ -233,6 +228,8 @@ const eslintConfig = [
   ...nextCoreWebVitals,
   {
     ignores: [
+      ".next/**",
+      "node_modules/**",
       "lib/generated/prisma/**",
       "scripts/backfill-note-colors.mjs",
       "*.py",
@@ -309,7 +306,7 @@ const eslintConfig = [
   apiRouteConfig,
   nextRouteConfig,
   {
-    files: ["src/shared/ui/**/*.{ts,tsx}", "src/shared/components/**/*.{ts,tsx}"],
+    files: ["src/shared/ui/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",

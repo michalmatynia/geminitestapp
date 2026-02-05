@@ -1,4 +1,4 @@
-import { SectionPanel } from "@/shared/ui";
+import { SectionPanel } from "./section-panel";
 import { cn } from "@/shared/utils";
 import type { ReactNode } from "react";
 

@@ -1,4 +1,6 @@
-import { SectionHeader, Button, SectionPanel } from "@/shared/ui";
+import { SectionHeader } from "./section-header";
+import { Button } from "./button";
+import { SectionPanel } from "./section-panel";
 import type { ReactNode } from "react";
 
 interface SettingsPageLayoutProps {

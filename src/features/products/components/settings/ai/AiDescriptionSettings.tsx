@@ -1,7 +1,6 @@
 "use client";
 
-import { Button, Input, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, SettingsPageLayout } from "@/shared/ui";
-import { PromptGenerationSection } from '@/shared/ui/prompt-generation-section';
+import { Button, Input, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, SettingsPageLayout, PromptGenerationSection } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useUpdateSetting } from "@/shared/hooks/useSettings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";

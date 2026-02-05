@@ -1857,6 +1857,7 @@ interface PageBuilderContextValue {
   selectedColumn: BlockInstance | null;
   selectedColumnParentSection: SectionInstance | null;
   selectedParentColumn: BlockInstance | null;
+  selectedParentRow: BlockInstance | null;
   selectedParentBlock: BlockInstance | null;
   vectorOverlay: VectorOverlayRequest | null;
   openVectorOverlay: (request: VectorOverlayRequest) => void;
@@ -1879,7 +1880,7 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
     setVectorOverlay(null);
   }, []);
 
-  const { selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentBlock } = useMemo(() => {
+  const { selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock } = useMemo(() => {
     const empty = {
       selectedSection: null as SectionInstance | null,
       selectedBlock: null as BlockInstance | null,
@@ -1887,6 +1888,7 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
       selectedColumn: null as BlockInstance | null,
       selectedColumnParentSection: null as SectionInstance | null,
       selectedParentColumn: null as BlockInstance | null,
+      selectedParentRow: null as BlockInstance | null,
       selectedParentBlock: null as BlockInstance | null,
     };
     if (!state.selectedNodeId) return empty;
@@ -1911,6 +1913,7 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
         selectedBlock: blockResult.block,
         selectedParentSection: blockResult.section,
         selectedParentColumn: blockResult.parentColumn ?? null,
+        selectedParentRow: blockResult.parentRow ?? null,
         selectedParentBlock: blockResult.parentBlock ?? null,
       };
     }
@@ -1928,6 +1931,7 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
       selectedColumn,
       selectedColumnParentSection,
       selectedParentColumn,
+      selectedParentRow,
       selectedParentBlock,
       vectorOverlay,
       openVectorOverlay,
@@ -1942,6 +1946,7 @@ export function PageBuilderProvider({ children }: { children: ReactNode }): Reac
       selectedColumn,
       selectedColumnParentSection,
       selectedParentColumn,
+      selectedParentRow,
       selectedParentBlock,
       vectorOverlay,
       openVectorOverlay,

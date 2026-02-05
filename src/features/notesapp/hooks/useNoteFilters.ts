@@ -40,20 +40,19 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   // Debounce search
   useEffect((): void | (() => void) => {
     const timer = setTimeout((): void => {
-      setDebouncedSearchQuery(searchQuery);
+      if (searchQuery !== debouncedSearchQuery) {
+        setDebouncedSearchQuery(searchQuery);
+        setPage(1);
+      }
     }, 250);
     return (): void => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearchQuery]);
 
-  // Reset page when filters change
-   
+  // Reset page when settings change
   useEffect((): void => {
     setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    debouncedSearchQuery,
-    filterPinned,
-    filterArchived,
-    filterTagIds,
     settings.selectedFolderId,
     settings.sortBy,
     settings.sortOrder,
@@ -76,6 +75,7 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     setSelectedNote(null);
     setIsEditing(false);
     setHighlightTagId(tagId);
+    setPage(1);
   }, []);
 
   const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
@@ -83,20 +83,41 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     setSelectedFolderId(null);
     setSelectedNote(null);
     setIsEditing(false);
+    setPage(1);
   }, []);
+
+  const setFilterPinnedWithPage = (v: boolean | undefined): void => {
+    setFilterPinned(v);
+    setPage(1);
+  };
+
+  const setFilterArchivedWithPage = (v: boolean | undefined): void => {
+    setFilterArchived(v);
+    setPage(1);
+  };
+
+  const setFilterFavoriteWithPage = (v: boolean | undefined): void => {
+    setFilterFavorite(v);
+    setPage(1);
+  };
+
+  const setFilterTagIdsWithPage = (ids: string[]): void => {
+    setFilterTagIds(ids);
+    setPage(1);
+  };
 
   return {
     searchQuery,
     setSearchQuery,
     debouncedSearchQuery,
     filterPinned,
-    setFilterPinned,
+    setFilterPinned: setFilterPinnedWithPage,
     filterArchived,
-    setFilterArchived,
+    setFilterArchived: setFilterArchivedWithPage,
     filterFavorite,
-    setFilterFavorite,
+    setFilterFavorite: setFilterFavoriteWithPage,
     filterTagIds,
-    setFilterTagIds,
+    setFilterTagIds: setFilterTagIdsWithPage,
     highlightTagId,
     setHighlightTagId,
     page,

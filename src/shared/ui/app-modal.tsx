@@ -12,6 +12,7 @@ type AppModalProps = {
   title: string;
   titleHidden?: boolean;
   header?: React.ReactNode;
+  headerActions?: React.ReactNode; // Added headerActions prop
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
   showClose?: boolean;
@@ -37,6 +38,7 @@ export function AppModal({
   title,
   titleHidden = false,
   header,
+  headerActions, // Destructure headerActions
   footer,
   size = "md",
   showClose = true,
@@ -53,13 +55,15 @@ export function AppModal({
   };
 
   const handleInteractOutside = (event: Event): void => {
-    if (closeOnOutside) return;
-    event.preventDefault();
+    if (!closeOnOutside) {
+      event.preventDefault();
+    }
   };
 
   const handleEscapeKeyDown = (event: KeyboardEvent): void => {
-    if (closeOnEscape) return;
-    event.preventDefault();
+    if (!closeOnEscape) {
+      event.preventDefault();
+    }
   };
 
   const bodyHeightClass = size === "sm" ? "max-h-[50vh]" : "h-[80vh]";
@@ -68,7 +72,7 @@ export function AppModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
-          "max-w-none w-auto p-0 border-none bg-transparent shadow-none pointer-events-none",
+          "max-w-none w-auto p-0 border-none bg-transparent shadow-none", // Removed pointer-events-none
           contentClassName ?? ""
         )}
         onInteractOutside={handleInteractOutside}
@@ -83,16 +87,19 @@ export function AppModal({
               <h2 className={cn("text-2xl font-bold text-white", titleHidden && "sr-only")}>
                 {title}
               </h2>
-              {showClose ? (
-                <Button
-                  type="button"
-                  onClick={() => handleOpenChange(false)}
-                  variant="outline"
-                  className="border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5"
-                >
-                  Close
-                </Button>
-              ) : null}
+              <div className="flex items-center gap-2"> {/* Container for close button and header actions */}
+                {headerActions} {/* Render header actions here */}
+                {showClose ? (
+                  <Button
+                    type="button"
+                    onClick={() => handleOpenChange(false)}
+                    variant="outline"
+                    className="border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5"
+                  >
+                    Close
+                  </Button>
+                ) : null}
+              </div>
             </div>
           )}
           <div className={cn(bodyHeightClass, "overflow-y-auto pr-2", bodyClassName ?? "")}>

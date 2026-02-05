@@ -34,9 +34,9 @@ export function ResourceCard({
   return (
     <CardWithActions
       title={title}
-      description={description ?? ''}
-      actions={actions}
-      onClick={onClick}
+      description={description ?? ''} // Always pass description, even if empty string
+      {...(actions ? { actions } : {})}
+      {...(onClick ? { onClick } : {})}
       className={cn("flex h-full flex-col", className)}
     >
       <div className="flex h-full flex-col">

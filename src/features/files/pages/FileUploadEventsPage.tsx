@@ -78,9 +78,9 @@ export default function FileUploadEventsPage(): React.JSX.Element {
     { key: "toDate", label: "To", type: "date" },
   ];
 
-  const handleFilterChange = (key: string, value: any): void => {
+  const handleFilterChange = (key: string, value: string): void => {
     setPage(1);
-    if (key === "status") setStatus(value);
+    if (key === "status") setStatus(value as (typeof statusOptions)[number]["value"]);
     if (key === "category") setCategory(value);
     if (key === "projectId") setProjectId(value);
     if (key === "query") setQuery(value);

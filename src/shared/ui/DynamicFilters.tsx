@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { Input, Label, UnifiedSelect, SearchInput, FiltersContainer } from "@/shared/ui";
+import { Input } from "./input";
+import { Label } from "./label";
+import { UnifiedSelect } from "./unified-select";
+import { SearchInput } from "./search-input";
+import { FiltersContainer } from "./filters-container";
 
 export type FilterFieldType = "text" | "search" | "select" | "date" | "number";
 
@@ -17,8 +21,8 @@ export interface FilterField {
 
 interface DynamicFiltersProps {
   fields: FilterField[];
-  values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  values: Record<string, string | number | boolean | null | undefined>;
+  onChange: (key: string, value: string) => void;
   onReset?: () => void;
   hasActiveFilters?: boolean;
   title?: string;
@@ -42,11 +46,11 @@ export function DynamicFilters({
 }: DynamicFiltersProps): React.JSX.Element {
   return (
     <FiltersContainer
-      title={title}
-      onReset={onReset}
-      hasActiveFilters={hasActiveFilters}
-      gridClassName={gridClassName}
-      className={className}
+      {...(title ? { title } : {})}
+      {...(onReset ? { onReset } : {})}
+      {...(hasActiveFilters !== undefined ? { hasActiveFilters } : {})}
+      {...(gridClassName ? { gridClassName } : {})}
+      {...(className ? { className } : {})}
     >
       {fields.map((field) => (
         <div key={field.key} className={field.colSpan}>
@@ -56,7 +60,7 @@ export function DynamicFilters({
           
           {field.type === "select" ? (
             <UnifiedSelect
-              value={values[field.key] ?? ""}
+              value={String(values[field.key] ?? "")}
               onValueChange={(value) => onChange(field.key, value)}
               options={field.options ?? []}
               placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}...`}
@@ -65,7 +69,7 @@ export function DynamicFilters({
           ) : field.type === "search" ? (
             <SearchInput
               placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
-              value={values[field.key] ?? ""}
+              value={String(values[field.key] ?? "")}
               onChange={(e) => onChange(field.key, e.target.value)}
               onClear={() => onChange(field.key, "")}
               className="h-9"
@@ -74,7 +78,7 @@ export function DynamicFilters({
             <Input
               type={field.type === "date" ? "date" : field.type === "number" ? "number" : "text"}
               placeholder={field.placeholder ?? field.label}
-              value={values[field.key] ?? ""}
+              value={String(values[field.key] ?? "")}
               onChange={(e) => onChange(field.key, e.target.value)}
               className="h-9"
             />

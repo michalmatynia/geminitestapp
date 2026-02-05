@@ -149,6 +149,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
     selectedColumn,
     selectedColumnParentSection,
     selectedParentColumn,
+    selectedParentRow,
     selectedParentBlock,
     dispatch,
   } = usePageBuilder();
@@ -529,6 +530,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
           blockId: selectedBlock.id,
           settings: nextSettings,
         });
+      } else if (selectedParentRow) {
+        // Block directly inside a Row container
+        dispatch({
+          type: "UPDATE_SECTION_BLOCK_SETTINGS",
+          sectionId: selectedParentSection.id,
+          parentBlockId: selectedParentRow.id,
+          blockId: selectedBlock.id,
+          settings: nextSettings,
+        });
       } else {
         // Direct block inside a section
         dispatch({
@@ -539,7 +549,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         });
       }
     },
-    [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]
+    [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]
   );
 
   const handleEventSettingChange = useCallback(
@@ -949,6 +959,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
         columnId: selectedParentColumn.id,
         blockId: selectedBlock.id,
       });
+    } else if (selectedParentRow) {
+      // Block inside a Row container
+      dispatch({
+        type: "REMOVE_ELEMENT_FROM_SECTION_BLOCK",
+        sectionId: selectedParentSection.id,
+        parentBlockId: selectedParentRow.id,
+        elementId: selectedBlock.id,
+      });
     } else {
       // Direct block inside a section
       dispatch({
@@ -957,7 +975,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         blockId: selectedBlock.id,
       });
     }
-  }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]);
+  }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]);
 
   const handleMakeBackground = useCallback(
     (target: "grid" | "row" | "column"): void => {

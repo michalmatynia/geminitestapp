@@ -50,7 +50,7 @@ export const ProductFilters = memo(function ProductFilters({
     { key: "endDate", label: "To Date", type: "date" },
   ], []);
 
-  const handleFilterChange = useCallback((key: string, value: any): void => {
+  const handleFilterChange = useCallback((key: string, value: string): void => {
     if (key === "search") setSearch(value);
     if (key === "sku") setSku(value);
     if (key === "minPrice") setMinPrice(value ? parseInt(value, 10) : undefined);

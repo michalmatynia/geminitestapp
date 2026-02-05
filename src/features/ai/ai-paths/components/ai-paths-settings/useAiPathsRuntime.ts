@@ -11,6 +11,7 @@ import type {
   PathConfig,
   PathDebugEntry,
   PathDebugSnapshot,
+  PathExecutionMode,
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
@@ -20,6 +21,7 @@ import {
   PATH_DEBUG_PREFIX,
   STORAGE_VERSION,
   TRIGGER_EVENTS,
+  appendLocalRun,
   aiJobsApi,
   coerceInput,
   entityApi,
@@ -45,6 +47,7 @@ type UseAiPathsRuntimeArgs = {
   activeTab: "canvas" | "paths" | "docs";
   isPathActive: boolean;
   activeTrigger: string;
+  executionMode: PathExecutionMode;
   edges: Edge[];
   nodes: AiNode[];
   pathDescription: string;
@@ -83,6 +86,7 @@ export function useAiPathsRuntime({
   activeTab,
   isPathActive,
   activeTrigger,
+  executionMode,
   edges,
   nodes,
   pathDescription,
@@ -217,6 +221,7 @@ export function useAiPathsRuntime({
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges,
       updatedAt,
@@ -230,6 +235,7 @@ export function useAiPathsRuntime({
       pathName,
       pathDescription,
       activeTrigger,
+      executionMode,
       nodes,
       edges,
       parserSamples,
@@ -458,6 +464,8 @@ export function useAiPathsRuntime({
     event?: React.MouseEvent,
     contextOverride?: Record<string, unknown>
   ): Promise<void> => {
+    const startedAt = new Date().toISOString();
+    const startedAtMs = Date.now();
     if (!isPathActive) {
       toast("This path is deactivated. Activate it to run.", { variant: "info" });
       return;
@@ -474,38 +482,78 @@ export function useAiPathsRuntime({
     };
     triggerContextRef.current = triggerContext;
     pendingSimulationContextRef.current = null;
-    const result = await evaluateGraphWithIteratorAutoContinue({
-      nodes,
-      edges,
-      activePathId,
-      activePathName: pathName,
-      triggerNodeId: triggerNode.id,
-      triggerEvent,
-      triggerContext,
-      deferPoll: true,
-      recordHistory: true,
-      historyLimit: 50,
-      seedHistory: runtimeStateRef.current.history ?? undefined,
-      fetchEntityByType,
-      reportAiPathsError,
-      toast,
-    });
-    const runAt = new Date().toISOString();
-    setRuntimeState(result);
-    setLastRunAt(runAt);
-    void persistDebugSnapshot(activePathId ?? null, runAt, result);
-    if (activePathId) {
-      setPathConfigs((prev: Record<string, PathConfig>) => ({
-        ...prev,
-        [activePathId]: {
-          ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
-          runtimeState: result,
-          lastRunAt: runAt,
-        },
-      }));
+    try {
+      const result = await evaluateGraphWithIteratorAutoContinue({
+        nodes,
+        edges,
+        activePathId,
+        activePathName: pathName,
+        triggerNodeId: triggerNode.id,
+        triggerEvent,
+        triggerContext,
+        deferPoll: true,
+        recordHistory: true,
+        historyLimit: 50,
+        seedHistory: runtimeStateRef.current.history ?? undefined,
+        fetchEntityByType,
+        reportAiPathsError,
+        toast,
+      });
+      const runAt = new Date().toISOString();
+      setRuntimeState(result);
+      setLastRunAt(runAt);
+      void persistDebugSnapshot(activePathId ?? null, runAt, result);
+      if (activePathId) {
+        setPathConfigs((prev: Record<string, PathConfig>) => ({
+          ...prev,
+          [activePathId]: {
+            ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
+            runtimeState: result,
+            lastRunAt: runAt,
+          },
+        }));
+      }
+      const entityId =
+        typeof (triggerContext as Record<string, unknown>)?.entityId === "string"
+          ? ((triggerContext as Record<string, unknown>).entityId as string)
+          : null;
+      const entityType =
+        typeof (triggerContext as Record<string, unknown>)?.entityType === "string"
+          ? ((triggerContext as Record<string, unknown>).entityType as string)
+          : null;
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: triggerEvent ?? null,
+        triggerLabel: activeTrigger ?? null,
+        entityId,
+        entityType,
+        status: "success",
+        startedAt,
+        finishedAt: runAt,
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: nodes.length,
+        source: "ai_paths_ui",
+      });
+    } catch (error) {
+      const finishedAt = new Date().toISOString();
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: triggerEvent ?? null,
+        triggerLabel: activeTrigger ?? null,
+        status: "error",
+        startedAt,
+        finishedAt,
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: nodes.length,
+        error: error instanceof Error ? error.message : "Local run failed",
+        source: "ai_paths_ui",
+      });
+      throw error;
     }
 
-  }, [isPathActive, buildTriggerContext, nodes, edges, activePathId, pathName, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
+  }, [isPathActive, buildTriggerContext, nodes, edges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
 
   const runPollUpdate = useCallback(
     async (
@@ -813,6 +861,10 @@ export function useAiPathsRuntime({
   );
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
+    if (executionMode === "server") {
+      void handleFireTriggerPersistent(triggerNode, event);
+      return;
+    }
     void (async (): Promise<void> => {
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
       const isScheduled = triggerEvent === "scheduled_run";

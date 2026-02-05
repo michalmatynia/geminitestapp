@@ -16,6 +16,7 @@ import type {
   Edge,
   ParserSampleState,
   PathConfig,
+  PathExecutionMode,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -68,6 +69,7 @@ type UseAiPathsPersistenceArgs = {
   pathDescription: string;
   pathName: string;
   paths: PathMeta[];
+  executionMode: PathExecutionMode;
   selectedNodeId: string | null;
   configOpen: boolean;
   runtimeState: RuntimeState;
@@ -103,6 +105,7 @@ type UseAiPathsPersistenceArgs = {
   setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
   setPathDebugSnapshots: React.Dispatch<React.SetStateAction<Record<string, PathDebugSnapshot>>>;
   setPathDescription: (value: string) => void;
+  setExecutionMode: (value: PathExecutionMode) => void;
   setPathName: (value: string) => void;
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
@@ -147,6 +150,7 @@ export function useAiPathsPersistence({
   pathDescription,
   pathName,
   paths,
+  executionMode,
   selectedNodeId,
   configOpen,
   runtimeState,
@@ -174,6 +178,7 @@ export function useAiPathsPersistence({
   setPathConfigs,
   setPathDebugSnapshots,
   setPathDescription,
+  setExecutionMode,
   setPathName,
   setPaths,
   setRuntimeState,
@@ -214,6 +219,7 @@ export function useAiPathsPersistence({
   const currentPathNameRef = useRef("AI Description Path");
   const currentPathDescriptionRef = useRef("");
   const currentActiveTriggerRef = useRef(triggers[0] ?? "Product Modal - Context Filter");
+  const currentExecutionModeRef = useRef<PathExecutionMode>("server");
   const currentParserSamplesRef = useRef<Record<string, ParserSampleState>>({});
   const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
   const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
@@ -505,6 +511,7 @@ export function useAiPathsPersistence({
         setPathName(activeConfig.name);
         setPathDescription(activeConfig.description);
         setActiveTrigger(normalizeTriggerLabel(activeConfig.trigger));
+        setExecutionMode(activeConfig.executionMode ?? "server");
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -592,6 +599,7 @@ export function useAiPathsPersistence({
         name: pathName,
         description: pathDescription,
         trigger: activeTrigger,
+        executionMode,
         isLocked: isPathLocked,
         isActive: isPathActive,
         uiState: {
@@ -610,6 +618,7 @@ export function useAiPathsPersistence({
       pathName,
       pathDescription,
       activeTrigger,
+      executionMode,
       isPathLocked,
       isPathActive,
       selectedNodeId,
@@ -630,6 +639,7 @@ export function useAiPathsPersistence({
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges,
       updatedAt,
@@ -649,6 +659,7 @@ export function useAiPathsPersistence({
       pathName,
       pathDescription,
       activeTrigger,
+      executionMode,
       nodes,
       edges,
       isPathLocked,
@@ -775,6 +786,7 @@ export function useAiPathsPersistence({
   }, [
     activePathId,
     activeTrigger,
+    executionMode,
     edges,
     loading,
     nodes,
@@ -814,6 +826,9 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     currentActiveTriggerRef.current = activeTrigger;
   }, [activeTrigger]);
+  useEffect((): void => {
+    currentExecutionModeRef.current = executionMode;
+  }, [executionMode]);
   useEffect((): void => {
     currentParserSamplesRef.current = parserSamples;
   }, [parserSamples]);
@@ -873,6 +888,7 @@ export function useAiPathsPersistence({
         name: currentPathNameRef.current,
         description: currentPathDescriptionRef.current,
         trigger: currentActiveTriggerRef.current,
+        executionMode: currentExecutionModeRef.current,
         nodes: currentNodesRef.current,
         edges: currentEdgesRef.current,
         updatedAt,

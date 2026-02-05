@@ -18,6 +18,7 @@ import type {
   NodeDefinition,
   ParserSampleState,
   PathConfig,
+  PathExecutionMode,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -81,6 +82,8 @@ export interface UseAiPathsSettingsStateReturn {
   handleDeletePath: (pathId?: string) => Promise<void>;
   activePathId: string | null;
   activeTrigger: string;
+  executionMode: PathExecutionMode;
+  handleExecutionModeChange: (mode: PathExecutionMode) => void;
   triggers: string[];
   isPathLocked: boolean;
   isPathActive: boolean;
@@ -344,6 +347,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     "Visual analysis + description generation with structured updates."
   );
   const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? "");
+  const [executionMode, setExecutionMode] = useState<PathExecutionMode>("server");
   const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
     {}
   );
@@ -847,6 +851,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     configOpen,
     runtimeState,
     updaterSamples,
+    executionMode,
     normalizeDbNodePreset,
     normalizeDbQueryPreset,
     normalizeTriggerLabel,
@@ -870,6 +875,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathConfigs,
     setPathDebugSnapshots,
     setPathDescription,
+    setExecutionMode,
     setPathName,
     setPaths,
     setRuntimeState,
@@ -919,6 +925,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activePathId,
     activeTab,
     activeTrigger,
+    executionMode,
     isPathActive,
     edges,
     nodes,
@@ -953,6 +960,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges: [],
       updatedAt,
@@ -993,6 +1001,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges,
       updatedAt,
@@ -1043,6 +1052,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges,
       updatedAt,
@@ -1095,6 +1105,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
+      executionMode,
       nodes,
       edges,
       updatedAt,
@@ -1205,6 +1216,22 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     );
   };
 
+  const handleExecutionModeChange = (mode: PathExecutionMode): void => {
+    if (!activePathId) {
+      setExecutionMode(mode);
+      return;
+    }
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to change execution mode.", { variant: "info" });
+      return;
+    }
+    setExecutionMode(mode);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+      const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+      return { ...prev, [activePathId]: { ...base, executionMode: mode } };
+    });
+  };
+
   const handleTogglePathLock = (): void => {
     if (!activePathId) return;
     const nextLocked = !isPathLocked;
@@ -1242,6 +1269,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName(resetConfig.name);
     setPathDescription(resetConfig.description);
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
+    setExecutionMode(resetConfig.executionMode ?? "server");
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setIsPathLocked(Boolean(resetConfig.isLocked));
@@ -1260,6 +1288,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       name,
       description: "",
       trigger: triggers[0] ?? "Product Modal - Context Filter",
+      executionMode: "server",
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -1288,6 +1317,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName(name);
     setPathDescription("");
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
+    setExecutionMode(config.executionMode ?? "server");
     setParserSamples({});
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
@@ -1317,6 +1347,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
+    setExecutionMode(config.executionMode ?? "server");
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1350,6 +1381,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setPathName(fallback.name);
       setPathDescription(fallback.description);
       setActiveTrigger(normalizeTriggerLabel(fallback.trigger));
+      setExecutionMode(fallback.executionMode ?? "server");
       setParserSamples(fallback.parserSamples ?? {});
       setUpdaterSamples(fallback.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(fallback.runtimeState));
@@ -1378,6 +1410,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setPathName(nextConfig.name);
       setPathDescription(nextConfig.description);
       setActiveTrigger(normalizeTriggerLabel(nextConfig.trigger));
+      setExecutionMode(nextConfig.executionMode ?? "server");
       setParserSamples(nextConfig.parserSamples ?? {});
       setUpdaterSamples(nextConfig.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
@@ -1420,6 +1453,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
+    setExecutionMode(config.executionMode ?? "server");
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1514,6 +1548,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleDeletePath,
     activePathId,
     activeTrigger,
+    executionMode,
+    handleExecutionModeChange,
     triggers,
     isPathLocked,
     isPathActive,

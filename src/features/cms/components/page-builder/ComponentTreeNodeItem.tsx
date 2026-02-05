@@ -267,38 +267,12 @@ export function SectionNodeItem({
       <TreeContextMenu items={sectionMenuItems}>
         <TreeRow
         tone="none"
-        draggable="true"
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(section.id);
           }
-        }}
-        onDragStart={(e: React.DragEvent) => {
-          e.stopPropagation();
-
-          // Set drag data FIRST - this must happen synchronously
-          setSectionDragData(e.dataTransfer, {
-            id: section.id,
-            type: section.type,
-            zone: section.zone,
-            index: sectionIndex,
-          });
-
-          // IMPORTANT: Defer React state updates to prevent re-render from cancelling drag
-          setTimeout(() => {
-            setDraggedSectionId(section.id);
-            setDraggedSectionType(section.type);
-            setDraggedSectionIndex(sectionIndex);
-            setDraggedSectionZone(section.zone);
-          }, 0);
-        }}
-        onDragEnd={() => {
-          setDraggedSectionId(null);
-          setDraggedSectionType(null);
-          setDraggedSectionIndex(null);
-          setDraggedSectionZone(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
@@ -444,7 +418,7 @@ export function SectionNodeItem({
             setDraggedFromParentBlockId(null);
           }
         }}
-        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium select-none active:cursor-grabbing ${
+        className={`relative flex w-full cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm font-medium select-none ${
           isSectionDragOver
             ? "bg-purple-600/30 text-purple-200 ring-1 ring-purple-500/50"
             : isDragOver
@@ -456,7 +430,6 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/section:opacity-100 pointer-events-none" />
         <TreeCaret
           isOpen={isExpanded}
           hasChildren={canToggle}
@@ -474,6 +447,40 @@ export function SectionNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
         )}
+        <div
+          draggable
+          onDragStart={(e: React.DragEvent) => {
+            e.stopPropagation();
+
+            // Set drag data FIRST - this must happen synchronously
+            setSectionDragData(e.dataTransfer, {
+              id: section.id,
+              type: section.type,
+              zone: section.zone,
+              index: sectionIndex,
+            });
+
+            // IMPORTANT: Defer React state updates to prevent re-render from cancelling drag
+            setTimeout(() => {
+              setDraggedSectionId(section.id);
+              setDraggedSectionType(section.type);
+              setDraggedSectionIndex(sectionIndex);
+              setDraggedSectionZone(section.zone);
+            }, 0);
+          }}
+          onDragEnd={() => {
+            setDraggedSectionId(null);
+            setDraggedSectionType(null);
+            setDraggedSectionIndex(null);
+            setDraggedSectionZone(null);
+          }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="flex items-center justify-center opacity-0 group-hover/section:opacity-100"
+          aria-label="Drag section"
+        >
+          <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+        </div>
         <TreeActionSlot
           show="hover"
           isVisible={isSelected}
@@ -819,37 +826,12 @@ function SlideshowFrameNodeItem({
         tone="none"
         role="button"
         tabIndex={0}
-        draggable
         onClick={() => onSelect(frame.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(frame.id);
           }
-        }}
-        onDragStart={(e: React.DragEvent) => {
-          e.stopPropagation();
-          setBlockDragData(e.dataTransfer, {
-            id: frame.id,
-            type: frame.type,
-            fromSectionId: sectionId,
-            fromColumnId: "",
-            fromParentBlockId: "",
-          });
-          setTimeout(() => {
-            setDraggedBlockId(frame.id);
-            if (setDraggedBlockType) setDraggedBlockType(frame.type);
-            setDraggedFromSectionId(sectionId);
-            if (setDraggedFromColumnId) setDraggedFromColumnId(null);
-            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
-          }, 0);
-        }}
-        onDragEnd={() => {
-          setDraggedBlockId(null);
-          if (setDraggedBlockType) setDraggedBlockType(null);
-          setDraggedFromSectionId(null);
-          if (setDraggedFromColumnId) setDraggedFromColumnId(null);
-          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           const blockDrag = readBlockDragData(e.dataTransfer, {
@@ -890,7 +872,7 @@ function SlideshowFrameNodeItem({
           if (setDraggedFromColumnId) setDraggedFromColumnId(null);
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
-        className={`flex w-full cursor-grab items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition active:cursor-grabbing ${
+        className={`flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
             : isSelected
@@ -900,7 +882,6 @@ function SlideshowFrameNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/frame:opacity-100" />
         <TreeCaret
           isOpen={isExpanded}
           hasChildren={true}
@@ -911,6 +892,39 @@ function SlideshowFrameNodeItem({
         />
         <Icon className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{blockLabel}</span>
+        <div
+          draggable
+          onDragStart={(e: React.DragEvent) => {
+            e.stopPropagation();
+            setBlockDragData(e.dataTransfer, {
+              id: frame.id,
+              type: frame.type,
+              fromSectionId: sectionId,
+              fromColumnId: "",
+              fromParentBlockId: "",
+            });
+            setTimeout(() => {
+              setDraggedBlockId(frame.id);
+              if (setDraggedBlockType) setDraggedBlockType(frame.type);
+              setDraggedFromSectionId(sectionId);
+              if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+              if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+            }, 0);
+          }}
+          onDragEnd={() => {
+            setDraggedBlockId(null);
+            if (setDraggedBlockType) setDraggedBlockType(null);
+            setDraggedFromSectionId(null);
+            if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+          }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="flex items-center justify-center opacity-0 group-hover/frame:opacity-100"
+          aria-label="Drag frame"
+        >
+          <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+        </div>
         <TreeActionSlot show="always" align="inline">
           <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
             <ColumnBlockPicker
@@ -1715,38 +1729,12 @@ function SectionBlockNodeItem({
         tone="none"
         role="button"
         tabIndex={0}
-        draggable
         onClick={() => onSelect(block.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(block.id);
           }
-        }}
-        onDragStart={(e: React.DragEvent) => {
-          e.stopPropagation();
-          setBlockDragData(e.dataTransfer, {
-            id: block.id,
-            type: block.type,
-            fromSectionId: sectionId,
-            fromColumnId: columnId ?? "",
-            fromParentBlockId: "",
-          });
-          // Defer state updates to prevent re-render from cancelling drag
-          setTimeout(() => {
-            setDraggedBlockId(block.id);
-            if (setDraggedBlockType) setDraggedBlockType(block.type);
-            setDraggedFromSectionId(sectionId);
-            setDraggedFromColumnId(columnId);
-            setDraggedFromParentBlockId(null);
-          }, 0);
-        }}
-        onDragEnd={() => {
-          setDraggedBlockId(null);
-          if (setDraggedBlockType) setDraggedBlockType(null);
-          setDraggedFromSectionId(null);
-          setDraggedFromColumnId(null);
-          setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
@@ -1820,7 +1808,7 @@ function SectionBlockNodeItem({
             setDraggedSectionId(null);
           }
         }}
-        className={`flex w-full cursor-grab items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition active:cursor-grabbing ${
+        className={`flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
             : isSelected
@@ -1830,7 +1818,6 @@ function SectionBlockNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/sblock:opacity-100" />
         <TreeCaret
           isOpen={isExpanded}
           hasChildren={true}
@@ -1844,6 +1831,40 @@ function SectionBlockNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
+        <div
+          draggable
+          onDragStart={(e: React.DragEvent) => {
+            e.stopPropagation();
+            setBlockDragData(e.dataTransfer, {
+              id: block.id,
+              type: block.type,
+              fromSectionId: sectionId,
+              fromColumnId: columnId ?? "",
+              fromParentBlockId: "",
+            });
+            // Defer state updates to prevent re-render from cancelling drag
+            setTimeout(() => {
+              setDraggedBlockId(block.id);
+              if (setDraggedBlockType) setDraggedBlockType(block.type);
+              setDraggedFromSectionId(sectionId);
+              setDraggedFromColumnId(columnId);
+              setDraggedFromParentBlockId(null);
+            }, 0);
+          }}
+          onDragEnd={() => {
+            setDraggedBlockId(null);
+            if (setDraggedBlockType) setDraggedBlockType(null);
+            setDraggedFromSectionId(null);
+            setDraggedFromColumnId(null);
+            setDraggedFromParentBlockId(null);
+          }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="flex items-center justify-center opacity-0 group-hover/sblock:opacity-100"
+          aria-label="Drag element"
+        >
+          <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+        </div>
         {!isTextAtom && (
           <TreeActionSlot show="always" align="inline">
             <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
@@ -1990,40 +2011,12 @@ function BlockNodeItem({
         tone="none"
         role="button"
         tabIndex={0}
-        draggable={canDrag}
         onClick={() => onSelect(block.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(block.id);
           }
-        }}
-        onDragStart={(e: React.DragEvent) => {
-          if (!canDrag) return;
-          e.stopPropagation();
-          setBlockDragData(e.dataTransfer, {
-            id: block.id,
-            type: block.type,
-            fromSectionId: sectionId,
-            fromColumnId: columnId ?? "",
-            fromParentBlockId: parentBlockId ?? "",
-          });
-          // Defer state updates to prevent re-render from cancelling drag
-          setTimeout(() => {
-            setDraggedBlockId(block.id);
-            if (setDraggedBlockType) setDraggedBlockType(block.type);
-            setDraggedFromSectionId(sectionId);
-            if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
-            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
-          }, 0);
-        }}
-        onDragEnd={() => {
-          if (!canDrag) return;
-          setDraggedBlockId(null);
-          if (setDraggedBlockType) setDraggedBlockType(null);
-          setDraggedFromSectionId(null);
-          if (setDraggedFromColumnId) setDraggedFromColumnId(null);
-          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           if (disableDrag) return;
@@ -2096,7 +2089,7 @@ function BlockNodeItem({
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
         }}
         className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-          isBackgroundMode ? "cursor-not-allowed" : canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+          isBackgroundMode ? "cursor-not-allowed" : "cursor-pointer"
         } ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
@@ -2109,22 +2102,57 @@ function BlockNodeItem({
             : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
         }`}
       >
+      <Icon className="size-3.5 shrink-0" />
+      <span className="flex-1 truncate">{blockLabel}</span>
       {isBackgroundMode ? (
         <span title={`Locked as ${backgroundTarget} background`}>
           <Lock className="size-3 shrink-0 text-amber-500" />
         </span>
       ) : canDrag ? (
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
+        <div
+          draggable
+          onDragStart={(e: React.DragEvent) => {
+            if (!canDrag) return;
+            e.stopPropagation();
+            setBlockDragData(e.dataTransfer, {
+              id: block.id,
+              type: block.type,
+              fromSectionId: sectionId,
+              fromColumnId: columnId ?? "",
+              fromParentBlockId: parentBlockId ?? "",
+            });
+            // Defer state updates to prevent re-render from cancelling drag
+            setTimeout(() => {
+              setDraggedBlockId(block.id);
+              if (setDraggedBlockType) setDraggedBlockType(block.type);
+              setDraggedFromSectionId(sectionId);
+              if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
+              if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
+            }, 0);
+          }}
+          onDragEnd={() => {
+            if (!canDrag) return;
+            setDraggedBlockId(null);
+            if (setDraggedBlockType) setDraggedBlockType(null);
+            setDraggedFromSectionId(null);
+            if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+            if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+          }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="flex items-center justify-center opacity-0 group-hover:opacity-100"
+          aria-label="Drag element"
+        >
+          <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+        </div>
       ) : (
         <span className="size-3 shrink-0" />
       )}
-      <Icon className="size-3.5 shrink-0" />
-      <span className="truncate">{blockLabel}</span>
       {isBackgroundMode && (
-        <span className="ml-auto text-[9px] text-amber-500/70 uppercase">{backgroundTarget} bg</span>
+        <span className="text-[9px] text-amber-500/70 uppercase">{backgroundTarget} bg</span>
       )}
       {isDragOver && (
-        <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
+        <span className="text-[10px] text-emerald-300">Insert here</span>
       )}
       {/* Delete button - visible on hover when selected or always visible on hover */}
       {onRemoveBlock && !isDragOver && !isBackgroundMode && (

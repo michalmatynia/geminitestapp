@@ -56,6 +56,8 @@ export function AiPathsSettingsView({
     handleTogglePathActive,
     activePathId,
     activeTrigger,
+    executionMode,
+    handleExecutionModeChange,
     triggers,
     lastError,
     setLastError,
@@ -215,6 +217,14 @@ export function AiPathsSettingsView({
     return filtered.length > 0 ? filtered : paths;
   }, [groupKey, pathConfigs, paths]);
 
+  const executionOptions = useMemo(
+    () => [
+      { value: "server", label: "Run on Server" },
+      { value: "local", label: "Run Locally" },
+    ],
+    []
+  );
+
   const setNodesFromUser: React.Dispatch<React.SetStateAction<AiNode[]>> = (
     next: React.SetStateAction<AiNode[]>
   ): void => {
@@ -364,6 +374,21 @@ export function AiPathsSettingsView({
                       Last run: {new Date(lastRunAt).toLocaleTimeString()}
                     </div>
                   )}
+                  <div className="flex flex-col items-end gap-1">
+                    <Label className="text-[10px] uppercase text-gray-500">Execution</Label>
+                    <UnifiedSelect
+                      value={executionMode}
+                      onValueChange={(value: string): void => {
+                        if (value !== executionMode) {
+                          handleExecutionModeChange(value as "local" | "server");
+                        }
+                      }}
+                      options={executionOptions}
+                      className="w-[160px]"
+                      triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                      disabled={isPathLocked}
+                    />
+                  </div>
                   <UnifiedSelect
                     value={activePathId}
                     onValueChange={(value: string): void => {

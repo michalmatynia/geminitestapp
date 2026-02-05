@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from "lucide-react";
+import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush, Pencil, Check, X } from "lucide-react";
 import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
@@ -2558,7 +2558,9 @@ function PageSettingsTab(): React.ReactNode {
   const [pageAiOutput, setPageAiOutput] = useState<string>("");
   const [pageAiError, setPageAiError] = useState<string | null>(null);
   const [pageAiLoading, setPageAiLoading] = useState<boolean>(false);
+  const [isEditingName, setIsEditingName] = useState(false);
   const pageAiAbortRef = useRef<AbortController | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
   const modelsQuery = useChatbotModels();
   const teachingAgentsQuery = useTeachingAgents();
 
@@ -2598,6 +2600,14 @@ function PageSettingsTab(): React.ReactNode {
     setPageAiOutput("");
     setPageAiError(null);
   }, [pageAiTask]);
+
+  useEffect((): void => {
+    if (!isEditingName) return;
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select?.();
+    }
+  }, [isEditingName]);
   const allSlugByValue = useMemo((): Map<string, Slug> => {
     const map = new Map<string, Slug>();
     allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
@@ -2974,6 +2984,73 @@ function PageSettingsTab(): React.ReactNode {
 
   return (
     <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
+      <div className="space-y-4 px-4 pt-4">
+        <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <FileText className="size-3 text-gray-500" />
+            {isEditingName ? (
+              <Input
+                id="page-name"
+                ref={nameInputRef}
+                value={page.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
+                onBlur={(): void => setIsEditingName(false)}
+                onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                  if (event.key === "Enter" || event.key === "Escape") {
+                    event.currentTarget.blur();
+                  }
+                }}
+                placeholder="Page name"
+                className="h-7 flex-1 bg-transparent px-2 text-xs"
+              />
+            ) : (
+              <span className="flex-1 truncate text-xs text-gray-200">
+                {page.name || "Untitled page"}
+              </span>
+            )}
+            {isEditingName ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditingName(false)}
+                  className="h-6 w-6 text-emerald-300 hover:text-emerald-100"
+                  aria-label="Save page name"
+                >
+                  <Check className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditingName(false)}
+                  className="h-6 w-6 text-rose-300 hover:text-rose-100"
+                  aria-label="Cancel editing page name"
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditingName(true)}
+                className="h-6 w-6 text-gray-400 hover:text-white"
+                aria-label="Edit page name"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
+          <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
+        </div>
+      </div>
+
       <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
         <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
         <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
@@ -2983,26 +3060,6 @@ function PageSettingsTab(): React.ReactNode {
       {/* ---- Page tab ---- */}
       <TabsContent value="page" className="flex-1 overflow-y-auto p-4 mt-0">
         <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            <FileText className="mr-1.5 inline size-3" />
-            {page.name}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="page-name" className="text-xs text-gray-400">Page name</Label>
-            <Input
-              id="page-name"
-              value={page.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
-              placeholder="Page name"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
-            <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
-          </div>
-
           {/* Status */}
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Status</Label>

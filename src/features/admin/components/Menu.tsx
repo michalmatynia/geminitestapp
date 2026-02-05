@@ -698,7 +698,7 @@ export const buildAdminNav = (handlers: {
     children: [
       { id: "jobs/products", label: "Product Jobs", href: "/admin/products/jobs" },
       { id: "jobs/ai", label: "AI Jobs", href: "/admin/ai-paths/jobs" },
-      { id: "jobs/queue", label: "AI Queue", href: "/admin/ai-paths/queue" },
+      { id: "jobs/queue", label: "Job Queue", href: "/admin/ai-paths/queue" },
       { id: "jobs/dead-letter", label: "Dead Letter", href: "/admin/ai-paths/dead-letter" },
       { id: "jobs/chatbot", label: "Chatbot Jobs", href: "/admin/chatbot/jobs" },
       { id: "jobs/listings", label: "Listing Jobs", href: "/admin/integrations/jobs" },

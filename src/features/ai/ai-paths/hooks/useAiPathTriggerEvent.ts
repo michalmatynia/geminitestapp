@@ -25,6 +25,9 @@ import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
+  appendLocalRun,
+  entityApi,
+  evaluateGraphWithIteratorAutoContinue,
   runsApi,
 } from "@/features/ai/ai-paths/lib";
 
@@ -427,59 +430,23 @@ export function useAiPathTriggerEvent(): {
         extras: args.extras ?? null,
       });
 
-      const runAt = new Date().toISOString();
       reportProgress({ status: "running", progress: 0 });
 
-      const enqueueResult = await runsApi.enqueue({
-        pathId: selectedConfig.id ?? "path",
-        pathName: selectedConfig.name ?? undefined,
-        nodes,
-        edges,
-        triggerEvent: triggerEventId,
-        triggerNodeId: triggerNode.id,
-        triggerContext,
-        entityId: args.entityId ?? null,
-        entityType: args.entityType,
-        meta: {
-          source: "trigger_button",
-          triggerEventId,
-          triggerLabel: args.triggerLabel ?? null,
-          ...(args.source ? { source: args.source } : {}),
-          ...(args.extras ?? {}),
-        },
-      });
-
-      if (!enqueueResult.ok) {
-        reportProgress({ status: "error", progress: 0 });
-        toast(enqueueResult.error || "Failed to enqueue AI Path run.", { variant: "error" });
-        return;
-      }
-
-      reportProgress({ status: "success", progress: 1 });
-      toast("AI Path run queued.", { variant: "success" });
-
-      if (args.entityType === "product") {
-        void queryClient.invalidateQueries({ queryKey: ["products"] });
-        void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
-      }
-      if (args.entityType === "note") {
-        void queryClient.invalidateQueries({ queryKey: ["notes"] });
-      }
-
-      try {
-        const updatedConfig: PathConfig = {
-          ...selectedConfig,
-          nodes,
-          edges,
-          lastRunAt: runAt,
-          updatedAt: runAt,
-        };
-
-        configs[updatedConfig.id] = updatedConfig;
-        const orderedIds: string[] = pathOrder.length ? pathOrder : orderedConfigs.map((config: PathConfig) => config.id);
-
+      const persistRunSnapshot = async (runAt: string): Promise<void> => {
         try {
+          const updatedConfig: PathConfig = {
+            ...selectedConfig,
+            nodes,
+            edges,
+            lastRunAt: runAt,
+            updatedAt: runAt,
+          };
+
+          configs[updatedConfig.id] = updatedConfig;
+          const orderedIds: string[] = pathOrder.length
+            ? pathOrder
+            : orderedConfigs.map((config: PathConfig) => config.id);
+
           const csrfHeaders = withCsrfHeaders({ "Content-Type": "application/json" });
           const configValue = safeJsonStringify(updatedConfig);
           const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
@@ -513,9 +480,131 @@ export function useAiPathTriggerEvent(): {
         } catch (error) {
           logger.error("Failed to persist AI Paths settings snapshot", error);
         }
-      } catch (error) {
-        logger.error("Failed to persist AI Paths run metadata", error);
+      };
+
+      const executionMode = selectedConfig.executionMode ?? "server";
+      const startedAt = new Date().toISOString();
+      const startedAtMs = Date.now();
+
+      if (executionMode === "local") {
+        try {
+          await evaluateGraphWithIteratorAutoContinue({
+            nodes,
+            edges,
+            activePathId: selectedConfig.id ?? null,
+            activePathName: selectedConfig.name ?? null,
+            triggerNodeId: triggerNode.id,
+            triggerEvent: triggerEventId,
+            triggerContext,
+            deferPoll: true,
+            recordHistory: true,
+            historyLimit: 50,
+            fetchEntityByType: async (entityType: string, entityId: string) => {
+              const result = await entityApi.getByType(entityType, entityId);
+              return result.ok ? result.data : null;
+            },
+            reportAiPathsError: (error, meta, summary) => {
+              logger.error(summary ?? "AI Paths run error", { error, ...meta });
+            },
+            toast,
+            onNodeFinish: ({ node }) => {
+              if (!completed.has(node.id)) {
+                completed.add(node.id);
+              }
+              reportProgress({
+                status: "running",
+                progress: completed.size / totalNodes,
+                node,
+              });
+            },
+          });
+          const runAt = new Date().toISOString();
+          reportProgress({ status: "success", progress: 1 });
+          toast("AI Path run completed locally.", { variant: "success" });
+          void appendLocalRun({
+            pathId: selectedConfig.id ?? null,
+            pathName: selectedConfig.name ?? null,
+            triggerEvent: triggerEventId,
+            triggerLabel: args.triggerLabel ?? null,
+            entityType: args.entityType,
+            entityId: args.entityId ?? null,
+            status: "success",
+            startedAt,
+            finishedAt: runAt,
+            durationMs: Date.now() - startedAtMs,
+            nodeCount: totalNodes,
+            source: "trigger_button",
+          });
+          if (args.entityType === "product") {
+            void queryClient.invalidateQueries({ queryKey: ["products"] });
+            void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+            void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
+          }
+          if (args.entityType === "note") {
+            void queryClient.invalidateQueries({ queryKey: ["notes"] });
+          }
+          await persistRunSnapshot(runAt);
+        } catch (error) {
+          reportProgress({ status: "error", progress: 0 });
+          toast("AI Path run failed.", { variant: "error" });
+          void appendLocalRun({
+            pathId: selectedConfig.id ?? null,
+            pathName: selectedConfig.name ?? null,
+            triggerEvent: triggerEventId,
+            triggerLabel: args.triggerLabel ?? null,
+            entityType: args.entityType,
+            entityId: args.entityId ?? null,
+            status: "error",
+            startedAt,
+            finishedAt: new Date().toISOString(),
+            durationMs: Date.now() - startedAtMs,
+            nodeCount: totalNodes,
+            error: error instanceof Error ? error.message : "Local run failed",
+            source: "trigger_button",
+          });
+        }
+        return;
       }
+
+      const enqueueResult = await runsApi.enqueue({
+        pathId: selectedConfig.id ?? "path",
+        pathName: selectedConfig.name ?? undefined,
+        nodes,
+        edges,
+        triggerEvent: triggerEventId,
+        triggerNodeId: triggerNode.id,
+        triggerContext,
+        entityId: args.entityId ?? null,
+        entityType: args.entityType,
+        meta: {
+          source: "trigger_button",
+          triggerEventId,
+          triggerLabel: args.triggerLabel ?? null,
+          ...(args.source ? { source: args.source } : {}),
+          ...(args.extras ?? {}),
+        },
+      });
+
+      if (!enqueueResult.ok) {
+        reportProgress({ status: "error", progress: 0 });
+        toast(enqueueResult.error || "Failed to enqueue AI Path run.", { variant: "error" });
+        return;
+      }
+
+      const runAt = new Date().toISOString();
+      reportProgress({ status: "success", progress: 1 });
+      toast("AI Path run queued.", { variant: "success" });
+
+      if (args.entityType === "product") {
+        void queryClient.invalidateQueries({ queryKey: ["products"] });
+        void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
+      }
+      if (args.entityType === "note") {
+        void queryClient.invalidateQueries({ queryKey: ["notes"] });
+      }
+
+      await persistRunSnapshot(runAt);
     } catch (error) {
       logger.error("Failed to run AI Path trigger", error);
       toast("Failed to run AI Path trigger.", { variant: "error" });

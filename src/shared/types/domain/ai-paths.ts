@@ -483,12 +483,15 @@ export type PathUiState = {
   configOpen?: boolean;
 };
 
+export type PathExecutionMode = "local" | "server";
+
 export type PathConfig = {
   id: string;
   version: number;
   name: string;
   description: string;
   trigger: string;
+  executionMode?: PathExecutionMode;
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;

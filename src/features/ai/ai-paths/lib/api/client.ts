@@ -8,6 +8,8 @@
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from "@/shared/types/agent-teaching";
+import type { ProductAiJobType } from "@/shared/types/jobs";
+import type { ProductFormData } from "@/features/products/types/forms";
 
 // ============================================================================
 // Types
@@ -413,6 +415,22 @@ export const aiJobsApi = {
     type: string;
     payload: unknown;
   }): Promise<ApiResponse<{ jobId: string }>> {
+    if (typeof window === "undefined") {
+      try {
+        const { enqueueProductAiJob } = await import("@/features/jobs/services/productAiService");
+        const job = await enqueueProductAiJob(
+          payload.productId,
+          payload.type as ProductAiJobType,
+          payload.payload
+        );
+        return { ok: true, data: { jobId: job.id } };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "Failed to enqueue AI job",
+        };
+      }
+    }
     return apiPost<{ jobId: string }>("/api/products/ai-jobs/enqueue", payload);
   },
 
@@ -457,6 +475,29 @@ export const aiGenerationApi = {
     imageUrls: string[];
     descriptionConfig?: Record<string, unknown>;
   }): Promise<ApiResponse<{ description?: string }>> {
+    if (typeof window === "undefined") {
+      try {
+        const { generateProductDescription } = await import(
+          "@/features/products/services/aiDescriptionService"
+        );
+        const result = await generateProductDescription({
+          productData: body.entityJson as ProductFormData,
+          imageUrls: body.imageUrls ?? [],
+          visionOutputEnabled: body.descriptionConfig?.visionOutputEnabled as
+            | boolean
+            | undefined,
+          generationOutputEnabled: body.descriptionConfig?.generationOutputEnabled as
+            | boolean
+            | undefined,
+        });
+        return { ok: true, data: { description: result.description } };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "Failed to generate description",
+        };
+      }
+    }
     return apiPost<{ description?: string }>("/api/generate-description", body);
   },
 
@@ -467,6 +508,23 @@ export const aiGenerationApi = {
     productId: string,
     description: string
   ): Promise<ApiResponse<Record<string, unknown>>> {
+    if (typeof window === "undefined") {
+      try {
+        const { updateProduct } = await import("@/features/products/server");
+        const formData = new FormData();
+        formData.append("description_en", description);
+        const updated = await updateProduct(productId, formData);
+        if (!updated) {
+          return { ok: false, error: "Product not found" };
+        }
+        return { ok: true, data: updated as Record<string, unknown> };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "Failed to update description",
+        };
+      }
+    }
     try {
       const formData = new FormData();
       formData.append("description_en", description);

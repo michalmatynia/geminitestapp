@@ -1,0 +1,33 @@
+(node:23015) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:23079) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=25s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=40s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=55s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=70s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=85s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=100s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=115s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=130s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=145s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=160s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=175s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=190s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=205s)
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1353.499576ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=222s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=237s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=252s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=267s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=282s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=297s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=312s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=327s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=342s)

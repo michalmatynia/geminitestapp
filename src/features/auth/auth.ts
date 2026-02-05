@@ -288,6 +288,16 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {
           const userId = user?.id ?? token.sub;
           if (!userId) return token;
+
+          const tokenMeta = token as JWT & { authRefreshedAt?: number };
+          const now = Date.now();
+          const refreshTtlMs = Number.parseInt(process.env.AUTH_TOKEN_REFRESH_TTL_MS ?? "60000", 10);
+          const lastRefresh = typeof tokenMeta.authRefreshedAt === "number" ? tokenMeta.authRefreshedAt : 0;
+          const hasRole = typeof tokenMeta.role === "string" && tokenMeta.role.length > 0;
+          const shouldRefresh = Boolean(user) || !hasRole || now - lastRefresh > refreshTtlMs;
+
+          if (!shouldRefresh) return token;
+
           try {
             const access = await getAuthAccessForUser(userId);
             token.role = access.roleId;
@@ -297,6 +307,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             const security = await getAuthSecurityProfile(userId);
             token.accountDisabled = Boolean(security.disabledAt);
             token.accountBanned = Boolean(security.bannedAt);
+            tokenMeta.authRefreshedAt = now;
           } catch (error) {
             await ErrorSystem.captureException(error, {
               service: "auth",

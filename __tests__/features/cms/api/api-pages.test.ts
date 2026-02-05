@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { GET as listPages, POST as createPage } from "@/app/api/cms/pages/route";
+import { GET as listPages, POST } from "@/app/api/cms/pages/route";
 import { GET as getPage, PUT as updatePage, DELETE as deletePage } from "@/app/api/cms/pages/[id]/route";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 

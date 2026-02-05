@@ -4,7 +4,6 @@ import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination,
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  RefreshCw,
   Clock,
   CheckCircle,
   XCircle,

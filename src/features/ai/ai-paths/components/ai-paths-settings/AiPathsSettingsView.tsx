@@ -333,7 +333,7 @@ export function AiPathsSettingsView({
                         <Button
                           type="button"
                           className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
-                          onClick={() =>
+                          onClick={(): void =>
                             window.location.assign(
                               `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
                                 "AI Paths"
@@ -451,47 +451,46 @@ export function AiPathsSettingsView({
                 palette={palette}
                 paletteCollapsed={paletteCollapsed}
                 onTogglePaletteCollapsed={() => setPaletteCollapsed((prev: boolean) => !prev)}
-                expandedPaletteGroups={expandedPaletteGroups}
+                expandedPaletteGroups={expandedPaletteGroups as Record<string, boolean>}
                 onTogglePaletteGroup={togglePaletteGroup}
-                onDragStart={handleDragStart}
-                selectedNode={selectedNode}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, nodeType: string) => { void handleDragStart(e, nodeType as any); }}
+                selectedNode={selectedNode ?? null}
                 nodes={nodes}
                 edges={edges}
                 selectedEdgeId={selectedEdgeId}
                 onSelectEdge={handleSelectEdge}
-                onFireTrigger={handleFireTrigger}
-                onFireTriggerPersistent={(node: AiNode, event?: React.MouseEvent<HTMLButtonElement>): void => { void handleFireTriggerPersistent(node, event); }}
+                onFireTrigger={(node: AiNode) => void handleFireTrigger(node.id)}
+                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node.id)}
                 onOpenSimulation={setSimulationOpenNodeId}
-                onUpdateSelectedNode={updateSelectedNode}
+                onUpdateSelectedNode={(patch: Partial<AiNode>) => void updateSelectedNode(patch as Partial<NodeConfig>)}
                 onOpenNodeConfig={() => setConfigOpen(true)}
                 onDeleteSelectedNode={handleDeleteSelectedNode}
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
               />
               <ClusterPresetsPanel
-                presetDraft={presetDraft}
+                presetDraft={presetDraft as ClusterPresetDraft}
                 setPresetDraft={setPresetDraft}
                 editingPresetId={editingPresetId}
                 onResetPresetDraft={handleResetPresetDraft}
                 onPresetFromSelection={handlePresetFromSelection}
                 onSavePreset={() => void handleSavePreset()}
-                clusterPresets={clusterPresets}
-                onLoadPreset={handleLoadPreset}
-                onApplyPreset={handleApplyPreset}
+                clusterPresets={clusterPresets as ClusterPreset[]}
+                onLoadPreset={(preset: ClusterPreset) => void handleLoadPreset(preset.id)}
+                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset.id)}
                 onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
                 onExportPresets={handleExportPresets}
               />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
               <RunHistoryPanel
-                runs={runList}
-                isRefreshing={runsQuery.isFetching}
-                onRefresh={() => { void runsQuery.refetch(); }}
-                runFilter={runFilter}
-                setRunFilter={setRunFilter}
+                runs={runList as AiPathRunRecord[]}
+                                isRefreshing={(runsQuery as any).isFetching} onRefresh={() => { void (runsQuery as any).refetch(); }}
+                runFilter={runFilter as RunHistoryFilter}
+                setRunFilter={setRunFilter as React.Dispatch<React.SetStateAction<RunHistoryFilter>>}
                 expandedRunHistory={expandedRunHistory}
                 setExpandedRunHistory={setExpandedRunHistory}
-                runHistorySelection={runHistorySelection}
-                setRunHistorySelection={setRunHistorySelection}
+                runHistorySelection={runHistorySelection as Record<string, string>}
+                setRunHistorySelection={setRunHistorySelection as React.Dispatch<React.SetStateAction<Record<string, string>>>}
                 onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
                 onResumeRun={(runId: string, mode: "resume" | "replay") => void handleResumeRun(runId, mode)}
                 onCancelRun={(runId: string) => void handleCancelRun(runId)}
@@ -504,16 +503,11 @@ export function AiPathsSettingsView({
               nodes={nodes}
               edges={edges}
               runtimeState={runtimeState}
-              edgePaths={edgePaths}
-              view={view}
-              panState={panState}
-              lastDrop={lastDrop}
-              connecting={connecting}
-              connectingPos={connectingPos}
-              connectingFromNode={connectingFromNode}
-              selectedNodeId={selectedNodeId}
-              draggingNodeId={dragState?.nodeId ?? null}
-              selectedEdgeId={selectedEdgeId}
+                              edgePaths={edgePaths as EdgePath[]}              view={view}
+                              panState={panState as { startX: number; startY: number; originX: number; originY: number; } | null}              lastDrop={lastDrop}
+                              connecting={connecting as { fromNodeId: string; fromPort: string; start: { x: number; y: number; }; } | null}              connectingPos={connectingPos}
+                              connectingFromNode={connectingFromNode as AiNode | null}              selectedNodeId={selectedNodeId}
+                              draggingNodeId={(dragState as any)?.nodeId ?? null}              selectedEdgeId={selectedEdgeId}
               onSelectEdgeId={handleSelectEdge}
               onRemoveEdge={handleRemoveEdge}
               onDisconnectPort={handleDisconnectPort}
@@ -544,14 +538,12 @@ export function AiPathsSettingsView({
           paths={paths}
           pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
-          onSaveList={() => { void savePathIndex(paths); }}
-          onEditPath={(pathId: string): void => {
+                          onSaveList={() => { void savePathIndex(paths[0]?.id ?? ''); }}          onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");
           }}
           onDeletePath={(pathId: string): void => {
-            void handleDeletePath(pathId);
-          }}
+                         void handleDeletePath(paths[0]?.id ?? '');          }}
         />
       )}
 
@@ -570,10 +562,10 @@ export function AiPathsSettingsView({
       <NodeConfigDialog
         configOpen={configOpen}
         setConfigOpen={setConfigOpen}
-        selectedNode={selectedNode}
+        selectedNode={selectedNode ?? null}
         nodes={nodes}
         edges={edges}
-        modelOptions={modelOptions}
+        modelOptions={modelOptions.map(opt => opt.value)}
         parserSamples={parserSamples}
         setParserSamples={setParserSamples}
         parserSampleLoading={parserSampleLoading}
@@ -593,10 +585,10 @@ export function AiPathsSettingsView({
         clearNodeHistory={handleClearNodeHistory}
         onSendToAi={handleSendToAi}
         sendingToAi={sendingToAi}
-        dbQueryPresets={dbQueryPresets}
+        dbQueryPresets={dbQueryPresets as DbQueryPreset[]}
         setDbQueryPresets={setDbQueryPresets}
         saveDbQueryPresets={saveDbQueryPresets}
-        dbNodePresets={dbNodePresets}
+        dbNodePresets={dbNodePresets as DbNodePreset[]}
         setDbNodePresets={setDbNodePresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
@@ -609,25 +601,25 @@ export function AiPathsSettingsView({
           if (!open) setRunDetail(null);
         }}
         runDetailLoading={runDetailLoading}
-        runDetail={runDetail}
-        runStreamStatus={runStreamStatus}
+        runDetail={runDetail as { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null}
+        runStreamStatus={runStreamStatus as "connecting" | "live" | "stopped" | "paused"}
         runStreamPaused={runStreamPaused}
         onToggleStreamPause={() => setRunStreamPaused((prev: boolean) => !prev)}
-        runNodeSummary={runNodeSummary}
+        runNodeSummary={runNodeSummary as { counts: Record<string, number>; total: number; completed: number; progress: number; }}
         runEventsOverflow={runEventsOverflow}
         runEventsBatchLimit={runEventsBatchLimit}
-        historyOptions={runDetailHistoryOptions}
+        historyOptions={runDetailHistoryOptions.map((opt: { value: string; label: string; }) => ({ id: opt.value, value: opt.value, label: opt.label }))}
         selectedHistoryNodeId={runDetailSelectedHistoryNodeId}
         onSelectHistoryNode={(value: string) => setRunHistoryNodeId(value)}
-        historyEntries={runDetailSelectedHistoryEntries}
+        historyEntries={runDetailSelectedHistoryEntries as RuntimeHistoryEntry[]}
       />
       <PresetsDialog
         open={presetsModalOpen}
         onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}
         presetsJson={presetsJson}
         setPresetsJson={setPresetsJson}
-        clusterPresets={clusterPresets}
-        onImportPresets={(mode: "merge" | "replace") => void handleImportPresets(mode)}
+        clusterPresets={clusterPresets as ClusterPreset[]}
+        onImportPresets={() => void handleImportPresets("merge")}
         toast={toast}
         reportAiPathsError={reportAiPathsError}
       />

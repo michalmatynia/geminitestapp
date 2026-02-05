@@ -3978,9 +3978,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
               </Button>
             </div>
 
-            <div className="text-[11px] text-gray-400">
-              Folder: <span className="text-gray-200">{selectedFolder || "(root)"}</span>
-            </div>
+            {selectedFolder ? (
+              <div className="text-[11px] text-gray-400">
+                Folder: <span className="text-gray-200">{selectedFolder}</span>
+              </div>
+            ) : null}
             <div className="flex items-center gap-2">
               <Input
                 value={newFolderName}
@@ -3998,18 +4000,18 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 Create folder
               </Button>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setSlotCreateOpen(true)}
-              disabled={!projectId || maxSlotsReached}
-            >
-              New Slot
-            </Button>
-            {selectedSlot ? (
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSlotCreateOpen(true)}
+                disabled={!projectId || maxSlotsReached}
+              >
+                New Slot
+              </Button>
+              {selectedSlot ? (
+                <>
                   <Button
                     type="button"
                     size="sm"
@@ -4027,9 +4029,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   >
                     <Settings2 className="size-4" />
                   </Button>
-                </div>
-              </div>
-            ) : null}
+                </>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex-1 overflow-hidden">

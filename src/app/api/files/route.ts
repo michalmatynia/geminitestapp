@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { getImageFileRepository } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/server";
-import type { ProductWithImages } from "@/features/products/server";
+
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -77,10 +77,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
     return NextResponse.json(result);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/files",
-      method: "GET",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "files.GET",

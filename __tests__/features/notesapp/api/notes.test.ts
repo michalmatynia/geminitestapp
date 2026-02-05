@@ -1,4 +1,4 @@
-import { GET as GET_NOTES, POST as POST_NOTES } from "@/app/api/notes/route";
+import { GET as GET_NOTES, POST } from "@/app/api/notes/route";
 import {
   GET as GET_NOTE,
   PATCH as PATCH_NOTE,

@@ -62,10 +62,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/client-errors",
-      method: "POST",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "client-errors.POST",

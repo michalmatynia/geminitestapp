@@ -8,101 +8,54 @@ import {
   validationCache,
   getValidationHealth,
 } from "@/features/products/validations";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import { badRequestError } from "@/shared/errors/app-error";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 // POST /api/products/validation - Batch validation
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const data = (await req.json()) as { products: unknown[] };
+  const products = data.products;
 
-export async function POST(req: NextRequest): Promise<Response> {
-
-  try {
-
-    const data = await req.json() as { products: unknown[] };
-
-    const products = data.products;
-
-
-
-    if (!Array.isArray(products)) {
-
-      return NextResponse.json(
-
-        { error: "Products must be an array" },
-
-        { status: 400 }
-
-      );
-
-    }
-
-
-
-    const result = await validateProductsBatch(products, "create");
-
-    
-
-    return NextResponse.json({
-
-      summary: {
-
-        total: result.summary.total,
-
-        successful: result.summary.successful,
-
-        failed: result.summary.failed,
-
-      },
-
-      results: result.results,
-
-      globalErrors: [],
-
-    });
-
-  } catch (_error) {
-
-    return NextResponse.json(
-
-      { error: "Batch validation failed" },
-
-      { status: 500 }
-
-    );
-
+  if (!Array.isArray(products)) {
+    throw badRequestError("Products must be an array");
   }
 
-}
-
-
-
-// GET /api/products/validation - Health check
-
-export function GET(): Response {
-
-  const health = getValidationHealth();
-
-  const cacheStats = validationCache.getStats();
-
-  
+  const result = await validateProductsBatch(products, "create");
 
   return NextResponse.json({
-
-    validation: health,
-
-    cache: cacheStats,
-
-    external: {
-
-      providers: externalValidationService.getProviders(),
-
+    summary: {
+      total: result.summary.total,
+      successful: result.summary.successful,
+      failed: result.summary.failed,
     },
-
-    rules: {
-
-      total: validationRuleEngine.getAllRules().length,
-
-      active: validationRuleEngine.getAllRules().filter(r => r.active).length,
-
-    },
-
+    results: result.results,
+    globalErrors: [],
   });
-
 }
+
+// GET /api/products/validation - Health check
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const health = getValidationHealth();
+  const cacheStats = validationCache.getStats();
+
+  return NextResponse.json({
+    validation: health,
+    cache: cacheStats,
+    external: {
+      providers: externalValidationService.getProviders(),
+    },
+    rules: {
+      total: validationRuleEngine.getAllRules().length,
+      active: validationRuleEngine.getAllRules().filter((r) => r.active).length,
+    },
+  });
+}
+
+export const POST = apiHandler(POST_handler, {
+  source: "products.validation.POST",
+});
+
+export const GET = apiHandler(GET_handler, {
+  source: "products.validation.GET",
+});

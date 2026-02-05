@@ -77,48 +77,91 @@ export type AuthUserAccess = {
   role?: AuthRole;
 };
 
+const parseNumber = (value: string | undefined, fallback: number): number => {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const AUTH_ACCESS_CACHE_TTL_MS = parseNumber(
+  process.env.AUTH_ACCESS_CACHE_TTL_MS ?? process.env.AUTH_TOKEN_REFRESH_TTL_MS,
+  60_000
+);
+
+const accessCache = new Map<string, { value: AuthUserAccess; ts: number }>();
+const accessInflight = new Map<string, Promise<AuthUserAccess>>();
+
+export const invalidateAuthAccessCache = (userId?: string): void => {
+  if (userId) {
+    accessCache.delete(userId);
+    accessInflight.delete(userId);
+    return;
+  }
+  accessCache.clear();
+  accessInflight.clear();
+};
+
 export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAccess> => {
-  const [roles, userRoles, defaultRoleId] = await Promise.all([
-    getAuthRoles(),
-    getAuthUserRoles(),
-    getAuthDefaultRoleId(),
-  ]);
-  const roleList = roles.length > 0 ? roles : DEFAULT_AUTH_ROLES;
-  const validDefaultRoleId =
-    defaultRoleId && roleList.some((role: AuthRole) => role.id === defaultRoleId)
-      ? defaultRoleId
-      : null;
-  const fallbackRoleId =
-    roleList.find((role: AuthRole) => role.id === "viewer")?.id ??
-    roleList.find((role: AuthRole) => !["super_admin", "superuser", "admin"].includes(role.id))
-      ?.id ??
-    roleList[0]?.id ??
-    "admin";
+  const now = Date.now();
+  const cached = accessCache.get(userId);
+  if (cached && now - cached.ts < AUTH_ACCESS_CACHE_TTL_MS) {
+    return cached.value;
+  }
+  const inflight = accessInflight.get(userId);
+  if (inflight) return inflight;
 
-  const assignedRoleId = userRoles[userId];
-  const isAssignedValid = assignedRoleId
-    ? roleList.some((role: AuthRole) => role.id === assignedRoleId)
-    : false;
-  const effectiveRoleId = isAssignedValid
-    ? (assignedRoleId as string)
-    : validDefaultRoleId ?? fallbackRoleId;
+  const promise = (async (): Promise<AuthUserAccess> => {
+    const [roles, userRoles, defaultRoleId] = await Promise.all([
+      getAuthRoles(),
+      getAuthUserRoles(),
+      getAuthDefaultRoleId(),
+    ]);
+    const roleList = roles.length > 0 ? roles : DEFAULT_AUTH_ROLES;
+    const validDefaultRoleId =
+      defaultRoleId && roleList.some((role: AuthRole) => role.id === defaultRoleId)
+        ? defaultRoleId
+        : null;
+    const fallbackRoleId =
+      roleList.find((role: AuthRole) => role.id === "viewer")?.id ??
+      roleList.find((role: AuthRole) => !["super_admin", "superuser", "admin"].includes(role.id))
+        ?.id ??
+      roleList[0]?.id ??
+      "admin";
 
-  const role =
-    roleList.find((item: AuthRole) => item.id === effectiveRoleId) ??
-    roleList[0] ??
-    DEFAULT_AUTH_ROLES[0]!;
+    const assignedRoleId = userRoles[userId];
+    const isAssignedValid = assignedRoleId
+      ? roleList.some((role: AuthRole) => role.id === assignedRoleId)
+      : false;
+    const effectiveRoleId = isAssignedValid
+      ? (assignedRoleId as string)
+      : validDefaultRoleId ?? fallbackRoleId;
 
-  const roleLevel = role.level ?? 0;
-  const denied = role.deniedPermissions ?? [];
-  const permissions = (role.permissions ?? []).filter(
-    (permission: string) => !denied.includes(permission)
-  );
+    const role =
+      roleList.find((item: AuthRole) => item.id === effectiveRoleId) ??
+      roleList[0] ??
+      DEFAULT_AUTH_ROLES[0]!;
 
-  return {
-    roleId: role.id,
-    permissions,
-    level: roleLevel,
-    isElevated: roleLevel >= ROLE_ELEVATION_THRESHOLD,
-    role,
-  };
+    const roleLevel = role.level ?? 0;
+    const denied = role.deniedPermissions ?? [];
+    const permissions = (role.permissions ?? []).filter(
+      (permission: string) => !denied.includes(permission)
+    );
+
+    return {
+      roleId: role.id,
+      permissions,
+      level: roleLevel,
+      isElevated: roleLevel >= ROLE_ELEVATION_THRESHOLD,
+      role,
+    };
+  })();
+
+  accessInflight.set(userId, promise);
+  try {
+    const value = await promise;
+    accessCache.set(userId, { value, ts: Date.now() });
+    return value;
+  } finally {
+    accessInflight.delete(userId);
+  }
 };

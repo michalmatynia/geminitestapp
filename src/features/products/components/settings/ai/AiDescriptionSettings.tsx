@@ -1,10 +1,11 @@
 "use client";
 
-import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Badge, UnifiedSelect, SectionPanel, SettingsPageLayout } from "@/shared/ui";
+import { Button, Input, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, SettingsPageLayout } from "@/shared/ui";
+import { PromptGenerationSection } from '@/shared/ui/prompt-generation-section';
 import { useState, useEffect } from "react";
 import { useUpdateSetting } from "@/shared/hooks/useSettings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
-import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
+import { InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import { logClientError } from "@/features/observability";
 import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from "@/shared/api/settings-client";
@@ -415,179 +416,59 @@ export function AiDescriptionSettings(): React.JSX.Element {
       }
     >
       <div className="space-y-8">
-        {/* Path 1 */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="info" className="h-6 w-6 justify-center p-0 font-bold">1</Badge>
-            <h3 className="text-md font-medium text-white">Signal Path 1: Image Analysis</h3>
-          </div>
-          
-          <div className="pl-8 space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Input Prompt</Label>
-                <Textarea
-                  rows={4}
-                  value={visionInputPrompt}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVisionInputPrompt(e.target.value)}
-                  className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Initial Result</Label>
-                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => copyResult(testResult?.analysisInitial)}>
-                    <CopyIcon className="size-3 mr-1"/>Copy
-                  </Button>
-                </div>
-                <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
-                  {testResult?.analysisInitial ? (
-                    <div className="whitespace-pre-wrap">{testResult.analysisInitial}</div>
-                  ) : (
-                    <span className="text-gray-600 italic text-xs">No result yet.</span>
-                  )}
-                </SectionPanel>
-              </div>
-            </div>
+        <PromptGenerationSection
+          pathNumber={1}
+          pathTitle="Signal Path 1: Image Analysis"
+          inputLabel="Input Prompt"
+          inputValue={visionInputPrompt}
+          onInputChange={setVisionInputPrompt}
+          initialResultLabel="Initial Result"
+          initialResultValue={testResult?.analysisInitial || null}
+          onCopyInitialResult={() => copyResult(testResult?.analysisInitial)}
+          modelLabel="Vision Model"
+          modelValue={imageAnalysisModel}
+          onModelChange={setImageAnalysisModel}
+          modelOptions={[...STATIC_VISION_MODELS, ...ollamaModels]}
+          outputEnabled={visionOutputEnabled}
+          onOutputEnabledChange={setVisionOutputEnabled}
+          outputPromptLabel="Output Prompt"
+          outputPromptValue={visionOutputPrompt}
+          onOutputPromptChange={setVisionOutputPrompt}
+          outputPlaceholder="Refine result... use [result] for initial analysis."
+          finalResultLabel="Final Analysis"
+          finalResultValue={testResult?.analysisFinal || null}
+          onCopyFinalResult={() => copyResult(testResult?.analysisFinal)}
+          badgeVariant="info"
+          badgeTextColor="text-blue-400"
+          outputEnabledCheckboxId="v-output-enabled"
+        />
 
-            <div className="max-w-md">
-              <Label>Vision Model</Label>
-              <UnifiedSelect
-                value={imageAnalysisModel}
-                onValueChange={setImageAnalysisModel}
-                options={[...STATIC_VISION_MODELS, ...ollamaModels]}
-              />
-            </div>
-
-            <div className="pt-4 border-t border-border/50 space-y-4">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="v-output-enabled" 
-                  checked={visionOutputEnabled} 
-                  onCheckedChange={(checked: boolean | "indeterminate") => setVisionOutputEnabled(!!checked)} 
-                />
-                <Label htmlFor="v-output-enabled" className="text-blue-400 cursor-pointer">Enable Output Prompt (Refinement using {imageAnalysisModel})</Label>
-              </div>
-              {visionOutputEnabled && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="space-y-2">
-                    <Label>Output Prompt</Label>
-                    <Textarea
-                      rows={4}
-                      value={visionOutputPrompt}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVisionOutputPrompt(e.target.value)}
-                      className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
-                      placeholder="Refine result... use [result] for initial analysis."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Final Analysis</Label>
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => copyResult(testResult?.analysisFinal)}>
-                        <CopyIcon className="size-3 mr-1"/>Copy
-                      </Button>
-                    </div>
-                    <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
-                      {testResult?.analysisFinal ? (
-                        <div className="whitespace-pre-wrap">{testResult.analysisFinal}</div>
-                      ) : (
-                        <span className="text-gray-600 italic text-xs">No result yet.</span>
-                      )}
-                    </SectionPanel>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-border my-8"></div>
-
-        {/* Path 2 */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="h-6 w-6 justify-center p-0 font-bold border-purple-500/30 bg-purple-500/20 text-purple-400">2</Badge>
-            <h3 className="text-md font-medium text-white">Signal Path 2: Description Generation</h3>
-          </div>
-          
-          <div className="pl-8 space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Input Prompt</Label>
-                <Textarea
-                  rows={6}
-                  value={generationInputPrompt}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setGenerationInputPrompt(e.target.value)}
-                  className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Initial Description</Label>
-                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => copyResult(testResult?.descriptionInitial)}>
-                    <CopyIcon className="size-3 mr-1"/>Copy
-                  </Button>
-                </div>
-                <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
-                  {testResult?.descriptionInitial ? (
-                    <div className="whitespace-pre-wrap">{testResult.descriptionInitial}</div>
-                  ) : (
-                    <span className="text-gray-600 italic text-xs">No result yet.</span>
-                  )}
-                </SectionPanel>
-              </div>
-            </div>
-
-            <div className="max-w-md">
-              <Label>Generation Model</Label>
-              <UnifiedSelect
-                value={descriptionGenerationModel}
-                onValueChange={setDescriptionGenerationModel}
-                options={[...STATIC_TEXT_MODELS, ...ollamaModels]}
-              />
-            </div>
-
-            <div className="pt-4 border-t border-border/50 space-y-4">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="g-output-enabled" 
-                  checked={generationOutputEnabled} 
-                  onCheckedChange={(checked: boolean | "indeterminate") => setGenerationOutputEnabled(!!checked)} 
-                />
-                <Label htmlFor="g-output-enabled" className="text-purple-400 cursor-pointer">Enable Output Prompt (Refinement using {descriptionGenerationModel})</Label>
-              </div>
-              {generationOutputEnabled && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="space-y-2">
-                    <Label>Output Prompt</Label>
-                    <Textarea
-                      rows={6}
-                      value={generationOutputPrompt}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setGenerationOutputPrompt(e.target.value)}
-                      className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
-                      placeholder="Final polish... use [result] for initial description."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Final Description</Label>
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => copyResult(testResult?.descriptionFinal)}>
-                        <CopyIcon className="size-3 mr-1"/>Copy
-                      </Button>
-                    </div>
-                    <SectionPanel variant="subtle" className="mt-1.5 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
-                      {testResult?.descriptionFinal ? (
-                        <div className="whitespace-pre-wrap">{testResult.descriptionFinal}</div>
-                      ) : (
-                        <span className="text-gray-600 italic text-xs">No result yet.</span>
-                      )}
-                    </SectionPanel>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <PromptGenerationSection
+          pathNumber={2}
+          pathTitle="Signal Path 2: Description Generation"
+          inputLabel="Input Prompt"
+          inputValue={generationInputPrompt}
+          onInputChange={setGenerationInputPrompt}
+          initialResultLabel="Initial Description"
+          initialResultValue={testResult?.descriptionInitial || null}
+          onCopyInitialResult={() => copyResult(testResult?.descriptionInitial)}
+          modelLabel="Generation Model"
+          modelValue={descriptionGenerationModel}
+          onModelChange={setDescriptionGenerationModel}
+          modelOptions={[...STATIC_TEXT_MODELS, ...ollamaModels]}
+          outputEnabled={generationOutputEnabled}
+          onOutputEnabledChange={setGenerationOutputEnabled}
+          outputPromptLabel="Output Prompt"
+          outputPromptValue={generationOutputPrompt}
+          onOutputPromptChange={setGenerationOutputPrompt}
+          outputPlaceholder="Final polish... use [result] for initial description."
+          finalResultLabel="Final Description"
+          finalResultValue={testResult?.descriptionFinal || null}
+          onCopyFinalResult={() => copyResult(testResult?.descriptionFinal)}
+          badgeVariant="secondary"
+          badgeTextColor="text-purple-400"
+          outputEnabledCheckboxId="g-output-enabled"
+        />
       </div>
     </SettingsPageLayout>
   );

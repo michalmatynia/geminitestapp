@@ -5,7 +5,6 @@
 import * as React from "react";
 
 import {
-  Button,
   Input,
   Label,
   Checkbox,
@@ -19,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui";
-import { FormModal } from "@/shared/components/FormModal";
+import { FormModal } from "@/shared/ui";
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSavePriceGroupMutation } from "@/features/products/hooks/useProductSettingsQueries";

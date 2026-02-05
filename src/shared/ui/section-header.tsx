@@ -11,6 +11,7 @@ const titleSizes: Record<SectionHeaderSize, string> = {
 
 type SectionHeaderProps = {
   title: string;
+  subtitle?: string | undefined; // Added subtitle prop
   description?: string;
   actions?: ReactNode;
   eyebrow?: ReactNode;
@@ -18,11 +19,14 @@ type SectionHeaderProps = {
   size?: SectionHeaderSize;
   className?: string;
   titleClassName?: string;
+  subtitleClassName?: string; // Added subtitleClassName prop
   descriptionClassName?: string;
+  children?: ReactNode; // Added children prop
 };
 
 export function SectionHeader({
   title,
+  subtitle, // Added subtitle
   description,
   actions,
   eyebrow,
@@ -30,7 +34,9 @@ export function SectionHeader({
   size = "lg",
   className,
   titleClassName,
+  subtitleClassName, // Added subtitleClassName
   descriptionClassName,
+  children, // Added children
 }: SectionHeaderProps) {
   return (
     <div
@@ -39,7 +45,7 @@ export function SectionHeader({
         className
       )}
     >
-      <div className="space-y-2">
+      <div className="space-y-2 flex-1 min-w-0"> {/* Added flex-1 and min-w-0 for better flex behavior */}
         {eyebrow ? <div className="text-sm text-muted-foreground">{eyebrow}</div> : null}
         <div className="flex items-center gap-3">
           {icon ? <div className="shrink-0">{icon}</div> : null}
@@ -53,6 +59,11 @@ export function SectionHeader({
             {title}
           </h1>
         </div>
+        {subtitle ? ( // Render subtitle if provided
+          <h2 className={cn("text-sm text-gray-400", subtitleClassName)}>
+            {subtitle}
+          </h2>
+        ) : null}
         {description ? (
           <p className={cn("text-sm text-gray-400", descriptionClassName)}>
             {description}
@@ -60,7 +71,14 @@ export function SectionHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0"> {/* Added shrink-0 for actions */}
+          {actions}
+        </div>
+      ) : null}
+      {children ? ( // Render children at the bottom, similar to TreeHeader
+        <div className={cn("w-full pt-4", children ? "mt-3" : "")}> {/* Added w-full and pt-4 */}
+          {children}
+        </div>
       ) : null}
     </div>
   );

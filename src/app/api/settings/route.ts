@@ -319,10 +319,6 @@ async function GET_handler(
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
     return response;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/settings",
-      method: "GET",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "settings.GET",
@@ -380,10 +376,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
     return NextResponse.json(setting);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/settings",
-      method: "POST",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "settings.POST",

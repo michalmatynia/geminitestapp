@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROMPT=${1:?Usage: ./gemini-headless-retry.sh "prompt"}
-MODEL="${MODEL:-gemini-2.5-pro}"
+MODEL="${MODEL:-gemini-2.5-flash}"
 SLEEP_SEC="${SLEEP_SEC:-15}"
 MAX_SLEEP="${MAX_SLEEP:-300}"
 
@@ -11,8 +11,7 @@ while true; do
 
   set +e
   gemini -p "$PROMPT" -m "$MODEL" \
-    --approval-mode auto_edit \
-    --yolo \
+    --approval-mode yolo \
     --output-format stream-json \
     2>&1 | tee "$tmp"
   rc=${PIPESTATUS[0]}

@@ -41,7 +41,7 @@ export function Asset3DCard({
   return (
     <ResourceCard
       title={displayName}
-      description={asset.description}
+      description={asset.description ?? ''}
       className={className}
       onClick={(): void => onPreview(asset)}
       actions={

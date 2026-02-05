@@ -1,0 +1,73 @@
+
+> libapp2@0.1.0 lint
+> eslint .
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx
+  487:31  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  488:41  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  515:31  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/pages/FileUploadEventsPage.tsx
+  81:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteFilters.ts
+  51:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteFilters.ts:51:5
+  49 |    
+  50 |   useEffect((): void => {
+> 51 |     setPage(1);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  52 |   }, [
+  53 |     debouncedSearchQuery,
+  54 |     filterPinned,  react-hooks/set-state-in-effect
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+  249:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters.tsx
+  53:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/settings/ai/AiDescriptionSettings.tsx
+  4:1  error  '@/shared/components/PromptGenerationSection' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useCatalogSync.ts
+  204:73  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useEnhancedQueries.ts
+  74:7  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useMetadata.ts
+   64:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+   64:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+   92:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+   92:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  120:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  120:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/DynamicFilters.tsx
+  20:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:22  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  68:22  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  77:22  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts
+  46:65  error  Unexpected path "@/features/observability/server" imported in restricted zone. Shared layer must not import from features  import/no-restricted-paths
+  56:70  error  Unexpected path "@/features/observability/server" imported in restricted zone. Shared layer must not import from features  import/no-restricted-paths
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/handle-api-error.ts
+  44:70  error  Unexpected path "@/features/observability/server" imported in restricted zone. Shared layer must not import from features  import/no-restricted-paths
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  37:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 25 problems (25 errors, 0 warnings)
+

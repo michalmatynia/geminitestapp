@@ -1,4 +1,6 @@
-import { Button, SharedModal } from "@/shared/ui";
+"use client";
+
+import { AppModal } from "./app-modal";
 import type { ReactNode } from "react";
 
 interface FormModalProps {
@@ -67,14 +69,14 @@ export function FormModal({
   );
 
   return (
-    <SharedModal
+    <AppModal
       open={isOpen}
-      onClose={onClose}
-      title={title} // SharedModal also takes title, but our custom header will override visual
+      onOpenChange={onClose} // Pass onClose to AppModal's onOpenChange
+      title={title} // Pass title for accessibility, though custom header includes it
       header={header}
       size={size}
     >
       {children}
-    </SharedModal>
+    </AppModal>
   );
 }

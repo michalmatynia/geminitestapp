@@ -51,6 +51,7 @@ export * from "./theme-toggle";
 export * from "./table-skeleton";
 export * from "./QueryDevPanel";
 export * from "./QueryErrorBoundary";
+export * from "./PromptGenerationSection";
 
 export { default as FilePreviewModal } from "./file-preview-modal";
 export { default as MissingImagePlaceholder } from "./missing-image-placeholder";

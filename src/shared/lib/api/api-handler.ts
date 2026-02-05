@@ -40,15 +40,25 @@ type ErrorFingerprintParams = {
   error: unknown;
 };
 
-// Stub implementations to avoid features layer dependency
-const logSystemEvent = (params: LogSystemEventParams): void => {
-  // Implementation would be injected or moved to shared layer
-  console.log('System event:', params);
+// Real implementations from features layer via dynamic imports to avoid circular dependencies
+const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+  try {
+    const { logSystemEvent: realLogSystemEvent } = await import("@/features/observability/server");
+    await realLogSystemEvent(params as any);
+  } catch (error) {
+    console.error('Failed to log system event via observability feature:', error);
+    console.log('System event (fallback):', params);
+  }
 };
 
-const getErrorFingerprint = (params: ErrorFingerprintParams): string => {
-  // Simple fingerprint generation
-  return `${params.source}-${params.statusCode}-${Date.now()}`;
+const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
+  try {
+    const { getErrorFingerprint: realGetFingerprint } = await import("@/features/observability/server");
+    return realGetFingerprint(params as any);
+  } catch (error) {
+    console.error('Failed to get error fingerprint via observability feature:', error);
+    return `${params.source}-${params.statusCode}-${Date.now()}`;
+  }
 };
 
 export type {
@@ -221,18 +231,23 @@ export function apiHandler(
       applySecurityHeaders(response);
       applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
-    } catch (error) {
-      const response = createErrorResponseWithTiming(error, request, context, options);
-      if (context.rateLimitHeaders) {
-        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-          response.headers.set(key, value);
-        });
-      }
-      applySecurityHeaders(response);
-      return response;
+        } catch (error) {
+          const response = await createErrorResponseWithTiming(
+            error,
+            request,
+            context,
+            options
+          );
+          if (context.rateLimitHeaders) {
+            Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+              response.headers.set(key, value);
+            });
+          }
+          applySecurityHeaders(response);
+          return response;
+        }
+      };
     }
-  };
-}
 
 /**
  * Wraps an API route handler with params (for dynamic routes like [id]).
@@ -320,7 +335,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
-      const response = createErrorResponseWithTiming(
+      const response = await createErrorResponseWithTiming(
         error,
         request,
         handlerContext,
@@ -360,12 +375,12 @@ function applyDefaultCacheHeaders(
 /**
  * Creates an error response with timing information and logging.
  */
-function createErrorResponseWithTiming(
+async function createErrorResponseWithTiming(
   error: unknown,
   request: NextRequest,
   context: ApiHandlerContext,
   options: ApiHandlerOptions
-): Response {
+): Promise<Response> {
   const resolved = resolveError(error, {
     ...(options.fallbackMessage !== undefined && { fallbackMessage: options.fallbackMessage }),
   });
@@ -397,7 +412,7 @@ function createErrorResponseWithTiming(
     errorId: resolved.errorId,
   };
 
-  const fingerprint = getErrorFingerprint({
+  const fingerprint = await getErrorFingerprint({
     message: resolved.message,
     source: options.source,
     request,

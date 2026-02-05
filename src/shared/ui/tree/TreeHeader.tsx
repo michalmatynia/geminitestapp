@@ -1,38 +1,29 @@
-"use client";
-
-import React from "react";
+import type { ReactNode } from "react";
 import { cn } from "@/shared/utils";
 
-export interface TreeHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  title?: string | undefined;
-  subtitle?: string | undefined;
-  actions?: React.ReactNode | undefined;
-  children?: React.ReactNode;
-}
+export type TreeHeaderProps = {
+  title: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+  titleClassName?: string;
+  actionsClassName?: string;
+};
 
 export function TreeHeader({
   title,
-  subtitle,
   actions,
   className,
-  children,
-  ...props
+  titleClassName,
+  actionsClassName,
 }: TreeHeaderProps): React.JSX.Element {
   return (
-    <div
-      className={cn("border-b border-border px-4 py-3", className)}
-      {...props}
-    >
-      {(title || subtitle || actions) && (
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            {title ? <div className="text-sm font-semibold text-white">{title}</div> : null}
-            {subtitle ? <div className="text-[11px] text-gray-400">{subtitle}</div> : null}
-          </div>
-          {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
-        </div>
-      )}
-      {children ? <div className={cn(title || subtitle || actions ? "mt-3" : "")}>{children}</div> : null}
+    <div className={cn("flex items-center justify-between gap-2", className)}>
+      <div className={cn("text-xs font-semibold uppercase tracking-wide text-gray-400", titleClassName)}>
+        {title}
+      </div>
+      {actions ? (
+        <div className={cn("flex items-center gap-2", actionsClassName)}>{actions}</div>
+      ) : null}
     </div>
   );
 }

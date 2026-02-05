@@ -172,8 +172,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       const entry = {
         key,
         value: typeof value === "string" ? value : JSON.stringify(value ?? ""),
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+        updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
       };
       const existing = byKey.get(key);
       if (!existing || entry.updatedAt > existing.updatedAt) {
@@ -296,8 +296,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           allowedIps: (doc as { allowedIps?: string[] }).allowedIps ?? [],
           disabledAt: toDate((doc as { disabledAt?: Date | string | null }).disabledAt),
           bannedAt: toDate((doc as { bannedAt?: Date | string | null }).bannedAt),
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
       })
       .filter(Boolean) as any;
@@ -316,8 +316,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           data: toJsonValue(doc),
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
       })
       .filter(Boolean) as any;
@@ -336,8 +336,8 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           data: toJsonValue(doc),
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
       })
       .filter(Boolean) as any;
@@ -413,6 +413,48 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const deleted = await prisma.systemLog.deleteMany();
     const created = data.length ? await prisma.systemLog.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+  });
+
+  await syncCollection("file_upload_events", async () => {
+    handledCollections.add("file_upload_events");
+    const docs = await mongo.collection("file_upload_events").find({}).toArray();
+    const warnings: string[] = [];
+    const data = docs
+      .map((doc: any) => {
+        const id = normalizeId(doc as Record<string, unknown>);
+        if (!id) return null;
+        const status = (doc as { status?: string }).status;
+        const resolvedStatus = status === "error" || status === "success" ? status : "success";
+        if (status && resolvedStatus !== status) {
+          warnings.push(`File upload event ${id}: invalid status ${status}`);
+        }
+        return {
+          id,
+          status: resolvedStatus,
+          category: (doc as { category?: string | null }).category ?? null,
+          projectId: (doc as { projectId?: string | null }).projectId ?? null,
+          folder: (doc as { folder?: string | null }).folder ?? null,
+          filename: (doc as { filename?: string | null }).filename ?? null,
+          filepath: (doc as { filepath?: string | null }).filepath ?? null,
+          mimetype: (doc as { mimetype?: string | null }).mimetype ?? null,
+          size: typeof (doc as { size?: number | null }).size === "number" ? (doc as { size?: number | null }).size : null,
+          source: (doc as { source?: string | null }).source ?? null,
+          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+          requestId: (doc as { requestId?: string | null }).requestId ?? null,
+          userId: (doc as { userId?: string | null }).userId ?? null,
+          meta: toJsonValue((doc as { meta?: unknown }).meta ?? null),
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+        };
+      })
+      .filter(Boolean) as any;
+    const deleted = await prisma.fileUploadEvent.deleteMany();
+    const created = data.length ? await prisma.fileUploadEvent.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("ai_configurations", async () => {
@@ -865,6 +907,43 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
   });
 
+  await syncCollection("product_producers", async () => {
+    handledCollections.add("product_producers");
+    const docs = await mongo.collection("product_producers").find({}).toArray();
+    const warnings: string[] = [];
+    const seenNames = new Set<string>();
+    const data = docs
+      .map((doc: any) => {
+        const id = normalizeId(doc as Record<string, unknown>);
+        if (!id) return null;
+        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name.trim() : "";
+        const name = rawName || id;
+        const nameKey = name.toLowerCase();
+        if (seenNames.has(nameKey)) {
+          warnings.push(`Skipped duplicate producer name: ${name}`);
+          return null;
+        }
+        seenNames.add(nameKey);
+        return {
+          id,
+          name,
+          website: (doc as { website?: string | null }).website ?? null,
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+        };
+      })
+      .filter(Boolean) as any;
+    await prisma.productProducerAssignment.deleteMany();
+    const deleted = await prisma.producer.deleteMany();
+    const created = data.length ? await prisma.producer.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
+  });
+
   await syncCollection("image_files", async () => {
     handledCollections.add("image_files");
     const docs = await mongo.collection("image_files").find({}).toArray();
@@ -891,13 +970,89 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
   });
 
+  await syncCollection("image_studio_slots", async () => {
+    handledCollections.add("image_studio_slots");
+    const availableImageFileIds = new Set<string>(
+      (await prisma.imageFile.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const availableAssetIds = new Set<string>(
+      (await prisma.asset3D.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const docs = await mongo.collection("image_studio_slots").find({}).toArray();
+    const warnings: string[] = [];
+    const data = docs
+      .map((doc: any) => {
+        const id = normalizeId(doc as Record<string, unknown>);
+        if (!id) return null;
+        const projectId = (doc as { projectId?: string }).projectId ?? "";
+        if (!projectId) {
+          warnings.push(`Image studio slot ${id}: missing projectId`);
+          return null;
+        }
+        const imageFileId = (doc as { imageFileId?: string | null }).imageFileId ?? null;
+        const screenshotFileId = (doc as { screenshotFileId?: string | null }).screenshotFileId ?? null;
+        const asset3dId = (doc as { asset3dId?: string | null }).asset3dId ?? null;
+        const resolvedImageFileId = imageFileId && availableImageFileIds.has(imageFileId) ? imageFileId : null;
+        const resolvedScreenshotFileId =
+          screenshotFileId && availableImageFileIds.has(screenshotFileId) ? screenshotFileId : null;
+        const resolvedAsset3dId = asset3dId && availableAssetIds.has(asset3dId) ? asset3dId : null;
+        if (imageFileId && !resolvedImageFileId) {
+          warnings.push(`Image studio slot ${id}: missing imageFile ${imageFileId}`);
+        }
+        if (screenshotFileId && !resolvedScreenshotFileId) {
+          warnings.push(`Image studio slot ${id}: missing screenshotFile ${screenshotFileId}`);
+        }
+        if (asset3dId && !resolvedAsset3dId) {
+          warnings.push(`Image studio slot ${id}: missing asset3d ${asset3dId}`);
+        }
+        return {
+          id,
+          projectId,
+          name: (doc as { name?: string | null }).name ?? "",
+          folderPath: (doc as { folderPath?: string | null }).folderPath ?? "",
+          position: (doc as { position?: number | null }).position ?? null,
+          imageFileId: resolvedImageFileId,
+          imageUrl: (doc as { imageUrl?: string | null }).imageUrl ?? null,
+          imageBase64: (doc as { imageBase64?: string | null }).imageBase64 ?? null,
+          asset3dId: resolvedAsset3dId,
+          screenshotFileId: resolvedScreenshotFileId,
+          metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null),
+          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+        };
+      })
+      .filter(Boolean) as any;
+    const deleted = await prisma.imageStudioSlot.deleteMany();
+    const created = data.length ? await prisma.imageStudioSlot.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
+  });
+
   await syncCollection("products", async () => {
     handledCollections.add("products");
+    const availableProducerIds = new Set<string>(
+      (await prisma.producer.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const warnings: string[] = [];
     const docs = await mongo.collection("products").find({}).toArray();
     const data = docs
       .map((doc: any) => {
         const id = normalizeId(doc as Record<string, unknown>);
         if (!id) return null;
+        const producers = Array.isArray((doc as { producers?: unknown[] }).producers)
+          ? (doc as { producers?: Array<{ producerId: string; assignedAt?: Date }> }).producers ?? []
+          : [];
+        const filteredProducers = producers.filter((producer) => availableProducerIds.has(producer.producerId));
+        if (filteredProducers.length !== producers.length) {
+          warnings.push(`Product ${id}: filtered ${producers.length - filteredProducers.length} missing producers`);
+        }
         return {
           id,
           sku: (doc as { sku?: string | null }).sku ?? null,
@@ -942,6 +1097,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           tags: Array.isArray((doc as { tags?: unknown[] }).tags)
             ? (doc as { tags?: Array<{ tagId: string; assignedAt?: Date }> }).tags ?? []
             : [],
+          producers: filteredProducers,
         };
       })
       .filter(Boolean) as Array<{
@@ -976,17 +1132,19 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         catalogs: Array<{ catalogId: string; assignedAt?: Date }>;
         categories: Array<{ categoryId: string; assignedAt?: Date }>;
         tags: Array<{ tagId: string; assignedAt?: Date }>;
+        producers: Array<{ producerId: string; assignedAt?: Date }>;
       }>;
 
     await prisma.productImage.deleteMany();
     await prisma.productCatalog.deleteMany();
     await prisma.productCategoryAssignment.deleteMany();
     await prisma.productTagAssignment.deleteMany();
+    await prisma.productProducerAssignment.deleteMany();
 
     const deleted = await prisma.product.deleteMany();
     const created = data.length
       ? await prisma.product.createMany({
-          data: data.map(({ images, catalogs, categories, tags, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
+          data: data.map(({ images, catalogs, categories, tags, producers, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
         })
       : { count: 0 };
 
@@ -1034,7 +1192,232 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       await prisma.productTagAssignment.createMany({ data: tagRows });
     }
 
-    return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
+    const producerRows: Prisma.ProductProducerAssignmentCreateManyInput[] = [];
+    const producerKeys = new Set<string>();
+    data.forEach((product) => {
+      product.producers.forEach((producer) => {
+        const key = `${product.id}::${producer.producerId}`;
+        if (producerKeys.has(key)) return;
+        producerKeys.add(key);
+        producerRows.push({
+          productId: product.id,
+          producerId: producer.producerId,
+          assignedAt: producer.assignedAt ?? new Date(),
+        });
+      });
+    });
+    if (producerRows.length) {
+      await prisma.productProducerAssignment.createMany({ data: producerRows });
+    }
+
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
+  });
+
+  await syncCollection("integrations", async () => {
+    handledCollections.add("integrations");
+    const docs = await mongo.collection("integrations").find({}).toArray();
+    const warnings: string[] = [];
+    const seenSlugs = new Set<string>();
+    const data = docs
+      .map((doc: any) => {
+        const id = normalizeId(doc as Record<string, unknown>);
+        if (!id) return null;
+        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name.trim() : "";
+        const name = rawName || id;
+        const rawSlug = typeof (doc as { slug?: string }).slug === "string" ? (doc as { slug?: string }).slug.trim() : "";
+        const fallbackSlug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        const slug = rawSlug || fallbackSlug || id;
+        if (!slug) {
+          warnings.push(`Integration ${id}: missing slug`);
+          return null;
+        }
+        const slugKey = slug.toLowerCase();
+        if (seenSlugs.has(slugKey)) {
+          warnings.push(`Skipped duplicate integration slug: ${slug}`);
+          return null;
+        }
+        seenSlugs.add(slugKey);
+        return {
+          id,
+          name,
+          slug,
+          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        };
+      })
+      .filter(Boolean) as any;
+    await prisma.productListing.deleteMany();
+    await prisma.integrationConnection.deleteMany();
+    const deleted = await prisma.integration.deleteMany();
+    const created = data.length ? await prisma.integration.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
+  });
+
+  await syncCollection("integration_connections", async () => {
+    handledCollections.add("integration_connections");
+    const availableIntegrationIds = new Set<string>(
+      (await prisma.integration.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const docs = await mongo.collection("integration_connections").find({}).toArray();
+    const warnings: string[] = [];
+    const byIntegration = new Map<string, { doc: any; updatedAt: Date }>();
+    docs.forEach((doc: any) => {
+      const id = normalizeId(doc as Record<string, unknown>);
+      const integrationId = (doc as { integrationId?: string }).integrationId ?? "";
+      if (!id || !integrationId) {
+        warnings.push(`Skipped integration connection with missing id/integrationId`);
+        return;
+      }
+      if (!availableIntegrationIds.has(integrationId)) {
+        warnings.push(`Integration connection ${id}: missing integration ${integrationId}`);
+        return;
+      }
+      const updatedAt = toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date();
+      const existing = byIntegration.get(integrationId);
+      if (existing && existing.updatedAt >= updatedAt) {
+        warnings.push(`Skipped duplicate connection for integration ${integrationId}`);
+        return;
+      }
+      if (existing) {
+        warnings.push(`Replaced older connection for integration ${integrationId}`);
+      }
+      byIntegration.set(integrationId, { doc, updatedAt });
+    });
+    const data = Array.from(byIntegration.values()).map(({ doc }) => ({
+      id: normalizeId(doc as Record<string, unknown>),
+      integrationId: (doc as { integrationId?: string }).integrationId ?? "",
+      name: (doc as { name?: string }).name ?? "Connection",
+      username: (doc as { username?: string }).username ?? "",
+      password: (doc as { password?: string }).password ?? "",
+      playwrightStorageState: (doc as { playwrightStorageState?: string | null }).playwrightStorageState ?? null,
+      playwrightStorageStateUpdatedAt: toDate((doc as { playwrightStorageStateUpdatedAt?: Date | string | null }).playwrightStorageStateUpdatedAt),
+      playwrightHeadless: (doc as { playwrightHeadless?: boolean | null }).playwrightHeadless ?? true,
+      playwrightSlowMo: (doc as { playwrightSlowMo?: number | null }).playwrightSlowMo ?? 50,
+      playwrightTimeout: (doc as { playwrightTimeout?: number | null }).playwrightTimeout ?? 15000,
+      playwrightNavigationTimeout: (doc as { playwrightNavigationTimeout?: number | null }).playwrightNavigationTimeout ?? 30000,
+      playwrightHumanizeMouse: (doc as { playwrightHumanizeMouse?: boolean | null }).playwrightHumanizeMouse ?? false,
+      playwrightMouseJitter: (doc as { playwrightMouseJitter?: number | null }).playwrightMouseJitter ?? 6,
+      playwrightClickDelayMin: (doc as { playwrightClickDelayMin?: number | null }).playwrightClickDelayMin ?? 30,
+      playwrightClickDelayMax: (doc as { playwrightClickDelayMax?: number | null }).playwrightClickDelayMax ?? 120,
+      playwrightInputDelayMin: (doc as { playwrightInputDelayMin?: number | null }).playwrightInputDelayMin ?? 20,
+      playwrightInputDelayMax: (doc as { playwrightInputDelayMax?: number | null }).playwrightInputDelayMax ?? 120,
+      playwrightActionDelayMin: (doc as { playwrightActionDelayMin?: number | null }).playwrightActionDelayMin ?? 200,
+      playwrightActionDelayMax: (doc as { playwrightActionDelayMax?: number | null }).playwrightActionDelayMax ?? 900,
+      playwrightProxyEnabled: (doc as { playwrightProxyEnabled?: boolean | null }).playwrightProxyEnabled ?? false,
+      playwrightProxyServer: (doc as { playwrightProxyServer?: string | null }).playwrightProxyServer ?? null,
+      playwrightProxyUsername: (doc as { playwrightProxyUsername?: string | null }).playwrightProxyUsername ?? null,
+      playwrightProxyPassword: (doc as { playwrightProxyPassword?: string | null }).playwrightProxyPassword ?? null,
+      playwrightEmulateDevice: (doc as { playwrightEmulateDevice?: boolean | null }).playwrightEmulateDevice ?? false,
+      playwrightDeviceName: (doc as { playwrightDeviceName?: string | null }).playwrightDeviceName ?? null,
+      allegroAccessToken: (doc as { allegroAccessToken?: string | null }).allegroAccessToken ?? null,
+      allegroRefreshToken: (doc as { allegroRefreshToken?: string | null }).allegroRefreshToken ?? null,
+      allegroTokenType: (doc as { allegroTokenType?: string | null }).allegroTokenType ?? null,
+      allegroScope: (doc as { allegroScope?: string | null }).allegroScope ?? null,
+      allegroExpiresAt: toDate((doc as { allegroExpiresAt?: Date | string | null }).allegroExpiresAt),
+      allegroTokenUpdatedAt: toDate((doc as { allegroTokenUpdatedAt?: Date | string | null }).allegroTokenUpdatedAt),
+      allegroUseSandbox: (doc as { allegroUseSandbox?: boolean | null }).allegroUseSandbox ?? false,
+      baseApiToken: (doc as { baseApiToken?: string | null }).baseApiToken ?? null,
+      baseTokenUpdatedAt: toDate((doc as { baseTokenUpdatedAt?: Date | string | null }).baseTokenUpdatedAt),
+      baseLastInventoryId: (doc as { baseLastInventoryId?: string | null }).baseLastInventoryId ?? null,
+      createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+      updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+    }));
+    const deleted = await prisma.integrationConnection.deleteMany();
+    const created = data.length ? await prisma.integrationConnection.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
+  });
+
+  await syncCollection("product_listings", async () => {
+    handledCollections.add("product_listings");
+    const productIds = new Set<string>(
+      (await prisma.product.findMany({ select: { id: true } }))
+        .map((entry: { id: string }) => entry.id)
+    );
+    const connections = await prisma.integrationConnection.findMany({
+      select: { id: true, integrationId: true },
+    });
+    const connectionMap = new Map<string, string>(
+      connections.map((entry: { id: string; integrationId: string }) => [entry.id, entry.integrationId])
+    );
+    const docs = await mongo.collection("product_listings").find({}).toArray();
+    const warnings: string[] = [];
+    const byKey = new Map<string, { doc: any; updatedAt: Date }>();
+    docs.forEach((doc: any) => {
+      const id = normalizeId(doc as Record<string, unknown>);
+      const productId = (doc as { productId?: string }).productId ?? "";
+      const connectionId = (doc as { connectionId?: string }).connectionId ?? "";
+      if (!id || !productId || !connectionId) {
+        warnings.push(`Skipped product listing with missing id/product/connection`);
+        return;
+      }
+      if (!productIds.has(productId)) {
+        warnings.push(`Product listing ${id}: missing product ${productId}`);
+        return;
+      }
+      const integrationId = connectionMap.get(connectionId);
+      if (!integrationId) {
+        warnings.push(`Product listing ${id}: missing connection ${connectionId}`);
+        return;
+      }
+      const updatedAt = toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date();
+      const key = `${productId}::${connectionId}`;
+      const existing = byKey.get(key);
+      if (existing && existing.updatedAt >= updatedAt) {
+        warnings.push(`Skipped duplicate listing for product ${productId} connection ${connectionId}`);
+        return;
+      }
+      if (existing) {
+        warnings.push(`Replaced older listing for product ${productId} connection ${connectionId}`);
+      }
+      byKey.set(key, { doc, updatedAt });
+    });
+    const data = Array.from(byKey.values()).map(({ doc }) => {
+      const connectionId = (doc as { connectionId?: string }).connectionId ?? "";
+      const resolvedIntegrationId = connectionMap.get(connectionId) ?? (doc as { integrationId?: string }).integrationId ?? "";
+      if ((doc as { integrationId?: string }).integrationId && (doc as { integrationId?: string }).integrationId !== resolvedIntegrationId) {
+        warnings.push(`Product listing ${normalizeId(doc as Record<string, unknown>)}: corrected integrationId to match connection`);
+      }
+      return {
+        id: normalizeId(doc as Record<string, unknown>),
+        productId: (doc as { productId?: string }).productId ?? "",
+        integrationId: resolvedIntegrationId,
+        connectionId,
+        externalListingId: (doc as { externalListingId?: string | null }).externalListingId ?? null,
+        inventoryId: (doc as { inventoryId?: string | null }).inventoryId ?? null,
+        status: (doc as { status?: string }).status ?? "pending",
+        listedAt: toDate((doc as { listedAt?: Date | string | null }).listedAt),
+        exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null),
+        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+      };
+    });
+    const deleted = await prisma.productListing.deleteMany();
+    const created = data.length ? await prisma.productListing.createMany({ data }) : { count: 0 };
+    return {
+      sourceCount: data.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+      ...(warnings.length ? { warnings } : null),
+    };
   });
 
   await syncCollection("product_drafts", async () => {
@@ -2035,6 +2418,32 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
+  await syncCollection("file_upload_events", async () => {
+    const rows = await prisma.fileUploadEvent.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: toObjectIdMaybe(row.id),
+      id: row.id,
+      status: row.status,
+      category: row.category ?? null,
+      projectId: row.projectId ?? null,
+      folder: row.folder ?? null,
+      filename: row.filename ?? null,
+      filepath: row.filepath ?? null,
+      mimetype: row.mimetype ?? null,
+      size: row.size ?? null,
+      source: row.source ?? null,
+      errorMessage: row.errorMessage ?? null,
+      requestId: row.requestId ?? null,
+      userId: row.userId ?? null,
+      meta: row.meta ?? null,
+      createdAt: row.createdAt,
+    }));
+    const collection = mongo.collection("file_upload_events");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
   await syncCollection("ai_configurations", async () => {
     const rows = await prisma.aiConfiguration.findMany();
     const docs = rows.map((row: any) => ({
@@ -2243,6 +2652,22 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
+  await syncCollection("product_producers", async () => {
+    const rows = await prisma.producer.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: row.id,
+      id: row.id,
+      name: row.name,
+      website: row.website ?? null,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+    const collection = mongo.collection("product_producers");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
   await syncCollection("product_parameters", async () => {
     const rows = await prisma.productParameter.findMany();
     const docs = rows.map((row: any) => ({
@@ -2282,6 +2707,30 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
+  await syncCollection("image_studio_slots", async () => {
+    const rows = await prisma.imageStudioSlot.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: row.id,
+      id: row.id,
+      projectId: row.projectId,
+      name: row.name ?? "",
+      folderPath: row.folderPath ?? "",
+      position: row.position ?? null,
+      imageFileId: row.imageFileId ?? null,
+      imageUrl: row.imageUrl ?? null,
+      imageBase64: row.imageBase64 ?? null,
+      asset3dId: row.asset3dId ?? null,
+      screenshotFileId: row.screenshotFileId ?? null,
+      metadata: row.metadata ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+    const collection = mongo.collection("image_studio_slots");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
   await syncCollection("products", async () => {
     const [rows, catalogRows] = await Promise.all([
       prisma.product.findMany({
@@ -2290,6 +2739,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
           catalogs: { include: { catalog: true } },
           categories: true,
           tags: true,
+          producers: true,
         },
       }),
       prisma.catalog.findMany({ include: { languages: true } }),
@@ -2382,10 +2832,101 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
           tagId: entry.tagId,
           assignedAt: entry.assignedAt,
         })),
+        producers: product.producers.map((entry: any) => ({
+          productId: entry.productId,
+          producerId: entry.producerId,
+          assignedAt: entry.assignedAt,
+        })),
       };
     });
 
     const collection = mongo.collection("products");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
+  await syncCollection("integrations", async () => {
+    const rows = await prisma.integration.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: row.id,
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+    const collection = mongo.collection("integrations");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
+  await syncCollection("integration_connections", async () => {
+    const rows = await prisma.integrationConnection.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: row.id,
+      id: row.id,
+      integrationId: row.integrationId,
+      name: row.name,
+      username: row.username,
+      password: row.password,
+      playwrightStorageState: row.playwrightStorageState ?? null,
+      playwrightStorageStateUpdatedAt: row.playwrightStorageStateUpdatedAt ?? null,
+      playwrightHeadless: row.playwrightHeadless,
+      playwrightSlowMo: row.playwrightSlowMo,
+      playwrightTimeout: row.playwrightTimeout,
+      playwrightNavigationTimeout: row.playwrightNavigationTimeout,
+      playwrightHumanizeMouse: row.playwrightHumanizeMouse,
+      playwrightMouseJitter: row.playwrightMouseJitter,
+      playwrightClickDelayMin: row.playwrightClickDelayMin,
+      playwrightClickDelayMax: row.playwrightClickDelayMax,
+      playwrightInputDelayMin: row.playwrightInputDelayMin,
+      playwrightInputDelayMax: row.playwrightInputDelayMax,
+      playwrightActionDelayMin: row.playwrightActionDelayMin,
+      playwrightActionDelayMax: row.playwrightActionDelayMax,
+      playwrightProxyEnabled: row.playwrightProxyEnabled,
+      playwrightProxyServer: row.playwrightProxyServer ?? null,
+      playwrightProxyUsername: row.playwrightProxyUsername ?? null,
+      playwrightProxyPassword: row.playwrightProxyPassword ?? null,
+      playwrightEmulateDevice: row.playwrightEmulateDevice,
+      playwrightDeviceName: row.playwrightDeviceName ?? null,
+      allegroAccessToken: row.allegroAccessToken ?? null,
+      allegroRefreshToken: row.allegroRefreshToken ?? null,
+      allegroTokenType: row.allegroTokenType ?? null,
+      allegroScope: row.allegroScope ?? null,
+      allegroExpiresAt: row.allegroExpiresAt ?? null,
+      allegroTokenUpdatedAt: row.allegroTokenUpdatedAt ?? null,
+      allegroUseSandbox: row.allegroUseSandbox ?? false,
+      baseApiToken: row.baseApiToken ?? null,
+      baseTokenUpdatedAt: row.baseTokenUpdatedAt ?? null,
+      baseLastInventoryId: row.baseLastInventoryId ?? null,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+    const collection = mongo.collection("integration_connections");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  });
+
+  await syncCollection("product_listings", async () => {
+    const rows = await prisma.productListing.findMany();
+    const docs = rows.map((row: any) => ({
+      _id: row.id,
+      id: row.id,
+      productId: row.productId,
+      integrationId: row.integrationId,
+      connectionId: row.connectionId,
+      externalListingId: row.externalListingId ?? null,
+      inventoryId: row.inventoryId ?? null,
+      status: row.status,
+      listedAt: row.listedAt ?? null,
+      exportHistory: row.exportHistory ?? null,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+    const collection = mongo.collection("product_listings");
     const deleted = await collection.deleteMany({});
     if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };

@@ -18,11 +18,19 @@ const handler: NextRequestHandler | null = typeof auth === "function" ? (auth as
 
 type HandlerContext = Parameters<NextRequestHandler>[1];
 
+const shouldBypassAuth = (request: NextRequest): boolean => {
+  const pathname = request.nextUrl.pathname;
+  return pathname === "/api/products";
+};
+
 export function proxy(
   request: NextRequest,
   context?: HandlerContext,
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
+  if (shouldBypassAuth(request)) {
+    return baseProxy(request);
+  }
   if (!handler || typeof handler !== "function") {
     return baseProxy(request);
   }

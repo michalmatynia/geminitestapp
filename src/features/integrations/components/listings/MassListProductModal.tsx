@@ -1,6 +1,6 @@
 "use client";
 
-import { FormModal } from "@/shared/components/FormModal";
+import { FormModal } from "@/shared/ui";
 import { useState } from "react";
 import { logClientError } from "@/features/observability";
 import { ExportLogViewer } from "./ExportLogViewer";

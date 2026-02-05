@@ -39,9 +39,14 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   }
 };
 
-const getErrorFingerprint = (params: ErrorFingerprintParams): string => {
-  // Simple fingerprint generation
-  return `${params.source}-${params.statusCode}-${Date.now()}`;
+const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
+  try {
+    const { getErrorFingerprint: realGetFingerprint } = await import("@/features/observability/server");
+    return realGetFingerprint(params as any);
+  } catch (error) {
+    console.error('Failed to get error fingerprint via observability feature:', error);
+    return `${params.source}-${params.statusCode}-${Date.now()}`;
+  }
 };
 
 type ApiErrorOptions = {
@@ -64,10 +69,10 @@ type ApiErrorOptions = {
  * - Sets appropriate headers (x-request-id, x-error-id, Retry-After)
  * - Differentiates between expected (user) and unexpected (server) errors
  */
-export const createErrorResponse = (
+export const createErrorResponse = async (
   error: unknown,
   options?: ApiErrorOptions
-): NextResponse => {
+): Promise<NextResponse> => {
   const resolved = resolveError(error, {
     ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}),
   });
@@ -77,7 +82,7 @@ export const createErrorResponse = (
     options?.request?.headers.get("x-request-id") ??
     randomUUID();
 
-  const fingerprint = getErrorFingerprint({
+  const fingerprint = await getErrorFingerprint({
     message: resolved.message,
     source: options?.source ?? "api",
     ...(options?.request ? { request: options.request } : {}),
@@ -186,5 +191,4 @@ export const createValidationErrorResponse = (
   options?: Pick<ApiErrorOptions, "request" | "source" | "requestId">
 ): NextResponse => {
   const error = validationError("Validation failed", { fields: fieldErrors });
-  return createErrorResponse(error, options);
-};
+      return createErrorResponse(error, options) as NextResponse;};

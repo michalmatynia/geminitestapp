@@ -1214,3 +1214,326 @@ Confirm single Prisma client instance (connection pooling)
 Add staleTime for read-heavy data
 Want me to implement any of these fixes? The AppErrorCodes fix is highest priority—it will cause runtime errors currently.
 
+
+
+Hacking site
+
+What the module should do
+1) Crawl your authenticated app (Playwright)
+
+Logs in (admin/user flows)
+
+Traverses pages
+
+Collects:
+
+Internal URLs discovered from links + network requests
+
+Security-relevant signals (headers, cookie flags, CSP, mixed content, console errors)
+
+Optional: screenshots + trace for evidence
+
+2) Scan for vulnerabilities (ZAP / DAST)
+
+Run OWASP ZAP baseline (fast) on discovered URLs
+
+Optional “full scan” in staging (slower, more aggressive)
+
+Output machine-readable results (JSON)
+
+3) Generate AI-driven report
+
+Transform scan JSON → normalized findings
+
+AI produces:
+
+Executive summary
+
+Top risks + why they matter
+
+Reproduction steps (safe)
+
+Fix recommendations (Next.js-specific where possible)
+
+“Diffable” remediation checklist
+
+4) Store + view in a Next.js “Security Center”
+
+Scan history
+
+Findings list w/ severity, status, assignee
+
+Report PDF/MD export
+
+Baseline comparison (regressions)
+
+Critical implementation detail: run scans in a worker (not in a serverless route)
+
+Playwright + ZAP are heavy processes:
+
+If you deploy on Vercel serverless, long-running scans will be painful or impossible.
+
+Best pattern: Next.js UI + API triggers → background worker (Docker container / VM) that runs Playwright+ZAP and writes results to DB.
+
+Typical setup:
+
+Next.js (admin UI) + Prisma/Postgres
+
+Redis + BullMQ (job queue)
+
+scanner-worker Node service (runs Playwright, calls ZAP container, stores results)
+
+Minimal data model (Prisma idea)
+
+SecurityScan explain: target, environment, status, startedAt, finishedAt, summary JSON
+
+SecurityFinding explain: scanId, ruleId, title, severity, url, evidence, recommendation, status (open/accepted/fixed)
+
+SecurityReport explain: scanId, markdown, createdAt, modelUsed
+
+Playwright crawler skeleton (authenticated URL discovery)
+// scanner/crawl.ts
+import { chromium } from "playwright";
+
+export type CrawlResult = {
+  urls: string[];
+  observations: Array<{
+    url: string;
+    securityHeaders?: Record<string, string>;
+    cookies?: Array<{ name: string; secure: boolean; httpOnly: boolean; sameSite?: string }>;
+    consoleErrors?: string[];
+  }>;
+};
+
+function isInternal(url: string, base: string) {
+  try {
+    const u = new URL(url);
+    const b = new URL(base);
+    return u.origin === b.origin;
+  } catch {
+    return false;
+  }
+}
+
+export async function crawlApp(opts: {
+  baseUrl: string;
+  loginUrl: string;
+  username: string;
+  password: string;
+  maxPages?: number;
+}) : Promise<CrawlResult> {
+  const { baseUrl, loginUrl, username, password, maxPages = 60 } = opts;
+
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  // --- Login (adapt selectors to your app) ---
+  await page.goto(loginUrl, { waitUntil: "networkidle" });
+  await page.fill('input[name="email"]', username);
+  await page.fill('input[name="password"]', password);
+  await page.click('button[type="submit"]');
+  await page.waitForLoadState("networkidle");
+
+  // --- Crawl ---
+  const queue: string[] = [baseUrl];
+  const seen = new Set<string>();
+  const observations: CrawlResult["observations"] = [];
+
+  while (queue.length && seen.size < maxPages) {
+    const url = queue.shift()!;
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    const response = await page.goto(url, { waitUntil: "networkidle" }).catch(() => null);
+
+    // Capture headers + cookie flags where possible
+    const securityHeaders: Record<string, string> = {};
+    if (response) {
+      const h = response.headers();
+      for (const k of [
+        "content-security-policy",
+        "strict-transport-security",
+        "x-frame-options",
+        "x-content-type-options",
+        "referrer-policy",
+        "permissions-policy",
+      ]) {
+        if (h[k]) securityHeaders[k] = h[k];
+      }
+    }
+
+    const cookies = (await context.cookies()).map(c => ({
+      name: c.name,
+      secure: !!c.secure,
+      httpOnly: !!c.httpOnly,
+      sameSite: c.sameSite,
+    }));
+
+    observations.push({ url, securityHeaders, cookies, consoleErrors });
+
+    // Discover links
+    const links = await page.$$eval("a[href]", (as) => as.map(a => (a as HTMLAnchorElement).href));
+    for (const link of links) {
+      if (!isInternal(link, baseUrl)) continue;
+      // Normalize (drop hash)
+      const u = new URL(link);
+      u.hash = "";
+      const normalized = u.toString();
+      if (!seen.has(normalized)) queue.push(normalized);
+    }
+  }
+
+  await browser.close();
+  return { urls: Array.from(seen), observations };
+}
+
+
+This gives you a list of authenticated URLs + “observations” you can already report on (missing HSTS, weak CSP, insecure cookies, etc.).
+
+Running OWASP ZAP baseline scan (safe default)
+
+The easiest reliable way is ZAP in Docker.
+
+Example command (baseline scan emits JSON):
+
+docker run --rm -t \
+  -v "$(pwd)/zap-out:/zap/wrk" \
+  ghcr.io/zaproxy/zaproxy:stable \
+  zap-baseline.py \
+  -t "https://your-staging-site.example" \
+  -J zap_report.json \
+  -r zap_report.html
+
+
+From Node worker you can run that via child_process:
+
+// scanner/zap.ts
+import { execa } from "execa";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+export async function runZapBaseline(opts: {
+  target: string;
+  outDir: string;
+}) {
+  await fs.mkdir(opts.outDir, { recursive: true });
+
+  const args = [
+    "run", "--rm", "-t",
+    "-v", `${path.resolve(opts.outDir)}:/zap/wrk`,
+    "ghcr.io/zaproxy/zaproxy:stable",
+    "zap-baseline.py",
+    "-t", opts.target,
+    "-J", "zap_report.json",
+    "-r", "zap_report.html",
+  ];
+
+  await execa("docker", args, { stdio: "inherit" });
+
+  const json = await fs.readFile(path.join(opts.outDir, "zap_report.json"), "utf8");
+  return JSON.parse(json);
+}
+
+
+Note: For authenticated scanning, you can either:
+
+Scan staging with test accounts and configure ZAP context/auth (more setup), or
+
+Use Playwright to generate an authenticated session and pass cookies into ZAP (doable, but slightly more advanced).
+
+AI report generation (turn raw findings into actions)
+
+Use AI only on sanitized findings:
+
+URLs OK
+
+Headers OK
+
+Don’t send secrets, tokens, full HTML pages, or user PII
+
+Prompt pattern (works well):
+
+System: “You are a security engineer… produce prioritized remediation…”
+
+Input: normalized findings array (title, severity, url, evidence summary)
+
+Output: markdown report with sections + checklists
+
+Example (pseudo, using OpenAI API style):
+
+export function buildSecurityReportPrompt(input: {
+  target: string;
+  findings: Array<{ severity: string; title: string; url: string; evidence?: string }>;
+}) {
+  return `
+Target: ${input.target}
+
+Findings (sanitized JSON):
+${JSON.stringify(input.findings, null, 2)}
+
+Write a Markdown report with:
+1) Executive summary (non-technical)
+2) Top 5 risks (why it matters, impact, likelihood)
+3) Detailed findings table (severity, affected URL, what was detected)
+4) Recommended fixes (prioritized, include Next.js/Node guidance where relevant)
+5) Verification steps after fix (safe checks only)
+`;
+}
+
+“Security Center” module in Next.js (what to build)
+
+UI pages (admin-only):
+
+/admin/security (scan list, “Run scan” button)
+
+/admin/security/scans/[id] (findings, evidence, AI report, artifacts)
+
+/admin/security/settings (targets, staging/prod toggle, credentials stored in secrets)
+
+API routes:
+
+POST /api/security/scans → enqueue job
+
+GET /api/security/scans/:id → scan status + summary
+
+GET /api/security/scans/:id/report → markdown/html export
+
+Worker job:
+
+crawlApp() with Playwright
+
+Run “quick checks” (headers/cookies)
+
+runZapBaseline()
+
+Normalize findings into your DB format
+
+Generate AI markdown report
+
+Mark scan complete
+
+Safety + practical guardrails (important)
+
+Only scan targets you own/control and preferably staging first.
+
+Add rate limits / concurrency limits (avoid accidental DoS of your own app).
+
+Have a “safe mode” (baseline only) vs “aggressive mode” (full scan) and restrict aggressive to staging.
+
+Don’t store raw auth cookies long-term; store encrypted short-lived secrets if needed.
+
+If you tell me these 3 things, I’ll tailor the exact implementation
+
+Are you hosted on Vercel or your own VPS/Docker?
+
+explained: Do you need authenticated scanning (behind login) or public pages only?
+
+Do you already have Redis/queues, or should this run as a separate “scanner” container?
+
+If you answer those, I can give you a concrete repo layout + Prisma schema + BullMQ worker + exact scan job code wired to your admin panel.

@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
-import type { ProductCategoryWithChildren } from "@/features/products/server";
+
 import { getProductDataProvider } from "@/features/products/server";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout -1
+
+# start gemini interactive
+spawn gemini
+
+# whenever the "high demand" screen appears, pick 1 + enter
+expect {
+  -re {We are currently experiencing high demand} {
+    send "1\r"
+    exp_continue
+  }
+  eof
+}

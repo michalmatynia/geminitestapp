@@ -10,7 +10,7 @@ export * from "./services/product-migration";
 export * from "./services/product-provider";
 export * from "./services/product-repository";
 export * from "./services/productService";
-export * from "./types";
+export * from "./services/product-provider";
 export * from "./types/drafts";
 export * from "./types/products-ui";
 export * from "./validations";

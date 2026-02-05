@@ -17,6 +17,7 @@ import {
   Badge,
   Alert,
   FormModal,
+  Button,
 } from "@/shared/ui";
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";

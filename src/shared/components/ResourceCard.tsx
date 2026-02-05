@@ -34,7 +34,7 @@ export function ResourceCard({
   return (
     <CardWithActions
       title={title}
-      description={description}
+      description={description ?? ''}
       actions={actions}
       onClick={onClick}
       className={cn("flex h-full flex-col", className)}

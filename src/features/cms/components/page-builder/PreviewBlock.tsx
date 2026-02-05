@@ -1335,9 +1335,21 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
+          {showEditorChrome && onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia({ kind: "section", sectionId: section.id, key: "src" });
+              }}
+              className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
           {divider}
           <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
             <div className="space-y-4">
@@ -2591,7 +2603,7 @@ function PreviewBlockItem({
     const text = (block.settings["headingText"] as string) || "Heading";
     const size = (block.settings["headingSize"] as string) || "medium";
     const typoStyles = getBlockTypographyStyles(block.settings);
-    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
+    const baseClasses = `w-full text-left transition relative group ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(
@@ -2831,6 +2843,25 @@ function PreviewBlockItem({
               No image selected
             </div>
           ) : null}
+          {showEditorChrome && onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia?.({
+                  kind: "block",
+                  sectionId,
+                  blockId: block.id,
+                  columnId,
+                  parentBlockId,
+                  key: "src",
+                });
+              }}
+              className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
         </div>
       )
     );

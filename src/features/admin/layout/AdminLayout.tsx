@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
 import { AiInsightsNotificationsDrawer } from "@/features/admin/components/AiInsightsNotificationsDrawer";
+import { QueryProvider } from "@/shared/providers/QueryProvider";
 
 import Menu from "@/features/admin/components/Menu";
 
@@ -135,11 +136,13 @@ export function AdminLayout({
 }): React.ReactNode {
   return (
     <SessionProvider session={session}>
-      <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-        <NoteSettingsProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
-        </NoteSettingsProvider>
-      </AdminLayoutProvider>
+      <QueryProvider>
+        <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+          <NoteSettingsProvider>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+          </NoteSettingsProvider>
+        </AdminLayoutProvider>
+      </QueryProvider>
     </SessionProvider>
   );
 }

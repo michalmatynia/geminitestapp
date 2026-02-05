@@ -24,7 +24,7 @@ import {
 } from "@/features/products/server";
 import { buildImageBase64Slots } from "@/features/products/services/image-base64";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import type { ProductFormData } from "@/features/products/server";
+
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
 import type { ImageFileRecord } from "@/features/files/server";

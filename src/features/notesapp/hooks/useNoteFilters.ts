@@ -46,8 +46,8 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   }, [searchQuery]);
 
   // Reset page when filters change
+   
   useEffect((): void => {
-
     setPage(1);
   }, [
     debouncedSearchQuery,

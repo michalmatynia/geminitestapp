@@ -1,13 +1,12 @@
 "use client";
 
-import { Button, Input, DynamicFilters, useToast, Label, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, AdminPageLayout, RefreshButton, type FilterField } from "@/shared/ui";
+import { Button, DynamicFilters, useToast, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, AdminPageLayout, RefreshButton, type FilterField } from "@/shared/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
 import { useClearLogsMutation, useRebuildIndexesMutation } from "@/features/observability/hooks/useLogMutations";
-
-import { RefreshCcw, Trash2, Copy } from "lucide-react";
+import { Trash2, Copy } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from "@/shared/types";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
@@ -737,6 +736,6 @@ export default function SystemLogsPage(): React.JSX.Element {
           </SectionPanel>
         </div>
       </ListPanel>
-    </div>
+    </AdminPageLayout>
   );
 }

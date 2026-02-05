@@ -1,10 +1,10 @@
 "use client";
 
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SharedModal, ConfirmDialog, DynamicFilters, ListPanel, RefreshButton, type FilterField } from "@/shared/ui";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SharedModal, ConfirmDialog, DynamicFilters, ListPanel, RefreshButton, SectionPanel, type FilterField } from "@/shared/ui";
 import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { RefreshCcw, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";

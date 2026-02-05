@@ -47,8 +47,6 @@ export const dynamic = "force-dynamic";
 async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
   try {
     const slugValue = slugSegments.join("/");
-    const session = await auth();
-    const allowDrafts = await canPreviewDrafts(session);
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
@@ -56,8 +54,10 @@ async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
     if (!domainSlug) return null;
     const page = await cmsRepository.getPageBySlug(slugValue);
     if (!page) return null;
-    // Only render published pages on the frontend
-    if (!allowDrafts && page.status !== "published") return null;
+    if (page.status === "published") return page;
+    const session = await auth();
+    const allowDrafts = await canPreviewDrafts(session);
+    if (!allowDrafts) return null;
     return page;
   } catch {
     return null;

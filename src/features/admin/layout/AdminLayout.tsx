@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/shared/ui";
+import { Button, ToastProvider } from "@/shared/ui";
+import { QueryProvider } from "@/shared/providers/QueryProvider";
 import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -11,7 +12,6 @@ import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
 import { AiInsightsNotificationsDrawer } from "@/features/admin/components/AiInsightsNotificationsDrawer";
-import { QueryProvider } from "@/shared/providers/QueryProvider";
 
 import Menu from "@/features/admin/components/Menu";
 
@@ -137,11 +137,13 @@ export function AdminLayout({
   return (
     <SessionProvider session={session}>
       <QueryProvider>
-        <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-          <NoteSettingsProvider>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
-          </NoteSettingsProvider>
-        </AdminLayoutProvider>
+        <ToastProvider>
+          <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+            <NoteSettingsProvider>
+              <AdminLayoutContent>{children}</AdminLayoutContent>
+            </NoteSettingsProvider>
+          </AdminLayoutProvider>
+        </ToastProvider>
       </QueryProvider>
     </SessionProvider>
   );

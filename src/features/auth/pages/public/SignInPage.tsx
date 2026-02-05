@@ -14,12 +14,40 @@ import { useSettingsMap } from "@/shared/hooks/use-settings";
 
 
 function SignInPageLoader(): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const [isClient] = useState(typeof window !== 'undefined');
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  const settingsQuery = useSettingsMap({ enabled: isClient });
+
+  if (!isClient || settingsQuery.isLoading || !settingsQuery.data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
-        <div className="text-gray-400">Loading...</div>
+        <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg animate-pulse">
+          <div className="space-y-2">
+            <div className="h-6 w-32 rounded bg-gray-800" />
+            <div className="h-4 w-48 rounded bg-gray-800" />
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="h-3 w-16 rounded bg-gray-800" />
+              <div className="h-10 w-full rounded bg-gray-800" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-20 rounded bg-gray-800" />
+              <div className="h-10 w-full rounded bg-gray-800" />
+            </div>
+            <div className="h-10 w-full rounded bg-gray-800" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span className="h-px flex-1 bg-gray-800" />
+              <span className="h-3 w-10 rounded bg-gray-800" />
+              <span className="h-px flex-1 bg-gray-800" />
+            </div>
+            <div className="h-9 w-full rounded bg-gray-800" />
+            <div className="h-9 w-full rounded bg-gray-800" />
+          </div>
+          <div className="h-3 w-40 rounded bg-gray-800" />
+        </div>
       </div>
     );
   }

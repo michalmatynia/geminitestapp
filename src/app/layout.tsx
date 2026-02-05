@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className={cn("font-sans")}>
         <ToastProvider>
           <QueryProvider>
-            <SettingsStoreProvider>
+            <SettingsStoreProvider mode="lite">
               <AppFontProvider />
               <BackgroundSyncProvider>
                 <SessionProvider>

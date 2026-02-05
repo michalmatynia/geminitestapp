@@ -34,9 +34,20 @@ const createId = (): string => {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 };
 
+let warnedNoMongo = false;
+const isMongoAvailable = (): boolean => {
+  if (process.env.MONGODB_URI) return true;
+  if (!warnedNoMongo) {
+    console.warn("[agent-teaching] MONGODB_URI missing; agent teaching data will be empty.");
+    warnedNoMongo = true;
+  }
+  return false;
+};
+
 const ensureIndexesOnce = (() => {
   let started = false;
   return async (): Promise<void> => {
+    if (!isMongoAvailable()) return;
     if (started) return;
     started = true;
     try {
@@ -53,6 +64,7 @@ const ensureIndexesOnce = (() => {
 })();
 
 export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> {
+  if (!isMongoAvailable()) return [];
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const docs = await db
@@ -79,6 +91,7 @@ export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> 
 }
 
 export async function getTeachingAgentById(agentId: string): Promise<AgentTeachingAgentRecord | null> {
+  if (!isMongoAvailable()) return null;
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const doc = await db.collection<AgentDoc>(AGENTS_COLLECTION).findOne({ _id: agentId });
@@ -102,6 +115,9 @@ export async function getTeachingAgentById(agentId: string): Promise<AgentTeachi
 }
 
 export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecord> & { name: string }): Promise<AgentTeachingAgentRecord> {
+  if (!isMongoAvailable()) {
+    throw new Error("MongoDB is not configured for agent teaching data.");
+  }
   await ensureIndexesOnce();
   const db = await getMongoDb();
 
@@ -153,6 +169,7 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
 }
 
 export async function deleteTeachingAgent(agentId: string): Promise<boolean> {
+  if (!isMongoAvailable()) return false;
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const result = await db.collection<AgentDoc>(AGENTS_COLLECTION).deleteOne({ _id: agentId });
@@ -160,6 +177,7 @@ export async function deleteTeachingAgent(agentId: string): Promise<boolean> {
 }
 
 export async function listEmbeddingCollections(): Promise<AgentTeachingEmbeddingCollectionRecord[]> {
+  if (!isMongoAvailable()) return [];
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const docs = await db
@@ -178,6 +196,7 @@ export async function listEmbeddingCollections(): Promise<AgentTeachingEmbedding
 }
 
 export async function getEmbeddingCollectionById(collectionId: string): Promise<AgentTeachingEmbeddingCollectionRecord | null> {
+  if (!isMongoAvailable()) return null;
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const doc = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).findOne({ _id: collectionId });
@@ -193,6 +212,9 @@ export async function getEmbeddingCollectionById(collectionId: string): Promise<
 }
 
 export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }): Promise<AgentTeachingEmbeddingCollectionRecord> {
+  if (!isMongoAvailable()) {
+    throw new Error("MongoDB is not configured for agent teaching data.");
+  }
   await ensureIndexesOnce();
   const db = await getMongoDb();
 
@@ -228,6 +250,7 @@ export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbe
 }
 
 export async function deleteEmbeddingCollection(collectionId: string): Promise<{ deleted: boolean; deletedDocuments: number }> {
+  if (!isMongoAvailable()) return { deleted: false, deletedDocuments: 0 };
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const deleteCollection = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).deleteOne({ _id: collectionId });
@@ -236,6 +259,7 @@ export async function deleteEmbeddingCollection(collectionId: string): Promise<{
 }
 
 export async function listEmbeddingDocuments(collectionId: string, options?: { limit?: number; skip?: number }): Promise<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number }> {
+  if (!isMongoAvailable()) return { items: [], total: 0 };
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const limit = Math.max(1, Math.min(options?.limit ?? 50, 200));
@@ -279,6 +303,9 @@ export async function createEmbeddingDocument(params: {
   embeddingModel: string;
   metadata?: AgentTeachingEmbeddingDocumentMetadata | null;
 }): Promise<AgentTeachingEmbeddingDocumentListItem> {
+  if (!isMongoAvailable()) {
+    throw new Error("MongoDB is not configured for agent teaching data.");
+  }
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
@@ -312,6 +339,7 @@ export async function createEmbeddingDocument(params: {
 }
 
 export async function deleteEmbeddingDocument(documentId: string): Promise<boolean> {
+  if (!isMongoAvailable()) return false;
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const result = await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).deleteOne({ _id: documentId });
@@ -331,6 +359,7 @@ export async function listEmbeddingDocumentsForRetrieval(params: {
   collectionIds: string[];
   limitPerCollection?: number;
 }): Promise<Array<RetrievalDocumentItem>> {
+  if (!isMongoAvailable()) return [];
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const ids = params.collectionIds.filter((id: string) => id.trim().length > 0);

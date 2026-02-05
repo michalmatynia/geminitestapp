@@ -254,7 +254,7 @@ const eslintConfig = [
       "*.json",
       "eslint_report*",
       "tsc_output*",
-      "scripts/backfill-note-colors.mjs",
+
       "*.py",
       "fix_all_api.cjs",
       "fix_simple.cjs",

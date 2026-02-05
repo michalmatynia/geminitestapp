@@ -53,7 +53,7 @@ export function useRealtimeQuery<TData>(
         console.log('WebSocket failed, using polling fallback');
       };
 
-    } catch (error) {
+    } catch (_error) {
       // WebSocket not available, use polling
       console.log('WebSocket not available, using polling');
     }

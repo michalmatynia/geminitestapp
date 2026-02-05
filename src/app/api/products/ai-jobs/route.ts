@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from "@/features/jobs/server";
 import { startProductAiJobQueue, getQueueStatus } from "@/features/jobs/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -38,6 +39,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     }
     return NextResponse.json({ jobs });
   } catch (error: unknown) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022")
+    ) {
+      console.warn("[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.", {
+        code: error.code,
+      });
+      return NextResponse.json({ jobs: [] });
+    }
     return createErrorResponse(error, {
       request: req,
       source: "products.ai-jobs.GET",

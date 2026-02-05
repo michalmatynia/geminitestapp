@@ -1,32 +1,15 @@
 const fs = require('fs');
 const report = JSON.parse(fs.readFileSync('eslint_report.json', 'utf8'));
 
-const summary = {};
-let totalErrors = 0;
-let totalWarnings = 0;
+const filesWithErrors = report.filter(f => f.errorCount > 0);
 
-report.forEach(file => {
-  file.messages.forEach(msg => {
-    if (!summary[msg.ruleId]) {
-      summary[msg.ruleId] = { count: 0, files: new Set() };
+console.log(`Total files with errors: ${filesWithErrors.length}`);
+
+filesWithErrors.slice(0, 10).forEach(f => {
+  console.log(`\nFile: ${f.filePath}`);
+  f.messages.forEach(m => {
+    if (m.severity === 2) {
+      console.log(`  - [${m.ruleId}] ${m.line}:${m.column} - ${m.message}`);
     }
-    summary[msg.ruleId].count++;
-    summary[msg.ruleId].files.add(file.filePath);
-    if (msg.severity === 2) totalErrors++;
-    else totalWarnings++;
   });
 });
-
-const sortedSummary = Object.entries(summary)
-  .map(([ruleId, data]) => ({
-    ruleId,
-    count: data.count,
-    fileCount: data.files.size,
-    exampleFile: [...data.files][0]
-  }))
-  .sort((a, b) => b.count - a.count);
-
-console.log(`Total Errors: ${totalErrors}`);
-console.log(`Total Warnings: ${totalWarnings}`);
-console.log('\nSummary by Rule:');
-console.table(sortedSummary);

@@ -11,6 +11,7 @@ import {
 import type { SystemSetting } from "@/shared/types/settings";
 import {
   fetchSettingsCached,
+  fetchLiteSettingsCached,
   invalidateSettingsCache,
   type SettingsScope,
 } from "@/shared/api/settings-client";
@@ -20,7 +21,7 @@ export type { SystemSetting };
 const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
   new Map(data.map((item) => [item.key, item.value]));
 
-export function useSettings(options?: { scope?: SettingsScope }): UseQueryResult<SystemSetting[], Error> {
+export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<SystemSetting[], Error> {
   const scope = options?.scope ?? "light";
   return useQuery({
     queryKey: ["settings", scope],
@@ -32,6 +33,7 @@ export function useSettings(options?: { scope?: SettingsScope }): UseQueryResult
         return [];
       }
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -40,7 +42,7 @@ export function useSettings(options?: { scope?: SettingsScope }): UseQueryResult
   });
 }
 
-export function useSettingsMap(options?: { scope?: SettingsScope }): UseQueryResult<Map<string, string>, Error> {
+export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
   const scope = options?.scope ?? "light";
   return useQuery({
     queryKey: ["settings", scope],
@@ -53,6 +55,28 @@ export function useSettingsMap(options?: { scope?: SettingsScope }): UseQueryRes
       }
     },
     select: selectSettingsMap,
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+  });
+}
+
+export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
+  return useQuery({
+    queryKey: ["settings", "lite"],
+    queryFn: async (): Promise<SystemSetting[]> => {
+      try {
+        return (await fetchLiteSettingsCached()) as SystemSetting[];
+      } catch (error) {
+        console.warn("[settings] Failed to fetch lite settings", error);
+        return [];
+      }
+    },
+    select: selectSettingsMap,
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

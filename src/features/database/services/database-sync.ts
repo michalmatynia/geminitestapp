@@ -37,6 +37,316 @@ export type DatabaseSyncResult = {
 const currencyCodes = new Set(["USD", "EUR", "PLN", "GBP", "SEK"]);
 const countryCodes = new Set(["PL", "DE", "GB", "US", "SE"]);
 
+interface MongoSettingDoc {
+  _id?: ObjectId;
+  key?: string;
+  value?: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+interface MongoUserDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  emailVerified?: Date | string | null;
+  image?: string | null;
+  passwordHash?: string | null;
+}
+
+interface MongoAccountDoc {
+  _id?: ObjectId;
+  id?: string;
+  userId?: string | ObjectId;
+  type?: string;
+  provider?: string;
+  providerAccountId?: string;
+  refresh_token?: string | null;
+  access_token?: string | null;
+  expires_at?: number | null;
+  token_type?: string | null;
+  scope?: string | null;
+  id_token?: string | null;
+  session_state?: string | null;
+}
+
+interface MongoAuthSecurityProfileDoc {
+  _id?: ObjectId;
+  id?: string;
+  userId?: string;
+  mfaEnabled?: boolean;
+  mfaSecret?: string | null;
+  recoveryCodes?: string[];
+  allowedIps?: string[];
+  disabledAt?: Date | string | null;
+  bannedAt?: Date | string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+
+
+
+interface MongoSessionDoc {
+  _id?: ObjectId;
+  id?: string;
+  userId?: string | ObjectId;
+  sessionToken?: string;
+  expires?: Date | string;
+}
+
+interface MongoVerificationTokenDoc {
+  identifier?: string;
+  token?: string;
+  expires?: Date | string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+interface MongoCurrencyDoc {
+  _id?: ObjectId;
+  id?: string;
+  code?: string;
+  name?: string;
+  symbol?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoCountryDoc {
+  _id?: ObjectId;
+  id?: string;
+  code?: string;
+  name?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  currencyIds?: string[];
+}
+
+interface MongoLanguageDoc {
+  _id?: ObjectId;
+  id?: string;
+  code?: string;
+  name?: string;
+  nativeName?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  countries?: Array<{ countryId: string }>;
+}
+
+interface MongoPriceGroupDoc {
+  _id?: ObjectId;
+  id?: string;
+  groupId?: string;
+  isDefault?: boolean;
+  name?: string;
+  description?: string | null;
+  currencyId?: string;
+  type?: string;
+  basePriceField?: string;
+  sourceGroupId?: string | null;
+  priceMultiplier?: number;
+  addToPrice?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoCatalogDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string;
+  description?: string | null;
+  isDefault?: boolean;
+  defaultLanguageId?: string | null;
+  defaultPriceGroupId?: string | null;
+  priceGroupIds?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  languageIds?: string[];
+}
+
+interface MongoProductParameterDoc {
+  _id?: ObjectId;
+  id?: string;
+  catalogId?: string;
+  name_en?: string;
+  name_pl?: string | null;
+  name_de?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoProducerDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string;
+  website?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+interface MongoImageFileDoc {
+  _id?: ObjectId;
+  id?: string;
+  filename?: string;
+  filepath?: string;
+  mimetype?: string;
+  size?: number;
+  width?: number | null;
+  height?: number | null;
+  tags?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoImageStudioSlotDoc {
+  _id?: ObjectId;
+  id?: string;
+  projectId?: string;
+  name?: string | null;
+  folderPath?: string | null;
+  position?: number | null;
+  imageFileId?: string | null;
+  imageUrl?: string | null;
+  imageBase64?: string | null;
+  asset3dId?: string | null;
+  screenshotFileId?: string | null;
+  metadata?: unknown;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+interface MongoTagDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoCategoryDoc {
+  _id?: ObjectId;
+  id?: string;
+  catalogId?: string;
+  parentId?: string | null;
+  name_en?: string;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MongoProductDoc {
+  _id?: ObjectId;
+  id?: string;
+  sku?: string | null;
+  baseProductId?: string | null;
+  defaultPriceGroupId?: string | null;
+  ean?: string | null;
+  gtin?: string | null;
+  asin?: string | null;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
+  supplierName?: string | null;
+  supplierLink?: string | null;
+  priceComment?: string | null;
+  stock?: number | null;
+  price?: number | null;
+  sizeLength?: number | null;
+  sizeWidth?: number | null;
+  weight?: number | null;
+  length?: number | null;
+  parameters?: Array<{ parameterId: string; value_en?: string; value_pl?: string; value_de?: string }>;
+  imageLinks?: string[];
+  imageBase64s?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  images?: Array<{ imageFileId: string; assignedAt?: Date }>;
+  catalogs?: Array<{ catalogId: string; assignedAt?: Date }>;
+  categoryId?: string | null;
+  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
+  tags?: Array<{ tagId: string; assignedAt?: Date }>;
+  producers?: Array<{ producerId: string; assignedAt?: Date }>;
+}
+
+interface _MongoIntegrationDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string;
+  slug?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface _MongoIntegrationConnectionDoc {
+  _id?: ObjectId;
+  id?: string;
+  integrationId?: string;
+  status?: string;
+  config?: unknown;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface _MongoAsset3DDoc {
+  _id?: ObjectId;
+  id?: string;
+  name?: string;
+  filename?: string;
+  filepath?: string;
+  mimetype?: string;
+  size?: number;
+  tags?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface _MongoProductDraftDoc {
+  _id?: ObjectId;
+  id?: string;
+  productId?: string | null;
+  baseProductId?: string | null;
+  name?: string | null;
+  status?: string;
+  content?: unknown;
+  metadata?: unknown;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface _MongoNoteDoc {
+  _id?: ObjectId;
+  id?: string;
+  title?: string;
+  content?: string;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  color?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  tags?: Array<{ tagId: string; assignedAt?: Date }>;
+  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
+  relationsFrom?: Array<{ targetNoteId: string; assignedAt?: Date }>;
+}
+
 const isObjectIdString = (value: string): boolean =>
   /^[a-fA-F0-9]{24}$/.test(value);
 
@@ -162,18 +472,18 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("settings");
     const docs = await mongo.collection("settings").find({}).toArray();
     const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
-    docs.forEach((doc: Record<string, unknown>) => {
+    docs.forEach((doc: MongoSettingDoc) => {
       const key =
-        (doc as { key?: string }).key ??
-        (doc as unknown as { _id?: ObjectId | string })._id?.toString() ??
+        doc.key ??
+        doc._id?.toString() ??
         "";
       if (!key) return;
-      const value = (doc as { value?: string }).value;
+      const value = doc.value;
       const entry = {
         key,
         value: typeof value === "string" ? value : JSON.stringify(value ?? ""),
-        createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
-        updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+        createdAt: toDate(doc.createdAt) ?? new Date(),
+        updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
       const existing = byKey.get(key);
       if (!existing || entry.updatedAt > existing.updatedAt) {
@@ -189,20 +499,20 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
   await syncCollection("users", async () => {
     handledCollections.add("users");
     const docs = await mongo.collection("users").find({}).toArray();
-    const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+    const data: Prisma.UserCreateManyInput[] = docs
+      .map((doc: MongoUserDoc) => {
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
-          name: (doc as { name?: string | null }).name ?? null,
-          email: (doc as { email?: string | null }).email ?? null,
-          emailVerified: toDate((doc as { emailVerified?: Date | string | null }).emailVerified) ?? null,
-          image: (doc as { image?: string | null }).image ?? null,
-          passwordHash: (doc as { passwordHash?: string | null }).passwordHash ?? null,
+          name: doc.name ?? null,
+          email: doc.email ?? null,
+          emailVerified: toDate(doc.emailVerified) ?? null,
+          image: doc.image ?? null,
+          passwordHash: doc.passwordHash ?? null,
         };
       })
-      .filter(Boolean) as any;
+      .filter(Boolean) as Prisma.UserCreateManyInput[];
     const deleted = await prisma.user.deleteMany();
     const created = data.length ? await prisma.user.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -211,28 +521,28 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
   await syncCollection("accounts", async () => {
     handledCollections.add("accounts");
     const docs = await mongo.collection("accounts").find({}).toArray();
-    const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        const userIdRaw = (doc as { userId?: string | ObjectId }).userId;
+    const data: Prisma.AccountCreateManyInput[] = docs
+      .map((doc: MongoAccountDoc) => {
+        const id = normalizeId(doc);
+        const userIdRaw = doc.userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? "");
         if (!id || !userId) return null;
         return {
           id,
           userId,
-          type: (doc as { type?: string }).type ?? "oauth",
-          provider: (doc as { provider?: string }).provider ?? "",
-          providerAccountId: (doc as { providerAccountId?: string }).providerAccountId ?? "",
-          refresh_token: (doc as { refresh_token?: string | null }).refresh_token ?? null,
-          access_token: (doc as { access_token?: string | null }).access_token ?? null,
-          expires_at: (doc as { expires_at?: number | null }).expires_at ?? null,
-          token_type: (doc as { token_type?: string | null }).token_type ?? null,
-          scope: (doc as { scope?: string | null }).scope ?? null,
-          id_token: (doc as { id_token?: string | null }).id_token ?? null,
-          session_state: (doc as { session_state?: string | null }).session_state ?? null,
+          type: doc.type ?? "oauth",
+          provider: doc.provider ?? "",
+          providerAccountId: doc.providerAccountId ?? "",
+          refresh_token: doc.refresh_token ?? null,
+          access_token: doc.access_token ?? null,
+          expires_at: doc.expires_at ?? null,
+          token_type: doc.token_type ?? null,
+          scope: doc.scope ?? null,
+          id_token: doc.id_token ?? null,
+          session_state: doc.session_state ?? null,
         };
       })
-      .filter(Boolean) as any;
+      .filter(Boolean) as Prisma.AccountCreateManyInput[];
     const deleted = await prisma.account.deleteMany();
     const created = data.length ? await prisma.account.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -240,14 +550,14 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("sessions", async () => {
     handledCollections.add("sessions");
-    const docs = await mongo.collection("sessions").find({}).toArray();
+    const docs = (await mongo.collection("sessions").find({}).toArray()) as unknown as MongoSessionDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        const userIdRaw = (doc as { userId?: string | ObjectId }).userId;
+      .map((doc: MongoSessionDoc) => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const userIdRaw = doc.userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? "");
-        const sessionToken = (doc as { sessionToken?: string }).sessionToken;
-        const expires = toDate((doc as { expires?: Date | string }).expires);
+        const sessionToken = doc.sessionToken;
+        const expires = toDate(doc.expires);
         if (!id || !userId || !sessionToken || !expires) return null;
         return {
           id,
@@ -256,7 +566,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           expires,
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.SessionCreateManyInput => item !== null);
     const deleted = await prisma.session.deleteMany();
     const created = data.length ? await prisma.session.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -264,43 +574,44 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("verification_tokens", async () => {
     handledCollections.add("verification_tokens");
-    const docs = await mongo.collection("verification_tokens").find({}).toArray();
+    const docs = (await mongo.collection("verification_tokens").find({}).toArray()) as unknown as MongoVerificationTokenDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const identifier = (doc as { identifier?: string }).identifier;
-        const token = (doc as { token?: string }).token;
-        const expires = toDate((doc as { expires?: Date | string }).expires);
+      .map((doc: MongoVerificationTokenDoc) => {
+        const identifier = doc.identifier;
+        const token = doc.token;
+        const expires = toDate(doc.expires);
         if (!identifier || !token || !expires) return null;
         return { identifier, token, expires };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.VerificationTokenCreateManyInput => item !== null);
     const deleted = await prisma.verificationToken.deleteMany();
     const created = data.length ? await prisma.verificationToken.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
   });
 
+
   await syncCollection("auth_security_profiles", async () => {
     handledCollections.add("auth_security_profiles");
     const docs = await mongo.collection("auth_security_profiles").find({}).toArray();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        const userId = (doc as { userId?: string }).userId ?? id;
+      .map((doc: MongoAuthSecurityProfileDoc): Prisma.AuthSecurityProfileCreateManyInput | null => {
+        const id = normalizeId(doc);
+        const userId = doc.userId ?? id;
         if (!userId) return null;
         return {
           id,
           userId,
-          mfaEnabled: Boolean((doc as { mfaEnabled?: boolean }).mfaEnabled),
-          mfaSecret: (doc as { mfaSecret?: string | null }).mfaSecret ?? null,
-          recoveryCodes: (doc as { recoveryCodes?: string[] }).recoveryCodes ?? [],
-          allowedIps: (doc as { allowedIps?: string[] }).allowedIps ?? [],
-          disabledAt: toDate((doc as { disabledAt?: Date | string | null }).disabledAt),
-          bannedAt: toDate((doc as { bannedAt?: Date | string | null }).bannedAt),
-          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
-          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+          mfaEnabled: Boolean(doc.mfaEnabled),
+          mfaSecret: doc.mfaSecret ?? null,
+          recoveryCodes: doc.recoveryCodes ?? [],
+          allowedIps: doc.allowedIps ?? [],
+          disabledAt: toDate(doc.disabledAt),
+          bannedAt: toDate(doc.bannedAt),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.AuthSecurityProfileCreateManyInput => item !== null);
     const deleted = await prisma.authSecurityProfile.deleteMany();
     const created = data.length ? await prisma.authSecurityProfile.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -320,7 +631,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter(Boolean) as Prisma.AuthLoginChallengeCreateManyInput[];
     const deleted = await prisma.authLoginChallenge.deleteMany();
     const created = data.length ? await prisma.authLoginChallenge.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -340,7 +651,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter(Boolean) as Prisma.AuthSecurityAttemptCreateManyInput[];
     const deleted = await prisma.authSecurityAttempt.deleteMany();
     const created = data.length ? await prisma.authSecurityAttempt.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -352,30 +663,30 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       (await prisma.user.findMany({ select: { id: true } }))
         .map((entry: { id: string }) => entry.id)
     );
-    const docs = await mongo.collection("user_preferences").find({}).toArray();
+    const docs = (await mongo.collection("user_preferences").find({}).toArray()) as unknown as MongoUserPreferencesDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        const userId = (doc as { userId?: string }).userId;
+      .map((doc: MongoUserPreferencesDoc): Prisma.UserPreferencesCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const userId = doc.userId;
         if (!userId || !existingUserIds.has(userId)) return null;
         return {
           id: id || userId,
           userId,
-          productListNameLocale: (doc as { productListNameLocale?: string | null }).productListNameLocale ?? null,
-          productListCatalogFilter: (doc as { productListCatalogFilter?: string | null }).productListCatalogFilter ?? null,
-          productListCurrencyCode: (doc as { productListCurrencyCode?: string | null }).productListCurrencyCode ?? null,
-          productListPageSize: (doc as { productListPageSize?: number | null }).productListPageSize ?? null,
-          productListThumbnailSource: (doc as { productListThumbnailSource?: string | null }).productListThumbnailSource ?? null,
-          aiPathsActivePathId: (doc as { aiPathsActivePathId?: string | null }).aiPathsActivePathId ?? null,
-          aiPathsExpandedGroups: (doc as { aiPathsExpandedGroups?: string[] }).aiPathsExpandedGroups ?? [],
-          aiPathsPaletteCollapsed: (doc as { aiPathsPaletteCollapsed?: boolean | null }).aiPathsPaletteCollapsed ?? null,
-          aiPathsPathIndex: (doc as { aiPathsPathIndex?: any | null }).aiPathsPathIndex ?? null,
-          aiPathsPathConfigs: (doc as { aiPathsPathConfigs?: any | null }).aiPathsPathConfigs ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          productListNameLocale: doc.productListNameLocale ?? null,
+          productListCatalogFilter: doc.productListCatalogFilter ?? null,
+          productListCurrencyCode: doc.productListCurrencyCode ?? null,
+          productListPageSize: doc.productListPageSize ?? null,
+          productListThumbnailSource: doc.productListThumbnailSource ?? null,
+          aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
+          aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
+          aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? null,
+          aiPathsPathIndex: toJsonValue(doc.aiPathsPathIndex ?? null),
+          aiPathsPathConfigs: toJsonValue(doc.aiPathsPathConfigs ?? null),
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.UserPreferencesCreateManyInput => item !== null);
     const deleted = await prisma.userPreferences.deleteMany();
     const created = data.length ? await prisma.userPreferences.createMany({ data }) : { count: 0 };
     return {
@@ -390,26 +701,26 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("system_logs", async () => {
     handledCollections.add("system_logs");
-    const docs = await mongo.collection("system_logs").find({}).toArray();
+    const docs = (await mongo.collection("system_logs").find({}).toArray()) as unknown as MongoSystemLogDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoSystemLogDoc): Prisma.SystemLogCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         return {
           ...(id ? { id } : null),
-          level: (doc as { level?: string }).level ?? "error",
-          message: (doc as { message?: string }).message ?? "",
-          source: (doc as { source?: string | null }).source ?? null,
-          context: (doc as { context?: unknown }).context ?? null,
-          stack: (doc as { stack?: string | null }).stack ?? null,
-          path: (doc as { path?: string | null }).path ?? null,
-          method: (doc as { method?: string | null }).method ?? null,
-          statusCode: (doc as { statusCode?: number | null }).statusCode ?? null,
-          requestId: (doc as { requestId?: string | null }).requestId ?? null,
-          userId: (doc as { userId?: string | null }).userId ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+          level: doc.level ?? "error",
+          message: doc.message ?? "",
+          source: doc.source ?? null,
+          context: toJsonValue(doc.context ?? null),
+          stack: doc.stack ?? null,
+          path: doc.path ?? null,
+          method: doc.method ?? null,
+          statusCode: doc.statusCode ?? null,
+          requestId: doc.requestId ?? null,
+          userId: doc.userId ?? null,
+          createdAt: doc.createdAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.SystemLogCreateManyInput => item !== null);
     const deleted = await prisma.systemLog.deleteMany();
     const created = data.length ? await prisma.systemLog.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -417,13 +728,13 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("file_upload_events", async () => {
     handledCollections.add("file_upload_events");
-    const docs = await mongo.collection("file_upload_events").find({}).toArray();
+    const docs = (await mongo.collection("file_upload_events").find({}).toArray()) as unknown as MongoFileUploadEventDoc[];
     const warnings: string[] = [];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoFileUploadEventDoc): Prisma.FileUploadEventCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const status = (doc as { status?: string }).status;
+        const status = doc.status;
         const resolvedStatus = status === "error" || status === "success" ? status : "success";
         if (status && resolvedStatus !== status) {
           warnings.push(`File upload event ${id}: invalid status ${status}`);
@@ -431,22 +742,22 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           status: resolvedStatus,
-          category: (doc as { category?: string | null }).category ?? null,
-          projectId: (doc as { projectId?: string | null }).projectId ?? null,
-          folder: (doc as { folder?: string | null }).folder ?? null,
-          filename: (doc as { filename?: string | null }).filename ?? null,
-          filepath: (doc as { filepath?: string | null }).filepath ?? null,
-          mimetype: (doc as { mimetype?: string | null }).mimetype ?? null,
-          size: typeof (doc as { size?: number | null }).size === "number" ? (doc as { size?: number | null }).size : null,
-          source: (doc as { source?: string | null }).source ?? null,
-          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
-          requestId: (doc as { requestId?: string | null }).requestId ?? null,
-          userId: (doc as { userId?: string | null }).userId ?? null,
-          meta: toJsonValue((doc as { meta?: unknown }).meta ?? null),
-          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
+          category: doc.category ?? null,
+          projectId: doc.projectId ?? null,
+          folder: doc.folder ?? null,
+          filename: doc.filename ?? null,
+          filepath: doc.filepath ?? null,
+          mimetype: doc.mimetype ?? null,
+          size: typeof doc.size === "number" ? doc.size : null,
+          source: doc.source ?? null,
+          errorMessage: doc.errorMessage ?? null,
+          requestId: doc.requestId ?? null,
+          userId: doc.userId ?? null,
+          meta: toJsonValue(doc.meta ?? null),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.FileUploadEventCreateManyInput => item !== null);
     const deleted = await prisma.fileUploadEvent.deleteMany();
     const created = data.length ? await prisma.fileUploadEvent.createMany({ data }) : { count: 0 };
     return {
@@ -459,28 +770,28 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("ai_configurations", async () => {
     handledCollections.add("ai_configurations");
-    const docs = await mongo.collection("ai_configurations").find({}).toArray();
+    const docs = (await mongo.collection("ai_configurations").find({}).toArray()) as unknown as MongoAiConfigurationDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoAiConfigurationDoc): Prisma.AiConfigurationCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          type: (doc as { type?: string | null }).type ?? null,
-          descriptionGenerationModel: (doc as { descriptionGenerationModel?: string | null }).descriptionGenerationModel ?? null,
-          generationInputPrompt: (doc as { generationInputPrompt?: string | null }).generationInputPrompt ?? null,
-          generationOutputEnabled: Boolean((doc as { generationOutputEnabled?: boolean }).generationOutputEnabled),
-          generationOutputPrompt: (doc as { generationOutputPrompt?: string | null }).generationOutputPrompt ?? null,
-          imageAnalysisModel: (doc as { imageAnalysisModel?: string | null }).imageAnalysisModel ?? null,
-          visionInputPrompt: (doc as { visionInputPrompt?: string | null }).visionInputPrompt ?? null,
-          visionOutputEnabled: Boolean((doc as { visionOutputEnabled?: boolean }).visionOutputEnabled),
-          visionOutputPrompt: (doc as { visionOutputPrompt?: string | null }).visionOutputPrompt ?? null,
-          testProductId: (doc as { testProductId?: string | null }).testProductId ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          type: doc.type ?? null,
+          descriptionGenerationModel: doc.descriptionGenerationModel ?? null,
+          generationInputPrompt: doc.generationInputPrompt ?? null,
+          generationOutputEnabled: Boolean(doc.generationOutputEnabled),
+          generationOutputPrompt: doc.generationOutputPrompt ?? null,
+          imageAnalysisModel: doc.imageAnalysisModel ?? null,
+          visionInputPrompt: doc.visionInputPrompt ?? null,
+          visionOutputEnabled: Boolean(doc.visionOutputEnabled),
+          visionOutputPrompt: doc.visionOutputPrompt ?? null,
+          testProductId: doc.testProductId ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.AiConfigurationCreateManyInput => item !== null);
     const deleted = await prisma.aiConfiguration.deleteMany();
     const created = data.length ? await prisma.aiConfiguration.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -488,22 +799,22 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("chatbot_sessions", async () => {
     handledCollections.add("chatbot_sessions");
-    const docs = await mongo.collection("chatbot_sessions").find({}).toArray();
+    const docs = (await mongo.collection("chatbot_sessions").find({}).toArray()) as unknown as MongoChatbotSessionDoc[];
     const sessions = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoChatbotSessionDoc) => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          title: (doc as { title?: string | null }).title ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          messages: Array.isArray((doc as { messages?: unknown[] }).messages)
-            ? (doc as { messages?: Array<{ role: string; content: string; createdAt?: Date }> }).messages ?? []
+          title: doc.title ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
+          messages: Array.isArray(doc.messages)
+            ? doc.messages ?? []
             : [],
         };
       })
-      .filter(Boolean) as Array<{ id: string; title: string | null; createdAt: Date; updatedAt: Date; messages: Array<{ role: string; content: string; createdAt?: Date }> }>;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     await prisma.chatbotMessage.deleteMany();
     const deletedSessions = await prisma.chatbotSession.deleteMany();
@@ -540,26 +851,26 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("chatbot_jobs", async () => {
     handledCollections.add("chatbot_jobs");
-    const docs = await mongo.collection("chatbot_jobs").find({}).toArray();
+    const docs = (await mongo.collection("chatbot_jobs").find({}).toArray()) as unknown as MongoChatbotJobDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        const sessionId = (doc as { sessionId?: string }).sessionId;
+      .map((doc: MongoChatbotJobDoc): Prisma.ChatbotJobCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const sessionId = doc.sessionId;
         if (!id || !sessionId) return null;
         return {
           id,
           sessionId,
-          status: (doc as { status?: string }).status ?? "pending",
-          model: (doc as { model?: string | null }).model ?? null,
-          payload: (doc as { payload?: any }).payload ?? null,
-          resultText: (doc as { resultText?: string | null }).resultText ?? null,
-          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
-          finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
+          status: doc.status ?? "pending",
+          model: doc.model ?? null,
+          payload: toJsonValue(doc.payload ?? null),
+          resultText: doc.resultText ?? null,
+          errorMessage: doc.errorMessage ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          startedAt: toDate(doc.startedAt),
+          finishedAt: toDate(doc.finishedAt),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ChatbotJobCreateManyInput => item !== null);
     const deleted = await prisma.chatbotJob.deleteMany();
     const created = data.length ? await prisma.chatbotJob.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -570,26 +881,26 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     // Clear dependent data so currency deletes don't fail on FK constraints.
     await prisma.product.deleteMany();
     await prisma.priceGroup.deleteMany();
-    const docs = await mongo.collection("currencies").find({}).toArray();
+    const docs = (await mongo.collection("currencies").find({}).toArray()) as unknown as MongoCurrencyDoc[];
     const warnings: string[] = [];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const code = String((doc as { code?: string }).code ?? "").toUpperCase();
+      .map((doc: MongoCurrencyDoc): Prisma.CurrencyCreateManyInput | null => {
+        const code = String(doc.code ?? "").toUpperCase();
         if (!currencyCodes.has(code)) {
           warnings.push(`Skipped currency code: ${code || "unknown"}`);
           return null;
         }
-        const id = (doc as { id?: string }).id ?? code;
+        const id = doc.id ?? code;
         return {
           id,
           code,
-          name: (doc as { name?: string }).name ?? code,
-          symbol: (doc as { symbol?: string | null }).symbol ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          name: doc.name ?? code,
+          symbol: doc.symbol ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.CurrencyCreateManyInput => item !== null);
     const deleted = await prisma.currency.deleteMany();
     const created = data.length ? await prisma.currency.createMany({ data }) : { count: 0 };
     return {
@@ -602,33 +913,33 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("countries", async () => {
     handledCollections.add("countries");
-    const docs = await mongo.collection("countries").find({}).toArray();
+    const docs = (await mongo.collection("countries").find({}).toArray()) as unknown as MongoCountryDoc[];
     const warnings: string[] = [];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const code = String((doc as { code?: string }).code ?? "").toUpperCase();
+      .map((doc: MongoCountryDoc) => {
+        const code = String(doc.code ?? "").toUpperCase();
         if (!countryCodes.has(code)) {
           warnings.push(`Skipped country code: ${code || "unknown"}`);
           return null;
         }
-        const id = (doc as { id?: string }).id ?? code;
+        const id = doc.id ?? code;
         return {
           id,
           code,
-          name: (doc as { name?: string }).name ?? code,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          currencyIds: Array.isArray((doc as { currencyIds?: string[] }).currencyIds)
-            ? (doc as { currencyIds?: string[] }).currencyIds ?? []
+          name: doc.name ?? code,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
+          currencyIds: Array.isArray(doc.currencyIds)
+            ? doc.currencyIds ?? []
             : [],
         };
       })
-      .filter(Boolean) as Array<{ id: string; code: string; name: string; createdAt: Date; updatedAt: Date; currencyIds: string[] }>;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     const deleted = await prisma.country.deleteMany();
     const created = data.length
       ? await prisma.country.createMany({
-          data: data.map(({ currencyIds, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
+          data: data.map(({ currencyIds: _, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
         })
       : { count: 0 };
 
@@ -655,34 +966,34 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("languages");
     // Clear catalogs so defaultLanguage FK doesn't block language deletes.
     await prisma.catalog.deleteMany();
-    const docs = await mongo.collection("languages").find({}).toArray();
+    const docs = (await mongo.collection("languages").find({}).toArray()) as unknown as MongoLanguageDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const code = String((doc as { code?: string }).code ?? "").toUpperCase();
+      .map((doc: MongoLanguageDoc) => {
+        const code = String(doc.code ?? "").toUpperCase();
         if (!code) return null;
         return {
-          id: (doc as { id?: string }).id ?? code,
+          id: doc.id ?? code,
           code,
-          name: (doc as { name?: string }).name ?? code,
-          nativeName: (doc as { nativeName?: string | null }).nativeName ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          countries: Array.isArray((doc as { countries?: unknown[] }).countries)
-            ? (doc as { countries?: Array<{ countryId: string }> }).countries ?? []
+          name: doc.name ?? code,
+          nativeName: doc.nativeName ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
+          countries: Array.isArray(doc.countries)
+            ? doc.countries ?? []
             : [],
         };
       })
-      .filter(Boolean) as Array<{ id: string; code: string; name: string; nativeName: string | null; createdAt: Date; updatedAt: Date; countries: Array<{ countryId: string }> }>;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     const deleted = await prisma.language.deleteMany();
     const created = data.length
       ? await prisma.language.createMany({
-          data: data.map(({ countries, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
+          data: data.map(({ countries: _, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
         })
       : { count: 0 };
 
     const joinRows = data.flatMap((lang) =>
-      lang.countries.map((entry: any) => ({
+      lang.countries.map((entry) => ({
         languageId: lang.id,
         countryId: entry.countryId,
       }))
@@ -706,17 +1017,17 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const warnings: string[] = [];
-    const docs = await mongo.collection("price_groups").find({}).toArray();
+    const docs = (await mongo.collection("price_groups").find({}).toArray()) as unknown as MongoPriceGroupDoc[];
     const availableGroupIds = new Set<string>(
       docs
-        .map((doc: Record<string, unknown>) => normalizeId(doc as Record<string, unknown>))
+        .map((doc: MongoPriceGroupDoc) => normalizeId(doc as unknown as Record<string, unknown>))
         .filter((id: string | null): id is string => Boolean(id))
     );
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoPriceGroupDoc): Prisma.PriceGroupCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const rawCurrencyId = (doc as { currencyId?: string }).currencyId ?? "PLN";
+        const rawCurrencyId = doc.currencyId ?? "PLN";
         const resolvedCurrencyId = availableCurrencyIds.has(rawCurrencyId)
           ? rawCurrencyId
           : availableCurrencyIds.has("PLN")
@@ -726,7 +1037,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           warnings.push(`Skipped price group ${id}: missing currency ${rawCurrencyId}`);
           return null;
         }
-        const rawSourceGroupId = (doc as { sourceGroupId?: string | null }).sourceGroupId ?? null;
+        const rawSourceGroupId = doc.sourceGroupId ?? null;
         const resolvedSourceGroupId =
           rawSourceGroupId && availableGroupIds.has(rawSourceGroupId) ? rawSourceGroupId : null;
         if (rawSourceGroupId && !resolvedSourceGroupId) {
@@ -734,21 +1045,21 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         }
         return {
           id,
-          groupId: (doc as { groupId?: string }).groupId ?? id,
-          isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
-          name: (doc as { name?: string }).name ?? id,
-          description: (doc as { description?: string | null }).description ?? null,
+          groupId: doc.groupId ?? id,
+          isDefault: Boolean(doc.isDefault),
+          name: doc.name ?? id,
+          description: doc.description ?? null,
           currencyId: resolvedCurrencyId,
-          type: (doc as { type?: string }).type ?? "standard",
-          basePriceField: (doc as { basePriceField?: string }).basePriceField ?? "price",
+          type: doc.type ?? "standard",
+          basePriceField: doc.basePriceField ?? "price",
           sourceGroupId: resolvedSourceGroupId,
-          priceMultiplier: (doc as { priceMultiplier?: number }).priceMultiplier ?? 1,
-          addToPrice: (doc as { addToPrice?: number }).addToPrice ?? 0,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          priceMultiplier: doc.priceMultiplier ?? 1,
+          addToPrice: doc.addToPrice ?? 0,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.PriceGroupCreateManyInput => item !== null);
     const deleted = await prisma.priceGroup.deleteMany();
     const created = data.length ? await prisma.priceGroup.createMany({ data }) : { count: 0 };
     return {
@@ -770,51 +1081,51 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const warnings: string[] = [];
-    const docs = await mongo.collection("catalogs").find({}).toArray();
+    const docs = (await mongo.collection("catalogs").find({}).toArray()) as unknown as MongoCatalogDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoCatalogDoc) => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const rawDefaultLanguageId = (doc as { defaultLanguageId?: string | null }).defaultLanguageId ?? null;
+        const rawDefaultLanguageId = doc.defaultLanguageId ?? null;
         const resolvedDefaultLanguageId =
           rawDefaultLanguageId && availableLanguageIds.has(rawDefaultLanguageId) ? rawDefaultLanguageId : null;
         if (rawDefaultLanguageId && !resolvedDefaultLanguageId) {
           warnings.push(`Catalog ${id}: missing default language ${rawDefaultLanguageId}`);
         }
-        const rawDefaultPriceGroupId = (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null;
+        const rawDefaultPriceGroupId = doc.defaultPriceGroupId ?? null;
         const resolvedDefaultPriceGroupId =
           rawDefaultPriceGroupId && availablePriceGroupIds.has(rawDefaultPriceGroupId) ? rawDefaultPriceGroupId : null;
         if (rawDefaultPriceGroupId && !resolvedDefaultPriceGroupId) {
           warnings.push(`Catalog ${id}: missing default price group ${rawDefaultPriceGroupId}`);
         }
-        const rawLanguageIds = (doc as { languageIds?: string[] }).languageIds ?? [];
+        const rawLanguageIds = doc.languageIds ?? [];
         const languageIds = rawLanguageIds.filter((languageId) => availableLanguageIds.has(languageId));
         if (rawLanguageIds.length !== languageIds.length) {
           warnings.push(`Catalog ${id}: filtered ${rawLanguageIds.length - languageIds.length} missing languages`);
         }
-        const rawPriceGroupIds = (doc as { priceGroupIds?: string[] }).priceGroupIds ?? [];
+        const rawPriceGroupIds = doc.priceGroupIds ?? [];
         const priceGroupIds = rawPriceGroupIds.filter((priceGroupId) => availablePriceGroupIds.has(priceGroupId));
         if (rawPriceGroupIds.length !== priceGroupIds.length) {
           warnings.push(`Catalog ${id}: filtered ${rawPriceGroupIds.length - priceGroupIds.length} missing price groups`);
         }
         return {
           id,
-          name: (doc as { name?: string }).name ?? id,
-          description: (doc as { description?: string | null }).description ?? null,
-          isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
+          name: doc.name ?? id,
+          description: doc.description ?? null,
+          isDefault: Boolean(doc.isDefault),
           defaultLanguageId: resolvedDefaultLanguageId,
           defaultPriceGroupId: resolvedDefaultPriceGroupId,
           priceGroupIds,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
           languageIds,
         };
       })
-      .filter(Boolean) as Array<{ id: string; name: string; description: string | null; isDefault: boolean; defaultLanguageId: string | null; defaultPriceGroupId: string | null; priceGroupIds: string[]; createdAt: Date; updatedAt: Date; languageIds: string[] }>;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
     const deleted = await prisma.catalog.deleteMany();
     const created = data.length
       ? await prisma.catalog.createMany({
-          data: data.map(({ languageIds, ...rest }) => rest) as Prisma.CatalogCreateManyInput[],
+          data: data.map(({ languageIds: _, ...rest }) => rest) as Prisma.CatalogCreateManyInput[],
         })
       : { count: 0 };
 
@@ -840,23 +1151,23 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_categories", async () => {
     handledCollections.add("product_categories");
-    const docs = await mongo.collection("product_categories").find({}).toArray();
+    const docs = (await mongo.collection("product_categories").find({}).toArray()) as unknown as MongoCategoryDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoCategoryDoc): Prisma.ProductCategoryCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          name: (doc as { name?: string }).name ?? id,
-          description: (doc as { description?: string | null }).description ?? null,
-          color: (doc as { color?: string | null }).color ?? null,
-          parentId: (doc as { parentId?: string | null }).parentId ?? null,
-          catalogId: (doc as { catalogId?: string }).catalogId ?? "",
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          name: doc.name_en ?? id,
+          description: doc.description_en ?? null,
+          color: null,
+          parentId: doc.parentId ?? null,
+          catalogId: doc.catalogId ?? "",
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProductCategoryCreateManyInput => item !== null);
     const deleted = await prisma.productCategory.deleteMany();
     const created = data.length ? await prisma.productCategory.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -864,21 +1175,21 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_tags", async () => {
     handledCollections.add("product_tags");
-    const docs = await mongo.collection("product_tags").find({}).toArray();
+    const docs = (await mongo.collection("product_tags").find({}).toArray()) as unknown as MongoTagDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoTagDoc): Prisma.ProductTagCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          name: (doc as { name?: string }).name ?? id,
-          color: (doc as { color?: string | null }).color ?? null,
-          catalogId: (doc as { catalogId?: string }).catalogId ?? "",
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          name: doc.name ?? id,
+          color: null,
+          catalogId: "",
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProductTagCreateManyInput => item !== null);
     const deleted = await prisma.productTag.deleteMany();
     const created = data.length ? await prisma.productTag.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -886,22 +1197,22 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_parameters", async () => {
     handledCollections.add("product_parameters");
-    const docs = await mongo.collection("product_parameters").find({}).toArray();
+    const docs = (await mongo.collection("product_parameters").find({}).toArray()) as unknown as MongoProductParameterDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoProductParameterDoc): Prisma.ProductParameterCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          catalogId: (doc as { catalogId?: string }).catalogId ?? "",
-          name_en: (doc as { name_en?: string }).name_en ?? "",
-          name_pl: (doc as { name_pl?: string | null }).name_pl ?? null,
-          name_de: (doc as { name_de?: string | null }).name_de ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          catalogId: doc.catalogId ?? "",
+          name_en: doc.name_en ?? "",
+          name_pl: doc.name_pl ?? null,
+          name_de: doc.name_de ?? null,
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProductParameterCreateManyInput => item !== null);
     const deleted = await prisma.productParameter.deleteMany();
     const created = data.length ? await prisma.productParameter.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -909,14 +1220,14 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("product_producers", async () => {
     handledCollections.add("product_producers");
-    const docs = await mongo.collection("product_producers").find({}).toArray();
+    const docs = (await mongo.collection("product_producers").find({}).toArray()) as unknown as MongoProducerDoc[];
     const warnings: string[] = [];
     const seenNames = new Set<string>();
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoProducerDoc): Prisma.ProducerCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const rawName = typeof (doc as { name?: string }).name === "string" ? (doc as { name?: string }).name?.trim() ?? "" : "";
+        const rawName = typeof doc.name === "string" ? doc.name?.trim() ?? "" : "";
         const name = rawName || id;
         const nameKey = name.toLowerCase();
         if (seenNames.has(nameKey)) {
@@ -927,12 +1238,12 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           name,
-          website: (doc as { website?: string | null }).website ?? null,
-          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
-          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+          website: doc.website ?? null,
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ProducerCreateManyInput => item !== null);
     await prisma.productProducerAssignment.deleteMany();
     const deleted = await prisma.producer.deleteMany();
     const created = data.length ? await prisma.producer.createMany({ data }) : { count: 0 };
@@ -946,25 +1257,25 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("image_files", async () => {
     handledCollections.add("image_files");
-    const docs = await mongo.collection("image_files").find({}).toArray();
+    const docs = (await mongo.collection("image_files").find({}).toArray()) as unknown as MongoImageFileDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoImageFileDoc): Prisma.ImageFileCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          filename: (doc as { filename?: string }).filename ?? "",
-          filepath: (doc as { filepath?: string }).filepath ?? "",
-          mimetype: (doc as { mimetype?: string }).mimetype ?? "",
-          size: (doc as { size?: number }).size ?? 0,
-          width: (doc as { width?: number | null }).width ?? null,
-          height: (doc as { height?: number | null }).height ?? null,
-          tags: (doc as { tags?: string[] }).tags ?? [],
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          filename: doc.filename ?? "",
+          filepath: doc.filepath ?? "",
+          mimetype: doc.mimetype ?? "",
+          size: doc.size ?? 0,
+          width: doc.width ?? null,
+          height: doc.height ?? null,
+          tags: doc.tags ?? [],
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ImageFileCreateManyInput => item !== null);
     const deleted = await prisma.imageFile.deleteMany();
     const created = data.length ? await prisma.imageFile.createMany({ data }) : { count: 0 };
     return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
@@ -980,20 +1291,20 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       (await prisma.asset3D.findMany({ select: { id: true } }))
         .map((entry: { id: string }) => entry.id)
     );
-    const docs = await mongo.collection("image_studio_slots").find({}).toArray();
+    const docs = (await mongo.collection("image_studio_slots").find({}).toArray()) as unknown as MongoImageStudioSlotDoc[];
     const warnings: string[] = [];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoImageStudioSlotDoc): Prisma.ImageStudioSlotCreateManyInput | null => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const projectId = (doc as { projectId?: string }).projectId ?? "";
+        const projectId = doc.projectId ?? "";
         if (!projectId) {
           warnings.push(`Image studio slot ${id}: missing projectId`);
           return null;
         }
-        const imageFileId = (doc as { imageFileId?: string | null }).imageFileId ?? null;
-        const screenshotFileId = (doc as { screenshotFileId?: string | null }).screenshotFileId ?? null;
-        const asset3dId = (doc as { asset3dId?: string | null }).asset3dId ?? null;
+        const imageFileId = doc.imageFileId ?? null;
+        const screenshotFileId = doc.screenshotFileId ?? null;
+        const asset3dId = doc.asset3dId ?? null;
         const resolvedImageFileId = imageFileId && availableImageFileIds.has(imageFileId) ? imageFileId : null;
         const resolvedScreenshotFileId =
           screenshotFileId && availableImageFileIds.has(screenshotFileId) ? screenshotFileId : null;
@@ -1010,20 +1321,20 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           projectId,
-          name: (doc as { name?: string | null }).name ?? "",
-          folderPath: (doc as { folderPath?: string | null }).folderPath ?? "",
-          position: (doc as { position?: number | null }).position ?? null,
+          name: doc.name ?? "",
+          folderPath: doc.folderPath ?? "",
+          position: doc.position ?? null,
           imageFileId: resolvedImageFileId,
-          imageUrl: (doc as { imageUrl?: string | null }).imageUrl ?? null,
-          imageBase64: (doc as { imageBase64?: string | null }).imageBase64 ?? null,
+          imageUrl: doc.imageUrl ?? null,
+          imageBase64: doc.imageBase64 ?? null,
           asset3dId: resolvedAsset3dId,
           screenshotFileId: resolvedScreenshotFileId,
-          metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null),
-          createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
-          updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
+          metadata: toJsonValue(doc.metadata ?? null),
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
       })
-      .filter(Boolean) as any;
+      .filter((item): item is Prisma.ImageStudioSlotCreateManyInput => item !== null);
     const deleted = await prisma.imageStudioSlot.deleteMany();
     const created = data.length ? await prisma.imageStudioSlot.createMany({ data }) : { count: 0 };
     return {
@@ -1041,13 +1352,13 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         .map((entry: { id: string }) => entry.id)
     );
     const warnings: string[] = [];
-    const docs = await mongo.collection("products").find({}).toArray();
+    const docs = (await mongo.collection("products").find({}).toArray()) as unknown as MongoProductDoc[];
     const data = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+      .map((doc: MongoProductDoc) => {
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        const producers = Array.isArray((doc as { producers?: unknown[] }).producers)
-          ? (doc as { producers?: Array<{ producerId: string; assignedAt?: Date }> }).producers ?? []
+        const producers = Array.isArray(doc.producers)
+          ? doc.producers ?? []
           : [];
         const filteredProducers = producers.filter((producer) => availableProducerIds.has(producer.producerId));
         if (filteredProducers.length !== producers.length) {
@@ -1055,85 +1366,52 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         }
         return {
           id,
-          sku: (doc as { sku?: string | null }).sku ?? null,
-          baseProductId: (doc as { baseProductId?: string | null }).baseProductId ?? null,
-          defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
-          ean: (doc as { ean?: string | null }).ean ?? null,
-          gtin: (doc as { gtin?: string | null }).gtin ?? null,
-          asin: (doc as { asin?: string | null }).asin ?? null,
-          name_en: (doc as { name_en?: string | null }).name_en ?? null,
-          name_pl: (doc as { name_pl?: string | null }).name_pl ?? null,
-          name_de: (doc as { name_de?: string | null }).name_de ?? null,
-          description_en: (doc as { description_en?: string | null }).description_en ?? null,
-          description_pl: (doc as { description_pl?: string | null }).description_pl ?? null,
-          description_de: (doc as { description_de?: string | null }).description_de ?? null,
-          supplierName: (doc as { supplierName?: string | null }).supplierName ?? null,
-          supplierLink: (doc as { supplierLink?: string | null }).supplierLink ?? null,
-          priceComment: (doc as { priceComment?: string | null }).priceComment ?? null,
-          stock: (doc as { stock?: number | null }).stock ?? null,
-          price: (doc as { price?: number | null }).price ?? null,
-          sizeLength: (doc as { sizeLength?: number | null }).sizeLength ?? null,
-          sizeWidth: (doc as { sizeWidth?: number | null }).sizeWidth ?? null,
-          weight: (doc as { weight?: number | null }).weight ?? null,
-          length: (doc as { length?: number | null }).length ?? null,
-          parameters: (doc as { parameters?: any[] }).parameters ?? [],
-          imageLinks: (doc as { imageLinks?: string[] }).imageLinks ?? [],
-          imageBase64s: (doc as { imageBase64s?: string[] }).imageBase64s ?? [],
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          images: Array.isArray((doc as { images?: unknown[] }).images)
-            ? (doc as { images?: Array<{ imageFileId: string; assignedAt?: Date }> }).images ?? []
+          sku: doc.sku ?? null,
+          baseProductId: doc.baseProductId ?? null,
+          defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
+          ean: doc.ean ?? null,
+          gtin: doc.gtin ?? null,
+          asin: doc.asin ?? null,
+          name_en: doc.name_en ?? null,
+          name_pl: doc.name_pl ?? null,
+          name_de: doc.name_de ?? null,
+          description_en: doc.description_en ?? null,
+          description_pl: doc.description_pl ?? null,
+          description_de: doc.description_de ?? null,
+          supplierName: doc.supplierName ?? null,
+          supplierLink: doc.supplierLink ?? null,
+          priceComment: doc.priceComment ?? null,
+          stock: doc.stock ?? null,
+          price: doc.price ?? null,
+          sizeLength: doc.sizeLength ?? null,
+          sizeWidth: doc.sizeWidth ?? null,
+          weight: doc.weight ?? null,
+          length: doc.length ?? null,
+          parameters: doc.parameters ?? [],
+          imageLinks: doc.imageLinks ?? [],
+          imageBase64s: doc.imageBase64s ?? [],
+          createdAt: doc.createdAt ?? new Date(),
+          updatedAt: doc.updatedAt ?? new Date(),
+          images: Array.isArray(doc.images)
+            ? doc.images ?? []
             : [],
-          catalogs: Array.isArray((doc as { catalogs?: unknown[] }).catalogs)
-            ? (doc as { catalogs?: Array<{ catalogId: string; assignedAt?: Date }> }).catalogs ?? []
+          catalogs: Array.isArray(doc.catalogs)
+            ? doc.catalogs ?? []
             : [],
           categories: ((): Array<{ categoryId: string; assignedAt: Date }> => {
             const categoryId =
-              (doc as { categoryId?: string | null }).categoryId ??
-              ((doc as { categories?: Array<{ categoryId?: string }> }).categories ?? [])[0]?.categoryId ??
+              doc.categoryId ??
+              (doc.categories ?? [])[0]?.categoryId ??
               null;
             return categoryId ? [{ categoryId, assignedAt: new Date() }] : [];
           })(),
-          tags: Array.isArray((doc as { tags?: unknown[] }).tags)
-            ? (doc as { tags?: Array<{ tagId: string; assignedAt?: Date }> }).tags ?? []
+          tags: Array.isArray(doc.tags)
+            ? doc.tags ?? []
             : [],
           producers: filteredProducers,
         };
       })
-      .filter(Boolean) as Array<{
-        id: string;
-        sku: string | null;
-        baseProductId: string | null;
-        defaultPriceGroupId: string | null;
-        ean: string | null;
-        gtin: string | null;
-        asin: string | null;
-        name_en: string | null;
-        name_pl: string | null;
-        name_de: string | null;
-        description_en: string | null;
-        description_pl: string | null;
-        description_de: string | null;
-        supplierName: string | null;
-        supplierLink: string | null;
-        priceComment: string | null;
-        stock: number | null;
-        price: number | null;
-        sizeLength: number | null;
-        sizeWidth: number | null;
-        weight: number | null;
-        length: number | null;
-        parameters: any[];
-        imageLinks: string[];
-        imageBase64s: string[];
-        createdAt: Date;
-        updatedAt: Date;
-        images: Array<{ imageFileId: string; assignedAt?: Date }>;
-        catalogs: Array<{ catalogId: string; assignedAt?: Date }>;
-        categories: Array<{ categoryId: string; assignedAt?: Date }>;
-        tags: Array<{ tagId: string; assignedAt?: Date }>;
-        producers: Array<{ producerId: string; assignedAt?: Date }>;
-      }>;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     await prisma.productImage.deleteMany();
     await prisma.productCatalog.deleteMany();
@@ -1142,11 +1420,12 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     await prisma.productProducerAssignment.deleteMany();
 
     const deleted = await prisma.product.deleteMany();
-    const created = data.length
-      ? await prisma.product.createMany({
-          data: data.map(({ images, catalogs, categories, tags, producers, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
-        })
-      : { count: 0 };
+    let created = { count: 0 };
+    if (data.length > 0) {
+      created = await prisma.product.createMany({
+        data: data.map(({ images, catalogs, categories, tags, producers, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
+      });
+    }
 
     const imageRows = data.flatMap((product) =>
       product.images.map((image) => ({
@@ -1848,170 +2127,116 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("notes", async () => {
     handledCollections.add("notes");
-    const availableNotebookIds = new Set<string>(
-      (await prisma.notebook.findMany({ select: { id: true } }))
-        .map((entry: { id: string }) => entry.id)
+    const _availableNotebookIds = new Set<string>(
+      (await prisma.notebook.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
     );
-    const availableTagIds = new Set<string>(
-      (await prisma.tag.findMany({ select: { id: true } }))
-        .map((entry: { id: string }) => entry.id)
+    const _availableTagIds = new Set<string>(
+      (await prisma.tag.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
     );
-    const availableCategoryIds = new Set<string>(
-      (await prisma.category.findMany({ select: { id: true } }))
-        .map((entry: { id: string }) => entry.id)
+    const _availableCategoryIds = new Set<string>(
+      (await prisma.category.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
     );
-    const warnings: string[] = [];
-    const docs = await mongo.collection("notes").find({}).toArray();
-    const rawNotes = docs
-      .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
-        if (!id) return null;
+    const _warnings: string[] = [];
+    const notes = await prisma.note.findMany({
+      include: {
+        tags: true,
+        categories: true,
+        relationsFrom: true,
+        files: true,
+      },
+    });
+    const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
+    const categoryMap = new Map(categories.map((category) => [category.id, category]));
+    const noteMap = new Map(notes.map((note) => [note.id, note]));
+
+    const docs = notes.map((note) => {
+      const tagEntries = note.tags.map((entry: any) => {
+        const tag = tagMap.get(entry.tagId);
         return {
-          id,
-          title: (doc as { title?: string }).title ?? "",
-          content: (doc as { content?: string }).content ?? "",
-          editorType: (doc as { editorType?: string }).editorType ?? "markdown",
-          color: (doc as { color?: string | null }).color ?? null,
-          isPinned: Boolean((doc as { isPinned?: boolean }).isPinned),
-          isArchived: Boolean((doc as { isArchived?: boolean }).isArchived),
-          isFavorite: Boolean((doc as { isFavorite?: boolean }).isFavorite),
-          notebookId: (doc as { notebookId?: string | null }).notebookId ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-          tags: Array.isArray((doc as { tags?: unknown[] }).tags)
-            ? (doc as { tags?: Array<{ tagId: string; assignedAt?: Date }> }).tags ?? []
-            : [],
-          categories: Array.isArray((doc as { categories?: unknown[] }).categories)
-            ? (doc as { categories?: Array<{ categoryId: string; assignedAt?: Date }> }).categories ?? []
-            : [],
-          relationsFrom: Array.isArray((doc as { relationsFrom?: unknown[] }).relationsFrom)
-            ? (doc as { relationsFrom?: Array<{ targetNoteId: string; assignedAt?: Date }> }).relationsFrom ?? []
-            : [],
+          noteId: entry.noteId,
+          tagId: entry.tagId,
+          assignedAt: entry.assignedAt,
+          tag: tag
+            ? {
+                id: tag.id,
+                name: tag.name,
+                color: tag.color ?? null,
+                notebookId: tag.notebookId ?? null,
+                createdAt: tag.createdAt,
+                updatedAt: tag.updatedAt,
+              }
+            : { id: entry.tagId, name: "", color: null, notebookId: null, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
-      })
-      .filter(Boolean) as Array<{
-        id: string;
-        title: string;
-        content: string;
-        editorType: string;
-        color: string | null;
-        isPinned: boolean;
-        isArchived: boolean;
-        isFavorite: boolean;
-        notebookId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: Array<{ tagId: string; assignedAt?: Date }>;
-        categories: Array<{ categoryId: string; assignedAt?: Date }>;
-        relationsFrom: Array<{ targetNoteId: string; assignedAt?: Date }>;
-      }>;
-    const normalizedNotes = rawNotes.map((note) => {
-      const resolvedNotebookId =
-        note.notebookId && availableNotebookIds.has(note.notebookId) ? note.notebookId : null;
-      if (note.notebookId && !resolvedNotebookId) {
-        warnings.push(`Note ${note.id}: missing notebook ${note.notebookId}`);
-      }
-      const filteredTags = note.tags.filter((tag) => availableTagIds.has(tag.tagId));
-      if (filteredTags.length !== note.tags.length) {
-        warnings.push(`Note ${note.id}: filtered ${note.tags.length - filteredTags.length} missing tags`);
-      }
-      const filteredCategories = note.categories.filter((category) => availableCategoryIds.has(category.categoryId));
-      if (filteredCategories.length !== note.categories.length) {
-        warnings.push(
-          `Note ${note.id}: filtered ${note.categories.length - filteredCategories.length} missing categories`
-        );
-      }
+      });
+      const categoryEntries = note.categories.map((entry: any) => {
+        const category = categoryMap.get(entry.categoryId);
+        return {
+          noteId: entry.noteId,
+          categoryId: entry.categoryId,
+          assignedAt: entry.assignedAt,
+          category: category
+            ? {
+                id: category.id,
+                name: category.name,
+                description: category.description ?? null,
+                color: category.color ?? null,
+                parentId: category.parentId ?? null,
+                themeId: category.themeId ?? null,
+                notebookId: category.notebookId ?? null,
+                sortIndex: category.sortIndex,
+                createdAt: category.createdAt,
+                updatedAt: category.updatedAt,
+              }
+            : { id: entry.categoryId, name: "", description: null, color: null, parentId: null, themeId: null, notebookId: null, sortIndex: 0, createdAt: note.createdAt, updatedAt: note.updatedAt },
+        };
+      });
+      const relationsFromEntries = note.relationsFrom.map((entry: any) => {
+        const targetNote = noteMap.get(entry.targetNoteId);
+        return {
+          sourceNoteId: entry.sourceNoteId,
+          targetNoteId: entry.targetNoteId,
+          assignedAt: entry.assignedAt,
+          targetNote: targetNote
+            ? { id: targetNote.id, title: targetNote.title, color: targetNote.color ?? null }
+            : { id: entry.targetNoteId, title: "", color: null },
+        };
+      });
+
       return {
-        ...note,
-        notebookId: resolvedNotebookId,
-        tags: filteredTags,
-        categories: filteredCategories,
+        _id: note.id,
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        editorType: note.editorType,
+        color: note.color ?? null,
+        isPinned: note.isPinned,
+        isArchived: note.isArchived,
+        isFavorite: note.isFavorite,
+        notebookId: note.notebookId ?? null,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        tags: tagEntries,
+        categories: categoryEntries,
+        relationsFrom: relationsFromEntries,
+        files: note.files.map((file) => ({
+          noteId: file.noteId,
+          slotIndex: file.slotIndex,
+          filename: file.filename,
+          filepath: file.filepath,
+          mimetype: file.mimetype,
+          size: file.size,
+          width: file.width ?? null,
+          height: file.height ?? null,
+          createdAt: file.createdAt,
+          updatedAt: file.updatedAt,
+        })),
       };
     });
-    const availableNoteIds = new Set(normalizedNotes.map((note) => note.id));
-    const notes = normalizedNotes.map((note) => {
-      const filteredRelations = note.relationsFrom.filter((relation) =>
-        availableNoteIds.has(relation.targetNoteId)
-      );
-      if (filteredRelations.length !== note.relationsFrom.length) {
-        warnings.push(
-          `Note ${note.id}: filtered ${note.relationsFrom.length - filteredRelations.length} missing relations`
-        );
-      }
-      return { ...note, relationsFrom: filteredRelations };
-    });
 
-    await prisma.noteRelation.deleteMany();
-    await prisma.noteTag.deleteMany();
-    await prisma.noteCategory.deleteMany();
-    await prisma.noteFile.deleteMany();
-    const deleted = await prisma.note.deleteMany();
-    const created = notes.length
-      ? await prisma.note.createMany({
-          data: notes.map(({ tags, categories, relationsFrom, ...rest }) => rest) as Prisma.NoteCreateManyInput[],
-        })
-      : { count: 0 };
-
-    const noteTags: Prisma.NoteTagCreateManyInput[] = [];
-    const noteTagKeys = new Set<string>();
-    notes.forEach((note) => {
-      note.tags.forEach((tag) => {
-        const key = `${note.id}::${tag.tagId}`;
-        if (noteTagKeys.has(key)) return;
-        noteTagKeys.add(key);
-        noteTags.push({
-          noteId: note.id,
-          tagId: tag.tagId,
-          assignedAt: tag.assignedAt ?? note.createdAt,
-        });
-      });
-    });
-    if (noteTags.length) {
-      await prisma.noteTag.createMany({ data: noteTags });
-    }
-
-    const noteCategories: Prisma.NoteCategoryCreateManyInput[] = [];
-    const noteCategoryKeys = new Set<string>();
-    notes.forEach((note) => {
-      note.categories.forEach((category) => {
-        const key = `${note.id}::${category.categoryId}`;
-        if (noteCategoryKeys.has(key)) return;
-        noteCategoryKeys.add(key);
-        noteCategories.push({
-          noteId: note.id,
-          categoryId: category.categoryId,
-          assignedAt: category.assignedAt ?? note.createdAt,
-        });
-      });
-    });
-    if (noteCategories.length) {
-      await prisma.noteCategory.createMany({ data: noteCategories });
-    }
-
-    const noteRelations: Prisma.NoteRelationCreateManyInput[] = [];
-    const noteRelationKeys = new Set<string>();
-    notes.forEach((note) => {
-      note.relationsFrom.forEach((relation) => {
-        const key = `${note.id}::${relation.targetNoteId}`;
-        if (noteRelationKeys.has(key)) return;
-        noteRelationKeys.add(key);
-        noteRelations.push({
-          sourceNoteId: note.id,
-          targetNoteId: relation.targetNoteId,
-          assignedAt: relation.assignedAt ?? note.createdAt,
-        });
-      });
-    });
-    if (noteRelations.length) {
-      await prisma.noteRelation.createMany({ data: noteRelations });
-    }
-
-    return {
-      sourceCount: notes.length,
-      targetDeleted: deleted.count,
-      targetInserted: created.count,
-      ...(warnings.length ? { warnings } : null),
-    };
+    const collection = mongo.collection("notes");
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: notes.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("note_files", async () => {

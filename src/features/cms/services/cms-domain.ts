@@ -2,6 +2,7 @@ import "server-only";
 
 import type { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { Collection } from "mongodb";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import type { CmsRepository } from "@/features/cms/types/services/cms-repository";
@@ -77,20 +78,16 @@ const getHostFromRequest = (req: NextRequest): string | null =>
   req.headers.get("x-forwarded-host") ?? req.headers.get("host");
 
 const getHostFromHeaders = (
-  headers: Headers | { get?: (key: string) => string | null } | Record<string, unknown> | null | undefined
+  headers:
+    | Headers
+    | { get?: (key: string) => string | null }
+    | Record<string, unknown>
+    | null
+    | undefined
 ): string | null => {
   if (!headers) return null;
   if (typeof (headers as Headers).get === "function") {
     return (headers as Headers).get("x-forwarded-host") ?? (headers as Headers).get("host");
-  }
-  if (typeof headers === "function") {
-    try {
-      // Handle accidental passing of the headers() function itself.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return getHostFromHeaders((headers as any)());
-    } catch {
-      return null;
-    }
   }
   if (typeof headers === "object") {
     const record = headers as Record<string, unknown>;
@@ -119,7 +116,7 @@ export async function setGlobalDefaultSlug(slugId: string | null): Promise<void>
     if (!process.env.MONGODB_URI) return;
     const db = await getMongoDb();
     const now = new Date();
-    await db.collection<SlugDocument>(SLUGS_COLLECTION).updateMany(
+    await (db.collection<SlugDocument>(SLUGS_COLLECTION) as Collection<SlugDocument>).updateMany(
       {},
       { $set: { isDefault: false, updatedAt: now } }
     );
@@ -145,8 +142,20 @@ export async function resolveCmsDomainFromRequest(req: NextRequest): Promise<Cms
   return resolveCmsDomainByHost(host);
 }
 
-export async function resolveCmsDomainFromHeaders(headers: Headers | { get?: (key: string) => string | null } | null | undefined): Promise<CmsDomain> {
-  const host = getHostFromHeaders(headers);
+export async function resolveCmsDomainFromHeaders(
+  headers:
+    | Headers
+    | Promise<Headers>
+    | { get?: (key: string) => string | null }
+    | Record<string, unknown>
+    | null
+    | undefined
+): Promise<CmsDomain> {
+  const resolved = await Promise.resolve(headers);
+  if (typeof resolved === "function") {
+    return resolveCmsDomainByHost(null);
+  }
+  const host = getHostFromHeaders(resolved);
   return resolveCmsDomainByHost(host);
 }
 

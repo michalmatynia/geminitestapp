@@ -40,6 +40,7 @@ const mergeImageLinks = (existing: string[], incoming: string[]): string[] => {
 };
 
 export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> => {
+  
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
     const db = await getMongoDb();
@@ -53,8 +54,8 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
       .collection<BaseListingSyncInfo>(LISTINGS_COLLECTION)
       .find({ integrationId: { $in: integrationIds } })
       .toArray();
-    return listings.map((listing: any) => ({
-      id: listing.id ?? (listing as unknown as { _id: string })._id,
+    return listings.map((listing) => ({
+      id: listing.id ?? listing._id,
       productId: listing.productId,
       connectionId: listing.connectionId,
       externalListingId: listing.externalListingId ?? null,
@@ -75,13 +76,13 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
     },
   });
 
-  return listings.map((listing: any) => ({
+  return listings.map((listing) => ({
     id: listing.id,
     productId: listing.productId,
     connectionId: listing.connectionId,
     externalListingId: listing.externalListingId ?? null,
     inventoryId: listing.inventoryId ?? null,
-    exportHistory: (listing.exportHistory ?? null) as ProductListingExportEvent[] | null,
+    exportHistory: (listing.exportHistory ?? null) as unknown as ProductListingExportEvent[] | null,
   }));
 };
 

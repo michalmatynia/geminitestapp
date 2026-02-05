@@ -73,6 +73,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
     queryKeys: [
       ['user', 'preferences'],
       ['settings'],
+      ['settings', 'lite'],
     ],
     ttl: 1000 * 60 * 60, // 1 hour
   });

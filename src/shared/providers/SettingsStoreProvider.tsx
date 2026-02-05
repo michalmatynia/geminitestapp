@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useLiteSettingsMap, useSettingsMap } from "@/shared/hooks/use-settings";
 
 type SettingsStoreValue = {
   map: Map<string, string>;
@@ -15,6 +15,19 @@ type SettingsStoreValue = {
 };
 
 const SettingsStoreContext = createContext<SettingsStoreValue | null>(null);
+const emptyMap = new Map<string, string>();
+const fallbackStore: SettingsStoreValue = {
+  map: emptyMap,
+  isLoading: false,
+  isFetching: false,
+  error: null,
+  get: (key: string): string | undefined => emptyMap.get(key),
+  getBoolean: (_key: string, fallback: boolean = false): boolean => fallback,
+  getNumber: (_key: string, fallback?: number): number | undefined => fallback,
+  refetch: (): void => {
+    // no-op
+  },
+};
 
 const parseBoolean = (value: string | undefined, fallback: boolean): boolean => {
   if (value === undefined) return fallback;
@@ -29,10 +42,15 @@ const parseNumber = (value: string | undefined, fallback?: number): number | und
 
 export function SettingsStoreProvider({
   children,
+  mode = "lite",
 }: {
   children: React.ReactNode;
+  mode?: "admin" | "lite";
 }): React.JSX.Element {
-  const settingsQuery = useSettingsMap({ scope: "light" });
+  const useAdmin = mode === "admin";
+  const adminQuery = useSettingsMap({ scope: "light", enabled: useAdmin });
+  const liteQuery = useLiteSettingsMap({ enabled: !useAdmin });
+  const settingsQuery = useAdmin ? adminQuery : liteQuery;
 
   const value = useMemo<SettingsStoreValue>(() => {
     const map = settingsQuery.data ?? new Map<string, string>();
@@ -62,7 +80,10 @@ export function SettingsStoreProvider({
 export function useSettingsStore(): SettingsStoreValue {
   const context = useContext(SettingsStoreContext);
   if (!context) {
-    throw new Error("useSettingsStore must be used within SettingsStoreProvider");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[settings-store] Missing provider; returning defaults.");
+    }
+    return fallbackStore;
   }
   return context;
 }

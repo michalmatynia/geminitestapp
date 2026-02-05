@@ -8,12 +8,15 @@ vi.mock("openai");
 
 // Mock the module where pollQueue resides, exporting pollQueue for testing.
 // resetProductAiJobQueue is explicitly exported from the real module, so it's not mocked here.
-const mockPollQueue = vi.fn();
+let mockPollQueue: ReturnType<typeof vi.fn>;
+
 vi.mock("@/features/jobs/workers/productAiQueue", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/jobs/workers/productAiQueue")>();
   return {
     ...actual,
-    pollQueue: mockPollQueue, // Export the mock pollQueue
+    get pollQueue() {
+      return mockPollQueue;
+    },
   };
 });
 
@@ -63,8 +66,19 @@ describe("Product AI Job Queue Worker", () => {
   };
 
   beforeEach(() => {
+    mockPollQueue = vi.fn(); // Assign here
     vi.clearAllMocks();
-    mockPollQueue.mockClear();
+    mockJobRepo.markStaleRunningJobs.mockClear();
+    mockJobRepo.claimNextPendingJob.mockClear();
+    mockJobRepo.findAnyPendingJob.mockClear();
+    mockJobRepo.updateJob.mockClear();
+    mockProductRepo.getProductById.mockClear();
+    mockProductRepo.updateProduct.mockClear();
+    mockOpenAI.chat.completions.create.mockClear();
+    vi.mocked(generateProductDescription).mockClear();
+    vi.mocked(translateProduct).mockClear();
+    vi.mocked(ErrorSystem.captureException).mockClear();
+
     resetProductAiJobQueue();
     vi.mocked(getProductAiJobRepository).mockResolvedValue(mockJobRepo as any);
     vi.mocked(getProductRepository).mockResolvedValue(mockProductRepo as any);

@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { WithId } from "mongodb";
 
@@ -85,6 +86,12 @@ const isHeavySettingKey = (key: string): boolean =>
 
 const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
   provider === "prisma" && Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+
+const isPrismaMissingTableError = (
+  error: unknown
+): error is Prisma.PrismaClientKnownRequestError =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  (error.code === "P2021" || error.code === "P2022");
 
 const settingSchema = z.object({
   key: z.string().trim().min(1),
@@ -197,17 +204,30 @@ const fetchAndCacheSettings = async (
   const hasMongo = Boolean(process.env.MONGODB_URI);
   const envProvider = process.env.APP_DB_PROVIDER?.toLowerCase().trim();
   const forcePrisma = envProvider === "prisma";
-  const shouldReadMongoSettings = hasMongo && !forcePrisma;
   const prismaSettings: SettingRecord[] = [];
+  let prismaMissing = false;
   if (canUsePrismaSettings(provider)) {
     const prismaStart = performance.now();
-    const settings = await prisma.setting.findMany({
-      where: buildPrismaScopeWhere(scope),
-      select: { key: true, value: true },
-    });
-    prismaSettings.push(...applyScopeFilter(settings, scope));
-    if (timings) timings.prisma = performance.now() - prismaStart;
+    try {
+      const settings = await prisma.setting.findMany({
+        where: buildPrismaScopeWhere(scope),
+        select: { key: true, value: true },
+      });
+      prismaSettings.push(...applyScopeFilter(settings, scope));
+    } catch (error) {
+      if (isPrismaMissingTableError(error)) {
+        prismaMissing = true;
+        console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
+          code: error.code,
+        });
+      } else {
+        throw error;
+      }
+    } finally {
+      if (timings) timings.prisma = performance.now() - prismaStart;
+    }
   }
+  const shouldReadMongoSettings = hasMongo && (!forcePrisma || prismaMissing);
   const mongoSettings = shouldReadMongoSettings
     ? await (async (): Promise<SettingRecord[]> => {
         const mongoStart = performance.now();
@@ -216,6 +236,9 @@ const fetchAndCacheSettings = async (
         return settings;
       })()
     : [];
+  if (prismaMissing && !hasMongo) {
+    console.warn("[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.");
+  }
   const settingsMap = new Map<string, SettingRecord>();
   if (provider === "mongodb") {
     mongoSettings.forEach((setting: SettingRecord) => {
@@ -272,6 +295,9 @@ async function GET_handler(
     }
     const cached = getCachedSettings(scope);
     if (cached) {
+      if (shouldLogTiming()) {
+        console.log("[settings] cache", { scope, status: "hit" });
+      }
       const response = NextResponse.json(cached, {
         headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "hit" },
       });
@@ -282,6 +308,9 @@ async function GET_handler(
     const inflight = getSettingsInflight(scope);
     if (inflight) {
       const data = await inflight;
+      if (shouldLogTiming()) {
+        console.log("[settings] cache", { scope, status: "wait" });
+      }
       const response = NextResponse.json(data, {
         headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "wait" },
       });
@@ -292,6 +321,9 @@ async function GET_handler(
 
     const stale = getStaleSettings(scope);
     if (stale) {
+      if (shouldLogTiming()) {
+        console.log("[settings] cache", { scope, status: "stale" });
+      }
       const timings: Record<string, number | null | undefined> = {};
       const refreshPromise = fetchAndCacheSettings(scope, timings)
         .catch((error) => {
@@ -320,6 +352,9 @@ async function GET_handler(
       });
     setSettingsInflight(inflightPromise, scope);
     const data = await inflightPromise;
+    if (shouldLogTiming()) {
+      console.log("[settings] cache", { scope, status: "miss" });
+    }
     const response = NextResponse.json(data, {
       headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "miss" },
     });
@@ -358,21 +393,39 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
     const shouldWritePrisma =
       canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
-    const [prismaSetting, mongoSetting] = await Promise.all([
-      shouldWritePrisma
-        ? prisma.setting.upsert({
-            where: { key },
-            update: { value },
-            create: { key, value },
-            select: { key: true, value: true },
-          })
-        : Promise.resolve(null),
-      shouldWriteMongo ? upsertMongoSetting(key, value) : Promise.resolve(null),
-    ]);
+    let prismaSetting: SettingRecord | null = null;
+    let mongoSetting: SettingRecord | null = null;
+    let prismaMissing = false;
+    if (shouldWritePrisma) {
+      try {
+        prismaSetting = await prisma.setting.upsert({
+          where: { key },
+          update: { value },
+          create: { key, value },
+          select: { key: true, value: true },
+        });
+      } catch (error) {
+        if (isPrismaMissingTableError(error)) {
+          prismaMissing = true;
+          console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
+            code: error.code,
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+    const shouldWriteMongoFallback = shouldWriteMongo || (prismaMissing && hasMongo);
+    if (shouldWriteMongoFallback) {
+      mongoSetting = await upsertMongoSetting(key, value);
+    }
     const setting = prismaSetting ?? mongoSetting;
     if (!setting) {
+      const message = prismaMissing
+        ? "Settings table is missing in Prisma. Run prisma db push or configure MongoDB."
+        : "No settings store configured";
       return createErrorResponse(
-        internalError("No settings store configured"),
+        internalError(message),
         { request: req, source: "settings.POST" }
       );
     }

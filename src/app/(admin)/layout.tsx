@@ -1,6 +1,7 @@
 import { JSX } from "react";
 import { redirect } from "next/navigation";
 import { AdminLayout } from "@/features/admin/layout/AdminLayout";
+import { SettingsStoreProvider } from "@/shared/providers/SettingsStoreProvider";
 import { auth } from "@/features/auth/server";
 import { getUserPreferences } from "@/features/auth/server";
 
@@ -28,8 +29,10 @@ export default async function Layout({
     redirect("/auth/signin");
   }
   return (
-    <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
-      {children}
-    </AdminLayout>
+    <SettingsStoreProvider mode="admin">
+      <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
+        {children}
+      </AdminLayout>
+    </SettingsStoreProvider>
   );
 }

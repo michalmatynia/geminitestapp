@@ -5,8 +5,32 @@ import { GET as listRuns, POST as createRun } from "@/app/api/chatbot/agent/rout
 import { GET as getLogs } from "@/app/api/chatbot/agent/[runId]/logs/route";
 import { GET as getAudits } from "@/app/api/chatbot/agent/[runId]/audits/route";
 
+vi.mock("@/shared/lib/db/prisma", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/lib/db/prisma")>();
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      chatbotAgentRun: {
+        ...actual.default.chatbotAgentRun,
+        findMany: vi.fn(),
+        create: vi.fn(),
+      },
+    },
+  };
+});
+
 describe("Agent API", () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.agentBrowserLog.deleteMany).mockClear();
+    vi.mocked(prisma.agentBrowserSnapshot.deleteMany).mockClear();
+    vi.mocked(prisma.agentAuditLog.deleteMany).mockClear();
+    vi.mocked(prisma.agentMemoryItem.deleteMany).mockClear();
+    vi.mocked(prisma.chatbotAgentRun.deleteMany).mockClear();
+    vi.mocked(prisma.chatbotAgentRun.create).mockClear();
+    vi.mocked(prisma.chatbotAgentRun.findMany).mockClear();
+
     await prisma.agentBrowserLog.deleteMany({});
     await prisma.agentBrowserSnapshot.deleteMany({});
     await prisma.agentAuditLog.deleteMany({});
@@ -19,9 +43,14 @@ describe("Agent API", () => {
   });
 
   it("should reject missing prompt when creating a run", async () => {
-    const req = new NextRequest("http://localhost/api/chatbot/agent", {
+    const req = new NextRequest("http://localhost/api/agentcreator/agent", {
       method: "POST",
       body: JSON.stringify({}),
+      headers: {
+        "x-csrf-token": "test-token",
+        "Cookie": "__Host-next-auth.csrf-token=test-token",
+        "Content-Type": "application/json",
+      },
     });
 
     const res = await createRun(req);
@@ -55,7 +84,17 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await listRuns(new NextRequest("http://localhost/api/chatbot/agent"));
+    vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValueOnce([
+      {
+        ...run,
+        _count: {
+          browserLogs: 1,
+          browserSnapshots: 1,
+        },
+      } as any,
+    ]);
+
+    const res = await listRuns(new NextRequest("http://localhost/api/agentcreator/agent"));
     const data = (await res.json()) as {
       runs: (ChatbotAgentRun & {
         _count: { browserLogs: number; browserSnapshots: number };

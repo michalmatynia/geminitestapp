@@ -104,7 +104,7 @@ export function ProductModals({
             onClose={onCloseEdit}
             title="Edit Product"
             submitButtonText="Update"
-            closeOnSubmit
+            closeOnSubmit={false}
           />
         </ProductFormProvider>
       )}

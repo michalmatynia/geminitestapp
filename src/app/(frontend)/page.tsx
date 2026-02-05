@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -58,6 +59,8 @@ type SettingDocument = {
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
+const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === "true";
+
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   try {
@@ -99,10 +102,19 @@ const getFrontPageSetting = async (): Promise<string | null> => {
   return readMongoFrontPageSetting();
 };
 
-export default async function Home() {
+export default async function Home(): Promise<JSX.Element> {
+  const timings: Record<string, number> = {};
+  let totalStart = 0; // TODO: Refactor timing logic to use useEffect/useRef
+  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    const result = await fn();
+    timings[label] = performance.now() - start;
+    return result;
+  };
+
   const [frontPageApp, cmsRepository] = await Promise.all([
-    getFrontPageSetting(),
-    getCmsRepository(),
+    withTiming("frontPageSetting", getFrontPageSetting),
+    withTiming("cmsRepository", getCmsRepository),
   ]);
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
@@ -114,12 +126,12 @@ export default async function Home() {
     }
   }
 
-  const hdrs = await headers();
-  const domain = await resolveCmsDomainFromHeaders(hdrs);
+  const hdrs = await withTiming("headers", () => headers());
+  const domain = await withTiming("cmsDomain", () => resolveCmsDomainFromHeaders(hdrs));
   const [slugs, themeSettings, menuSettings] = await Promise.all([
-    getSlugsForDomain(domain.id, cmsRepository),
-    getCmsThemeSettings(),
-    getCmsMenuSettings(domain.id),
+    withTiming("cmsSlugs", () => getSlugsForDomain(domain.id, cmsRepository)),
+    withTiming("cmsTheme", () => getCmsThemeSettings()),
+    withTiming("cmsMenu", () => getCmsMenuSettings(domain.id)),
   ]);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
   const colorSchemes = buildColorSchemeMap(themeSettings);
@@ -141,14 +153,19 @@ export default async function Home() {
 
   if (defaultSlug) {
     // Try to load the published CMS page linked to this slug
-    const [cmsPage, session] = await Promise.all([
-      cmsRepository.getPageBySlug(defaultSlug.slug),
-      auth(),
-    ]);
-    const allowDrafts = await canPreviewDrafts(session);
+    const cmsPage = await withTiming("cmsPageBySlug", () => cmsRepository.getPageBySlug(defaultSlug.slug));
+    let allowDrafts = false;
+    if (cmsPage && cmsPage.status !== "published") {
+      const session = await withTiming("auth", () => auth());
+      allowDrafts = await withTiming("canPreviewDrafts", () => canPreviewDrafts(session));
+    }
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
 
     const showMenu = cmsPage?.showMenu !== false;
+    if (shouldLogTiming()) {
+      timings.total = performance.now() - totalStart;
+      console.log("[timing] home", timings);
+    }
     return (
       <CmsPageShell
         menu={menuSettings}
@@ -179,12 +196,16 @@ export default async function Home() {
     );
   }
 
-  const productsRaw = await productService.getProducts({});
+  const productsRaw = await withTiming("products", () => productService.getProducts({}));
   const products = (
     productsRaw as (ProductWithImages | (ProductWithImages & MaybeImages))[]
   ).map(normalizeProduct);
 
   const showFallbackHeader = !menuSettings.showMenu;
+  if (shouldLogTiming()) {
+    timings.total = performance.now() - totalStart;
+    console.log("[timing] home", timings);
+  }
   return (
     <CmsPageShell
       menu={menuSettings}

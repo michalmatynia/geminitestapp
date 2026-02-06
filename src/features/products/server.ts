@@ -2,7 +2,7 @@ import "server-only";
 
 export { default as ProductEditPage } from "./pages/ProductEditPage";
 export { ProductPublicPage } from "./pages/ProductPublicPage";
-export * from "./api/parse-json";
+export * from "@/shared/lib/api/parse-json";
 export * from "./services/aiDescriptionService";
 export * from "./services/aiTranslationService";
 export * from "./services/catalog-repository";

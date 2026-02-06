@@ -1,13 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import {
-  validateProductsBatch,
-  externalValidationService,
-  validationRuleEngine,
-  validationCache,
-  getValidationHealth,
-} from "@/features/products/validations";
+import { validateProductsBatch } from "@/features/products/validations";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import { badRequestError } from "@/shared/errors/app-error";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -36,19 +30,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 // GET /api/products/validation - Health check
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const health = getValidationHealth();
-  const cacheStats = validationCache.getStats();
-
   return NextResponse.json({
-    validation: health,
-    cache: cacheStats,
-    external: {
-      providers: externalValidationService.getProviders(),
-    },
-    rules: {
-      total: validationRuleEngine.getAllRules().length,
-      active: validationRuleEngine.getAllRules().filter((r) => r.active).length,
-    },
+    status: "ok",
+    validation: { engine: "zod-schema" },
   });
 }
 

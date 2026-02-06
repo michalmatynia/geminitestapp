@@ -2,18 +2,12 @@
 
 import type { Language } from "@/shared/types/internationalization";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import {
   createContext,
   useContext,
   useState,
-  useCallback,
   BaseSyntheticEvent,
-  useRef,
-  useEffect,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/shared/ui";
 import {
   UseFormRegister,
   UseFormSetValue,
@@ -43,8 +37,7 @@ import {
 
 import { useProductImages } from "@/features/products/hooks/useProductImages";
 import { useProductMetadata } from "@/features/products/hooks/useProductMetadata";
-import { delay } from "@/shared/utils";
-import { useCreateProductMutation, useUpdateProductMutation } from "@/features/products/hooks/useProductData";
+import { useProductFormSubmit } from "@/features/products/hooks/useProductFormSubmit";
 
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
@@ -117,8 +110,6 @@ export const useProductFormContext = (): ProductFormContextType => {
   return context;
 };
 
-// This context provides a centralized place for managing the state and logic of the product form.
-// It handles form data, image uploads, and communication with the API.
 export function ProductFormProvider({
   children,
   product,
@@ -138,8 +129,6 @@ export function ProductFormProvider({
   initialSku?: string | undefined;
   initialCatalogId?: string | undefined;
 }): React.ReactNode {
-  // product: edit mode -> update schema
-  // requireSku: create mode -> create schema; draft mode can allow update schema (SKU optional)
   const formSchema = product || !requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
@@ -174,16 +163,8 @@ export function ProductFormProvider({
     setValue,
     getValues,
   } = methods;
-  const { toast } = useToast();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [generationError, setGenerationError] = useState<string | null>(null);
 
-  const createMutation = useCreateProductMutation();
-  const updateMutation = useUpdateProductMutation();
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const {
     imageSlots,
@@ -244,8 +225,6 @@ export function ProductFormProvider({
     () => (Array.isArray(product?.noteIds) ? product.noteIds : [])
   );
 
-
-
   const toggleNote = (noteId: string): void => {
     const id = noteId.trim();
     if (!id) return;
@@ -274,153 +253,22 @@ export function ProductFormProvider({
     () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
   );
 
-
-
-  useEffect((): (() => void) => {
-    return (): void => {
-      if (successTimerRef.current) {
-        clearTimeout(successTimerRef.current);
-      }
-    };
-  }, []);
-
-  const onSubmit = useCallback(async (data: ProductFormData): Promise<void> => {
-    const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
-    const hasTempImages = imageSlots.some((slot: ProductImageSlot | null): boolean => {
-      if (!slot) return false;
-      if (slot.type === "file") return true;
-      return slot.previewUrl.startsWith("/uploads/products/temp/");
-    });
-
-    if (!skuValue && hasTempImages) {
-      const shouldContinue = window.confirm(
-        "This product has images without an SKU. They will stay in the temporary folder until you set an SKU. Continue?"
-      );
-      if (!shouldContinue) {
-        return;
-      }
-    }
-
-    setUploadError(null);
-    setUploadSuccess(false);
-
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
-      if (value !== null && value !== undefined) {
-        if (typeof value === "object") {
-          formData.append(key, JSON.stringify(value));
-        } else if (typeof value === "string") {
-          formData.append(key, value);
-        } else {
-          formData.append(key, String(value as number | boolean));
-        }
-      }
-    });
-    const normalizedLinks = imageLinks.map((link: string): string => link.trim());
-    formData.append("imageLinks", JSON.stringify(normalizedLinks));
-    const normalizedBase64s = imageBase64s.map((link: string): string => link.trim());
-    formData.append("imageBase64s", JSON.stringify(normalizedBase64s));
-
-    // Process image slots
-    imageSlots.forEach((slot: ProductImageSlot | null): void => {
-      if (slot?.type === 'file') {
-        formData.append("images", slot.data); // Append actual File object
-      } else if (slot?.type === 'existing') {
-        formData.append("imageFileIds", slot.data.id); // Append existing ImageFile ID
-      }
-    });
-    selectedCatalogIds.forEach((catalogId: string): void => {
-      formData.append("catalogIds", catalogId);
-    });
-    if (selectedCategoryId) {
-      formData.append("categoryId", selectedCategoryId);
-    } else {
-      // Ensure update mode can clear the category.
-      formData.append("categoryId", "");
-    }
-    selectedTagIds.forEach((tagId: string): void => {
-      formData.append("tagIds", tagId);
-    });
-    selectedProducerIds.forEach((producerId: string): void => {
-      formData.append("producerIds", producerId);
-    });
-    if (selectedProducerIds.length === 0) {
-      // Ensure update mode can clear previously assigned producers.
-      formData.append("producerIds", "");
-    }
-    selectedNoteIds.forEach((noteId: string): void => {
-      formData.append("noteIds", noteId);
-    });
-    if (selectedNoteIds.length === 0) {
-      // Ensure update mode can clear previously assigned note links.
-      formData.append("noteIds", "");
-    }
-    const normalizedParameters = parameterValues
-      .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
-        parameterId: entry.parameterId?.trim(),
-        value: typeof entry.value === "string" ? entry.value.trim() : "",
-      }))
-      .filter((entry: { parameterId: string | undefined; value: string }): boolean => !!entry.parameterId);
-    formData.append("parameters", JSON.stringify(normalizedParameters));
-
-    try {
-      const savedProduct = product
-        ? await updateMutation.mutateAsync({ id: product.id, data: formData })
-        : await createMutation.mutateAsync(formData);
-
-      const isQueued = savedProduct == null;
-
-      if (isQueued) {
-        if (product) {
-          onSuccess?.({ queued: true });
-        } else {
-          onSuccess?.({ queued: true });
-        }
-        return;
-      }
-
-      // Small delay to ensure DB consistency before refetch
-      await delay(500);
-
-      // Invalidate both products list and count queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["products"] }),
-        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-      ]);
-
-      if (!product) {
-        onSuccess?.();
-      } else {
-        refreshImages(savedProduct as ProductWithImages);
-        setUploadSuccess(true);
-        if (successTimerRef.current) {
-          clearTimeout(successTimerRef.current);
-        }
-        successTimerRef.current = setTimeout(() => {
-          setUploadSuccess(false);
-        }, 3000);
-        // Product edit modal flow passes `onSuccess` which already shows a toast and closes the modal.
-        // Edit page flow doesn't pass `onSuccess`, so we show a toast here.
-        if (!onSuccess) {
-          toast("Product updated successfully.", { variant: "success" });
-        }
-        onEditSave?.(savedProduct as ProductWithImages);
-        onSuccess?.();
-        router.refresh();
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setUploadError(error.message);
-      } else {
-        setUploadError("An unknown error occurred");
-      }
-    }
-  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, router]);
-
-  const submitHandler = useCallback(
-    (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),
-    [methods, onSubmit]
-  );
+  const { handleSubmit: submitHandler, uploading, uploadError, uploadSuccess } = useProductFormSubmit({
+    product,
+    methods,
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    selectedCatalogIds,
+    selectedCategoryId,
+    selectedTagIds,
+    selectedProducerIds,
+    selectedNoteIds,
+    parameterValues,
+    refreshImages,
+    onSuccess,
+    onEditSave,
+  });
 
   return (
     <FormProvider {...methods}>
@@ -434,7 +282,7 @@ export function ProductFormProvider({
           imageSlots,
           imageLinks,
           imageBase64s,
-          uploading: createMutation.isPending || updateMutation.isPending,
+          uploading,
           uploadError,
           uploadSuccess,
           showFileManager,

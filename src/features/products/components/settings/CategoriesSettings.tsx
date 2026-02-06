@@ -4,31 +4,18 @@ import {
   Button,
   UnifiedSelect,
   useToast,
-  Input,
-  Textarea,
-  Label,
-  SharedModal,
   EmptyState,
   ConfirmDialog,
   SectionPanel,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/shared/ui";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import {
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  Trash2,
-  FolderPlus,
-} from "lucide-react";
-import { DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils/drag-drop";
+import { Plus } from "lucide-react";
+import { DRAG_KEYS, getFirstDragValue } from "@/shared/utils/drag-drop";
 
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from "@/features/products/types";
 import { useSaveCategoryMutation, useDeleteCategoryMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { CategoryTreeItem } from "./CategoryTreeItem";
+import { CategoryForm, type CategoryFormData } from "./CategoryForm";
 
 type CategoriesSettingsProps = {
   loading: boolean;
@@ -37,199 +24,6 @@ type CategoriesSettingsProps = {
   selectedCatalogId: string | null;
   onCatalogChange: (catalogId: string) => void;
   onRefresh: () => void;
-};
-
-type CategoryNodeProps = {
-  category: ProductCategoryWithChildren;
-  level: number;
-  expandedIds: Set<string>;
-  onToggleExpand: (id: string) => void;
-  onEdit: (category: ProductCategoryWithChildren) => void;
-  onDelete: (category: ProductCategoryWithChildren) => void;
-  onCreateChild: (parentId: string) => void;
-  draggedId: string | null;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
-  onDrop: (draggedId: string, targetId: string | null) => void;
-  allCategories: ProductCategoryWithChildren[];
-};
-
-function CategoryNode({
-  category,
-  level,
-  expandedIds,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onCreateChild,
-  draggedId,
-  onDragStart,
-  onDragEnd,
-  onDrop,
-  allCategories,
-}: CategoryNodeProps): React.JSX.Element {
-  const [isDragOver, setIsDragOver] = useState<boolean>(false);
-  const hasChildren: boolean = category.children.length > 0;
-  const isExpanded: boolean = expandedIds.has(category.id);
-
-  const canDropHere: boolean = useMemo((): boolean => {
-    if (!draggedId) return true;
-    if (draggedId === category.id) return false;
-
-    // Check if the target category is a descendant of the dragged category
-    const isDescendant = (
-      cat: ProductCategoryWithChildren,
-      targetId: string
-    ): boolean => {
-      if (cat.id === targetId) return true;
-      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
-    };
-
-    const findCategory = (
-      cats: ProductCategoryWithChildren[],
-      id: string
-    ): ProductCategoryWithChildren | null => {
-      for (const cat of cats) {
-        if (cat.id === id) return cat;
-        const found: ProductCategoryWithChildren | null = findCategory(cat.children, id);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const draggedCategory: ProductCategoryWithChildren | null = findCategory(allCategories, draggedId);
-    if (!draggedCategory) return true;
-
-    return !isDescendant(draggedCategory, category.id);
-  }, [draggedId, category.id, allCategories]);
-
-  return (
-    <div>
-      <div
-        draggable
-        onDragStart={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          setDragData(e.dataTransfer, { [DRAG_KEYS.CATEGORY_ID]: category.id }, { effectAllowed: "move" });
-          onDragStart(category.id);
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = "0.5";
-        }}
-        onDragEnd={(e: React.DragEvent): void => {
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = "1";
-          onDragEnd();
-        }}
-        onDragOver={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (canDropHere) {
-            setIsDragOver(true);
-          }
-        }}
-        onDragLeave={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          setIsDragOver(false);
-        }}
-        onDrop={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          const droppedId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? "") || "";
-          if (droppedId && canDropHere) {
-            onDrop(droppedId, category.id);
-          }
-        }}
-        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-          isDragOver && canDropHere
-            ? "bg-emerald-600 text-white"
-            : "text-gray-300 hover:bg-muted/50"
-        }`}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
-      >
-        {hasChildren ? (
-          <Button
-            onClick={(): void => onToggleExpand(category.id)}
-            className="p-0.5 hover:bg-gray-700 rounded"
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-4" />
-            ) : (
-              <ChevronRight className="size-4" />
-            )}
-          </Button>
-        ) : (
-          <div className="w-5" />
-        )}
-
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm truncate">{category.name}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onCreateChild(category.id);
-            }}
-            className="p-1 hover:bg-gray-700 rounded"
-            title="Add subcategory"
-          >
-            <FolderPlus className="size-3" />
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onEdit(category);
-            }}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
-            title="Edit category"
-          >
-            Edit
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onDelete(category);
-            }}
-            className="p-1 hover:bg-red-600 rounded"
-            title="Delete category"
-          >
-            <Trash2 className="size-3" />
-          </Button>
-        </div>
-      </div>
-
-      {isExpanded && hasChildren && (
-        <div>
-          {category.children.map((child: ProductCategoryWithChildren): React.JSX.Element => (
-            <CategoryNode
-              key={child.id}
-              category={child}
-              level={level + 1}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onCreateChild={onCreateChild}
-              draggedId={draggedId}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onDrop={onDrop}
-              allCategories={allCategories}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-type CategoryFormData = {
-  name: string;
-  description: string;
-  color: string;
-  parentId: string | null;
-  catalogId: string;
 };
 
 export function CategoriesSettings({
@@ -601,7 +395,7 @@ export function CategoriesSettings({
                 </div>
 
                 {categories.map((category: ProductCategoryWithChildren): React.JSX.Element => (
-                  <CategoryNode
+                  <CategoryTreeItem
                     key={category.id}
                     category={category}
                     level={0}
@@ -644,157 +438,20 @@ export function CategoriesSettings({
         variant="destructive"
       />
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <SharedModal
-          open={showModal}
-          onClose={(): void => setShowModal(false)}
-          title={editingCategory ? "Edit Category" : "Create Category"}
-          size="md"
-        >
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs text-gray-400">Name</Label>
-              <Input
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="Category name"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Description</Label>
-              <Textarea
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                rows={3}
-                value={formData.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Optional description"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Catalog</Label>
-              <div className="mt-2">
-                <Select
-                  value={formData.catalogId}
-                  onValueChange={(value: string): void => {
-                    const nextCatalogId: string = value;
-                    setFormData((prev: CategoryFormData) => ({
-                      ...prev,
-                      catalogId: nextCatalogId,
-                      parentId:
-                        prev.catalogId !== nextCatalogId ? null : prev.parentId,
-                    }));
-                    setModalCatalogId(nextCatalogId);
-                  }}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
-                    <SelectValue placeholder="Select catalog" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                      <SelectItem key={catalog.id} value={catalog.id}>
-                        {catalog.name}
-                        {catalog.isDefault ? " (Default)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Parent Category</Label>
-              <div className="mt-2">
-                <Select
-                  value={formData.parentId ?? "__root__"}
-                  onValueChange={(value: string): void =>
-                    setFormData((prev: CategoryFormData) => ({
-                      ...prev,
-                      parentId: value === "__root__" ? null : value,
-                    }))
-                  }
-                  disabled={modalLoadingCategories}
-                >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-sm text-white">
-                    <SelectValue placeholder="Select parent category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__root__">No parent (root)</SelectItem>
-                    {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {"|-- ".repeat(option.level)}
-                        {option.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {modalLoadingCategories && (
-                <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
-              )}
-              {!modalLoadingCategories &&
-                modalCatalogId &&
-                parentOptions.length === 0 && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    No categories available in{" "}
-                    {modalCatalog?.name ?? "this catalog"}.
-                  </p>
-                )}
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Color</Label>
-              <div className="mt-2 flex items-center gap-3">
-                <Input
-                  type="color"
-                  className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
-                  value={formData.color}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                  }
-                />
-                <Input
-                  type="text"
-                  className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.color}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                  }
-                  placeholder="#10b981"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4">
-              <Button
-                className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
-                type="button"
-                onClick={(): void => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                type="button"
-                onClick={(): void => { void handleSave(); }}
-                disabled={saveCategoryMutation.isPending}
-              >
-                {saveCategoryMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-        </SharedModal>
-      )}
+      <CategoryForm
+        open={showModal}
+        onClose={(): void => setShowModal(false)}
+        isEditing={!!editingCategory}
+        formData={formData}
+        onFormDataChange={setFormData}
+        onSave={(): void => { void handleSave(); }}
+        saving={saveCategoryMutation.isPending}
+        catalogs={catalogs}
+        onCatalogChange={setModalCatalogId}
+        parentOptions={parentOptions}
+        loadingCategories={modalLoadingCategories}
+        modalCatalogName={modalCatalog?.name}
+      />
     </div>
   );
 }

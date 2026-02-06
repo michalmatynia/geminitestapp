@@ -1,35 +1,180 @@
-import { ValidationApp, type ValidationResult, type ValidationError } from "./core";
+import type { ZodIssue } from "zod";
+import { productCreateSchema, productUpdateSchema } from "./schemas";
 
-// Re-export core types for backward compatibility
-export type {
-  ValidationResult,
-  ValidationError,
-  ValidationMetadata,
-  FieldValidationResult
-} from "./core";
+// Core validation types
+export type ValidationError = {
+  field: string;
+  message: string;
+  code: string;
+  severity: "low" | "medium" | "high" | "critical";
+  context?: Record<string, unknown> | undefined;
+};
 
-// Main validation functions using the new architecture
-export const validateProductCreate: typeof ValidationApp.validateProductCreate = ValidationApp.validateProductCreate.bind(ValidationApp);
-export const validateProductUpdate: typeof ValidationApp.validateProductUpdate = ValidationApp.validateProductUpdate.bind(ValidationApp);
-export const validateProductField: typeof ValidationApp.validateProductField = ValidationApp.validateProductField.bind(ValidationApp);
-export const validateProductFields: typeof ValidationApp.validateProductFieldsBatch = ValidationApp.validateProductFieldsBatch.bind(ValidationApp);
-export const validateProductsBatch: typeof ValidationApp.validateProductsBatch = ValidationApp.validateProductsBatch.bind(ValidationApp);
+export type ValidationMetadata = {
+  validationTime: number;
+  rulesApplied: string[];
+  cacheHit: boolean;
+  source: "schema" | "config" | "external" | "rule" | "batch";
+  metadata?: Record<string, unknown>;
+};
+
+export type ValidationResult<T> =
+  | {
+      success: true;
+      data: T;
+      warnings?: ValidationError[] | undefined;
+      metadata: ValidationMetadata;
+    }
+  | {
+      success: false;
+      errors: ValidationError[];
+      warnings?: ValidationError[] | undefined;
+      metadata: ValidationMetadata;
+    };
+
+export type FieldValidationResult = {
+  field: string;
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings?: ValidationError[] | undefined;
+};
+
+// Helpers
+
+function zodIssueSeverity(code: string): ValidationError["severity"] {
+  if (code === "invalid_type") return "high";
+  return "medium";
+}
+
+function zodIssuesToErrors(issues: ZodIssue[]): ValidationError[] {
+  return issues.map((issue) => ({
+    field: issue.path.join(".") || "root",
+    message: issue.message,
+    code: issue.code,
+    severity: zodIssueSeverity(issue.code),
+    context: { path: issue.path },
+  }));
+}
+
+function createMetadata(startTime: number): ValidationMetadata {
+  return {
+    validationTime: performance.now() - startTime,
+    rulesApplied: [],
+    cacheHit: false,
+    source: "schema",
+  };
+}
+
+// Main validation functions
+
+export async function validateProductCreate(
+  data: unknown,
+): Promise<ValidationResult<unknown>> {
+  const startTime = performance.now();
+  const result = productCreateSchema.safeParse(data);
+  const metadata = createMetadata(startTime);
+
+  if (!result.success) {
+    return { success: false, errors: zodIssuesToErrors(result.error.issues), metadata };
+  }
+  return { success: true, data: result.data, metadata };
+}
+
+export async function validateProductUpdate(
+  data: unknown,
+): Promise<ValidationResult<unknown>> {
+  const startTime = performance.now();
+  const result = productUpdateSchema.safeParse(data);
+  const metadata = createMetadata(startTime);
+
+  if (!result.success) {
+    return { success: false, errors: zodIssuesToErrors(result.error.issues), metadata };
+  }
+  return { success: true, data: result.data, metadata };
+}
+
+export async function validateProductField(
+  field: string,
+  value: unknown,
+  context: "create" | "update" = "create",
+): Promise<FieldValidationResult> {
+  const partialData = { [field]: value };
+  const result =
+    context === "create"
+      ? await validateProductCreate(partialData)
+      : await validateProductUpdate(partialData);
+
+  return {
+    field,
+    isValid: result.success,
+    errors: result.success
+      ? []
+      : result.errors.filter((e) => e.field === field),
+    warnings: result.warnings?.filter((e) => e.field === field),
+  };
+}
+
+export async function validateProductFields(
+  fields: Record<string, unknown>,
+  context: "create" | "update" = "create",
+): Promise<Record<string, FieldValidationResult>> {
+  const results: Record<string, FieldValidationResult> = {};
+  await Promise.all(
+    Object.entries(fields).map(async ([field, value]) => {
+      results[field] = await validateProductField(field, value, context);
+    }),
+  );
+  return results;
+}
+
+export async function validateProductsBatch(
+  products: unknown[],
+  context: "create" | "update" = "create",
+): Promise<{
+  results: Array<{ index: number; result: ValidationResult<unknown> }>;
+  summary: { total: number; successful: number; failed: number };
+}> {
+  const validate =
+    context === "create" ? validateProductCreate : validateProductUpdate;
+
+  const results = await Promise.all(
+    products.map(async (product, index) => ({
+      index,
+      result: await validate(product),
+    })),
+  );
+
+  const successful = results.filter((r) => r.result.success).length;
+
+  return {
+    results,
+    summary: { total: results.length, successful, failed: results.length - successful },
+  };
+}
 
 // Type guards
-export const isValidProductCreate: typeof ValidationApp.isValidProductCreate = ValidationApp.isValidProductCreate.bind(ValidationApp);
-export const isValidProductUpdate: typeof ValidationApp.isValidProductUpdate = ValidationApp.isValidProductUpdate.bind(ValidationApp);
 
-// Utility functions
+export async function isValidProductCreate(data: unknown): Promise<boolean> {
+  const result = await validateProductCreate(data);
+  return result.success;
+}
+
+export async function isValidProductUpdate(data: unknown): Promise<boolean> {
+  const result = await validateProductUpdate(data);
+  return result.success;
+}
+
 export function isProductLike(data: unknown): data is Record<string, unknown> {
-  return data !== null && typeof data === 'object' && !Array.isArray(data);
+  return data !== null && typeof data === "object" && !Array.isArray(data);
 }
 
 export function hasRequiredProductFields(data: unknown): boolean {
   if (!isProductLike(data)) return false;
-  return 'sku' in data || 'name_en' in data || 'price' in data;
+  return "sku" in data || "name_en" in data || "price" in data;
 }
 
 // Validation summary utilities
+
 export function getValidationSummary(result: ValidationResult<unknown>): {
   isValid: boolean;
   errorCount: number;
@@ -37,73 +182,59 @@ export function getValidationSummary(result: ValidationResult<unknown>): {
   criticalErrors: ValidationError[];
   fieldErrors: Record<string, ValidationError[]>;
 } {
-  const errors = result.success ? [] : (result.errors || []);
+  const errors = result.success ? [] : result.errors || [];
   const warnings = result.warnings || [];
-  
-  const criticalErrors = errors.filter((e: ValidationError) => e.severity === 'critical');
+
+  const criticalErrors = errors.filter((e) => e.severity === "critical");
   const fieldErrors: Record<string, ValidationError[]> = {};
-  
-  [...errors, ...warnings].forEach((error: ValidationError) => {
+
+  [...errors, ...warnings].forEach((error) => {
     if (!fieldErrors[error.field]) {
       fieldErrors[error.field] = [];
     }
     fieldErrors[error.field]!.push(error);
   });
-  
-  return {
-    isValid: result.success,
-    errorCount: errors.length,
-    warningCount: warnings.length,
-    criticalErrors,
-    fieldErrors
-  };
+
+  return { isValid: result.success, errorCount: errors.length, warningCount: warnings.length, criticalErrors, fieldErrors };
 }
 
-export function mergeValidationResults<T>(results: ValidationResult<T>[]): ValidationResult<T[]> {
+export function mergeValidationResults<T>(
+  results: ValidationResult<T>[],
+): ValidationResult<T[]> {
   const allErrors: ValidationError[] = [];
   const allWarnings: ValidationError[] = [];
   const validData: T[] = [];
-  let totalTime: number = 0;
+  let totalTime = 0;
   const allRules: string[] = [];
-  
+
   for (const result of results) {
     if (result.success && result.data !== undefined) {
       validData.push(result.data);
     } else if (!result.success && result.errors) {
       allErrors.push(...result.errors);
     }
-    
+
     if (result.warnings) {
       allWarnings.push(...result.warnings);
     }
-    
+
     if (result.metadata) {
       totalTime += result.metadata.validationTime;
       allRules.push(...result.metadata.rulesApplied);
     }
   }
-  
+
   const warnings = allWarnings.length > 0 ? allWarnings : undefined;
-  const metadata = {
+  const metadata: ValidationMetadata = {
     validationTime: totalTime,
     rulesApplied: [...new Set(allRules)],
     cacheHit: false,
-    source: 'batch' as const
+    source: "batch",
   };
 
   if (allErrors.length > 0) {
-    return {
-      success: false,
-      errors: allErrors,
-      warnings,
-      metadata
-    };
+    return { success: false, errors: allErrors, warnings, metadata };
   }
 
-  return {
-    success: true,
-    data: validData,
-    warnings,
-    metadata
-  };
+  return { success: true, data: validData, warnings, metadata };
 }

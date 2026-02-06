@@ -56,7 +56,8 @@
       "Bash(grep:*)",
       "Bash(sqlite3:*)",
       "Bash(tree:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(sort:*)"
     ]
   }
 }

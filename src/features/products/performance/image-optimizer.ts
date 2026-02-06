@@ -1,11 +1,19 @@
 import sharp from 'sharp';
 import { ErrorSystem } from "@/features/observability/server";
 
-import {
-  DEFAULT_IMAGE_SIZES,
-  type ImageFormat,
-  type ImageSize,
-} from "./image-url-generator";
+export type ImageFormat = "webp" | "avif" | "jpeg" | "png";
+export type ImageSize = "thumbnail" | "small" | "medium" | "large" | "original";
+
+const DEFAULT_IMAGE_SIZES: Record<
+  ImageSize,
+  { width: number; height?: number; quality?: number }
+> = {
+  thumbnail: { width: 150, height: 150, quality: 80 },
+  small: { width: 300, quality: 85 },
+  medium: { width: 600, quality: 90 },
+  large: { width: 1200, quality: 95 },
+  original: { width: 2000, quality: 100 },
+};
 
 export type OptimizationOptions = {
   formats?: ImageFormat[];

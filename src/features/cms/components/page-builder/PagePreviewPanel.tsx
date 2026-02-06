@@ -19,7 +19,7 @@ import { logClientError } from "@/features/observability";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsSlugs, useUpdatePage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
+import { PreviewEditorPreferencesProvider, PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { PageSelectorBar } from "./PageSelectorBar";
 import { VectorOverlay } from "./VectorOverlay";
@@ -138,6 +138,12 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
   const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
+
+  const initialPauseSlideshowOnHoverInEditor = useMemo((): boolean => {
+    return Boolean(userPreferences?.cmsSlideshowPauseOnHoverInEditor);
+  }, [userPreferences?.cmsSlideshowPauseOnHoverInEditor]);
+  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<boolean | null>(null);
+  const pauseSlideshowOnHoverInEditor = userPauseSlideshowOnHoverInEditor ?? initialPauseSlideshowOnHoverInEditor;
 
   const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return "";
@@ -539,6 +545,17 @@ export function PagePreviewPanel(): React.ReactNode {
                 />
                 Draft preview
               </label>
+              <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
+                <Checkbox
+                  checked={pauseSlideshowOnHoverInEditor}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => {
+                    const next = value === true;
+                    setUserPauseSlideshowOnHoverInEditor(next);
+                    updatePreferencesMutation.mutate({ cmsSlideshowPauseOnHoverInEditor: next });
+                  }}
+                />
+                Pause slides on hover (editor)
+              </label>
               <Button
                 onClick={(): void => { void handlePreview(); }}
                 size="sm"
@@ -644,41 +661,43 @@ export function PagePreviewPanel(): React.ReactNode {
                 }}
               >
                 <div style={contentStyle} className={isVectorOverlayOpen ? "pointer-events-none" : ""}>
-                  {ZONE_ORDER.map((zone: PageZone) => {
-                    const zoneSections = sectionsByZone[zone];
-                    if (zoneSections.length === 0) return null;
+                  <PreviewEditorPreferencesProvider value={{ pauseSlideshowOnHoverInEditor }}>
+                    {ZONE_ORDER.map((zone: PageZone) => {
+                      const zoneSections = sectionsByZone[zone];
+                      if (zoneSections.length === 0) return null;
 
-                    return (
-                      <div key={zone}>
-                        {/* Zone sections */}
-                        <div>
-                          {zoneSections.map((section: SectionInstance) => (
-                            <PreviewSection
-                              key={section.id}
-                              section={section}
-                              layout={{ fullWidth: theme.fullWidth }}
-                              selectedNodeId={state.selectedNodeId}
-                              isInspecting={state.inspectorEnabled}
-                              inspectorSettings={state.inspectorSettings}
-                              hoveredNodeId={effectiveHoveredNodeId}
-                              colorSchemes={colorSchemes || {}}
-                              mediaStyles={mediaStyles}
-                              onSelect={handleSelectNode}
-                              onHoverNode={handleHoverNode}
-                              onOpenMedia={handleOpenMedia}
-                              onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
-                              onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
-                                dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
-                              }
-                              onRemoveRow={(sectionId: string, rowId: string) =>
-                                dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
-                              }
-                            />
-                          ))}
+                      return (
+                        <div key={zone}>
+                          {/* Zone sections */}
+                          <div>
+                            {zoneSections.map((section: SectionInstance) => (
+                              <PreviewSection
+                                key={section.id}
+                                section={section}
+                                layout={{ fullWidth: theme.fullWidth }}
+                                selectedNodeId={state.selectedNodeId}
+                                isInspecting={state.inspectorEnabled}
+                                inspectorSettings={state.inspectorSettings}
+                                hoveredNodeId={effectiveHoveredNodeId}
+                                colorSchemes={colorSchemes || {}}
+                                mediaStyles={mediaStyles}
+                                onSelect={handleSelectNode}
+                                onHoverNode={handleHoverNode}
+                                onOpenMedia={handleOpenMedia}
+                                onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
+                                onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
+                                  dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
+                                }
+                                onRemoveRow={(sectionId: string, rowId: string) =>
+                                  dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
+                                }
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </PreviewEditorPreferencesProvider>
                 </div>
                 {vectorOverlay ? (
                   <VectorOverlay request={vectorOverlay} onClose={closeVectorOverlay} />

@@ -53,6 +53,10 @@ import type { AiNode, NodeDefinition } from "@/features/ai/ai-paths/lib";
 /**
  * Props for CanvasSidebarWrapper.
  * Only callbacks that involve external orchestration remain.
+ *
+ * Props eliminated by using context actions directly:
+ * - onOpenSimulation → SelectionContext.setSimulationOpenNodeId
+ * - onOpenNodeConfig → SelectionContext.setConfigOpen
  */
 export type CanvasSidebarWrapperProps = {
   /** Palette node definitions - not in context, passed from parent */
@@ -63,12 +67,8 @@ export type CanvasSidebarWrapperProps = {
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   /** Callback to fire a persistent trigger */
   onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
-  /** Callback to open simulation dialog */
-  onOpenSimulation: (nodeId: string) => void;
   /** Callback to update selected node */
   onUpdateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  /** Callback to open node config */
-  onOpenNodeConfig: () => void;
   /** Callback to delete selected node */
   onDeleteSelectedNode: () => void;
   /** Callback to remove an edge */
@@ -85,9 +85,7 @@ export function CanvasSidebarWrapper({
   onDragStart,
   onFireTrigger,
   onFireTriggerPersistent,
-  onOpenSimulation,
   onUpdateSelectedNode,
-  onOpenNodeConfig,
   onDeleteSelectedNode,
   onRemoveEdge,
   onClearWires,
@@ -97,7 +95,7 @@ export function CanvasSidebarWrapper({
 
   // Read state from SelectionContext
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
-  const { selectEdge } = useSelectionActions();
+  const { selectEdge, setSimulationOpenNodeId, setConfigOpen } = useSelectionActions();
 
   // Read state from PresetsContext
   const { paletteCollapsed, expandedPaletteGroups } = usePresetsState();
@@ -132,9 +130,9 @@ export function CanvasSidebarWrapper({
       // Callback props passed through
       onDragStart={onDragStart}
       onFireTrigger={onFireTrigger}
-      onOpenSimulation={onOpenSimulation}
+      onOpenSimulation={setSimulationOpenNodeId}
       onUpdateSelectedNode={onUpdateSelectedNode}
-      onOpenNodeConfig={onOpenNodeConfig}
+      onOpenNodeConfig={() => setConfigOpen(true)}
       onDeleteSelectedNode={onDeleteSelectedNode}
       onRemoveEdge={onRemoveEdge}
       onClearWires={onClearWires}

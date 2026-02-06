@@ -3,6 +3,7 @@ import "server-only";
 import type { AiNode, Edge, AiPathRunRecord } from "@/shared/types/ai-paths";
 import { normalizeNodes, sanitizeEdges } from "@/features/ai/ai-paths/lib";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
+import { enqueuePathRunJob } from "@/features/jobs/workers/aiPathRunQueue";
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -50,6 +51,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     message: "Run queued.",
     metadata: { pathId: run.pathId },
   });
+
+  // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
+  await enqueuePathRunJob(run.id);
+
   return run;
 };
 

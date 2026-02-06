@@ -39,6 +39,7 @@ export type UserPreferencesData = {
   cmsThemeLogoWidth?: number | null;
   cmsThemeLogoUrl?: string | null;
   cmsPreviewEnabled?: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
 };
 
 export type UserPreferences = {
@@ -65,6 +66,7 @@ export type UserPreferences = {
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
   cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -93,6 +95,7 @@ type UserPreferencesDocument = {
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
   cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -123,6 +126,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null,
   cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
   cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null,
+  cmsSlideshowPauseOnHoverInEditor: doc.cmsSlideshowPauseOnHoverInEditor ?? false,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -150,6 +154,7 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
   cmsThemeLogoWidth: null,
   cmsThemeLogoUrl: null,
   cmsPreviewEnabled: false,
+  cmsSlideshowPauseOnHoverInEditor: false,
 });
 
 /**

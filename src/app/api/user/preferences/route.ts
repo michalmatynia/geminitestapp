@@ -27,6 +27,7 @@ const updatePreferencesSchema = z.object({
   cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
   cmsThemeLogoUrl: z.string().optional().nullable(),
   cmsPreviewEnabled: z.boolean().optional().nullable(),
+  cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
 });
 
 /**
@@ -54,6 +55,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         cmsThemeLogoWidth: null,
         cmsThemeLogoUrl: null,
         cmsPreviewEnabled: false,
+        cmsSlideshowPauseOnHoverInEditor: false,
         ...(includeAdminMenu
           ? {
               adminMenuFavorites: [],
@@ -78,6 +80,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       cmsThemeLogoWidth: preferences.cmsThemeLogoWidth ?? null,
       cmsThemeLogoUrl: preferences.cmsThemeLogoUrl ?? null,
       cmsPreviewEnabled: preferences.cmsPreviewEnabled ?? false,
+      cmsSlideshowPauseOnHoverInEditor: preferences.cmsSlideshowPauseOnHoverInEditor ?? false,
       ...(includeAdminMenu
         ? {
             adminMenuFavorites: preferences.adminMenuFavorites ?? [],
@@ -134,6 +137,9 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
     if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
     if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
+    if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
+      partial.cmsSlideshowPauseOnHoverInEditor = parsed.cmsSlideshowPauseOnHoverInEditor;
+    }
     data = partial as Partial<UserPreferencesData>;
 
     if (!isDatabaseConfigured) {

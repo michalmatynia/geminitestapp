@@ -20,7 +20,11 @@
 
 React error overlay ? 
 
-Node Schema Matrix
+use Context !
+
+every element in CMS should have an uption for image file background
+
+Node Schema Matrix for extracting Schemas for prompts
 Node Notes and make the canvas bigger
 
 There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings

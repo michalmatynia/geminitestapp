@@ -208,6 +208,30 @@ app.prepare().then(() => {
     handle(req, res);
   });
 
+  // Graceful shutdown: drain BullMQ workers and close Redis before exit
+  const gracefulShutdown = async (signal) => {
+    console.log(`\n> Received ${signal}, shutting down gracefully...`);
+    try {
+      const { stopAllWorkers, closeRedisConnection } = await import('./src/shared/lib/queue/index.js');
+      await stopAllWorkers();
+      await closeRedisConnection();
+    } catch (err) {
+      console.warn('[server] Queue cleanup error:', err.message);
+    }
+    server.close(() => {
+      console.log('> Server closed');
+      process.exit(0);
+    });
+    // Force exit after 10 seconds
+    setTimeout(() => {
+      console.warn('> Forced exit after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   server.listen(port, (err) => {
     if (err) throw err;
     console.log(`> Ready on http://localhost:${port}`);

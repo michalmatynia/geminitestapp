@@ -91,6 +91,7 @@ export interface UserPreferencesDto extends DtoBase {
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
   cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
 }
 
 export interface UpdateUserPreferencesDto {
@@ -115,4 +116,5 @@ export interface UpdateUserPreferencesDto {
   cmsThemeLogoWidth?: number | null;
   cmsThemeLogoUrl?: string | null;
   cmsPreviewEnabled?: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
 }

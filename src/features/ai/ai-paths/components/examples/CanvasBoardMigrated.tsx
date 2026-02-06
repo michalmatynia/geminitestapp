@@ -28,16 +28,15 @@
  * />
  * ```
  *
- * AFTER: 21 props (only callbacks + edgePaths)
+ * AFTER: 20 props (only callbacks)
  * ```tsx
  * <CanvasBoardMigrated
- *   edgePaths={edgePaths}
  *   onSelectEdgeId={...}
  *   ... 19 more callback props
  * />
  * ```
  *
- * State props eliminated (14 props removed, 40% reduction):
+ * State props eliminated (15 props removed, 43% reduction):
  * - viewportRef, canvasRef → CanvasContext refs
  * - view, panState, lastDrop → CanvasContext state
  * - connecting, connectingPos → CanvasContext state
@@ -45,18 +44,20 @@
  * - selectedNodeId, selectedEdgeId → SelectionContext
  * - runtimeState → RuntimeContext
  * - connectingFromNode, draggingNodeId → derived from context
+ * - edgePaths → computed via useEdgePaths hook
  */
 
 import { useMemo } from "react";
-import { CanvasBoard, type EdgePath } from "../canvas-board";
+import { CanvasBoard } from "../canvas-board";
 import { useCanvasState, useCanvasRefs } from "../../context/CanvasContext";
 import { useGraphState } from "../../context/GraphContext";
-import { useSelectionState } from "../../context/SelectionContext";
+import { useSelectionState, useSelectionActions } from "../../context/SelectionContext";
 import { useRuntimeState } from "../../context/RuntimeContext";
+import { useEdgePaths } from "../../context/hooks/useEdgePaths";
 import type { AiNode } from "@/features/ai/ai-paths/lib";
 
 /**
- * Props for CanvasBoardMigrated - only callbacks and derived values.
+ * Props for CanvasBoardMigrated - only callbacks.
  *
  * State props have been removed as they now come from contexts:
  * - viewportRef, canvasRef (CanvasContext refs)
@@ -65,18 +66,18 @@ import type { AiNode } from "@/features/ai/ai-paths/lib";
  * - view, panState, lastDrop, connecting, connectingPos (CanvasContext state)
  * - selectedNodeId, selectedEdgeId (SelectionContext)
  * - connectingFromNode, draggingNodeId (derived from context)
+ * - edgePaths (computed via useEdgePaths hook)
+ *
+ * Props eliminated by using context actions directly:
+ * - onSelectEdgeId → SelectionContext.selectEdge
+ * - onSelectNode → SelectionContext.selectNode
+ * - onOpenNodeConfig → SelectionContext.setConfigOpen
  */
 export type CanvasBoardMigratedProps = {
-  // Derived value - complex computation, kept as prop for now
-  edgePaths: EdgePath[];
-
   // Callbacks - remain as props since they involve orchestration
-  onSelectEdgeId: (edgeId: string | null) => void;
   onRemoveEdge: (edgeId: string) => void;
   onDisconnectPort: (direction: "input" | "output", nodeId: string, port: string) => void;
   onReconnectInput: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
-  onSelectNode: (nodeId: string) => void;
-  onOpenNodeConfig: (nodeId: string) => void;
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onPointerDownNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
   onPointerMoveNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
@@ -108,13 +109,9 @@ export type CanvasBoardMigratedProps = {
  * This enables incremental migration without modifying the original component.
  */
 export function CanvasBoardMigrated({
-  edgePaths,
-  onSelectEdgeId,
   onRemoveEdge,
   onDisconnectPort,
   onReconnectInput,
-  onSelectNode,
-  onOpenNodeConfig,
   onFireTrigger,
   onPointerDownNode,
   onPointerMoveNode,
@@ -135,7 +132,11 @@ export function CanvasBoardMigrated({
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { nodes, edges } = useGraphState();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
+  const { selectNode, selectEdge, setConfigOpen } = useSelectionActions();
   const { runtimeState } = useRuntimeState();
+
+  // Compute edge paths from context data
+  const edgePaths = useEdgePaths();
 
   // Derive values from context state
   const connectingFromNode = useMemo<AiNode | null>(() => {
@@ -169,13 +170,14 @@ export function CanvasBoardMigrated({
       // State from SelectionContext
       selectedNodeId={selectedNodeId}
       selectedEdgeId={selectedEdgeId}
-      // All callbacks passed through
-      onSelectEdgeId={onSelectEdgeId}
+      // Selection actions from context
+      onSelectEdgeId={selectEdge}
+      onSelectNode={selectNode}
+      onOpenNodeConfig={() => setConfigOpen(true)}
+      // Callback props passed through
       onRemoveEdge={onRemoveEdge}
       onDisconnectPort={onDisconnectPort}
       onReconnectInput={onReconnectInput}
-      onSelectNode={onSelectNode}
-      onOpenNodeConfig={onOpenNodeConfig}
       onFireTrigger={onFireTrigger}
       onPointerDownNode={onPointerDownNode}
       onPointerMoveNode={onPointerMoveNode}

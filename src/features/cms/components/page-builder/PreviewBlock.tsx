@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useId, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useRef, useState, useId, useCallback, useMemo, memo, useContext } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
 import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -25,6 +25,31 @@ export type MediaReplaceTarget = {
   parentBlockId?: string | undefined;
   key: string;
 };
+
+type PreviewEditorPreferences = {
+  pauseSlideshowOnHoverInEditor: boolean;
+};
+
+const PreviewEditorPreferencesContext = React.createContext<PreviewEditorPreferences>({
+  pauseSlideshowOnHoverInEditor: false,
+});
+
+export function PreviewEditorPreferencesProvider({
+  value,
+  children,
+}: {
+  value: PreviewEditorPreferences;
+  children: React.ReactNode;
+}): React.ReactNode {
+  return (
+    <PreviewEditorPreferencesContext.Provider value={value}>
+      {children}
+    </PreviewEditorPreferencesContext.Provider>
+  );
+}
+
+const usePreviewEditorPreferences = (): PreviewEditorPreferences =>
+  useContext(PreviewEditorPreferencesContext);
 
 // Section-type block types that get a richer preview
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"];
@@ -746,6 +771,8 @@ export function PreviewSection({
   const slideshowAutoplay = (section.settings["autoplay"] as string) !== "no";
   const slideshowAutoplaySpeed = (section.settings["autoplaySpeed"] as number) || 5000;
   const slideshowPauseOnHover = (section.settings["pauseOnHover"] as string) !== "no";
+  const { pauseSlideshowOnHoverInEditor } = usePreviewEditorPreferences();
+  const slideshowAllowPauseOnHover = slideshowPauseOnHover && pauseSlideshowOnHoverInEditor;
   const slideshowLoop = (section.settings["loop"] as string) !== "no";
   const slideshowElementAnimationType = (section.settings["elementAnimationType"] as string) || "fade-in";
   const slideshowElementAnimationDuration = (section.settings["elementAnimationDuration"] as number) || 400;
@@ -810,6 +837,11 @@ export function PreviewSection({
     slideshowAutoplaySpeed,
     goToNextSlideshow,
   ]);
+  useEffect((): void => {
+    if (!slideshowAllowPauseOnHover && slideshowPaused) {
+      setSlideshowPaused(false);
+    }
+  }, [slideshowAllowPauseOnHover, slideshowPaused]);
 
   // Helper to render blocks list
   const renderBlocks = (emptyText: string): React.ReactNode =>
@@ -2089,8 +2121,8 @@ export function PreviewSection({
               <div
                 className="relative overflow-hidden min-h-[300px]"
                 style={slideHeightStyle}
-                onMouseEnter={slideshowPauseOnHover ? (): void => setSlideshowPaused(true) : undefined}
-                onMouseLeave={slideshowPauseOnHover ? (): void => setSlideshowPaused(false) : undefined}
+                onMouseEnter={slideshowAllowPauseOnHover ? (): void => setSlideshowPaused(true) : undefined}
+                onMouseLeave={slideshowAllowPauseOnHover ? (): void => setSlideshowPaused(false) : undefined}
               >
                 {frames.map((frame: BlockInstance, idx: number) => {
                   const frameSettings = (frame.settings ?? {}) as Record<string, unknown>;
@@ -4180,6 +4212,8 @@ function PreviewSlideshowBlock({
   const autoplay = (block.settings["autoplay"] as string) !== "no";
   const autoplaySpeed = (block.settings["autoplaySpeed"] as number) || 5000;
   const pauseOnHover = (block.settings["pauseOnHover"] as string) !== "no";
+  const { pauseSlideshowOnHoverInEditor } = usePreviewEditorPreferences();
+  const allowPauseOnHover = pauseOnHover && pauseSlideshowOnHoverInEditor;
   const loop = (block.settings["loop"] as string) !== "no";
   const elementAnimationType = (block.settings["elementAnimationType"] as string) || "fade-in";
   const elementAnimationDuration = (block.settings["elementAnimationDuration"] as number) || 400;
@@ -4235,6 +4269,11 @@ function PreviewSlideshowBlock({
     const interval = window.setInterval(goToNext, autoplaySpeed);
     return (): void => window.clearInterval(interval);
   }, [autoplay, autoplaySpeed, isPaused, slideCount, goToNext]);
+  useEffect((): void => {
+    if (!allowPauseOnHover && isPaused) {
+      setIsPaused(false);
+    }
+  }, [allowPauseOnHover, isPaused]);
   const slideHeightStyle: React.CSSProperties | undefined =
     heightMode === "fixed" && height > 0 ? { height: `${height}px` } : undefined;
 
@@ -4255,8 +4294,8 @@ function PreviewSlideshowBlock({
           <div
             className="relative overflow-hidden min-h-[200px]"
             style={slideHeightStyle}
-            onMouseEnter={pauseOnHover ? (): void => setIsPaused(true) : undefined}
-            onMouseLeave={pauseOnHover ? (): void => setIsPaused(false) : undefined}
+            onMouseEnter={allowPauseOnHover ? (): void => setIsPaused(true) : undefined}
+            onMouseLeave={allowPauseOnHover ? (): void => setIsPaused(false) : undefined}
           >
             {frames.map((frame: BlockInstance, idx: number) => {
               const frameSettings = (frame.settings ?? {}) as Record<string, unknown>;

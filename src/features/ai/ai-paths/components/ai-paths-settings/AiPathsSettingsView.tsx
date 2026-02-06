@@ -75,15 +75,11 @@ export function AiPathsSettingsView({
     savePathIndex,
     setNodes,
     runtimeState,
-    edgePaths,
     palette,
     handleDragStart,
-    handleSelectEdge,
     handleFireTrigger,
     handleFireTriggerPersistent,
-    setSimulationOpenNodeId,
     updateSelectedNode,
-    setConfigOpen,
     handleDeleteSelectedNode,
     handleRemoveEdge,
     handleClearWires,
@@ -91,7 +87,6 @@ export function AiPathsSettingsView({
     handleClearHistory,
     handleDisconnectPort,
     handleReconnectInput,
-    handleSelectNode,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -426,9 +421,7 @@ export function AiPathsSettingsView({
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
-                onOpenSimulation={setSimulationOpenNodeId}
                 onUpdateSelectedNode={updateSelectedNode}
-                onOpenNodeConfig={() => setConfigOpen(true)}
                 onDeleteSelectedNode={handleDeleteSelectedNode}
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
@@ -452,13 +445,9 @@ export function AiPathsSettingsView({
               />
             </div>
             <CanvasBoardMigrated
-              edgePaths={edgePaths}
-              onSelectEdgeId={handleSelectEdge}
               onRemoveEdge={handleRemoveEdge}
               onDisconnectPort={handleDisconnectPort}
               onReconnectInput={handleReconnectInput}
-              onSelectNode={handleSelectNode}
-              onOpenNodeConfig={() => setConfigOpen(true)}
               onFireTrigger={(node) => void handleFireTrigger(node)}
               onPointerDownNode={handlePointerDown}
               onPointerMoveNode={handlePointerMove}

@@ -47,6 +47,11 @@ function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPaths
     simulationOpenNodeId: state.simulationOpenNodeId,
     // Canvas
     view: state.view,
+    panState: state.panState,
+    dragState: state.dragState,
+    connecting: state.connecting,
+    connectingPos: state.connectingPos,
+    lastDrop: state.lastDrop,
     // Graph
     nodes: state.nodes,
     edges: state.edges,
@@ -61,6 +66,16 @@ function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPaths
     // Persistence
     loading: state.loading,
     saving: state.saving,
+    // Presets
+    clusterPresets: state.clusterPresets,
+    presetDraft: state.presetDraft,
+    editingPresetId: state.editingPresetId,
+    paletteCollapsed: state.paletteCollapsed,
+    expandedPaletteGroups: state.expandedPaletteGroups,
+    // Run History
+    runFilter: state.runFilter,
+    expandedRunHistory: state.expandedRunHistory,
+    runHistorySelection: state.runHistorySelection,
   });
 
   return (

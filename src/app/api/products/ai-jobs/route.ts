@@ -20,14 +20,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     // Check if requesting queue status
     const checkStatus = searchParams.get("status");
     if (checkStatus === "true") {
-      const status = getQueueStatus();
+      const status = await getQueueStatus();
       console.log("[api/products/ai-jobs] Queue status:", status);
       return NextResponse.json({ status });
     }
 
     const productId = searchParams.get("productId") || undefined;
     const jobs = await getProductAiJobs(productId);
-    const queueStatus = getQueueStatus();
+    const queueStatus = await getQueueStatus();
     if (!queueStatus.running) {
       const hasActiveJobs = jobs.some(
         (job) => job.status === "pending" || job.status === "running"

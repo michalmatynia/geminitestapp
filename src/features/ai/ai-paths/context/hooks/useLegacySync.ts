@@ -32,8 +32,14 @@ import { useCanvasActions } from "../CanvasContext";
 import { useGraphActions } from "../GraphContext";
 import { useRuntimeActions } from "../RuntimeContext";
 import { usePersistenceActions } from "../PersistenceContext";
-import type { AiNode, Edge, RuntimeState } from "@/features/ai/ai-paths/lib";
-import type { ViewState } from "../CanvasContext";
+import { usePresetsActions } from "../PresetsContext";
+import { useRunHistoryActions } from "../RunHistoryContext";
+import type { AiNode, Edge, RuntimeState, ClusterPreset } from "@/features/ai/ai-paths/lib";
+import type { ViewState, PanState, DragState, ConnectingState } from "../CanvasContext";
+import type { ClusterPresetDraft } from "../PresetsContext";
+// Note: Using string for runFilter to accommodate different RunHistoryFilter types
+// (context uses "all" | "completed" | "failed" | "running" | "queued" | "cancelled"
+// while run-history-panel uses "all" | "active" | "failed" | "dead")
 
 // ---------------------------------------------------------------------------
 // Selection Sync
@@ -94,17 +100,54 @@ export function useLegacySyncSelection({
 
 export interface LegacySyncCanvasProps {
   view: ViewState;
+  panState?: PanState | null | undefined;
+  dragState?: DragState | null | undefined;
+  connecting?: ConnectingState | null | undefined;
+  connectingPos?: { x: number; y: number } | null | undefined;
+  lastDrop?: { x: number; y: number } | null | undefined;
 }
 
 /**
  * Sync canvas state from legacy hook to CanvasContext.
  */
-export function useLegacySyncCanvas({ view }: LegacySyncCanvasProps): void {
+export function useLegacySyncCanvas({
+  view,
+  panState,
+  dragState,
+  connecting,
+  connectingPos,
+  lastDrop,
+}: LegacySyncCanvasProps): void {
   const actions = useCanvasActions();
 
   useEffect(() => {
     actions.setView(view);
   }, [view, actions]);
+  useEffect(() => {
+    if (panState !== undefined) {
+      actions.setPanState(panState);
+    }
+  }, [panState, actions]);
+  useEffect(() => {
+    if (dragState !== undefined) {
+      actions.setDragState(dragState);
+    }
+  }, [dragState, actions]);
+  useEffect(() => {
+    if (connecting !== undefined) {
+      actions.setConnecting(connecting);
+    }
+  }, [connecting, actions]);
+  useEffect(() => {
+    if (connectingPos !== undefined) {
+      actions.setConnectingPos(connectingPos);
+    }
+  }, [connectingPos, actions]);
+  useEffect(() => {
+    if (lastDrop !== undefined) {
+      actions.setLastDrop(lastDrop);
+    }
+  }, [lastDrop, actions]);
 }
 
 // ---------------------------------------------------------------------------
@@ -233,6 +276,103 @@ export function useLegacySyncPersistence({
 }
 
 // ---------------------------------------------------------------------------
+// Presets Sync
+// ---------------------------------------------------------------------------
+
+export interface LegacySyncPresetsProps {
+  clusterPresets?: ClusterPreset[] | undefined;
+  presetDraft?: ClusterPresetDraft | undefined;
+  editingPresetId?: string | null | undefined;
+  paletteCollapsed?: boolean | undefined;
+  expandedPaletteGroups?: Set<string> | undefined;
+}
+
+/**
+ * Sync presets state from legacy hook to PresetsContext.
+ */
+export function useLegacySyncPresets({
+  clusterPresets,
+  presetDraft,
+  editingPresetId,
+  paletteCollapsed,
+  expandedPaletteGroups,
+}: LegacySyncPresetsProps): void {
+  const actions = usePresetsActions();
+
+  useEffect(() => {
+    if (clusterPresets !== undefined) {
+      actions.setClusterPresets(clusterPresets);
+    }
+  }, [clusterPresets, actions]);
+
+  useEffect(() => {
+    if (presetDraft !== undefined) {
+      actions.setPresetDraft(presetDraft);
+    }
+  }, [presetDraft, actions]);
+
+  useEffect(() => {
+    if (editingPresetId !== undefined) {
+      actions.setEditingPresetId(editingPresetId);
+    }
+  }, [editingPresetId, actions]);
+
+  useEffect(() => {
+    if (paletteCollapsed !== undefined) {
+      actions.setPaletteCollapsed(paletteCollapsed);
+    }
+  }, [paletteCollapsed, actions]);
+
+  useEffect(() => {
+    if (expandedPaletteGroups !== undefined) {
+      actions.setExpandedPaletteGroups(expandedPaletteGroups);
+    }
+  }, [expandedPaletteGroups, actions]);
+}
+
+// ---------------------------------------------------------------------------
+// Run History Sync
+// ---------------------------------------------------------------------------
+
+export interface LegacySyncRunHistoryProps {
+  runFilter?: string | undefined;
+  expandedRunHistory?: Record<string, boolean> | undefined;
+  runHistorySelection?: Record<string, string> | undefined;
+}
+
+/**
+ * Sync run history state from legacy hook to RunHistoryContext.
+ * Note: runFilter is typed as string to accommodate different RunHistoryFilter types.
+ */
+export function useLegacySyncRunHistory({
+  runFilter,
+  expandedRunHistory,
+  runHistorySelection,
+}: LegacySyncRunHistoryProps): void {
+  const actions = useRunHistoryActions();
+
+  useEffect(() => {
+    if (runFilter !== undefined) {
+      // Cast to context's RunHistoryFilter type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      actions.setRunFilter(runFilter as any);
+    }
+  }, [runFilter, actions]);
+
+  useEffect(() => {
+    if (expandedRunHistory !== undefined) {
+      actions.setExpandedRunHistory(expandedRunHistory);
+    }
+  }, [expandedRunHistory, actions]);
+
+  useEffect(() => {
+    if (runHistorySelection !== undefined) {
+      actions.setRunHistorySelection(runHistorySelection);
+    }
+  }, [runHistorySelection, actions]);
+}
+
+// ---------------------------------------------------------------------------
 // Combined Sync
 // ---------------------------------------------------------------------------
 
@@ -245,6 +385,11 @@ export interface LegacySyncAllProps {
   simulationOpenNodeId?: string | null | undefined;
   // Canvas
   view: ViewState;
+  panState?: PanState | null | undefined;
+  dragState?: DragState | null | undefined;
+  connecting?: ConnectingState | null | undefined;
+  connectingPos?: { x: number; y: number } | null | undefined;
+  lastDrop?: { x: number; y: number } | null | undefined;
   // Graph
   nodes: AiNode[];
   edges: Edge[];
@@ -259,6 +404,16 @@ export interface LegacySyncAllProps {
   // Persistence
   loading: boolean;
   saving?: boolean | undefined;
+  // Presets
+  clusterPresets?: ClusterPreset[] | undefined;
+  presetDraft?: ClusterPresetDraft | undefined;
+  editingPresetId?: string | null | undefined;
+  paletteCollapsed?: boolean | undefined;
+  expandedPaletteGroups?: Set<string> | undefined;
+  // Run History
+  runFilter?: string | undefined;
+  expandedRunHistory?: Record<string, boolean> | undefined;
+  runHistorySelection?: Record<string, string> | undefined;
 }
 
 /**
@@ -276,6 +431,11 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
 
   useLegacySyncCanvas({
     view: props.view,
+    panState: props.panState,
+    dragState: props.dragState,
+    connecting: props.connecting,
+    connectingPos: props.connectingPos,
+    lastDrop: props.lastDrop,
   });
 
   useLegacySyncGraph({
@@ -296,5 +456,19 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
   useLegacySyncPersistence({
     loading: props.loading,
     saving: props.saving,
+  });
+
+  useLegacySyncPresets({
+    clusterPresets: props.clusterPresets,
+    presetDraft: props.presetDraft,
+    editingPresetId: props.editingPresetId,
+    paletteCollapsed: props.paletteCollapsed,
+    expandedPaletteGroups: props.expandedPaletteGroups,
+  });
+
+  useLegacySyncRunHistory({
+    runFilter: props.runFilter,
+    expandedRunHistory: props.expandedRunHistory,
+    runHistorySelection: props.runHistorySelection,
   });
 }

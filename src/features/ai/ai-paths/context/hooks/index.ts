@@ -85,11 +85,18 @@ export {
   useLegacySyncGraph,
   useLegacySyncRuntime,
   useLegacySyncPersistence,
+  useLegacySyncPresets,
+  useLegacySyncRunHistory,
   useLegacySyncAll,
   type LegacySyncSelectionProps,
   type LegacySyncCanvasProps,
   type LegacySyncGraphProps,
   type LegacySyncRuntimeProps,
   type LegacySyncPersistenceProps,
+  type LegacySyncPresetsProps,
+  type LegacySyncRunHistoryProps,
   type LegacySyncAllProps,
 } from "./useLegacySync";
+
+// Derived hooks
+export { useEdgePaths, type EdgePath } from "./useEdgePaths";

@@ -17,6 +17,8 @@ import {
 } from "@/features/ai/ai-paths/lib";
 import { ToastFn } from "@/shared/types/ai-paths-runtime";
 import { DRAG_KEYS, getFirstDragValue, setDragData } from "@/shared/utils/drag-drop";
+import { useCanvasRefs } from "@/features/ai/ai-paths/context/CanvasContext";
+import { useSelectionActions, useSelectionState } from "@/features/ai/ai-paths/context/SelectionContext";
 
 type UseAiPathsCanvasInteractionsArgs = {
   nodes: AiNode[];
@@ -105,10 +107,10 @@ export function useAiPathsCanvasInteractions({
     originX: number;
     originY: number;
   } | null>(null);
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const { selectedEdgeId, selectedNodeId: selectedNodeIdCtx } = useSelectionState();
+  const { selectEdge, selectNode } = useSelectionActions();
 
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const { viewportRef, canvasRef } = useCanvasRefs();
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const lastDropTimerRef = useRef<number | null>(null);
@@ -157,7 +159,7 @@ export function useAiPathsCanvasInteractions({
       if (target?.closest("[data-edge-panel]")) return;
       setConnecting(null);
       setConnectingPos(null);
-      setSelectedEdgeId(null);
+      selectEdge(null);
     };
     window.addEventListener("pointerdown", handlePointerDown);
     return (): void => window.removeEventListener("pointerdown", handlePointerDown);
@@ -186,10 +188,10 @@ export function useAiPathsCanvasInteractions({
         return remaining;
       });
       if (selectedEdgeId === edgeId) {
-        setSelectedEdgeId(null);
+        selectEdge(null);
       }
     },
-    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges]
+    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges, selectEdge]
   );
 
   const handleDisconnectPort = useCallback(
@@ -208,14 +210,14 @@ export function useAiPathsCanvasInteractions({
         if (selectedEdgeId) {
           const selectedEdge = prev.find((edge: Edge) => edge.id === selectedEdgeId);
           if (selectedEdge && shouldRemove(selectedEdge)) {
-            setSelectedEdgeId(null);
+            selectEdge(null);
           }
         }
         clearRuntimeInputsForEdges(removed, remaining);
         return remaining;
       });
     },
-    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges]
+    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges, selectEdge]
   );
 
   const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -228,36 +230,40 @@ export function useAiPathsCanvasInteractions({
   };
 
   const handleDeleteSelectedNode = useCallback((): void => {
-    if (!selectedNodeId) return;
+    const activeNodeId = selectedNodeIdCtx ?? selectedNodeId;
+    if (!activeNodeId) return;
     if (isPathLocked) {
       notifyLocked();
       return;
     }
-    const targetNode = nodes.find((node: AiNode): boolean => node.id === selectedNodeId);
+    const targetNode = nodes.find((node: AiNode): boolean => node.id === activeNodeId);
     const label = targetNode?.title || "this node";
     const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
     if (!confirmed) return;
-    setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== selectedNodeId));
+    setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== activeNodeId));
     setEdges((prev: Edge[]): Edge[] => {
       const removed = prev.filter(
-        (edge: Edge): boolean => edge.from === selectedNodeId || edge.to === selectedNodeId
+        (edge: Edge): boolean => edge.from === activeNodeId || edge.to === activeNodeId
       );
       const remaining = prev.filter(
-        (edge: Edge): boolean => edge.from !== selectedNodeId && edge.to !== selectedNodeId
+        (edge: Edge): boolean => edge.from !== activeNodeId && edge.to !== activeNodeId
       );
       clearRuntimeInputsForEdges(removed, remaining);
       return remaining;
     });
+    selectNode(null);
     setSelectedNodeId(null);
   }, [
     nodes,
     selectedNodeId,
+    selectedNodeIdCtx,
     clearRuntimeInputsForEdges,
     isPathLocked,
     notifyLocked,
     setEdges,
     setNodes,
     setSelectedNodeId,
+    selectNode,
   ]);
 
   useEffect((): void | (() => void) => {
@@ -265,7 +271,7 @@ export function useAiPathsCanvasInteractions({
       if (event.key === "Escape") {
         setConnecting(null);
         setConnectingPos(null);
-        setSelectedEdgeId(null);
+        selectEdge(null);
       }
       if (event.key === "Backspace" || event.key === "Delete") {
         if (isTypingTarget(event.target)) return;
@@ -274,7 +280,7 @@ export function useAiPathsCanvasInteractions({
           handleRemoveEdge(selectedEdgeId);
           return;
         }
-        if (selectedNodeId) {
+        if (selectedNodeIdCtx ?? selectedNodeId) {
           event.preventDefault();
           handleDeleteSelectedNode();
         }
@@ -282,7 +288,7 @@ export function useAiPathsCanvasInteractions({
     };
     window.addEventListener("keydown", handleKeyDown);
     return (): void => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedEdgeId, selectedNodeId, handleRemoveEdge, handleDeleteSelectedNode]);
+  }, [selectedEdgeId, selectedNodeId, selectedNodeIdCtx, handleRemoveEdge, handleDeleteSelectedNode]);
 
   useEffect((): void => {
     setEdges((prev: Edge[]): Edge[] => sanitizeEdges(nodes, prev));
@@ -430,7 +436,7 @@ export function useAiPathsCanvasInteractions({
         return remaining;
       });
       if (selectedEdgeId === edgeToMove.id) {
-        setSelectedEdgeId(null);
+        selectEdge(null);
       }
       setConnecting({ fromNodeId: edgeToMove.from, fromPort: edgeToMove.fromPort, start });
       setConnectingPos(nextPos);
@@ -446,6 +452,7 @@ export function useAiPathsCanvasInteractions({
       selectedEdgeId,
       setEdges,
       view,
+      selectEdge,
     ]
   );
 
@@ -800,16 +807,18 @@ export function useAiPathsCanvasInteractions({
   };
 
   const handleSelectEdge = (edgeId: string | null): void => {
-    setSelectedEdgeId(edgeId);
+    selectEdge(edgeId);
     if (edgeId) {
+      selectNode(null);
       setSelectedNodeId(null);
     }
   };
 
   const handleSelectNode = (nodeId: string): void => {
-    if (nodeId === selectedNodeId) return;
+    if (nodeId === (selectedNodeIdCtx ?? selectedNodeId)) return;
     if (confirmNodeSwitch && !confirmNodeSwitch(nodeId)) return;
-    setSelectedEdgeId(null);
+    selectEdge(null);
+    selectNode(nodeId);
     setSelectedNodeId(nodeId);
   };
 

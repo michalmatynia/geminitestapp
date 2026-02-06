@@ -246,6 +246,9 @@ export const handleModel: NodeHandler = async ({
       payloadHash,
     };
   } catch (error) {
+    if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      throw error;
+    }
     reportAiPathsError(
       error,
       { action: 'graphModel', nodeId: node.id },

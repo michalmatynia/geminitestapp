@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 import { PageBuilderLayout } from '@/features/cms/components/page-builder/PageBuilderLayout';
 import { useCmsPages, useCmsPage, useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
-import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
+import { initialState } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
@@ -91,6 +92,11 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('PageBuilder UI Integration', () => {
   const mockPages = [{ id: '1', name: 'Home', status: 'published', components: [] }];
+  const testInitialState = {
+    ...initialState,
+    currentPage: mockPages[0],
+    pages: mockPages,
+  } as any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,41 +109,36 @@ describe('PageBuilder UI Integration', () => {
   });
 
   it('should allow adding a section and see it in the preview', async () => {
-    render(<PageBuilderLayout />, { wrapper });
+    render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
     
     // 1. Initial state: No sections
-    expect(screen.getByText(/No sections yet/i)).toBeInTheDocument();
+    expect(screen.getByTestId('preview-empty')).toBeInTheDocument();
 
     // 2. Open section picker (default in sections mode)
-    const addSectionBtn = screen.getByLabelText(/Add section to Template/i);
+    const addSectionBtn = screen.getAllByRole('button', { name: /Add section/i })[1]!;
     fireEvent.click(addSectionBtn);
 
-    // 3. Select 'Hero' section
-    const heroBtn = screen.getByText('Hero');
-    fireEvent.click(heroBtn);
+    // 3. Select 'RichText' section
+    const richTextBtn = screen.getByText('RichText');
+    fireEvent.click(richTextBtn);
 
     // 4. Verify section is added to structure and preview
     await waitFor(() => {
-      // In ComponentTreePanel, it should show 'Hero'
-      const treeItems = screen.getAllByText('Hero');
+      // In ComponentTreePanel, it should show 'RichText'
+      const treeItems = screen.getAllByText('RichText');
       expect(treeItems.length).toBeGreaterThan(0);
-      
-      // In PagePreviewPanel, it should show section content (Hero has default title usually)
-      // Since we don't mock PreviewSection, it will render for real.
-      // Hero section usually has "Hero Title" or similar in default settings.
-      // Let's check for the section-item in the tree as a reliable indicator.
     });
   });
 
   it('should handle undo/redo operations', async () => {
-    render(<PageBuilderLayout />, { wrapper });
+    render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
     
     // 1. Add a section
-    fireEvent.click(screen.getByLabelText(/Add section to Template/i));
-    fireEvent.click(screen.getByText('Hero'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Add section/i })[1]!);
+    fireEvent.click(screen.getByText('RichText'));
     
     await waitFor(() => {
-      expect(screen.getByText('Hero')).toBeInTheDocument();
+      expect(screen.getByText('RichText')).toBeInTheDocument();
     });
 
     // 2. Click Undo
@@ -145,7 +146,7 @@ describe('PageBuilder UI Integration', () => {
     fireEvent.click(undoBtn);
 
     await waitFor(() => {
-      expect(screen.queryByText('Hero')).not.toBeInTheDocument();
+      expect(screen.queryByText('RichText')).not.toBeInTheDocument();
     });
 
     // 3. Click Redo
@@ -153,12 +154,12 @@ describe('PageBuilder UI Integration', () => {
     fireEvent.click(redoBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Hero')).toBeInTheDocument();
+      expect(screen.getByText('RichText')).toBeInTheDocument();
     });
   });
 
   it('should switch between desktop and mobile previews', async () => {
-    render(<PageBuilderLayout />, { wrapper });
+    render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
     
     // Default is desktop.
     screen.getByTestId('preview-empty');
@@ -166,8 +167,8 @@ describe('PageBuilder UI Integration', () => {
     // but here we have empty preview).
     
     // Let's add a section to see the canvas
-    fireEvent.click(screen.getByLabelText(/Add section to Template/i));
-    fireEvent.click(screen.getByText('Hero'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Add section/i })[1]!);
+    fireEvent.click(screen.getByText('RichText'));
 
     await waitFor(() => {
       expect(screen.getByTestId('preview-canvas')).toBeInTheDocument();

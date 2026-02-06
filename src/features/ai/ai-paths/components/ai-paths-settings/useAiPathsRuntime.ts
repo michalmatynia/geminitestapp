@@ -918,13 +918,77 @@ export function useAiPathsRuntime({
     lastTriggerNodeIdRef.current = triggerNode.id;
     lastTriggerEventRef.current = triggerEvent ?? null;
     abortControllerRef.current = new AbortController();
+    const simulationContext = pendingSimulationContextRef.current ?? null;
     const triggerContext = {
       ...buildTriggerContext(triggerNode, triggerEvent, event),
-      ...(pendingSimulationContextRef.current ?? {}),
+      ...(simulationContext ?? {}),
       ...(contextOverride ?? {}),
     };
     triggerContextRef.current = triggerContext;
     pendingSimulationContextRef.current = null;
+    const immediateEntityId =
+      typeof triggerContext.entityId === 'string'
+        ? triggerContext.entityId
+        : typeof triggerContext.productId === 'string'
+          ? triggerContext.productId
+          : null;
+    const immediateEntityType =
+      typeof triggerContext.entityType === 'string'
+        ? triggerContext.entityType
+        : null;
+    const immediateContext = {
+      ...triggerContext,
+      ...(immediateEntityId ? { entityId: immediateEntityId } : {}),
+      ...(immediateEntityType ? { entityType: immediateEntityType } : {}),
+      trigger: triggerEvent,
+      pathId: activePathId ?? null,
+      source: triggerContext.source ?? null,
+    };
+    const immediateOutputs: RuntimePortValues = {
+      trigger: true,
+      triggerName: triggerEvent,
+      meta: {
+        firedAt: startedAt,
+        trigger: triggerEvent,
+        pathId: activePathId ?? null,
+        entityId: immediateEntityId,
+        entityType: immediateEntityType,
+        ui: triggerContext.ui ?? null,
+        location: triggerContext.location ?? null,
+        source: triggerContext.source ?? null,
+        user: triggerContext.user ?? null,
+        event: triggerContext.event ?? null,
+        extras: triggerContext.extras ?? null,
+      },
+      context: immediateContext,
+      ...(immediateEntityId ? { entityId: immediateEntityId } : {}),
+      ...(immediateEntityType ? { entityType: immediateEntityType } : {}),
+    };
+    const immediateInputs = simulationContext ?? contextOverride ?? null;
+    if (executionMode === 'local') {
+      setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const next: RuntimeState = {
+          ...prev,
+          runId,
+          runStartedAt: startedAt,
+          outputs: {
+            ...prev.outputs,
+            [triggerNode.id]: immediateOutputs,
+          },
+        };
+        if (immediateInputs) {
+          next.inputs = {
+            ...prev.inputs,
+            [triggerNode.id]: {
+              ...(prev.inputs[triggerNode.id] ?? {}),
+              context: immediateInputs,
+            },
+          };
+        }
+        runtimeStateRef.current = next;
+        return next;
+      });
+    }
 
     const outcome = await runLocalLoop(mode);
     if (outcome.status === 'paused') {
@@ -982,52 +1046,6 @@ export function useAiPathsRuntime({
     finalizeLocalRunOutcome,
   ]);
 
-  const finalizeLocalRunOutcome = useCallback((
-    outcome: { status: 'completed' | 'paused' | 'canceled' | 'error'; error?: unknown; state: RuntimeState },
-    options: {
-      startedAt: string;
-      startedAtMs: number;
-      triggerEvent: string | null;
-      triggerContext?: Record<string, unknown> | null;
-    }
-  ): void => {
-    const finishedAt = new Date().toISOString();
-    setLastRunAt(finishedAt);
-    if (activePathId) {
-      setPathConfigs((prev: Record<string, PathConfig>) => ({
-        ...prev,
-        [activePathId]: {
-          ...(prev[activePathId] ?? buildActivePathConfig(finishedAt)),
-          runtimeState: outcome.state,
-          lastRunAt: finishedAt,
-        },
-      }));
-    }
-    void persistDebugSnapshot(activePathId ?? null, finishedAt, outcome.state);
-    void appendLocalRun({
-      pathId: activePathId ?? null,
-      pathName: pathName ?? null,
-      triggerEvent: options.triggerEvent,
-      triggerLabel: activeTrigger ?? null,
-      status: outcome.status === 'completed' ? 'success' : outcome.status,
-      startedAt: options.startedAt,
-      finishedAt,
-      durationMs: Date.now() - options.startedAtMs,
-      nodeCount: normalizedNodes.length,
-      error: outcome.error instanceof Error ? outcome.error.message : (typeof outcome.error === 'string' ? outcome.error : undefined),
-      source: 'ai_paths_ui',
-    });
-  }, [
-    activePathId,
-    activeTrigger,
-    buildActivePathConfig,
-    normalizedNodes.length,
-    pathName,
-    persistDebugSnapshot,
-    setLastRunAt,
-    setPathConfigs,
-  ]);
-
   const processQueuedRuns = useCallback((): void => {
     if (runMode !== 'queue' || queuedRunsRef.current.length === 0) return;
     const next = queuedRunsRef.current.shift();
@@ -1046,14 +1064,14 @@ export function useAiPathsRuntime({
     void runGraphForTrigger(nextTrigger, undefined, next.contextOverride ?? undefined);
   }, [runMode, activePathId, normalizedNodes, toast, runGraphForTrigger]);
 
-  const handlePauseRun = useCallback((): void => {
+  const pauseRun = useCallback((): void => {
     if (!runInFlightRef.current) return;
     if (runStatusRef.current === 'running' || runStatusRef.current === 'stepping') {
       pauseRequestedRef.current = true;
     }
   }, []);
 
-  const handleResumeRun = useCallback((): void => {
+  const resumeRun = useCallback((): void => {
     if (runStatusRef.current !== 'paused') return;
     const startedAt =
       currentRunStartedAtRef.current ?? runtimeStateRef.current.runStartedAt;
@@ -1089,7 +1107,7 @@ export function useAiPathsRuntime({
     })();
   }, [finalizeLocalRunOutcome, processQueuedRuns, runLocalLoop, updateRunStatus]);
 
-  const handleStepRun = useCallback(
+  const stepRun = useCallback(
     (triggerNode?: AiNode): void => {
       if (runStatusRef.current === 'running') {
         toast('Pause the run to step through nodes.', { variant: 'info' });
@@ -1151,58 +1169,7 @@ export function useAiPathsRuntime({
     ]
   );
 
-  const handleCancelRun = useCallback((): void => {
-    if (!runInFlightRef.current && runStatusRef.current !== 'paused') return;
-    if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-      abortControllerRef.current.abort();
-    }
-    if (runStatusRef.current === 'paused') {
-      runInFlightRef.current = false;
-      updateRunStatus('idle');
-      abortControllerRef.current = null;
-      pauseRequestedRef.current = false;
-      toast('Run cancelled.', { variant: 'info' });
-      processQueuedRuns();
-    }
-  }, [processQueuedRuns, toast, updateRunStatus]);
-              startedAtMs: Number.isNaN(startedAtMs) ? Date.now() : startedAtMs,
-              triggerEvent: lastTriggerEventRef.current ?? null,
-              triggerContext: triggerContextRef.current,
-            });
-          }
-          processQueuedRuns();
-        })();
-        return;
-      }
-      if (runInFlightRef.current) {
-        return;
-      }
-      const resolvedTrigger =
-        triggerNode?.type === 'trigger'
-          ? triggerNode
-          : lastTriggerNodeIdRef.current
-            ? normalizedNodes.find(
-              (node: AiNode): boolean => node.id === lastTriggerNodeIdRef.current
-            )
-            : normalizedNodes.find((node: AiNode): boolean => node.type === 'trigger');
-      if (!resolvedTrigger) {
-        toast('Select a Trigger node to step the run.', { variant: 'info' });
-        return;
-      }
-      void runGraphForTrigger(resolvedTrigger, undefined, undefined, { mode: 'step' });
-    },
-    [
-      finalizeLocalRunOutcome,
-      normalizedNodes,
-      processQueuedRuns,
-      runGraphForTrigger,
-      runLocalLoop,
-      toast,
-      updateRunStatus,
-    ]
-  );
-
-  const handleCancelRun = useCallback((): void => {
+  const cancelRun = useCallback((): void => {
     if (!runInFlightRef.current && runStatusRef.current !== 'paused') return;
     if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
       abortControllerRef.current.abort();
@@ -1248,7 +1215,7 @@ export function useAiPathsRuntime({
             successOperator: pollConfig?.successOperator ?? 'equals',
             successValue: pollConfig?.successValue ?? 'completed',
             resultPath: pollConfig?.resultPath ?? 'result',
-          }, { signal: abortSignal });
+          }, abortSignal ? { signal: abortSignal } : {});
           pollOutput = {
             result: response.result,
             status: response.status,
@@ -1262,7 +1229,7 @@ export function useAiPathsRuntime({
           const result = await pollGraphJob(jobId, {
             intervalMs: pollConfig?.intervalMs ?? 2000,
             maxAttempts: pollConfig?.maxAttempts ?? 30,
-            signal: abortSignal,
+            ...(abortSignal ? { signal: abortSignal } : {}),
           });
 
           pollOutput = {
@@ -1396,6 +1363,9 @@ export function useAiPathsRuntime({
           }
         }
       } catch (error) {
+        if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+          return;
+        }
         reportAiPathsError(
           error,
           { action: 'pollJob', nodeId: node.id, jobId: fallbackJobId },
@@ -1851,7 +1821,7 @@ export function useAiPathsRuntime({
       directJobId = enqueueData.jobId;
       toast('AI job queued. Waiting for result...', { variant: 'success' });
       const result = await pollGraphJob(enqueueData.jobId, {
-        signal: abortControllerRef.current?.signal,
+        ...(abortControllerRef.current?.signal ? { signal: abortControllerRef.current.signal } : {}),
       });
       // Update runtime state with the result
       setRuntimeState((prev: RuntimeState): RuntimeState => {
@@ -1993,10 +1963,10 @@ export function useAiPathsRuntime({
     handleRunSimulation,
     handleFireTrigger,
     handleFireTriggerPersistent,
-    handlePauseRun,
-    handleResumeRun,
-    handleStepRun,
-    handleCancelRun,
+    handlePauseRun: pauseRun,
+    handleResumeRun: resumeRun,
+    handleStepRun: stepRun,
+    handleCancelRun: cancelRun,
     runStatus,
     handleSendToAi,
     sendingToAi,

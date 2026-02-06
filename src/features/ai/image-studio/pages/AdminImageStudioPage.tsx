@@ -3232,1151 +3232,1184 @@ export function AdminImageStudioPage(): React.JSX.Element {
         >
           <TabsContent value="studio" className="mt-0 flex min-h-0 flex-1 flex-col gap-4">
 
-          <SharedModal
-            open={driveImportOpen}
-            onClose={() => setDriveImportOpen(false)}
-            title="Import from Drive"
-            size="xl"
-          >
-            <FileManager
-              mode="select"
-              selectionMode="multiple"
-              onSelectFile={(files: ImageFileSelection[]) => void handleDriveSelection(files)}
-            />
-          </SharedModal>
+            <SharedModal
+              open={driveImportOpen}
+              onClose={() => setDriveImportOpen(false)}
+              title="Import from Drive"
+              size="xl"
+            >
+              <FileManager
+                mode="select"
+                selectionMode="multiple"
+                onSelectFile={(files: ImageFileSelection[]) => void handleDriveSelection(files)}
+              />
+            </SharedModal>
 
-          <SharedModal
-            open={extractReviewOpen}
-            onClose={() => setExtractReviewOpen(false)}
-            title="Review parameter extraction"
-            size="lg"
-          >
-            <div className="space-y-4 text-sm text-gray-200">
-              <div className="space-y-2">
-                <div className="text-[11px] text-gray-400">Prompt to extract from</div>
-                <Textarea
-                  value={extractDraftPrompt}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(e.target.value)}
-                  className="h-36 font-mono text-[11px]"
-                  placeholder="Paste or edit your prompt before extracting parameters."
-                />
-              </div>
+            <SharedModal
+              open={extractReviewOpen}
+              onClose={() => setExtractReviewOpen(false)}
+              title="Review parameter extraction"
+              size="lg"
+            >
+              <div className="space-y-4 text-sm text-gray-200">
+                <div className="space-y-2">
+                  <div className="text-[11px] text-gray-400">Prompt to extract from</div>
+                  <Textarea
+                    value={extractDraftPrompt}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(e.target.value)}
+                    className="h-36 font-mono text-[11px]"
+                    placeholder="Paste or edit your prompt before extracting parameters."
+                  />
+                </div>
 
-              {extractDraftPrompt.trim() ? (
-                extractPreviewResult ? (
-                  extractPreviewResult.ok ? (
-                    <div className="space-y-3 rounded border border-border bg-card/60 p-3">
-                      <div className="flex items-center justify-between gap-3 text-[11px]">
-                        <div className="text-gray-400">
+                {extractDraftPrompt.trim() ? (
+                  extractPreviewResult ? (
+                    extractPreviewResult.ok ? (
+                      <div className="space-y-3 rounded border border-border bg-card/60 p-3">
+                        <div className="flex items-center justify-between gap-3 text-[11px]">
+                          <div className="text-gray-400">
                       Proposed params: <span className="text-gray-200">{extractPreviewLeaves.length}</span>
-                        </div>
-                        <div className="text-gray-500">
+                          </div>
+                          <div className="text-gray-500">
                       Validation:{' '}
-                          {extractPreviewValidationSummary.errors === 0 && extractPreviewValidationSummary.warnings === 0 ? (
-                            <span className="text-emerald-300">OK</span>
-                          ) : (
-                            <>
-                              {extractPreviewValidationSummary.errors > 0 ? (
-                                <span className="text-red-300">{extractPreviewValidationSummary.errors} error(s)</span>
-                              ) : (
-                                <span className="text-gray-400">0 errors</span>
-                              )}
-                              {' • '}
-                              {extractPreviewValidationSummary.warnings > 0 ? (
-                                <span className="text-yellow-300">{extractPreviewValidationSummary.warnings} warning(s)</span>
-                              ) : (
-                                <span className="text-gray-400">0 warnings</span>
-                              )}
-                            </>
-                          )}
+                            {extractPreviewValidationSummary.errors === 0 && extractPreviewValidationSummary.warnings === 0 ? (
+                              <span className="text-emerald-300">OK</span>
+                            ) : (
+                              <>
+                                {extractPreviewValidationSummary.errors > 0 ? (
+                                  <span className="text-red-300">{extractPreviewValidationSummary.errors} error(s)</span>
+                                ) : (
+                                  <span className="text-gray-400">0 errors</span>
+                                )}
+                                {' • '}
+                                {extractPreviewValidationSummary.warnings > 0 ? (
+                                  <span className="text-yellow-300">{extractPreviewValidationSummary.warnings} warning(s)</span>
+                                ) : (
+                                  <span className="text-gray-400">0 warnings</span>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="max-h-72 space-y-2 overflow-auto text-[11px] text-gray-300">
-                        {extractPreviewLeaves.length === 0 ? (
-                          <div className="text-gray-400">No parameters detected.</div>
-                        ) : (
-                          extractPreviewLeaves.map((leaf: ParamLeaf) => {
-                            const spec = extractPreviewSpec?.[leaf.path];
-                            const rec = recommendParamUiControl(leaf.value, spec);
-                            const selectedOverride = extractPreviewUiOverrides[leaf.path] ?? 'auto';
-                            const issues = extractPreviewIssuesByPath[leaf.path] ?? [];
-                            const errors = issues.filter((issue: ParamIssue) => issue.severity === 'error');
-                            const warnings = issues.filter((issue: ParamIssue) => issue.severity === 'warning');
-                            return (
-                              <div key={leaf.path} className="rounded border border-border/60 bg-background/40 p-2">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <div className="min-w-0 truncate font-mono text-gray-200">{leaf.path}</div>
-                                  <div className="text-gray-500">
+                        <div className="max-h-72 space-y-2 overflow-auto text-[11px] text-gray-300">
+                          {extractPreviewLeaves.length === 0 ? (
+                            <div className="text-gray-400">No parameters detected.</div>
+                          ) : (
+                            extractPreviewLeaves.map((leaf: ParamLeaf) => {
+                              const spec = extractPreviewSpec?.[leaf.path];
+                              const rec = recommendParamUiControl(leaf.value, spec);
+                              const selectedOverride = extractPreviewUiOverrides[leaf.path] ?? 'auto';
+                              const issues = extractPreviewIssuesByPath[leaf.path] ?? [];
+                              const errors = issues.filter((issue: ParamIssue) => issue.severity === 'error');
+                              const warnings = issues.filter((issue: ParamIssue) => issue.severity === 'warning');
+                              return (
+                                <div key={leaf.path} className="rounded border border-border/60 bg-background/40 p-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="min-w-0 truncate font-mono text-gray-200">{leaf.path}</div>
+                                    <div className="text-gray-500">
                                 Type:{' '}
-                                    <span className="text-gray-300">
-                                      {Array.isArray(leaf.value) ? 'array' : leaf.value === null ? 'null' : typeof leaf.value}
-                                    </span>
-                                    {spec?.kind ? (
+                                      <span className="text-gray-300">
+                                        {Array.isArray(leaf.value) ? 'array' : leaf.value === null ? 'null' : typeof leaf.value}
+                                      </span>
+                                      {spec?.kind ? (
+                                        <>
+                                          {' • '}
+                                    Kind: <span className="text-gray-300">{spec.kind}</span>
+                                        </>
+                                      ) : null}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-1 text-gray-400">
+                              Value: <span className="text-gray-300">{safeJsonStringify(leaf.value)}</span>
+                                  </div>
+
+                                  <div className="mt-1 text-gray-500">
+                              Suggested control:{' '}
+                                    <span className="text-gray-300">{paramUiControlLabel(rec.recommended)}</span>
+                                    {rec.reason ? (
                                       <>
                                         {' • '}
-                                    Kind: <span className="text-gray-300">{spec.kind}</span>
+                                        <span className="text-gray-400">{rec.reason}</span>
                                       </>
                                     ) : null}
                                   </div>
-                                </div>
 
-                                <div className="mt-1 text-gray-400">
-                              Value: <span className="text-gray-300">{safeJsonStringify(leaf.value)}</span>
-                                </div>
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                                    <div className="text-gray-500">Selector:</div>
+                                    <Select
+                                      value={selectedOverride}
+                                      onValueChange={(next: string) => {
+                                        if (!isParamUiControl(next)) return;
+                                        setExtractPreviewUiOverrides((prev: Record<string, ParamUiControl>) => {
+                                          if (next === 'auto') {
+                                            if (!(leaf.path in prev)) return prev;
+                                            const { [leaf.path]: _removed, ...rest } = prev;
+                                            return rest;
+                                          }
+                                          return { ...prev, [leaf.path]: next };
+                                        });
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-7 w-[140px] px-2">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {rec.options.map((opt: ParamUiControl) => (
+                                          <SelectItem key={opt} value={opt}>
+                                            {opt === 'auto' ? `Auto (${paramUiControlLabel(rec.recommended)})` : paramUiControlLabel(opt)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
 
-                                <div className="mt-1 text-gray-500">
-                              Suggested control:{' '}
-                                  <span className="text-gray-300">{paramUiControlLabel(rec.recommended)}</span>
-                                  {rec.reason ? (
-                                    <>
-                                      {' • '}
-                                      <span className="text-gray-400">{rec.reason}</span>
-                                    </>
+                                  {spec ? (
+                                    <div className="mt-1 text-gray-500">
+                                      {spec.hint ? (
+                                        <span>
+                                    Hint: <span className="text-gray-400">{spec.hint}</span>
+                                        </span>
+                                      ) : null}
+                                      {(spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? (
+                                        <span>
+                                          {spec.hint ? ' • ' : ''}
+                                    Range:{' '}
+                                          <span className="text-gray-400">
+                                            {spec.min ?? '?'}..{spec.max ?? '?'} step {spec.step ?? '?'}
+                                          </span>
+                                        </span>
+                                      ) : null}
+                                      {spec.enumOptions ? (
+                                        <span>
+                                          {(spec.hint || spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? ' • ' : ''}
+                                    Enum: <span className="text-gray-400">{spec.enumOptions.join(', ')}</span>
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+
+                                  {errors.length > 0 || warnings.length > 0 ? (
+                                    <div className="mt-2 space-y-1">
+                                      {errors.map((issue: ParamIssue) => (
+                                        <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
+                                          {issue.message}
+                                        </div>
+                                      ))}
+                                      {warnings.map((issue: ParamIssue) => (
+                                        <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
+                                          {issue.message}
+                                        </div>
+                                      ))}
+                                    </div>
                                   ) : null}
                                 </div>
+                              );
+                            })
+                          )}
+                        </div>
 
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                  <div className="text-gray-500">Selector:</div>
-                                  <Select
-                                    value={selectedOverride}
-                                    onValueChange={(next: string) => {
-                                      if (!isParamUiControl(next)) return;
-                                      setExtractPreviewUiOverrides((prev: Record<string, ParamUiControl>) => {
-                                        if (next === 'auto') {
-                                          if (!(leaf.path in prev)) return prev;
-                                          const { [leaf.path]: _removed, ...rest } = prev;
-                                          return rest;
-                                        }
-                                        return { ...prev, [leaf.path]: next };
-                                      });
-                                    }}
-                                  >
-                                    <SelectTrigger className="h-7 w-[140px] px-2">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {rec.options.map((opt: ParamUiControl) => (
-                                        <SelectItem key={opt} value={opt}>
-                                          {opt === 'auto' ? `Auto (${paramUiControlLabel(rec.recommended)})` : paramUiControlLabel(opt)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                {spec ? (
-                                  <div className="mt-1 text-gray-500">
-                                    {spec.hint ? (
-                                      <span>
-                                    Hint: <span className="text-gray-400">{spec.hint}</span>
-                                      </span>
-                                    ) : null}
-                                    {(spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? (
-                                      <span>
-                                        {spec.hint ? ' • ' : ''}
-                                    Range:{' '}
-                                        <span className="text-gray-400">
-                                          {spec.min ?? '?'}..{spec.max ?? '?'} step {spec.step ?? '?'}
-                                        </span>
-                                      </span>
-                                    ) : null}
-                                    {spec.enumOptions ? (
-                                      <span>
-                                        {(spec.hint || spec.min !== undefined || spec.max !== undefined || spec.step !== undefined) ? ' • ' : ''}
-                                    Enum: <span className="text-gray-400">{spec.enumOptions.join(', ')}</span>
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-
-                                {errors.length > 0 || warnings.length > 0 ? (
-                                  <div className="mt-2 space-y-1">
-                                    {errors.map((issue: ParamIssue) => (
-                                      <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
-                                        {issue.message}
-                                      </div>
-                                    ))}
-                                    {warnings.map((issue: ParamIssue) => (
-                                      <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
-                                        {issue.message}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : null}
-                              </div>
-                            );
-                          })
-                        )}
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">Raw extracted JSON</div>
+                          <Textarea
+                            value={extractPreviewResult.ok ? safeJsonStringify(extractPreviewResult.params) : ''}
+                            readOnly
+                            className="h-28 font-mono text-[11px]"
+                          />
+                        </div>
                       </div>
-
-                      <div className="space-y-1">
-                        <div className="text-[11px] text-gray-500">Raw extracted JSON</div>
-                        <Textarea
-                          value={extractPreviewResult.ok ? safeJsonStringify(extractPreviewResult.params) : ''}
-                          readOnly
-                          className="h-28 font-mono text-[11px]"
-                        />
+                    ) : (
+                      <div className="rounded border border-red-500/40 bg-red-500/10 p-3 text-[11px] text-red-200">
+                        {String(extractPreviewResult.error)}
                       </div>
-                    </div>
+                    )
                   ) : (
-                    <div className="rounded border border-red-500/40 bg-red-500/10 p-3 text-[11px] text-red-200">
-                      {String(extractPreviewResult.error)}
-                    </div>
+                    <div className="text-[11px] text-gray-400">No preview available yet.</div>
                   )
                 ) : (
-                  <div className="text-[11px] text-gray-400">No preview available yet.</div>
-                )
-              ) : (
-                <div className="text-[11px] text-gray-400">Add a prompt to preview extracted parameters.</div>
-              )}
+                  <div className="text-[11px] text-gray-400">Add a prompt to preview extracted parameters.</div>
+                )}
 
-              {studioSettings.promptExtraction.mode !== 'programmatic' ? (
-                <div className="rounded border border-border bg-card/60 p-3 text-[11px] text-gray-300">
+                {studioSettings.promptExtraction.mode !== 'programmatic' ? (
+                  <div className="rounded border border-border bg-card/60 p-3 text-[11px] text-gray-300">
               AI extraction is not wired yet. Selected model:{' '}
-                  <span className="text-gray-200">{studioSettings.promptExtraction.gpt.model}</span>. Configure at
-                  {' '}
-                  <span className="text-gray-200">/admin/settings/ai</span>.
-                </div>
-              ) : null}
-
-              <div className="flex items-center justify-end gap-2">
-                <Button variant="outline" onClick={() => setExtractReviewOpen(false)}>
-              Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (!extractDraftPrompt.trim()) return;
-                    if (studioSettings.promptExtraction.mode !== 'programmatic') {
-                      toast(
-                        `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
-                        { variant: 'info' }
-                      );
-                      return;
-                    }
-                    setPromptText(extractDraftPrompt);
-                    applyProgrammaticExtraction(extractDraftPrompt);
-                    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
-                      if (!extractPreviewUiOverrides || Object.keys(extractPreviewUiOverrides).length === 0) return prev;
-                      return { ...prev, ...extractPreviewUiOverrides };
-                    });
-                    setExtractReviewOpen(false);
-                  }}
-                  disabled={!extractDraftPrompt.trim()}
-                >
-              Extract params
-                </Button>
-              </div>
-            </div>
-          </SharedModal>
-
-          <SharedModal
-            open={slotInlineEditOpen && Boolean(selectedSlot)}
-            onClose={() => setSlotInlineEditOpen(false)}
-            title="Edit slot"
-            size="lg"
-          >
-            {selectedSlot ? (
-              <div className="space-y-4 text-sm text-gray-200">
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <Select
-                    value={moveTargetFolder === '' ? '__root__' : moveTargetFolder}
-                    onValueChange={(value: string) => {
-                      setMoveTargetFolder(value === '__root__' ? '' : value);
-                    }}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Move to folder" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {folderOptions.map((folder: string) => (
-                        <SelectItem key={folder || '__root__'} value={folder || '__root__'}>
-                          {folder || '(root)'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={moveSlotMutation.isPending || (selectedSlot.folderPath ?? '') === moveTargetFolder}
-                    onClick={() => {
-                      void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
-                    }}
-                  >
-                Move
-                  </Button>
-                </div>
-
-                {!isImageSlot ? (
-                  <>
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="text-[11px] text-gray-400">Slot image</div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setDriveImportMode('replace');
-                            setDriveImportTargetId(selectedSlot.id);
-                            setDriveImportOpen(true);
-                          }}
-                          disabled={slotUpdateBusy || importFromDriveMutation.isPending}
-                        >
-                          <Folder className="mr-2 size-4" />
-                      Replace from Drive
-                        </Button>
-                        <FileUploadButton
-                          variant="outline"
-                          size="sm"
-                          accept="image/*"
-                          disabled={slotUpdateBusy}
-                          onFilesSelected={handleReplaceUpload}
-                        >
-                          <Upload className="mr-2 size-4" />
-                      Replace from Upload
-                        </FileUploadButton>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={slotImageUrlDraft}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
-                          placeholder="Paste image URL"
-                          className="h-8"
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void handleApplyImageUrl()}
-                          disabled={slotUpdateBusy}
-                        >
-                      Use URL
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={slotBase64Draft}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
-                        placeholder="Paste base64 data URL"
-                        className="min-h-[80px] text-xs"
-                      />
-                      <div className="flex items-center justify-between gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void handleApplyBase64()}
-                          disabled={slotUpdateBusy}
-                        >
-                      Use Base64
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => void handleClearSlotMedia()}
-                          disabled={slotUpdateBusy}
-                        >
-                      Clear
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="text-[11px] text-gray-400">3D asset</div>
-                      <Asset3DPickerField
-                        value={selectedSlot.asset3dId ?? ''}
-                        onChange={(value: string) => {
-                          void updateSlotMutation.mutateAsync({
-                            id: selectedSlot.id,
-                            data: { asset3dId: value || null },
-                          });
-                        }}
-                        disabled={slotUpdateBusy}
-                      />
-                      <FileUploadButton
-                        variant="outline"
-                        size="sm"
-                        accept=".glb,.gltf,model/gltf-binary"
-                        disabled={slotUpdateBusy}
-                        onFilesSelected={async (files: File[]) => {
-                          await handleUpload3DAsset(files);
-                        }}
-                      >
-                        <Upload className="mr-2 size-4" />
-                    Upload 3D
-                      </FileUploadButton>
-                    </div>
-
-                    <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] text-gray-400">Composite sources</div>
-                        {compositeAssetIds.length > 0 ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-[10px]"
-                            onClick={() => setCompositeAssetIds([])}
-                          >
-                        Clear
-                          </Button>
-                        ) : null}
-                      </div>
-                      <MultiSelect
-                        options={compositeAssetOptions}
-                        selected={compositeAssetIds}
-                        onChange={(values: string[]) => {
-                          const baseId = workingSlotId ?? selectedSlotId;
-                          const next = values.filter((id: string) => id !== baseId);
-                          setCompositeAssetIds(next);
-                        }}
-                        placeholder="Add slots for compositing"
-                        searchPlaceholder="Search slots..."
-                        disabled={!projectId || compositeAssetOptions.length === 0}
-                        className="text-xs"
-                      />
-                      {compositeAssets.length > 0 ? (
-                        <div className="space-y-1">
-                          {compositeAssets.map((slot: ImageStudioSlotRecord) => {
-                            const folder = slot.folderPath ?? '';
-                            const name = slot.name || slot.id;
-                            const label = folder ? `${folder}/${name}` : name;
-                            return (
-                              <div
-                                key={slot.id}
-                                className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
-                              >
-                                <span className="truncate text-gray-300">{label}</span>
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6"
-                                  onClick={() =>
-                                    setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
-                                  }
-                                >
-                                  <X className="size-3" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-[10px] text-gray-500">
-                      Optional. Send up to 16 images total (including base).
-                        </div>
-                      )}
-                    </div>
-                  </>
+                    <span className="text-gray-200">{studioSettings.promptExtraction.gpt.model}</span>. Configure at
+                    {' '}
+                    <span className="text-gray-200">/admin/settings/ai</span>.
+                  </div>
                 ) : null}
 
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-red-300 hover:text-red-200"
-                  disabled={deleteSlotMutation.isPending}
-                  onClick={() => {
-                    const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
-                    if (!confirmed) return;
-                    void deleteSlotMutation.mutateAsync(selectedSlot.id);
-                  }}
-                >
-              Delete slot
-                </Button>
-              </div>
-            ) : null}
-          </SharedModal>
-
-          <SharedModal
-            open={slotCreateOpen}
-            onClose={() => setSlotCreateOpen(false)}
-            title="New slot"
-            size="md"
-          >
-            <div className="space-y-4 text-sm text-gray-200">
-              <div className="text-[11px] text-gray-400">
-            Folder: <span className="text-gray-200">{selectedFolder || '(root)'}</span>
-              </div>
-              <div className="grid gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setSlotCreateOpen(false);
-                    void handleCreateSlot();
-                  }}
-                  disabled={!projectId || maxSlotsReached}
-                >
-                  <Plus className="mr-2 size-4" />
-              Create empty slot
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setSlotCreateOpen(false);
-                    setDriveImportMode('create');
-                    setDriveImportTargetId(null);
-                    setDriveImportOpen(true);
-                  }}
-                  disabled={!projectId || importFromDriveMutation.isPending}
-                >
-                  <Folder className="mr-2 size-4" />
-              Import from Drive
-                </Button>
-                <FileUploadButton
-                  variant="outline"
-                  accept="image/*"
-                  multiple
-                  disabled={!projectId || uploadMutation.isPending}
-                  onFilesSelected={async (files: File[]) => {
-                    setSlotCreateOpen(false);
-                    await uploadMutation.mutateAsync({ files, folder: selectedFolder });
-                  }}
-                >
-                  <Upload className="mr-2 size-4" />
-              Upload images
-                </FileUploadButton>
-              </div>
-              {maxSlotsReached ? (
-                <div className="text-[11px] text-amber-200">Max 100 slots per project.</div>
-              ) : null}
-            </div>
-          </SharedModal>
-
-          <SharedModal
-            open={learnOpen}
-            onClose={() => setLearnOpen(false)}
-            title="Learn patterns from prompt"
-            size="lg"
-          >
-            <div className="space-y-3 text-sm text-gray-200">
-              {learnLoading ? (
-                <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
-              Learning patterns from the prompt…
-                </div>
-              ) : learnCandidates.length === 0 ? (
-                <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
-              No learned patterns to review yet.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {learnCandidates.map((rule: PromptValidationRule, index: number) => {
-                    const key = buildRuleKey(rule, index);
-                    return (
-                      <div key={key} className="rounded border border-border bg-card/40 p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <label className="flex items-start gap-2 text-xs text-gray-200">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(learnSelection[key])}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setLearnSelection((prev: Record<string, boolean>) => ({ ...prev, [key]: e.target.checked }))
-                              }
-                            />
-                            <span>
-                              <div className="text-sm text-gray-100">{rule.title}</div>
-                              <div className="text-[11px] text-gray-400">ID: {rule.id}</div>
-                            </span>
-                          </label>
-                          <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
-                            {rule.kind}
-                          </span>
-                        </div>
-                        {rule.kind === 'regex' ? (
-                          <div className="mt-2 rounded border border-border bg-card/50 p-2 font-mono text-[11px] text-gray-200">
-                            {rule.pattern}
-                            <span className="text-gray-400">{rule.flags?.trim() ? `/${rule.flags}` : ''}</span>
-                          </div>
-                        ) : null}
-                        <div className="mt-2 text-[11px] text-gray-400">{rule.message}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    setLearnSelection((prev: Record<string, boolean>) => {
-                      const next = { ...prev };
-                      learnCandidates.forEach((rule: PromptValidationRule, index: number) => {
-                        next[buildRuleKey(rule, index)] = true;
+                <div className="flex items-center justify-end gap-2">
+                  <Button variant="outline" onClick={() => setExtractReviewOpen(false)}>
+              Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (!extractDraftPrompt.trim()) return;
+                      if (studioSettings.promptExtraction.mode !== 'programmatic') {
+                        toast(
+                          `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
+                          { variant: 'info' }
+                        );
+                        return;
+                      }
+                      setPromptText(extractDraftPrompt);
+                      applyProgrammaticExtraction(extractDraftPrompt);
+                      setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+                        if (!extractPreviewUiOverrides || Object.keys(extractPreviewUiOverrides).length === 0) return prev;
+                        return { ...prev, ...extractPreviewUiOverrides };
                       });
-                      return next;
-                    })
-                  }
-                  disabled={learnCandidates.length === 0}
-                >
-              Select all
-                </Button>
-                <Button type="button" onClick={() => void handleApplyLearned()} disabled={learnCandidates.length === 0}>
-              Add selected
-                </Button>
-              </div>
-            </div>
-          </SharedModal>
-
-          <SharedModal
-            open={uiSuggestOpen}
-            onClose={() => setUiSuggestOpen(false)}
-            title="UI Extractor Suggestions"
-            size="lg"
-          >
-            <div className="space-y-3 text-sm text-gray-200">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-[11px] text-gray-400">Mode</div>
-                <Select
-                  value={uiSuggestMode}
-                  onValueChange={(value: string) =>
-                    setUiSuggestMode(value === 'ai' || value === 'both' ? value : 'heuristic')
-                  }
-                >
-                  <SelectTrigger className="h-8 w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="heuristic">Heuristic</SelectItem>
-                    <SelectItem value="ai">AI</SelectItem>
-                    <SelectItem value="both">Both</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <div className="text-[11px] text-gray-400">Min confidence</div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={uiSuggestMinConfidence}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const next = Number(e.target.value);
-                      setUiSuggestMinConfidence(Number.isFinite(next) ? Math.max(0, Math.min(1, next)) : 0.5);
+                      setExtractReviewOpen(false);
                     }}
-                    className="h-8 w-20"
-                  />
+                    disabled={!extractDraftPrompt.trim()}
+                  >
+              Extract params
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void handleSuggestUi()}
-                  disabled={uiSuggestLoading}
-                >
-              Refresh
-                </Button>
               </div>
+            </SharedModal>
 
-              {uiSuggestLoading ? (
-                <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
-              Extracting UI suggestions…
-                </div>
-              ) : uiSuggestionRows.length === 0 ? (
-                <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
-              No suggestions yet. Click “Refresh” to run the extractor.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {uiSuggestionRows.map((row: UiSuggestionRow) => {
-                    const selected = row.selected;
-                    const options = row.heuristic?.options?.length ? row.heuristic.options : row.ai?.options ?? ['auto'];
-                    const uniqueOptions = Array.from(new Set(options)).filter(isParamUiControl);
-                    const best = row.ai?.confidence && row.heuristic?.confidence
-                      ? (row.ai.confidence >= row.heuristic.confidence ? 'ai' : 'heuristic')
-                      : row.ai?.confidence
-                        ? 'ai'
-                        : 'heuristic';
-                    const bestConfidence = Math.max(row.ai?.confidence ?? 0, row.heuristic?.confidence ?? 0);
-                    return (
-                      <div key={row.path} className="rounded border border-border bg-card/40 p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <label className="flex items-start gap-2 text-xs text-gray-200">
-                            <input
-                              type="checkbox"
-                              checked={row.apply}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                                  prev.map((item: UiSuggestionRow) => (item.path === row.path ? { ...item, apply: e.target.checked } : item))
-                                )
-                              }
-                            />
-                            <span>
-                              <div className="text-sm text-gray-100">{row.path}</div>
-                              <div className="text-[11px] text-gray-400 truncate">
-                                {row.valuePreview}
-                              </div>
-                              {row.hint ? (
-                                <div className="text-[11px] text-gray-500">{row.hint}</div>
-                              ) : null}
-                            </span>
-                          </label>
-                          <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
-                            {best === 'ai' ? 'AI' : 'Heuristic'} · {bestConfidence.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
-                          <div className="space-y-1 text-[11px] text-gray-400">
-                            {row.ai?.reason ? <div><span className="text-gray-300">AI:</span> {row.ai.reason}</div> : null}
-                            {row.heuristic?.reason ? <div><span className="text-gray-300">Heuristic:</span> {row.heuristic.reason}</div> : null}
-                            {!row.ai?.reason && !row.heuristic?.reason ? (
-                              <div>Suggested UI control for this parameter.</div>
-                            ) : null}
-                          </div>
-                          <Select
-                            value={selected}
-                            onValueChange={(newValue: string) =>
-                              setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                                prev.map((item: UiSuggestionRow) =>
-                                  item.path === row.path
-                                    ? { ...item, selected: newValue as ParamUiControl }                                : item
-                                )
-                              )
-                            }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {uniqueOptions.map((option: ParamUiControl) => (
-                                <SelectItem key={option} value={option}>
-                                  {paramUiControlLabel(option)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {row.heuristic?.control ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                                  prev.map((item: UiSuggestionRow) =>
-                                    item.path === row.path ? { ...item, selected: row.heuristic!.control } : item
-                                  )
-                                )
-                              }
-                            >
-                          Use heuristic
-                            </Button>
-                          ) : null}
-                          {row.ai?.control ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                                  prev.map((item: UiSuggestionRow) =>
-                                    item.path === row.path ? { ...item, selected: row.ai!.control } : item
-                                  )
-                                )
-                              }
-                            >
-                          Use AI
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                                prev.map((item: UiSuggestionRow) =>
-                                  item.path === row.path ? { ...item, selected: 'auto' } : item
-                                )
-                              )
-                            }
-                          >
-                        Clear
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    setUiSuggestionRows((prev: UiSuggestionRow[]) => prev.map((row: UiSuggestionRow) => ({ ...row, apply: true })))
-                  }
-                  disabled={uiSuggestionRows.length === 0}
-                >
-              Select all
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    setUiSuggestionRows((prev: UiSuggestionRow[]) =>
-                      prev.map((row: UiSuggestionRow) => {
-                        const best = row.ai?.confidence && row.heuristic?.confidence
-                          ? (row.ai.confidence >= row.heuristic.confidence ? row.ai.control : row.heuristic.control)
-                          : row.ai?.control ?? row.heuristic?.control ?? row.selected;
-                        return { ...row, selected: best };
-                      })
-                    )
-                  }
-                  disabled={uiSuggestionRows.length === 0}
-                >
-              Use best
-                </Button>
-                <Button type="button" onClick={handleApplyUiSuggestions} disabled={uiSuggestionRows.length === 0}>
-              Apply selected
-                </Button>
-              </div>
-            </div>
-          </SharedModal>
-
-
-          <div className="relative flex min-h-0 flex-1">
-            <div
-              className={cn(
-                'grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out',
-                isFocusMode ? 'grid-cols-[0px_1fr_420px] gap-4' : 'grid-cols-[300px_1fr_420px] gap-4'
-              )}
+            <SharedModal
+              open={slotInlineEditOpen && Boolean(selectedSlot)}
+              onClose={() => setSlotInlineEditOpen(false)}
+              title="Edit slot"
+              size="lg"
             >
-              {/* Project + Slots */}
-              <SectionPanel
-                className={cn(
-                  'order-1 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
-                  isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
-                )}
-                variant="subtle"
-                aria-hidden={isFocusMode}
-              >
-                <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Project</Label>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={projectId || '__none__'}
-                        onValueChange={(value: string) => {
-                          hasManualProjectSelectionRef.current = true;
-                          setProjectId(value === '__none__' ? '' : value);
-                        }}
-                      >
-                        <SelectTrigger className="h-9 w-full">
-                          <SelectValue placeholder={projectsQuery.isLoading ? 'Loading...' : 'Select project'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(projectsQuery.data ?? []).map((id: string) => (
-                            <SelectItem key={id} value={id}>
-                              {id}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {!projectId ? (
-                      <div className="text-[11px] text-amber-200">
-                Select or create a project to enable uploads and imports.
-                      </div>
-                    ) : null}
-
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={newProjectId}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
-                        placeholder="New project id (e.g. milkbar-001)"
-                        className="h-9"
-                      />
-                      <Button
-                        onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
-                        disabled={!newProjectId.trim() || createProjectMutation.isPending}
-                      >
-                Create
-                      </Button>
-                    </div>
-
-                    {selectedFolder ? (
-                      <div className="text-[11px] text-gray-400">
-                Folder: <span className="text-gray-200">{selectedFolder}</span>
-                      </div>
-                    ) : null}
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={newFolderName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewFolderName(e.target.value)}
-                        placeholder="New folder (e.g. banners/home)"
-                        className="h-8"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!projectId || !newFolderName.trim() || createFolderMutation.isPending}
-                        onClick={() => void createFolderMutation.mutateAsync(newFolderName)}
-                      >
-                Create folder
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSlotCreateOpen(true)}
-                        disabled={!projectId || maxSlotsReached}
-                      >
-                New Slot
-                      </Button>
-                      {selectedSlot ? (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={workingSlotId === selectedSlot.id ? 'secondary' : 'outline'}
-                            onClick={() => setWorkingSlotId(selectedSlot.id)}
-                          >
-                            {workingSlotId === selectedSlot.id ? 'Loaded' : 'Load to preview'}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="outline"
-                            title="Edit slot"
-                            onClick={() => setSlotInlineEditOpen(true)}
-                          >
-                            <Settings2 className="size-4" />
-                          </Button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-hidden">
-                    <ImageStudioSlotTreeContext.Provider value={slotTreeContextValue}>
-                      <SlotTree key={projectId} />
-                    </ImageStudioSlotTreeContext.Provider>
-                  </div>
-                </div>
-              </SectionPanel>
-              {/* Preview */}
-              <SectionPanel className="order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
-                <PanelHeader
-                  title="Preview"
-                  {...(!isFocusMode ? { subtitle: workingSlot?.name || '—' } : {})}
-                  actions={(
-                    <div className="flex items-center gap-2">
-                      {!isFocusMode ? (
-                        <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
-                      ) : null}
-                      {workingSlot?.asset3dId ? (
-                        <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
-                          <Button
-                            type="button"
-                            variant={previewMode === 'image' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => setPreviewMode('image')}
-                          >
-                      Image
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={previewMode === '3d' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => setPreviewMode('3d')}
-                          >
-                      3D
-                          </Button>
-                        </div>
-                      ) : null}
-                      {previewMode === '3d' && workingSlot?.asset3dId ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => void handleCaptureScreenshot()}
-                        >
-                          <Camera className="mr-2 size-4" />
-                    Screenshot
-                        </Button>
-                      ) : null}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsFocusMode((prev: boolean) => !prev)}
-                      >
-                        {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
-                        {isFocusMode ? 'Edit' : 'Show'}
-                      </Button>
-                    </div>
-                  )}
-                />
-                <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-[11px] text-gray-400">Mask generator</div>
+              {selectedSlot ? (
+                <div className="space-y-4 text-sm text-gray-200">
+                  <div className="grid grid-cols-[1fr_auto] gap-2">
                     <Select
-                      value={maskGenMode}
+                      value={moveTargetFolder === '' ? '__root__' : moveTargetFolder}
                       onValueChange={(value: string) => {
-                        if (value === 'ai-bbox' || value === 'threshold' || value === 'edges') {
-                          setMaskGenMode(value);
-                          return;
-                        }
-                        setMaskGenMode('ai-polygon');
+                        setMoveTargetFolder(value === '__root__' ? '' : value);
                       }}
                     >
-                      <SelectTrigger className="h-8 w-[160px]">
-                        <SelectValue />
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Move to folder" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ai-polygon">AI polygon</SelectItem>
-                        <SelectItem value="ai-bbox">AI bbox</SelectItem>
-                        <SelectItem value="threshold">Threshold</SelectItem>
-                        <SelectItem value="edges">Edges</SelectItem>
+                        {folderOptions.map((folder: string) => (
+                          <SelectItem key={folder || '__root__'} value={folder || '__root__'}>
+                            {folder || '(root)'}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <Button
                       type="button"
-                      variant="outline"
                       size="sm"
-                      onClick={() => void handleGenerateMask(maskGenMode)}
-                      disabled={maskGenLoading || !workingSlotImageSrc}
+                      variant="outline"
+                      disabled={moveSlotMutation.isPending || (selectedSlot.folderPath ?? '') === moveTargetFolder}
+                      onClick={() => {
+                        void moveSlotMutation.mutateAsync({ slot: selectedSlot, targetFolder: moveTargetFolder });
+                      }}
                     >
-                      {maskGenLoading ? 'Generating...' : 'Generate'}
+                Move
                     </Button>
                   </div>
 
-                  <div className="relative flex-1">
-                    <div className="h-full overflow-hidden">
-                      {previewMode === '3d' && workingSlot?.asset3dId ? (
-                        <div className="relative h-full w-full overflow-hidden rounded border border-border bg-black/20">
-                          <Viewer3D
-                            modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
-                            allowUserControls
-                            captureRef={captureRef}
-                            className="h-full w-full"
-                          />
-                        </div>
-                      ) : (
-                        <VectorDrawingCanvas
-                          src={workingSlotImageSrc ?? ''}
-                          tool={tool}
-                          shapes={maskShapes}
-                          activeShapeId={activeMaskId}
-                          selectedPointIndex={selectedPointIndex}
-                          onSelectShape={setActiveMaskId}
-                          onSelectPoint={setSelectedPointIndex}
-                          onChange={(nextShapes: MaskShape[]) => {
-                            setMaskShapes(nextShapes);
-                          }}
-                          brushRadius={brushRadius}
-                        />
-                      )}
-                    </div>
-                    <VectorDrawingToolbar
-                      className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
-                      tool={tool}
-                      onSelectTool={setTool}
-                      onUndo={() => {
-                        if (!activeMaskId) return;
-                        setMaskShapes((prev: MaskShape[]) =>
-                          prev.map((shape: MaskShape) =>
-                            shape.id === activeMaskId
-                              ? { ...shape, points: shape.points.slice(0, -1), closed: false }
-                              : shape
-                          )
-                        );
-                      }}
-                      onClose={() => {
-                        if (!activeMaskId) return;
-                        setMaskShapes((prev: MaskShape[]) =>
-                          prev.map((shape: MaskShape) =>
-                            shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
-                          )
-                        );
-                      }}
-                      onDetach={() => {
-                        if (!activeMaskId) return;
-                        setMaskShapes((prev: MaskShape[]) =>
-                          prev.map((shape: MaskShape) => {
-                            if (shape.id !== activeMaskId) return shape;
-                            if (!shape.closed) return shape;
-                            if (shape.points.length < 3) return { ...shape, closed: false };
-                            if (selectedPointIndex === null) return { ...shape, closed: false };
-                            const pts = shape.points;
-                            const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
-                            return { ...shape, points: rotated, closed: false };
-                          })
-                        );
-                      }}
-                      onClear={() => {
-                        setMaskShapes([]);
-                        setActiveMaskId(null);
-                      }}
-                      disableUndo={!activeMaskId}
-                      disableClose={!activeMaskId}
-                      disableDetach={!activeMaskId}
-                      disableClear={maskShapes.length === 0}
-                    />
-                  </div>
-
-                  {!isFocusMode ? (
-                    <div className="shrink-0 h-64 overflow-y-auto pr-1 space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <Label className="text-xs text-gray-400">Mask Layers</Label>
+                  {!isImageSlot ? (
+                    <>
+                      <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                        <div className="text-[11px] text-gray-400">Slot image</div>
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              setMaskShapes((prev: MaskShape[]) => prev.filter((shape: MaskShape) => shape.id !== activeMaskId));
-                              setActiveMaskId(null);
+                              setDriveImportMode('replace');
+                              setDriveImportTargetId(selectedSlot.id);
+                              setDriveImportOpen(true);
                             }}
-                            disabled={!activeMaskId}
+                            disabled={slotUpdateBusy || importFromDriveMutation.isPending}
                           >
-                    Remove active
+                            <Folder className="mr-2 size-4" />
+                      Replace from Drive
+                          </Button>
+                          <FileUploadButton
+                            variant="outline"
+                            size="sm"
+                            accept="image/*"
+                            disabled={slotUpdateBusy}
+                            onFilesSelected={handleReplaceUpload}
+                          >
+                            <Upload className="mr-2 size-4" />
+                      Replace from Upload
+                          </FileUploadButton>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={slotImageUrlDraft}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(e.target.value)}
+                            placeholder="Paste image URL"
+                            className="h-8"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void handleApplyImageUrl()}
+                            disabled={slotUpdateBusy}
+                          >
+                      Use URL
                           </Button>
                         </div>
-                        <div className="max-h-28 overflow-auto rounded border border-border bg-card/40 p-2 text-[11px] text-gray-300">
-                          {maskShapes.length === 0 ? (
-                            <div className="text-gray-500">No mask layers yet.</div>
-                          ) : (
-                            maskShapes.map((shape: MaskShape) => (
-                              <button
-                                key={shape.id}
-                                type="button"
-                                onClick={() => setActiveMaskId(shape.id)}
-                                className={cn(
-                                  'flex w-full items-center justify-between rounded px-2 py-1 text-left',
-                                  shape.id === activeMaskId ? 'bg-muted text-white' : 'text-gray-300 hover:bg-muted/60'
-                                )}
-                              >
-                                <span className="truncate">{shape.name}</span>
-                                <span className="text-[10px] text-gray-500">{shape.points.length} pt</span>
-                              </button>
-                            ))
-                          )}
+                        <Textarea
+                          value={slotBase64Draft}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(e.target.value)}
+                          placeholder="Paste base64 data URL"
+                          className="min-h-[80px] text-xs"
+                        />
+                        <div className="flex items-center justify-between gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void handleApplyBase64()}
+                            disabled={slotUpdateBusy}
+                          >
+                      Use Base64
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => void handleClearSlotMedia()}
+                            disabled={slotUpdateBusy}
+                          >
+                      Clear
+                          </Button>
                         </div>
-                        {activeMaskId ? (
+                      </div>
+
+                      <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                        <div className="text-[11px] text-gray-400">3D asset</div>
+                        <Asset3DPickerField
+                          value={selectedSlot.asset3dId ?? ''}
+                          onChange={(value: string) => {
+                            void updateSlotMutation.mutateAsync({
+                              id: selectedSlot.id,
+                              data: { asset3dId: value || null },
+                            });
+                          }}
+                          disabled={slotUpdateBusy}
+                        />
+                        <FileUploadButton
+                          variant="outline"
+                          size="sm"
+                          accept=".glb,.gltf,model/gltf-binary"
+                          disabled={slotUpdateBusy}
+                          onFilesSelected={async (files: File[]) => {
+                            await handleUpload3DAsset(files);
+                          }}
+                        >
+                          <Upload className="mr-2 size-4" />
+                    Upload 3D
+                        </FileUploadButton>
+                      </div>
+
+                      <div className="space-y-2 rounded border border-border/60 bg-card/40 p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-[11px] text-gray-400">Composite sources</div>
+                          {compositeAssetIds.length > 0 ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-[10px]"
+                              onClick={() => setCompositeAssetIds([])}
+                            >
+                        Clear
+                            </Button>
+                          ) : null}
+                        </div>
+                        <MultiSelect
+                          options={compositeAssetOptions}
+                          selected={compositeAssetIds}
+                          onChange={(values: string[]) => {
+                            const baseId = workingSlotId ?? selectedSlotId;
+                            const next = values.filter((id: string) => id !== baseId);
+                            setCompositeAssetIds(next);
+                          }}
+                          placeholder="Add slots for compositing"
+                          searchPlaceholder="Search slots..."
+                          disabled={!projectId || compositeAssetOptions.length === 0}
+                          className="text-xs"
+                        />
+                        {compositeAssets.length > 0 ? (
+                          <div className="space-y-1">
+                            {compositeAssets.map((slot: ImageStudioSlotRecord) => {
+                              const folder = slot.folderPath ?? '';
+                              const name = slot.name || slot.id;
+                              const label = folder ? `${folder}/${name}` : name;
+                              return (
+                                <div
+                                  key={slot.id}
+                                  className="flex items-center justify-between gap-2 rounded border border-border/40 bg-muted/40 px-2 py-1 text-[11px]"
+                                >
+                                  <span className="truncate text-gray-300">{label}</span>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6"
+                                    onClick={() =>
+                                      setCompositeAssetIds((prev: string[]) => prev.filter((id: string) => id !== slot.id))
+                                    }
+                                  >
+                                    <X className="size-3" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-gray-500">
+                      Optional. Send up to 16 images total (including base).
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-red-300 hover:text-red-200"
+                    disabled={deleteSlotMutation.isPending}
+                    onClick={() => {
+                      const confirmed = window.confirm(`Delete "${selectedSlot.name ?? selectedSlot.id}"? This cannot be undone.`);
+                      if (!confirmed) return;
+                      void deleteSlotMutation.mutateAsync(selectedSlot.id);
+                    }}
+                  >
+              Delete slot
+                  </Button>
+                </div>
+              ) : null}
+            </SharedModal>
+
+            <SharedModal
+              open={slotCreateOpen}
+              onClose={() => setSlotCreateOpen(false)}
+              title="New slot"
+              size="md"
+            >
+              <div className="space-y-4 text-sm text-gray-200">
+                <div className="text-[11px] text-gray-400">
+            Folder: <span className="text-gray-200">{selectedFolder || '(root)'}</span>
+                </div>
+                <div className="grid gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSlotCreateOpen(false);
+                      void handleCreateSlot();
+                    }}
+                    disabled={!projectId || maxSlotsReached}
+                  >
+                    <Plus className="mr-2 size-4" />
+              Create empty slot
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSlotCreateOpen(false);
+                      setDriveImportMode('create');
+                      setDriveImportTargetId(null);
+                      setDriveImportOpen(true);
+                    }}
+                    disabled={!projectId || importFromDriveMutation.isPending}
+                  >
+                    <Folder className="mr-2 size-4" />
+              Import from Drive
+                  </Button>
+                  <FileUploadButton
+                    variant="outline"
+                    accept="image/*"
+                    multiple
+                    disabled={!projectId || uploadMutation.isPending}
+                    onFilesSelected={async (files: File[]) => {
+                      setSlotCreateOpen(false);
+                      await uploadMutation.mutateAsync({ files, folder: selectedFolder });
+                    }}
+                  >
+                    <Upload className="mr-2 size-4" />
+              Upload images
+                  </FileUploadButton>
+                </div>
+                {maxSlotsReached ? (
+                  <div className="text-[11px] text-amber-200">Max 100 slots per project.</div>
+                ) : null}
+              </div>
+            </SharedModal>
+
+            <SharedModal
+              open={learnOpen}
+              onClose={() => setLearnOpen(false)}
+              title="Learn patterns from prompt"
+              size="lg"
+            >
+              <div className="space-y-3 text-sm text-gray-200">
+                {learnLoading ? (
+                  <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              Learning patterns from the prompt…
+                  </div>
+                ) : learnCandidates.length === 0 ? (
+                  <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              No learned patterns to review yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {learnCandidates.map((rule: PromptValidationRule, index: number) => {
+                      const key = buildRuleKey(rule, index);
+                      return (
+                        <div key={key} className="rounded border border-border bg-card/40 p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <label className="flex items-start gap-2 text-xs text-gray-200">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(learnSelection[key])}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                  setLearnSelection((prev: Record<string, boolean>) => ({ ...prev, [key]: e.target.checked }))
+                                }
+                              />
+                              <span>
+                                <div className="text-sm text-gray-100">{rule.title}</div>
+                                <div className="text-[11px] text-gray-400">ID: {rule.id}</div>
+                              </span>
+                            </label>
+                            <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
+                              {rule.kind}
+                            </span>
+                          </div>
+                          {rule.kind === 'regex' ? (
+                            <div className="mt-2 rounded border border-border bg-card/50 p-2 font-mono text-[11px] text-gray-200">
+                              {rule.pattern}
+                              <span className="text-gray-400">{rule.flags?.trim() ? `/${rule.flags}` : ''}</span>
+                            </div>
+                          ) : null}
+                          <div className="mt-2 text-[11px] text-gray-400">{rule.message}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setLearnSelection((prev: Record<string, boolean>) => {
+                        const next = { ...prev };
+                        learnCandidates.forEach((rule: PromptValidationRule, index: number) => {
+                          next[buildRuleKey(rule, index)] = true;
+                        });
+                        return next;
+                      })
+                    }
+                    disabled={learnCandidates.length === 0}
+                  >
+              Select all
+                  </Button>
+                  <Button type="button" onClick={() => void handleApplyLearned()} disabled={learnCandidates.length === 0}>
+              Add selected
+                  </Button>
+                </div>
+              </div>
+            </SharedModal>
+
+            <SharedModal
+              open={uiSuggestOpen}
+              onClose={() => setUiSuggestOpen(false)}
+              title="UI Extractor Suggestions"
+              size="lg"
+            >
+              <div className="space-y-3 text-sm text-gray-200">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-[11px] text-gray-400">Mode</div>
+                  <Select
+                    value={uiSuggestMode}
+                    onValueChange={(value: string) =>
+                      setUiSuggestMode(value === 'ai' || value === 'both' ? value : 'heuristic')
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[160px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="heuristic">Heuristic</SelectItem>
+                      <SelectItem value="ai">AI</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2">
+                    <div className="text-[11px] text-gray-400">Min confidence</div>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={uiSuggestMinConfidence}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const next = Number(e.target.value);
+                        setUiSuggestMinConfidence(Number.isFinite(next) ? Math.max(0, Math.min(1, next)) : 0.5);
+                      }}
+                      className="h-8 w-20"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleSuggestUi()}
+                    disabled={uiSuggestLoading}
+                  >
+              Refresh
+                  </Button>
+                </div>
+
+                {uiSuggestLoading ? (
+                  <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              Extracting UI suggestions…
+                  </div>
+                ) : uiSuggestionRows.length === 0 ? (
+                  <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              No suggestions yet. Click “Refresh” to run the extractor.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {uiSuggestionRows.map((row: UiSuggestionRow) => {
+                      const selected = row.selected;
+                      const options = row.heuristic?.options?.length ? row.heuristic.options : row.ai?.options ?? ['auto'];
+                      const uniqueOptions = Array.from(new Set(options)).filter(isParamUiControl);
+                      const best = row.ai?.confidence && row.heuristic?.confidence
+                        ? (row.ai.confidence >= row.heuristic.confidence ? 'ai' : 'heuristic')
+                        : row.ai?.confidence
+                          ? 'ai'
+                          : 'heuristic';
+                      const bestConfidence = Math.max(row.ai?.confidence ?? 0, row.heuristic?.confidence ?? 0);
+                      return (
+                        <div key={row.path} className="rounded border border-border bg-card/40 p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <label className="flex items-start gap-2 text-xs text-gray-200">
+                              <input
+                                type="checkbox"
+                                checked={row.apply}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                  setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                                    prev.map((item: UiSuggestionRow) => (item.path === row.path ? { ...item, apply: e.target.checked } : item))
+                                  )
+                                }
+                              />
+                              <span>
+                                <div className="text-sm text-gray-100">{row.path}</div>
+                                <div className="text-[11px] text-gray-400 truncate">
+                                  {row.valuePreview}
+                                </div>
+                                {row.hint ? (
+                                  <div className="text-[11px] text-gray-500">{row.hint}</div>
+                                ) : null}
+                              </span>
+                            </label>
+                            <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
+                              {best === 'ai' ? 'AI' : 'Heuristic'} · {bestConfidence.toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                            <div className="space-y-1 text-[11px] text-gray-400">
+                              {row.ai?.reason ? <div><span className="text-gray-300">AI:</span> {row.ai.reason}</div> : null}
+                              {row.heuristic?.reason ? <div><span className="text-gray-300">Heuristic:</span> {row.heuristic.reason}</div> : null}
+                              {!row.ai?.reason && !row.heuristic?.reason ? (
+                                <div>Suggested UI control for this parameter.</div>
+                              ) : null}
+                            </div>
+                            <Select
+                              value={selected}
+                              onValueChange={(newValue: string) =>
+                                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                                  prev.map((item: UiSuggestionRow) =>
+                                    item.path === row.path
+                                      ? { ...item, selected: newValue as ParamUiControl }                                : item
+                                  )
+                                )
+                              }
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {uniqueOptions.map((option: ParamUiControl) => (
+                                  <SelectItem key={option} value={option}>
+                                    {paramUiControlLabel(option)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {row.heuristic?.control ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                                    prev.map((item: UiSuggestionRow) =>
+                                      item.path === row.path ? { ...item, selected: row.heuristic!.control } : item
+                                    )
+                                  )
+                                }
+                              >
+                          Use heuristic
+                              </Button>
+                            ) : null}
+                            {row.ai?.control ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                                    prev.map((item: UiSuggestionRow) =>
+                                      item.path === row.path ? { ...item, selected: row.ai!.control } : item
+                                    )
+                                  )
+                                }
+                              >
+                          Use AI
+                              </Button>
+                            ) : null}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                                  prev.map((item: UiSuggestionRow) =>
+                                    item.path === row.path ? { ...item, selected: 'auto' } : item
+                                  )
+                                )
+                              }
+                            >
+                        Clear
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setUiSuggestionRows((prev: UiSuggestionRow[]) => prev.map((row: UiSuggestionRow) => ({ ...row, apply: true })))
+                    }
+                    disabled={uiSuggestionRows.length === 0}
+                  >
+              Select all
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setUiSuggestionRows((prev: UiSuggestionRow[]) =>
+                        prev.map((row: UiSuggestionRow) => {
+                          const best = row.ai?.confidence && row.heuristic?.confidence
+                            ? (row.ai.confidence >= row.heuristic.confidence ? row.ai.control : row.heuristic.control)
+                            : row.ai?.control ?? row.heuristic?.control ?? row.selected;
+                          return { ...row, selected: best };
+                        })
+                      )
+                    }
+                    disabled={uiSuggestionRows.length === 0}
+                  >
+              Use best
+                  </Button>
+                  <Button type="button" onClick={handleApplyUiSuggestions} disabled={uiSuggestionRows.length === 0}>
+              Apply selected
+                  </Button>
+                </div>
+              </div>
+            </SharedModal>
+
+
+            <div className="relative flex min-h-0 flex-1">
+              <div
+                className={cn(
+                  'grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out',
+                  isFocusMode ? 'grid-cols-[0px_1fr_420px] gap-4' : 'grid-cols-[300px_1fr_420px] gap-4'
+                )}
+              >
+                {/* Project + Slots */}
+                <SectionPanel
+                  className={cn(
+                    'order-1 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
+                    isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
+                  )}
+                  variant="subtle"
+                  aria-hidden={isFocusMode}
+                >
+                  <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-400">Project</Label>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={projectId || '__none__'}
+                          onValueChange={(value: string) => {
+                            hasManualProjectSelectionRef.current = true;
+                            setProjectId(value === '__none__' ? '' : value);
+                          }}
+                        >
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder={projectsQuery.isLoading ? 'Loading...' : 'Select project'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(projectsQuery.data ?? []).map((id: string) => (
+                              <SelectItem key={id} value={id}>
+                                {id}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {!projectId ? (
+                        <div className="text-[11px] text-amber-200">
+                Select or create a project to enable uploads and imports.
+                        </div>
+                      ) : null}
+
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={newProjectId}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
+                          placeholder="New project id (e.g. milkbar-001)"
+                          className="h-9"
+                        />
+                        <Button
+                          onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
+                          disabled={!newProjectId.trim() || createProjectMutation.isPending}
+                        >
+                Create
+                        </Button>
+                      </div>
+
+                      {selectedFolder ? (
+                        <div className="text-[11px] text-gray-400">
+                Folder: <span className="text-gray-200">{selectedFolder}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={newFolderName}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewFolderName(e.target.value)}
+                          placeholder="New folder (e.g. banners/home)"
+                          className="h-8"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!projectId || !newFolderName.trim() || createFolderMutation.isPending}
+                          onClick={() => void createFolderMutation.mutateAsync(newFolderName)}
+                        >
+                Create folder
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSlotCreateOpen(true)}
+                          disabled={!projectId || maxSlotsReached}
+                        >
+                New Slot
+                        </Button>
+                        {selectedSlot ? (
+                          <>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={workingSlotId === selectedSlot.id ? 'secondary' : 'outline'}
+                              onClick={() => setWorkingSlotId(selectedSlot.id)}
+                            >
+                              {workingSlotId === selectedSlot.id ? 'Loaded' : 'Load to preview'}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              title="Edit slot"
+                              onClick={() => setSlotInlineEditOpen(true)}
+                            >
+                              <Settings2 className="size-4" />
+                            </Button>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-hidden">
+                      <ImageStudioSlotTreeContext.Provider value={slotTreeContextValue}>
+                        <SlotTree key={projectId} />
+                      </ImageStudioSlotTreeContext.Provider>
+                    </div>
+                  </div>
+                </SectionPanel>
+                {/* Preview */}
+                <SectionPanel className="order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
+                  <PanelHeader
+                    title="Preview"
+                    {...(!isFocusMode ? { subtitle: workingSlot?.name || '—' } : {})}
+                    actions={(
+                      <div className="flex items-center gap-2">
+                        {!isFocusMode ? (
+                          <div className="text-[11px] text-gray-400">Masks: {maskShapes.length}</div>
+                        ) : null}
+                        {workingSlot?.asset3dId ? (
+                          <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
+                            <Button
+                              type="button"
+                              variant={previewMode === 'image' ? 'secondary' : 'ghost'}
+                              size="sm"
+                              onClick={() => setPreviewMode('image')}
+                            >
+                      Image
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={previewMode === '3d' ? 'secondary' : 'ghost'}
+                              size="sm"
+                              onClick={() => setPreviewMode('3d')}
+                            >
+                      3D
+                            </Button>
+                          </div>
+                        ) : null}
+                        {previewMode === '3d' && workingSlot?.asset3dId ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleCaptureScreenshot()}
+                          >
+                            <Camera className="mr-2 size-4" />
+                    Screenshot
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+                        >
+                          {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+                          {isFocusMode ? 'Edit' : 'Show'}
+                        </Button>
+                      </div>
+                    )}
+                  />
+                  <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-[11px] text-gray-400">Mask generator</div>
+                      <Select
+                        value={maskGenMode}
+                        onValueChange={(value: string) => {
+                          if (value === 'ai-bbox' || value === 'threshold' || value === 'edges') {
+                            setMaskGenMode(value);
+                            return;
+                          }
+                          setMaskGenMode('ai-polygon');
+                        }}
+                      >
+                        <SelectTrigger className="h-8 w-[160px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ai-polygon">AI polygon</SelectItem>
+                          <SelectItem value="ai-bbox">AI bbox</SelectItem>
+                          <SelectItem value="threshold">Threshold</SelectItem>
+                          <SelectItem value="edges">Edges</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleGenerateMask(maskGenMode)}
+                        disabled={maskGenLoading || !workingSlotImageSrc}
+                      >
+                        {maskGenLoading ? 'Generating...' : 'Generate'}
+                      </Button>
+                    </div>
+
+                    <div className="relative flex-1">
+                      <div className="h-full overflow-hidden">
+                        {previewMode === '3d' && workingSlot?.asset3dId ? (
+                          <div className="relative h-full w-full overflow-hidden rounded border border-border bg-black/20">
+                            <Viewer3D
+                              modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
+                              allowUserControls
+                              captureRef={captureRef}
+                              className="h-full w-full"
+                            />
+                          </div>
+                        ) : (
+                          <VectorDrawingCanvas
+                            src={workingSlotImageSrc ?? ''}
+                            tool={tool}
+                            shapes={maskShapes}
+                            activeShapeId={activeMaskId}
+                            selectedPointIndex={selectedPointIndex}
+                            onSelectShape={setActiveMaskId}
+                            onSelectPoint={setSelectedPointIndex}
+                            onChange={(nextShapes: MaskShape[]) => {
+                              setMaskShapes(nextShapes);
+                            }}
+                            brushRadius={brushRadius}
+                          />
+                        )}
+                      </div>
+                      <VectorDrawingToolbar
+                        className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
+                        tool={tool}
+                        onSelectTool={setTool}
+                        onUndo={() => {
+                          if (!activeMaskId) return;
+                          setMaskShapes((prev: MaskShape[]) =>
+                            prev.map((shape: MaskShape) =>
+                              shape.id === activeMaskId
+                                ? { ...shape, points: shape.points.slice(0, -1), closed: false }
+                                : shape
+                            )
+                          );
+                        }}
+                        onClose={() => {
+                          if (!activeMaskId) return;
+                          setMaskShapes((prev: MaskShape[]) =>
+                            prev.map((shape: MaskShape) =>
+                              shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
+                            )
+                          );
+                        }}
+                        onDetach={() => {
+                          if (!activeMaskId) return;
+                          setMaskShapes((prev: MaskShape[]) =>
+                            prev.map((shape: MaskShape) => {
+                              if (shape.id !== activeMaskId) return shape;
+                              if (!shape.closed) return shape;
+                              if (shape.points.length < 3) return { ...shape, closed: false };
+                              if (selectedPointIndex === null) return { ...shape, closed: false };
+                              const pts = shape.points;
+                              const rotated = [...pts.slice(selectedPointIndex), ...pts.slice(0, selectedPointIndex)];
+                              return { ...shape, points: rotated, closed: false };
+                            })
+                          );
+                        }}
+                        onClear={() => {
+                          setMaskShapes([]);
+                          setActiveMaskId(null);
+                        }}
+                        disableUndo={!activeMaskId}
+                        disableClose={!activeMaskId}
+                        disableDetach={!activeMaskId}
+                        disableClear={maskShapes.length === 0}
+                      />
+                    </div>
+
+                    {!isFocusMode ? (
+                      <div className="shrink-0 h-64 overflow-y-auto pr-1 space-y-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <Label className="text-xs text-gray-400">Mask Layers</Label>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setMaskShapes((prev: MaskShape[]) => prev.filter((shape: MaskShape) => shape.id !== activeMaskId));
+                                setActiveMaskId(null);
+                              }}
+                              disabled={!activeMaskId}
+                            >
+                    Remove active
+                            </Button>
+                          </div>
+                          <div className="max-h-28 overflow-auto rounded border border-border bg-card/40 p-2 text-[11px] text-gray-300">
+                            {maskShapes.length === 0 ? (
+                              <div className="text-gray-500">No mask layers yet.</div>
+                            ) : (
+                              maskShapes.map((shape: MaskShape) => (
+                                <button
+                                  key={shape.id}
+                                  type="button"
+                                  onClick={() => setActiveMaskId(shape.id)}
+                                  className={cn(
+                                    'flex w-full items-center justify-between rounded px-2 py-1 text-left',
+                                    shape.id === activeMaskId ? 'bg-muted text-white' : 'text-gray-300 hover:bg-muted/60'
+                                  )}
+                                >
+                                  <span className="truncate">{shape.name}</span>
+                                  <span className="text-[10px] text-gray-500">{shape.points.length} pt</span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                          {activeMaskId ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-[11px] text-gray-400">Layer name</Label>
+                                <Input
+                                  value={maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.name ?? ''}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const value = e.target.value;
+                                    setMaskShapes((prev: MaskShape[]) =>
+                                      prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, name: value } : shape))
+                                    );
+                                  }}
+                                  className="h-8"
+                                />
+                              </div>
+                              <div className="flex items-end">
+                                <label className="flex items-center gap-2 text-[11px] text-gray-200">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.visible ?? true)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                      const checked = e.target.checked;
+                                      setMaskShapes((prev: MaskShape[]) =>
+                                        prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, visible: checked } : shape))
+                                      );
+                                    }}
+                                  />
+                        Visible
+                                </label>
+                              </div>
+                            </div>
+                          ) : null}
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <Label className="text-[11px] text-gray-400">Layer name</Label>
+                              <Label className="text-[11px] text-gray-400">Feather</Label>
                               <Input
-                                value={maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.name ?? ''}
+                                type="number"
+                                min={0}
+                                max={50}
+                                step={1}
+                                value={maskFeather}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                  const value = e.target.value;
-                                  setMaskShapes((prev: MaskShape[]) =>
-                                    prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, name: value } : shape))
-                                  );
+                                  const next = Number(e.target.value);
+                                  setMaskFeather(Number.isFinite(next) ? next : 0);
                                 }}
                                 className="h-8"
                               />
@@ -4385,505 +4418,472 @@ export function AdminImageStudioPage(): React.JSX.Element {
                               <label className="flex items-center gap-2 text-[11px] text-gray-200">
                                 <input
                                   type="checkbox"
-                                  checked={Boolean(maskShapes.find((s: MaskShape) => s.id === activeMaskId)?.visible ?? true)}
-                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    const checked = e.target.checked;
-                                    setMaskShapes((prev: MaskShape[]) =>
-                                      prev.map((shape: MaskShape) => (shape.id === activeMaskId ? { ...shape, visible: checked } : shape))
-                                    );
-                                  }}
+                                  checked={maskInvert}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaskInvert(e.target.checked)}
                                 />
-                        Visible
+                      Invert mask
                               </label>
                             </div>
                           </div>
-                        ) : null}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="text-[11px] text-gray-400">Feather</Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={50}
-                              step={1}
-                              value={maskFeather}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const next = Number(e.target.value);
-                                setMaskFeather(Number.isFinite(next) ? next : 0);
-                              }}
-                              className="h-8"
-                            />
-                          </div>
-                          <div className="flex items-end">
-                            <label className="flex items-center gap-2 text-[11px] text-gray-200">
-                              <input
-                                type="checkbox"
-                                checked={maskInvert}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaskInvert(e.target.checked)}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[11px] text-gray-400">Brush radius</Label>
+                              <Input
+                                type="number"
+                                min={2}
+                                max={64}
+                                step={1}
+                                value={brushRadius}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                  const next = Number(e.target.value);
+                                  setBrushRadius(Number.isFinite(next) ? next : 8);
+                                }}
+                                className="h-8"
                               />
-                      Invert mask
-                            </label>
+                            </div>
+                            <div className="flex items-end">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (!activeMaskId || selectedPointIndex === null) return;
+                                  setMaskShapes((prev: MaskShape[]) =>
+                                    prev.map((shape: MaskShape) => {
+                                      if (shape.id !== activeMaskId) return shape;
+                                      const nextPoints = shape.points.filter((_: Point, idx: number) => idx !== selectedPointIndex);
+                                      return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
+                                    })
+                                  );
+                                  setSelectedPointIndex(null);
+                                }}
+                                disabled={!activeMaskId || selectedPointIndex === null}
+                              >
+                      Delete point
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="text-[11px] text-gray-400">Brush radius</Label>
-                            <Input
-                              type="number"
-                              min={2}
-                              max={64}
-                              step={1}
-                              value={brushRadius}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const next = Number(e.target.value);
-                                setBrushRadius(Number.isFinite(next) ? next : 8);
-                              }}
-                              className="h-8"
-                            />
-                          </div>
-                          <div className="flex items-end">
+                          <div className="flex items-center gap-2">
                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                if (!activeMaskId || selectedPointIndex === null) return;
+                                if (!activeMaskId) return;
                                 setMaskShapes((prev: MaskShape[]) =>
                                   prev.map((shape: MaskShape) => {
                                     if (shape.id !== activeMaskId) return shape;
-                                    const nextPoints = shape.points.filter((_: Point, idx: number) => idx !== selectedPointIndex);
-                                    return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
+                                    if (shape.points.length < 3) return shape;
+                                    const pts = shape.points;
+                                    const smoothed: Point[] = [];
+                                    for (let i = 0; i < pts.length; i += 1) {
+                                      const p0 = pts[i]!;
+                                      const p1 = pts[(i + 1) % pts.length]!;
+                                      smoothed.push({ x: p0.x * 0.75 + p1.x * 0.25, y: p0.y * 0.75 + p1.y * 0.25 });
+                                      smoothed.push({ x: p0.x * 0.25 + p1.x * 0.75, y: p0.y * 0.25 + p1.y * 0.75 });
+                                    }
+                                    return { ...shape, points: smoothed };
                                   })
                                 );
-                                setSelectedPointIndex(null);
                               }}
-                              disabled={!activeMaskId || selectedPointIndex === null}
+                              disabled={!activeMaskId}
                             >
-                      Delete point
+                    Smooth
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (!activeMaskId) return;
+                                setMaskShapes((prev: MaskShape[]) =>
+                                  prev.map((shape: MaskShape) => {
+                                    if (shape.id !== activeMaskId) return shape;
+                                    if (shape.points.length < 2) return shape;
+                                    const next: Point[] = [];
+                                    for (let i = 0; i < shape.points.length - 1; i += 1) {
+                                      const a = shape.points[i]!;
+                                      const b = shape.points[i + 1]!;
+                                      next.push(a);
+                                      next.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+                                    }
+                                    const last = shape.points[shape.points.length - 1]!;
+                                    if (shape.closed) {
+                                      const first = shape.points[0]!;
+                                      next.push(last);
+                                      next.push({ x: (last.x + first.x) / 2, y: (last.y + first.y) / 2 });
+                                    } else {
+                                      next.push(last);
+                                    }
+                                    return { ...shape, points: next };
+                                  })
+                                );
+                              }}
+                              disabled={!activeMaskId}
+                            >
+                    Add points
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedPointIndex(null)}
+                              disabled={selectedPointIndex === null}
+                            >
+                    Deselect point
                             </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (!activeMaskId) return;
-                              setMaskShapes((prev: MaskShape[]) =>
-                                prev.map((shape: MaskShape) => {
-                                  if (shape.id !== activeMaskId) return shape;
-                                  if (shape.points.length < 3) return shape;
-                                  const pts = shape.points;
-                                  const smoothed: Point[] = [];
-                                  for (let i = 0; i < pts.length; i += 1) {
-                                    const p0 = pts[i]!;
-                                    const p1 = pts[(i + 1) % pts.length]!;
-                                    smoothed.push({ x: p0.x * 0.75 + p1.x * 0.25, y: p0.y * 0.75 + p1.y * 0.25 });
-                                    smoothed.push({ x: p0.x * 0.25 + p1.x * 0.75, y: p0.y * 0.25 + p1.y * 0.75 });
-                                  }
-                                  return { ...shape, points: smoothed };
-                                })
-                              );
-                            }}
-                            disabled={!activeMaskId}
-                          >
-                    Smooth
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (!activeMaskId) return;
-                              setMaskShapes((prev: MaskShape[]) =>
-                                prev.map((shape: MaskShape) => {
-                                  if (shape.id !== activeMaskId) return shape;
-                                  if (shape.points.length < 2) return shape;
-                                  const next: Point[] = [];
-                                  for (let i = 0; i < shape.points.length - 1; i += 1) {
-                                    const a = shape.points[i]!;
-                                    const b = shape.points[i + 1]!;
-                                    next.push(a);
-                                    next.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
-                                  }
-                                  const last = shape.points[shape.points.length - 1]!;
-                                  if (shape.closed) {
-                                    const first = shape.points[0]!;
-                                    next.push(last);
-                                    next.push({ x: (last.x + first.x) / 2, y: (last.y + first.y) / 2 });
-                                  } else {
-                                    next.push(last);
-                                  }
-                                  return { ...shape, points: next };
-                                })
-                              );
-                            }}
-                            disabled={!activeMaskId}
-                          >
-                    Add points
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedPointIndex(null)}
-                            disabled={selectedPointIndex === null}
-                          >
-                    Deselect point
-                          </Button>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-400">Mask JSON</Label>
+                          <Textarea
+                            value={maskPolygons.length === 0 ? '' : safeJsonStringify({ type: 'polygons', polygons: maskPolygons, invert: maskInvert, feather: maskFeather })}
+                            readOnly
+                            className="h-24 font-mono text-[11px]"
+                            placeholder="Draw a polygon mask to populate this."
+                          />
                         </div>
                       </div>
+                    ) : null}
+                  </div>
+                </SectionPanel>
 
-                      <div className="space-y-2">
-                        <Label className="text-xs text-gray-400">Mask JSON</Label>
-                        <Textarea
-                          value={maskPolygons.length === 0 ? '' : safeJsonStringify({ type: 'polygons', polygons: maskPolygons, invert: maskInvert, feather: maskFeather })}
-                          readOnly
-                          className="h-24 font-mono text-[11px]"
-                          placeholder="Draw a polygon mask to populate this."
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </SectionPanel>
-
-              {/* Prompt + Params */}
-              <SectionPanel
-                className={cn(
-                  'order-3 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0'
-                )}
-                variant="subtle"
-              >
-                <PanelHeader
-                  title=""
-                  actions={(
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="AI extract"
-                        onClick={() => {
-                          if (!promptText.trim()) return;
-                          setExtractDraftPrompt(promptText);
-                          setExtractReviewOpen(true);
-                        }}
-                        disabled={!promptText.trim()}
-                      >
-                        <Sparkles className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Auto format"
-                        onClick={autoFormatPrompt}
-                        disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== 'programmatic'}
-                      >
-                        <Wand2 className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Suggest UI"
-                        onClick={() => void handleSuggestUi()}
-                        disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
-                      >
-                        <Grid3X3 className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Learn patterns"
-                        onClick={() => void handleLearnPatterns()}
-                        disabled={!promptText.trim() || !canManagePatterns || learnLoading}
-                      >
-                        <BookOpen className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Extract params"
-                        onClick={() => {
-                          if (!promptText.trim()) return;
-                          setExtractDraftPrompt(promptText);
-                          setExtractReviewOpen(true);
-                        }}
-                        disabled={!promptText.trim()}
-                      >
-                        <Settings2 className="size-4" />
-                      </Button>
-                    </div>
+                {/* Prompt + Params */}
+                <SectionPanel
+                  className={cn(
+                    'order-3 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0'
                   )}
-                />
-                <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+                  variant="subtle"
+                >
+                  <PanelHeader
+                    title=""
+                    actions={(
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="AI extract"
+                          onClick={() => {
+                            if (!promptText.trim()) return;
+                            setExtractDraftPrompt(promptText);
+                            setExtractReviewOpen(true);
+                          }}
+                          disabled={!promptText.trim()}
+                        >
+                          <Sparkles className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="Auto format"
+                          onClick={autoFormatPrompt}
+                          disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== 'programmatic'}
+                        >
+                          <Wand2 className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="Suggest UI"
+                          onClick={() => void handleSuggestUi()}
+                          disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
+                        >
+                          <Grid3X3 className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="Learn patterns"
+                          onClick={() => void handleLearnPatterns()}
+                          disabled={!promptText.trim() || !canManagePatterns || learnLoading}
+                        >
+                          <BookOpen className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="Extract params"
+                          onClick={() => {
+                            if (!promptText.trim()) return;
+                            setExtractDraftPrompt(promptText);
+                            setExtractReviewOpen(true);
+                          }}
+                          disabled={!promptText.trim()}
+                        >
+                          <Settings2 className="size-4" />
+                        </Button>
+                      </div>
+                    )}
+                  />
+                  <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
 
-                  <div className="space-y-2">
-                    <Textarea
-                      value={promptText}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptText(e.target.value)}
-                      className="h-40 font-mono text-[11px]"
-                      placeholder="Paste your prompt here. It must include `params = { ... }` (JSON-like; comments/unquoted keys ok)."
-                    />
-                    {promptValidationIssues.length > 0 ? (
-                      <div className="space-y-2 rounded border border-border bg-gray-900/30 p-2">
-                        <div className="text-[11px] text-gray-400">
+                    <div className="space-y-2">
+                      <Textarea
+                        value={promptText}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptText(e.target.value)}
+                        className="h-40 font-mono text-[11px]"
+                        placeholder="Paste your prompt here. It must include `params = { ... }` (JSON-like; comments/unquoted keys ok)."
+                      />
+                      {promptValidationIssues.length > 0 ? (
+                        <div className="space-y-2 rounded border border-border bg-gray-900/30 p-2">
+                          <div className="text-[11px] text-gray-400">
                   Prompt validation:{' '}
-                          <span className="text-gray-200">{promptValidationIssues.length} issue(s)</span>
-                        </div>
-                        {promptValidationIssues.map((issue: PromptValidationIssue) => {
-                          const tone =
+                            <span className="text-gray-200">{promptValidationIssues.length} issue(s)</span>
+                          </div>
+                          {promptValidationIssues.map((issue: PromptValidationIssue) => {
+                            const tone =
                     issue.severity === 'error'
                       ? 'border-red-500/30 bg-red-500/10 text-red-200'
                       : issue.severity === 'warning'
                         ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-200'
                         : 'border-blue-500/30 bg-blue-500/10 text-blue-200';
-                          return (
-                            <div key={issue.ruleId} className={`rounded border px-2 py-1.5 ${tone}`}>
-                              <div className="text-[11px] font-semibold">{issue.title}</div>
-                              <div className="text-[11px] opacity-90">{issue.message}</div>
-                              {issue.suggestions.length > 0 ? (
-                                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[11px] opacity-90">
-                                  {issue.suggestions.map((s: PromptValidationSuggestion, idx: number) => (
-                                    <li key={`${issue.ruleId}-${idx}`}>
-                                      {s.suggestion}
-                                      {s.found ? <span className="ml-1 opacity-80">(found: {s.found})</span> : null}
-                                      {s.comment ? <span className="ml-1 opacity-80">— {s.comment}</span> : null}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                    {extractResult && !extractResult.ok ? (
-                      <div className="text-xs text-red-300">{extractResult.error}</div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex-1 overflow-hidden">
-                    <Label className="text-xs text-gray-400">Params</Label>
-                    <div className="mt-2 h-full overflow-auto rounded border border-border bg-card/40 p-2">
-                      {paramsState ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-3 rounded border border-border bg-card/60 p-2 text-[11px]">
-                            <div className="text-gray-300">
-                      Validation:{' '}
-                              {validationSummary.errors === 0 && validationSummary.warnings === 0 ? (
-                                <span className="text-emerald-300">OK</span>
-                              ) : (
-                                <>
-                                  {validationSummary.errors > 0 ? (
-                                    <span className="text-red-300">{validationSummary.errors} error(s)</span>
-                                  ) : (
-                                    <span className="text-gray-400">0 errors</span>
-                                  )}
-                                  {' • '}
-                                  {validationSummary.warnings > 0 ? (
-                                    <span className="text-yellow-300">{validationSummary.warnings} warning(s)</span>
-                                  ) : (
-                                    <span className="text-gray-400">0 warnings</span>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                            <div className="text-gray-500">Hints from inline comments are used for enums/ranges.</div>
-                          </div>
-                          <ImageStudioParamsContext.Provider value={paramsContextValue}>
-                            {paramLeaves.map((leaf: ParamLeaf) => (
-                              <ParamRow key={leaf.path} leaf={leaf} />
-                            ))}
-                          </ImageStudioParamsContext.Provider>
+                            return (
+                              <div key={issue.ruleId} className={`rounded border px-2 py-1.5 ${tone}`}>
+                                <div className="text-[11px] font-semibold">{issue.title}</div>
+                                <div className="text-[11px] opacity-90">{issue.message}</div>
+                                {issue.suggestions.length > 0 ? (
+                                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[11px] opacity-90">
+                                    {issue.suggestions.map((s: PromptValidationSuggestion, idx: number) => (
+                                      <li key={`${issue.ruleId}-${idx}`}>
+                                        {s.suggestion}
+                                        {s.found ? <span className="ml-1 opacity-80">(found: {s.found})</span> : null}
+                                        {s.comment ? <span className="ml-1 opacity-80">— {s.comment}</span> : null}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                              </div>
+                            );
+                          })}
                         </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">Extract params to edit them as fields.</div>
-                      )}
+                      ) : null}
+                      {extractResult && !extractResult.ok ? (
+                        <div className="text-xs text-red-300">{extractResult.error}</div>
+                      ) : null}
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Generated Prompt</Label>
-                    <Textarea
-                      value={generatedPrompt}
-                      readOnly
-                      className="h-40 font-mono text-[11px]"
-                      placeholder="Extract params to generate a normalized prompt with updated values."
-                    />
-                  </div>
+                    <div className="flex-1 overflow-hidden">
+                      <Label className="text-xs text-gray-400">Params</Label>
+                      <div className="mt-2 h-full overflow-auto rounded border border-border bg-card/40 p-2">
+                        {paramsState ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3 rounded border border-border bg-card/60 p-2 text-[11px]">
+                              <div className="text-gray-300">
+                      Validation:{' '}
+                                {validationSummary.errors === 0 && validationSummary.warnings === 0 ? (
+                                  <span className="text-emerald-300">OK</span>
+                                ) : (
+                                  <>
+                                    {validationSummary.errors > 0 ? (
+                                      <span className="text-red-300">{validationSummary.errors} error(s)</span>
+                                    ) : (
+                                      <span className="text-gray-400">0 errors</span>
+                                    )}
+                                    {' • '}
+                                    {validationSummary.warnings > 0 ? (
+                                      <span className="text-yellow-300">{validationSummary.warnings} warning(s)</span>
+                                    ) : (
+                                      <span className="text-gray-400">0 warnings</span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-gray-500">Hints from inline comments are used for enums/ranges.</div>
+                            </div>
+                            <ImageStudioParamsContext.Provider value={paramsContextValue}>
+                              {paramLeaves.map((leaf: ParamLeaf) => (
+                                <ParamRow key={leaf.path} leaf={leaf} />
+                              ))}
+                            </ImageStudioParamsContext.Provider>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400">Extract params to edit them as fields.</div>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] text-gray-400">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-400">Generated Prompt</Label>
+                      <Textarea
+                        value={generatedPrompt}
+                        readOnly
+                        className="h-40 font-mono text-[11px]"
+                        placeholder="Extract params to generate a normalized prompt with updated values."
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-gray-400">
               Payload preview (used for Image Studio run)
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => void runMutation.mutateAsync()}
-                        disabled={runMutation.isPending || !projectId || !workingSlotRunAsset || !(generatedPrompt || promptText).trim()}
-                      >
-                        {runMutation.isPending ? 'Running...' : 'Run edit'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard
-                            .writeText(safeJsonStringify(runPayload))
-                            .then(() => toast('Copied payload to clipboard.', { variant: 'success' }))
-                            .catch(() => toast('Failed to copy payload.', { variant: 'error' }));
-                        }}
-                      >
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => void runMutation.mutateAsync()}
+                          disabled={runMutation.isPending || !projectId || !workingSlotRunAsset || !(generatedPrompt || promptText).trim()}
+                        >
+                          {runMutation.isPending ? 'Running...' : 'Run edit'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard
+                              .writeText(safeJsonStringify(runPayload))
+                              .then(() => toast('Copied payload to clipboard.', { variant: 'success' }))
+                              .catch(() => toast('Failed to copy payload.', { variant: 'error' }));
+                          }}
+                        >
                 Copy payload
-                      </Button>
+                        </Button>
+                      </div>
                     </div>
+                  </div>
+                </SectionPanel>
+
+              </div>
+
+            </div>
+          </TabsContent>
+
+          <TabsContent value="projects">
+            <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+              <SectionPanel variant="subtle" className="p-0">
+                <PanelHeader
+                  title="Projects"
+                  actions={(
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { void projectsQuery.refetch(); }}
+                      title="Reload projects"
+                    >
+                      <RefreshCcw className={cn('mr-2 size-4', projectsQuery.isFetching ? 'animate-spin' : '')} />
+                    Refresh
+                    </Button>
+                  )}
+                />
+                <div className="space-y-4 p-4">
+                  <Input
+                    value={projectSearch}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
+                    placeholder="Search projects..."
+                    className="h-9"
+                  />
+
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newProjectId}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
+                      placeholder="New project id (e.g. milkbar-001)"
+                      className="h-9"
+                    />
+                    <Button
+                      onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
+                      disabled={!newProjectId.trim() || createProjectMutation.isPending}
+                    >
+                    Create
+                    </Button>
+                  </div>
+
+                  <div className="text-[11px] text-gray-400">
+                    {projectsQuery.isLoading ? 'Loading projects...' : `${filteredProjects.length} project(s)`}
+                  </div>
+
+                  <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
+                    {filteredProjects.length === 0 ? (
+                      <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                      No projects found.
+                      </div>
+                    ) : (
+                      filteredProjects.map((id: string) => (
+                        <div
+                          key={id}
+                          className={cn(
+                            'flex items-center justify-between gap-3 rounded border border-border bg-card/40 p-2',
+                            id === projectId && 'border-emerald-500/40 bg-emerald-500/10'
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <div className="truncate text-sm text-gray-100">{id}</div>
+                            {id === projectId ? (
+                              <div className="text-[10px] text-emerald-200">Active</div>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setProjectId(id)}
+                              disabled={id === projectId}
+                            >
+                            Select
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-rose-500/30 text-rose-200 hover:bg-rose-500/10"
+                              onClick={() => void handleDeleteProject(id)}
+                              disabled={pendingDeleteId === id || deleteProjectMutation.isPending}
+                            >
+                              {pendingDeleteId === id ? 'Deleting...' : 'Delete'}
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </SectionPanel>
 
-            </div>
-
-          </div>
-        </TabsContent>
-
-        <TabsContent value="projects">
-          <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-            <SectionPanel variant="subtle" className="p-0">
-              <PanelHeader
-                title="Projects"
-                actions={(
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { void projectsQuery.refetch(); }}
-                    title="Reload projects"
-                  >
-                    <RefreshCcw className={cn('mr-2 size-4', projectsQuery.isFetching ? 'animate-spin' : '')} />
-                    Refresh
-                  </Button>
-                )}
-              />
-              <div className="space-y-4 p-4">
-                <Input
-                  value={projectSearch}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
-                  placeholder="Search projects..."
-                  className="h-9"
-                />
-
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newProjectId}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProjectId(e.target.value)}
-                    placeholder="New project id (e.g. milkbar-001)"
-                    className="h-9"
-                  />
-                  <Button
-                    onClick={() => void createProjectMutation.mutateAsync(newProjectId)}
-                    disabled={!newProjectId.trim() || createProjectMutation.isPending}
-                  >
-                    Create
-                  </Button>
-                </div>
-
-                <div className="text-[11px] text-gray-400">
-                  {projectsQuery.isLoading ? 'Loading projects...' : `${filteredProjects.length} project(s)`}
-                </div>
-
-                <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
-                  {filteredProjects.length === 0 ? (
-                    <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
-                      No projects found.
+              <SectionPanel variant="subtle" className="p-0">
+                <PanelHeader title="Active project" />
+                <div className="space-y-4 p-4">
+                  {projectId ? (
+                    <div className="space-y-3 text-sm text-gray-300">
+                      <div>
+                      Project: <span className="text-gray-100">{projectId}</span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                      Slots loaded: <span className="text-gray-200">{slots.length}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleTabChange('studio')}>
+                        Open Studio
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProjectId('')}
+                          disabled={!projectId}
+                        >
+                        Clear selection
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    filteredProjects.map((id: string) => (
-                      <div
-                        key={id}
-                        className={cn(
-                          'flex items-center justify-between gap-3 rounded border border-border bg-card/40 p-2',
-                          id === projectId && 'border-emerald-500/40 bg-emerald-500/10'
-                        )}
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate text-sm text-gray-100">{id}</div>
-                          {id === projectId ? (
-                            <div className="text-[10px] text-emerald-200">Active</div>
-                          ) : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setProjectId(id)}
-                            disabled={id === projectId}
-                          >
-                            Select
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-500/30 text-rose-200 hover:bg-rose-500/10"
-                            onClick={() => void handleDeleteProject(id)}
-                            disabled={pendingDeleteId === id || deleteProjectMutation.isPending}
-                          >
-                            {pendingDeleteId === id ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </div>
-                      </div>
-                    ))
+                    <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
+                    No project selected yet.
+                    </div>
                   )}
                 </div>
-              </div>
-            </SectionPanel>
+              </SectionPanel>
+            </div>
+          </TabsContent>
 
-            <SectionPanel variant="subtle" className="p-0">
-              <PanelHeader title="Active project" />
-              <div className="space-y-4 p-4">
-                {projectId ? (
-                  <div className="space-y-3 text-sm text-gray-300">
-                    <div>
-                      Project: <span className="text-gray-100">{projectId}</span>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Slots loaded: <span className="text-gray-200">{slots.length}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleTabChange('studio')}>
-                        Open Studio
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setProjectId('')}
-                        disabled={!projectId}
-                      >
-                        Clear selection
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded border border-dashed border-border p-3 text-sm text-gray-400">
-                    No project selected yet.
-                  </div>
-                )}
-              </div>
-            </SectionPanel>
-          </div>
-        </TabsContent>
+          <TabsContent value="settings">
+            <div className="space-y-4">
+              {settingsPanel}
+            </div>
+          </TabsContent>
 
-        <TabsContent value="settings">
-          <div className="space-y-4">
-            {settingsPanel}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="validation">
-          <AdminImageStudioValidationPatternsPage
-            embedded
-            onSaved={handleRefreshSettings}
-          />
-        </TabsContent>
+          <TabsContent value="validation">
+            <AdminImageStudioValidationPatternsPage
+              embedded
+              onSaved={handleRefreshSettings}
+            />
+          </TabsContent>
         </Tabs>
       </ClientOnly>
     </div>

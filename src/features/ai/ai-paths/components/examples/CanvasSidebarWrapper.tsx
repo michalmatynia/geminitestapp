@@ -45,7 +45,7 @@
 
 import { useMemo } from 'react';
 
-import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { AiNode, NodeDefinition, PathExecutionMode } from '@/features/ai/ai-paths/lib';
 
 import { useGraphState } from '../../context/GraphContext';
 import { usePresetsState, usePresetsActions } from '../../context/PresetsContext';
@@ -78,6 +78,18 @@ export type CanvasSidebarWrapperProps = {
   onRemoveEdge: (edgeId: string) => void;
   /** Callback to clear all wires */
   onClearWires: () => void;
+  /** Execution mode for run controls */
+  executionMode: PathExecutionMode;
+  /** Current run status */
+  runStatus: 'idle' | 'running' | 'paused' | 'stepping';
+  /** Pause current run */
+  onPauseRun?: () => void;
+  /** Resume paused run */
+  onResumeRun?: () => void;
+  /** Step run (optional trigger override) */
+  onStepRun?: (triggerNode?: AiNode) => void;
+  /** Cancel current run */
+  onCancelRun?: () => void;
 };
 
 /**
@@ -92,6 +104,12 @@ export function CanvasSidebarWrapper({
   onDeleteSelectedNode,
   onRemoveEdge,
   onClearWires,
+  executionMode,
+  runStatus,
+  onPauseRun,
+  onResumeRun,
+  onStepRun,
+  onCancelRun,
 }: CanvasSidebarWrapperProps): React.JSX.Element {
   // Read state from GraphContext
   const { nodes, edges } = useGraphState();
@@ -113,6 +131,10 @@ export function CanvasSidebarWrapper({
   // Build optional props
   const optionalProps = {
     ...(onFireTriggerPersistent !== undefined && { onFireTriggerPersistent }),
+    ...(onPauseRun !== undefined && { onPauseRun }),
+    ...(onResumeRun !== undefined && { onResumeRun }),
+    ...(onStepRun !== undefined && { onStepRun }),
+    ...(onCancelRun !== undefined && { onCancelRun }),
   };
 
   return (
@@ -139,6 +161,9 @@ export function CanvasSidebarWrapper({
       onDeleteSelectedNode={onDeleteSelectedNode}
       onRemoveEdge={onRemoveEdge}
       onClearWires={onClearWires}
+      executionMode={executionMode}
+      runStatus={runStatus}
+      // Run control props
       // Optional props
       {...optionalProps}
     />

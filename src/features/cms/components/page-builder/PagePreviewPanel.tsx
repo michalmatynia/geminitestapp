@@ -576,6 +576,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
                 disabled={state.history.past.length === 0}
+                aria-label="Undo"
               >
                 <Undo2 className="size-4" />
               </Button>
@@ -585,6 +586,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
                 disabled={state.history.future.length === 0}
+                aria-label="Redo"
               >
                 <Redo2 className="size-4" />
               </Button>

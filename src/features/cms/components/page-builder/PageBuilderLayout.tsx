@@ -17,6 +17,8 @@ import { useBuilderKeyboardShortcuts } from '../../hooks/useBuilderKeyboardShort
 import { DragStateProvider } from '../../hooks/useDragStateContext';
 import { PageBuilderProvider, usePageBuilder } from '../../hooks/usePageBuilderContext';
 
+import type { PageBuilderState } from '../../types/page-builder';
+
 function PageBuilderInner(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayout();
@@ -226,9 +228,9 @@ function PageBuilderInner(): React.ReactNode {
   );
 }
 
-export function PageBuilderLayout(): React.ReactNode {
+export function PageBuilderLayout({ initialState }: { initialState?: PageBuilderState | undefined }): React.ReactNode {
   return (
-    <PageBuilderProvider>
+    <PageBuilderProvider {...(initialState ? { initialState } : {})}>
       <DragStateProvider>
         <ThemeSettingsProvider>
           <PageBuilderInner />

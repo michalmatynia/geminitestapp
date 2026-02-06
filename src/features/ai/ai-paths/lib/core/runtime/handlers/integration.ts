@@ -335,6 +335,9 @@ export const handlePoll: NodeHandler = async ({
         },
       };
     } catch (error: unknown) {
+      if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+        throw error;
+      }
       reportAiPathsError(
         error,
         { action: 'pollDatabase', nodeId: node.id },
@@ -368,6 +371,9 @@ export const handlePoll: NodeHandler = async ({
       bundle: { jobId, status: 'completed', result },
     };
   } catch (error: unknown) {
+    if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      throw error;
+    }
     reportAiPathsError(
       error,
       { action: 'pollJob', jobId, nodeId: node.id },
@@ -494,6 +500,9 @@ export const handleHttp: NodeHandler = async ({
       },
     };
   } catch (error: unknown) {
+    if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+      throw error;
+    }
     reportAiPathsError(
       error,
       { action: 'httpFetch', url: resolvedUrl, nodeId: node.id },

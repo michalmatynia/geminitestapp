@@ -22,6 +22,432 @@ const getContextValue = (context: unknown, path: string): unknown => {
   return current ?? null;
 };
 
+function LogDiagnostics(): React.JSX.Element {
+  const {
+    diagnostics,
+    diagnosticsUpdatedAt,
+    mongoDiagnosticsQuery,
+    rebuildIndexesMutation,
+    setIsRebuildIndexesConfirmOpen,
+  } = useSystemLogsContext();
+
+  return (
+    <SectionPanel className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-lg font-semibold text-white">Diagnostics</div>
+          <div className="text-xs text-gray-400">
+            Mongo index status for AI Paths runtime collections.
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span>
+            {diagnosticsUpdatedAt
+              ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
+              : '—'}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(): void => {
+              void mongoDiagnosticsQuery.refetch();
+            }}
+            disabled={mongoDiagnosticsQuery.isFetching}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsRebuildIndexesConfirmOpen(true)}
+            disabled={rebuildIndexesMutation.isPending}
+            className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+          >
+            {rebuildIndexesMutation.isPending ? 'Rebuilding...' : 'Rebuild missing indexes'}
+          </Button>
+        </div>
+      </div>
+      {mongoDiagnosticsQuery.isLoading ? (
+        <div className="text-sm text-gray-400">Loading diagnostics...</div>
+      ) : diagnostics.length === 0 ? (
+        <div className="text-sm text-gray-400">No diagnostics available.</div>
+      ) : (
+        <div className="rounded-md border border-border/70 bg-card/60">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/60">
+                <TableHead className="text-xs text-gray-400">Collection</TableHead>
+                <TableHead className="text-xs text-gray-400">Expected</TableHead>
+                <TableHead className="text-xs text-gray-400">Missing</TableHead>
+                <TableHead className="text-xs text-gray-400">Extra</TableHead>
+                <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {diagnostics.map((collection) => {
+                const missingCount = collection.missing.length;
+                const extraCount = collection.extra.length;
+                const statusLabel = collection.error
+                  ? 'Error'
+                  : missingCount === 0
+                    ? 'OK'
+                    : 'Missing';
+                return (
+                  <TableRow key={collection.name} className="border-border/50">
+                    <TableCell className="font-mono text-xs text-gray-200">
+                      {collection.name}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-300">
+                      {collection.expected.length}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-300">
+                      {collection.error ? (
+                        <div className="space-y-1 text-rose-200">
+                          <div>—</div>
+                          <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
+                            {collection.error}
+                          </div>
+                        </div>
+                      ) : missingCount === 0 ? (
+                        '0'
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="text-amber-200">{missingCount}</div>
+                          <div className="space-y-1 text-[10px] text-amber-200">
+                            {collection.missing.map((item) => (
+                              <div
+                                key={JSON.stringify(item.key)}
+                                className="rounded bg-amber-500/10 px-2 py-1"
+                              >
+                                {JSON.stringify(item.key)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-300">
+                      {extraCount}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span
+                        className={`rounded border px-2 py-0.5 text-xs ${
+                          collection.error
+                            ? 'border-rose-400/40 text-rose-200 bg-rose-500/10'
+                            : missingCount === 0
+                              ? 'border-emerald-400/40 text-emerald-200 bg-emerald-500/10'
+                              : 'border-amber-400/40 text-amber-200 bg-amber-500/10'
+                        }`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </SectionPanel>
+  );
+}
+
+function LogMetrics(): React.JSX.Element {
+  const { metricsQuery, metrics, levels } = useSystemLogsContext();
+
+  return (
+    <SectionPanel variant="subtle" className="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Metrics</h2>
+          <p className="text-xs text-gray-400">
+            Metrics reflect the current filters.
+          </p>
+        </div>
+        <div className="text-xs text-gray-500">
+          {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : '—'}
+        </div>
+      </div>
+      {metricsQuery.isLoading ? (
+        <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
+      ) : !metrics ? (
+        <div className="mt-4 text-sm text-gray-400">
+          No metrics available yet.
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <SectionPanel variant="subtle-compact" className="p-3">
+            <div className="text-xs text-gray-400">Totals</div>
+            <div className="mt-2 space-y-1 text-sm text-gray-200">
+              <div>Total: {metrics.total}</div>
+              <div>Last 24h: {metrics.last24Hours}</div>
+              <div>Last 7d: {metrics.last7Days}</div>
+            </div>
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact" className="p-3">
+            <div className="text-xs text-gray-400">By level</div>
+            <div className="mt-2 space-y-1 text-sm text-gray-200">
+              <div className="text-red-300">Errors: {levels.error}</div>
+              <div className="text-yellow-300">Warnings: {levels.warn}</div>
+              <div className="text-blue-300">Info: {levels.info}</div>
+            </div>
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact" className="p-3">
+            <div className="text-xs text-gray-400">Top sources</div>
+            {metrics.topSources.length === 0 ? (
+              <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
+            ) : (
+              <div className="mt-2 space-y-1 text-xs text-gray-300">
+                {metrics.topSources.map((item) => (
+                  <div key={item.source} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{item.source}</span>
+                    <span className="text-gray-500">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 text-xs text-gray-400">Top paths</div>
+            {metrics.topPaths.length === 0 ? (
+              <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
+            ) : (
+              <div className="mt-2 space-y-1 text-xs text-gray-300">
+                {metrics.topPaths.map((item) => (
+                  <div key={item.path} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{item.path}</span>
+                    <span className="text-gray-500">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionPanel>
+        </div>
+      )}
+    </SectionPanel>
+  );
+}
+
+function AiLogInterpreter(): React.JSX.Element {
+  const { runInsightMutation, insightsQuery } = useSystemLogsContext();
+
+  return (
+    <SectionPanel variant="subtle" className="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">AI Log Interpreter</h2>
+          <p className="text-xs text-gray-400">
+            Summarizes error patterns and potential causes using your configured AI model or agent.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => runInsightMutation.mutate()}
+          disabled={runInsightMutation.isPending}
+        >
+          {runInsightMutation.isPending ? 'Running...' : 'Run AI Interpretation'}
+        </Button>
+      </div>
+      {insightsQuery.isLoading ? (
+        <div className="mt-3 text-xs text-gray-400">Loading AI insights...</div>
+      ) : insightsQuery.error ? (
+        <div className="mt-3 text-xs text-red-400">{insightsQuery.error.message}</div>
+      ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
+        <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {insightsQuery.data?.insights.map((insight) => (
+            <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] uppercase text-gray-500">
+                  {formatTimestamp(insight.createdAt)}
+                </span>
+                <span
+                  className={`rounded border px-2 py-0.5 text-[10px] ${
+                    insight.status === 'ok'
+                      ? 'border-emerald-500/40 text-emerald-200'
+                      : insight.status === 'warning'
+                        ? 'border-amber-500/40 text-amber-200'
+                        : 'border-rose-500/40 text-rose-200'
+                  }`}
+                >
+                  {insight.status}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-white">{insight.summary}</div>
+              {insight.warnings.length > 0 ? (
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                  {insight.warnings.map((warning: string, index: number) => (
+                    <li key={`${insight.id}-warn-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-3 text-[10px] text-gray-500">
+        Configure the AI model/agent in Settings → AI.
+      </div>
+    </SectionPanel>
+  );
+}
+
+function LogList(): React.JSX.Element {
+  const {
+    logsQuery,
+    logs,
+    total,
+    totalPages,
+    page,
+    setPage,
+    interpretLogMutation,
+    logInterpretations,
+  } = useSystemLogsContext();
+
+  return (
+    <SectionPanel variant="subtle" className="p-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
+        <span>
+          Showing {logs.length} of {total} logs
+        </span>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          className="scale-90 origin-right"
+        />
+      </div>
+      {logsQuery.isLoading ? (
+        <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
+      ) : logs.length === 0 ? (
+        <div className="px-4 py-8 text-sm text-gray-400">
+          No system logs found.
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {logs.map((log: SystemLogRecord) => (
+            <div key={log.id} className="px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <StatusBadge
+                    status={log.level}
+                    variant={log.level === 'warn' ? 'warning' : log.level as 'info' | 'success' | 'warning' | 'error'}
+                  />
+                  <span className="text-xs text-gray-400">
+                    {formatTimestamp(log.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {log.source ? (
+                    <span className="text-xs text-gray-500">{log.source}</span>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => interpretLogMutation.mutate(log.id)}
+                    disabled={interpretLogMutation.isPending}
+                    className="h-6 px-2 text-[10px]"
+                  >
+                    Interpret
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-2 text-sm text-gray-200">{log.message}</div>
+              {(log.path || log.method || log.statusCode) && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {log.method ? `${log.method} ` : ''}
+                  {log.path ?? ''}
+                  {log.statusCode ? ` • ${log.statusCode}` : ''}
+                </div>
+              )}
+              {log.context && getContextValue(log.context, 'fingerprint') ? (
+                <div className="mt-2 text-xs text-gray-500">
+                  Fingerprint:{' '}
+                  <span className="font-mono text-gray-300">
+                    {String(getContextValue(log.context, 'fingerprint'))}
+                  </span>
+                </div>
+              ) : null}
+              {(log.context || log.stack) && (
+                <details className="mt-2 text-xs text-gray-400">
+                  <summary className="cursor-pointer hover:text-gray-200">
+                    Details
+                  </summary>
+                  {logInterpretations[log.id] ? (
+                    <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
+                      <div className="font-semibold text-gray-200">AI Interpretation</div>
+                      <div className="mt-2 text-gray-300">
+                        {logInterpretations[log.id]?.summary}
+                      </div>
+                      {logInterpretations[log.id]?.warnings?.length ? (
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                          {logInterpretations[log.id]?.warnings?.map((warning: string, index: number) => (
+                            <li key={`${log.id}-ai-${index}`}>{warning}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </SectionPanel>
+                  ) : null}
+                  {log.source === 'client' && log.context ? (
+                    <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
+                      <div className="font-semibold text-gray-200">Client context</div>
+                      <div className="mt-2 grid gap-2 md:grid-cols-2">
+                        <div>
+                          <div className="text-gray-500">App</div>
+                          <div>{String((getContextValue(log.context, 'app.version') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Build</div>
+                          <div>{String((getContextValue(log.context, 'app.buildId') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Release</div>
+                          <div>{String((getContextValue(log.context, 'app.releaseChannel') as string | number | null) ?? '—')}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">User</div>
+                          <div>{String((getContextValue(log.context, 'user.email') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Role</div>
+                          <div>{String((getContextValue(log.context, 'user.role') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Route</div>
+                          <div>{String((getContextValue(log.context, 'route') as string | number | null) ?? '—')}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Device</div>
+                          <div>{String((getContextValue(log.context, 'device.platform') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Memory</div>
+                          <div>{String((getContextValue(log.context, 'device.deviceMemory') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Cores</div>
+                          <div>{String((getContextValue(log.context, 'device.hardwareConcurrency') as string | number | null) ?? '—')}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Network</div>
+                          <div>{String((getContextValue(log.context, 'network.effectiveType') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">Downlink</div>
+                          <div>{String((getContextValue(log.context, 'network.downlink') as string | number | null) ?? '—')}</div>
+                          <div className="text-gray-500">RTT</div>
+                          <div>{String((getContextValue(log.context, 'network.rtt') as string | number | null) ?? '—')}</div>
+                        </div>
+                      </div>
+                    </SectionPanel>
+                  ) : null}
+                  {log.stack && (
+                    <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
+                      {log.stack}
+                    </pre>
+                  )}
+                  {log.context && (
+                    <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
+                      {JSON.stringify(log.context, null, 2)}
+                    </pre>
+                  )}
+                </details>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionPanel>
+  );
+}
+
 function SystemLogsContent(): React.JSX.Element {
   const {
     filterFields,
@@ -34,29 +460,15 @@ function SystemLogsContent(): React.JSX.Element {
     handleResetFilters,
     logs,
     logsJson,
-    total,
-    totalPages,
-    page,
-    setPage,
-    metrics,
-    levels,
-    diagnostics,
-    diagnosticsUpdatedAt,
-    logInterpretations,
     logsQuery,
     metricsQuery,
-    mongoDiagnosticsQuery,
-    insightsQuery,
-    runInsightMutation,
-    interpretLogMutation,
-    clearLogsMutation,
-    rebuildIndexesMutation,
     isClearLogsConfirmOpen,
     setIsClearLogsConfirmOpen,
     isRebuildIndexesConfirmOpen,
     setIsRebuildIndexesConfirmOpen,
     handleClearLogs,
     handleRebuildMongoIndexes,
+    clearLogsMutation,
     toast,
   } = useSystemLogsContext();
 
@@ -132,124 +544,7 @@ function SystemLogsContent(): React.JSX.Element {
               description="This will scan AI Paths collections and create missing indexes. Proceed?"
               confirmText="Rebuild"
             />
-            <SectionPanel className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="text-lg font-semibold text-white">Diagnostics</div>
-                  <div className="text-xs text-gray-400">
-                    Mongo index status for AI Paths runtime collections.
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span>
-                    {diagnosticsUpdatedAt
-                      ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
-                      : '—'}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(): void => {
-                      void mongoDiagnosticsQuery.refetch();
-                    }}
-                    disabled={mongoDiagnosticsQuery.isFetching}
-                  >
-                    Refresh
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsRebuildIndexesConfirmOpen(true)}
-                    disabled={rebuildIndexesMutation.isPending}
-                    className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
-                  >
-                    {rebuildIndexesMutation.isPending ? 'Rebuilding...' : 'Rebuild missing indexes'}
-                  </Button>
-                </div>
-              </div>
-              {mongoDiagnosticsQuery.isLoading ? (
-                <div className="text-sm text-gray-400">Loading diagnostics...</div>
-              ) : diagnostics.length === 0 ? (
-                <div className="text-sm text-gray-400">No diagnostics available.</div>
-              ) : (
-                <div className="rounded-md border border-border/70 bg-card/60">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border/60">
-                        <TableHead className="text-xs text-gray-400">Collection</TableHead>
-                        <TableHead className="text-xs text-gray-400">Expected</TableHead>
-                        <TableHead className="text-xs text-gray-400">Missing</TableHead>
-                        <TableHead className="text-xs text-gray-400">Extra</TableHead>
-                        <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {diagnostics.map((collection) => {
-                        const missingCount = collection.missing.length;
-                        const extraCount = collection.extra.length;
-                        const statusLabel = collection.error
-                          ? 'Error'
-                          : missingCount === 0
-                            ? 'OK'
-                            : 'Missing';
-                        return (
-                          <TableRow key={collection.name} className="border-border/50">
-                            <TableCell className="font-mono text-xs text-gray-200">
-                              {collection.name}
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-300">
-                              {collection.expected.length}
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-300">
-                              {collection.error ? (
-                                <div className="space-y-1 text-rose-200">
-                                  <div>—</div>
-                                  <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
-                                    {collection.error}
-                                  </div>
-                                </div>
-                              ) : missingCount === 0 ? (
-                                '0'
-                              ) : (
-                                <div className="space-y-1">
-                                  <div className="text-amber-200">{missingCount}</div>
-                                  <div className="space-y-1 text-[10px] text-amber-200">
-                                    {collection.missing.map((item) => (
-                                      <div
-                                        key={JSON.stringify(item.key)}
-                                        className="rounded bg-amber-500/10 px-2 py-1"
-                                      >
-                                        {JSON.stringify(item.key)}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-300">
-                              {extraCount}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span
-                                className={`rounded border px-2 py-0.5 text-xs ${
-                                  collection.error
-                                    ? 'border-rose-400/40 text-rose-200 bg-rose-500/10'
-                                    : missingCount === 0
-                                      ? 'border-emerald-400/40 text-emerald-200 bg-emerald-500/10'
-                                      : 'border-amber-400/40 text-amber-200 bg-amber-500/10'
-                                }`}
-                              >
-                                {statusLabel}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </SectionPanel>
+            <LogDiagnostics />
           </>
         }
         filters={
@@ -264,273 +559,9 @@ function SystemLogsContent(): React.JSX.Element {
         }
       >
         <div className="space-y-6">
-          <SectionPanel variant="subtle" className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Metrics</h2>
-                <p className="text-xs text-gray-400">
-                  Metrics reflect the current filters.
-                </p>
-              </div>
-              <div className="text-xs text-gray-500">
-                {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : '—'}
-              </div>
-            </div>
-            {metricsQuery.isLoading ? (
-              <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
-            ) : !metrics ? (
-              <div className="mt-4 text-sm text-gray-400">
-                No metrics available yet.
-              </div>
-            ) : (
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <SectionPanel variant="subtle-compact" className="p-3">
-                  <div className="text-xs text-gray-400">Totals</div>
-                  <div className="mt-2 space-y-1 text-sm text-gray-200">
-                    <div>Total: {metrics.total}</div>
-                    <div>Last 24h: {metrics.last24Hours}</div>
-                    <div>Last 7d: {metrics.last7Days}</div>
-                  </div>
-                </SectionPanel>
-                <SectionPanel variant="subtle-compact" className="p-3">
-                  <div className="text-xs text-gray-400">By level</div>
-                  <div className="mt-2 space-y-1 text-sm text-gray-200">
-                    <div className="text-red-300">Errors: {levels.error}</div>
-                    <div className="text-yellow-300">Warnings: {levels.warn}</div>
-                    <div className="text-blue-300">Info: {levels.info}</div>
-                  </div>
-                </SectionPanel>
-                <SectionPanel variant="subtle-compact" className="p-3">
-                  <div className="text-xs text-gray-400">Top sources</div>
-                  {metrics.topSources.length === 0 ? (
-                    <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
-                  ) : (
-                    <div className="mt-2 space-y-1 text-xs text-gray-300">
-                      {metrics.topSources.map((item) => (
-                        <div key={item.source} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{item.source}</span>
-                          <span className="text-gray-500">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-3 text-xs text-gray-400">Top paths</div>
-                  {metrics.topPaths.length === 0 ? (
-                    <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
-                  ) : (
-                    <div className="mt-2 space-y-1 text-xs text-gray-300">
-                      {metrics.topPaths.map((item) => (
-                        <div key={item.path} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{item.path}</span>
-                          <span className="text-gray-500">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </SectionPanel>
-              </div>
-            )}
-          </SectionPanel>
-
-          <SectionPanel variant="subtle" className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">AI Log Interpreter</h2>
-                <p className="text-xs text-gray-400">
-                  Summarizes error patterns and potential causes using your configured AI model or agent.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => runInsightMutation.mutate()}
-                disabled={runInsightMutation.isPending}
-              >
-                {runInsightMutation.isPending ? 'Running...' : 'Run AI Interpretation'}
-              </Button>
-            </div>
-            {insightsQuery.isLoading ? (
-              <div className="mt-3 text-xs text-gray-400">Loading AI insights...</div>
-            ) : insightsQuery.error ? (
-              <div className="mt-3 text-xs text-red-400">{insightsQuery.error.message}</div>
-            ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-              <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {insightsQuery.data?.insights.map((insight) => (
-                  <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] uppercase text-gray-500">
-                        {formatTimestamp(insight.createdAt)}
-                      </span>
-                      <span
-                        className={`rounded border px-2 py-0.5 text-[10px] ${
-                          insight.status === 'ok'
-                            ? 'border-emerald-500/40 text-emerald-200'
-                            : insight.status === 'warning'
-                              ? 'border-amber-500/40 text-amber-200'
-                              : 'border-rose-500/40 text-rose-200'
-                        }`}
-                      >
-                        {insight.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-sm text-white">{insight.summary}</div>
-                    {insight.warnings.length > 0 ? (
-                      <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                        {insight.warnings.map((warning: string, index: number) => (
-                          <li key={`${insight.id}-warn-${index}`}>{warning}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="mt-3 text-[10px] text-gray-500">
-              Configure the AI model/agent in Settings → AI.
-            </div>
-          </SectionPanel>
-
-          <SectionPanel variant="subtle" className="p-0">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
-              <span>
-                Showing {logs.length} of {total} logs
-              </span>
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                className="scale-90 origin-right"
-              />
-            </div>
-            {logsQuery.isLoading ? (
-              <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
-            ) : logs.length === 0 ? (
-              <div className="px-4 py-8 text-sm text-gray-400">
-                No system logs found.
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {logs.map((log: SystemLogRecord) => (
-                  <div key={log.id} className="px-4 py-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <StatusBadge
-                          status={log.level}
-                          variant={log.level === 'warn' ? 'warning' : log.level as 'info' | 'success' | 'warning' | 'error'}
-                        />
-                        <span className="text-xs text-gray-400">
-                          {formatTimestamp(log.createdAt)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {log.source ? (
-                          <span className="text-xs text-gray-500">{log.source}</span>
-                        ) : null}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => interpretLogMutation.mutate(log.id)}
-                          disabled={interpretLogMutation.isPending}
-                          className="h-6 px-2 text-[10px]"
-                        >
-                          Interpret
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="mt-2 text-sm text-gray-200">{log.message}</div>
-                    {(log.path || log.method || log.statusCode) && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        {log.method ? `${log.method} ` : ''}
-                        {log.path ?? ''}
-                        {log.statusCode ? ` • ${log.statusCode}` : ''}
-                      </div>
-                    )}
-                    {log.context && getContextValue(log.context, 'fingerprint') ? (
-                      <div className="mt-2 text-xs text-gray-500">
-                        Fingerprint:{' '}
-                        <span className="font-mono text-gray-300">
-                          {String(getContextValue(log.context, 'fingerprint'))}
-                        </span>
-                      </div>
-                    ) : null}
-                    {(log.context || log.stack) && (
-                      <details className="mt-2 text-xs text-gray-400">
-                        <summary className="cursor-pointer hover:text-gray-200">
-                          Details
-                        </summary>
-                        {logInterpretations[log.id] ? (
-                          <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
-                            <div className="font-semibold text-gray-200">AI Interpretation</div>
-                            <div className="mt-2 text-gray-300">
-                              {logInterpretations[log.id]?.summary}
-                            </div>
-                            {logInterpretations[log.id]?.warnings?.length ? (
-                              <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
-                                {logInterpretations[log.id]?.warnings?.map((warning: string, index: number) => (
-                                  <li key={`${log.id}-ai-${index}`}>{warning}</li>
-                                ))}
-                              </ul>
-                            ) : null}
-                          </SectionPanel>
-                        ) : null}
-                        {log.source === 'client' && log.context ? (
-                          <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
-                            <div className="font-semibold text-gray-200">Client context</div>
-                            <div className="mt-2 grid gap-2 md:grid-cols-2">
-                              <div>
-                                <div className="text-gray-500">App</div>
-                                <div>{String((getContextValue(log.context, 'app.version') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Build</div>
-                                <div>{String((getContextValue(log.context, 'app.buildId') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Release</div>
-                                <div>{String((getContextValue(log.context, 'app.releaseChannel') as string | number | null) ?? '—')}</div>
-                              </div>
-                              <div>
-                                <div className="text-gray-500">User</div>
-                                <div>{String((getContextValue(log.context, 'user.email') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Role</div>
-                                <div>{String((getContextValue(log.context, 'user.role') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Route</div>
-                                <div>{String((getContextValue(log.context, 'route') as string | number | null) ?? '—')}</div>
-                              </div>
-                              <div>
-                                <div className="text-gray-500">Device</div>
-                                <div>{String((getContextValue(log.context, 'device.platform') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Memory</div>
-                                <div>{String((getContextValue(log.context, 'device.deviceMemory') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Cores</div>
-                                <div>{String((getContextValue(log.context, 'device.hardwareConcurrency') as string | number | null) ?? '—')}</div>
-                              </div>
-                              <div>
-                                <div className="text-gray-500">Network</div>
-                                <div>{String((getContextValue(log.context, 'network.effectiveType') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">Downlink</div>
-                                <div>{String((getContextValue(log.context, 'network.downlink') as string | number | null) ?? '—')}</div>
-                                <div className="text-gray-500">RTT</div>
-                                <div>{String((getContextValue(log.context, 'network.rtt') as string | number | null) ?? '—')}</div>
-                              </div>
-                            </div>
-                          </SectionPanel>
-                        ) : null}
-                        {log.stack && (
-                          <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
-                            {log.stack}
-                          </pre>
-                        )}
-                        {log.context && (
-                          <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
-                            {JSON.stringify(log.context, null, 2)}
-                          </pre>
-                        )}
-                      </details>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
+          <LogMetrics />
+          <AiLogInterpreter />
+          <LogList />
         </div>
       </ListPanel>
     </AdminPageLayout>

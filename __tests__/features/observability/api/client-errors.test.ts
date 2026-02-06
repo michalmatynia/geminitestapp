@@ -43,13 +43,16 @@ describe('Client Errors API', () => {
     );
   });
 
-  it('should handle invalid payload', async () => {
+  it('should handle invalid payload by falling back to unknown error', async () => {
     const req = new NextRequest('http://localhost/api/client-errors', {
       method: 'POST',
       body: JSON.stringify({ name: 'Only name' }), // message missing
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.ok).toBe(true);
+    expect(ErrorSystem.captureException).toHaveBeenCalled();
   });
 });

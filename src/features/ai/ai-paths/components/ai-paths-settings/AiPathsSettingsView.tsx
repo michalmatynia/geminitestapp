@@ -82,6 +82,11 @@ export function AiPathsSettingsView({
     handleDragStart,
     handleFireTrigger,
     handleFireTriggerPersistent,
+    handlePauseActiveRun,
+    handleResumeActiveRun,
+    handleStepActiveRun,
+    handleCancelActiveRun,
+    runtimeRunStatus,
     updateSelectedNode,
     handleDeleteSelectedNode,
     handleRemoveEdge,
@@ -274,14 +279,6 @@ export function AiPathsSettingsView({
                     {saving ? 'Saving...' : 'Save Path'}
                   </Button>
                   <Button
-                    type="button"
-                    className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
-                    onClick={() => setIsFocusMode(!isFocusMode)}
-                    title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
-                  >
-                    {isFocusMode ? 'Edit' : 'Show'}
-                  </Button>
-                  <Button
                     className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
                     onClick={handleReset}
                     type="button"
@@ -308,14 +305,6 @@ export function AiPathsSettingsView({
                     title={hasHistory ? 'Clear history for all nodes in this path' : 'No history recorded yet'}
                   >
                       Clear History
-                  </Button>
-                  <Button
-                    className="rounded-md border border-border text-sm text-rose-200 hover:bg-rose-500/10"
-                    onClick={() => void handleDeletePath()}
-                    type="button"
-                    disabled={!activePathId}
-                  >
-                      Delete Path
                   </Button>
                   {lastError && (
                     <div className="flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
@@ -364,6 +353,23 @@ export function AiPathsSettingsView({
               ),
               document.getElementById('ai-paths-actions') ?? document.body
             )
+            : null}
+          {typeof document !== 'undefined'
+            ? (() => {
+              const headerTarget = document.getElementById('ai-paths-header-actions');
+              if (!headerTarget) return null;
+              return createPortal(
+                <Button
+                  type="button"
+                  className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                  onClick={() => setIsFocusMode(!isFocusMode)}
+                  title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+                >
+                  {isFocusMode ? 'Edit' : 'Show'}
+                </Button>,
+                headerTarget
+              );
+            })()
             : null}
           {!isFocusMode && typeof document !== 'undefined' && activePathId
             ? createPortal(
@@ -527,6 +533,12 @@ export function AiPathsSettingsView({
                 onDeleteSelectedNode={handleDeleteSelectedNode}
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
+                executionMode={executionMode}
+                runStatus={runtimeRunStatus}
+                onPauseRun={handlePauseActiveRun}
+                onResumeRun={handleResumeActiveRun}
+                onStepRun={handleStepActiveRun}
+                onCancelRun={handleCancelActiveRun}
               />
               <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
@@ -547,18 +559,6 @@ export function AiPathsSettingsView({
               />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
-              {isFocusMode ? (
-                <div className="absolute right-3 top-3 z-20">
-                  <Button
-                    type="button"
-                    className="h-9 rounded-md border border-border bg-card/80 px-3 text-sm text-gray-200 hover:bg-card/60"
-                    onClick={() => setIsFocusMode(false)}
-                    title="Show side panels"
-                  >
-                    Edit
-                  </Button>
-                </div>
-              ) : null}
               <CanvasBoardMigrated
                 flowIntensity={flowIntensity}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
@@ -580,6 +580,18 @@ export function AiPathsSettingsView({
                 onFitToNodes={fitToNodes}
                 onResetView={resetView}
               />
+              {!isFocusMode && (
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    className="rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10"
+                    onClick={() => void handleDeletePath()}
+                    type="button"
+                    disabled={!activePathId}
+                  >
+                    Delete Path
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

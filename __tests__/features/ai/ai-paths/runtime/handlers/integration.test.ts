@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import * as api from '@/features/ai/ai-paths/lib/api';
 import { 
   handleTrigger, 
   handleNotification, 
@@ -7,8 +9,8 @@ import {
   handleDatabase,
   handleDbSchema
 } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration';
+
 import { createMockContext } from '../../test-utils';
-import * as api from '@/features/ai/ai-paths/lib/api';
 
 vi.mock('@/features/ai/ai-paths/lib/api', () => ({
   dbApi: {

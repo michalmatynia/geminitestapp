@@ -7,6 +7,7 @@ import type {
   RuntimeState,
 } from '@/shared/types/ai-paths';
 
+import { DEFAULT_DB_QUERY } from '../constants';
 import {
   appendInputValue,
   cloneValue,
@@ -17,8 +18,6 @@ import {
   getPortDataTypes,
   isValueCompatibleWithTypes,
 } from '../utils';
-import { DEFAULT_DB_QUERY } from '../constants';
-import { buildDbQueryPayload, extractImageUrls } from './utils';
 import {
   NodeHandler,
   handleAiDescription,
@@ -50,6 +49,7 @@ import {
   handleValidator,
   handleViewer,
 } from './handlers';
+import { buildDbQueryPayload, extractImageUrls } from './utils';
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 

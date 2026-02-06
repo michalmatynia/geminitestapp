@@ -478,9 +478,11 @@ function ImageElementBlock({
           style={imageStylesForFill}
         />
       ) : (
-        <img
+        <Image
           src={src}
           alt={alt}
+          width={1000}
+          height={1000}
           style={{
             ...imageStyles,
             height: 'auto',
@@ -540,7 +542,7 @@ function ImageBlock({
       {useFill ? (
         <Image src={src} alt={alt} fill className={imageClassName} />
       ) : (
-        <img src={src} alt={alt} className={imageClassName} />
+        <Image src={src} alt={alt} width={1000} height={1000} className={imageClassName} />
       )}
     </div>
   );

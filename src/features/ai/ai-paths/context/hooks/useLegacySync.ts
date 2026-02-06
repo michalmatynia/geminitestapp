@@ -422,7 +422,6 @@ export function useLegacySyncRunHistory({
   useEffect(() => {
     if (runFilter !== undefined) {
       // Cast to context's RunHistoryFilter type
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       actions.setRunFilter(runFilter as any);
     }
   }, [runFilter, actions]);

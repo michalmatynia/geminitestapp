@@ -3,7 +3,7 @@
 
 
 
-import type { AiNode, Edge, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, NodeDefinition, PathExecutionMode } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
 
@@ -29,6 +29,12 @@ type CanvasSidebarProps = {
   onDeleteSelectedNode: () => void;
   onRemoveEdge: (edgeId: string) => void;
   onClearWires: () => void;
+  executionMode: PathExecutionMode;
+  runStatus: 'idle' | 'running' | 'paused' | 'stepping';
+  onPauseRun?: () => void;
+  onResumeRun?: () => void;
+  onStepRun?: (triggerNode?: AiNode) => void;
+  onCancelRun?: () => void;
 };
 
 export function CanvasSidebar({
@@ -51,9 +57,24 @@ export function CanvasSidebar({
   onDeleteSelectedNode,
   onRemoveEdge,
   onClearWires,
+  executionMode,
+  runStatus,
+  onPauseRun,
+  onResumeRun,
+  onStepRun,
+  onCancelRun,
 }: CanvasSidebarProps): React.JSX.Element {
   const selectedIsScheduledTrigger =
     selectedNode?.type === 'trigger' && selectedNode.config?.trigger?.event === 'scheduled_run';
+  const showRunControls = executionMode === 'local';
+  const runStatusLabel =
+    runStatus === 'running'
+      ? 'Running'
+      : runStatus === 'paused'
+        ? 'Paused'
+        : runStatus === 'stepping'
+          ? 'Stepping'
+          : 'Idle';
 
   return (
     <div className="space-y-4">
@@ -333,6 +354,75 @@ export function CanvasSidebar({
               Select a node to inspect inputs, outputs, and configuration.
             </div>
           )}
+        </SectionPanel>
+      )}
+
+      {showRunControls && (
+        <SectionPanel variant="subtle" className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-white">Run Controls</span>
+            <span className="rounded border border-border/60 px-2 py-0.5 text-[10px] uppercase text-gray-400">
+              {runStatusLabel}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {runStatus === 'running' || runStatus === 'stepping' ? (
+              <>
+                <Button
+                  className="rounded-md border border-amber-500/40 text-xs text-amber-200 hover:bg-amber-500/10"
+                  type="button"
+                  onClick={onPauseRun}
+                  disabled={!onPauseRun}
+                >
+                  Pause
+                </Button>
+                <Button
+                  className="rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
+                  type="button"
+                  onClick={onCancelRun}
+                  disabled={!onCancelRun}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : runStatus === 'paused' ? (
+              <>
+                <Button
+                  className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                  type="button"
+                  onClick={onResumeRun}
+                  disabled={!onResumeRun}
+                >
+                  Resume
+                </Button>
+                <Button
+                  className="rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10"
+                  type="button"
+                  onClick={() => onStepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                  disabled={!onStepRun}
+                >
+                  Step
+                </Button>
+                <Button
+                  className="col-span-2 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
+                  type="button"
+                  onClick={onCancelRun}
+                  disabled={!onCancelRun}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                className="col-span-2 rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10"
+                type="button"
+                onClick={() => onStepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                disabled={!onStepRun}
+              >
+                Step Run
+              </Button>
+            )}
+          </div>
         </SectionPanel>
       )}
 

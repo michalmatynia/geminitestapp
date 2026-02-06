@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import * as api from '@/features/ai/ai-paths/lib/api';
 import { 
   handleTemplate, 
   handlePrompt, 
@@ -6,8 +8,8 @@ import {
   handleAiDescription, 
   handleDescriptionUpdater 
 } from '@/features/ai/ai-paths/lib/core/runtime/handlers/generation';
+
 import { createMockContext } from '../../test-utils';
-import * as api from '@/features/ai/ai-paths/lib/api';
 
 vi.mock('@/features/ai/ai-paths/lib/api', () => ({
   aiJobsApi: {

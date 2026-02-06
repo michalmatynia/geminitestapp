@@ -280,6 +280,11 @@ export interface UseAiPathsSettingsStateReturn {
     entityId: string
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode, triggerEvent?: string) => void;
+  handlePauseActiveRun: () => void;
+  handleResumeActiveRun: () => void;
+  handleStepActiveRun: (triggerNode?: AiNode) => void;
+  handleCancelActiveRun: () => void;
+  runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping';
   clearRuntimeForNode: (nodeId: string) => void;
   handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
@@ -866,6 +871,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     autoSaveStatus,
     autoSaveAt,
     handleSave,
+    persistActivePathPreference,
     persistPathSettings,
     persistSettingsBulk,
     savePathIndex,
@@ -962,11 +968,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleRunSimulation,
     handleFireTrigger,
     handleFireTriggerPersistent,
-    handlePauseRun,
-    handleResumeRun,
-    handleStepRun,
-    handleCancelRun,
-    runStatus,
+    handlePauseRun: handlePauseActiveRun,
+    handleResumeRun: handleResumeActiveRun,
+    handleStepRun: handleStepActiveRun,
+    handleCancelRun: handleCancelActiveRun,
+    runStatus: runtimeRunStatus,
     handleSendToAi,
     sendingToAi,
   } = useAiPathsRuntime({
@@ -1646,6 +1652,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     if (!value) return;
     const config = pathConfigs[value] ?? createDefaultPathConfig(value);
     setActivePathId(value);
+    void persistActivePathPreference(value);
     const normalizedNodes = normalizeNodes(config.nodes);
     setNodes(normalizedNodes);
     setEdges(sanitizeEdges(normalizedNodes, config.edges));
@@ -1868,11 +1875,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     clearRuntimeForNode,
     handleSendToAi,
     sendingToAi,
-    handlePauseRun,
-    handleResumeRun,
-    handleStepRun,
-    handleCancelRun,
-    runStatus,
+    handlePauseActiveRun,
+    handleResumeActiveRun,
+    handleStepActiveRun,
+    handleCancelActiveRun,
+    runtimeRunStatus,
     dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,

@@ -5,6 +5,11 @@ import { GET, POST, DELETE } from '@/app/api/system/logs/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
+// Mock apiHandler to bypass CSRF
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler: vi.fn((handler) => handler),
+}));
+
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {

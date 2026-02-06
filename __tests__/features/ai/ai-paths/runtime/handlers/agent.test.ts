@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import * as api from '@/features/ai/ai-paths/lib/api';
 import { 
   handleAgent, 
   handleLearnerAgent 
 } from '@/features/ai/ai-paths/lib/core/runtime/handlers/agent';
+
 import { createMockContext } from '../../test-utils';
-import * as api from '@/features/ai/ai-paths/lib/api';
 
 vi.mock('@/features/ai/ai-paths/lib/api', () => ({
   agentApi: {

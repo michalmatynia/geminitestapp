@@ -146,6 +146,7 @@ type UseAiPathsPersistenceResult = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
+  persistActivePathPreference: (pathId: string | null) => Promise<void>;
   persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
@@ -303,6 +304,20 @@ export function useAiPathsPersistence({
       throw new Error('Failed to update user preferences');
     }
   }, []);
+  const persistActivePathPreference = useCallback(
+    async (pathId: string | null): Promise<void> => {
+      if (!uiStateLoaded) return;
+      const resolved = pathId ?? null;
+      if (resolved === lastUserPrefsActivePathIdRef.current) return;
+      try {
+        await persistUserPreferences(resolved);
+        lastUserPrefsActivePathIdRef.current = resolved;
+      } catch (error) {
+        console.warn('[AI Paths] Failed to persist user preferences.', error);
+      }
+    },
+    [persistUserPreferences, uiStateLoaded]
+  );
 
   useEffect((): void => {
     if (loadInFlightRef.current) return;
@@ -1124,8 +1139,9 @@ export function useAiPathsPersistence({
         console.warn('[AI Paths] Failed to persist path config on unload.', error);
       });
       void fetch('/api/user/preferences', {
-        method: 'POST',
+        method: 'PATCH',
         headers: csrfHeaders,
+        credentials: 'include',
         body: JSON.stringify({ aiPathsActivePathId: pathId }),
         keepalive: true,
       }).catch((error: unknown) => {
@@ -1196,6 +1212,7 @@ export function useAiPathsPersistence({
     autoSaveAt,
     autoSaveStatus,
     handleSave,
+    persistActivePathPreference,
     persistPathSettings,
     persistSettingsBulk,
     savePathIndex,

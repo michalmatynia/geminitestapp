@@ -1,16 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/server';
+import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
-import { logger } from '@/shared/utils/logger';
 
 // Mock dependencies
-vi.mock('@/shared/utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
+vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn(),
 }));
 
 vi.mock('@/features/ai/agent-runtime/server', () => ({
@@ -28,11 +24,12 @@ describe('ErrorSystem', () => {
     
     await ErrorSystem.captureException(error, context);
 
-    expect(logger.error).toHaveBeenCalledWith(
-      '[test-service] Test exception',
+    expect(logSystemEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        service: 'test-service',
-        stack: error.stack,
+        level: 'error',
+        message: '[test-service] Test exception',
+        source: 'test-service',
+        error,
       })
     );
   });
@@ -40,9 +37,12 @@ describe('ErrorSystem', () => {
   it('captures and logs a string error', async () => {
     await ErrorSystem.captureException('Something went wrong', { service: 'ui' });
 
-    expect(logger.error).toHaveBeenCalledWith(
-      '[ui] Something went wrong',
-      expect.objectContaining({ service: 'ui' })
+    expect(logSystemEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'error',
+        message: '[ui] Something went wrong',
+        source: 'ui',
+      })
     );
   });
 
@@ -65,7 +65,10 @@ describe('ErrorSystem', () => {
 
   it('logs warnings and optionally to agent audit', async () => {
     await ErrorSystem.logWarning('Low disk space', { service: 'disk' });
-    expect(logger.warn).toHaveBeenCalledWith('[disk] Low disk space', { service: 'disk' });
+    expect(logSystemEvent).toHaveBeenCalledWith(expect.objectContaining({
+      level: 'warn',
+      message: '[disk] Low disk space',
+    }));
 
     const agentContext = { service: 'agent', runId: 'run-123' };
     await ErrorSystem.logWarning('Retry limit reached', agentContext);
@@ -74,6 +77,9 @@ describe('ErrorSystem', () => {
 
   it('logs info messages', async () => {
     await ErrorSystem.logInfo('User logged in', { userId: 'user-1' });
-    expect(logger.info).toHaveBeenCalledWith('[unknown] User logged in', { userId: 'user-1' });
+    expect(logSystemEvent).toHaveBeenCalledWith(expect.objectContaining({
+      level: 'info',
+      message: '[unknown] User logged in',
+    }));
   });
 });

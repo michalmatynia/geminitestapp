@@ -106,6 +106,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
         <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
           <div className="pointer-events-auto">
             <div className="flex items-center gap-2">
+              <div id="ai-paths-header-actions" className="flex items-center gap-2" />
               <UserNav onOpenAiWarnings={() => setAiDrawerOpen(true)} />
             </div>
           </div>

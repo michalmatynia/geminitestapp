@@ -46,11 +46,9 @@ export function AdminAiPathsPage(): React.JSX.Element {
         <div id="ai-paths-name" className="text-sm text-gray-300" />
       </div>
       <SectionPanel className={isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'}>
-        {!isFocusMode ? (
-          <div className="mb-4 flex items-center justify-end">
-            <div id="ai-paths-actions" className="flex items-center gap-3" />
-          </div>
-        ) : null}
+        <div className={`mb-4 flex items-center justify-end ${isFocusMode ? 'hidden' : ''}`}>
+          <div id="ai-paths-actions" className="flex items-center gap-3" />
+        </div>
         <AiPathsSettings
           activeTab={activeTab}
           renderActions={(actions: React.ReactNode) => (

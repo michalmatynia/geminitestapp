@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import { ArrowLeft, Bold, ChevronDown, Italic, Link2, List, ListOrdered } from "lucide-react";
+import { Bold, ChevronDown, Italic, Link2, List, ListOrdered } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import {
@@ -15,8 +15,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
-  UnifiedSelect,
   FileUploadButton,
   FileUploadTrigger,
   PanelHeader,
@@ -41,191 +39,32 @@ import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/use
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import type { ChatMessage } from "@/shared/types/chatbot";
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from "@/features/ai/brain";
-
-const THEME_SECTIONS = [
-  "Logo",
-  "Colors",
-  "Typography",
-  "Layout",
-  "Animations",
-  "Buttons",
-  "Variant Pills",
-  "Inputs",
-  "Product Cards",
-  "Collection Cards",
-  "Blog Cards",
-  "Content Containers",
-  "Media",
-  "Dropdowns and pop-ups",
-  "Drawers",
-  "Badges",
-  "Brand Information",
-  "Social Media",
-  "Search Behaviour",
-  "Currency Format",
-  "Cart",
-  "Custom CSS",
-  "Theme Style",
-];
-
-const toSectionId = (section: string): string =>
-  `cms-theme-section-${section.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-
-const FONT_OPTIONS = [
-  { label: "Inter", value: "Inter, sans-serif" },
-  { label: "Bebas Neue", value: "'Bebas Neue', sans-serif" },
-  { label: "Space Grotesk", value: "'Space Grotesk', sans-serif" },
-  { label: "Manrope", value: "Manrope, sans-serif" },
-  { label: "Outfit", value: "Outfit, sans-serif" },
-  { label: "Plus Jakarta Sans", value: "'Plus Jakarta Sans', sans-serif" },
-  { label: "DM Sans", value: "'DM Sans', sans-serif" },
-  { label: "Sora", value: "Sora, sans-serif" },
-  { label: "Arial", value: "Arial, sans-serif" },
-  { label: "Georgia", value: "Georgia, serif" },
-  { label: "Times New Roman", value: "'Times New Roman', serif" },
-  { label: "Courier New", value: "'Courier New', monospace" },
-  { label: "Verdana", value: "Verdana, sans-serif" },
-  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
-  { label: "Palatino", value: "'Palatino Linotype', serif" },
-  { label: "System UI", value: "system-ui, sans-serif" },
-];
-
-const WEIGHT_OPTIONS = [
-  { label: "100 – Thin", value: "100" },
-  { label: "200 – Extra Light", value: "200" },
-  { label: "300 – Light", value: "300" },
-  { label: "400 – Normal", value: "400" },
-  { label: "500 – Medium", value: "500" },
-  { label: "600 – Semi Bold", value: "600" },
-  { label: "700 – Bold", value: "700" },
-  { label: "800 – Extra Bold", value: "800" },
-  { label: "900 – Black", value: "900" },
-];
-
-const DEFAULT_SCHEME_COLORS: ColorSchemeColors = {
-  background: "#0b1220",
-  surface: "#111827",
-  text: "#f3f4f6",
-  accent: "#3b82f6",
-  border: "#1f2937",
-};
-
-const SAVED_THEME_PREFIX = "saved:";
-
-const parseCssNumber = (value?: string | null): number | null => {
-  if (!value) return null;
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const extractJsonBlock = (value: string): string | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced?.[1]) return fenced[1].trim();
-  const first = trimmed.indexOf("{");
-  const last = trimmed.lastIndexOf("}");
-  if (first >= 0 && last > first) {
-    return trimmed.slice(first, last + 1);
-  }
-  return null;
-};
-
-const normalizeAiString = (value: unknown): string | undefined => {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : undefined;
-};
-
-const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
-  if (!payload || typeof payload !== "object") return null;
-  const raw = payload as Record<string, unknown>;
-  const name =
-    normalizeAiString(raw.name) ??
-    normalizeAiString(raw.schemeName) ??
-    normalizeAiString(raw.title);
-  const colorsSource =
-    (raw.colors as Record<string, unknown>) ||
-    (raw.palette as Record<string, unknown>) ||
-    (raw.scheme as Record<string, unknown>) ||
-    raw;
-
-  if (!colorsSource || typeof colorsSource !== "object") return null;
-
-  const colors = colorsSource;
-  const parsedRaw = {
-    background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
-    surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
-    text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground),
-    accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary),
-    border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
-  };
-  const parsed: Partial<ColorSchemeColors> = {};
-  (Object.entries(parsedRaw) as Array<[keyof ColorSchemeColors, string | undefined]>).forEach(
-    ([key, val]: [keyof ColorSchemeColors, string | undefined]) => {
-      if (val !== undefined) {
-        parsed[key] = val;
-      }
-    }
-  );
-
-  if (!Object.values(parsed).some(Boolean) && !name) return null;
-  return { ...(name ? { name } : {}), colors: parsed };
-};
-
-const applySavedThemePreset = (
-  current: ThemeSettings,
-  saved: CmsTheme,
-  presetValue: string
-): ThemeSettings => {
-  const next = { ...current, themePreset: presetValue };
-
-  const colors = saved.colors;
-  if (colors) {
-    if (colors.primary) next.primaryColor = colors.primary;
-    if (colors.secondary) next.secondaryColor = colors.secondary;
-    if (colors.accent) next.accentColor = colors.accent;
-    if (colors.background) next.backgroundColor = colors.background;
-    if (colors.surface) next.surfaceColor = colors.surface;
-    if (colors.text) next.textColor = colors.text;
-    if (colors.muted) next.mutedTextColor = colors.muted;
-  }
-
-  const typography = saved.typography;
-  if (typography) {
-    if (typography.headingFont) next.headingFont = typography.headingFont;
-    if (typography.bodyFont) next.bodyFont = typography.bodyFont;
-    if (Number.isFinite(typography.baseSize)) next.baseSize = typography.baseSize;
-    if (Number.isFinite(typography.headingWeight)) next.headingWeight = String(typography.headingWeight);
-    if (Number.isFinite(typography.bodyWeight)) next.bodyWeight = String(typography.bodyWeight);
-  }
-
-  const spacing = saved.spacing;
-  if (spacing) {
-    const sectionSpacing = parseCssNumber(spacing.sectionPadding);
-    if (sectionSpacing !== null) next.sectionSpacing = sectionSpacing;
-    const maxWidth = parseCssNumber(spacing.containerMaxWidth);
-    if (maxWidth !== null) next.maxContentWidth = maxWidth;
-  }
-
-  if (typeof saved.customCss === "string") {
-    next.customCss = saved.customCss;
-  }
-
-  return next;
-};
+import {
+  THEME_SECTIONS,
+  toSectionId,
+  DEFAULT_SCHEME_COLORS,
+  SAVED_THEME_PREFIX,
+} from "./theme/theme-constants";
+import {
+  extractJsonBlock,
+  normalizeAiString,
+  parseColorSchemePayload,
+  applySavedThemePreset,
+  sanitizeRichText,
+} from "./theme/theme-utils";
+import { ThemeColorsSection } from "./theme/ThemeColorsSection";
+import { ThemeTypographySection } from "./theme/ThemeTypographySection";
+import { ThemeLayoutSection } from "./theme/ThemeLayoutSection";
+import { ThemeButtonsSection } from "./theme/ThemeButtonsSection";
+import {
+  ThemeProductCardsSection,
+  ThemeCollectionCardsSection,
+  ThemeBlogCardsSection,
+} from "./theme/ThemeCardsSection";
 
 // ---------------------------------------------------------------------------
 // Reusable utilities
 // ---------------------------------------------------------------------------
-
-function sanitizeRichText(value: string | null | undefined): string {
-  if (!value) return "";
-  if (typeof value !== "string") return "";
-  const temp = document.createElement("div");
-  temp.innerHTML = value;
-  return temp.innerHTML;
-}
 
 function RichTextToolbarButton({
   title,
@@ -831,7 +670,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           const border = pickFromText(["border", "outline"]);
           if (border !== undefined) colors.border = border;
           const name = pickFromText(["name", "scheme", "title"]);
-    
+
           if (!Object.values(colors).some(Boolean) && name === undefined) return null;
           return { ...(name !== undefined ? { name } : {}), colors };
         }, []);
@@ -1054,386 +893,60 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         // ---------------------------------------------------------------
         case "Colors":
           return (
-            <div className="space-y-4">
-              <div className="rounded border border-border/40 bg-gray-900/60 p-3">
-                <div className="flex items-center justify-end">
-                  {schemeView === "list" ? (
-                    <div className="flex items-center gap-2">
-                      {activeScheme && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditScheme(activeScheme.id)}
-                          className="h-7 px-2 text-[11px]"
-                        >
-                          Edit scheme
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={startAddScheme}
-                        className="h-7 px-2 text-[11px]"
-                      >
-                        Add scheme
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setSchemeView("list");
-                        setEditingSchemeId(null);
-                      }}
-                      className="h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200"
-                    >
-                      <ArrowLeft className="mr-1 size-3" />
-                      Back to schemes
-                    </Button>
-                  )}
-                </div>
-                {schemeView === "list" ? (
-                  theme.colorSchemes.length > 0 ? (
-                    <div className="mt-3 flex flex-col gap-3">
-                      {theme.colorSchemes.map((scheme: ColorScheme) => {
-                        const isActive = scheme.id === theme.activeColorSchemeId;
-                        return (
-                          <div
-                            key={scheme.id}
-                            className={`group rounded border p-2 text-left transition ${
-                              isActive
-                                ? "border-blue-500/60 bg-blue-500/10"
-                                : "border-border/40 bg-gray-900/40 hover:border-border/70"
-                            }`}
-                          >
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={(): void => update("activeColorSchemeId", scheme.id)}
-                              onKeyDown={(event: React.KeyboardEvent): void => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  update("activeColorSchemeId", scheme.id);
-                                }
-                              }}
-                              className="w-full text-left"
-                            >
-                              <div className="mb-2 flex items-start justify-between gap-2 text-[11px] text-gray-300">
-                                <span className="whitespace-normal break-words">{scheme.name}</span>
-                                <div className="flex items-center gap-2">
-                                  {isActive && (
-                                    <span className="rounded-full border border-blue-500/40 bg-blue-500/20 px-2 py-0.5 text-[10px] text-blue-200">
-                                      Active
-                                    </span>
-                                  )}
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(event: React.MouseEvent): void => {
-                                      event.stopPropagation();
-                                      startEditScheme(scheme.id);
-                                    }}
-                                    className="h-6 px-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-gray-200"
-                                  >
-                                    Edit
-                                  </Button>
-                                </div>
-                              </div>
-                              <div
-                                className="rounded border p-2"
-                                style={{ backgroundColor: scheme.colors.background, borderColor: scheme.colors.border }}
-                              >
-                                <div
-                                  className="overflow-hidden rounded border"
-                                  style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
-                                >
-                                  <div
-                                    className="flex items-center justify-between border-b px-2 py-1"
-                                    style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
-                                  >
-                                    <div
-                                      className="h-1.5 w-10 rounded"
-                                      style={{ backgroundColor: scheme.colors.text, opacity: 0.75 }}
-                                    />
-                                    <div
-                                      className="h-1.5 w-6 rounded"
-                                      style={{ backgroundColor: scheme.colors.accent }}
-                                    />
-                                  </div>
-                                  <div className="space-y-2 p-2">
-                                    <div
-                                      className="rounded border p-2"
-                                      style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
-                                    >
-                                      <div
-                                        className="h-2 w-4/5 rounded"
-                                        style={{ backgroundColor: scheme.colors.text, opacity: 0.8 }}
-                                      />
-                                      <div
-                                        className="mt-1 h-2 w-2/3 rounded"
-                                        style={{ backgroundColor: scheme.colors.text, opacity: 0.6 }}
-                                      />
-                                      <div className="mt-2 flex gap-2">
-                                        <div
-                                          className="h-2 w-8 rounded"
-                                          style={{ backgroundColor: scheme.colors.accent }}
-                                        />
-                                        <div
-                                          className="h-2 w-8 rounded"
-                                          style={{ backgroundColor: scheme.colors.text, opacity: 0.35 }}
-                                        />
-                                      </div>
-                                    </div>
-                                    <div
-                                      className="h-1 w-full rounded"
-                                      style={{ backgroundColor: scheme.colors.border, opacity: 0.7 }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-3 text-xs text-gray-500">No schemes yet.</div>
-                  )
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-400">
-                        {editingSchemeId ? "Edit scheme" : "New scheme"}
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveScheme}
-                        className="bg-blue-600 text-white hover:bg-blue-700"
-                      >
-                        {editingSchemeId ? "Save scheme" : "Create scheme"}
-                      </Button>
-                    </div>
-                    <TextField
-                      label="Scheme name"
-                      value={newSchemeName}
-                      onChange={setNewSchemeName}
-                      placeholder="e.g. Midnight"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <ColorField
-                        label="Background"
-                        value={newSchemeColors.background}
-                        onChange={updateSchemeColor("background")}
-                      />
-                      <ColorField
-                        label="Surface"
-                        value={newSchemeColors.surface}
-                        onChange={updateSchemeColor("surface")}
-                      />
-                      <ColorField
-                        label="Text"
-                        value={newSchemeColors.text}
-                        onChange={updateSchemeColor("text")}
-                      />
-                      <ColorField
-                        label="Accent"
-                        value={newSchemeColors.accent}
-                        onChange={updateSchemeColor("accent")}
-                      />
-                      <ColorField
-                        label="Border"
-                        value={newSchemeColors.border}
-                        onChange={updateSchemeColor("border")}
-                      />
-                    </div>
-                    <div className="rounded border border-border/40 bg-gray-900/40 p-3 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
-                          AI scheme generator
-                        </Label>
-                        <span className="text-[10px] text-gray-500">On demand</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-400">Provider</Label>
-                        <UnifiedSelect
-                          value={schemeAiProvider}
-                          onValueChange={(value: string): void => setSchemeAiProvider(value as "model" | "agent")}
-                          options={schemeProviderOptions}
-                          placeholder="Select provider"
-                        />
-                      </div>
-                      {schemeAiProvider !== "agent" ? (
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-gray-400">Model</Label>
-                          <UnifiedSelect
-                            value={schemeAiModelId}
-                            onValueChange={(value: string): void => setSchemeAiModelId(value)}
-                            options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-                            placeholder={modelOptions.length ? "Select model" : "No models available"}
-                          />
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-gray-400">Deepthinking agent</Label>
-                          <UnifiedSelect
-                            value={schemeAiAgentId}
-                            onValueChange={(value: string): void => setSchemeAiAgentId(value)}
-                            options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
-                            placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
-                          />
-                        </div>
-                      )}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-400">Prompt</Label>
-                        <Textarea
-                          value={schemeAiPrompt}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setSchemeAiPrompt(e.target.value)}
-                          placeholder="Describe the theme you want (e.g. cinematic dark with neon accents)."
-                          className="min-h-[90px] text-xs"
-                          spellCheck={false}
-                        />
-                      </div>
-                      <div className="text-[11px] text-gray-500">
-                        Use <span className="font-mono text-gray-300">{"{{theme_context}}"}</span> to inject current theme context.
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={(): void => void handleGenerateScheme()}
-                          disabled={schemeAiLoading}
-                        >
-                          {schemeAiLoading ? "Generating…" : "Generate scheme"}
-                        </Button>
-                        {schemeAiLoading && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleCancelSchemeAi}
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                      </div>
-                      {schemeAiError && (
-                        <div className="text-xs text-red-400">{schemeAiError}</div>
-                      )}
-                      {schemeAiOutput && (
-                        <div className="space-y-2">
-                          <Label className="text-xs text-gray-400">AI output</Label>
-                          <Textarea
-                            value={schemeAiOutput}
-                            readOnly
-                            className="min-h-[90px] text-xs font-mono text-gray-300"
-                          />
-                        </div>
-                      )}
-                      {schemeAiPreview && (
-                        <div className="rounded border border-border/40 bg-gray-950/40 p-2">
-                          <div className="flex items-center justify-between text-[11px] text-gray-400">
-                            <span>Preview</span>
-                            {schemeAiPreview.name ? (
-                              <span className="text-gray-300">{schemeAiPreview.name}</span>
-                            ) : null}
-                          </div>
-                          <div className="mt-2 grid grid-cols-5 gap-2">
-                            {(["background", "surface", "text", "accent", "border"] as Array<keyof ColorSchemeColors>).map((key: keyof ColorSchemeColors) => {
-                              const value =
-                                schemeAiPreview.colors[key] ??
-                                newSchemeColors[key];
-                              return (
-                                <div key={key} className="space-y-1 text-[10px] text-gray-500">
-                                  <div
-                                    className="h-6 rounded border border-border/60"
-                                    style={{ backgroundColor: value }}
-                                  />
-                                  <span className="block truncate">{key}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                <button
-                  type="button"
-                  onClick={toggleGlobalPalette}
-                  className="flex w-full items-center justify-between gap-2 text-left"
-                >
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500">Global palette</span>
-                  <ChevronDown className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isGlobalPaletteOpen && (
-                  <div className="mt-3 space-y-3">
-                    <ColorField label="Primary" value={theme.primaryColor} onChange={updateSetting("primaryColor")} />
-                    <ColorField label="Secondary" value={theme.secondaryColor} onChange={updateSetting("secondaryColor")} />
-                    <ColorField label="Accent" value={theme.accentColor} onChange={updateSetting("accentColor")} />
-                    <ColorField label="Background" value={theme.backgroundColor} onChange={updateSetting("backgroundColor")} />
-                    <ColorField label="Surface" value={theme.surfaceColor} onChange={updateSetting("surfaceColor")} />
-                    <ColorField label="Text" value={theme.textColor} onChange={updateSetting("textColor")} />
-                    <ColorField label="Muted text" value={theme.mutedTextColor} onChange={updateSetting("mutedTextColor")} />
-                    <ColorField label="Border" value={theme.borderColor} onChange={updateSetting("borderColor")} />
-                    <ColorField label="Error" value={theme.errorColor} onChange={updateSetting("errorColor")} />
-                    <ColorField label="Success" value={theme.successColor} onChange={updateSetting("successColor")} />
-                  </div>
-                )}
-              </div>
-            </div>
+            <ThemeColorsSection
+              theme={theme}
+              update={update}
+              updateSetting={updateSetting}
+              schemeView={schemeView}
+              setSchemeView={setSchemeView}
+              editingSchemeId={editingSchemeId}
+              setEditingSchemeId={setEditingSchemeId}
+              activeScheme={activeScheme}
+              startAddScheme={startAddScheme}
+              startEditScheme={startEditScheme}
+              handleSaveScheme={handleSaveScheme}
+              newSchemeName={newSchemeName}
+              setNewSchemeName={setNewSchemeName}
+              newSchemeColors={newSchemeColors}
+              updateSchemeColor={updateSchemeColor}
+              isGlobalPaletteOpen={isGlobalPaletteOpen}
+              toggleGlobalPalette={toggleGlobalPalette}
+              schemeAiProvider={schemeAiProvider}
+              setSchemeAiProvider={setSchemeAiProvider}
+              schemeProviderOptions={schemeProviderOptions}
+              schemeAiModelId={schemeAiModelId}
+              setSchemeAiModelId={setSchemeAiModelId}
+              modelOptions={modelOptions}
+              schemeAiAgentId={schemeAiAgentId}
+              setSchemeAiAgentId={setSchemeAiAgentId}
+              agentOptions={agentOptions}
+              schemeAiPrompt={schemeAiPrompt}
+              setSchemeAiPrompt={setSchemeAiPrompt}
+              schemeAiLoading={schemeAiLoading}
+              schemeAiError={schemeAiError}
+              schemeAiOutput={schemeAiOutput}
+              schemeAiPreview={schemeAiPreview}
+              handleGenerateScheme={handleGenerateScheme}
+              handleCancelSchemeAi={handleCancelSchemeAi}
+            />
           );
 
         // ---------------------------------------------------------------
         case "Typography":
           return (
-            <div className="space-y-3">
-              <NumberField label="Base size" value={theme.baseSize} onChange={updateSetting("baseSize")} suffix="px" min={12} max={24} />
-              <SelectField label="Heading font" value={theme.headingFont} onChange={updateSetting("headingFont")} options={FONT_OPTIONS} />
-              <RangeField label="Heading size scale" value={theme.headingSizeScale} onChange={updateSetting("headingSizeScale")} min={0.5} max={2} step={0.05} suffix="x" />
-              <SelectField label="Heading weight" value={theme.headingWeight} onChange={updateSetting("headingWeight")} options={WEIGHT_OPTIONS} />
-              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={updateSetting("headingLineHeight")} min={1} max={2} step={0.1} />
-              <SelectField label="Body font" value={theme.bodyFont} onChange={updateSetting("bodyFont")} options={FONT_OPTIONS} />
-              <RangeField label="Body size scale" value={theme.bodySizeScale} onChange={updateSetting("bodySizeScale")} min={0.5} max={2} step={0.05} suffix="x" />
-              <SelectField label="Body weight" value={theme.bodyWeight} onChange={updateSetting("bodyWeight")} options={WEIGHT_OPTIONS} />
-              <RangeField label="Body line height" value={theme.lineHeight} onChange={updateSetting("lineHeight")} min={1} max={2.5} step={0.1} />
-            </div>
+            <ThemeTypographySection
+              theme={theme}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------
         case "Layout":
           return (
-            <div className="space-y-3">
-              <CheckboxField label="Full width page" checked={theme.fullWidth} onChange={updateSetting("fullWidth")} />
-              <RangeField label="Max content width" value={theme.maxContentWidth} onChange={updateSetting("maxContentWidth")} min={800} max={1600} suffix="px" />
-              <RangeField label="Grid gutter" value={theme.gridGutter} onChange={updateSetting("gridGutter")} min={8} max={48} suffix="px" />
-              <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={updateSetting("sectionSpacing")} min={16} max={128} suffix="px" />
-              <RangeField label="Container padding" value={theme.containerPadding} onChange={updateSetting("containerPadding")} min={8} max={64} suffix="px" />
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page padding (px)</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <NumberField label="Top" value={theme.pagePaddingTop} onChange={updateSetting("pagePaddingTop")} suffix="px" min={0} max={200} />
-                  <NumberField label="Right" value={theme.pagePaddingRight} onChange={updateSetting("pagePaddingRight")} suffix="px" min={0} max={200} />
-                  <NumberField label="Bottom" value={theme.pagePaddingBottom} onChange={updateSetting("pagePaddingBottom")} suffix="px" min={0} max={200} />
-                  <NumberField label="Left" value={theme.pagePaddingLeft} onChange={updateSetting("pagePaddingLeft")} suffix="px" min={0} max={200} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page margin (px)</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <NumberField label="Top" value={theme.pageMarginTop} onChange={updateSetting("pageMarginTop")} suffix="px" min={0} max={200} />
-                  <NumberField label="Right" value={theme.pageMarginRight} onChange={updateSetting("pageMarginRight")} suffix="px" min={0} max={200} />
-                  <NumberField label="Bottom" value={theme.pageMarginBottom} onChange={updateSetting("pageMarginBottom")} suffix="px" min={0} max={200} />
-                  <NumberField label="Left" value={theme.pageMarginLeft} onChange={updateSetting("pageMarginLeft")} suffix="px" min={0} max={200} />
-                </div>
-              </div>
-              <RangeField label="Page corner radius" value={theme.borderRadius} onChange={updateSetting("borderRadius")} min={0} max={40} suffix="px" />
-            </div>
+            <ThemeLayoutSection
+              theme={theme}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------
@@ -1490,49 +1003,10 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         // ---------------------------------------------------------------
         case "Buttons":
           return (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Padding X" value={theme.btnPaddingX} onChange={updateSetting("btnPaddingX")} suffix="px" min={4} max={48} />
-                <NumberField label="Padding Y" value={theme.btnPaddingY} onChange={updateSetting("btnPaddingY")} suffix="px" min={4} max={24} />
-              </div>
-              <NumberField label="Font size" value={theme.btnFontSize} onChange={updateSetting("btnFontSize")} suffix="px" min={10} max={24} />
-              <SelectField label="Font weight" value={theme.btnFontWeight} onChange={updateSetting("btnFontWeight")} options={WEIGHT_OPTIONS} />
-              <NumberField label="Radius" value={theme.btnRadius} onChange={updateSetting("btnRadius")} suffix="px" min={0} max={24} />
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Primary</Label>
-                <div className="space-y-2">
-                  <ColorField label="Background" value={theme.btnPrimaryBg} onChange={updateSetting("btnPrimaryBg")} />
-                  <ColorField label="Text" value={theme.btnPrimaryText} onChange={updateSetting("btnPrimaryText")} />
-                </div>
-              </div>
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Secondary</Label>
-                <div className="space-y-2">
-                  <ColorField label="Background" value={theme.btnSecondaryBg} onChange={updateSetting("btnSecondaryBg")} />
-                  <ColorField label="Text" value={theme.btnSecondaryText} onChange={updateSetting("btnSecondaryText")} />
-                </div>
-              </div>
-              <ColorField label="Outline border" value={theme.btnOutlineBorder} onChange={updateSetting("btnOutlineBorder")} />
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
-                <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.btnBorderWidth} onChange={updateSetting("btnBorderWidth")} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.btnBorderOpacity} onChange={updateSetting("btnBorderOpacity")} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.btnBorderRadius} onChange={updateSetting("btnBorderRadius")} suffix="px" min={0} max={48} />
-                </div>
-              </div>
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
-                <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.btnShadowOpacity} onChange={updateSetting("btnShadowOpacity")} min={0} max={100} suffix="%" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.btnShadowX} onChange={updateSetting("btnShadowX")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.btnShadowY} onChange={updateSetting("btnShadowY")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.btnShadowBlur} onChange={updateSetting("btnShadowBlur")} suffix="px" min={0} max={40} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ThemeButtonsSection
+              theme={theme}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------
@@ -1607,148 +1081,31 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         // ---------------------------------------------------------------
         case "Product Cards":
           return (
-            <div className="space-y-3">
-              <SelectField label="Style" value={theme.cardStyle} onChange={updateSetting("cardStyle")} options={[
-                { label: "Standard", value: "standard" },
-                { label: "Card", value: "card" },
-              ]} />
-              <SelectField label="Image ratio" value={theme.cardImageRatio} onChange={updateSetting("cardImageRatio")} options={[
-                { label: "1:1 Square", value: "1:1" },
-                { label: "3:4 Portrait", value: "3:4" },
-                { label: "4:3 Landscape", value: "4:3" },
-                { label: "16:9 Wide", value: "16:9" },
-              ]} />
-              <RangeField label="Image padding" value={theme.cardImagePadding} onChange={updateSetting("cardImagePadding")} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.cardTextAlignment} onChange={updateSetting("cardTextAlignment")} options={[
-                { label: "Left", value: "left" },
-                { label: "Center", value: "center" },
-                { label: "Right", value: "right" },
-              ]} />
-              <SelectField label="Color scheme" value={theme.cardColorScheme} onChange={(v: string): void => update("cardColorScheme", v)} options={
-                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
-              } />
-              <NumberField label="Radius" value={theme.cardRadius} onChange={updateSetting("cardRadius")} suffix="px" min={0} max={24} />
-              <ColorField label="Background" value={theme.cardBg} onChange={updateSetting("cardBg")} />
-              <SelectField label="Shadow" value={theme.cardShadow} onChange={updateSetting("cardShadow")} options={[
-                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
-              ]} />
-              <SelectField label="Hover shadow" value={theme.cardHoverShadow} onChange={updateSetting("cardHoverShadow")} options={[
-                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
-              ]} />
-              <CheckboxField label="Show badge" checked={theme.showBadge} onChange={updateSetting("showBadge")} />
-              <CheckboxField label="Show quick-add button" checked={theme.showQuickAdd} onChange={updateSetting("showQuickAdd")} />
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
-                <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.cardBorderWidth} onChange={updateSetting("cardBorderWidth")} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.cardBorderOpacity} onChange={updateSetting("cardBorderOpacity")} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.cardBorderRadius} onChange={updateSetting("cardBorderRadius")} suffix="px" min={0} max={48} />
-                </div>
-              </div>
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
-                <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.cardShadowOpacity} onChange={updateSetting("cardShadowOpacity")} min={0} max={100} suffix="%" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.cardShadowX} onChange={updateSetting("cardShadowX")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.cardShadowY} onChange={updateSetting("cardShadowY")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.cardShadowBlur} onChange={updateSetting("cardShadowBlur")} suffix="px" min={0} max={40} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ThemeProductCardsSection
+              theme={theme}
+              update={update}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------
         case "Collection Cards":
           return (
-            <div className="space-y-3">
-              <SelectField label="Style" value={theme.collectionStyle} onChange={updateSetting("collectionStyle")} options={[
-                { label: "Standard", value: "standard" },
-                { label: "Card", value: "card" },
-              ]} />
-              <SelectField label="Image ratio" value={theme.collectionRatio} onChange={updateSetting("collectionRatio")} options={[
-                { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
-              ]} />
-              <RangeField label="Image padding" value={theme.collectionImagePadding} onChange={updateSetting("collectionImagePadding")} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={updateSetting("collectionTextAlign")} options={[
-                { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
-              ]} />
-              <SelectField label="Color scheme" value={theme.collectionColorScheme} onChange={(v: string): void => update("collectionColorScheme", v)} options={
-                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
-              } />
-              <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={updateSetting("collectionOverlay")} />
-              {theme.collectionOverlay && (
-                <ColorField label="Overlay color" value={theme.collectionOverlayColor} onChange={updateSetting("collectionOverlayColor")} />
-              )}
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
-                <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.collectionBorderWidth} onChange={updateSetting("collectionBorderWidth")} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.collectionBorderOpacity} onChange={updateSetting("collectionBorderOpacity")} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.collectionRadius} onChange={updateSetting("collectionRadius")} suffix="px" min={0} max={24} />
-                </div>
-              </div>
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
-                <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.collectionShadowOpacity} onChange={updateSetting("collectionShadowOpacity")} min={0} max={100} suffix="%" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.collectionShadowX} onChange={updateSetting("collectionShadowX")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.collectionShadowY} onChange={updateSetting("collectionShadowY")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.collectionShadowBlur} onChange={updateSetting("collectionShadowBlur")} suffix="px" min={0} max={40} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ThemeCollectionCardsSection
+              theme={theme}
+              update={update}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------
         case "Blog Cards":
           return (
-            <div className="space-y-3">
-              <SelectField label="Style" value={theme.blogStyle} onChange={updateSetting("blogStyle")} options={[
-                { label: "Standard", value: "standard" },
-                { label: "Card", value: "card" },
-              ]} />
-              <SelectField label="Image ratio" value={theme.blogRatio} onChange={updateSetting("blogRatio")} options={[
-                { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
-              ]} />
-              <RangeField label="Image padding" value={theme.blogImagePadding} onChange={updateSetting("blogImagePadding")} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.blogTextAlignment} onChange={updateSetting("blogTextAlignment")} options={[
-                { label: "Left", value: "left" },
-                { label: "Center", value: "center" },
-                { label: "Right", value: "right" },
-              ]} />
-              <SelectField label="Color scheme" value={theme.blogColorScheme} onChange={(v: string): void => update("blogColorScheme", v)} options={
-                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
-              } />
-              <NumberField label="Radius" value={theme.blogRadius} onChange={updateSetting("blogRadius")} suffix="px" min={0} max={24} />
-              <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={updateSetting("blogShowDate")} />
-              <CheckboxField label="Show excerpt" checked={theme.blogShowExcerpt} onChange={updateSetting("blogShowExcerpt")} />
-              {theme.blogShowExcerpt && (
-                <NumberField label="Excerpt lines" value={theme.blogExcerptLines} onChange={updateSetting("blogExcerptLines")} min={1} max={5} />
-              )}
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
-                <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.blogBorderWidth} onChange={updateSetting("blogBorderWidth")} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.blogBorderOpacity} onChange={updateSetting("blogBorderOpacity")} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.blogBorderRadius} onChange={updateSetting("blogBorderRadius")} suffix="px" min={0} max={48} />
-                </div>
-              </div>
-              <div className="border-t border-border/30 pt-2">
-                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
-                <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.blogShadowOpacity} onChange={updateSetting("blogShadowOpacity")} min={0} max={100} suffix="%" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.blogShadowX} onChange={updateSetting("blogShadowX")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.blogShadowY} onChange={updateSetting("blogShadowY")} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.blogShadowBlur} onChange={updateSetting("blogShadowBlur")} suffix="px" min={0} max={40} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ThemeBlogCardsSection
+              theme={theme}
+              update={update}
+              updateSetting={updateSetting}
+            />
           );
 
         // ---------------------------------------------------------------

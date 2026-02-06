@@ -1,21 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush, Pencil, Check, X } from "lucide-react";
-import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, SectionPanel, useToast } from "@/shared/ui";
-import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance, PageZone } from "../../types/page-builder";
+import { Trash2, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from "lucide-react";
+import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast } from "@/shared/ui";
+import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
-import type { PageStatus, Slug, PageSlugLink } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from "../../hooks/useCmsQueries";
-import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from "./section-registry";
-import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
 import { CssAnimationConfigPanel } from "./CssAnimationConfigPanel";
 import type { CssAnimationConfig } from "@/features/cms/types/css-animations";
-import type { CustomCssAiConfig, CustomCssAiProvider } from "@/features/cms/types/custom-css-ai";
+import type { CustomCssAiConfig } from "@/features/cms/types/custom-css-ai";
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from "@/features/cms/types/custom-css-ai";
 import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
@@ -23,13 +18,7 @@ import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
 import { logClientError } from "@/features/observability";
-import { RangeField, SelectField } from "./shared-fields";
-import { SECTION_TEMPLATES } from "./section-templates";
 import {
-  EVENT_CLICK_ACTION_OPTIONS,
-  EVENT_CLICK_TARGET_OPTIONS,
-  EVENT_HOVER_EFFECT_OPTIONS,
-  EVENT_SCROLL_BEHAVIOR_OPTIONS,
   getEventEffectsConfig,
 } from "@/features/cms/utils/event-effects";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
@@ -37,108 +26,14 @@ import { useTeachingAgents } from "@/features/ai/agentcreator/teaching/hooks/use
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import type { ChatMessage } from "@/shared/types/chatbot";
 
-const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
-const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
+import { prependManagementFields, groupSettingsFields, renderFieldGroups } from "./settings/field-group-helpers";
+import { PageSettingsTab } from "./settings/PageSettingsTab";
+import { CssAiSection, extractCssFromResponse, extractJsonFromResponse } from "./settings/CssAiSection";
+import { ContentAiSection } from "./settings/ContentAiSection";
+import { EventEffectsTab } from "./settings/EventEffectsTab";
+import { ConnectionsTab } from "./settings/ConnectionsTab";
+
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
-const MANAGEMENT_FIELDS: SettingsField[] = [
-  { key: "label", label: "Label", type: "text", defaultValue: "" },
-  { key: "notes", label: "Internal notes", type: "text", defaultValue: "" },
-];
-
-function prependManagementFields(schema: SettingsField[]): SettingsField[] {
-  const existing = new Set(schema.map((field: SettingsField) => field.key));
-  const extra = MANAGEMENT_FIELDS.filter((field: SettingsField) => !existing.has(field.key));
-  return extra.length ? [...extra, ...schema] : schema;
-}
-
-interface FieldGroup {
-  kind: "single" | "padding" | "margin";
-  fields: SettingsField[];
-}
-
-/** Groups consecutive padding / margin number fields so they render compactly. */
-function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
-  const groups: FieldGroup[] = [];
-  let paddingBuf: SettingsField[] = [];
-  let marginBuf: SettingsField[] = [];
-
-  const flushPadding = (): void => {
-    if (paddingBuf.length) { groups.push({ kind: "padding", fields: paddingBuf }); paddingBuf = []; }
-  };
-  const flushMargin = (): void => {
-    if (marginBuf.length) { groups.push({ kind: "margin", fields: marginBuf }); marginBuf = []; }
-  };
-
-  for (const field of schema) {
-    if (PADDING_KEYS.has(field.key)) {
-      flushMargin();
-      paddingBuf.push(field);
-    } else if (MARGIN_KEYS.has(field.key)) {
-      flushPadding();
-      marginBuf.push(field);
-    } else {
-      flushPadding();
-      flushMargin();
-      groups.push({ kind: "single", fields: [field] });
-    }
-  }
-  flushPadding();
-  flushMargin();
-  return groups;
-}
-
-function renderFieldGroups(
-  groups: FieldGroup[],
-  settings: Record<string, unknown>,
-  onChange: (key: string, value: unknown) => void,
-  resolveField?: (field: SettingsField) => SettingsField,
-): React.ReactNode[] {
-  return groups.map((group: FieldGroup) => {
-    if (group.kind === "single") {
-      const raw = group.fields[0]!;
-      const field = resolveField ? resolveField(raw) : raw;
-      const legacyBackground =
-        field.type === "background" && settings[field.key] === undefined
-          ? ((): Record<string, unknown> | undefined => {
-              const bgColor = settings["backgroundColor"];
-              if (typeof bgColor !== "string") return undefined;
-              const trimmed = bgColor.trim();
-              if (!trimmed) return undefined;
-              return { type: "solid", color: trimmed };
-            })()
-          : undefined;
-      return (
-        <SettingsFieldRenderer
-          key={field.key}
-          field={field}
-          value={legacyBackground ?? settings[field.key]}
-          onChange={onChange}
-        />
-      );
-    }
-    const label = group.kind === "padding" ? "Padding" : "Margin";
-    return (
-      <div key={group.kind} className="space-y-1.5">
-        <Label className="text-xs text-gray-400">{label}</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {group.fields.map((field: SettingsField) => (
-            <div key={field.key} className="space-y-0.5">
-              <span className="text-[10px] text-gray-500 uppercase">
-                {field.key.replace(/^(padding|margin)/, "")}
-              </span>
-              <Input
-                type="number"
-                value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(field.key, Number(e.target.value))}
-                className="text-xs h-7 px-1.5"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  });
-}
 
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
@@ -162,7 +57,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const [cssAiLoading, setCssAiLoading] = useState<boolean>(false);
   const [cssAiError, setCssAiError] = useState<string | null>(null);
   const [cssAiOutput, setCssAiOutput] = useState<string>("");
-  const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
   const [contentAiProvider, setContentAiProvider] = useState<"model" | "agent">("model");
   const [contentAiModelId, setContentAiModelId] = useState<string>("");
   const [contentAiAgentId, setContentAiAgentId] = useState<string>("");
@@ -251,7 +145,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
     }, []);
 
-  
+
 
     const modelsQuery = useChatbotModels({ enabled: showCustomCssTab });
 
@@ -286,7 +180,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
       []
 
     );
-  const contextPlaceholder = "{{page_context}}\n{{element_context}}";
   const PAGE_CONTEXT_LIMIT = 6000;
   const ELEMENT_CONTEXT_LIMIT = 2500;
 
@@ -643,102 +536,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
     ]
   );
 
-  const extractCssFromResponse = useCallback((raw: string): string => {
-    const trimmed = raw.trim();
-    if (!trimmed) return "";
-    const fenceMatch = trimmed.match(/```(?:css)?\s*([\s\S]*?)```/i);
-    if (fenceMatch?.[1]) {
-      return fenceMatch[1].trim();
-    }
-    return trimmed.replace(/```/g, "").trim();
-  }, []);
-
-  const extractJsonFromResponse = useCallback((raw: string): Record<string, unknown> | null => {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-    const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
-    const first = candidate.indexOf("{");
-    const last = candidate.lastIndexOf("}");
-    const jsonText = first >= 0 && last > first ? candidate.slice(first, last + 1) : candidate;
-    try {
-      const parsed = JSON.parse(jsonText) as unknown;
-      if (!parsed || typeof parsed !== "object") return null;
-      return parsed as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const buildDiffLines = useCallback(
-    (
-      prev: string,
-      next: string,
-      limit: number = 220
-    ): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
-      const prevLines = prev.split("\n");
-      const nextLines = next.split("\n");
-      const max = Math.max(prevLines.length, nextLines.length);
-      const lines: Array<{ type: "add" | "remove" | "same"; text: string }> = [];
-      let truncated = false;
-      for (let index = 0; index < max; index += 1) {
-        const prevLine = prevLines[index];
-        const nextLine = nextLines[index];
-        if (prevLine === nextLine) {
-          if (prevLine !== undefined) {
-            lines.push({ type: "same", text: prevLine });
-          }
-        } else {
-          if (prevLine !== undefined) {
-            lines.push({ type: "remove", text: prevLine });
-          }
-          if (nextLine !== undefined) {
-            lines.push({ type: "add", text: nextLine });
-          }
-        }
-        if (lines.length >= limit) {
-          truncated = true;
-          break;
-        }
-      }
-      return { lines, truncated };
-    },
-    []
-  );
-
-  const cssDiff = useMemo(() => {
-    if (!cssAiOutput) return null;
-    return buildDiffLines(customCssValue, cssAiOutput);
-  }, [cssAiOutput, customCssValue, buildDiffLines]);
-
-  const cssDiffLines = useMemo(() => {
-    if (!cssDiff) return [];
-    return cssAiDiffOnly ? cssDiff.lines.filter((line: { type: "add" | "remove" | "same"; text: string }) => line.type !== "same") : cssDiff.lines;
-  }, [cssDiff, cssAiDiffOnly]);
-
-  const cssDiffStats = useMemo(() => {
-    if (!cssDiff) return { added: 0, removed: 0, same: 0 };
-    return cssDiff.lines.reduce(
-      (acc: { added: number; removed: number; same: number }, line: { type: "add" | "remove" | "same"; text: string }) => {
-        if (line.type === "add") acc.added += 1;
-        else if (line.type === "remove") acc.removed += 1;
-        else acc.same += 1;
-        return acc;
-      },
-      { added: 0, removed: 0, same: 0 }
-    );
-  }, [cssDiff]);
-
   const pageContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
-     
+
     contextPreviewNonce;
     return buildPageContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
 
   const elementContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return "";
-     
+
     contextPreviewNonce;
     return buildElementContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);
@@ -903,7 +710,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
     customCssAiConfig.agentId,
     customCssAiConfig.modelId,
     modelOptions,
-    extractCssFromResponse,
     cssAiAppend,
     cssAiAutoApply,
     customCssValue,
@@ -1390,7 +1196,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
     contentAiModelId,
     contentAiAgentId,
     modelOptions,
-    extractJsonFromResponse,
     toast,
   ]);
 
@@ -1409,7 +1214,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         ? (parsed.settings as Record<string, unknown>)
         : parsed;
     applyContentAiSettings(settingsSource);
-  }, [contentAiOutput, extractJsonFromResponse, applyContentAiSettings]);
+  }, [contentAiOutput, applyContentAiSettings]);
 
   const handleCancelContentAi = useCallback((): void => {
     if (contentAiAbortRef.current) {
@@ -1939,127 +1744,28 @@ export function ComponentSettingsPanel(): React.ReactNode {
           </TabsContent>
           {/* ---- AI tab ---- */}
           <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
-            <div className="space-y-3">
-              <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                AI content for <span className="text-gray-200">{selectedLabel}</span>
-              </div>
-              <SectionPanel variant="subtle-compact" className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase tracking-wider text-gray-400">
-                    Content AI
-                  </Label>
-                  <span className="text-[10px] text-gray-500">JSON output</span>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-400">Provider</Label>
-                  <UnifiedSelect
-                    value={contentAiProvider}
-                    onValueChange={(value: string): void => setContentAiProvider(value as "model" | "agent")}
-                    options={providerOptions}
-                    placeholder="Select provider"
-                  />
-                </div>
-                {contentAiProvider !== "agent" ? (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-400">Model</Label>
-                    <UnifiedSelect
-                      value={contentAiModelId}
-                      onValueChange={(value: string): void => setContentAiModelId(value)}
-                      options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-                      placeholder={modelOptions.length ? "Select model" : "No models available"}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-400">Deepthinking agent</Label>
-                    <UnifiedSelect
-                      value={contentAiAgentId}
-                      onValueChange={(value: string): void => setContentAiAgentId(value)}
-                      options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
-                      placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
-                    />
-                  </div>
-                )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-400">Prompt</Label>
-                  <Textarea
-                    value={contentAiPrompt}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                      setContentAiPrompt(e.target.value)
-                    }
-                    placeholder={`Describe the content you want.\n\nContext:\n${contentAiPlaceholder}`}
-                    className="min-h-[120px] text-xs"
-                    spellCheck={false}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-[11px] text-gray-500">Context placeholders</div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(): void => {
-                      const current = contentAiPrompt.trim();
-                      const nextPrompt = current.length ? `${current}\n\n${contentAiPlaceholder}` : contentAiPlaceholder;
-                      setContentAiPrompt(nextPrompt);
-                    }}
-                  >
-                    Insert placeholders
-                  </Button>
-                </div>
-                <Textarea
-                  value={contentAiPlaceholder}
-                  readOnly
-                  className="min-h-[64px] text-xs font-mono text-gray-300"
-                />
-                <div className="text-[11px] text-gray-500">
-                  <span className="font-mono text-gray-300">allowed_keys</span> = {contentAiAllowedKeys.length ? contentAiAllowedKeys.join(", ") : "No keys available."}
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={(): void => void handleGenerateContentAi()}
-                    disabled={contentAiLoading}
-                  >
-                    {contentAiLoading ? "Generating…" : "Generate JSON"}
-                  </Button>
-                  {contentAiLoading && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancelContentAi}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-                {contentAiError && (
-                  <div className="text-xs text-red-400">{contentAiError}</div>
-                )}
-                {contentAiOutput && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-gray-400">AI output</Label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={handleApplyContentAi}
-                      >
-                        Apply to settings
-                      </Button>
-                    </div>
-                    <Textarea
-                      value={contentAiOutput}
-                      readOnly
-                      className="min-h-[140px] text-xs font-mono text-gray-300"
-                    />
-                  </div>
-                )}
-              </SectionPanel>
-            </div>
+            <ContentAiSection
+              selectedLabel={selectedLabel}
+              contentAiProvider={contentAiProvider}
+              setContentAiProvider={setContentAiProvider}
+              contentAiModelId={contentAiModelId}
+              setContentAiModelId={setContentAiModelId}
+              contentAiAgentId={contentAiAgentId}
+              setContentAiAgentId={setContentAiAgentId}
+              contentAiPrompt={contentAiPrompt}
+              setContentAiPrompt={setContentAiPrompt}
+              contentAiLoading={contentAiLoading}
+              contentAiError={contentAiError}
+              contentAiOutput={contentAiOutput}
+              contentAiAllowedKeys={contentAiAllowedKeys}
+              contentAiPlaceholder={contentAiPlaceholder}
+              providerOptions={providerOptions}
+              modelOptions={modelOptions}
+              agentOptions={agentOptions}
+              onGenerateContentAi={(): void => void handleGenerateContentAi()}
+              onCancelContentAi={handleCancelContentAi}
+              onApplyContentAi={handleApplyContentAi}
+            />
           </TabsContent>
           {showCustomCssTab && (
             <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0">
@@ -2074,293 +1780,34 @@ export function ComponentSettingsPanel(): React.ReactNode {
                         : selectedBlock?.type ?? "Item"}
                   </span>
                 </div>
-                <SectionPanel variant="subtle-compact" className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase tracking-wider text-gray-400">
-                      CSS AI Assistant
-                    </Label>
-                    <span className="text-[10px] text-gray-500">Optional</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-400">Provider</Label>
-                    <UnifiedSelect
-                      value={customCssAiConfig.provider ?? "model"}
-                      onValueChange={(value: string): void =>
-                        handleCustomCssAiChange({ provider: value as CustomCssAiProvider })
-                      }
-                      options={providerOptions}
-                      placeholder="Select provider"
-                    />
-                  </div>
-                  {customCssAiConfig.provider !== "agent" ? (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-400">Model</Label>
-                      <UnifiedSelect
-                        value={customCssAiConfig.modelId ?? ""}
-                        onValueChange={(value: string): void =>
-                          handleCustomCssAiChange({ modelId: value })
-                        }
-                        options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-                        placeholder={modelOptions.length ? "Select model" : "No models available"}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-400">Deepthinking agent</Label>
-                      <UnifiedSelect
-                        value={customCssAiConfig.agentId ?? ""}
-                        onValueChange={(value: string): void =>
-                          handleCustomCssAiChange({ agentId: value })
-                        }
-                        options={
-                          agentOptions.length
-                            ? agentOptions
-                            : [{ label: "No agents configured", value: "" }]
-                        }
-                        placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-400">Prompt</Label>
-                    <Textarea
-                      value={customCssAiConfig.prompt ?? ""}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                        handleCustomCssAiChange({ prompt: e.target.value })
-                      }
-                      placeholder={`Describe the CSS you want.\n\nContext:\n${contextPlaceholder}`}
-                      className="min-h-[120px] text-xs"
-                      spellCheck={false}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-[11px] text-gray-500">Context placeholders</div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={(): void => {
-                        const current = (customCssAiConfig.prompt ?? "").trim();
-                        const nextPrompt = current.length
-                          ? `${current}\n\n${contextPlaceholder}`
-                          : contextPlaceholder;
-                        handleCustomCssAiChange({ prompt: nextPrompt });
-                      }}
-                    >
-                      Insert placeholders
-                    </Button>
-                  </div>
-                  <Textarea
-                    value={contextPlaceholder}
-                    readOnly
-                    className="min-h-[64px] text-xs font-mono text-gray-300"
-                  />
-                  <div className="text-[11px] text-gray-500">
-                    <span className="font-mono text-gray-300">page_context</span> = full page UI context,{" "}
-                    <span className="font-mono text-gray-300">element_context</span> = selected element details.
-                  </div>
-                  <div className="rounded border border-border/40 bg-gray-900/40 p-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Label className="text-xs text-gray-400">Context preview</Label>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label className="flex items-center gap-2 text-[11px] text-gray-300">
-                          <Switch
-                            checked={contextPreviewFull}
-                            onCheckedChange={(value: boolean | "indeterminate"): void =>
-                              setContextPreviewFull(value === true)
-                            }
-                          />
-                          Full context
-                        </label>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(): void => setContextPreviewNonce((prev: number) => prev + 1)}
-                        >
-                          Refresh
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(): void => setContextPreviewOpen((prev: boolean) => !prev)}
-                        >
-                          {contextPreviewOpen ? "Hide" : "Show"}
-                        </Button>
-                      </div>
-                    </div>
-                    {contextPreviewOpen ? (
-                      <Tabs
-                        value={contextPreviewTab}
-                        onValueChange={(value: string): void =>
-                          setContextPreviewTab(value as "page" | "element")
-                        }
-                        className="mt-3"
-                      >
-                        <TabsList className="w-full">
-                          <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
-                          <TabsTrigger value="element" className="flex-1 text-xs">Element</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="page" className="mt-2 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] text-gray-400">Full page context</span>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={(): void => void handleCopyContext(pageContextPreview)}
-                            >
-                              Copy
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={pageContextPreview}
-                            readOnly
-                            className="min-h-[160px] text-xs font-mono text-gray-300"
-                          />
-                        </TabsContent>
-                        <TabsContent value="element" className="mt-2 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] text-gray-400">Selected element context</span>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={(): void => void handleCopyContext(elementContextPreview)}
-                            >
-                              Copy
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={elementContextPreview}
-                            readOnly
-                            className="min-h-[160px] text-xs font-mono text-gray-300"
-                          />
-                        </TabsContent>
-                      </Tabs>
-                    ) : (
-                      <div className="mt-2 text-[11px] text-gray-500">
-                        Preview the raw context payloads used for AI prompts.
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs text-gray-300">
-                      <Switch
-                        checked={cssAiAutoApply}
-                        onCheckedChange={(value: boolean | "indeterminate"): void =>
-                          setCssAiAutoApply(value === true)
-                        }
-                      />
-                      Auto-apply on generate
-                    </label>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={(): void => void handleGenerateCss()}
-                      disabled={cssAiLoading}
-                    >
-                      {cssAiLoading ? "Generating…" : "Generate CSS"}
-                    </Button>
-                    {cssAiLoading && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCancelCss}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                  {cssAiAutoApply && (
-                    <label className="flex items-center gap-2 text-xs text-gray-300">
-                      <Switch
-                        checked={cssAiAppend}
-                        onCheckedChange={(value: boolean | "indeterminate"): void =>
-                          setCssAiAppend(value === true)
-                        }
-                      />
-                      Append when auto-applying
-                    </label>
-                  )}
-                  {cssAiError && (
-                    <div className="text-xs text-red-400">{cssAiError}</div>
-                  )}
-                  {cssAiOutput && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs text-gray-400">Last generated CSS</Label>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(): void => handleApplyGeneratedCss("append")}
-                          >
-                            Apply append
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(): void => handleApplyGeneratedCss("replace")}
-                          >
-                            Apply replace
-                          </Button>
-                        </div>
-                      </div>
-                      <Textarea
-                        value={cssAiOutput}
-                        readOnly
-                        className="min-h-[120px] text-xs font-mono text-gray-300"
-                      />
-                      <div className="rounded border border-border/40 bg-gray-900/40 p-2">
-                        <div className="flex items-center justify-between text-[11px] text-gray-400">
-                          <div className="flex items-center gap-3">
-                            <span>Diff</span>
-                            <span className="text-emerald-300">+{cssDiffStats.added}</span>
-                            <span className="text-rose-300">-{cssDiffStats.removed}</span>
-                            <span className="text-gray-500">={cssDiffStats.same}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={(): void => setCssAiDiffOnly((prev: boolean) => !prev)}
-                          >
-                            {cssAiDiffOnly ? "Changes only" : "Show all"}
-                          </Button>
-                        </div>
-                        <div className="mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]">
-                          {cssDiffLines.length > 0 ? (
-                            cssDiffLines.map((line: { type: "add" | "remove" | "same"; text: string }, index: number) => {
-                              const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
-                              const colorClass =
-                                line.type === "add"
-                                  ? "text-emerald-300"
-                                  : line.type === "remove"
-                                    ? "text-rose-300"
-                                    : "text-gray-300";
-                              return (
-                                <div key={`${line.type}-${index}`} className={`whitespace-pre ${colorClass}`}>
-                                  {prefix}
-                                  {line.text}
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="text-gray-500">No differences yet.</div>
-                          )}
-                          {cssDiff?.truncated ? (
-                            <div className="mt-1 text-gray-500">Diff truncated…</div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </SectionPanel>
+                <CssAiSection
+                  customCssValue={customCssValue}
+                  cssAiOutput={cssAiOutput}
+                  cssAiError={cssAiError}
+                  cssAiLoading={cssAiLoading}
+                  cssAiAutoApply={cssAiAutoApply}
+                  setCssAiAutoApply={setCssAiAutoApply}
+                  cssAiAppend={cssAiAppend}
+                  setCssAiAppend={setCssAiAppend}
+                  onGenerateCss={(): void => void handleGenerateCss()}
+                  onCancelCss={handleCancelCss}
+                  onApplyGeneratedCss={handleApplyGeneratedCss}
+                  customCssAiConfig={customCssAiConfig}
+                  onCustomCssAiChange={handleCustomCssAiChange}
+                  providerOptions={providerOptions}
+                  modelOptions={modelOptions}
+                  agentOptions={agentOptions}
+                  contextPreviewOpen={contextPreviewOpen}
+                  setContextPreviewOpen={setContextPreviewOpen}
+                  contextPreviewTab={contextPreviewTab}
+                  setContextPreviewTab={setContextPreviewTab}
+                  contextPreviewFull={contextPreviewFull}
+                  setContextPreviewFull={setContextPreviewFull}
+                  setContextPreviewNonce={setContextPreviewNonce}
+                  pageContextPreview={pageContextPreview}
+                  elementContextPreview={elementContextPreview}
+                  onCopyContext={(value: string): void => void handleCopyContext(value)}
+                />
                 <div className="text-[11px] text-gray-500">
                   Use <span className="font-mono text-gray-300">parent</span> to target this element and{" "}
                   <span className="font-mono text-gray-300">children</span> to target its direct children.
@@ -2377,1024 +1824,26 @@ export function ComponentSettingsPanel(): React.ReactNode {
           )}
           {showEventsTab && (
             <TabsContent value="events" className="flex-1 overflow-y-auto p-4 mt-0">
-              {!eventConfig ? (
-                <div className="text-xs text-gray-500">Select a block or section to configure event effects.</div>
-              ) : (
-                <div className="space-y-5">
-                  <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                    Event effects for{" "}
-                    <span className="text-gray-200">
-                      {selectedBlock ? blockDef?.label ?? "Block" : sectionDef?.label ?? "Section"}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Hover</div>
-                    <SelectField
-                      label="Hover effect"
-                      value={eventConfig.hoverEffect}
-                      onChange={(value: string): void => handleEventSettingChange("eventHoverEffect", value)}
-                      options={EVENT_HOVER_EFFECT_OPTIONS}
-                    />
-                    <RangeField
-                      label="Hover scale"
-                      value={eventConfig.hoverScale}
-                      onChange={(value: number): void => handleEventSettingChange("eventHoverScale", value)}
-                      min={1}
-                      max={1.2}
-                      step={0.01}
-                      suffix="x"
-                      disabled={eventConfig.hoverEffect === "none"}
-                    />
-                    <p className="text-[11px] text-gray-500">
-                      Hover effects preview in the builder; they apply on the live site too.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Click</div>
-                    <SelectField
-                      label="Click action"
-                      value={eventConfig.clickAction}
-                      onChange={(value: string): void => handleEventSettingChange("eventClickAction", value)}
-                      options={EVENT_CLICK_ACTION_OPTIONS}
-                    />
-
-                    {eventConfig.clickAction === "navigate" && (
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
-                          URL
-                        </Label>
-                        <Input
-                          value={eventConfig.clickUrl}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                            handleEventSettingChange("eventClickUrl", e.target.value)
-                          }
-                          placeholder="https://example.com"
-                          className="h-8 text-xs"
-                        />
-                        <SelectField
-                          label="Open link"
-                          value={eventConfig.clickTarget}
-                          onChange={(value: string): void => handleEventSettingChange("eventClickTarget", value)}
-                          options={EVENT_CLICK_TARGET_OPTIONS}
-                        />
-                      </div>
-                    )}
-
-                    {eventConfig.clickAction === "scroll" && (
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
-                          Target ID
-                        </Label>
-                        <Input
-                          value={eventConfig.clickScrollTarget}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                            handleEventSettingChange("eventClickScrollTarget", e.target.value)
-                          }
-                          placeholder="hero-section"
-                          className="h-8 text-xs"
-                        />
-                        <SelectField
-                          label="Scroll behavior"
-                          value={eventConfig.clickScrollBehavior}
-                          onChange={(value: string): void => handleEventSettingChange("eventClickScrollBehavior", value)}
-                          options={EVENT_SCROLL_BEHAVIOR_OPTIONS}
-                        />
-                        <p className="text-[11px] text-gray-500">
-                          The target should match an element ID (with or without #).
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              <EventEffectsTab
+                eventConfig={eventConfig}
+                selectedBlockLabel={selectedBlock ? blockDef?.label ?? "Block" : null}
+                selectedSectionLabel={selectedSection ? sectionDef?.label ?? "Section" : null}
+                onEventSettingChange={handleEventSettingChange}
+              />
             </TabsContent>
           )}
           {showConnectionsTab && (
             <TabsContent value="connections" className="flex-1 overflow-y-auto p-4 mt-0">
-              {!hasSelection ? (
-                <div className="text-xs text-gray-500">Select an element to configure connections.</div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                    Connection settings for <span className="text-gray-200">{selectedLabel}</span>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Data source</Label>
-                    <Input
-                      value={connectionSettings.source}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ source: e.target.value })
-                      }
-                      placeholder="e.g. product, collection, hero"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Key path</Label>
-                    <Input
-                      value={connectionSettings.path}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ path: e.target.value })
-                      }
-                      placeholder="e.g. title, hero.text"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Fallback</Label>
-                    <Input
-                      value={connectionSettings.fallback}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ fallback: e.target.value })
-                      }
-                      placeholder="Optional fallback text"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <label className="flex items-center gap-2 text-xs text-gray-400">
-                    <Checkbox
-                      checked={connectionSettings.enabled}
-                      onCheckedChange={(value: boolean | "indeterminate"): void =>
-                        updateConnectionSetting({ enabled: value === true })
-                      }
-                    />
-                    Enable data connection
-                  </label>
-                </div>
-              )}
+              <ConnectionsTab
+                hasSelection={hasSelection}
+                selectedLabel={selectedLabel}
+                connectionSettings={connectionSettings}
+                updateConnectionSetting={updateConnectionSetting}
+              />
             </TabsContent>
           )}
         </Tabs>
       )}
     </aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page-level settings (status + SEO) — shown when no node is selected
-// ---------------------------------------------------------------------------
-
-const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
-  { label: "Draft", value: "draft" },
-  { label: "Published", value: "published" },
-];
-
-function PageSettingsTab(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
-  const page = state.currentPage;
-  const { activeDomainId } = useCmsDomainSelection();
-  const slugsQuery = useCmsSlugs(activeDomainId);
-  const allSlugsQuery = useCmsAllSlugs(Boolean(page));
-  const updateSlug = useUpdateSlug();
-  const [search, setSearch] = useState("");
-  const { toast } = useToast();
-  const [pageAiProvider, setPageAiProvider] = useState<"model" | "agent">("model");
-  const [pageAiModelId, setPageAiModelId] = useState<string>("");
-  const [pageAiAgentId, setPageAiAgentId] = useState<string>("");
-  const [pageAiPrompt, setPageAiPrompt] = useState<string>("");
-  const [pageAiTask, setPageAiTask] = useState<"layout" | "seo">("layout");
-  const [pageAiOutput, setPageAiOutput] = useState<string>("");
-  const [pageAiError, setPageAiError] = useState<string | null>(null);
-  const [pageAiLoading, setPageAiLoading] = useState<boolean>(false);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const pageAiAbortRef = useRef<AbortController | null>(null);
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
-  const modelsQuery = useChatbotModels();
-  const teachingAgentsQuery = useTeachingAgents();
-
-  const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
-  const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
-  const modelOptions = useMemo((): string[] => {
-    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
-    return Array.from(new Set(fromApi));
-  }, [modelsQuery.data]);
-  const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
-    [teachingAgentsQuery.data]
-  );
-  const pageAiTaskOptions = useMemo(
-    () => [
-      { label: "Layout plan", value: "layout" },
-      { label: "SEO metadata", value: "seo" },
-    ],
-    []
-  );
-  const pageAiProviderOptions = useMemo(
-    () => [
-      { label: "AI model", value: "model" },
-      { label: "Deepthinking agent", value: "agent" },
-    ],
-    []
-  );
-
-  useEffect((): void => {
-    if (pageAiProvider !== "model") return;
-    if (pageAiModelId.trim().length) return;
-    if (!modelOptions.length) return;
-    setPageAiModelId(modelOptions[0]!);
-  }, [pageAiProvider, pageAiModelId, modelOptions]);
-
-  useEffect((): void => {
-    setPageAiOutput("");
-    setPageAiError(null);
-  }, [pageAiTask]);
-
-  useEffect((): void => {
-    if (!isEditingName) return;
-    if (nameInputRef.current) {
-      nameInputRef.current.focus();
-      nameInputRef.current.select?.();
-    }
-  }, [isEditingName]);
-  const allSlugByValue = useMemo((): Map<string, Slug> => {
-    const map = new Map<string, Slug>();
-    allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
-    return map;
-  }, [allSlugs]);
-
-  const selectedSlugIds = useMemo((): string[] => {
-    if (!page) return [];
-    const pageSlugValues = (page.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
-    return pageSlugValues
-      .map((value: string) => allSlugByValue.get(value)?.id)
-      .filter((value: string | undefined): value is string => Boolean(value));
-  }, [page, allSlugByValue]);
-
-  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
-  const selectedSlugs = useMemo((): Slug[] => {
-    const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
-    return selectedSlugIds
-      .map((idValue: string) => byId.get(idValue))
-      .filter((value: Slug | undefined): value is Slug => Boolean(value));
-  }, [allSlugs, selectedSlugIds]);
-
-  const crossZoneSlugs = useMemo(
-    (): Slug[] => selectedSlugs.filter((slug: Slug) => !domainSlugIds.has(slug.id)),
-    [selectedSlugs, domainSlugIds]
-  );
-  const eligibleHomeSlugs = useMemo(
-    (): Slug[] => selectedSlugs.filter((slug: Slug) => domainSlugIds.has(slug.id)),
-    [selectedSlugs, domainSlugIds]
-  );
-  const currentHomeSlug = useMemo(
-    (): Slug | null => domainSlugs.find((slug: Slug) => slug.isDefault) ?? null,
-    [domainSlugs]
-  );
-  const pageHomeSlug = useMemo(
-    (): Slug | null => (currentHomeSlug ? eligibleHomeSlugs.find((slug: Slug) => slug.id === currentHomeSlug.id) ?? null : null),
-    [currentHomeSlug, eligibleHomeSlugs]
-  );
-
-  const filteredDomainSlugs = useMemo((): Slug[] => {
-    const term = search.trim().toLowerCase();
-    if (!term) return domainSlugs;
-    return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
-  }, [domainSlugs, search]);
-
-  const handleStatusChange = (status: PageStatus): void => {
-    dispatch({ type: "SET_PAGE_STATUS", status });
-  };
-
-  const handleNameChange = (value: string): void => {
-    dispatch({ type: "SET_PAGE_NAME", name: value });
-  };
-
-  const handleSeoChange = (key: string, value: string): void => {
-    dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
-  };
-
-  const handleMenuVisibilityChange = (checked: boolean): void => {
-    dispatch({ type: "SET_PAGE_MENU_VISIBILITY", showMenu: checked });
-  };
-
-  const showMenuValue = page ? page.showMenu !== false : false;
-
-  const applySelectedSlugIds = (ids: string[]): void => {
-    const selectedSlugsList = ids
-      .map((idValue: string) => allSlugs.find((slug: Slug) => slug.id === idValue))
-      .filter((value: Slug | undefined): value is Slug => Boolean(value));
-    dispatch({
-      type: "UPDATE_PAGE_SLUGS",
-      slugIds: ids,
-      slugValues: selectedSlugsList.map((slug: Slug) => slug.slug),
-    });
-  };
-
-  const handleToggleSlug = (slug: Slug): void => {
-    const nextIds = selectedSlugIds.includes(slug.id)
-      ? selectedSlugIds.filter((idValue: string) => idValue !== slug.id)
-      : [...selectedSlugIds, slug.id];
-    applySelectedSlugIds(nextIds);
-  };
-
-  const handleRemoveSlug = (slug: Slug): void => {
-    applySelectedSlugIds(selectedSlugIds.filter((idValue: string) => idValue !== slug.id));
-  };
-
-  const handleSetHome = async (slug: Slug): Promise<void> => {
-    await updateSlug.mutateAsync({
-      id: slug.id,
-      input: { slug: slug.slug, isDefault: true },
-      domainId: activeDomainId,
-    });
-  };
-
-  useEffect((): (() => void) => {
-    return (): void => {
-      if (pageAiAbortRef.current) {
-        pageAiAbortRef.current.abort();
-        pageAiAbortRef.current = null;
-      }
-    };
-  }, []);
-
-  const pageContext = useMemo((): string => {
-    if (!page) return "No page loaded.";
-    return JSON.stringify(
-      {
-        page: {
-          id: page.id,
-          name: page.name,
-          status: page.status,
-          slugs: page.slugs ?? [],
-          seoTitle: page.seoTitle,
-          seoDescription: page.seoDescription,
-          seoCanonical: page.seoCanonical,
-          seoOgImage: page.seoOgImage,
-          robotsMeta: page.robotsMeta,
-        },
-        sections: state.sections.map((section: SectionInstance) => ({
-          id: section.id,
-          type: section.type,
-          zone: section.zone,
-        })),
-      },
-      null,
-      2
-    );
-  }, [page, state.sections]);
-
-  const pageAiPlaceholder = "{{page_context}}\n{{available_templates}}";
-  const templateCatalog = useMemo(
-    () =>
-      SECTION_TEMPLATES.map(
-        (template: (typeof SECTION_TEMPLATES)[number]) =>
-          `- ${template.name} (${template.category}): ${template.description}`
-      ).join("\n"),
-    []
-  );
-
-  const extractPageAiJson = useCallback((raw: string): Record<string, unknown> | null => {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-    const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
-    const first = candidate.indexOf("{");
-    const last = candidate.lastIndexOf("}");
-    const jsonText = first >= 0 && last > first ? candidate.slice(first, last + 1) : candidate;
-    try {
-      const parsed = JSON.parse(jsonText) as unknown;
-      if (!parsed || typeof parsed !== "object") return null;
-      return parsed as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const buildPageAiPrompt = useCallback((): string => {
-    const basePrompt = pageAiPrompt.trim();
-    const defaultPrompt =
-      pageAiTask === "seo"
-        ? "Generate SEO metadata for this page. Return JSON with seoTitle, seoDescription, seoCanonical, seoOgImage, robotsMeta."
-        : "Create a layout plan using available templates. Return JSON with a sections array using template names.";
-    const promptBody = basePrompt.length ? basePrompt : defaultPrompt;
-    const resolved = promptBody
-      .replace(/{{\s*page_context\s*}}/gi, pageContext)
-      .replace(/{{\s*available_templates\s*}}/gi, templateCatalog);
-    const usesPlaceholders =
-      /{{\s*page_context\s*}}/i.test(promptBody) ||
-      /{{\s*available_templates\s*}}/i.test(promptBody);
-    if (usesPlaceholders) return resolved;
-    return `${resolved}\n\nPage context:\n${pageContext}\n\nAvailable templates:\n${templateCatalog}`;
-  }, [pageAiPrompt, pageAiTask, pageContext, templateCatalog]);
-
-  const handleGeneratePageAi = useCallback(async (): Promise<void> => {
-    if (pageAiLoading) return;
-    setPageAiError(null);
-    setPageAiOutput("");
-    setPageAiLoading(true);
-    try {
-      const prompt = buildPageAiPrompt();
-      if (!prompt.trim()) throw new Error("Prompt is empty.");
-
-      const provider = pageAiProvider;
-      const modelId = provider === "model" ? (pageAiModelId.trim() || modelOptions[0] || "") : "";
-      const agentId = provider === "agent" ? pageAiAgentId.trim() : "";
-      if (provider === "model" && !modelId) throw new Error("Select an AI model first.");
-      if (provider === "agent" && !agentId) throw new Error("Select a Deepthinking agent first.");
-
-      const messages: ChatMessage[] = [
-        {
-          role: "system",
-          content:
-            "You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.",
-        },
-        { role: "user", content: prompt },
-      ];
-
-      const controller = new AbortController();
-      pageAiAbortRef.current = controller;
-
-      const res = await fetch("/api/cms/css-ai/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({ provider, modelId, agentId, messages }),
-      });
-      if (!res.ok || !res.body) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Streaming request failed.");
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let accumulated = "";
-      let doneSignal = false;
-
-      const processEvent = (raw: string): void => {
-        const lines = raw.split("\n").map((line: string) => line.trim());
-        const dataLine = lines.find((line: string) => line.startsWith("data:"));
-        if (!dataLine) return;
-        const payload = JSON.parse(dataLine.replace(/^data:\s*/, "")) as {
-          delta?: string;
-          done?: boolean;
-          error?: string;
-        };
-        if (payload.error) {
-          throw new Error(payload.error);
-        }
-        if (payload.delta) {
-          accumulated += payload.delta;
-          setPageAiOutput(accumulated);
-        }
-        if (payload.done) {
-          doneSignal = true;
-        }
-      };
-
-      while (!doneSignal) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (!value) continue;
-        buffer += decoder.decode(value, { stream: true });
-        const chunks = buffer.split("\n\n");
-        buffer = chunks.pop() ?? "";
-        for (const chunk of chunks) {
-          processEvent(chunk);
-          if (doneSignal) break;
-        }
-      }
-      if (buffer.trim() && !doneSignal) {
-        processEvent(buffer);
-      }
-      if (doneSignal) {
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
-        }
-      }
-
-      const parsed = extractPageAiJson(accumulated);
-      if (!parsed) throw new Error("AI response did not include JSON.");
-      setPageAiOutput(JSON.stringify(parsed, null, 2));
-      toast(`AI output ready (${provider}).`, { variant: "success" });
-    } catch (error) {
-      if ((error as Error)?.name === "AbortError") {
-        setPageAiError("Generation cancelled.");
-        toast("Generation cancelled.", { variant: "info" });
-      } else {
-        const message = error instanceof Error ? error.message : "Failed to generate AI output.";
-        setPageAiError(message);
-        toast(message, { variant: "error" });
-      }
-    } finally {
-      setPageAiLoading(false);
-      pageAiAbortRef.current = null;
-    }
-  }, [
-    pageAiLoading,
-    buildPageAiPrompt,
-    pageAiProvider,
-    pageAiModelId,
-    pageAiAgentId,
-    modelOptions,
-    extractPageAiJson,
-    toast,
-  ]);
-
-  const handleApplyPageAi = useCallback((): void => {
-    if (!pageAiOutput.trim()) {
-      setPageAiError("No AI output to apply.");
-      return;
-    }
-    const parsed = extractPageAiJson(pageAiOutput);
-    if (!parsed) {
-      setPageAiError("AI output is not valid JSON.");
-      return;
-    }
-
-    if (pageAiTask === "seo") {
-      const source =
-        typeof parsed.seo === "object" && parsed.seo
-          ? (parsed.seo as Record<string, unknown>)
-          : parsed;
-      const seoPatch: Record<string, string> = {};
-      if (typeof source.seoTitle === "string") seoPatch.seoTitle = source.seoTitle;
-      if (typeof source.seoDescription === "string") seoPatch.seoDescription = source.seoDescription;
-      if (typeof source.seoCanonical === "string") seoPatch.seoCanonical = source.seoCanonical;
-      if (typeof source.seoOgImage === "string") seoPatch.seoOgImage = source.seoOgImage;
-      if (typeof source.robotsMeta === "string") seoPatch.robotsMeta = source.robotsMeta;
-      if (Object.keys(seoPatch).length === 0) {
-        setPageAiError("No SEO fields found in AI output.");
-        return;
-      }
-      dispatch({ type: "UPDATE_SEO", seo: seoPatch });
-      toast("SEO metadata applied.", { variant: "success" });
-      return;
-    }
-
-    const sectionsRaw =
-      Array.isArray(parsed)
-        ? parsed
-        : parsed.sections ?? parsed.layout ?? parsed.plan;
-    const sections = Array.isArray(sectionsRaw) ? sectionsRaw : [];
-    if (!sections.length) {
-      setPageAiError("No sections found in AI output.");
-      return;
-    }
-
-    const validZones = new Set<PageZone>(["header", "template", "footer"]);
-    let inserted = 0;
-    sections.forEach((item: unknown) => {
-      const entry = typeof item === "string" ? { template: item } : (item as Record<string, unknown>);
-      const templateName = typeof entry.template === "string" ? entry.template : typeof entry.name === "string" ? entry.name : "";
-      const typeName = typeof entry.type === "string" ? entry.type : "";
-      const zoneCandidate = typeof entry.zone === "string" ? entry.zone : "template";
-      const zone = validZones.has(zoneCandidate as PageZone) ? (zoneCandidate as PageZone) : "template";
-
-      if (templateName) {
-        const template = SECTION_TEMPLATES.find(
-          (tpl: (typeof SECTION_TEMPLATES)[number]) => tpl.name.toLowerCase() === templateName.toLowerCase()
-        );
-        if (!template) return;
-        const section = template.create();
-        section.zone = zone;
-        dispatch({ type: "INSERT_TEMPLATE_SECTION", section });
-        inserted += 1;
-        return;
-      }
-
-      if (typeName) {
-        const def = getSectionDefinition(typeName);
-        if (!def) return;
-        dispatch({ type: "ADD_SECTION", sectionType: typeName, zone });
-        inserted += 1;
-      }
-    });
-
-    if (inserted === 0) {
-      setPageAiError("No valid templates or section types matched.");
-      return;
-    }
-    toast(`Inserted ${inserted} section${inserted === 1 ? "" : "s"}.`, { variant: "success" });
-  }, [pageAiOutput, pageAiTask, extractPageAiJson, dispatch, toast]);
-
-  const handleCancelPageAi = useCallback((): void => {
-    if (pageAiAbortRef.current) {
-      pageAiAbortRef.current.abort();
-      pageAiAbortRef.current = null;
-    }
-  }, []);
-
-  if (!page) return null;
-
-  return (
-    <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
-      <div className="space-y-4 px-4 pt-4">
-        <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <FileText className="size-3 text-gray-500" />
-            {isEditingName ? (
-              <Input
-                id="page-name"
-                ref={nameInputRef}
-                value={page.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
-                onBlur={(): void => setIsEditingName(false)}
-                onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                  if (event.key === "Enter" || event.key === "Escape") {
-                    event.currentTarget.blur();
-                  }
-                }}
-                placeholder="Page name"
-                className="h-7 flex-1 bg-transparent px-2 text-xs"
-              />
-            ) : (
-              <span className="flex-1 truncate text-xs text-gray-200">
-                {page.name || "Untitled page"}
-              </span>
-            )}
-            {isEditingName ? (
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditingName(false)}
-                  className="h-6 w-6 text-emerald-300 hover:text-emerald-100"
-                  aria-label="Save page name"
-                >
-                  <Check className="size-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditingName(false)}
-                  className="h-6 w-6 text-rose-300 hover:text-rose-100"
-                  aria-label="Cancel editing page name"
-                >
-                  <X className="size-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditingName(true)}
-                className="h-6 w-6 text-gray-400 hover:text-white"
-                aria-label="Edit page name"
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
-          <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
-        </div>
-      </div>
-
-      <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
-        <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
-        <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
-        <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
-      </TabsList>
-
-      {/* ---- Page tab ---- */}
-      <TabsContent value="page" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          {/* Status */}
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Status</Label>
-            <div className="flex gap-2">
-              {STATUS_OPTIONS.map((opt: { label: string; value: PageStatus }) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={(): void => handleStatusChange(opt.value)}
-                  className={`flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition ${
-                    page.status === opt.value
-                      ? opt.value === "published"
-                        ? "border-green-500 bg-green-500/10 text-green-400"
-                        : "border-blue-500 bg-blue-500/10 text-blue-400"
-                      : "border-border/40 bg-gray-800/30 text-gray-400 hover:border-border/60"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {page.publishedAt && page.status === "published" && (
-              <p className="text-[10px] text-gray-500">
-                Published: {new Date(page.publishedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Menu</Label>
-            <div className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2">
-              <span className="text-xs text-gray-300">Show global menu on this page</span>
-              <Switch checked={showMenuValue} onCheckedChange={handleMenuVisibilityChange} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Slugs for this zone</Label>
-            <Input
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-              placeholder="Search slugs..."
-              className="h-8 text-xs"
-            />
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2">
-              {filteredDomainSlugs.length === 0 ? (
-                <p className="py-4 text-center text-xs text-gray-500">
-                  No slugs available for this zone.
-                </p>
-              ) : (
-                filteredDomainSlugs.map((slug: Slug) => {
-                  const checked = selectedSlugIds.includes(slug.id);
-                  return (
-                    <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(): void => handleToggleSlug(slug)}
-                      />
-                      /{slug.slug}
-                    </label>
-                  );
-                })
-              )}
-            </div>
-            <p className="text-[10px] text-gray-500">{selectedSlugIds.length} selected</p>
-          </div>
-
-          {crossZoneSlugs.length > 0 ? (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
-                Cross-zone slugs
-              </p>
-              <p className="mt-1 text-[10px] text-amber-200/80">
-                These slugs are not part of the current zone. Remove them or switch zones.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {crossZoneSlugs.map((slug: Slug) => (
-                  <button
-                    key={slug.id}
-                    type="button"
-                    onClick={(): void => handleRemoveSlug(slug)}
-                    className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
-                  >
-                    /{slug.slug} ×
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Home page</Label>
-            {eligibleHomeSlugs.length === 0 ? (
-              <p className="text-xs text-gray-500">
-                Assign at least one slug in this zone to set this page as the home page.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {eligibleHomeSlugs.map((slug: Slug) => {
-                  const isHome = currentHomeSlug?.id === slug.id;
-                  return (
-                    <div
-                      key={slug.id}
-                      className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-2.5 py-2 text-xs"
-                    >
-                      <span className="text-gray-200">/{slug.slug}</span>
-                      {isHome ? (
-                        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300">
-                          Home
-                        </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={updateSlug.isPending}
-                          onClick={(): void => { void handleSetHome(slug); }}
-                          className="h-6 px-2 text-[10px]"
-                        >
-                          Set as home
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-                {currentHomeSlug && !pageHomeSlug ? (
-                  <p className="text-[10px] text-gray-500">
-                    Current home page: /{currentHomeSlug.slug}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
-
-          <p className="text-xs text-gray-500">
-            Select a section or block from the tree to edit its settings.
-          </p>
-        </div>
-      </TabsContent>
-
-      {/* ---- SEO tab ---- */}
-      <TabsContent value="seo" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            <Globe className="mr-1.5 inline size-3" />
-            Search Engine Optimization
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-title" className="text-xs text-gray-400">Page title</Label>
-            <Input
-              id="seo-title"
-              value={page.seoTitle ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoTitle", e.target.value)}
-              placeholder={page.name}
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-desc" className="text-xs text-gray-400">Meta description</Label>
-            <Input
-              id="seo-desc"
-              value={page.seoDescription ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoDescription", e.target.value)}
-              placeholder="Page description for search engines"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-canonical" className="text-xs text-gray-400">Canonical URL</Label>
-            <Input
-              id="seo-canonical"
-              value={page.seoCanonical ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoCanonical", e.target.value)}
-              placeholder="https://example.com/page"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-og" className="text-xs text-gray-400">OG Image URL</Label>
-            <Input
-              id="seo-og"
-              value={page.seoOgImage ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoOgImage", e.target.value)}
-              placeholder="https://example.com/image.png"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-robots" className="text-xs text-gray-400">Robots meta</Label>
-            <Input
-              id="seo-robots"
-              value={page.robotsMeta ?? "index,follow"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("robotsMeta", e.target.value)}
-              placeholder="index,follow"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          {/* SEO Preview */}
-          <div className="space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Search preview</p>
-            <p className="text-sm font-medium text-blue-400 truncate">
-              {page.seoTitle || page.name}
-            </p>
-            <p className="text-xs text-gray-400 line-clamp-2">
-              {page.seoDescription || "No description set"}
-            </p>
-          </div>
-        </div>
-      </TabsContent>
-
-      {/* ---- AI tab ---- */}
-      <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            AI page assistant
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Task</Label>
-            <UnifiedSelect
-              value={pageAiTask}
-              onValueChange={(value: string): void => setPageAiTask(value as "layout" | "seo")}
-              options={pageAiTaskOptions}
-              placeholder="Select task"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Provider</Label>
-            <UnifiedSelect
-              value={pageAiProvider}
-              onValueChange={(value: string): void => setPageAiProvider(value as "model" | "agent")}
-              options={pageAiProviderOptions}
-              placeholder="Select provider"
-            />
-          </div>
-          {pageAiProvider !== "agent" ? (
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400">Model</Label>
-              <UnifiedSelect
-                value={pageAiModelId}
-                onValueChange={(value: string): void => setPageAiModelId(value)}
-                options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-                placeholder={modelOptions.length ? "Select model" : "No models available"}
-              />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400">Deepthinking agent</Label>
-              <UnifiedSelect
-                value={pageAiAgentId}
-                onValueChange={(value: string): void => setPageAiAgentId(value)}
-                options={agentOptions.length ? agentOptions : [{ label: "No agents configured", value: "" }]}
-                placeholder={agentOptions.length ? "Select agent" : "No agents configured"}
-              />
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Prompt</Label>
-            <Textarea
-              value={pageAiPrompt}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setPageAiPrompt(e.target.value)}
-              placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
-              className="min-h-[120px] text-xs"
-              spellCheck={false}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] text-gray-500">Context placeholders</div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={(): void => {
-                const current = pageAiPrompt.trim();
-                const nextPrompt = current.length ? `${current}\n\n${pageAiPlaceholder}` : pageAiPlaceholder;
-                setPageAiPrompt(nextPrompt);
-              }}
-            >
-              Insert placeholders
-            </Button>
-          </div>
-          <Textarea
-            value={pageAiPlaceholder}
-            readOnly
-            className="min-h-[64px] text-xs font-mono text-gray-300"
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Button
-              type="button"
-              size="sm"
-              onClick={(): void => void handleGeneratePageAi()}
-              disabled={pageAiLoading}
-            >
-              {pageAiLoading ? "Generating…" : "Generate"}
-            </Button>
-            {pageAiLoading && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleCancelPageAi}
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
-          {pageAiError && (
-            <div className="text-xs text-red-400">{pageAiError}</div>
-          )}
-          {pageAiOutput && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-gray-400">AI output</Label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleApplyPageAi}
-                >
-                  Apply
-                </Button>
-              </div>
-              <Textarea
-                value={pageAiOutput}
-                readOnly
-                className="min-h-[140px] text-xs font-mono text-gray-300"
-              />
-            </div>
-          )}
-        </div>
-      </TabsContent>
-    </Tabs>
   );
 }

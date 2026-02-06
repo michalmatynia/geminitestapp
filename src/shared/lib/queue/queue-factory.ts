@@ -97,6 +97,18 @@ export function createManagedQueue<TJobData>(
 
     worker.on('error', (err: Error) => {
       console.error(`[${config.name}] Worker error:`, err.message);
+      // Log to ErrorSystem via dynamic import to avoid shared -> features circular dependency
+      void (async () => {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          await ErrorSystem.captureException(err, {
+            service: `queue-worker:${config.name}`,
+            category: 'SYSTEM',
+          });
+        } catch (logError) {
+          console.error(`[${config.name}] Failed to log worker error to ErrorSystem:`, logError);
+        }
+      })();
     });
 
     console.log(`[${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`);

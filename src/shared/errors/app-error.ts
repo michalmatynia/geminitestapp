@@ -216,6 +216,17 @@ export const unprocessableEntityError = (
     expected: true,
   });
 
+export const methodNotAllowedError = (
+  message: string = 'Method not allowed',
+  meta?: Record<string, unknown>
+): AppError =>
+  new AppError(message, {
+    code: 'METHOD_NOT_ALLOWED',
+    httpStatus: 405,
+    meta,
+    expected: true,
+  });
+
 // ============================================================================
 // Server Errors (5xx)
 // ============================================================================

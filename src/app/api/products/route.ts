@@ -8,8 +8,10 @@ import { badRequestError } from "@/shared/errors/app-error";
 
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
-import { validateProductCreateMiddleware } from "@/features/products/validations";
+import { validateProductCreateMiddleware } from "@/features/products/validations/middleware";
 import { CachedProductService, performanceMonitor } from "@/features/products/performance";
+
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/products
@@ -31,11 +33,11 @@ const attachTimingHeaders = (response: Response, entries: Record<string, number 
   }
 };
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
   const timings: Record<string, number | null | undefined> = {};
-  const requestStart = performance.now();
+  const requestStart = ctx.startTime;
 
   try {
     const providerStart = performance.now();
@@ -46,7 +48,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     // Why: this route is the source of truth for the admin list and must never
     // return stale empty cache entries.
     const products = await productService.getProducts(filters, { timings, provider });
-    timings.total = performance.now() - requestStart;
+    timings.total = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
       console.log("[timing] products.GET", { provider, ...timings });
@@ -56,22 +58,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {
-    timings.total = performance.now() - requestStart;
+    timings.total = ctx.getElapsedMs();
     if (shouldLogTiming()) {
       console.log("[timing] products.GET error", timings);
     }
     performanceMonitor.record("db.error", 1, { operation: "getProducts" });
-    
-    await ErrorSystem.captureException(error, {
-      service: "api/products",
-      method: "GET",
-      filters,
-    });
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.GET",
-      fallbackMessage: "Failed to fetch products",
-    });
+    throw error; // Let apiHandler handle logging and response
   }
 }
 
@@ -80,53 +72,41 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new product with validation and cache invalidation.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  let formData: FormData;
   try {
-    let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch (error) {
-      throw badRequestError("Invalid form data payload", { error });
-    }
-
-    // Validate the form data
-    const validation = await validateProductCreateMiddleware(formData);
-    if (!validation.success) {
-      return validation.response;
-    }
-
-    const idempotencyKey =
-      req.headers.get("idempotency-key") ??
-      req.headers.get("x-idempotency-key");
-    const skuField = formData.get("sku");
-    if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
-      const existing = await CachedProductService.getProductBySku(skuField.trim());
-      if (existing) {
-        return NextResponse.json({
-          ...((existing as unknown) as Record<string, unknown>),
-          idempotent: true,
-        });
-      }
-    }
-    
-    const product = await productService.createProduct(formData);
-    
-    // Invalidate relevant caches
-    CachedProductService.invalidateAll();
-    
-    return NextResponse.json(product);
-  } catch (error: unknown) {
-    await ErrorSystem.captureException(error, {
-      service: "api/products",
-      method: "POST",
-    });
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.POST",
-      fallbackMessage: "Failed to create product",
-    });
+    formData = await req.formData();
+  } catch (error) {
+    throw badRequestError("Invalid form data payload", { error });
   }
+
+  // Validate the form data
+  const validation = await validateProductCreateMiddleware(formData);
+  if (!validation.success) {
+    return validation.response;
+  }
+
+  const idempotencyKey =
+    req.headers.get("idempotency-key") ??
+    req.headers.get("x-idempotency-key");
+  const skuField = formData.get("sku");
+  if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
+    const existing = await CachedProductService.getProductBySku(skuField.trim());
+    if (existing) {
+      return NextResponse.json({
+        ...((existing as unknown) as Record<string, unknown>),
+        idempotent: true,
+      });
+    }
+  }
+  
+  const product = await productService.createProduct(formData);
+  
+  // Invalidate relevant caches
+  CachedProductService.invalidateAll();
+  
+  return NextResponse.json(product);
 }
 
-export const GET = async (req: NextRequest): Promise<Response> => GET_handler(req, {} as ApiHandlerContext);
+export const GET = apiHandler(GET_handler, { source: "products.GET" });
 
-export const POST = async (req: NextRequest): Promise<Response> => POST_handler(req, {} as ApiHandlerContext);
+export const POST = apiHandler(POST_handler, { source: "products.POST" });

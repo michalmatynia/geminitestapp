@@ -24,6 +24,7 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'regex',
   'mapper',
   'mutator',
+  'string_mutator',
   'validator',
   'viewer',
 ];
@@ -109,6 +110,8 @@ export const DATABASE_INPUT_PORTS = [
 ];
 export const REGEX_INPUT_PORTS = ['value', 'prompt', 'regexCallback'];
 export const REGEX_OUTPUT_PORTS = ['grouped', 'matches', 'value', 'aiPrompt'];
+export const STRING_MUTATOR_INPUT_PORTS = ['value', 'prompt', 'result'];
+export const STRING_MUTATOR_OUTPUT_PORTS = ['value'];
 export const ITERATOR_INPUT_PORTS = ['value', 'callback'];
 export const ITERATOR_OUTPUT_PORTS = ['value', 'index', 'total', 'done', 'status'];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
@@ -552,6 +555,20 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'poll',
     'database',
   ],
+  string_mutator: [
+    'math',
+    'template',
+    'viewer',
+    'bundle',
+    'compare',
+    'router',
+    'delay',
+    'poll',
+    'http',
+    'database',
+    'regex',
+    'notification',
+  ],
   validator: [
     'viewer',
     'prompt',
@@ -600,6 +617,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   iterator: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },
   mapper: { border: 'border-blue-500/40', glow: 'shadow-blue-500/20' },
   mutator: { border: 'border-teal-500/40', glow: 'shadow-teal-500/20' },
+  string_mutator: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
   validator: { border: 'border-orange-500/40', glow: 'shadow-orange-500/20' },
   constant: { border: 'border-slate-400/40', glow: 'shadow-slate-500/20' },
   math: { border: 'border-yellow-500/40', glow: 'shadow-yellow-500/20' },

@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { badRequestError, forbiddenError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
+import { badRequestError, forbiddenError, methodNotAllowedError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
 import {
@@ -175,9 +175,9 @@ export function apiHandler(
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
     if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
-      const response = NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
-      applySecurityHeaders(response);
-      return response;
+      throw methodNotAllowedError(`Method ${request.method} not allowed`, {
+        allowedMethods: options.allowedMethods,
+      });
     }
 
     const requestId = request.headers.get('x-request-id') ?? randomUUID();
@@ -278,9 +278,9 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 ) => Promise<Response> {
   return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
     if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
-      const response = NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
-      applySecurityHeaders(response);
-      return response;
+      throw methodNotAllowedError(`Method ${request.method} not allowed`, {
+        allowedMethods: options.allowedMethods,
+      });
     }
 
     const requestId = request.headers.get('x-request-id') ?? randomUUID();

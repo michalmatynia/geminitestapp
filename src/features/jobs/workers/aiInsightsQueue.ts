@@ -17,6 +17,16 @@ const queue = createManagedQueue<AiInsightsJobData>({
   processor: async () => {
     await tick();
   },
+  onFailed: async (_jobId, error) => {
+    try {
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      void ErrorSystem.captureException(error, {
+        service: 'ai-insights-queue',
+      });
+    } catch {
+      console.error('[aiInsightsQueue] Fatal queue error', error);
+    }
+  },
 });
 
 export const startAiInsightsQueue = (): void => {

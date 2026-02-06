@@ -6,6 +6,7 @@ import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
 
 const payloadSchema = z.object({
   url: z.string().trim().min(1),
@@ -21,7 +22,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = payloadSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const url = parsed.data.url.trim();
@@ -31,7 +32,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     const res = await fetch(url);
     if (!res.ok) {
-      return NextResponse.json({ error: `Failed to fetch (${res.status})` }, { status: 400 });
+      throw badRequestError(`Failed to fetch (${res.status})`);
     }
     const buffer = Buffer.from(await res.arrayBuffer());
     const contentType = res.headers.get("content-type") || "image/jpeg";

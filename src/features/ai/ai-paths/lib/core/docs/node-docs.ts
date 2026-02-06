@@ -251,6 +251,47 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  string_mutator: [
+    {
+      path: 'stringMutator.operations',
+      description:
+        'Ordered list of string operations to apply to the incoming value.',
+      defaultValue: '[]',
+    },
+    {
+      path: 'stringMutator.operations[].type',
+      description:
+        'Operation type: trim, replace, remove, case, append, slice.',
+    },
+    {
+      path: 'stringMutator.operations[].search',
+      description:
+        'Text or regex pattern to replace/remove (replace/remove only).',
+    },
+    {
+      path: 'stringMutator.operations[].replace',
+      description:
+        'Replacement text for replace operations.',
+    },
+    {
+      path: 'stringMutator.operations[].matchMode',
+      description:
+        'Match mode for replace/remove (first or all).',
+      defaultValue: 'all',
+    },
+    {
+      path: 'stringMutator.operations[].useRegex',
+      description:
+        'If true, treat search as a regex pattern.',
+      defaultValue: 'false',
+    },
+    {
+      path: 'stringMutator.operations[].flags',
+      description:
+        'Regex flags when useRegex is enabled (e.g., gim).',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   validator: [
     {
       path: 'validator.requiredPaths',
@@ -620,6 +661,11 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
   ],
   db_schema: [
     {
+      path: 'db_schema.provider',
+      description: 'Which provider to load: auto (primary), mongodb, prisma, or all.',
+      defaultValue: 'all',
+    },
+    {
       path: 'db_schema.mode',
       description: 'all = include all collections; selected = include only `collections`.',
       defaultValue: 'all',
@@ -693,6 +739,7 @@ const ALL_NODE_TYPES: NodeType[] = [
   'iterator',
   'mapper',
   'mutator',
+  'string_mutator',
   'validator',
   'constant',
   'math',

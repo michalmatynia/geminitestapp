@@ -105,7 +105,7 @@ export function CanvasSidebar({
 	              { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
 	              {
 	                title: 'Transforms',
-	                types: ['mapper', 'mutator', 'validator', 'regex', 'iterator'],
+	                types: ['mapper', 'mutator', 'string_mutator', 'validator', 'regex', 'iterator'],
 	                icon: '🧭',
 	              },
 	              {

@@ -20,6 +20,8 @@ import {
   PROMPT_OUTPUT_PORTS,
   REGEX_INPUT_PORTS,
   REGEX_OUTPUT_PORTS,
+  STRING_MUTATOR_INPUT_PORTS,
+  STRING_MUTATOR_OUTPUT_PORTS,
   ITERATOR_INPUT_PORTS,
   ITERATOR_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
@@ -154,6 +156,13 @@ export const palette: NodeDefinition[] = [
     description: 'Mutate context values with templates.',
     inputs: ['context'],
     outputs: ['context'],
+  },
+  {
+    type: 'string_mutator',
+    title: 'String Mutator',
+    description: 'Transform text with chained string operations.',
+    inputs: STRING_MUTATOR_INPUT_PORTS,
+    outputs: STRING_MUTATOR_OUTPUT_PORTS,
   },
   {
     type: 'validator',

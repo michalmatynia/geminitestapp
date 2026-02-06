@@ -34,7 +34,9 @@ import {
   resolveEntityIdFromInputs,
 } from '../utils';
 
-import type { SchemaResponse } from '../../../api';
+import type { SchemaProvider, SchemaCollection, SchemaResponse } from '../../../api/client';
+
+type SingleProviderSchemaResponse = { provider: SchemaProvider; collections: SchemaCollection[]; };
 
 interface PromptCandidate {
   edge: Edge;
@@ -1805,17 +1807,26 @@ export const handleDatabase: NodeHandler = async ({
     let insertResult: unknown = payload;
 
     if (!payload) {
+      const nodeTitle = node.title?.trim();
+      const nodeLabel = nodeTitle ? `"${nodeTitle}"` : `node ${node.id}`;
+      const writeSourceLabel = writeSourcePath
+        ? `${writeSource}.${writeSourcePath}`
+        : writeSource;
       reportAiPathsError(
         new Error('Database insert missing payload'),
         {
           action: 'insertEntity',
           nodeId: node.id,
+          nodeTitle: nodeTitle ?? null,
           writeSource,
           writeSourcePath,
         },
         'Database insert missing payload:',
       );
-      toast('Database insert needs a JSON payload.', { variant: 'error' });
+      toast(
+        `Database insert payload missing for ${nodeLabel} (write source: ${writeSourceLabel}).`,
+        { variant: 'error' },
+      );
       return {
         result: null,
         bundle: { error: 'Missing payload' },

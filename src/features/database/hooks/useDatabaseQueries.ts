@@ -3,22 +3,27 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
-import { 
-  fetchDatabasePreview, 
-  fetchDatabaseBackups, 
-  createDatabaseBackup, 
-  restoreDatabaseBackup, 
-  uploadDatabaseBackup, 
-  deleteDatabaseBackup 
+import {
+  fetchDatabasePreview,
+  fetchDatabaseBackups,
+  createDatabaseBackup,
+  restoreDatabaseBackup,
+  uploadDatabaseBackup,
+  deleteDatabaseBackup,
+  executeSqlQuery,
+  executeCrudOperation,
 } from '../api';
 
-import type { 
-  DatabasePreviewPayload, 
-  DatabasePreviewMode, 
-  DatabaseType, 
+import type {
+  CrudRequest,
+  CrudResult,
+  DatabasePreviewPayload,
+  DatabasePreviewMode,
+  DatabaseType,
   DatabaseInfo,
   DatabaseBackupResponse,
-  DatabaseRestoreResponse
+  DatabaseRestoreResponse,
+  SqlQueryResult,
 } from '../types';
 
 export function useDatabaseBackups(dbType: DatabaseType): UseQueryResult<DatabaseInfo[], Error> {
@@ -109,5 +114,30 @@ export function useDatabasePreview(input: {
       return payload;
     },
     enabled: enabled && (!!backupName || mode === 'current'),
+  });
+}
+
+export function useSqlQueryMutation(): UseMutationResult<
+  SqlQueryResult,
+  Error,
+  {
+    sql?: string;
+    type: DatabaseType;
+    collection?: string;
+    operation?: string;
+    filter?: Record<string, unknown>;
+    document?: Record<string, unknown>;
+    update?: Record<string, unknown>;
+    pipeline?: Record<string, unknown>[];
+  }
+> {
+  return useMutation({
+    mutationFn: (input) => executeSqlQuery(input),
+  });
+}
+
+export function useCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
+  return useMutation({
+    mutationFn: (input: CrudRequest) => executeCrudOperation(input),
   });
 }

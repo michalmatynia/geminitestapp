@@ -63,11 +63,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const notes = await noteService.getAll(filters);
     return NextResponse.json(notes);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/notes",
-      method: "GET",
-      filters,
-    });
     return createErrorResponse(error, {
       request: req,
       source: "notes.GET",
@@ -97,10 +92,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
     return NextResponse.json(note, { status: 201 });
   } catch (error: unknown) {
-    await ErrorSystem.captureException(error, {
-      service: "api/notes",
-      method: "POST",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "notes.POST",

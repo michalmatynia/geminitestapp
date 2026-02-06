@@ -670,11 +670,25 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const modelsQuery = useQuery<{ models?: string[] }>({
     queryKey: ['ai-paths-models'],
     queryFn: async (): Promise<{ models?: string[] }> => {
-      const res = await fetch('/api/chatbot');
-      if (!res.ok) {
-        throw new Error('Failed to load models.');
+      try {
+        const res = await fetch('/api/chatbot', {
+          headers: { accept: 'application/json' },
+        });
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          console.warn('[ai-paths][models] Failed to load models.', {
+            status: res.status,
+            statusText: res.statusText,
+            body,
+          });
+          return { models: [] };
+        }
+        const data = (await res.json()) as { models?: string[] };
+        return data ?? { models: [] };
+      } catch (error) {
+        console.warn('[ai-paths][models] Model list fetch failed.', error);
+        return { models: [] };
       }
-      return (await res.json()) as { models?: string[] };
     },
     staleTime: 1000 * 60 * 5,
   });

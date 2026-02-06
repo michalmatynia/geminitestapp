@@ -13,6 +13,7 @@ import type {
   ProductParameter,
 } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
+import { getLanguages } from '@/features/internationalization/api';
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({
@@ -28,11 +29,7 @@ export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
 export function useLanguages(): UseQueryResult<Language[]> {
   return useQuery({
     queryKey: ['languages'],
-    queryFn: async () => {
-      const res = await fetch('/api/languages');
-      if (!res.ok) throw new Error('Failed to fetch languages');
-      return (await res.json()) as Language[];
-    },
+    queryFn: async () => getLanguages(),
   });
 }
 

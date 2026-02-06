@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { enforceAiPathsActionRateLimit, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
 
 const actionSchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
@@ -44,34 +44,6 @@ const actionSchema = z.object({
   upsert: z.boolean().optional(),
   returnDocument: z.enum(["before", "after"]).optional(),
 });
-
-const ALLOWED_COLLECTIONS = new Set([
-  "products",
-  "product_drafts",
-  "product_categories",
-  "product_tags",
-  "catalogs",
-  "image_files",
-  "product_listings",
-  "product_ai_jobs",
-  "integrations",
-  "integration_connections",
-  "settings",
-  "users",
-  "user_preferences",
-  "languages",
-  "system_logs",
-  "notes",
-  "tags",
-  "categories",
-  "notebooks",
-  "noteFiles",
-  "themes",
-  "chatbot_sessions",
-  "auth_security_attempts",
-  "auth_security_profiles",
-  "auth_login_challenges",
-]);
 
 const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
@@ -157,7 +129,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       returnDocument = "after",
     } = data;
 
-    if (!ALLOWED_COLLECTIONS.has(collection)) {
+    if (!isCollectionAllowed(collection)) {
       return createErrorResponse(internalError("Collection not allowlisted"), {
         request: req,
         source: "ai-paths.db-action",

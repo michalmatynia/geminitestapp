@@ -90,6 +90,18 @@ export type DatabaseAction =
   | 'deleteMany'
   | 'findOneAndDelete';
 
+export type DbSchemaSnapshot = {
+  provider: 'mongodb' | 'prisma' | 'multi';
+  collections: Array<{
+    name: string;
+    fields: Array<{ name: string; type: string }>;
+    relations?: string[];
+    provider?: 'mongodb' | 'prisma';
+  }>;
+  sources?: Partial<Record<'mongodb' | 'prisma', { provider: 'mongodb' | 'prisma'; collections: Array<{ name: string; fields: Array<{ name: string; type: string }>; relations?: string[] }> }>>;
+  syncedAt?: string;
+};
+
 export type DatabaseConfig = {
   operation: DatabaseOperation;
   entityType?: string | undefined;
@@ -111,6 +123,7 @@ export type DatabaseConfig = {
   trimStrings?: boolean | undefined;
   aiPrompt?: string | undefined;
   validationRuleIds?: string[] | undefined;
+  schemaSnapshot?: DbSchemaSnapshot | undefined;
 };
 
 export type UpdaterSampleState = {
@@ -161,6 +174,51 @@ export type MutatorConfig = {
   path: string;
   valueTemplate: string;
   targetType?: 'string' | 'number' | 'boolean' | 'json';
+};
+
+export type StringMutatorOperation =
+  | {
+      id?: string;
+      type: 'trim';
+      mode?: 'both' | 'start' | 'end';
+    }
+  | {
+      id?: string;
+      type: 'replace';
+      search: string;
+      replace: string;
+      matchMode?: 'first' | 'all';
+      useRegex?: boolean;
+      flags?: string;
+    }
+  | {
+      id?: string;
+      type: 'remove';
+      search: string;
+      matchMode?: 'first' | 'all';
+      useRegex?: boolean;
+      flags?: string;
+    }
+  | {
+      id?: string;
+      type: 'case';
+      mode: 'upper' | 'lower' | 'title';
+    }
+  | {
+      id?: string;
+      type: 'append';
+      value: string;
+      position?: 'prefix' | 'suffix';
+    }
+  | {
+      id?: string;
+      type: 'slice';
+      start?: number;
+      end?: number;
+    };
+
+export type StringMutatorConfig = {
+  operations: StringMutatorOperation[];
 };
 
 export type ValidatorConfig = {
@@ -301,6 +359,7 @@ export type PollConfig = {
 };
 
 export type DbSchemaConfig = {
+  provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
   mode: 'all' | 'selected';
   collections: string[];
   includeFields: boolean;
@@ -331,6 +390,7 @@ export type NodeConfig = {
   iterator?: IteratorConfig;
   mapper?: MapperConfig;
   mutator?: MutatorConfig;
+  stringMutator?: StringMutatorConfig;
   validator?: ValidatorConfig;
   constant?: ConstantConfig;
   math?: MathConfig;

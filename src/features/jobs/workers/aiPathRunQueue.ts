@@ -37,6 +37,17 @@ const queue = createManagedQueue<AiPathRunJobData>({
     }
     await processRun({ ...run, status: 'running' });
   },
+  onFailed: async (_jobId, error, data) => {
+    try {
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      void ErrorSystem.captureException(error, {
+        service: 'ai-path-run-queue',
+        runId: data.runId,
+      });
+    } catch {
+      console.error('[aiPathRunQueue] Fatal queue error', error);
+    }
+  },
 });
 
 export const startAiPathRunQueue = (): void => {

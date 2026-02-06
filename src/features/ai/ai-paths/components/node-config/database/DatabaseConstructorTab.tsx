@@ -94,6 +94,21 @@ const formatCollectionSchema = (collectionName: string, fields: FieldSchema[]): 
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
+const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
+  if (!schema?.collections?.length) return [];
+  if (schema.provider === 'multi') return schema.collections;
+  return schema.collections.map((collection: CollectionSchema) => ({
+    ...collection,
+    provider: schema.provider as 'mongodb' | 'prisma',
+  }));
+};
+
+const formatCollectionLabel = (
+  collection: CollectionSchema,
+  isMulti: boolean
+): string =>
+  isMulti && collection.provider ? `${collection.name} (${collection.provider})` : collection.name;
+
 type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;
   pendingAiQuery: string;
@@ -206,6 +221,15 @@ export function DatabaseConstructorTab({
     : AGGREGATION_STAGE_SNIPPETS;
   const sortPresets = isPrismaProvider ? PRISMA_SORT_PRESETS : SORT_PRESETS;
   const projectionPresets = isPrismaProvider ? PRISMA_PROJECTION_PRESETS : PROJECTION_PRESETS;
+  const schemaCollections = React.useMemo(
+    () => normalizeSchemaCollections(schemaMatrix),
+    [schemaMatrix]
+  );
+  const fetchedCollections = React.useMemo(
+    () => normalizeSchemaCollections(fetchedDbSchema),
+    [fetchedDbSchema]
+  );
+  const isMultiSchema = schemaMatrix?.provider === 'multi';
   // State for code snippet navigation in AI responses
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   // State for template snippets modal
@@ -422,20 +446,35 @@ export function DatabaseConstructorTab({
     });
 
     const schemaEntries: PlaceholderGroup['entries'] = [];
-    if (schemaMatrix?.collections?.length) {
-      schemaMatrix.collections.forEach((collection: CollectionSchema, index: number) => {
+    if (schemaCollections.length) {
+      schemaCollections.forEach((collection: CollectionSchema, index: number) => {
         const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
         const displayName = toTitleCase(singularize(collection.name));
-        const nameSet = new Set<string>([collection.name, displayName]);
-        Array.from(nameSet).forEach((name: string) => {
-          schemaEntries.push({
-            id: `schema-${index}-${name}`,
-            label: `Collection: ${name}`,
-            token: `{{Collection: ${name}}}`,
-            resolvesTo: schemaText,
-            dynamic: true,
+        if (isMultiSchema && collection.provider) {
+          const labeledName = `${collection.name} (${collection.provider})`;
+          const labeledDisplay = `${displayName} (${collection.provider})`;
+          const nameSet = new Set<string>([labeledName, labeledDisplay]);
+          Array.from(nameSet).forEach((name: string) => {
+            schemaEntries.push({
+              id: `schema-${index}-${name}`,
+              label: `Collection: ${name}`,
+              token: `{{Collection: ${name}}}`,
+              resolvesTo: schemaText,
+              dynamic: true,
+            });
           });
-        });
+        } else {
+          const nameSet = new Set<string>([collection.name, displayName]);
+          Array.from(nameSet).forEach((name: string) => {
+            schemaEntries.push({
+              id: `schema-${index}-${name}`,
+              label: `Collection: ${name}`,
+              token: `{{Collection: ${name}}}`,
+              resolvesTo: schemaText,
+              dynamic: true,
+            });
+          });
+        }
       });
     }
     if (schemaEntries.length > 0) {
@@ -448,7 +487,7 @@ export function DatabaseConstructorTab({
     }
 
     return groups;
-  }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaMatrix]);
+  }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaCollections, isMultiSchema]);
 
   const pendingAiQuerySection = pendingAiQuery ? (
     <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
@@ -690,18 +729,18 @@ export function DatabaseConstructorTab({
               <span className="text-[10px] text-gray-500">Loading...</span>
             )}
           </div>
-          {fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
+          {fetchedCollections.length > 0 ? (
             <div className="space-y-2">
               <div className="text-[10px] text-gray-400">
                 Click to set collection or insert field:
               </div>
               <div className="flex flex-wrap gap-1">
-                {fetchedDbSchema.collections.map((coll: CollectionSchema): React.JSX.Element => {
+                {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => {
                   const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(', ') ?? '';
                   const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || 'unknown'}}}`;
                   return (
                     <Tooltip
-                      key={coll.name}
+                      key={`${coll.provider ?? 'db'}:${coll.name}`}
                       content={resolvedTooltip}
                       side="bottom"
                       maxWidth="500px"
@@ -717,14 +756,14 @@ export function DatabaseConstructorTab({
                           toast(`Collection set to: ${coll.name}`, { variant: 'success' });
                         }}
                       >
-                        {coll.name}
+                        {formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))}
                       </Button>
                     </Tooltip>
                   );
                 })}
               </div>
               {((): React.JSX.Element | null => {
-                const currentColl = fetchedDbSchema.collections.find(
+                const currentColl = fetchedCollections.find(
                   (c: CollectionSchema) => c.name === queryConfig.collection
                 );
                 if (!currentColl?.fields?.length) return null;
@@ -1107,7 +1146,7 @@ export function DatabaseConstructorTab({
         <div className="space-y-3 rounded-md border border-border bg-card/40 p-3">
           <Label className="text-xs text-gray-400">Sample JSON (fetch to enable Field Mapping)</Label>
           <div className="flex flex-wrap gap-2 items-center">
-            {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 && (
+            {hasSchemaConnection && fetchedCollections.length > 0 && (
               <Select
                 value={sampleState.entityType}
                 onValueChange={(value: string): void => {
@@ -1126,9 +1165,9 @@ export function DatabaseConstructorTab({
                   <SelectValue placeholder="Select collection" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                  {fetchedDbSchema.collections.map((coll: CollectionSchema): React.JSX.Element => (
-                    <SelectItem key={coll.name} value={coll.name}>
-                      {coll.name}
+                  {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => (
+                    <SelectItem key={`${coll.provider ?? 'db'}:${coll.name}`} value={coll.name}>
+                      {formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))}
                     </SelectItem>
                   ))}
                 </SelectContent>

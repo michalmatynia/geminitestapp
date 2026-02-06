@@ -57,7 +57,9 @@
       "Bash(sqlite3:*)",
       "Bash(tree:*)",
       "Bash(xargs:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)"
     ]
   }
 }

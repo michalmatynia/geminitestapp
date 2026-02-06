@@ -14,6 +14,7 @@ export type AiNodeTypeDto =
   | 'iterator'
   | 'mapper'
   | 'mutator'
+  | 'string_mutator'
   | 'validator'
   | 'constant'
   | 'math'

@@ -175,7 +175,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = runSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const projectId = sanitizeProjectId(parsed.data.projectId);

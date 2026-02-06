@@ -65,7 +65,6 @@ export function AiPathsSettingsView({
   const {
     handleCreatePath,
     handleSave,
-    handleReset,
     handleDeletePath,
     handleTogglePathLock,
     handleTogglePathActive,
@@ -236,125 +235,138 @@ export function AiPathsSettingsView({
           {!isFocusMode && typeof document !== 'undefined' && renderActions
             ? createPortal(
               renderActions(
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    className="rounded-md border text-sm text-white hover:bg-muted/60"
-                    type="button"
-                    onClick={handleCreatePath}
-                  >
-                      New Path
-                  </Button>
-                  <Button
-                    type="button"
-                    className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
-                    onClick={handleTogglePathLock}
-                    disabled={!activePathId}
-                    title={isPathLocked ? 'Unlock to edit nodes and connections' : 'Lock to prevent edits'}
-                  >
-                    {isPathLocked ? 'Unlock Path' : 'Lock Path'}
-                  </Button>
-                  <Button
-                    type="button"
-                    className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
-                    onClick={handleTogglePathActive}
-                    disabled={!activePathId}
-                    title={isPathActive ? 'Deactivate to stop runs' : 'Activate to allow runs'}
-                  >
-                    {isPathActive ? 'Deactivate' : 'Activate'}
-                  </Button>
-                  <Button
-                    className="rounded-md border text-sm text-white hover:bg-muted/60"
-                    onClick={() => {
-                      if (nodeConfigDirty) {
-                        toast(
-                          'You have unsaved node changes. Click Update Node in the config dialog before saving the path.',
-                          { variant: 'info' }
-                        );
-                        return;
-                      }
-                      void handleSave();
-                    }}
-                    disabled={saving}
-                  >
-                    {saving ? 'Saving...' : 'Save Path'}
-                  </Button>
-                  <Button
-                    className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
-                    onClick={handleReset}
-                    type="button"
-                  >
-                      Reset to Defaults
-                  </Button>
-                  <Button
-                    className="rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10"
-                    onClick={() => {
-                      void handleClearConnectorData();
-                    }}
-                    type="button"
-                    disabled={!activePathId}
-                  >
-                      Clear Connector Data
-                  </Button>
-                  <Button
-                    className="rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10"
-                    onClick={() => {
-                      void handleClearHistory();
-                    }}
-                    type="button"
-                    disabled={!activePathId}
-                    title={hasHistory ? 'Clear history for all nodes in this path' : 'No history recorded yet'}
-                  >
-                      Clear History
-                  </Button>
-                  {lastError && (
-                    <div className="flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
-                      <span className="max-w-[220px] truncate">
-                          Last error: {lastError.message}
-                      </span>
+                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
+                  <div className="flex flex-col items-start gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
                       <Button
                         type="button"
-                        className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
-                        onClick={() => {
-                          setLastError(null);
-                          void persistLastError(null);
-                        }}
+                        className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
+                        onClick={handleTogglePathLock}
+                        disabled={!activePathId}
+                        title={isPathLocked ? 'Unlock to edit nodes and connections' : 'Lock to prevent edits'}
                       >
-                          Clear
+                        {isPathLocked ? 'Unlock Path' : 'Lock Path'}
                       </Button>
-                      {lastError.message === 'Failed to load AI Paths settings' && (
+                      <Button
+                        className="rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10"
+                        onClick={() => {
+                          void handleClearConnectorData();
+                        }}
+                        type="button"
+                        disabled={!activePathId}
+                      >
+                          Clear Connector Data
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
+                        onClick={handleTogglePathActive}
+                        disabled={!activePathId}
+                        title={isPathActive ? 'Deactivate to stop runs' : 'Activate to allow runs'}
+                      >
+                        {isPathActive ? 'Deactivate' : 'Activate'}
+                      </Button>
+                      <Button
+                        className="rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10"
+                        onClick={() => {
+                          void handleClearHistory();
+                        }}
+                        type="button"
+                        disabled={!activePathId}
+                        title={hasHistory ? 'Clear history for all nodes in this path' : 'No history recorded yet'}
+                      >
+                          Clear History
+                      </Button>
+                    </div>
+                    {lastError && (
+                      <div className="flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
+                        <span className="max-w-[220px] truncate">
+                            Last error: {lastError.message}
+                        </span>
                         <Button
                           type="button"
                           className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
                           onClick={() => {
                             setLastError(null);
                             void persistLastError(null);
-                            incrementLoadNonce();
                           }}
                         >
-                            Retry
+                            Clear
                         </Button>
-                      )}
+                        {lastError.message === 'Failed to load AI Paths settings' && (
+                          <Button
+                            type="button"
+                            className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                            onClick={() => {
+                              setLastError(null);
+                              void persistLastError(null);
+                              incrementLoadNonce();
+                            }}
+                          >
+                              Retry
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                          onClick={(): void =>
+                            window.location.assign(
+                              `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
+                                'AI Paths'
+                              )}`
+                            )
+                          }
+                        >
+                            View logs
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-center">
+                    {!isFocusMode && (
                       <Button
                         type="button"
-                        className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
-                        onClick={(): void =>
-                          window.location.assign(
-                            `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
-                              'AI Paths'
-                            )}`
-                          )
-                        }
+                        className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                        onClick={() => setIsFocusMode(true)}
+                        title="Show canvas only"
                       >
-                          View logs
+                        Show
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Button
+                      className="rounded-md border text-sm text-white hover:bg-muted/60"
+                      type="button"
+                      onClick={handleCreatePath}
+                    >
+                        New Path
+                    </Button>
+                    <Button
+                      className="rounded-md border text-sm text-white hover:bg-muted/60"
+                      onClick={() => {
+                        if (nodeConfigDirty) {
+                          toast(
+                            'You have unsaved node changes. Click Update Node in the config dialog before saving the path.',
+                            { variant: 'info' }
+                          );
+                          return;
+                        }
+                        void handleSave();
+                      }}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Path'}
+                    </Button>
+                  </div>
                 </div>
               ),
               document.getElementById('ai-paths-actions') ?? document.body
             )
             : null}
-          {typeof document !== 'undefined'
+          {isFocusMode && typeof document !== 'undefined'
             ? (() => {
               const headerTarget = document.getElementById('ai-paths-header-actions');
               if (!headerTarget) return null;
@@ -362,10 +374,10 @@ export function AiPathsSettingsView({
                 <Button
                   type="button"
                   className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
-                  onClick={() => setIsFocusMode(!isFocusMode)}
-                  title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+                  onClick={() => setIsFocusMode(false)}
+                  title="Show side panels"
                 >
-                  {isFocusMode ? 'Edit' : 'Show'}
+                  Edit
                 </Button>,
                 headerTarget
               );
@@ -580,20 +592,20 @@ export function AiPathsSettingsView({
                 onFitToNodes={fitToNodes}
                 onResetView={resetView}
               />
-              {!isFocusMode && (
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    className="rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10"
-                    onClick={() => void handleDeletePath()}
-                    type="button"
-                    disabled={!activePathId}
-                  >
-                    Delete Path
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
+          {!isFocusMode && (
+            <div className="mt-4 flex justify-end">
+              <Button
+                className="rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10"
+                onClick={() => void handleDeletePath()}
+                type="button"
+                disabled={!activePathId}
+              >
+                Delete Path
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

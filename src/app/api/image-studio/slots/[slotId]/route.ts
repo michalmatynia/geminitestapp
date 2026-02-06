@@ -42,7 +42,7 @@ async function PATCH_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const data = {

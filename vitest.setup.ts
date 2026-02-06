@@ -18,7 +18,7 @@ vi.mock("@/shared/lib/db/app-db-provider", () => ({
 const MODEL_DEFAULTS: Record<string, any> = {
   product: { images: [], catalogs: [], categories: [], tags: [], producers: [] },
   note: { tags: [], categories: [], files: [], relationsFrom: [], relationsTo: [] },
-  catalog: { products: [], languages: [], categories: [], tags: [] },
+  catalog: { products: [], languages: [], categories: [], tags: [], priceGroups: [] },
   page: { slugs: [], components: [] },
   language: { countries: [] },
   country: { languages: [], currencies: [] },
@@ -537,6 +537,67 @@ vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ href, children }: { href: string; children: React.ReactNode }) =>
     React.createElement("a", { href }, children),
+}));
+
+// Mock next/server (for NextRequest/NextResponse in API routes)
+vi.mock("next/server", () => ({
+  NextRequest: class NextRequest extends Request {
+    constructor(input: RequestInfo, init?: RequestInit) {
+      super(input, init);
+    }
+  },
+  NextResponse: class NextResponse extends Response {
+    constructor(body?: BodyInit | null, init?: ResponseInit) {
+      super(body, init);
+    }
+    static json = vi.fn((data: any, init?: ResponseInit) => {
+      return new NextResponse(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+    });
+  },
+}));
+
+// Mock next/server.js specifically, as suggested by the error message
+vi.mock("next/server.js", () => ({
+  NextRequest: class NextRequest extends Request {
+    constructor(input: RequestInfo, init?: RequestInit) {
+      super(input, init);
+    }
+  },
+  NextResponse: class NextResponse extends Response {
+    constructor(body?: BodyInit | null, init?: ResponseInit) {
+      super(body, init);
+    }
+    static json = vi.fn((data: any, init?: ResponseInit) => {
+      return new NextResponse(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+    });
+  },
+}));
+
+// Mock next-auth entirely to prevent internal module resolution issues
+vi.mock('next-auth', () => ({
+  // Provide a minimal mock or an empty object to bypass its internal logic
+  // This will prevent next-auth from trying to import next/server
+  Auth: vi.fn(), // Mock Auth function if used
+  // Add other mocks as needed based on next-auth usage
+}));
+
+vi.mock('next-auth/react', () => ({
+  SessionProvider: ({ children }: any) => children,
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
 }));
 
 // Mock ResizeObserver

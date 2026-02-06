@@ -5,6 +5,7 @@ import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { notFoundError } from "@/shared/errors/app-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { getSystemLogById } from "@/features/observability/server";
 import { generateLogInterpretation } from "@/features/ai/insights/generator";
@@ -25,7 +26,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
     const log = await getSystemLogById(parsed.data.logId);
     if (!log) {
-      return NextResponse.json({ error: "Log not found." }, { status: 404 });
+      throw notFoundError("Log not found.");
     }
     const insight = await generateLogInterpretation({
       source: "manual",

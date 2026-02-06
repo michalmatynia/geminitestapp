@@ -36,6 +36,7 @@ import {
   handleMath,
   handleModel,
   handleMutator,
+  handleStringMutator,
   handleNotification,
   handleParser,
   handlePoll,
@@ -448,6 +449,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   iterator: handleIterator,
   mapper: handleMapper,
   mutator: handleMutator,
+  string_mutator: handleStringMutator,
   validator: handleValidator,
   constant: handleConstant,
   math: handleMath,
@@ -894,10 +896,12 @@ export async function evaluateGraph({
 
     if (operation === 'insert') {
       const writeSource = dbConfig.writeSource ?? 'bundle';
-      if (connectedPorts.has(writeSource)) {
-        return hasAnyValue([writeSource]);
+      const insertPorts = [writeSource, 'queryCallback'];
+      const hasPayload = hasAnyValue(insertPorts);
+      if (connectedPorts.has(writeSource) || connectedPorts.has('queryCallback')) {
+        return hasPayload;
       }
-      return true;
+      return hasPayload;
     }
 
     if (operation === 'update') {

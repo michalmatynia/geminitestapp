@@ -54,10 +54,7 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
 
     const { name, email, emailVerified } = data;
     if (name === undefined && email === undefined && emailVerified === undefined) {
-      return NextResponse.json(
-        { error: "No updates provided." },
-        { status: 400 }
-      );
+      throw badRequestError("No updates provided.");
     }
 
     const { id: userId } = params;

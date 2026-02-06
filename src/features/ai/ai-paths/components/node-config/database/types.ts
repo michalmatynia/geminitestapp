@@ -4,11 +4,13 @@ export type CollectionSchema = {
   name: string;
   fields: FieldSchema[];
   relations?: string[];
+  provider?: 'mongodb' | 'prisma';
 };
 
 export type SchemaData = {
-  provider: string;
+  provider: 'mongodb' | 'prisma' | 'multi';
   collections: CollectionSchema[];
+  sources?: Partial<Record<'mongodb' | 'prisma', { provider: 'mongodb' | 'prisma'; collections: CollectionSchema[] }>>;
 };
 
 export type AiQuery = {

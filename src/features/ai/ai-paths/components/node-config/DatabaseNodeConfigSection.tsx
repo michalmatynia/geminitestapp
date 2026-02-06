@@ -69,7 +69,7 @@ import {
   type ValidationPaletteRule,
 } from './database/query-utils';
 
-import type { AiQuery, DatabasePresetOption, SchemaData } from './database/types';
+import type { AiQuery, CollectionSchema, DatabasePresetOption, SchemaData } from './database/types';
 
 const toTitleCase = (value: string): string =>
   value
@@ -114,21 +114,85 @@ const formatCollectionSchema = (collectionName: string, fields: Array<{ name: st
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
+const formatCollectionLabel = (collection: CollectionSchema, includeProvider: boolean): string => {
+  const baseLabel = toTitleCase(collection.name);
+  if (includeProvider && collection.provider) {
+    return `${baseLabel} (${collection.provider})`;
+  }
+  return baseLabel;
+};
+
+const normalizeSchemaCollections = (schema: SchemaData | null): Array<CollectionSchema> => {
+  if (!schema?.collections?.length) return [];
+  if (schema.provider === 'multi') return schema.collections;
+  return schema.collections.map((collection: CollectionSchema) => ({
+    ...collection,
+    provider: schema.provider as 'mongodb' | 'prisma',
+  }));
+};
+
+const matchesCollectionSelection = (
+  collection: CollectionSchema,
+  selectedSet: Set<string>
+): boolean => {
+  const nameKey = collection.name.toLowerCase();
+  if (selectedSet.has(nameKey)) return true;
+  if (collection.provider) {
+    const providerKey = `${collection.provider}:${collection.name}`.toLowerCase();
+    if (selectedSet.has(providerKey)) return true;
+  }
+  return false;
+};
+
+const applySchemaSelection = (
+  schema: SchemaData,
+  schemaConfig?: SchemaConfig | null
+): SchemaData => {
+  let collections = normalizeSchemaCollections(schema);
+  if (schemaConfig?.mode === 'selected' && schemaConfig.collections?.length) {
+    const selectedCollections = new Set(
+      schemaConfig.collections.map((name: string) => name.toLowerCase())
+    );
+    collections = collections.filter((collection: CollectionSchema) =>
+      matchesCollectionSelection(collection, selectedCollections)
+    );
+  }
+  if (schemaConfig?.includeFields === false) {
+    collections = collections.map((collection: CollectionSchema) => ({
+      ...collection,
+      fields: [],
+    }));
+  }
+  return { ...schema, collections };
+};
+
 const buildSchemaPlaceholderContext = (schema: SchemaData | null): Record<string, string> => {
   const context: Record<string, string> = {};
-  if (!schema?.collections?.length) return context;
-  schema.collections.forEach((collection: { name: string; fields: Array<{ name: string; type: string }> }) => {
+  const collections = normalizeSchemaCollections(schema);
+  if (collections.length === 0) return context;
+  const isMulti = schema?.provider === 'multi';
+  collections.forEach((collection: CollectionSchema) => {
     const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
     const displayName = toTitleCase(singularize(collection.name));
-    const nameSet = new Set<string>([collection.name, displayName]);
-    nameSet.forEach((name: string) => {
-      context[`Collection: ${name}`] = schemaText;
-    });
+    if (isMulti && collection.provider) {
+      const labeledName = `${collection.name} (${collection.provider})`;
+      const labeledDisplay = `${displayName} (${collection.provider})`;
+      const nameSet = new Set<string>([labeledName, labeledDisplay]);
+      nameSet.forEach((name: string) => {
+        context[`Collection: ${name}`] = schemaText;
+      });
+    } else {
+      const nameSet = new Set<string>([collection.name, displayName]);
+      nameSet.forEach((name: string) => {
+        context[`Collection: ${name}`] = schemaText;
+      });
+    }
   });
   return context;
 };
 
 type SchemaConfig = {
+  provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
   mode?: 'all' | 'selected';
   collections?: string[];
   includeFields?: boolean;
@@ -189,7 +253,6 @@ export function DatabaseNodeConfigSection({
   const [selectedAiQueryId, setSelectedAiQueryId] = React.useState<string>('');
   const [testQueryResult, setTestQueryResult] = React.useState<string>('');
   const [testQueryLoading, setTestQueryLoading] = React.useState(false);
-  const [testQueryDryRun, setTestQueryDryRun] = React.useState(false);
   const queryTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastInjectedResponseRef = React.useRef<string>('');
@@ -242,10 +305,12 @@ export function DatabaseNodeConfigSection({
     };
   }, [edges, nodes, selectedNode.id, selectedNode.type]);
 
+  const schemaProvider = schemaConnection.schemaConfig?.provider ?? 'auto';
+
   const schemaQuery = useQuery({
-    queryKey: ['db-schema'],
+    queryKey: ['db-schema', schemaProvider],
     queryFn: async (): Promise<SchemaData> => {
-      const result = await dbApi.schema();
+      const result = await dbApi.schema({ provider: schemaProvider });
       if (!result.ok) {
         throw new Error(result.error || 'Failed to fetch schema.');
       }
@@ -256,19 +321,9 @@ export function DatabaseNodeConfigSection({
 
   const fetchedDbSchema = React.useMemo((): SchemaData | null => {
     if (!schemaConnection.hasSchemaConnection || !schemaQuery.data) return null;
-    const schemaConfig = schemaConnection.schemaConfig;
-    let collections = schemaQuery.data.collections;
-    if (schemaConfig?.mode === 'selected' && schemaConfig.collections?.length) {
-      const selectedCollections = new Set(schemaConfig.collections);
-      collections = collections.filter((c: { name: string }) => selectedCollections.has(c.name));
-    }
-    if (schemaConfig?.includeFields === false) {
-      collections = collections.map((c: { name: string; fields: unknown[] }) => ({ ...c, fields: [] }));
-    }
-    return { ...schemaQuery.data, collections };
+    return applySchemaSelection(schemaQuery.data, schemaConnection.schemaConfig);
   }, [schemaConnection.hasSchemaConnection, schemaConnection.schemaConfig, schemaQuery.data]);
   const schemaLoading = schemaQuery.isFetching;
-  const schemaMatrix = schemaQuery.data ?? null;
 
   const dbActionMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>): Promise<unknown> => {
@@ -348,7 +403,6 @@ export function DatabaseNodeConfigSection({
     setQueryValidatorEnabled(false);
     setPendingAiQuery('');
     lastInjectedResponseRef.current = '';
-    setTestQueryDryRun(false);
   }, [selectedNode.id]);
 
   React.useEffect(() => {
@@ -427,6 +481,7 @@ export function DatabaseNodeConfigSection({
     trimStrings: persistedDatabase?.trimStrings ?? false,
     aiPrompt: persistedDatabase?.aiPrompt ?? '',
     validationRuleIds: persistedDatabase?.validationRuleIds ?? [],
+    schemaSnapshot: persistedDatabase?.schemaSnapshot,
   };
   const selectedValidationRuleIds = databaseConfig.validationRuleIds ?? [];
   const selectedValidationRules = selectedValidationRuleIds.length
@@ -469,6 +524,50 @@ export function DatabaseNodeConfigSection({
     return 'read';
   };
   const queryConfig = databaseConfig.query ?? defaultQuery;
+  const schemaSnapshot = databaseConfig.schemaSnapshot ?? null;
+  const effectiveSchema: SchemaData | null = fetchedDbSchema ?? schemaSnapshot;
+  const schemaMatrix = effectiveSchema ?? null;
+  const runDry = databaseConfig.dryRun ?? false;
+  const schemaSource: 'connected' | 'snapshot' | 'none' = schemaConnection.hasSchemaConnection
+    ? 'connected'
+    : schemaSnapshot
+      ? 'snapshot'
+      : 'none';
+  const schemaSyncMutation = useMutation({
+    mutationFn: async (
+      provider: 'auto' | 'mongodb' | 'prisma' | 'all'
+    ): Promise<SchemaData> => {
+      const result = await dbApi.schema({ provider });
+      if (!result.ok) {
+        throw new Error(result.error || 'Failed to fetch schema.');
+      }
+      return result.data as SchemaData;
+    },
+    onSuccess: (data: SchemaData): void => {
+      const filtered = applySchemaSelection(data, schemaConnection.schemaConfig);
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          schemaSnapshot: {
+            ...filtered,
+            syncedAt: new Date().toISOString(),
+          },
+        },
+      });
+      toast('Schema collections synced.', { variant: 'success' });
+    },
+    onError: (error: unknown): void => {
+      toast(
+        error instanceof Error ? error.message : 'Failed to sync schema collections.',
+        { variant: 'error' }
+      );
+    },
+  });
+  const schemaSyncing = schemaSyncMutation.isPending;
+  const handleSyncSchema = (): void => {
+    const provider = schemaConnection.schemaConfig?.provider ?? queryConfig.provider ?? 'auto';
+    schemaSyncMutation.mutate(provider);
+  };
   const deriveActionFromCategory = (category: string, single: boolean): DatabaseAction => {
     switch (category) {
       case 'create':
@@ -555,8 +654,6 @@ export function DatabaseNodeConfigSection({
     placeholderSet.add(trimmed);
     connectedPlaceholders.push(trimmed);
   };
-  // Check if db_schema node is connected
-  const hasSchemaConnection = schemaConnection.hasSchemaConnection;
   // Add direct port connections
   incomingPorts.forEach((port: string) => {
     if (port === 'bundle') {
@@ -896,7 +993,24 @@ export function DatabaseNodeConfigSection({
     }
   };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
-  const collectionOption = DB_COLLECTION_OPTIONS.some(
+  const schemaCollectionOptions = React.useMemo(() => {
+    if (!effectiveSchema?.collections?.length) return [];
+    let collections = normalizeSchemaCollections(effectiveSchema);
+    if (effectiveSchema.provider === 'multi') {
+      const preferredProvider = queryConfig.provider === 'prisma' ? 'prisma' : 'mongodb';
+      collections = collections.filter((collection) => collection.provider === preferredProvider);
+    }
+    return collections
+      .map((collection) => ({
+        value: collection.name,
+        label: formatCollectionLabel(collection, effectiveSchema.provider === 'multi'),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [effectiveSchema, queryConfig.provider]);
+  const useSchemaCollections = schemaSource !== 'none';
+  const lockCollectionName = schemaConnection.hasSchemaConnection && Boolean(fetchedDbSchema);
+  const collectionOptions = useSchemaCollections ? schemaCollectionOptions : DB_COLLECTION_OPTIONS;
+  const collectionOption = collectionOptions.some(
     (option: { value: string }) => option.value === queryConfig.collection
   )
     ? queryConfig.collection
@@ -1394,7 +1508,7 @@ export function DatabaseNodeConfigSection({
         }
       };
       const confirmWriteAction = (summary: string): boolean => {
-        if (testQueryDryRun) return true;
+        if (runDry) return true;
         return window.confirm(`${summary}\n\nProceed?`);
       };
       if (actionCategory === 'create') {
@@ -1429,7 +1543,7 @@ export function DatabaseNodeConfigSection({
             return;
           }
         }
-        if (testQueryDryRun) {
+        if (runDry) {
           const preview = {
             dryRun: true,
             action,
@@ -1494,7 +1608,7 @@ export function DatabaseNodeConfigSection({
           setTestQueryLoading(false);
           return;
         }
-        if (testQueryDryRun) {
+        if (runDry) {
           const preview = {
             dryRun: true,
             action,
@@ -1587,7 +1701,7 @@ export function DatabaseNodeConfigSection({
           setTestQueryLoading(false);
           return;
         }
-        if (testQueryDryRun) {
+        if (runDry) {
           const preview = {
             dryRun: true,
             action,
@@ -1803,8 +1917,15 @@ export function DatabaseNodeConfigSection({
       filterTemplateValue={queryTemplateValue}
       filterPlaceholder={queryPlaceholder}
       onFilterChange={handleFilterChange}
-      runDry={testQueryDryRun}
-      onToggleRunDry={() => setTestQueryDryRun((prev: boolean) => !prev)}
+      runDry={runDry}
+      onToggleRunDry={() =>
+        updateSelectedNodeConfig({
+          database: {
+            ...databaseConfig,
+            dryRun: !runDry,
+          },
+        })
+      }
       queryValidation={queryValidation}
       queryFormatterEnabled={queryFormatterEnabled}
       queryValidatorEnabled={queryValidatorEnabled}
@@ -1990,7 +2111,7 @@ export function DatabaseNodeConfigSection({
               <SelectValue placeholder="Select collection" />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-              {DB_COLLECTION_OPTIONS.map((option: { value: string; label: string }) => (
+              {collectionOptions.map((option: { value: string; label: string }) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -1998,15 +2119,51 @@ export function DatabaseNodeConfigSection({
               <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
           </Select>
-          {collectionOption === 'custom' && (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] text-gray-500">
+              {schemaSource === 'connected'
+                ? 'Using live schema from connected Database Schema node.'
+                : schemaSource === 'snapshot'
+                  ? `Using cached schema snapshot${schemaSnapshot?.syncedAt ? ` (synced ${new Date(schemaSnapshot.syncedAt).toLocaleString()})` : ''}.`
+                  : 'No schema snapshot yet. Sync to load collections.'}
+            </p>
+            <Button
+              type="button"
+              className="h-6 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={handleSyncSchema}
+              disabled={schemaSyncing}
+            >
+              {schemaSyncing ? 'Syncing...' : 'Sync collections'}
+            </Button>
+          </div>
+          {useSchemaCollections && schemaLoading && (
+            <p className="mt-2 text-[11px] text-gray-500">
+              Loading schema collections...
+            </p>
+          )}
+          {useSchemaCollections && !schemaLoading && !schemaSyncing && schemaCollectionOptions.length === 0 && (
+            <p className="mt-2 text-[11px] text-gray-500">
+              {schemaSource === 'connected'
+                ? 'No schema collections available. Check the Database Schema node selection.'
+                : 'No synced collections available. Click "Sync collections" to refresh.'}
+            </p>
+          )}
+          {(collectionOption === 'custom' || useSchemaCollections) && (
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={queryConfig.collection}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                updateQueryConfig({ collection: event.target.value })
-              }
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                if (lockCollectionName) return;
+                updateQueryConfig({ collection: event.target.value });
+              }}
+              readOnly={lockCollectionName}
               placeholder="collection_name"
             />
+          )}
+          {lockCollectionName && (
+            <p className="mt-1 text-[10px] text-gray-500">
+              Collection name is locked to the connected schema.
+            </p>
           )}
         </div>
       </div>
@@ -2329,11 +2486,11 @@ export function DatabaseNodeConfigSection({
             updateSelectedNodeConfig={updateSelectedNodeConfig}
             updateQueryConfig={updateQueryConfig}
             connectedPlaceholders={connectedPlaceholders}
-            hasSchemaConnection={hasSchemaConnection}
-            fetchedDbSchema={fetchedDbSchema}
+            hasSchemaConnection={schemaConnection.hasSchemaConnection || Boolean(schemaSnapshot?.collections?.length)}
+            fetchedDbSchema={effectiveSchema}
             schemaMatrix={schemaMatrix}
-            onSyncSchema={() => void schemaQuery.refetch()}
-            schemaSyncing={schemaQuery.isFetching}
+            onSyncSchema={handleSyncSchema}
+            schemaSyncing={schemaSyncing}
             schemaLoading={schemaLoading}
             nodes={nodes}
             edges={edges}

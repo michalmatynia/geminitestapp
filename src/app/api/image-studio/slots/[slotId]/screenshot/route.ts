@@ -51,7 +51,7 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = payloadSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const slot = await getImageStudioSlotById(slotId);
@@ -59,7 +59,7 @@ async function POST_handler(
 
     const parsedData = parseDataUrl(parsed.data.dataUrl);
     if (!parsedData) {
-      return NextResponse.json({ error: "Invalid data URL" }, { status: 400 });
+      throw badRequestError("Invalid data URL");
     }
 
     const ext = guessExtension(parsedData.mime);

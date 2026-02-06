@@ -1,10 +1,15 @@
 export const runtime = "nodejs";
 
-import { NextResponse } from "next/server";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { NextRequest, NextResponse } from "next/server";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type FieldInfo = {
   name: string;
@@ -22,10 +27,20 @@ type CollectionSchema = {
   relations?: string[] | undefined;
 };
 
+type SchemaProvider = "mongodb" | "prisma";
+
 type SchemaResponse = {
-  provider: "mongodb" | "prisma";
+  provider: SchemaProvider;
   collections: CollectionSchema[];
 };
+
+type MultiSchemaResponse = {
+  provider: "multi";
+  collections: Array<CollectionSchema & { provider: SchemaProvider }>;
+  sources: Partial<Record<SchemaProvider, SchemaResponse>>;
+};
+
+type SchemaResponsePayload = SchemaResponse | MultiSchemaResponse;
 
 // Prisma DMMF types for internal use
 type DmmfField = {
@@ -45,6 +60,85 @@ type DmmfModel = {
 
 type DmmfDatamodel = {
   models: DmmfModel[];
+};
+
+const PRISMA_SCHEMA_ENV_PATH = process.env.PRISMA_SCHEMA_PATH;
+const PRISMA_SCHEMA_DEFAULT_PATH = path.join(process.cwd(), "prisma", "schema.prisma");
+
+const readPrismaSchemaFile = (): string | null => {
+  const schemaPath = PRISMA_SCHEMA_ENV_PATH
+    ? path.isAbsolute(PRISMA_SCHEMA_ENV_PATH)
+      ? PRISMA_SCHEMA_ENV_PATH
+      : path.join(process.cwd(), PRISMA_SCHEMA_ENV_PATH)
+    : PRISMA_SCHEMA_DEFAULT_PATH;
+  try {
+    return readFileSync(schemaPath, "utf8");
+  } catch {
+    return null;
+  }
+};
+
+const stripSchemaComments = (schema: string): string => {
+  const withoutBlock = schema.replace(/\/\*[\s\S]*?\*\//g, "");
+  return withoutBlock
+    .split("\n")
+    .map((line: string) => line.replace(/\/\/.*$/, ""))
+    .join("\n");
+};
+
+const normalizePrismaFieldType = (
+  rawType: string
+): { type: string; isRequired: boolean } => {
+  const isList = rawType.endsWith("[]");
+  const isOptional = rawType.endsWith("?");
+  const baseType = rawType.replace(/\?|\[\]/g, "");
+  const type = isList ? `${baseType}[]` : baseType;
+  return { type, isRequired: !isOptional };
+};
+
+const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
+  const cleaned = stripSchemaComments(schemaText);
+  const modelRegex = /model\s+(\w+)\s*\{([\s\S]*?)\n\}/g;
+  const collections: CollectionSchema[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = modelRegex.exec(cleaned)) !== null) {
+    const modelName = match[1];
+    const body = match[2] ?? "";
+    const fields: FieldInfo[] = [];
+
+    body.split("\n").forEach((line: string) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      if (trimmed.startsWith("@@") || trimmed.startsWith("@")) return;
+      const [fieldName, fieldTypeRaw] = trimmed.split(/\s+/);
+      if (!fieldName || !fieldTypeRaw) return;
+      const { type, isRequired } = normalizePrismaFieldType(fieldTypeRaw);
+      const fieldInfo: FieldInfo = {
+        name: fieldName,
+        type,
+        isRequired,
+      };
+      if (trimmed.includes("@id")) fieldInfo.isId = true;
+      if (trimmed.includes("@unique")) fieldInfo.isUnique = true;
+      if (trimmed.includes("@default")) fieldInfo.hasDefault = true;
+      fields.push(fieldInfo);
+    });
+
+    fields.sort((a: FieldInfo, b: FieldInfo) => a.name.localeCompare(b.name));
+    collections.push({ name: modelName, fields });
+  }
+
+  return collections;
+};
+
+const getPrismaDmmf = (): DmmfDatamodel | null => {
+  if (!process.env.DATABASE_URL) return null;
+  try {
+    return (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null;
+  } catch {
+    return null;
+  }
 };
 
 async function getMongoSchema(): Promise<SchemaResponse> {
@@ -115,7 +209,7 @@ async function getMongoSchema(): Promise<SchemaResponse> {
 
 function getPrismaSchema(): SchemaResponse {
   // Accessing internal DMMF for schema introspection
-  const dmmf = (prisma as unknown as { _dmmf: { datamodel: DmmfDatamodel } })._dmmf?.datamodel;
+  const dmmf = getPrismaDmmf();
   const collections: CollectionSchema[] = [];
 
   if (dmmf?.models) {
@@ -136,26 +230,74 @@ function getPrismaSchema(): SchemaResponse {
       });
     }
   }
+  if (collections.length === 0) {
+    const schemaText = readPrismaSchemaFile();
+    if (schemaText) {
+      collections.push(...parsePrismaSchemaModels(schemaText));
+    }
+  }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
   return { provider: "prisma", collections };
 }
 
-export async function GET(): Promise<Response> {
-  try {
-    const provider = await getAppDbProvider();
+const enrichCollections = (
+  schema: SchemaResponse,
+  provider: SchemaProvider
+): Array<CollectionSchema & { provider: SchemaProvider }> =>
+  schema.collections.map((collection: CollectionSchema) => ({
+    ...collection,
+    provider,
+  }));
 
-    if (provider === "mongodb") {
-      const schema = await getMongoSchema();
-      return NextResponse.json(schema);
-    } else {
-      const schema = getPrismaSchema();
-      return NextResponse.json(schema);
-    }
-  } catch (error) {
-    return createErrorResponse(error, {
-      source: "databases.schema.GET",
-      fallbackMessage: "Failed to fetch schema",
-    });
+async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const { searchParams } = new URL(request.url);
+  const providerParam = (searchParams.get("provider") ?? "auto").toLowerCase();
+
+  if (providerParam === "mongodb") {
+    const schema = await getMongoSchema();
+    return NextResponse.json(schema);
   }
+  if (providerParam === "prisma") {
+    const schema = getPrismaSchema();
+    return NextResponse.json(schema);
+  }
+
+  if (providerParam === "all") {
+    const sources: Partial<Record<SchemaProvider, SchemaResponse>> = {};
+    const collections: Array<CollectionSchema & { provider: SchemaProvider }> = [];
+
+    try {
+      const mongoSchema = await getMongoSchema();
+      sources.mongodb = mongoSchema;
+      collections.push(...enrichCollections(mongoSchema, "mongodb"));
+    } catch {
+      // Ignore if Mongo is not configured.
+    }
+
+    try {
+      const prismaSchema = getPrismaSchema();
+      sources.prisma = prismaSchema;
+      collections.push(...enrichCollections(prismaSchema, "prisma"));
+    } catch {
+      // Ignore if Prisma is not configured.
+    }
+
+    const payload: SchemaResponsePayload = {
+      provider: "multi",
+      collections,
+      sources,
+    };
+    return NextResponse.json(payload);
+  }
+
+  const provider = await getAppDbProvider();
+  if (provider === "mongodb") {
+    const schema = await getMongoSchema();
+    return NextResponse.json(schema);
+  }
+  const schema = getPrismaSchema();
+  return NextResponse.json(schema);
 }
+
+export const GET = apiHandler(GET_handler, { source: "databases.schema.GET" });

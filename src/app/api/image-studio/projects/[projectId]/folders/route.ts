@@ -43,12 +43,12 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = createFolderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const safeFolder = sanitizeFolderPath(parsed.data.folder);
     if (!safeFolder) {
-      return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
+      throw badRequestError("Folder name is required");
     }
 
     const folderPath = path.join(projectsRoot, projectId, safeFolder);

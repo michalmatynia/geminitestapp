@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -14,16 +13,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
 
-  try {
-    const count = await productService.countProducts(filters);
-    return NextResponse.json({ count });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.count.GET",
-      fallbackMessage: "Failed to fetch product count",
-    });
-  }
+  const count = await productService.countProducts(filters);
+  return NextResponse.json({ count });
 }
 
 export const GET = apiHandler(

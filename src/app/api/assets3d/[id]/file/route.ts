@@ -8,43 +8,38 @@ import { existsSync } from "fs";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
+
+async function GET_handler(
+  _request: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
 ): Promise<Response> {
-  try {
-    const { id } = await params;
-    const repository = getAsset3DRepository();
-    const asset = await repository.getAsset3DById(id);
+  const { id } = params;
+  const repository = getAsset3DRepository();
+  const asset = await repository.getAsset3DById(id);
 
-    if (!asset) {
-      return createErrorResponse(
-        notFoundError(`Asset not found in database: ${id}`),
-        { request, source: "assets3d.file.GET" }
-      );
-    }
-
-    const diskPath = join(process.cwd(), "public", asset.filepath.replace(/^\/+/, ""));
-    
-    if (!existsSync(diskPath)) {
-      return createErrorResponse(
-        notFoundError(`File not found on disk: ${diskPath}`),
-        { request, source: "assets3d.file.GET" }
-      );
-    }
-
-    const fileBuffer = await readFile(diskPath);
-    
-    return new NextResponse(fileBuffer, {
-      headers: {
-        "Content-Type": asset.mimetype || "application/octet-stream",
-        "Cache-Control": "public, max-age=31536000",
-      },
-    });
-  } catch (error) {
-    return createErrorResponse(
-      notFoundError("File not found", { cause: error }),
-      { request, source: "assets3d.file.GET" }
-    );
+  if (!asset) {
+    throw notFoundError(`Asset not found in database: ${id}`);
   }
+
+  const diskPath = join(process.cwd(), "public", asset.filepath.replace(/^\/+/, ""));
+  
+  if (!existsSync(diskPath)) {
+    throw notFoundError(`File not found on disk: ${diskPath}`);
+  }
+
+  const fileBuffer = await readFile(diskPath);
+  
+  return new NextResponse(fileBuffer, {
+    headers: {
+      "Content-Type": asset.mimetype || "application/octet-stream",
+      "Cache-Control": "public, max-age=31536000",
+    },
+  });
 }
+
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
+  source: "assets3d.file.GET",
+});

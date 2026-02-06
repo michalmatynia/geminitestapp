@@ -1,6 +1,8 @@
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type {
+  CrudRequest,
+  CrudResult,
   DatabaseBackupResponse,
   DatabaseInfo,
   DatabasePreviewGroup,
@@ -10,6 +12,7 @@ import type {
   DatabasePreviewTable,
   DatabaseRestoreResponse,
   DatabaseType,
+  SqlQueryResult,
 } from '../types';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
@@ -136,4 +139,34 @@ export const fetchDatabasePreview = async (input: {
     ...(finalPageSize !== undefined ? { pageSize: finalPageSize } : {}),
   };
   return { ok: res.ok, payload };
+};
+
+export const executeSqlQuery = async (input: {
+  sql?: string;
+  type: DatabaseType;
+  // MongoDB fields
+  collection?: string;
+  operation?: string;
+  filter?: Record<string, unknown>;
+  document?: Record<string, unknown>;
+  update?: Record<string, unknown>;
+  pipeline?: Record<string, unknown>[];
+}): Promise<SqlQueryResult> => {
+  const res = await fetch('/api/databases/execute', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input),
+  });
+  return safeJson<SqlQueryResult>(res);
+};
+
+export const executeCrudOperation = async (
+  input: CrudRequest
+): Promise<CrudResult> => {
+  const res = await fetch('/api/databases/crud', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input),
+  });
+  return safeJson<CrudResult>(res);
 };

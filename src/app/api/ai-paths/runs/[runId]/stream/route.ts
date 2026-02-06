@@ -8,6 +8,9 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 import type { AiPathRunEventRecord, AiPathRunRecord, AiPathRunNodeRecord } from "@/shared/types/ai-paths";
 
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
+
 const TERMINAL_STATUSES = new Set([
   "completed",
   "failed",
@@ -43,39 +46,20 @@ const parseSinceParam = (value: string | null): Date | null => {
   return null;
 };
 
-export async function GET(
+async function GET_handler(
   req: NextRequest,
-  ctx: { params: Promise<{ runId: string }> }
+  _ctx: ApiHandlerContext,
+  params: { runId: string }
 ): Promise<Response> {
-  const { runId } = await ctx.params;
-  let access;
-  try {
-    access = await requireAiPathsAccess();
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.runs.stream",
-      fallbackMessage: "Unauthorized.",
-    });
-  }
+  const { runId } = params;
+  const access = await requireAiPathsAccess();
   const repo = getPathRunRepository();
   const initialRun = await repo.findRunById(runId);
   if (!initialRun) {
-    return createErrorResponse(notFoundError("Run not found", { runId }), {
-      request: req,
-      source: "ai-paths.runs.stream",
-      fallbackMessage: "Run not found",
-    });
+    throw notFoundError("Run not found", { runId });
   }
-  try {
-    assertAiPathRunAccess(access, initialRun);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.runs.stream",
-      fallbackMessage: "Forbidden.",
-    });
-  }
+  assertAiPathRunAccess(access, initialRun);
+
   const encoder = new TextEncoder();
   const sinceParam = new URL(req.url).searchParams.get("since");
   const initialSince = parseSinceParam(sinceParam);
@@ -172,3 +156,7 @@ export async function GET(
     },
   });
 }
+
+export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, {
+  source: "ai-paths.runs.stream",
+});

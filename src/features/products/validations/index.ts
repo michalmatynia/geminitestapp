@@ -32,13 +32,6 @@ export {
   type FieldValidationResult,
 } from './validators';
 
-// Middleware
-export {
-  validateProductCreateMiddleware,
-  validateProductUpdateMiddleware,
-  type ValidationMiddlewareOptions,
-} from './middleware';
-
 // Hooks
 export {
   useProductCreateValidation,

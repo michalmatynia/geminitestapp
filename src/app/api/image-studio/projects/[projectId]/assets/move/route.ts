@@ -85,7 +85,7 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = moveSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const targetFolder = parsed.data.targetFolder ? sanitizeFolderPath(parsed.data.targetFolder) : "";
@@ -114,19 +114,19 @@ async function POST_handler(
 
     const normalizedSource = normalizePublicPath(sourceFilepath);
     if (!normalizedSource) {
-      return NextResponse.json({ error: "Source filepath is required" }, { status: 400 });
+      throw badRequestError("Source filepath is required");
     }
     if (!normalizedSource.startsWith(`/uploads/studio/${projectId}/`)) {
-      return NextResponse.json({ error: "Source file must be inside the project uploads folder" }, { status: 400 });
+      throw badRequestError("Source file must be inside the project uploads folder");
     }
 
     const sourceDiskPath = resolveDiskPathFromPublicUploadPath(normalizedSource);
     if (!sourceDiskPath) {
-      return NextResponse.json({ error: "Source file not found" }, { status: 404 });
+      throw notFoundError("Source file not found");
     }
     const sourceStat = await fs.stat(sourceDiskPath).catch(() => null);
     if (!sourceStat || !sourceStat.isFile()) {
-      return NextResponse.json({ error: "Source file not found" }, { status: 404 });
+      throw notFoundError("Source file not found");
     }
 
     await fs.mkdir(targetDiskDir, { recursive: true });

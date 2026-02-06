@@ -36,11 +36,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       );
     } catch (error) {
       productRepoAvailable = false;
-      await ErrorSystem.captureException(error, {
-        service: "api/files",
-        method: "GET",
-        action: "loadProducts",
-      });
     }
     const filteredProducts = productId
       ? products.filter((product: ProductWithImages) => product.id === productId)

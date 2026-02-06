@@ -12,7 +12,6 @@ import {
   getAppDbProvider,
   invalidateAppDbProviderCache,
 } from "@/shared/lib/db/app-db-provider";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -283,166 +282,147 @@ async function GET_handler(
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
-  try {
-    const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get("scope"));
-    if (req.nextUrl.searchParams.get("debug") === "1" && isSettingsCacheDebugEnabled()) {
-      const response = NextResponse.json(getSettingsCacheStats(), {
-        headers: { "Cache-Control": "no-store" },
-      });
-      await attachProviderHeader(response);
-      attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
-      return response;
+  const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get("scope"));
+  if (req.nextUrl.searchParams.get("debug") === "1" && isSettingsCacheDebugEnabled()) {
+    const response = NextResponse.json(getSettingsCacheStats(), {
+      headers: { "Cache-Control": "no-store" },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
+    return response;
+  }
+  const cached = getCachedSettings(scope);
+  if (cached) {
+    if (shouldLogTiming()) {
+      console.log("[settings] cache", { scope, status: "hit" });
     }
-    const cached = getCachedSettings(scope);
-    if (cached) {
-      if (shouldLogTiming()) {
-        console.log("[settings] cache", { scope, status: "hit" });
-      }
-      const response = NextResponse.json(cached, {
-        headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "hit" },
-      });
-      await attachProviderHeader(response);
-      attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
-      return response;
+    const response = NextResponse.json(cached, {
+      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "hit" },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
+    return response;
+  }
+  const inflight = getSettingsInflight(scope);
+  if (inflight) {
+    const data = await inflight;
+    if (shouldLogTiming()) {
+      console.log("[settings] cache", { scope, status: "wait" });
     }
-    const inflight = getSettingsInflight(scope);
-    if (inflight) {
-      const data = await inflight;
-      if (shouldLogTiming()) {
-        console.log("[settings] cache", { scope, status: "wait" });
-      }
-      const response = NextResponse.json(data, {
-        headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "wait" },
-      });
-      await attachProviderHeader(response);
-      attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
-      return response;
-    }
+    const response = NextResponse.json(data, {
+      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "wait" },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
+    return response;
+  }
 
-    const stale = getStaleSettings(scope);
-    if (stale) {
-      if (shouldLogTiming()) {
-        console.log("[settings] cache", { scope, status: "stale" });
-      }
-      const timings: Record<string, number | null | undefined> = {};
-      const refreshPromise = fetchAndCacheSettings(scope, timings)
-        .catch((error) => {
-          void ErrorSystem.captureException(error, {
-            service: "api/settings",
-            method: "GET",
-          });
-          return stale;
-        })
-        .finally(() => {
-          setSettingsInflight(null, scope);
-        });
-      setSettingsInflight(refreshPromise, scope);
-      const response = NextResponse.json(stale, {
-        headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "stale" },
-      });
-      await attachProviderHeader(response);
-      attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
-      return response;
+  const stale = getStaleSettings(scope);
+  if (stale) {
+    if (shouldLogTiming()) {
+      console.log("[settings] cache", { scope, status: "stale" });
     }
-
     const timings: Record<string, number | null | undefined> = {};
-    const inflightPromise = fetchAndCacheSettings(scope, timings)
+    const refreshPromise = fetchAndCacheSettings(scope, timings)
+      .catch((error) => {
+        void ErrorSystem.captureException(error, {
+          service: "api/settings",
+          method: "GET",
+        });
+        return stale;
+      })
       .finally(() => {
         setSettingsInflight(null, scope);
       });
-    setSettingsInflight(inflightPromise, scope);
-    const data = await inflightPromise;
-    if (shouldLogTiming()) {
-      console.log("[settings] cache", { scope, status: "miss" });
-    }
-    const response = NextResponse.json(data, {
-      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "miss" },
+    setSettingsInflight(refreshPromise, scope);
+    const response = NextResponse.json(stale, {
+      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "stale" },
     });
     await attachProviderHeader(response);
-    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
     return response;
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "settings.GET",
-      fallbackMessage: "Failed to fetch settings",
-    });
   }
+
+  const timings: Record<string, number | null | undefined> = {};
+  const inflightPromise = fetchAndCacheSettings(scope, timings)
+    .finally(() => {
+      setSettingsInflight(null, scope);
+    });
+  setSettingsInflight(inflightPromise, scope);
+  const data = await inflightPromise;
+  if (shouldLogTiming()) {
+    console.log("[settings] cache", { scope, status: "miss" });
+  }
+  const response = NextResponse.json(data, {
+    headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "miss" },
+  });
+  await attachProviderHeader(response);
+  attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
+  return response;
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }
-  try {
-    clearSettingsCache();
-    const parsed = await parseJsonBody(req, settingSchema, {
-      logPrefix: "settings.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { key, value } = parsed.data;
-    if (shouldLog()) {
-      await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
-    }
-    const provider = await getAppDbProvider();
-    const hasMongo = Boolean(process.env.MONGODB_URI);
-    const shouldWriteMongo =
-      hasMongo &&
-      (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
-    const shouldWritePrisma =
-      canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
-    let prismaSetting: SettingRecord | null = null;
-    let mongoSetting: SettingRecord | null = null;
-    let prismaMissing = false;
-    if (shouldWritePrisma) {
-      try {
-        prismaSetting = await prisma.setting.upsert({
-          where: { key },
-          update: { value },
-          create: { key, value },
-          select: { key: true, value: true },
+  clearSettingsCache();
+  const parsed = await parseJsonBody(req, settingSchema, {
+    logPrefix: "settings.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { key, value } = parsed.data;
+  if (shouldLog()) {
+    await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
+  }
+  const provider = await getAppDbProvider();
+  const hasMongo = Boolean(process.env.MONGODB_URI);
+  const shouldWriteMongo =
+    hasMongo &&
+    (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
+  const shouldWritePrisma =
+    canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
+  let prismaSetting: SettingRecord | null = null;
+  let mongoSetting: SettingRecord | null = null;
+  let prismaMissing = false;
+  if (shouldWritePrisma) {
+    try {
+      prismaSetting = await prisma.setting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+        select: { key: true, value: true },
+      });
+    } catch (error) {
+      if (isPrismaMissingTableError(error)) {
+        prismaMissing = true;
+        console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
+          code: error.code,
         });
-      } catch (error) {
-        if (isPrismaMissingTableError(error)) {
-          prismaMissing = true;
-          console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
-            code: error.code,
-          });
-        } else {
-          throw error;
-        }
+      } else {
+        throw error;
       }
     }
-    const shouldWriteMongoFallback = shouldWriteMongo || (prismaMissing && hasMongo);
-    if (shouldWriteMongoFallback) {
-      mongoSetting = await upsertMongoSetting(key, value);
-    }
-    const setting = prismaSetting ?? mongoSetting;
-    if (!setting) {
-      const message = prismaMissing
-        ? "Settings table is missing in Prisma. Run prisma db push or configure MongoDB."
-        : "No settings store configured";
-      return createErrorResponse(
-        internalError(message),
-        { request: req, source: "settings.POST" }
-      );
-    }
-    if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
-      invalidateAppDbProviderCache();
-    }
-    if (shouldLog()) {
-      await ErrorSystem.logInfo("[settings] saved", { service: "api/settings", key: setting.key });
-    }
-    return NextResponse.json(setting);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "settings.POST",
-      fallbackMessage: "Failed to save setting",
-    });
   }
+  const shouldWriteMongoFallback = shouldWriteMongo || (prismaMissing && hasMongo);
+  if (shouldWriteMongoFallback) {
+    mongoSetting = await upsertMongoSetting(key, value);
+  }
+  const setting = prismaSetting ?? mongoSetting;
+  if (!setting) {
+    const message = prismaMissing
+      ? "Settings table is missing in Prisma. Run prisma db push or configure MongoDB."
+      : "No settings store configured";
+    throw internalError(message);
+  }
+  if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
+    invalidateAppDbProviderCache();
+  }
+  if (shouldLog()) {
+    await ErrorSystem.logInfo("[settings] saved", { service: "api/settings", key: setting.key });
+  }
+  return NextResponse.json(setting);
 }
 
 const disableSettingsRateLimit = process.env.NODE_ENV !== "production";

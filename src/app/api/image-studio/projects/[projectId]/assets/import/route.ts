@@ -164,7 +164,7 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = importSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const safeFolder =
@@ -353,7 +353,7 @@ async function POST_handler(
     }
 
     if (uploaded.length === 0) {
-      return NextResponse.json({ error: "No files imported", failures }, { status: 400 });
+      throw badRequestError("No files imported", { failures });
     }
 
     return NextResponse.json({ uploaded, failures }, { status: 201 });

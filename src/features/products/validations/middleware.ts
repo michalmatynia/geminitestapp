@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
+
 import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
 
 export type ValidationMiddlewareOptions = {
@@ -19,16 +21,15 @@ export async function validateProductCreateMiddleware(
   const result = await validateProductCreate(data);
 
   if (!result.success) {
-    const response = options.customErrorHandler 
-      ? options.customErrorHandler(result.errors)
-      : NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          details: result.errors,
-          code: 'VALIDATION_ERROR'
-        },
-        { status: 400 }
-      );
+    if (options.customErrorHandler) {
+      return { success: false, response: options.customErrorHandler(result.errors) };
+    }
+    const fieldErrors: Record<string, string[]> = {};
+    result.errors.forEach((err: ValidationError) => {
+      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
+      fieldErrors[err.field]!.push(err.message);
+    });
+    const response = await createValidationErrorResponse(fieldErrors, { source: 'products.validation.create' });
     return { success: false, response };
   }
 
@@ -47,16 +48,15 @@ export async function validateProductUpdateMiddleware(
   const result = await validateProductUpdate(data);
 
   if (!result.success) {
-    const response = options.customErrorHandler 
-      ? options.customErrorHandler(result.errors)
-      : NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          details: result.errors,
-          code: 'VALIDATION_ERROR'
-        },
-        { status: 400 }
-      );
+    if (options.customErrorHandler) {
+      return { success: false, response: options.customErrorHandler(result.errors) };
+    }
+    const fieldErrors: Record<string, string[]> = {};
+    result.errors.forEach((err: ValidationError) => {
+      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
+      fieldErrors[err.field]!.push(err.message);
+    });
+    const response = await createValidationErrorResponse(fieldErrors, { source: 'products.validation.update' });
     return { success: false, response };
   }
 

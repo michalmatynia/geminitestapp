@@ -62,14 +62,23 @@ export type EntityUpdatePayload = {
   mode?: 'replace' | 'append';
 };
 
-export type SchemaResponse = {
-  provider: 'prisma' | 'mongodb';
-  collections: Array<{
-    name: string;
-    fields?: Array<{ name: string; type: string }>;
-    relations?: string[];
-  }>;
+export type SchemaProvider = 'prisma' | 'mongodb';
+export type SchemaCollection = {
+  name: string;
+  fields?: Array<{ name: string; type: string }>;
+  relations?: string[];
+  provider?: SchemaProvider | 'multi';
 };
+export type SchemaResponse =
+  | {
+    provider: SchemaProvider;
+    collections: SchemaCollection[];
+  }
+  | {
+    provider: 'multi';
+    collections: SchemaCollection[];
+    sources?: Partial<Record<SchemaProvider, { provider: SchemaProvider; collections: SchemaCollection[] }>>;
+  };
 
 export type BrowseResponse = {
   documents: Record<string, unknown>[];
@@ -246,8 +255,10 @@ export const dbApi = {
   /**
    * Fetch database schema
    */
-  async schema(): Promise<ApiResponse<SchemaResponse>> {
-    return apiFetch<SchemaResponse>('/api/databases/schema');
+  async schema(options?: { provider?: 'auto' | 'mongodb' | 'prisma' | 'all' }): Promise<ApiResponse<SchemaResponse>> {
+    const provider = options?.provider;
+    const query = provider && provider !== 'auto' ? `?provider=${encodeURIComponent(provider)}` : '';
+    return apiFetch<SchemaResponse>(`/api/databases/schema${query}`);
   },
 
   /**
@@ -255,13 +266,16 @@ export const dbApi = {
    */
   async browse(
     collection: string,
-    options?: { limit?: number; skip?: number; query?: string }
+    options?: { limit?: number; skip?: number; query?: string; provider?: 'auto' | 'mongodb' | 'prisma' | 'all' }
   ): Promise<ApiResponse<BrowseResponse>> {
     const params = new URLSearchParams();
     params.set('collection', collection);
     if (options?.limit) params.set('limit', String(options.limit));
     if (options?.skip) params.set('skip', String(options.skip));
     if (options?.query) params.set('query', options.query);
+    if (options?.provider && options.provider !== 'auto' && options.provider !== 'all') {
+      params.set('provider', options.provider);
+    }
     return apiFetch<BrowseResponse>(`/api/databases/browse?${params.toString()}`);
   },
 };

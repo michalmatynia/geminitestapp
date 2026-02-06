@@ -8,12 +8,67 @@ import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type SchemaData = {
-  provider: string;
+  provider: 'mongodb' | 'prisma' | 'multi';
   collections: Array<{
     name: string;
     fields: Array<{ name: string; type: string }>;
     relations?: string[];
+    provider?: 'mongodb' | 'prisma' | 'multi';
   }>;
+  sources?: Partial<Record<'mongodb' | 'prisma', { provider: 'mongodb' | 'prisma'; collections: Array<{
+    name: string;
+    fields: Array<{ name: string; type: string }>;
+    relations?: string[];
+    provider?: 'mongodb' | 'prisma';
+  }> }>>;
+};
+
+const normalizeSchemaCollections = (schema: SchemaData | null): Array<{
+  name: string;
+  fields: Array<{ name: string; type: string }>;
+  relations?: string[];
+  provider?: 'mongodb' | 'prisma' | 'multi';
+}> => {
+  if (!schema) return [];
+  if (schema.provider === 'multi') {
+    if (schema.collections?.length) return schema.collections;
+    const merged: Array<{
+      name: string;
+      fields: Array<{ name: string; type: string }>;
+      relations?: string[];
+      provider?: 'mongodb' | 'prisma';
+    }> = [];
+    (['mongodb', 'prisma'] as const).forEach((provider) => {
+      const source = schema.sources?.[provider];
+      if (!source?.collections?.length) return;
+      source.collections.forEach((collection) => {
+        merged.push({ ...collection, provider });
+      });
+    });
+    return merged;
+  }
+  return schema.collections.map((collection) => ({ ...collection, provider: schema.provider }));
+};
+
+const buildCollectionKey = (
+  collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' },
+  includeProvider: boolean
+): string =>
+  includeProvider && collection.provider
+    ? `${collection.provider}:${collection.name}`
+    : collection.name;
+
+const matchesCollectionSelection = (
+  collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' },
+  selectedSet: Set<string>
+): boolean => {
+  const nameKey = collection.name.toLowerCase();
+  if (selectedSet.has(nameKey)) return true;
+  if (collection.provider) {
+    const providerKey = `${collection.provider}:${collection.name}`.toLowerCase();
+    if (selectedSet.has(providerKey)) return true;
+  }
+  return false;
 };
 
 type DbSchemaNodeConfigSectionProps = {
@@ -31,12 +86,30 @@ export function DbSchemaNodeConfigSection({
   const [browseSearch, setBrowseSearch] = React.useState('');
   const [browseQuery, setBrowseQuery] = React.useState('');
   const [expandedDocId, setExpandedDocId] = React.useState<string | null>(null);
+  const [browseProvider, setBrowseProvider] = React.useState<'mongodb' | 'prisma' | null>(null);
   const browseLimit = 10;
 
+  const schemaConfig = {
+    provider: 'all',
+    mode: 'all',
+    collections: [] as string[],
+    includeFields: true,
+    includeRelations: true,
+    formatAs: 'text',
+    ...(selectedNode.config?.db_schema ?? {}),
+  } as {
+    provider: 'auto' | 'mongodb' | 'prisma' | 'all';
+    mode: 'all' | 'selected';
+    collections: string[];
+    includeFields: boolean;
+    includeRelations: boolean;
+    formatAs: 'json' | 'text';
+  };
+
   const schemaQuery = useQuery({
-    queryKey: ['db-schema'],
+    queryKey: ['db-schema', schemaConfig.provider ?? 'auto'],
     queryFn: async (): Promise<SchemaData> => {
-      const result = await dbApi.schema();
+      const result = await dbApi.schema({ provider: schemaConfig.provider });
       if (!result.ok) {
         throw new Error(result.error || 'Failed to fetch schema.');
       }
@@ -46,7 +119,7 @@ export function DbSchemaNodeConfigSection({
   });
 
   const browseQueryResult = useQuery({
-    queryKey: ['db-browse', browseCollection, browseSkip, browseQuery],
+    queryKey: ['db-browse', browseProvider, browseCollection, browseSkip, browseQuery],
     queryFn: async (): Promise<{ documents: Record<string, unknown>[]; total: number }> => {
       if (!browseCollection) {
         return { documents: [], total: 0 };
@@ -55,6 +128,7 @@ export function DbSchemaNodeConfigSection({
         limit: browseLimit,
         skip: browseSkip,
         ...(browseQuery.trim() ? { query: browseQuery.trim() } : {}),
+        ...(browseProvider ? { provider: browseProvider } : {}),
       });
       if (!result.ok) {
         throw new Error(result.error || 'Failed to browse collection.');
@@ -74,16 +148,42 @@ export function DbSchemaNodeConfigSection({
   const browseTotal = browseQueryResult.data?.total ?? 0;
   const browseLoading = browseQueryResult.isFetching;
 
-  if (selectedNode.type !== 'db_schema') return null;
+  const schemaCollections = React.useMemo(
+    () => normalizeSchemaCollections(fetchedDbSchema),
+    [fetchedDbSchema]
+  );
+  const showProviderLabel = fetchedDbSchema?.provider === 'multi';
+  const availableProviders = React.useMemo(() => {
+    if (!fetchedDbSchema) return [] as Array<'mongodb' | 'prisma'>;
+    if (fetchedDbSchema.provider === 'multi') {
+      const providers = new Set<'mongodb' | 'prisma'>();
+      schemaCollections.forEach((collection) => {
+        if (collection.provider && collection.provider !== 'multi') providers.add(collection.provider);
+      });
+      return Array.from(providers);
+    }
+    return [fetchedDbSchema.provider];
+  }, [fetchedDbSchema, schemaCollections]);
 
-  const schemaConfig = {
-    mode: 'all' as const,
-    collections: [] as string[],
-    includeFields: true,
-    includeRelations: true,
-    formatAs: 'text' as const,
-    ...(selectedNode.config?.db_schema ?? {}),
-  };
+  React.useEffect((): void => {
+    if (schemaConfig.provider === 'mongodb' || schemaConfig.provider === 'prisma') {
+      setBrowseProvider(schemaConfig.provider);
+      return;
+    }
+    if (!browseProvider || !availableProviders.includes(browseProvider)) {
+      setBrowseProvider(availableProviders[0] ?? null);
+    }
+  }, [schemaConfig.provider, availableProviders, browseProvider]);
+
+  React.useEffect((): void => {
+    setBrowseCollection(null);
+    setBrowseSkip(0);
+    setBrowseSearch('');
+    setBrowseQuery('');
+    setExpandedDocId(null);
+  }, [browseProvider]);
+
+  if (selectedNode.type !== 'db_schema') return null;
 
   const updateSchemaConfig = (patch: Partial<typeof schemaConfig>): void => {
     const nextConfig = { ...schemaConfig, ...patch };
@@ -92,11 +192,13 @@ export function DbSchemaNodeConfigSection({
     });
   };
 
-  const toggleCollection = (collName: string): void => {
+  const toggleCollection = (collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' }): void => {
     const current = schemaConfig.collections ?? [];
-    const next = current.includes(collName)
-      ? current.filter((c: string): boolean => c !== collName)
-      : [...current, collName];
+    const includeProvider = fetchedDbSchema?.provider === 'multi';
+    const key = buildCollectionKey(collection, includeProvider);
+    const next = current.includes(key)
+      ? current.filter((c: string): boolean => c !== key)
+      : [...current, key];
     updateSchemaConfig({ collections: next });
   };
 
@@ -111,12 +213,37 @@ export function DbSchemaNodeConfigSection({
           <div className="py-4 text-center text-sm text-gray-400">
             Loading schema...
           </div>
-        ) : fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
+        ) : schemaCollections.length > 0 ? (
           <div className="space-y-4">
             <div className="text-xs text-gray-400">
-              Provider: <span className="text-purple-300">{fetchedDbSchema.provider}</span>
+              Provider:{' '}
+              <span className="text-purple-300">
+                {(fetchedDbSchema && fetchedDbSchema.provider === 'multi')
+                  ? availableProviders.join(' + ') || 'multi'
+                  : fetchedDbSchema?.provider || 'N/A'}
+              </span>
               {' · '}
-              {fetchedDbSchema.collections.length} collections
+              {schemaCollections.length} collections
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Schema Provider</Label>
+              <Select
+                value={schemaConfig.provider ?? 'auto'}
+                onValueChange={(value: string) =>
+                  updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })
+                }
+              >
+                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto (Primary DB)</SelectItem>
+                  <SelectItem value="mongodb">MongoDB</SelectItem>
+                  <SelectItem value="prisma">Prisma (PostgreSQL)</SelectItem>
+                  <SelectItem value="all">All Providers</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -143,20 +270,29 @@ export function DbSchemaNodeConfigSection({
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
                 <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2">
-                  {fetchedDbSchema.collections.map((coll: { name: string; fields: Array<{ name: string; type: string }> }) => {
-                    const isSelected = schemaConfig.collections?.includes(coll.name);
+                  {schemaCollections.map((coll) => {
+                    const includeProvider = fetchedDbSchema?.provider === 'multi';
+                    const key = buildCollectionKey(coll, includeProvider);
+                    const isSelected = schemaConfig.collections?.includes(key);
                     return (
                       <button
-                        key={coll.name}
+                        key={key}
                         type="button"
-                        onClick={() => toggleCollection(coll.name)}
+                        onClick={() => toggleCollection(coll)}
                         className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition ${
                           isSelected
                             ? 'bg-purple-500/20 text-purple-200'
                             : 'text-gray-300 hover:bg-muted/50'
                         }`}
                       >
-                        <span className="font-medium">{coll.name}</span>
+                        <span className="font-medium">
+                          {coll.name}
+                          {showProviderLabel && coll.provider ? (
+                            <span className="ml-2 text-[10px] text-gray-500">
+                              ({coll.provider})
+                            </span>
+                          ) : null}
+                        </span>
                         <span className="text-[10px] text-gray-500">
                           {coll.fields?.length ?? 0} fields
                         </span>
@@ -225,13 +361,23 @@ export function DbSchemaNodeConfigSection({
               <div className="mb-2 text-[10px] uppercase text-gray-500">Preview</div>
               <div className="max-h-[150px] overflow-y-auto text-[11px] text-gray-300">
                 {(schemaConfig.mode === 'all'
-                  ? fetchedDbSchema.collections
-                  : fetchedDbSchema.collections.filter((c: { name: string }) =>
-                    schemaConfig.collections?.includes(c.name)
+                  ? schemaCollections
+                  : schemaCollections.filter((collection) =>
+                    matchesCollectionSelection(
+                      collection,
+                      new Set((schemaConfig.collections ?? []).map((c: string) => c.toLowerCase()))
+                    )
                   )
-                ).map((coll: { name: string; fields?: Array<{ name: string; type: string }> }) => (
-                  <div key={coll.name} className="mb-2">
-                    <div className="font-medium text-purple-300">{coll.name}</div>
+                ).map((coll) => (
+                  <div key={`${coll.provider ?? 'db'}:${coll.name}`} className="mb-2">
+                    <div className="font-medium text-purple-300">
+                      {coll.name}
+                      {showProviderLabel && coll.provider ? (
+                        <span className="ml-2 text-[10px] text-gray-500">
+                          ({coll.provider})
+                        </span>
+                      ) : null}
+                    </div>
                     {schemaConfig.includeFields && coll.fields && (
                       <div className="ml-2 text-[10px] text-gray-500">
                         {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(', ')}
@@ -255,27 +401,53 @@ export function DbSchemaNodeConfigSection({
               <div className="space-y-2">
                 <Label className="text-xs text-gray-400">Browse Collection</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={browseCollection ?? ''}
-                    onValueChange={(value: string) => {
-                      setBrowseCollection(value || null);
-                      setBrowseSkip(0);
-                      setBrowseSearch('');
-                      setBrowseQuery('');
-                      setExpandedDocId(null);
-                    }}
-                  >
-                    <SelectTrigger className="flex-1 border-border bg-card/70 text-sm text-white">
-                      <SelectValue placeholder="Select collection to browse" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fetchedDbSchema.collections.map((coll: { name: string }) => (
-                        <SelectItem key={coll.name} value={coll.name}>
-                          {coll.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-1 flex-col gap-2">
+                    {availableProviders.length > 1 && (
+                      <Select
+                        value={browseProvider ?? ''}
+                        onValueChange={(value: string) => {
+                          setBrowseProvider((value as 'mongodb' | 'prisma') || null);
+                        }}
+                      >
+                        <SelectTrigger className="border-border bg-card/70 text-sm text-white">
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableProviders.map((provider) => (
+                            <SelectItem key={provider} value={provider}>
+                              {provider}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Select
+                      value={browseCollection ?? ''}
+                      onValueChange={(value: string) => {
+                        setBrowseCollection(value || null);
+                        setBrowseSkip(0);
+                        setBrowseSearch('');
+                        setBrowseQuery('');
+                        setExpandedDocId(null);
+                      }}
+                    >
+                      <SelectTrigger className="flex-1 border-border bg-card/70 text-sm text-white">
+                        <SelectValue placeholder="Select collection to browse" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {schemaCollections
+                          .filter((collection) =>
+                            browseProvider ? collection.provider === browseProvider : true
+                          )
+                          .map((coll) => (
+                            <SelectItem key={`${coll.provider ?? 'db'}:${coll.name}`} value={coll.name}>
+                              {coll.name}
+                              {showProviderLabel && coll.provider ? ` (${coll.provider})` : ''}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {browseCollection && (
                     <Button
                       type="button"
@@ -343,10 +515,10 @@ export function DbSchemaNodeConfigSection({
                           docId = String(rawId);
                         } else if (
                           rawId &&
-                                                              typeof rawId === 'object' &&
-                                                              'toString' in rawId &&
-                                                              typeof (rawId as { toString: unknown }).toString === 'function' &&
-                                                              (rawId as { toString: unknown }).toString !== Object.prototype.toString
+                          typeof rawId === 'object' &&
+                          'toString' in rawId &&
+                          typeof (rawId as { toString: unknown }).toString === 'function' &&
+                          (rawId as { toString: unknown }).toString !== Object.prototype.toString
                         ) {
                           docId = (rawId as { toString(): string }).toString();
                         } else {
@@ -377,7 +549,8 @@ export function DbSchemaNodeConfigSection({
                               <div className="flex items-center gap-2">
                                 <span className="text-cyan-300">{displayName}</span>
                                 <span className="text-[9px] text-gray-500">({docId})</span>
-                              </div>                                          <svg
+                              </div>
+                              <svg
                                 className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                 fill="none"
                                 viewBox="0 0 24 24"
@@ -415,7 +588,7 @@ export function DbSchemaNodeConfigSection({
                           setBrowseSkip(newSkip);
                         }}
                       >
-                      Previous
+                        Previous
                       </Button>
                       <span className="text-[10px] text-gray-500">
                         Page {Math.floor(browseSkip / browseLimit) + 1} of {Math.ceil(browseTotal / browseLimit)}
@@ -429,7 +602,7 @@ export function DbSchemaNodeConfigSection({
                           setBrowseSkip(newSkip);
                         }}
                       >
-                      Next
+                        Next
                       </Button>
                     </div>
                   )}
@@ -456,5 +629,4 @@ export function DbSchemaNodeConfigSection({
       </div>
     </div>
   );
-            
 }

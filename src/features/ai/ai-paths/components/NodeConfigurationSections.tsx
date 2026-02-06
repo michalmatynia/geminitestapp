@@ -31,6 +31,7 @@ import { MapperNodeConfigSection } from './node-config/dialog/MapperNodeConfigSe
 import { MathNodeConfigSection } from './node-config/dialog/MathNodeConfigSection';
 import { ModelNodeConfigSection } from './node-config/dialog/ModelNodeConfigSection';
 import { MutatorNodeConfigSection } from './node-config/dialog/MutatorNodeConfigSection';
+import { StringMutatorNodeConfigSection } from './node-config/dialog/StringMutatorNodeConfigSection';
 import { PollNodeConfigSection } from './node-config/dialog/PollNodeConfigSection';
 import { PromptNodeConfigSection } from './node-config/dialog/PromptNodeConfigSection';
 import { RegexNodeConfigSection } from './node-config/dialog/RegexNodeConfigSection';
@@ -158,6 +159,10 @@ export function NodeConfigurationSections({
         updateSelectedNodeConfig={updateSelectedNodeConfig}
       />
       <MutatorNodeConfigSection
+        selectedNode={selectedNode}
+        updateSelectedNodeConfig={updateSelectedNodeConfig}
+      />
+      <StringMutatorNodeConfigSection
         selectedNode={selectedNode}
         updateSelectedNodeConfig={updateSelectedNodeConfig}
       />

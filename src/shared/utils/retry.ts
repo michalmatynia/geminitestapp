@@ -17,10 +17,16 @@ type LogSystemEventParams = {
   context?: Record<string, unknown>;
 };
 
-// Stub implementation to avoid features layer dependency
-const logSystemEvent = (params: LogSystemEventParams): void => {
-  // Implementation would be injected or moved to shared layer
-  console.log('System event:', params);
+// Real implementation from features layer via dynamic import to avoid circular dependencies
+const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+  try {
+    // eslint-disable-next-line import/no-restricted-paths
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    await realLogSystemEvent(params as any);
+  } catch (error) {
+    console.error('Failed to log system event via observability feature:', error);
+    console.log('System event (fallback):', params);
+  }
 };
 
 /**

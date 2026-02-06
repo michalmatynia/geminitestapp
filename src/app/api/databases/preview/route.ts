@@ -250,6 +250,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       rows: Record<string, unknown>[];
       totalRows: number;
     }[] = [];
+
+    type TableDetailEntry = {
+      name: string;
+      columns: { name: string; type: string; nullable: boolean; defaultValue: string | null; isPrimaryKey: boolean }[];
+      indexes: { name: string; columns: string[]; isUnique: boolean; definition: string }[];
+      foreignKeys: { name: string; column: string; referencedTable: string; referencedColumn: string; onDelete: string; onUpdate: string }[];
+      rowEstimate: number;
+      sizeBytes: number;
+      sizeFormatted: string;
+    };
+    let tableDetails: TableDetailEntry[] = [];
+    let enumTypes: { name: string; values: string[] }[] = [];
+    let databaseSize = "";
+
     try {
       stage = "connect";
       const previewUrl = new URL(process.env.DATABASE_URL ?? "");
@@ -290,7 +304,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         const estimateRows = await previewClient.query<{
           relname: string;
           reltuples: number;
-        }>( 
+        }>(
           `SELECT c.relname, c.reltuples::bigint AS reltuples
            FROM pg_class c
            JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -308,8 +322,222 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         }));
       }
 
+      // ── Detailed schema queries ──
+
+      stage = "detail_columns";
+      const columnsResult = await previewClient.query<{
+        table_name: string;
+        column_name: string;
+        data_type: string;
+        udt_name: string;
+        is_nullable: string;
+        column_default: string | null;
+      }>(
+        `SELECT table_name, column_name, data_type, udt_name, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+         ORDER BY table_name, ordinal_position`
+      );
+
+      stage = "detail_pks";
+      const pkResult = await previewClient.query<{
+        table_name: string;
+        column_name: string;
+      }>(
+        `SELECT tc.table_name, kcu.column_name
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+         WHERE tc.constraint_type = 'PRIMARY KEY'
+           AND tc.table_schema = 'public'`
+      );
+      const pkSet = new Set(
+        pkResult.rows.map((r: { table_name: string; column_name: string }) => `${r.table_name}.${r.column_name}`)
+      );
+
+      stage = "detail_indexes";
+      const indexResult = await previewClient.query<{
+        tablename: string;
+        indexname: string;
+        indexdef: string;
+      }>(
+        `SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' ORDER BY tablename, indexname`
+      );
+      const uniqueIndexResult = await previewClient.query<{
+        indexname: string;
+        indisunique: boolean;
+      }>(
+        `SELECT i.relname AS indexname, ix.indisunique
+         FROM pg_index ix
+         JOIN pg_class i ON i.oid = ix.indexrelid
+         JOIN pg_class t ON t.oid = ix.indrelid
+         JOIN pg_namespace n ON n.oid = t.relnamespace
+         WHERE n.nspname = 'public'`
+      );
+      const uniqueMap = new Map(
+        uniqueIndexResult.rows.map((r: { indexname: string; indisunique: boolean }) => [r.indexname, r.indisunique])
+      );
+
+      stage = "detail_fks";
+      const fkResult = await previewClient.query<{
+        constraint_name: string;
+        source_table: string;
+        source_column: string;
+        target_table: string;
+        target_column: string;
+        delete_rule: string;
+        update_rule: string;
+      }>(
+        `SELECT
+           tc.constraint_name,
+           tc.table_name AS source_table,
+           kcu.column_name AS source_column,
+           ccu.table_name AS target_table,
+           ccu.column_name AS target_column,
+           rc.delete_rule,
+           rc.update_rule
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+         JOIN information_schema.constraint_column_usage ccu
+           ON tc.constraint_name = ccu.constraint_name
+           AND tc.table_schema = ccu.table_schema
+         JOIN information_schema.referential_constraints rc
+           ON tc.constraint_name = rc.constraint_name
+           AND tc.table_schema = rc.constraint_schema
+         WHERE tc.constraint_type = 'FOREIGN KEY'
+           AND tc.table_schema = 'public'
+         ORDER BY tc.table_name, tc.constraint_name`
+      );
+
+      stage = "detail_enums";
+      const enumResult = await previewClient.query<{
+        enum_name: string;
+        enum_value: string;
+      }>(
+        `SELECT t.typname AS enum_name, e.enumlabel AS enum_value
+         FROM pg_type t
+         JOIN pg_enum e ON t.oid = e.enumtypid
+         JOIN pg_namespace n ON n.oid = t.typnamespace
+         WHERE n.nspname = 'public'
+         ORDER BY t.typname, e.enumsortorder`
+      );
+      const enumMap = new Map<string, string[]>();
+      for (const row of enumResult.rows) {
+        const existing = enumMap.get(row.enum_name);
+        if (existing) {
+          existing.push(row.enum_value);
+        } else {
+          enumMap.set(row.enum_name, [row.enum_value]);
+        }
+      }
+      enumTypes = Array.from(enumMap.entries()).map(([name, values]: [string, string[]]) => ({ name, values }));
+
+      stage = "detail_sizes";
+      const sizeResult = await previewClient.query<{
+        tablename: string;
+        size_bytes: string;
+        size_formatted: string;
+      }>(
+        `SELECT
+           c.relname AS tablename,
+           pg_total_relation_size(c.oid)::bigint AS size_bytes,
+           pg_size_pretty(pg_total_relation_size(c.oid)) AS size_formatted
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE n.nspname = 'public' AND c.relkind = 'r'
+         ORDER BY c.relname`
+      );
+      const sizeMap = new Map(
+        sizeResult.rows.map((r: { tablename: string; size_bytes: string; size_formatted: string }) => [
+          r.tablename,
+          { sizeBytes: Number(r.size_bytes), sizeFormatted: r.size_formatted },
+        ])
+      );
+
+      const dbSizeResult = await previewClient.query<{ size: string }>(
+        `SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
+      );
+      databaseSize = dbSizeResult.rows[0]?.size ?? "";
+
+      // ── Build tableDetails ──
+
+      const colsByTable = new Map<string, typeof columnsResult.rows>();
+      for (const col of columnsResult.rows) {
+        const existing = colsByTable.get(col.table_name);
+        if (existing) {
+          existing.push(col);
+        } else {
+          colsByTable.set(col.table_name, [col]);
+        }
+      }
+      const idxByTable = new Map<string, typeof indexResult.rows>();
+      for (const idx of indexResult.rows) {
+        const existing = idxByTable.get(idx.tablename);
+        if (existing) {
+          existing.push(idx);
+        } else {
+          idxByTable.set(idx.tablename, [idx]);
+        }
+      }
+      const fkByTable = new Map<string, typeof fkResult.rows>();
+      for (const fk of fkResult.rows) {
+        const existing = fkByTable.get(fk.source_table);
+        if (existing) {
+          existing.push(fk);
+        } else {
+          fkByTable.set(fk.source_table, [fk]);
+        }
+      }
+
+      const rowEstimateMap = new Map(tableStats.map((t: { name: string; rowEstimate: number }) => [t.name, t.rowEstimate]));
+
+      tableDetails = tables.map((tableName: string) => {
+        const cols = colsByTable.get(tableName) ?? [];
+        const idxs = idxByTable.get(tableName) ?? [];
+        const fks = fkByTable.get(tableName) ?? [];
+        const size = sizeMap.get(tableName) ?? { sizeBytes: 0, sizeFormatted: "0 bytes" };
+
+        return {
+          name: tableName,
+          columns: cols.map((c) => ({
+            name: c.column_name,
+            type: c.data_type === "USER-DEFINED" ? c.udt_name : c.data_type,
+            nullable: c.is_nullable === "YES",
+            defaultValue: c.column_default,
+            isPrimaryKey: pkSet.has(`${tableName}.${c.column_name}`),
+          })),
+          indexes: idxs.map((i) => {
+            const colMatch = i.indexdef.match(/\(([^)]+)\)/);
+            const columns = colMatch ? colMatch[1]!.split(",").map((s: string) => s.trim()) : [];
+            return {
+              name: i.indexname,
+              columns,
+              isUnique: uniqueMap.get(i.indexname) ?? false,
+              definition: i.indexdef,
+            };
+          }),
+          foreignKeys: fks.map((f) => ({
+            name: f.constraint_name,
+            column: f.source_column,
+            referencedTable: f.target_table,
+            referencedColumn: f.target_column,
+            onDelete: f.delete_rule,
+            onUpdate: f.update_rule,
+          })),
+          rowEstimate: rowEstimateMap.get(tableName) ?? 0,
+          sizeBytes: size.sizeBytes,
+          sizeFormatted: size.sizeFormatted,
+        };
+      });
+
+      // ── Fetch paginated rows ──
+
+      stage = "query_rows";
       for (const table of tables) {
-        const countResult = await previewClient.query<{ total: string }>( 
+        const countResult = await previewClient.query<{ total: string }>(
           `SELECT COUNT(*)::bigint AS total FROM "${table}"`
         );
         const totalRows = Number(countResult.rows[0]?.total ?? 0);
@@ -350,6 +578,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         groups: groupObj,
       },
       data: tableRows,
+      tableDetails,
+      enums: enumTypes,
+      databaseSize,
     });
   } catch (error) {
     return createErrorResponse(error, {

@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
-import { validateProductUpdateMiddleware } from "@/features/products/validations";
+import { validateProductUpdateMiddleware } from "@/features/products/validations/middleware";
 
 /**
  * GET /api/products/[id]
@@ -34,10 +34,6 @@ async function GET_handler(
 
     return NextResponse.json(product);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/products/[id]",
-      method: "GET",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].GET",
@@ -82,10 +78,6 @@ async function PUT_handler(
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
-    await ErrorSystem.captureException(error, {
-      service: "api/products/[id]",
-      method: "PUT",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].PUT",
@@ -134,10 +126,6 @@ async function PATCH_handler(
 
     return NextResponse.json(product);
   } catch (error: unknown) {
-    await ErrorSystem.captureException(error, {
-      service: "api/products/[id]",
-      method: "PATCH",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].PATCH",
@@ -166,10 +154,6 @@ async function DELETE_handler(
     }
     return new Response(null, { status: 204 });
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/products/[id]",
-      method: "DELETE",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].DELETE",

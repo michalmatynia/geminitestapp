@@ -14,6 +14,7 @@ import type {
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
+import { getLanguages } from '@/features/internationalization/api';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 
@@ -88,11 +89,7 @@ export function useParameters(catalogId: string): UseQueryResult<ProductParamete
 export function useLanguages(): UseQueryResult<Language[]> {
   return useQuery({
     queryKey: productMetadataKeys.languages,
-    queryFn: async (): Promise<Language[]> => {
-      const res = await fetch('/api/languages');
-      if (!res.ok) throw new Error('Failed to load languages');
-      return (await res.json()) as Language[];
-    },
+    queryFn: async (): Promise<Language[]> => getLanguages(),
   });
 }
 

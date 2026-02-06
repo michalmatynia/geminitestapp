@@ -219,6 +219,14 @@ export default function DatabasesPage(): React.JSX.Element {
           <Button variant="secondary" onClick={handlePreviewCurrent}>
             Preview Current DB
           </Button>
+          <Button
+            variant="outline"
+            onClick={(): void => {
+              window.location.assign('/admin/databases/operations');
+            }}
+          >
+            Database Operations
+          </Button>
         </>
       }
       tabs={{

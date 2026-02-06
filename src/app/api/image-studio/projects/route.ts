@@ -8,6 +8,7 @@ import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
 
 const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
 
@@ -42,12 +43,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = createProjectSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const sanitized = sanitizeProjectId(parsed.data.projectId);
     if (!sanitized) {
-      return NextResponse.json({ error: "Project id is required" }, { status: 400 });
+      throw badRequestError("Project id is required");
     }
 
     const projectDir = path.join(projectsRoot, sanitized);

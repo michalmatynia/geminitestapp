@@ -200,7 +200,7 @@ async function POST_handler(
     const folder = formData.get("folder");
     const files = extractUploadedFiles(formData);
     if (files.length === 0) {
-      return NextResponse.json({ error: "No files provided" }, { status: 400 });
+      throw badRequestError("No files provided");
     }
 
     const uploaded: ImageFileRecord[] = [];
@@ -225,7 +225,7 @@ async function POST_handler(
     }
 
     if (uploaded.length === 0) {
-      return NextResponse.json({ error: "Upload failed", failures }, { status: 400 });
+      throw badRequestError("Upload failed", { failures });
     }
 
     return NextResponse.json({ uploaded, failures }, { status: 201 });

@@ -2,15 +2,16 @@ import { MongoClient } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
+
 export const runtime = "nodejs";
 
-export async function GET(req: NextRequest): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const uri = process.env.MONGODB_URI;
-  if (!uri)
-    return Response.json(
-      { ok: false, error: "MONGODB_URI missing" },
-      { status: 500 },
-    );
+  if (!uri) {
+    throw new Error("MONGODB_URI missing");
+  }
 
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 
@@ -18,13 +19,12 @@ export async function GET(req: NextRequest): Promise<NextResponse | Response> {
     await client.connect();
     await client.db().command({ ping: 1 });
     return Response.json({ ok: true });
-  } catch (e: unknown) {
-    return createErrorResponse(e, {
-      request: req,
-      source: "api.health",
-      fallbackMessage: "Database ping failed",
-    });
   } finally {
     await client.close().catch(() => {});
   }
 }
+
+export const GET = apiHandler(GET_handler, {
+  source: "api.health",
+  fallbackMessage: "Database ping failed",
+});

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, quotaExceededError } from "@/shared/errors/app-error";
 import {
   countImageStudioSlots,
   createImageStudioSlots,
@@ -75,7 +75,7 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const existingCount = await countImageStudioSlots(projectId);
@@ -83,7 +83,7 @@ async function POST_handler(
     const count = parsed.data.count ?? incomingSlots.length;
     const maxCreate = Math.max(0, Math.min(100 - existingCount, count));
     if (maxCreate <= 0) {
-      return NextResponse.json({ error: "Slot limit reached" }, { status: 400 });
+      throw quotaExceededError("Slot limit reached");
     }
 
     const baseName = Date.now().toString();

@@ -36,6 +36,17 @@ const queue = createManagedQueue<ChatbotJobData>({
   },
   onFailed: async (_jobId, error, data) => {
     const message = error instanceof Error ? error.message : 'Job failed.';
+    
+    try {
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      await ErrorSystem.captureException(error, {
+        service: 'chatbot-job-queue',
+        jobId: data.jobId,
+      });
+    } catch (logError) {
+      console.error('[chatbot][jobs] Failed to log to ErrorSystem:', logError);
+    }
+
     await chatbotJobRepository.update(data.jobId, {
       status: 'failed',
       finishedAt: new Date(),

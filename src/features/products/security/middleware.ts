@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { AppError, internalError } from '@/shared/errors/app-error';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+
 import { withSecureFileUpload } from './file-upload';
 import { InputSanitizer, ProductSanitizationRules, validateProductInput, type SanitizationOptions } from './input-sanitization';
 import { withRateLimit, rateLimiters } from './rate-limiting';
@@ -169,19 +172,11 @@ export function withSecurity(
       const validation = await SecurityMiddleware.validateRequest(req, config);
       
       if (!validation.allowed) {
-        const response = NextResponse.json(
-          { error: validation.message || 'Request not allowed' },
-          { status: validation.status || 403 }
-        );
-        
-        // Add rate limit headers if present
-        if (validation.headers) {
-          Object.entries(validation.headers).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        
-        return addSecurityHeaders(response);
+        throw new AppError(validation.message || 'Request not allowed', {
+          code: 'SECURITY_VALIDATION_FAILED',
+          httpStatus: validation.status || 403,
+          meta: validation.headers,
+        });
       }
 
       // Call original handler with sanitized data
@@ -197,13 +192,13 @@ export function withSecurity(
       // Add security headers to response
       return addSecurityHeaders(response as NextResponse);
 
-    } catch {
-      const errorResponse = NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
-      
-      return addSecurityHeaders(errorResponse);
+    } catch (error) {
+      const response = await createErrorResponse(error, {
+        request: req,
+        source: 'products.security.middleware',
+        fallbackMessage: 'Internal server error',
+      });
+      return addSecurityHeaders(response);
     }
   };
 }
@@ -220,30 +215,23 @@ export function withFileUploadSecurity(
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
       
       if (!validation.allowed) {
-        const response = NextResponse.json(
-          { error: validation.message || 'File upload not allowed' },
-          { status: validation.status || 403 }
-        );
-        
-        if (validation.headers) {
-          Object.entries(validation.headers).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        
-        return addSecurityHeaders(response);
+        throw new AppError(validation.message || 'File upload not allowed', {
+          code: 'FILE_UPLOAD_SECURITY_FAILED',
+          httpStatus: validation.status || 403,
+          meta: validation.headers,
+        });
       }
 
       const response = await handler(req, validation.files || [], ...args);
       return addSecurityHeaders(response as NextResponse);
 
-    } catch {
-      const errorResponse = NextResponse.json(
-        { error: 'File upload failed' },
-        { status: 500 }
-      );
-      
-      return addSecurityHeaders(errorResponse);
+    } catch (error) {
+      const response = await createErrorResponse(error, {
+        request: req,
+        source: 'products.security.fileupload',
+        fallbackMessage: 'File upload failed',
+      });
+      return addSecurityHeaders(response);
     }
   };
 }

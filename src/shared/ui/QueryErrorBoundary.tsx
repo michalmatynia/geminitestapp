@@ -4,6 +4,8 @@ import { useQueryErrorResetBoundary } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { Button } from './button';
 
 function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -38,6 +40,12 @@ export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
     <ErrorBoundary
       FallbackComponent={QueryErrorFallback}
       onReset={reset}
+      onError={(error, info) => {
+        logClientError(error, {
+          componentStack: info.componentStack,
+          context: { source: 'QueryErrorBoundary' },
+        });
+      }}
       resetKeys={[]}
     >
       {children}

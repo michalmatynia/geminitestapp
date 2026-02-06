@@ -1,6 +1,6 @@
 'use client';
 
-
+import { useEffect, useRef } from 'react';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
@@ -18,6 +18,7 @@ import {
 type SimulationDialogProps = {
   openNodeId: string | null;
   onClose: () => void;
+  onPersist?: (() => void | Promise<void>) | undefined;
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   isPathLocked?: boolean;
@@ -27,6 +28,7 @@ type SimulationDialogProps = {
 export function SimulationDialog({
   openNodeId,
   onClose,
+  onPersist,
   nodes,
   setNodes,
   isPathLocked = false,
@@ -34,12 +36,38 @@ export function SimulationDialog({
 }: SimulationDialogProps): React.JSX.Element | null {
   if (!openNodeId) return null;
   const simulationNode = nodes.find((node: AiNode): boolean => node.id === openNodeId);
+  const openNodeRef = useRef<string | null>(null);
+  const persistedValueRef = useRef<string>('');
+
+  const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
+  const simulationEntityValue =
+    simulationConfig.entityId?.trim()
+      ? simulationConfig.entityId
+      : simulationConfig.productId ?? '';
+
+  const persistIfChanged = (): void => {
+    const current = simulationEntityValue.trim();
+    if (current === persistedValueRef.current.trim()) return;
+    persistedValueRef.current = current;
+    void onPersist?.();
+  };
+
+  useEffect(() => {
+    if (!openNodeId) return;
+    if (openNodeRef.current !== openNodeId) {
+      openNodeRef.current = openNodeId;
+      persistedValueRef.current = simulationEntityValue;
+    }
+  }, [openNodeId, simulationEntityValue]);
 
   return (
     <Dialog
       open={Boolean(openNodeId)}
       onOpenChange={(open: boolean): void => {
-        if (!open) onClose();
+        if (!open) {
+          persistIfChanged();
+          onClose();
+        }
       }}
     >
       <DialogContent className="max-w-md border border-border bg-card text-white">
@@ -50,11 +78,6 @@ export function SimulationDialog({
           </DialogDescription>
         </DialogHeader>
         {simulationNode ? ((): React.JSX.Element => {
-          const simulationConfig = simulationNode.config?.simulation ?? { productId: '' };
-          const simulationEntityValue =
-            simulationConfig.entityId?.trim()
-              ? simulationConfig.entityId
-              : simulationConfig.productId ?? '';
           return (
             <div className="space-y-4">
               <div>
@@ -82,6 +105,10 @@ export function SimulationDialog({
                           : node
                       )
                     );
+                  }}
+                  onBlur={(): void => {
+                    if (isPathLocked) return;
+                    persistIfChanged();
                   }}
                 />
                 {isPathLocked ? (

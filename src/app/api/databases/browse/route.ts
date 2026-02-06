@@ -6,7 +6,10 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { ObjectId } from "mongodb";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
 import { ErrorSystem } from "@/features/observability/server";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type BrowseParams = {
   collection: string;
@@ -107,11 +110,10 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   // Build where clause if query provided
   let where: Record<string, unknown> = {};
-      if (query) {
-        try {
-          where = JSON.parse(query) as Record<string, unknown>;
-        } catch {
-  
+  if (query) {
+    try {
+      where = JSON.parse(query) as Record<string, unknown>;
+    } catch {
       // Try to search by common fields
       where = {
         OR: [
@@ -154,40 +156,35 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
   }
 }
 
-export async function GET(request: NextRequest): Promise<Response> {
-  try {
-    const { searchParams } = new URL(request.url);
-    const collection = searchParams.get("collection");
-    const limit = parseInt(searchParams.get("limit") ?? "20", 10);
-    const skip = parseInt(searchParams.get("skip") ?? "0", 10);
-    const query = searchParams.get("query") ?? undefined;
+async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const { searchParams } = new URL(request.url);
+  const collection = searchParams.get("collection");
+  const limit = parseInt(searchParams.get("limit") ?? "20", 10);
+  const skip = parseInt(searchParams.get("skip") ?? "0", 10);
+  const query = searchParams.get("query") ?? undefined;
+  const providerParam = (searchParams.get("provider") ?? "").toLowerCase();
 
-    if (!collection) {
-      return NextResponse.json(
-        { error: "Collection parameter is required" },
-        { status: 400 }
-      );
-    }
+  if (!collection) {
+    throw badRequestError("Collection parameter is required");
+  }
 
-    const provider = await getAppDbProvider();
+  const provider =
+    providerParam === "mongodb" || providerParam === "prisma"
+      ? providerParam
+      : await getAppDbProvider();
 
-    const params: BrowseParams = { collection, limit, skip };
-    if (query !== undefined) {
-      params.query = query;
-    }
+  const params: BrowseParams = { collection, limit, skip };
+  if (query !== undefined) {
+    params.query = query;
+  }
 
-    if (provider === "mongodb") {
-      const result = await browseMongoCollection(params);
-      return NextResponse.json(result);
-    } else {
-      const result = await browsePrismaCollection(params);
-      return NextResponse.json(result);
-    }
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "databases.browse.GET",
-      fallbackMessage: "Failed to browse collection",
-    });
+  if (provider === "mongodb") {
+    const result = await browseMongoCollection(params);
+    return NextResponse.json(result);
+  } else {
+    const result = await browsePrismaCollection(params);
+    return NextResponse.json(result);
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "databases.browse.GET" });

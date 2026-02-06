@@ -21,6 +21,8 @@ import {
   PROMPT_OUTPUT_PORTS,
   REGEX_INPUT_PORTS,
   REGEX_OUTPUT_PORTS,
+  STRING_MUTATOR_INPUT_PORTS,
+  STRING_MUTATOR_OUTPUT_PORTS,
   ITERATOR_INPUT_PORTS,
   ITERATOR_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
@@ -219,6 +221,20 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             mutator: {
               path: node.config?.mutator?.path ?? 'entity.title',
               valueTemplate: node.config?.mutator?.valueTemplate ?? '{{value}}',
+            },
+          },
+        };
+      }
+      if (node.type === 'string_mutator') {
+        const operations = node.config?.stringMutator?.operations;
+        return {
+          ...node,
+          inputs: ensureUniquePorts(node.inputs ?? [], STRING_MUTATOR_INPUT_PORTS),
+          outputs: ensureUniquePorts(node.outputs ?? [], STRING_MUTATOR_OUTPUT_PORTS),
+          config: {
+            ...node.config,
+            stringMutator: {
+              operations: Array.isArray(operations) ? operations : [],
             },
           },
         };
@@ -459,6 +475,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           config: {
             ...node.config,
             db_schema: {
+              provider: schemaConfig?.provider ?? 'all',
               mode: schemaConfig?.mode ?? 'all',
               collections: schemaConfig?.collections ?? [],
               includeFields: schemaConfig?.includeFields ?? true,
@@ -716,6 +733,13 @@ export const getDefaultConfigForType = (
       },
     };
   }
+  if (type === 'string_mutator') {
+    return {
+      stringMutator: {
+        operations: [],
+      },
+    };
+  }
   if (type === 'validator') {
     return {
       validator: {
@@ -918,6 +942,7 @@ export const getDefaultConfigForType = (
   if (type === 'db_schema') {
     return {
       db_schema: {
+        provider: 'all',
         mode: 'all',
         collections: [],
         includeFields: true,

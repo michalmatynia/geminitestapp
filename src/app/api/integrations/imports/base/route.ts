@@ -12,6 +12,7 @@ import { getImportTemplate } from "@/features/integrations/services/import-templ
 import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
 import { decryptSecret } from "@/features/integrations/utils/encryption";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import {
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
@@ -116,10 +117,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     if (!token) {
-      return NextResponse.json(
-        { error: "Base.com API token is required (or connect integration)." },
-        { status: 400 }
-      );
+      throw badRequestError("Base.com API token is required (or connect integration).");
     }
 
     if (data.action === "inventories") {
@@ -129,10 +127,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (data.action === "warehouses") {
       if (!data.inventoryId) {
-        return NextResponse.json(
-          { error: "Inventory ID is required." },
-          { status: 400 }
-        );
+        throw badRequestError("Inventory ID is required.");
       }
       const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
       let allWarehouses: { id: string; name: string }[] = [];
@@ -148,10 +143,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (data.action === "warehouses_debug") {
       if (!data.inventoryId) {
-        return NextResponse.json(
-          { error: "Inventory ID is required." },
-          { status: 400 }
-        );
+        throw badRequestError("Inventory ID is required.");
       }
       const inventoryResult = await fetchBaseWarehousesDebug(
         token,
@@ -180,10 +172,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     if (!data.inventoryId) {
-      return NextResponse.json(
-        { error: "Inventory ID is required." },
-        { status: 400 }
-      );
+      throw badRequestError("Inventory ID is required.");
     }
 
     if (data.action === "list") {
@@ -374,10 +363,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       ? await getImportTemplate(data.templateId)
       : null;
     if (data.templateId && !template) {
-      return NextResponse.json(
-        { error: "Import template not found." },
-        { status: 400 }
-      );
+      throw notFoundError("Import template not found.");
     }
 
     const catalogs = await catalogRepository.listCatalogs();
@@ -386,10 +372,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       ? catalogs.find((catalog) => catalog.id === data.catalogId)
       : defaultCatalog;
     if (!targetCatalog) {
-      return NextResponse.json(
-        { error: "Selected catalog not found." },
-        { status: 400 }
-      );
+      throw notFoundError("Selected catalog not found.");
     }
 
     const defaultPriceGroupId = targetCatalog.defaultPriceGroupId;
@@ -413,10 +396,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           });
     const resolvedDefault = (await defaultPriceGroup) as { id: string } | null;
     if (!resolvedDefault?.id) {
-      return NextResponse.json(
-        { error: "Default price group is required before importing products." },
-        { status: 400 }
-      );
+      throw badRequestError("Default price group is required before importing products.");
     }
     let imported = 0;
     let failed = 0;

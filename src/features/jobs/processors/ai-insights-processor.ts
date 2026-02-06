@@ -54,7 +54,8 @@ export async function tick(): Promise<void> {
         );
       }
     }
-  } catch {
-    // best-effort; errors are logged by generator
+  } catch (error) {
+    // Re-throw so the queue worker handles it and logs it via ErrorSystem
+    throw error;
   }
 }

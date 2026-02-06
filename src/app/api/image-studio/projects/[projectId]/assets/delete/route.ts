@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
@@ -71,7 +71,7 @@ async function POST_handler(
     const body = (await req.json().catch(() => null)) as unknown;
     const parsed = deleteSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
     }
 
     const assetId = parsed.data.id?.trim() ?? "";
@@ -87,7 +87,7 @@ async function POST_handler(
       filepath = record.filepath;
       const normalized = normalizePublicPath(filepath);
       if (!normalized || !normalized.startsWith(`/uploads/studio/${projectId}/`)) {
-        return NextResponse.json({ error: "Asset not in this project" }, { status: 400 });
+        throw badRequestError("Asset not in this project");
       }
       const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
       if (diskPath) {
@@ -107,11 +107,11 @@ async function POST_handler(
 
     const normalized = normalizePublicPath(filepath);
     if (!normalized || !normalized.startsWith(`/uploads/studio/${projectId}/`)) {
-      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+      throw notFoundError("Asset not found");
     }
     const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
     if (!diskPath) {
-      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+      throw notFoundError("Asset not found");
     }
     await fs.unlink(diskPath).catch((error: unknown) => {
       if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {

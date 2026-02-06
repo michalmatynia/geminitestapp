@@ -13,40 +13,32 @@ const bulkSchema = z.object({
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, bulkSchema, {
-      logPrefix: "products.images.base64.bulk.POST",
-    });
-    if (!parsed.ok) return parsed.response;
-    const { productIds } = parsed.data;
-    if (!productIds.length) {
-      throw badRequestError("No product ids provided");
-    }
-
-    const results = await Promise.allSettled(
-      productIds.map((id: string) =>
-        fetch(new URL(`/api/products/${id}/images/base64`, req.url), {
-          method: "POST",
-        })
-      )
-    );
-
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.length - succeeded;
-
-    return NextResponse.json({
-      status: "ok",
-      requested: productIds.length,
-      succeeded,
-      failed,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.images.base64.bulk.POST",
-      fallbackMessage: "Failed to convert images to base64",
-    });
+  const parsed = await parseJsonBody(req, bulkSchema, {
+    logPrefix: "products.images.base64.bulk.POST",
+  });
+  if (!parsed.ok) return parsed.response;
+  const { productIds } = parsed.data;
+  if (!productIds.length) {
+    throw badRequestError("No product ids provided");
   }
+
+  const results = await Promise.allSettled(
+    productIds.map((id: string) =>
+      fetch(new URL(`/api/products/${id}/images/base64`, req.url), {
+        method: "POST",
+      })
+    )
+  );
+
+  const succeeded = results.filter((r) => r.status === "fulfilled").length;
+  const failed = results.length - succeeded;
+
+  return NextResponse.json({
+    status: "ok",
+    requested: productIds.length,
+    succeeded,
+    failed,
+  });
 }
 
 export const POST = apiHandler(

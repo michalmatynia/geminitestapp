@@ -27,55 +27,47 @@ const productParameterCreateSchema = z.object({
  * - catalogId: Filter by catalog (required)
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const catalogId = searchParams.get("catalogId");
+  const { searchParams } = new URL(req.url);
+  const catalogId = searchParams.get("catalogId");
 
-    if (!catalogId) {
-      throw badRequestError("catalogId query parameter is required");
-    }
-
-    const provider = await getProductDataProvider();
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const parameters = await db
-        .collection("product_parameters")
-        .find({ catalogId })
-        .sort({ name_en: 1 })
-        .toArray();
-      const normalized = parameters.map((param: Record<string, unknown>) => {
-        const { _id, ...rest } = param as unknown as {
-          _id?: { toString?: () => string };
-        } & Record<string, unknown>;
-        const fallbackId = _id?.toString ? _id.toString() : undefined;
-        return {
-          ...rest,
-          id: (rest as { id?: string }).id ?? fallbackId,
-        };
-      });
-      return NextResponse.json(normalized);
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product parameters require the Postgres product store.");
-    }
-
-    const parameters = await prisma.productParameter.findMany({
-      where: { catalogId },
-      orderBy: { name_en: "asc" },
-    });
-    return NextResponse.json(parameters);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.parameters.GET",
-      fallbackMessage: "Failed to fetch product parameters",
-    });
+  if (!catalogId) {
+    throw badRequestError("catalogId query parameter is required");
   }
+
+  const provider = await getProductDataProvider();
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
+    }
+    const db = await getMongoDb();
+    const parameters = await db
+      .collection("product_parameters")
+      .find({ catalogId })
+      .sort({ name_en: 1 })
+      .toArray();
+    const normalized = parameters.map((param: Record<string, unknown>) => {
+      const { _id, ...rest } = param as unknown as {
+        _id?: { toString?: () => string };
+      } & Record<string, unknown>;
+      const fallbackId = _id?.toString ? _id.toString() : undefined;
+      return {
+        ...rest,
+        id: (rest as { id?: string }).id ?? fallbackId,
+      };
+    });
+    return NextResponse.json(normalized);
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product parameters require the Postgres product store.");
+  }
+
+  const parameters = await prisma.productParameter.findMany({
+    where: { catalogId },
+    orderBy: { name_en: "asc" },
+  });
+  return NextResponse.json(parameters);
 }
 
 /**
@@ -83,52 +75,24 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new product parameter.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const provider = await getProductDataProvider();
-    const parsed = await parseJsonBody(req, productParameterCreateSchema, {
-      logPrefix: "product-parameters.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
+  const provider = await getProductDataProvider();
+  const parsed = await parseJsonBody(req, productParameterCreateSchema, {
+    logPrefix: "product-parameters.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const { name_en, name_pl, name_de, catalogId } = parsed.data;
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-
-    const { name_en, name_pl, name_de, catalogId } = parsed.data;
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const existing = await db.collection("product_parameters").findOne({
-        name_en,
-        catalogId,
-      });
-      if (existing) {
-        throw conflictError(
-          "A parameter with this name already exists in this catalog",
-          { name_en, catalogId }
-        );
-      }
-      const now = new Date();
-      const parameter = {
-        id: randomUUID(),
-        name_en,
-        name_pl: name_pl ?? null,
-        name_de: name_de ?? null,
-        catalogId,
-        createdAt: now,
-        updatedAt: now,
-      };
-      await db.collection("product_parameters").insertOne(parameter);
-      return NextResponse.json(parameter as unknown as ProductParameter, { status: 201 });
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product parameters require the Postgres product store.");
-    }
-
-    const existing = await prisma.productParameter.findFirst({
-      where: { name_en, catalogId },
+    const db = await getMongoDb();
+    const existing = await db.collection("product_parameters").findOne({
+      name_en,
+      catalogId,
     });
     if (existing) {
       throw conflictError(
@@ -136,24 +100,44 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         { name_en, catalogId }
       );
     }
-
-    const parameter = await prisma.productParameter.create({
-      data: {
-        name_en,
-        name_pl: name_pl ?? null,
-        name_de: name_de ?? null,
-        catalogId,
-      },
-    });
-
-    return NextResponse.json(parameter, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.parameters.POST",
-      fallbackMessage: "Failed to create product parameter",
-    });
+    const now = new Date();
+    const parameter = {
+      id: randomUUID(),
+      name_en,
+      name_pl: name_pl ?? null,
+      name_de: name_de ?? null,
+      catalogId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.collection("product_parameters").insertOne(parameter);
+    return NextResponse.json(parameter as unknown as ProductParameter, { status: 201 });
   }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product parameters require the Postgres product store.");
+  }
+
+  const existing = await prisma.productParameter.findFirst({
+    where: { name_en, catalogId },
+  });
+  if (existing) {
+    throw conflictError(
+      "A parameter with this name already exists in this catalog",
+      { name_en, catalogId }
+    );
+  }
+
+  const parameter = await prisma.productParameter.create({
+    data: {
+      name_en,
+      name_pl: name_pl ?? null,
+      name_de: name_de ?? null,
+      catalogId,
+    },
+  });
+
+  return NextResponse.json(parameter, { status: 201 });
 }
 
 export const GET = apiHandler(

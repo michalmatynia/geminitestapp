@@ -34,7 +34,7 @@ import {
 import {
   productCreateSchema,
   productUpdateSchema,
-} from '@/features/products/validations';
+} from '@/features/products/validations/schemas';
 import type { ImageFileSelection } from '@/shared/types/files';
 import type { Language } from '@/shared/types/internationalization';
 

@@ -31,13 +31,13 @@ import { MapperNodeConfigSection } from './node-config/dialog/MapperNodeConfigSe
 import { MathNodeConfigSection } from './node-config/dialog/MathNodeConfigSection';
 import { ModelNodeConfigSection } from './node-config/dialog/ModelNodeConfigSection';
 import { MutatorNodeConfigSection } from './node-config/dialog/MutatorNodeConfigSection';
-import { StringMutatorNodeConfigSection } from './node-config/dialog/StringMutatorNodeConfigSection';
 import { PollNodeConfigSection } from './node-config/dialog/PollNodeConfigSection';
 import { PromptNodeConfigSection } from './node-config/dialog/PromptNodeConfigSection';
 import { RegexNodeConfigSection } from './node-config/dialog/RegexNodeConfigSection';
 import { RouterNodeConfigSection } from './node-config/dialog/RouterNodeConfigSection';
 import { RuntimeNodeConfigSection } from './node-config/dialog/RuntimeNodeConfigSection';
 import { SimulationNodeConfigSection } from './node-config/dialog/SimulationNodeConfigSection';
+import { StringMutatorNodeConfigSection } from './node-config/dialog/StringMutatorNodeConfigSection';
 import { TemplateNodeConfigSection } from './node-config/dialog/TemplateNodeConfigSection';
 import { TriggerNodeConfigSection } from './node-config/dialog/TriggerNodeConfigSection';
 import { UnsupportedNodeConfigNotice } from './node-config/dialog/UnsupportedNodeConfigNotice';

@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';

@@ -13,33 +13,25 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    const productId = params.id;
-    if (!productId) {
-      throw badRequestError("Product id is required");
-    }
-
-    const productRepo = await getProductRepository();
-    const product = await productRepo.getProductById(productId);
-    if (!product) {
-      throw notFoundError("Product not found", { productId });
-    }
-
-    const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
-    await productRepo.updateProduct(productId, { imageBase64s, imageLinks });
-
-    return NextResponse.json({
-      status: "ok",
-      productId,
-      count: imageBase64s.filter(Boolean).length,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: _req,
-      source: "products.images.base64.POST",
-      fallbackMessage: "Failed to convert product images to base64",
-    });
+  const productId = params.id;
+  if (!productId) {
+    throw badRequestError("Product id is required");
   }
+
+  const productRepo = await getProductRepository();
+  const product = await productRepo.getProductById(productId);
+  if (!product) {
+    throw notFoundError("Product not found", { productId });
+  }
+
+  const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
+  await productRepo.updateProduct(productId, { imageBase64s, imageLinks });
+
+  return NextResponse.json({
+    status: "ok",
+    productId,
+    count: imageBase64s.filter(Boolean).length,
+  });
 }
 
 export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {

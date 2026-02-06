@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -22,26 +21,18 @@ type CreateMappingRequest = {
  *   - catalogId (optional): Filter by catalog ID
  */
 async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(request.url);
-    const connectionId = searchParams.get("connectionId");
-    const catalogId = searchParams.get("catalogId") ?? undefined;
+  const { searchParams } = new URL(request.url);
+  const connectionId = searchParams.get("connectionId");
+  const catalogId = searchParams.get("catalogId") ?? undefined;
 
-    if (!connectionId) {
-      throw badRequestError("connectionId is required");
-    }
-
-    const repo = getCategoryMappingRepository();
-    const mappings = await repo.listByConnection(connectionId, catalogId);
-
-    return NextResponse.json(mappings);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "marketplace.mappings.GET",
-      fallbackMessage: "Failed to fetch category mappings",
-    });
+  if (!connectionId) {
+    throw badRequestError("connectionId is required");
   }
+
+  const repo = getCategoryMappingRepository();
+  const mappings = await repo.listByConnection(connectionId, catalogId);
+
+  return NextResponse.json(mappings);
 }
 
 /**
@@ -49,47 +40,39 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
  * Creates a new category mapping.
  */
 async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const body = (await request.json()) as CreateMappingRequest;
-    const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
+  const body = (await request.json()) as CreateMappingRequest;
+  const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
 
-    if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
-      throw badRequestError(
-        "connectionId, externalCategoryId, internalCategoryId, and catalogId are required"
-      );
-    }
-
-    const repo = getCategoryMappingRepository();
-
-    // Check if mapping already exists
-    const existing = await repo.getByExternalCategory(
-      connectionId,
-      externalCategoryId,
-      catalogId
+  if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
+    throw badRequestError(
+      "connectionId, externalCategoryId, internalCategoryId, and catalogId are required"
     );
-
-    if (existing) {
-      // Update existing mapping
-      const updated = await repo.update(existing.id, { internalCategoryId });
-      return NextResponse.json(updated);
-    }
-
-    // Create new mapping
-    const mapping = await repo.create({
-      connectionId,
-      externalCategoryId,
-      internalCategoryId,
-      catalogId,
-    });
-
-    return NextResponse.json(mapping, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "marketplace.mappings.POST",
-      fallbackMessage: "Failed to create category mapping",
-    });
   }
+
+  const repo = getCategoryMappingRepository();
+
+  // Check if mapping already exists
+  const existing = await repo.getByExternalCategory(
+    connectionId,
+    externalCategoryId,
+    catalogId
+  );
+
+  if (existing) {
+    // Update existing mapping
+    const updated = await repo.update(existing.id, { internalCategoryId });
+    return NextResponse.json(updated);
+  }
+
+  // Create new mapping
+  const mapping = await repo.create({
+    connectionId,
+    externalCategoryId,
+    internalCategoryId,
+    catalogId,
+  });
+
+  return NextResponse.json(mapping, { status: 201 });
 }
 
 export const GET = apiHandler(

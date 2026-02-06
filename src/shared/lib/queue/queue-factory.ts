@@ -100,6 +100,7 @@ export function createManagedQueue<TJobData>(
       // Log to ErrorSystem via dynamic import to avoid shared -> features circular dependency
       void (async () => {
         try {
+          // eslint-disable-next-line import/no-restricted-paths
           const { ErrorSystem } = await import('@/features/observability/services/error-system');
           await ErrorSystem.captureException(err, {
             service: `queue-worker:${config.name}`,

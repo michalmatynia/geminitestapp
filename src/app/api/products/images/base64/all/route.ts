@@ -8,46 +8,38 @@ import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from "@
 import type { ProductAiJobType } from "@/shared/types/jobs";
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const job = await enqueueProductAiJob(
-      "system",
-      "base64_all" as ProductAiJobType,
-      { source: "base64_all" }
-    );
+  const job = await enqueueProductAiJob(
+    "system",
+    "base64_all" as ProductAiJobType,
+    { source: "base64_all" }
+  );
 
-    const inlineJobs =
-      process.env.AI_JOBS_INLINE === "true" ||
-      process.env.NODE_ENV !== "production";
+  const inlineJobs =
+    process.env.AI_JOBS_INLINE === "true" ||
+    process.env.NODE_ENV !== "production";
 
-    if (inlineJobs) {
-      processSingleJob(job.id).catch(async (error: unknown) => {
-        try {
-          const { logSystemError } = await import("@/features/observability/server");
-          await logSystemError({ 
-            message: "[products.images.base64.all] Failed to run base64 job",
-            error,
-            source: "api/products/images/base64/all",
-            context: { jobId: job.id }
-          });
-        } catch (logError) {
-          console.error("[products.images.base64.all] Failed to run base64 job (and logging failed)", error, logError);
-        }
-      });
-    } else {
-      startProductAiJobQueue();
-    }
-
-    return NextResponse.json({
-      status: "ok",
-      jobId: job.id,
+  if (inlineJobs) {
+    processSingleJob(job.id).catch(async (error: unknown) => {
+      try {
+        const { logSystemError } = await import("@/features/observability/server");
+        await logSystemError({ 
+          message: "[products.images.base64.all] Failed to run base64 job",
+          error,
+          source: "api/products/images/base64/all",
+          context: { jobId: job.id }
+        });
+      } catch (logError) {
+        console.error("[products.images.base64.all] Failed to run base64 job (and logging failed)", error, logError);
+      }
     });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.images.base64.all.POST",
-      fallbackMessage: "Failed to convert images to base64",
-    });
+  } else {
+    startProductAiJobQueue();
   }
+
+  return NextResponse.json({
+    status: "ok",
+    jobId: job.id,
+  });
 }
 
 export const POST = apiHandler(

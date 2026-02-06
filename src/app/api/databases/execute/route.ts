@@ -29,13 +29,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const dbType = parsed.type ?? "postgresql";
 
   if (dbType === "mongodb") {
-    return handleMongoOperation(req, parsed);
+    return handleMongoOperation(parsed);
   }
 
-  return handlePostgresQuery(req, parsed.sql);
+  return handlePostgresQuery(parsed.sql);
+
 }
 
-async function handlePostgresQuery(req: NextRequest, sql: string | undefined): Promise<Response> {
+async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
   if (!sql || !sql.trim()) {
     throw badRequestError("SQL query is required.");
   }
@@ -71,7 +72,6 @@ async function handlePostgresQuery(req: NextRequest, sql: string | undefined): P
 }
 
 async function handleMongoOperation(
-  req: NextRequest,
   parsed: {
     collection?: string;
     operation?: string;

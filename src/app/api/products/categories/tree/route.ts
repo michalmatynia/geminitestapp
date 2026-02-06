@@ -29,68 +29,60 @@ type CategoryFromDb = {
  * - catalogId: Filter by catalog (required)
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const catalogId = searchParams.get("catalogId");
+  const { searchParams } = new URL(req.url);
+  const catalogId = searchParams.get("catalogId");
 
-    if (!catalogId) {
-      throw badRequestError("catalogId query parameter is required");
+  if (!catalogId) {
+    throw badRequestError("catalogId query parameter is required");
+  }
+
+  const provider = await getProductDataProvider();
+  let categories: CategoryFromDb[] = [];
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-
-    const provider = await getProductDataProvider();
-    let categories: CategoryFromDb[] = [];
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const docs = await db
-        .collection<CategoryFromDb>("product_categories")
-        .find({ catalogId })
-        .sort({ name: 1 })
-        .toArray();
-      categories = docs.map((doc: CategoryFromDb) => {
-        const { _id, ...rest } = doc as unknown as {
-          _id?: { toString?: () => string };
-        } & CategoryFromDb;
-        const fallbackId = _id?.toString ? _id.toString() : "";
-        return {
-          ...rest,
-          id: rest.id ?? fallbackId,
-        };
-      });
-    } else {
-      if (!process.env.DATABASE_URL) {
-        throw badRequestError("Product categories require the Postgres product store.");
-      }
-      categories = await prisma.productCategory.findMany({
-        where: { catalogId },
-        orderBy: { name: "asc" },
-      });
+    const db = await getMongoDb();
+    const docs = await db
+      .collection<CategoryFromDb>("product_categories")
+      .find({ catalogId })
+      .sort({ name: 1 })
+      .toArray();
+    categories = docs.map((doc: CategoryFromDb) => {
+      const { _id, ...rest } = doc as unknown as {
+        _id?: { toString?: () => string };
+      } & CategoryFromDb;
+      const fallbackId = _id?.toString ? _id.toString() : "";
+      return {
+        ...rest,
+        id: rest.id ?? fallbackId,
+      };
+    });
+  } else {
+    if (!process.env.DATABASE_URL) {
+      throw badRequestError("Product categories require the Postgres product store.");
     }
-
-    // Build tree recursively
-    const buildTree = (parentId: string | null): ProductCategoryWithChildren[] => {
-      return categories
-        .filter((cat: CategoryFromDb) => cat.parentId === parentId)
-        .map((cat: CategoryFromDb) => ({
-          ...cat,
-          createdAt: cat.createdAt?.toISOString() ?? new Date().toISOString(),
-          updatedAt: cat.updatedAt?.toISOString() ?? new Date().toISOString(),
-          children: buildTree(cat.id),
-        }));
-    };
-
-    const tree = buildTree(null);
-    return NextResponse.json(tree);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.categories.tree.GET",
-      fallbackMessage: "Failed to fetch category tree",
+    categories = await prisma.productCategory.findMany({
+      where: { catalogId },
+      orderBy: { name: "asc" },
     });
   }
+
+  // Build tree recursively
+  const buildTree = (parentId: string | null): ProductCategoryWithChildren[] => {
+    return categories
+      .filter((cat: CategoryFromDb) => cat.parentId === parentId)
+      .map((cat: CategoryFromDb) => ({
+        ...cat,
+        createdAt: cat.createdAt?.toISOString() ?? new Date().toISOString(),
+        updatedAt: cat.updatedAt?.toISOString() ?? new Date().toISOString(),
+        children: buildTree(cat.id),
+      }));
+  };
+
+  const tree = buildTree(null);
+  return NextResponse.json(tree);
 }
 
 export const GET = apiHandler(

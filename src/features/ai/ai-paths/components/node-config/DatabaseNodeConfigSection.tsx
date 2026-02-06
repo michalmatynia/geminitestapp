@@ -35,6 +35,7 @@ import {
   toNumber,
 } from '@/features/ai/ai-paths/lib';
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Checkbox } from '@/shared/ui';
@@ -164,6 +165,51 @@ const applySchemaSelection = (
     }));
   }
   return { ...schema, collections };
+};
+
+const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
+
+const toSnakeCase = (value: string): string =>
+  value
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .replace(/__+/g, '_')
+    .toLowerCase();
+
+const pluralize = (value: string): string => {
+  if (!value) return value;
+  if (value.endsWith('s')) return value;
+  if (value.endsWith('y') && !/[aeiou]y$/.test(value)) {
+    return `${value.slice(0, -1)}ies`;
+  }
+  if (value.endsWith('x') || value.endsWith('ch') || value.endsWith('sh') || value.endsWith('z')) {
+    return `${value}es`;
+  }
+  return `${value}s`;
+};
+
+const PRODUCT_COLLECTION_KEYS = new Set<string>([
+  'products',
+  'product_drafts',
+  'product_categories',
+  'product_tags',
+  'catalogs',
+  'image_files',
+  'product_listings',
+  'product_ai_jobs',
+]);
+
+const isProductCollection = (collection: string): boolean => {
+  if (!collection) return false;
+  const trimmed = collection.trim();
+  if (!trimmed) return false;
+  const lower = normalizeCollectionKey(trimmed);
+  if (PRODUCT_COLLECTION_KEYS.has(lower)) return true;
+  const snake = toSnakeCase(trimmed);
+  if (PRODUCT_COLLECTION_KEYS.has(snake)) return true;
+  if (PRODUCT_COLLECTION_KEYS.has(pluralize(snake))) return true;
+  if (PRODUCT_COLLECTION_KEYS.has(pluralize(lower))) return true;
+  return false;
 };
 
 const buildSchemaPlaceholderContext = (schema: SchemaData | null): Record<string, string> => {
@@ -528,6 +574,26 @@ export function DatabaseNodeConfigSection({
   const effectiveSchema: SchemaData | null = fetchedDbSchema ?? schemaSnapshot;
   const schemaMatrix = effectiveSchema ?? null;
   const runDry = databaseConfig.dryRun ?? false;
+  const appDbProvider =
+    settingsQuery.data?.get('app_db_provider') === 'mongodb' ? 'mongodb' : 'prisma';
+  const productDbProvider =
+    settingsQuery.data?.get(PRODUCT_DB_PROVIDER_SETTING_KEY) === 'prisma'
+      ? 'prisma'
+      : 'mongodb';
+  const usingMongoActions = Boolean(databaseConfig.useMongoActions);
+  const usingMongoProvider = queryConfig.provider === 'mongodb' || usingMongoActions;
+  const usingPrismaProvider = queryConfig.provider === 'prisma';
+  const isProductCollectionQuery = isProductCollection(queryConfig.collection ?? '');
+  const providerWarning =
+    appDbProvider === 'prisma' && usingMongoProvider
+      ? 'MongoDB is not the active app database. This node is configured to run MongoDB queries/actions and may write to Mongo even when Postgres is active.'
+      : appDbProvider === 'mongodb' && usingPrismaProvider
+        ? 'PostgreSQL (Prisma) is not the active app database. This node is configured to run Prisma queries and may return empty results when MongoDB is active.'
+        : null;
+  const productProviderWarning =
+    isProductCollectionQuery && productDbProvider !== appDbProvider
+      ? `Product data provider is set to ${productDbProvider.toUpperCase()}, so Products/Categories/Tags screens will read from ${productDbProvider.toUpperCase()} even if this node queries ${appDbProvider.toUpperCase()}.`
+      : null;
   const schemaSource: 'connected' | 'snapshot' | 'none' = schemaConnection.hasSchemaConnection
     ? 'connected'
     : schemaSnapshot
@@ -2167,6 +2233,12 @@ export function DatabaseNodeConfigSection({
           )}
         </div>
       </div>
+      {(providerWarning || productProviderWarning) && (
+        <div className="mt-3 space-y-1 rounded-md border border-amber-700/50 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+          {providerWarning && <div>{providerWarning}</div>}
+          {productProviderWarning && <div>{productProviderWarning}</div>}
+        </div>
+      )}
       {showLimit && (
         <div>
           <Label className="text-xs text-gray-400">Limit</Label>

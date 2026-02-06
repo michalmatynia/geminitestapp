@@ -34,9 +34,7 @@ import {
   resolveEntityIdFromInputs,
 } from '../utils';
 
-import type { SchemaProvider, SchemaCollection, SchemaResponse } from '../../../api/client';
-
-type SingleProviderSchemaResponse = { provider: SchemaProvider; collections: SchemaCollection[]; };
+import type { SchemaResponse } from '../../../api/client';
 
 interface PromptCandidate {
   edge: Edge;

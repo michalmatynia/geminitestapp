@@ -15,21 +15,13 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Fetches all categories.
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const notebookIdParam = searchParams.get("notebookId");
-    const notebook = notebookIdParam
-      ? { id: notebookIdParam }
-      : await noteService.getOrCreateDefaultNotebook();
-    const categories = await noteService.getAllCategories(notebook.id);
-    return NextResponse.json(categories);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.categories.GET",
-      fallbackMessage: "Failed to fetch categories",
-    });
-  }
+  const { searchParams } = new URL(req.url);
+  const notebookIdParam = searchParams.get("notebookId");
+  const notebook = notebookIdParam
+    ? { id: notebookIdParam }
+    : await noteService.getOrCreateDefaultNotebook();
+  const categories = await noteService.getAllCategories(notebook.id);
+  return NextResponse.json(categories);
 }
 
 /**
@@ -37,28 +29,20 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new category.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, categoryCreateSchema, {
-      logPrefix: "categories.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const resolvedNotebookId =
-      parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const category = await noteService.createCategory(removeUndefined({
-      ...parsed.data,
-      notebookId: resolvedNotebookId,
-    }) as CategoryCreateInput);
-    return NextResponse.json(category, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.categories.POST",
-      fallbackMessage: "Failed to create category",
-    });
+  const parsed = await parseJsonBody(req, categoryCreateSchema, {
+    logPrefix: "categories.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+
+  const resolvedNotebookId =
+    parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
+  const category = await noteService.createCategory(removeUndefined({
+    ...parsed.data,
+    notebookId: resolvedNotebookId,
+  }) as CategoryCreateInput);
+  return NextResponse.json(category, { status: 201 });
 }
 
 export const GET = apiHandler(

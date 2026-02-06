@@ -57,7 +57,7 @@ export function AiPathsSettingsView({
   const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs } = useGraphState();
 
   // Domain: Selection — read from context
-  const { nodeConfigDirty } = useSelectionState();
+  const { nodeConfigDirty, nodeConfigDraft } = useSelectionState();
 
   // Utility — imported directly
   const { toast } = useToast();
@@ -76,6 +76,7 @@ export function AiPathsSettingsView({
     updateActivePathMeta,
     handleSwitchPath,
     savePathIndex,
+    nodes,
     setNodes,
     palette,
     handleDragStart,
@@ -348,11 +349,22 @@ export function AiPathsSettingsView({
                       className="rounded-md border text-sm text-white hover:bg-muted/60"
                       onClick={() => {
                         if (nodeConfigDirty) {
+                          if (nodeConfigDraft) {
+                            const nextNodes = nodes.map((node: AiNode): AiNode =>
+                              node.id === nodeConfigDraft.id ? nodeConfigDraft : node
+                            );
+                            updateSelectedNode(nodeConfigDraft, { nodeId: nodeConfigDraft.id });
+                            void handleSave({
+                              includeNodeConfig: true,
+                              force: true,
+                              nodesOverride: nextNodes,
+                            });
+                            return;
+                          }
                           toast(
-                            'You have unsaved node changes. Click Update Node in the config dialog before saving the path.',
+                            'Saving path settings only. Unsaved node changes in the config dialog are not included.',
                             { variant: 'info' }
                           );
-                          return;
                         }
                         void handleSave();
                       }}
@@ -496,7 +508,7 @@ export function AiPathsSettingsView({
                     setPathName(nextName);
                     updateActivePathMeta(nextName);
                     setRenameOpen(false);
-                    void handleSave();
+                    void handleSave({ pathNameOverride: nextName });
                   }}
                 >
                   Save

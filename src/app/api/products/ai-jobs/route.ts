@@ -48,11 +48,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       });
       return NextResponse.json({ jobs: [] });
     }
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.GET",
-      fallbackMessage: "Failed to fetch jobs",
-    });
+    throw error;
   }
 }
 
@@ -70,27 +66,19 @@ const hasScheduledMarker = (payload: unknown): boolean => {
 };
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const scope = searchParams.get("scope");
+  const { searchParams } = new URL(req.url);
+  const scope = searchParams.get("scope");
 
-    if (scope === "terminal") {
-      const count = await deleteTerminalProductAiJobs();
-      return NextResponse.json({ success: true, count });
-    }
-    if (scope === "all") {
-      const count = await deleteAllProductAiJobs();
-      return NextResponse.json({ success: true, count });
-    }
-
-    throw badRequestError("Invalid scope");
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.DELETE",
-      fallbackMessage: "Failed to delete jobs",
-    });
+  if (scope === "terminal") {
+    const count = await deleteTerminalProductAiJobs();
+    return NextResponse.json({ success: true, count });
   }
+  if (scope === "all") {
+    const count = await deleteAllProductAiJobs();
+    return NextResponse.json({ success: true, count });
+  }
+
+  throw badRequestError("Invalid scope");
 }
 
 export const GET = apiHandler(

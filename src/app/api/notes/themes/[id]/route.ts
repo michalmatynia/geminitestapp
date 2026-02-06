@@ -15,21 +15,13 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    const theme = await noteService.getThemeById(id);
-    if (!theme) {
-      throw notFoundError("Theme not found", { themeId: id });
-    }
-    return NextResponse.json(theme);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.themes.[id].GET",
-      fallbackMessage: "Failed to fetch theme",
-    });
+  const theme = await noteService.getThemeById(id);
+  if (!theme) {
+    throw notFoundError("Theme not found", { themeId: id });
   }
+  return NextResponse.json(theme);
 }
 
 /**
@@ -38,49 +30,33 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    const parsed = await parseJsonBody(req, themeUpdateSchema, {
-      logPrefix: "themes.PATCH",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const updated = await noteService.updateTheme(
-      id,
-      removeUndefined(parsed.data) as ThemeUpdateInput
-    );
-    if (!updated) {
-      throw notFoundError("Theme not found", { themeId: id });
-    }
-    return NextResponse.json(updated);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.themes.[id].PATCH",
-      fallbackMessage: "Failed to update theme",
-    });
+  const parsed = await parseJsonBody(req, themeUpdateSchema, {
+    logPrefix: "themes.PATCH",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const updated = await noteService.updateTheme(
+    id,
+    removeUndefined(parsed.data) as ThemeUpdateInput
+  );
+  if (!updated) {
+    throw notFoundError("Theme not found", { themeId: id });
+  }
+  return NextResponse.json(updated);
 }
 
 /**
  * DELETE /api/notes/themes/[id]
  * Deletes a theme.
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    const success = await noteService.deleteTheme(id);
-    if (!success) {
-      throw notFoundError("Theme not found", { themeId: id });
-    }
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.themes.[id].DELETE",
-      fallbackMessage: "Failed to delete theme",
-    });
+  const success = await noteService.deleteTheme(id);
+  if (!success) {
+    throw notFoundError("Theme not found", { themeId: id });
   }
+  return NextResponse.json({ success: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "notes.themes.[id].GET" });

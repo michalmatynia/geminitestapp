@@ -3,11 +3,9 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { ErrorSystem } from "@/features/observability/server";
 import { validateProductCreateMiddleware } from "@/features/products/validations/middleware";
 import { CachedProductService, performanceMonitor } from "@/features/products/performance";
 
@@ -37,7 +35,6 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
   const timings: Record<string, number | null | undefined> = {};
-  const requestStart = ctx.startTime;
 
   try {
     const providerStart = performance.now();

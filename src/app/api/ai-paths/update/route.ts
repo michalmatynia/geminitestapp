@@ -11,9 +11,11 @@ import { badRequestError, notFoundError, validationError } from "@/shared/errors
 import { productUpdateSchema } from "@/features/products/server";
 import { noteUpdateSchema } from "@/features/notesapp";
 import { getProductRepository } from "@/features/products/server";
+import { getProductDataProvider } from "@/features/products/services/product-provider";
 import { noteService } from "@/features/notesapp/server";
 import { removeUndefined } from "@/shared/utils";
 import { NoteUpdateInput } from "@/shared/types/notes";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import {
   enforceAiPathsActionRateLimit,
   ensureAiPathsPermission,
@@ -101,6 +103,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (entityType === "product") {
       ensureAiPathsPermission(access, "products.manage", "Forbidden.");
+      const appProvider = await getAppDbProvider();
+      const productProvider = await getProductDataProvider();
+      if (appProvider === "prisma" && productProvider === "mongodb") {
+        throw badRequestError(
+          "Product updates are blocked: product_db_provider is MongoDB while app_db_provider is Prisma."
+        );
+      }
       const productRepository = await getProductRepository();
       const existing =
         mode === "append" ? await productRepository.getProductById(entityId as string) : null;

@@ -43,80 +43,71 @@ async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    if (!params.id) {
-      throw badRequestError("Category id is required");
+  if (!params.id) {
+    throw badRequestError("Category id is required");
+  }
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-    const provider = await getProductDataProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const category = await db
-        .collection<MongoCategory>("product_categories")
-        .findOne({ id: params.id });
-      if (!category) {
-        throw notFoundError("Category not found", { categoryId: params.id });
-      }
-      const children = await db
-        .collection<MongoCategory>("product_categories")
-        .find({ parentId: params.id })
-        .toArray();
-      const parent = category.parentId
-        ? await db
-            .collection<MongoCategory>("product_categories")
-            .findOne({ id: category.parentId })
-        : null;
-      return NextResponse.json({
-        ...category,
-        id: category.id ?? String(category._id),
-        children: children.map((child) => {
-          const { _id, ...rest } = child;
-          const fallbackId = _id ? String(_id) : undefined;
-          return {
-            ...rest,
-            id: (rest as { id?: string }).id ?? fallbackId,
-          };
-        }),
-        parent: parent
-          ? (() => {
-              const { _id, ...rest } = parent;
-              const fallbackId = _id ? String(_id) : undefined;
-              return {
-                ...rest,
-                id: (rest as { id?: string }).id ?? fallbackId,
-              };
-            })()
-          : null,
-      });
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product categories require the Postgres product store.");
-    }
-
-    const category = await prisma.productCategory.findUnique({
-      where: { id: params.id },
-      include: {
-        children: true,
-        parent: true,
-      },
-    });
-
+    const db = await getMongoDb();
+    const category = await db
+      .collection<MongoCategory>("product_categories")
+      .findOne({ id: params.id });
     if (!category) {
       throw notFoundError("Category not found", { categoryId: params.id });
     }
-
-    return NextResponse.json(category);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.categories.[id].GET",
-      fallbackMessage: "Failed to fetch category",
-      extra: { categoryId: params.id },
+    const children = await db
+      .collection<MongoCategory>("product_categories")
+      .find({ parentId: params.id })
+      .toArray();
+    const parent = category.parentId
+      ? await db
+          .collection<MongoCategory>("product_categories")
+          .findOne({ id: category.parentId })
+      : null;
+    return NextResponse.json({
+      ...category,
+      id: category.id ?? String(category._id),
+      children: children.map((child) => {
+        const { _id, ...rest } = child;
+        const fallbackId = _id ? String(_id) : undefined;
+        return {
+          ...rest,
+          id: (rest as { id?: string }).id ?? fallbackId,
+        };
+      }),
+      parent: parent
+        ? (() => {
+            const { _id, ...rest } = parent;
+            const fallbackId = _id ? String(_id) : undefined;
+            return {
+              ...rest,
+              id: (rest as { id?: string }).id ?? fallbackId,
+            };
+          })()
+        : null,
     });
   }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product categories require the Postgres product store.");
+  }
+
+  const category = await prisma.productCategory.findUnique({
+    where: { id: params.id },
+    include: {
+      children: true,
+      parent: true,
+    },
+  });
+
+  if (!category) {
+    throw notFoundError("Category not found", { categoryId: params.id });
+  }
+
+  return NextResponse.json(category);
 }
 
 /**
@@ -128,123 +119,34 @@ async function PUT_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    if (!params.id) {
-      throw badRequestError("Category id is required");
+  if (!params.id) {
+    throw badRequestError("Category id is required");
+  }
+  const provider = await getProductDataProvider();
+  const parsed = await parseJsonBody(req, productCategoryUpdateSchema, {
+    logPrefix: "product-categories.PUT",
+    allowEmpty: true,
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const { name, description, color, parentId, catalogId } = parsed.data;
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-    const provider = await getProductDataProvider();
-    const parsed = await parseJsonBody(req, productCategoryUpdateSchema, {
-      logPrefix: "product-categories.PUT",
-      allowEmpty: true,
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const { name, description, color, parentId, catalogId } = parsed.data;
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const current = await db
-        .collection<MongoCategory>("product_categories")
-        .findOne({ id: params.id });
-      if (!current) {
-        throw notFoundError("Category not found", { categoryId: params.id });
-      }
-
-      const nextCatalogId =
-        catalogId ?? current.catalogId;
-      const nextParentId =
-        parentId !== undefined
-          ? parentId
-          : catalogId && catalogId !== current.catalogId
-            ? null
-            : current.parentId ?? null;
-
-      if (!nextCatalogId) {
-        throw badRequestError("Catalog ID is required.");
-      }
-
-      if (nextParentId) {
-        const parent = await db
-          .collection<MongoCategory>("product_categories")
-          .findOne({ id: nextParentId });
-        if (!parent || parent.catalogId !== nextCatalogId) {
-          throw badRequestError("Parent category must be in the same catalog.", {
-            parentId: nextParentId,
-            catalogId: nextCatalogId,
-          });
-        }
-      }
-
-      // Prevent moving category to itself or its descendants
-      if (
-        nextParentId !== null &&
-        (catalogId === undefined ||
-          catalogId === current.catalogId)
-      ) {
-        const isDescendant = await checkIsDescendantMongo(
-          db,
-          params.id,
-          nextParentId
-        );
-        if (isDescendant) {
-          throw badRequestError("Cannot move category into itself or its descendants");
-        }
-      }
-
-      if (name !== undefined) {
-        const existing = await db.collection<MongoCategory>("product_categories").findOne({
-          name,
-          parentId: nextParentId,
-          catalogId: nextCatalogId,
-          id: { $ne: params.id },
-        });
-
-        if (existing) {
-          throw conflictError("A category with this name already exists at this level", {
-            name,
-            parentId: nextParentId,
-            catalogId: nextCatalogId,
-          });
-        }
-      }
-
-      const updateDoc = {
-        ...(name !== undefined ? { name } : {}),
-        ...(description !== undefined ? { description } : {}),
-        ...(color !== undefined ? { color } : {}),
-        ...(catalogId !== undefined ? { catalogId } : {}),
-        ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
-        updatedAt: new Date(),
-      };
-
-      await db
-        .collection<MongoCategory>("product_categories")
-        .updateOne({ id: params.id }, { $set: updateDoc });
-      const updated = await db
-        .collection<MongoCategory>("product_categories")
-        .findOne({ id: params.id });
-      return NextResponse.json(updated as unknown as ProductCategoryDto);
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product categories require the Postgres product store.");
-    }
-
-    const current = await prisma.productCategory.findUnique({
-      where: { id: params.id },
-      select: { catalogId: true, parentId: true },
-    });
-
+    const db = await getMongoDb();
+    const current = await db
+      .collection<MongoCategory>("product_categories")
+      .findOne({ id: params.id });
     if (!current) {
       throw notFoundError("Category not found", { categoryId: params.id });
     }
 
-    const nextCatalogId = catalogId ?? current.catalogId;
+    const nextCatalogId =
+      catalogId ?? current.catalogId;
     const nextParentId =
       parentId !== undefined
         ? parentId
@@ -252,11 +154,14 @@ async function PUT_handler(
           ? null
           : current.parentId ?? null;
 
+    if (!nextCatalogId) {
+      throw badRequestError("Catalog ID is required.");
+    }
+
     if (nextParentId) {
-      const parent = await prisma.productCategory.findUnique({
-        where: { id: nextParentId },
-        select: { catalogId: true },
-      });
+      const parent = await db
+        .collection<MongoCategory>("product_categories")
+        .findOne({ id: nextParentId });
       if (!parent || parent.catalogId !== nextCatalogId) {
         throw badRequestError("Parent category must be in the same catalog.", {
           parentId: nextParentId,
@@ -268,23 +173,25 @@ async function PUT_handler(
     // Prevent moving category to itself or its descendants
     if (
       nextParentId !== null &&
-      (catalogId === undefined || catalogId === current.catalogId)
+      (catalogId === undefined ||
+        catalogId === current.catalogId)
     ) {
-      const isDescendant = await checkIsDescendant(params.id, nextParentId);
+      const isDescendant = await checkIsDescendantMongo(
+        db,
+        params.id,
+        nextParentId
+      );
       if (isDescendant) {
         throw badRequestError("Cannot move category into itself or its descendants");
       }
     }
 
-    // Check for duplicate name under the new parent
     if (name !== undefined) {
-      const existing = await prisma.productCategory.findFirst({
-        where: {
-          name,
-          parentId: nextParentId,
-          catalogId: nextCatalogId,
-          NOT: { id: params.id },
-        },
+      const existing = await db.collection<MongoCategory>("product_categories").findOne({
+        name,
+        parentId: nextParentId,
+        catalogId: nextCatalogId,
+        id: { $ne: params.id },
       });
 
       if (existing) {
@@ -296,26 +203,102 @@ async function PUT_handler(
       }
     }
 
-    const category = await prisma.productCategory.update({
-      where: { id: params.id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-        ...(color !== undefined && { color }),
-        ...(catalogId !== undefined && { catalogId }),
-        ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
+    const updateDoc = {
+      ...(name !== undefined ? { name } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(color !== undefined ? { color } : {}),
+      ...(catalogId !== undefined ? { catalogId } : {}),
+      ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
+      updatedAt: new Date(),
+    };
+
+    await db
+      .collection<MongoCategory>("product_categories")
+      .updateOne({ id: params.id }, { $set: updateDoc });
+    const updated = await db
+      .collection<MongoCategory>("product_categories")
+      .findOne({ id: params.id });
+    return NextResponse.json(updated as unknown as ProductCategoryDto);
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product categories require the Postgres product store.");
+  }
+
+  const current = await prisma.productCategory.findUnique({
+    where: { id: params.id },
+    select: { catalogId: true, parentId: true },
+  });
+
+  if (!current) {
+    throw notFoundError("Category not found", { categoryId: params.id });
+  }
+
+  const nextCatalogId = catalogId ?? current.catalogId;
+  const nextParentId =
+    parentId !== undefined
+      ? parentId
+      : catalogId && catalogId !== current.catalogId
+        ? null
+        : current.parentId ?? null;
+
+  if (nextParentId) {
+    const parent = await prisma.productCategory.findUnique({
+      where: { id: nextParentId },
+      select: { catalogId: true },
+    });
+    if (!parent || parent.catalogId !== nextCatalogId) {
+      throw badRequestError("Parent category must be in the same catalog.", {
+        parentId: nextParentId,
+        catalogId: nextCatalogId,
+      });
+    }
+  }
+
+  // Prevent moving category to itself or its descendants
+  if (
+    nextParentId !== null &&
+    (catalogId === undefined ||
+      catalogId === current.catalogId)
+  ) {
+    const isDescendant = await checkIsDescendant(params.id, nextParentId);
+    if (isDescendant) {
+      throw badRequestError("Cannot move category into itself or its descendants");
+    }
+  }
+
+  // Check for duplicate name under the new parent
+  if (name !== undefined) {
+    const existing = await prisma.productCategory.findFirst({
+      where: {
+        name,
+        parentId: nextParentId,
+        catalogId: nextCatalogId,
+        NOT: { id: params.id },
       },
     });
 
-    return NextResponse.json(category as unknown as ProductCategoryDto);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.categories.[id].PUT",
-      fallbackMessage: "Failed to update category",
-      extra: { categoryId: params.id },
-    });
+    if (existing) {
+      throw conflictError("A category with this name already exists at this level", {
+        name,
+        parentId: nextParentId,
+        catalogId: nextCatalogId,
+      });
+    }
   }
+
+  const category = await prisma.productCategory.update({
+    where: { id: params.id },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
+      ...(color !== undefined && { color }),
+      ...(catalogId !== undefined && { catalogId }),
+      ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
+    },
+  });
+
+  return NextResponse.json(category as unknown as ProductCategoryDto);
 }
 
 /**
@@ -323,45 +306,36 @@ async function PUT_handler(
  * Deletes a product category and all its children (cascade).
  */
 async function DELETE_handler(
-  request: NextRequest,
+  _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    if (!params.id) {
-      throw badRequestError("Category id is required");
-    }
-    const provider = await getProductDataProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const idsToDelete = await collectCategoryIds(db, params.id);
-      await db
-        .collection("product_categories")
-        .deleteMany({ id: { $in: idsToDelete } });
-      return NextResponse.json({ success: true });
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product categories require the Postgres product store.");
-    }
-
-    // The schema has onDelete: Cascade, so children will be deleted automatically
-    await prisma.productCategory.delete({
-      where: { id: params.id },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "products.categories.[id].DELETE",
-      fallbackMessage: "Failed to delete category",
-      extra: { categoryId: params.id },
-    });
+  if (!params.id) {
+    throw badRequestError("Category id is required");
   }
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
+    }
+    const db = await getMongoDb();
+    const idsToDelete = await collectCategoryIds(db, params.id);
+    await db
+      .collection("product_categories")
+      .deleteMany({ id: { $in: idsToDelete } });
+    return NextResponse.json({ success: true });
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product categories require the Postgres product store.");
+  }
+
+  // The schema has onDelete: Cascade, so children will be deleted automatically
+  await prisma.productCategory.delete({
+    where: { id: params.id },
+  });
+
+  return NextResponse.json({ success: true });
 }
 
 /**

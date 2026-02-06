@@ -23,6 +23,8 @@ import {
 import { Button, Tooltip, SectionPanel } from '@/shared/ui';
 
 import { formatPortLabel } from '../utils/ui-utils';
+import { NodeProcessingDots } from './NodeProcessingDots';
+import { SignalDots } from './SignalDots';
 
 export type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
 const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
@@ -810,6 +812,15 @@ export function CanvasBoard({
           height={CANVAS_HEIGHT}
           style={{ pointerEvents: 'auto' }}
         >
+          <defs>
+            <filter id="signal-dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
@@ -869,14 +880,20 @@ export function CanvasBoard({
                   style={{ pointerEvents: 'none' }}
                 />
                 {isFlowing && flowEnabled ? (
-                  <path
-                    d={edge.path}
-                    className={`${edgeClass} ai-paths-wire-flow`}
-                    strokeWidth={isSelected ? 3.4 : 2.2}
-                    stroke="currentColor"
-                    fill="none"
-                    style={{ pointerEvents: 'none' }}
-                  />
+                  <>
+                    <path
+                      d={edge.path}
+                      className={`${edgeClass} ai-paths-wire-flow`}
+                      strokeWidth={isSelected ? 3.4 : 2.2}
+                      stroke="currentColor"
+                      fill="none"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    <SignalDots
+                      path={edge.path}
+                      intensity={resolvedFlowIntensity as Exclude<typeof resolvedFlowIntensity, 'off'>}
+                    />
+                  </>
                 ) : null}
                 {edge.arrow ? (
                   <path
@@ -981,6 +998,15 @@ export function CanvasBoard({
                 : iteratorStatus === 'waiting_callback'
                   ? 'border-sky-500/60 bg-sky-500/15 text-sky-200'
                   : 'border-border bg-card/60 text-gray-200';
+          // Determine if this blocker node is actively processing (for signal dots)
+          const blockerNodeStatus =
+            (node.type === 'model' || node.type === 'agent' || node.type === 'learner_agent' || node.type === 'poll' || node.type === 'delay')
+              ? (runtimeState.outputs[node.id]?.status as string | undefined)
+              : undefined;
+          const isBlockerProcessing =
+            flowEnabled &&
+            !!blockerNodeStatus &&
+            !['completed', 'failed'].includes(blockerNodeStatus.trim().toLowerCase());
           const noteConfig = node.config?.notes;
           const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
           const noteColor =
@@ -1271,6 +1297,12 @@ export function CanvasBoard({
                     {iteratorStatus ? <span>{iteratorStatus}</span> : null}
                   </div>
                 ) : null}
+                {isBlockerProcessing && (
+                  <div className="inline-flex w-fit items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[2px] text-[9px] uppercase tracking-wide text-sky-200">
+                    Processing
+                    <NodeProcessingDots active />
+                  </div>
+                )}
                 {node.type === 'viewer' && !triggerConnected.has(node.id) && (
                   <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
                     Not wired to a Trigger

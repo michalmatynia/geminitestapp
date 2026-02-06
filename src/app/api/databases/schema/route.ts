@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -104,6 +103,7 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
 
   while ((match = modelRegex.exec(cleaned)) !== null) {
     const modelName = match[1];
+    if (!modelName) continue;
     const body = match[2] ?? "";
     const fields: FieldInfo[] = [];
 

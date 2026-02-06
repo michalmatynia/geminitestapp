@@ -9,7 +9,6 @@ import {
   getImportParameterCache,
   setImportParameterCache
 } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -258,123 +257,107 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const parsed = await parseJsonBody(req, requestSchema, {
+    logPrefix: "imports.base.parameters.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+
+  if (data.clearOnly) {
+    await setImportParameterCache({
+      inventoryId: null,
+      productId: null,
+      keys: [],
+      values: {}
+    });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!data.inventoryId || !data.productId) {
+    throw badRequestError("Inventory ID and Product ID are required.");
+  }
+
+  const integrationRepo = await getIntegrationRepository();
+  const integrations = await integrationRepo.listIntegrations();
+  const baseIntegration = integrations.find((i) => i.slug === "baselinker");
+  if (!baseIntegration) {
+    throw notFoundError("Base integration not found.");
+  }
+
+  const connections = await integrationRepo.listConnections(baseIntegration.id);
+  const connection = connections.find((c) => c.baseApiToken);
+  if (!connection?.baseApiToken) {
+    throw badRequestError("No Base API token configured.");
+  }
+
+  const token = decryptSecret(connection.baseApiToken);
+  const payload = await callBaseApi(token, "getInventoryProductsData", {
+    inventory_id: data.inventoryId,
+    products: [data.productId]
+  });
+  const product = extractProductRecord(payload, data.productId);
+  if (!product || typeof product !== "object") {
+    throw notFoundError("Product not found in response.", {
+      productId: data.productId
+    });
+  }
+  
+  // Inject inventory_id if missing, so it can be mapped
+  if (data.inventoryId && !product["inventory_id"]) {
+    product["inventory_id"] = data.inventoryId;
+  }
+
+  // Inject product ID variants if missing
+  if (data.productId) {
+    if (!product["product_id"]) {
+       product["product_id"] = data.productId;
+    }
+    if (!product["id"]) {
+        product["id"] = data.productId;
+    }
+  }
+
+  const { keys, values } = collectParameterKeys(
+    product
+  );
+
   try {
-    const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.parameters.POST"
+    await setImportParameterCache({
+      inventoryId: data.inventoryId,
+      productId: data.productId,
+      keys,
+      values
     });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-
-    if (data.clearOnly) {
-      await setImportParameterCache({
-        inventoryId: null,
-        productId: null,
-        keys: [],
-        values: {}
-      });
-      return NextResponse.json({ ok: true });
-    }
-
-    if (!data.inventoryId || !data.productId) {
-      throw badRequestError("Inventory ID and Product ID are required.");
-    }
-
-    const integrationRepo = await getIntegrationRepository();
-    const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) => i.slug === "baselinker");
-    if (!baseIntegration) {
-      throw notFoundError("Base integration not found.");
-    }
-
-    const connections = await integrationRepo.listConnections(baseIntegration.id);
-    const connection = connections.find((c) => c.baseApiToken);
-    if (!connection?.baseApiToken) {
-      throw badRequestError("No Base API token configured.");
-    }
-
-    const token = decryptSecret(connection.baseApiToken);
-    const payload = await callBaseApi(token, "getInventoryProductsData", {
-      inventory_id: data.inventoryId,
-      products: [data.productId]
-    });
-    const product = extractProductRecord(payload, data.productId);
-    if (!product || typeof product !== "object") {
-      throw notFoundError("Product not found in response.", {
+  } catch (cacheError) {
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(cacheError, { 
+        service: "api/integrations/imports/base/parameters",
+        inventoryId: data.inventoryId,
         productId: data.productId
       });
+    } catch (logError) {
+      console.error("Failed to cache parameters (and logging failed)", cacheError, logError);
     }
-    
-    // Inject inventory_id if missing, so it can be mapped
-    if (data.inventoryId && !product["inventory_id"]) {
-      product["inventory_id"] = data.inventoryId;
-    }
-
-    // Inject product ID variants if missing
-    if (data.productId) {
-      if (!product["product_id"]) {
-         product["product_id"] = data.productId;
-      }
-      if (!product["id"]) {
-          product["id"] = data.productId;
-      }
-    }
-
-    const { keys, values } = collectParameterKeys(
-      product
-    );
-
-    try {
-      await setImportParameterCache({
-        inventoryId: data.inventoryId,
-        productId: data.productId,
-        keys,
-        values
-      });
-    } catch (cacheError) {
-      try {
-        const { ErrorSystem } = await import("@/features/observability/services/error-system");
-        void ErrorSystem.captureException(cacheError, { 
-          service: "api/integrations/imports/base/parameters",
-          inventoryId: data.inventoryId,
-          productId: data.productId
-        });
-      } catch (logError) {
-        console.error("Failed to cache parameters (and logging failed)", cacheError, logError);
-      }
-    }
-
-    return NextResponse.json({ keys, values });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.parameters.POST",
-      fallbackMessage: "Failed to load parameters"
-    });
   }
+
+  return NextResponse.json({ keys, values });
 }
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const cache = await getImportParameterCache();
-    return NextResponse.json(
-      cache
-        ? {
-            inventoryId: cache.inventoryId,
-            productId: cache.productId,
-            keys: cache.keys,
-            values: cache.values
-          }
-        : { keys: [], values: {} }
-    );
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.parameters.GET",
-      fallbackMessage: "Failed to load cached parameters."
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const cache = await getImportParameterCache();
+  return NextResponse.json(
+    cache
+      ? {
+          inventoryId: cache.inventoryId,
+          productId: cache.productId,
+          keys: cache.keys,
+          values: cache.values
+        }
+      : { keys: [], values: {} }
+  );
 }
 
 export const POST = apiHandler(

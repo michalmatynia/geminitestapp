@@ -1,0 +1,29 @@
+src/app/api/ai-config/route.ts(40,3): error TS6133: 'req' is declared but its value is never read.
+src/app/api/ai-paths/runs/[runId]/stream/route.ts(6,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/assets3d/[id]/file/route.ts(8,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/assets3d/reindex/route.ts(7,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
+src/app/api/databases/browse/route.ts(8,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/databases/schema/route.ts(9,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/databases/schema/route.ts(129,24): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/drafts/route.ts(56,28): error TS6133: 'req' is declared but its value is never read.
+src/app/api/files/route.ts(10,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
+src/app/api/health/route.ts(2,23): error TS6133: 'NextResponse' is declared but its value is never read.
+src/app/api/health/route.ts(3,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/health/route.ts(10,28): error TS6133: 'req' is declared but its value is never read.
+src/app/api/integrations/imports/base/parameters/route.ts(12,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
+src/app/api/integrations/imports/base/parameters/route.ts(350,28): error TS6133: 'req' is declared but its value is never read.
+src/app/api/notes/route.ts(11,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
+src/app/api/products/[id]/route.ts(12,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
+src/app/api/products/producers/route.ts(25,28): error TS6133: 'req' is declared but its value is never read.
+src/app/api/products/route.ts(38,9): error TS6133: 'requestStart' is declared but its value is never read.
+src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(2102,28): error TS2345: Argument of type 'SchemaResponse' is not assignable to parameter of type 'LocalSchemaResponse'.
+  Type '{ provider: "multi"; collections: SchemaCollection[]; sources?: Partial<Record<SchemaProvider, { provider: SchemaProvider; collections: SchemaCollection[]; }>>; }' is not assignable to type 'LocalSchemaResponse'.
+    Types of property 'provider' are incompatible.
+      Type '"multi"' is not assignable to type '"mongodb" | "prisma"'.
+src/shared/ui/QueryErrorBoundary.tsx(44,31): error TS2379: Argument of type '{ componentStack: string | null | undefined; context: { source: string; }; }' is not assignable to parameter of type '{ digest?: string; componentStack?: string | null; context?: ClientErrorContext | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'componentStack' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+vitest.setup.ts(553,12): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Response'.
+vitest.setup.ts(576,12): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Response'.

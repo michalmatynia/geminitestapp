@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Button, SectionPanel } from '@/shared/ui';
 
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
+
 import type { DatabaseType, SqlQueryResult } from '../types';
 
 const HISTORY_KEY = 'db-sql-query-history';
@@ -28,7 +29,9 @@ function loadHistory(): string[] {
 function saveHistory(history: string[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
-  } catch {}
+  } catch (error) {
+    console.warn('[SqlQueryConsole] Failed to save history', error);
+  }
 }
 
 function formatCellValue(value: unknown): string {
@@ -221,15 +224,15 @@ export function SqlQueryConsole({
                     <th className="px-3 py-2 font-medium text-gray-600">#</th>
                     {result.fields.length > 0
                       ? result.fields.map((f: { name: string }) => (
-                          <th key={f.name} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
-                            {f.name}
-                          </th>
-                        ))
+                        <th key={f.name} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
+                          {f.name}
+                        </th>
+                      ))
                       : Object.keys(result.rows[0] ?? {}).map((key: string) => (
-                          <th key={key} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
-                            {key}
-                          </th>
-                        ))}
+                        <th key={key} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
+                          {key}
+                        </th>
+                      ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

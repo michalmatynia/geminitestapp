@@ -9,6 +9,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
 
@@ -134,6 +135,28 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         request: req,
         source: "ai-paths.db-action",
       });
+    }
+
+    const appProvider = await getAppDbProvider();
+    const isWriteAction = [
+      "insertOne",
+      "insertMany",
+      "updateOne",
+      "updateMany",
+      "replaceOne",
+      "findOneAndUpdate",
+      "deleteOne",
+      "deleteMany",
+      "findOneAndDelete",
+    ].includes(action);
+    if (appProvider === "prisma" && isWriteAction) {
+      return createErrorResponse(
+        badRequestError("MongoDB writes are disabled when app_db_provider is Prisma."),
+        {
+          request: req,
+          source: "ai-paths.db-action",
+        }
+      );
     }
 
     const mongo = await getMongoDb();

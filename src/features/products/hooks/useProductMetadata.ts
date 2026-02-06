@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import React, { useMemo } from 'react';
 
+import { getLanguages } from '@/features/internationalization/api';
 import type { 
   CatalogRecord, 
   ProductCategory, 
@@ -14,7 +15,6 @@ import type {
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
-import { getLanguages } from '@/features/internationalization/api';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 

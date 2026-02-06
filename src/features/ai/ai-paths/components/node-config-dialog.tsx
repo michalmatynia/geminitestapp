@@ -38,6 +38,7 @@ import {
 import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab'; // Keep NodeHistoryTab import
 import { NodeNotesTab } from './node-config/dialog/NodeNotesTab';
 import { NodeConfigurationSections } from './NodeConfigurationSections'; // Import the new component
+import { useSelectionActions } from '../context';
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -118,6 +119,7 @@ export function NodeConfigDialog({
   savePathConfig,
 }: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
+  const { setNodeConfigDraft } = useSelectionActions();
   const isScheduledTrigger =
     selectedNode.type === 'trigger' &&
     selectedNode.config?.trigger?.event === 'scheduled_run';
@@ -157,6 +159,7 @@ export function NodeConfigDialog({
   useEffect((): void => {
     if (!configOpen || !selectedNode) {
       setDraftNode(null);
+      setNodeConfigDraft(null);
       return;
     }
     setDraftNode((prev: AiNode | null) => {
@@ -165,7 +168,12 @@ export function NodeConfigDialog({
       }
       return prev;
     });
-  }, [configOpen, selectedNode?.id, cloneNode]);
+  }, [configOpen, selectedNode?.id, cloneNode, setNodeConfigDraft]);
+
+  useEffect((): void => {
+    if (!configOpen) return;
+    setNodeConfigDraft(draftNode);
+  }, [configOpen, draftNode, setNodeConfigDraft]);
 
   const draftSelectedNode = draftNode ?? selectedNode;
   const nodesForConfig = useMemo((): AiNode[] => {

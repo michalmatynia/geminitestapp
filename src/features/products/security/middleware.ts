@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { AppError, internalError } from '@/shared/errors/app-error';
+import { AppError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import { withSecureFileUpload } from './file-upload';

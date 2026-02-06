@@ -3,7 +3,6 @@ import fs from "fs/promises";
 import path from "path";
 import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
 import type { ChatMessage } from "@/shared/types/chatbot";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   externalServiceError,
@@ -192,82 +191,38 @@ const cleanupChatbotTemp = async (): Promise<void> => {
 
 
 async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-
   const requestStart = Date.now();
 
-  try {
-
-    const ollamaModels = await fetchOllamaModels(ctx, requestStart);
-    if (ollamaModels && ollamaModels.length > 0) {
-      if (DEBUG_CHATBOT) {
-        console.info("[chatbot][models] Loaded", {
-          count: ollamaModels.length,
-          durationMs: Date.now() - requestStart,
-          requestId: ctx.requestId,
-        });
-      }
-      return NextResponse.json({ models: ollamaModels });
-    }
-
-    const fallbackModels = await buildProviderFallbackModels();
-    return NextResponse.json({
-      models: fallbackModels,
-      warning: {
-        code: "OLLAMA_UNAVAILABLE",
-        message: "Ollama models unavailable. Returned provider presets instead.",
-      },
-    });
-
-  } catch (error) {
-
-    const message = error instanceof Error ? error.message : "Failed to load models.";
-    try {
-      const { logSystemEvent } = await import("@/features/observability/server");
-      await logSystemEvent({
-        level: "warn",
-        message: "[chatbot][models] Failed to resolve model list",
-        error,
-        source: "api/chatbot",
-        context: { action: "getModels", requestId: ctx.requestId },
+  const ollamaModels = await fetchOllamaModels(ctx, requestStart);
+  if (ollamaModels && ollamaModels.length > 0) {
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][models] Loaded", {
+        count: ollamaModels.length,
+        durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
       });
-    } catch (logError) {
-      if (DEBUG_CHATBOT) {
-        console.warn("[chatbot][models] Model list fetch failed (and logging failed)", {
-          message,
-          durationMs: Date.now() - requestStart,
-          requestId: ctx.requestId,
-          logError,
-        });
-      }
     }
-
-    return NextResponse.json({
-      models: await buildProviderFallbackModels(),
-      warning: { code: "MODEL_LIST_UNAVAILABLE", message },
-    });
-
+    return NextResponse.json({ models: ollamaModels });
   }
 
+  const fallbackModels = await buildProviderFallbackModels();
+  return NextResponse.json({
+    models: fallbackModels,
+    warning: {
+      code: "OLLAMA_UNAVAILABLE",
+      message: "Ollama models unavailable. Returned provider presets instead.",
+    },
+  });
 }
 
-
-
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-
   const tempFiles: string[] = [];
-
   const tempDirs: string[] = [];
-
   const requestStart = Date.now(); // total request timer
-
-
 
   try {
     if (!OLLAMA_MODEL) {
-      return createErrorResponse(
-        internalError("OLLAMA_MODEL is not configured."),
-        { request: req, source: "chatbot.POST" }
-      );
+      throw internalError("OLLAMA_MODEL is not configured.");
     }
 
     await cleanupChatbotTemp();
@@ -289,10 +244,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         try {
           messages = JSON.parse(rawMessages) as unknown as ChatMessage[];
         } catch (_error) {
-          return createErrorResponse(
-            badRequestError("Invalid messages payload."),
-            { request: req, source: "chatbot.POST" }
-          );
+          throw badRequestError("Invalid messages payload.");
         }
       }
 
@@ -405,10 +357,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       try {
         body = (await req.json()) as unknown as typeof body;
       } catch (_error) {
-        return createErrorResponse(badRequestError("Invalid JSON payload."), {
-          request: req,
-          source: "chatbot.POST",
-        });
+        throw badRequestError("Invalid JSON payload.");
       }
       messages = body.messages ?? [];
       requestedModel = body.model ?? null;
@@ -416,17 +365,11 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return createErrorResponse(badRequestError("No messages provided."), {
-        request: req,
-          source: "chatbot.POST",
-      });
+      throw badRequestError("No messages provided.");
     }
 
     if (messages.length > 60) {
-      return createErrorResponse(badRequestError("Too many messages provided."), {
-        request: req,
-        source: "chatbot.POST",
-      });
+      throw badRequestError("Too many messages provided.");
     }
 
     const hasValidMessages = messages.every(
@@ -437,17 +380,11 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     );
 
     if (!hasValidMessages) {
-      return createErrorResponse(badRequestError("Invalid message payload."), {
-        request: req,
-        source: "chatbot.POST",
-      });
+      throw badRequestError("Invalid message payload.");
     }
 
     if (messages.some((message: ChatMessage) => message.content.length > 10000)) {
-      return createErrorResponse(badRequestError("Message content too large."), {
-        request: req,
-        source: "chatbot.POST",
-      });
+      throw badRequestError("Message content too large.");
     }
 
     if (DEBUG_CHATBOT) {
@@ -488,10 +425,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
     if (!res.ok) {
       const errorText = await res.text();
-      return createErrorResponse(
-        externalServiceError(`Ollama error: ${errorText || res.statusText}`),
-        { request: req, source: "chatbot.POST" }
-      );
+      throw externalServiceError(`Ollama error: ${errorText || res.statusText}`);
     }
 
     const data = (await res.json()) as unknown as {
@@ -542,14 +476,6 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     return NextResponse.json({
       message: data.message?.content || data.response,
       sessionId,
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to reach Ollama.";
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.POST",
-      fallbackMessage: message,
     });
   } finally {
     if (tempFiles.length > 0) {

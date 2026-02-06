@@ -54,8 +54,8 @@ async function GET_handler(
 }
 
 export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
-    GET_handler(req, ctx),
+  async (_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
+    GET_handler(_req, ctx),
   { source: "ai-config.GET" },
 );
 export const POST = apiHandler(

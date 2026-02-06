@@ -35,14 +35,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   if (dbType === "mongodb") {
-    return handleMongoCrud(req, table, operation, data, primaryKey);
+    return handleMongoCrud(table, operation, data, primaryKey);
   }
 
-  return handlePostgresCrud(req, table, operation, data, primaryKey);
+  return handlePostgresCrud(table, operation, data, primaryKey);
 }
 
 async function handlePostgresCrud(
-  req: NextRequest,
   table: string,
   operation: "insert" | "update" | "delete",
   data?: Record<string, unknown>,
@@ -135,7 +134,6 @@ function toObjectId(value: unknown): ObjectId | unknown {
 }
 
 async function handleMongoCrud(
-  req: NextRequest,
   collectionName: string,
   operation: "insert" | "update" | "delete",
   data?: Record<string, unknown>,

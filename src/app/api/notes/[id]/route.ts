@@ -16,26 +16,18 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Fetches a single note by ID.
  */
 async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  try {
-    const note = await noteService.getById(id);
+  const note = await noteService.getById(id);
 
-    if (!note) {
-      throw notFoundError("Note not found", { noteId: id });
-    }
-
-    return NextResponse.json(note);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.[id].GET",
-      fallbackMessage: "Failed to fetch note",
-    });
+  if (!note) {
+    throw notFoundError("Note not found", { noteId: id });
   }
+
+  return NextResponse.json(note);
 }
 
 /**
@@ -48,28 +40,20 @@ async function PATCH_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  try {
-    const parsed = await parseJsonBody(req, noteUpdateSchema, {
-      logPrefix: "notes.PATCH",
-      allowEmpty: true,
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const body = parsed.data;
-    const note = await noteService.update(
-      id,
-      removeUndefined(body) as NoteUpdateInput
-    );
-
-    return NextResponse.json(note);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.[id].PATCH",
-      fallbackMessage: "Failed to update note",
-    });
+  const parsed = await parseJsonBody(req, noteUpdateSchema, {
+    logPrefix: "notes.PATCH",
+    allowEmpty: true,
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const body = parsed.data;
+  const note = await noteService.update(
+    id,
+    removeUndefined(body) as NoteUpdateInput
+  );
+
+  return NextResponse.json(note);
 }
 
 /**
@@ -77,21 +61,13 @@ async function PATCH_handler(
  * Deletes a note.
  */
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  try {
-    await noteService.delete(id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.[id].DELETE",
-      fallbackMessage: "Failed to delete note",
-    });
-  }
+  await noteService.delete(id);
+  return NextResponse.json({ success: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {

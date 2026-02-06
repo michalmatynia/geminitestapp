@@ -538,30 +538,57 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       nodeId: string;
       entityType: string;
       entityId: string;
-    }): Promise<{ nodeId: string; entityType: string; entityId: string; sample: unknown }> => {
+    }): Promise<{ nodeId: string; entityType: string; entityId: string; sample: unknown | null; error?: string }> => {
       if (entityType === 'custom') {
-        throw new Error('Use pasted JSON for custom samples.');
+        return { nodeId, entityType, entityId, sample: null, error: 'Use pasted JSON for custom samples.' };
       }
       let sample: unknown = null;
       let fetchedId = entityId;
+      const isObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
+      const fetchViaDbQuery = async (
+        collection: string,
+        id?: string
+      ): Promise<{ sample: unknown | null; fetchedId: string }> => {
+        const queries: Array<{ query: Record<string, unknown>; idType?: 'string' | 'objectId' }> = [];
+        if (id && id.trim()) {
+          queries.push({ query: { id }, idType: 'string' });
+          if (isObjectId(id)) {
+            queries.push({ query: { _id: id }, idType: 'objectId' });
+          } else {
+            queries.push({ query: { _id: id }, idType: 'string' });
+          }
+        } else {
+          queries.push({ query: {}, idType: 'string' });
+        }
+        for (const candidate of queries) {
+          const result = await dbApi.query<{ item?: unknown; items?: unknown[] }>({
+            provider: 'auto',
+            collection,
+            query: candidate.query,
+            single: true,
+            limit: 1,
+            idType: candidate.idType,
+          });
+          if (!result.ok) {
+            continue;
+          }
+          const payload = result.data;
+          const resolvedSample = payload?.item ?? (payload?.items?.[0] ?? null);
+          if (resolvedSample) {
+            const rawId = (resolvedSample as Record<string, unknown>)?._id
+              ?? (resolvedSample as Record<string, unknown>)?.id;
+            const nextId = (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
+            return { sample: resolvedSample, fetchedId: nextId };
+          }
+        }
+        return { sample: null, fetchedId: id ?? '' };
+      };
 
       // If no entityId provided, fetch first document from collection
       if (!entityId.trim()) {
-        const data = await queryClient.fetchQuery({
-          queryKey: ['db-browse-sample', entityType],
-          queryFn: async () => {
-            const result = await dbApi.browse(entityType, { limit: 1 });
-            if (!result.ok) return { documents: [] as Record<string, unknown>[] };
-            return { documents: result.data.documents ?? [] };
-          },
-          staleTime: AI_PATHS_SAMPLE_STALE_MS,
-        });
-        const firstDoc = data.documents?.[0];
-        if (firstDoc) {
-          sample = firstDoc;
-          const rawId = firstDoc._id ?? firstDoc.id;
-          fetchedId = (rawId as { toString?: () => string })?.toString?.() ?? '';
-        }
+        const fetched = await fetchViaDbQuery(entityType, '');
+        sample = fetched.sample;
+        fetchedId = fetched.fetchedId;
       } else {
         const normalized = entityType.toLowerCase();
         if (normalized === 'product') {
@@ -582,15 +609,23 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
             },
             staleTime: AI_PATHS_SAMPLE_STALE_MS,
           });
+        } else {
+          const fetched = await fetchViaDbQuery(entityType, entityId);
+          sample = fetched.sample;
+          fetchedId = fetched.fetchedId;
         }
       }
 
       if (!sample) {
-        throw new Error('No sample found.');
+        return { nodeId, entityType, entityId: fetchedId, sample: null, error: 'No sample found.' };
       }
       return { nodeId, entityType, entityId: fetchedId, sample };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample }: { nodeId: string; entityType: string; entityId: string; sample: unknown }): void => {
+    onSuccess: ({ nodeId, entityType, entityId, sample, error }: { nodeId: string; entityType: string; entityId: string; sample: unknown | null; error?: string }): void => {
+      if (!sample) {
+        toast(error ?? 'No sample found.', { variant: 'error' });
+        return;
+      }
       setUpdaterSamples((prev: Record<string, UpdaterSampleState>) => ({
         ...prev,
         [nodeId]: {
@@ -889,7 +924,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     persistPathSettings,
     persistSettingsBulk,
     savePathIndex,
-    syncNodesRef,
   } = useAiPathsPersistence({
     activePathId,
     activeTrigger,
@@ -1250,7 +1284,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       if (shouldSanitizeEdges) {
         setEdges((current: Edge[]): Edge[] => sanitizeEdges(next, current));
       }
-      syncNodesRef(next);
       return next;
     });
   };
@@ -1288,8 +1321,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         }
         return { ...node, config: mergedConfig };
       });
-      // Update ref synchronously so beforeunload has latest value
-      syncNodesRef(next);
       return next;
     });
   };

@@ -15,21 +15,13 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Fetches all tags.
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const notebookIdParam = searchParams.get("notebookId");
-    const notebook = notebookIdParam
-      ? { id: notebookIdParam }
-      : await noteService.getOrCreateDefaultNotebook();
-    const tags = await noteService.getAllTags(notebook.id);
-    return NextResponse.json(tags);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.tags.GET",
-      fallbackMessage: "Failed to fetch tags",
-    });
-  }
+  const { searchParams } = new URL(req.url);
+  const notebookIdParam = searchParams.get("notebookId");
+  const notebook = notebookIdParam
+    ? { id: notebookIdParam }
+    : await noteService.getOrCreateDefaultNotebook();
+  const tags = await noteService.getAllTags(notebook.id);
+  return NextResponse.json(tags);
 }
 
 /**
@@ -37,28 +29,20 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new tag.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, tagCreateSchema, {
-      logPrefix: "tags.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const resolvedNotebookId =
-      parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const tag = await noteService.createTag(removeUndefined({
-      ...parsed.data,
-      notebookId: resolvedNotebookId,
-    }) as TagCreateInput);
-    return NextResponse.json(tag, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.tags.POST",
-      fallbackMessage: "Failed to create tag",
-    });
+  const parsed = await parseJsonBody(req, tagCreateSchema, {
+    logPrefix: "tags.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+
+  const resolvedNotebookId =
+    parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
+  const tag = await noteService.createTag(removeUndefined({
+    ...parsed.data,
+    notebookId: resolvedNotebookId,
+  }) as TagCreateInput);
+  return NextResponse.json(tag, { status: 201 });
 }
 
 export const GET = apiHandler(

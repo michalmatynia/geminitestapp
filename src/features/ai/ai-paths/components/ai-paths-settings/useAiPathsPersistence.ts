@@ -40,10 +40,7 @@ import {
   sanitizeEdges,
   triggers,
 } from '@/features/ai/ai-paths/lib';
-import {
-  fetchSettingsCached,
-  invalidateSettingsCache,
-} from '@/shared/api/settings-client';
+import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -53,8 +50,6 @@ import {
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
 
-const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
-const AUTO_SAVE_ENABLED = false;
 
 type ToastFn = (
   message: string,
@@ -144,6 +139,7 @@ type UseAiPathsPersistenceResult = {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
+    pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
   persistActivePathPreference: (pathId: string | null) => Promise<void>;
@@ -151,7 +147,6 @@ type UseAiPathsPersistenceResult = {
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   saving: boolean;
-  syncNodesRef: (next: AiNode[]) => void;
 };
 
 export function useAiPathsPersistence({
@@ -238,35 +233,11 @@ export function useAiPathsPersistence({
   const [uiStateLoaded, setUiStateLoaded] = useState(false);
 
   const lastSavedSnapshotRef = useRef<string | null>(null);
-  const autoSaveTimerRef = useRef<number | null>(null);
-  const autoSaveInFlightRef = useRef(false);
   const lastUiStatePayloadRef = useRef<string>('');
   const lastSettingsPayloadRef = useRef<string>('');
   const lastUserPrefsActivePathIdRef = useRef<string | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
-
-  // Refs to track current state for beforeunload handler (avoids stale closure)
-  const currentNodesRef = useRef<AiNode[]>(initialNodes);
-  const currentEdgesRef = useRef<Edge[]>(initialEdges);
-  const currentPathsRef = useRef<PathMeta[]>([]);
-  const currentPathConfigsRef = useRef<Record<string, PathConfig>>({});
-  const currentActivePathIdRef = useRef<string | null>(null);
-  const currentPathNameRef = useRef('AI Description Path');
-  const currentPathDescriptionRef = useRef('');
-  const currentActiveTriggerRef = useRef(triggers[0] ?? 'Product Modal - Context Filter');
-  const currentExecutionModeRef = useRef<PathExecutionMode>('server');
-  const currentFlowIntensityRef = useRef<PathFlowIntensity>('medium');
-  const currentRunModeRef = useRef<PathRunMode>('block');
-  const currentParserSamplesRef = useRef<Record<string, ParserSampleState>>({});
-  const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
-  const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
-  const currentLastRunAtRef = useRef<string | null>(null);
-  const currentSelectedNodeIdRef = useRef<string | null>(null);
-
-  const syncNodesRef = useCallback((next: AiNode[]): void => {
-    currentNodesRef.current = next;
-  }, []);
 
   const normalizeConfigForHash = useCallback(
     (config: PathConfig): PathConfig => ({
@@ -709,10 +680,10 @@ export function useAiPathsPersistence({
     }, [activePathId, nodes, pathConfigs]);
 
   const buildPathSnapshot = useCallback(
-    (): string =>
+    (nameOverride?: string): string =>
       stableStringify({
         activePathId,
-        name: pathName,
+        name: nameOverride ?? pathName,
         description: pathDescription,
         trigger: activeTrigger,
         executionMode,
@@ -754,10 +725,10 @@ export function useAiPathsPersistence({
   );
 
   const buildActivePathConfig = useCallback(
-    (updatedAt: string, nodesOverride?: AiNode[]): PathConfig => ({
+    (updatedAt: string, nodesOverride?: AiNode[], nameOverride?: string): PathConfig => ({
       id: activePathId ?? 'default',
       version: STORAGE_VERSION,
-      name: pathName,
+      name: nameOverride ?? pathName,
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
@@ -801,12 +772,14 @@ export function useAiPathsPersistence({
       silent?: boolean | undefined;
       force?: boolean | undefined;
       includeNodeConfig?: boolean | undefined;
+      pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
     }): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
       const force = options?.force ?? false;
       const includeNodeConfig = options?.includeNodeConfig ?? true;
+      const resolvedName = options?.pathNameOverride ?? pathName;
       if (isPathLocked || !isPathActive) {
         if (!silent) {
           toast(
@@ -819,7 +792,7 @@ export function useAiPathsPersistence({
         return false;
       }
       if (!force) {
-        const snapshot = buildPathSnapshot();
+        const snapshot = buildPathSnapshot(resolvedName);
         if (snapshot && snapshot === lastSavedSnapshotRef.current) {
           return true;
         }
@@ -831,9 +804,9 @@ export function useAiPathsPersistence({
         const nodesForSave = includeNodeConfig
           ? baseNodes
           : buildNodesForAutoSave(baseNodes);
-        const config = buildActivePathConfig(updatedAt, nodesForSave);
+        const config = buildActivePathConfig(updatedAt, nodesForSave, resolvedName);
         const nextPaths = paths.map((path: PathMeta): PathMeta =>
-          path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
+          path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
         );
         const nextConfigs = { ...pathConfigs, [activePathId]: config };
         setPathConfigs(nextConfigs);
@@ -841,7 +814,7 @@ export function useAiPathsPersistence({
         await persistPathSettings(nextPaths, activePathId, config);
         setLastError(null);
         void persistLastError(null);
-        lastSavedSnapshotRef.current = buildPathSnapshot();
+        lastSavedSnapshotRef.current = buildPathSnapshot(resolvedName);
         if (!silent) {
           toast('AI Paths saved.', { variant: 'success' });
         }
@@ -849,7 +822,7 @@ export function useAiPathsPersistence({
       } catch (error) {
         reportAiPathsError(
           error,
-          { action: silent ? 'autoSavePath' : 'savePath', pathId: activePathId },
+          { action: silent ? 'savePathSilent' : 'savePath', pathId: activePathId },
           'Failed to save AI Paths settings:'
         );
         if (!silent) {
@@ -886,6 +859,7 @@ export function useAiPathsPersistence({
       silent?: boolean | undefined;
       includeNodeConfig?: boolean | undefined;
       force?: boolean | undefined;
+      pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
     }): Promise<void> => {
       const silent = options?.silent ?? false;
@@ -904,6 +878,7 @@ export function useAiPathsPersistence({
         force: options?.force ?? true,
         silent,
         includeNodeConfig: options?.includeNodeConfig,
+        pathNameOverride: options?.pathNameOverride,
         nodesOverride: options?.nodesOverride,
       });
       if (silent) return;
@@ -935,251 +910,6 @@ export function useAiPathsPersistence({
       }
     }
   }, [activePathId, autoSaveAt, autoSaveStatus, buildPathSnapshot, loading]);
-
-  useEffect((): void | (() => void) => {
-    if (!AUTO_SAVE_ENABLED) return;
-    if (loading || !activePathId) return;
-    if (saving || autoSaveInFlightRef.current) return;
-    const snapshot = buildPathSnapshot();
-    if (!lastSavedSnapshotRef.current) {
-      lastSavedSnapshotRef.current = snapshot;
-      return;
-    }
-    if (snapshot === lastSavedSnapshotRef.current) return;
-    if (autoSaveTimerRef.current) {
-      window.clearTimeout(autoSaveTimerRef.current);
-    }
-    autoSaveTimerRef.current = window.setTimeout((): void => {
-      if (autoSaveInFlightRef.current) return;
-      autoSaveInFlightRef.current = true;
-      setAutoSaveStatus('saving');
-      void persistPathConfig({ silent: true, includeNodeConfig: false })
-        .then((ok: boolean) => {
-          if (ok) {
-            setAutoSaveStatus('saved');
-            setAutoSaveAt(new Date().toISOString());
-          } else {
-            setAutoSaveStatus('error');
-          }
-        })
-        .finally(() => {
-          autoSaveInFlightRef.current = false;
-        });
-    }, AUTO_SAVE_DEBOUNCE_MS);
-    return (): void => {
-      if (autoSaveTimerRef.current) {
-        window.clearTimeout(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = null;
-      }
-    };
-  }, [
-    activePathId,
-    activeTrigger,
-    executionMode,
-    isPathLocked,
-    isPathActive,
-    edges,
-    loading,
-    nodes,
-    parserSamples,
-    pathDescription,
-    pathName,
-    saving,
-    updaterSamples,
-    runtimeState,
-    lastRunAt,
-    buildPathSnapshot,
-    persistPathConfig,
-  ]);
-
-  // Keep refs in sync with state (for beforeunload handler which can't use stale closures)
-  useEffect((): void => {
-    currentNodesRef.current = nodes;
-  }, [nodes]);
-  useEffect((): void => {
-    currentEdgesRef.current = edges;
-  }, [edges]);
-  useEffect((): void => {
-    currentPathsRef.current = paths;
-  }, [paths]);
-  useEffect((): void => {
-    currentPathConfigsRef.current = pathConfigs;
-  }, [pathConfigs]);
-  useEffect((): void => {
-    currentActivePathIdRef.current = activePathId;
-  }, [activePathId]);
-  useEffect((): void => {
-    currentPathNameRef.current = pathName;
-  }, [pathName]);
-  useEffect((): void => {
-    currentPathDescriptionRef.current = pathDescription;
-  }, [pathDescription]);
-  useEffect((): void => {
-    currentActiveTriggerRef.current = activeTrigger;
-  }, [activeTrigger]);
-  useEffect((): void => {
-    currentExecutionModeRef.current = executionMode;
-  }, [executionMode]);
-  useEffect((): void => {
-    currentFlowIntensityRef.current = flowIntensity;
-  }, [flowIntensity]);
-  useEffect((): void => {
-    currentRunModeRef.current = runMode;
-  }, [runMode]);
-  useEffect((): void => {
-    currentParserSamplesRef.current = parserSamples;
-  }, [parserSamples]);
-  useEffect((): void => {
-    currentUpdaterSamplesRef.current = updaterSamples;
-  }, [updaterSamples]);
-  useEffect((): void => {
-    currentRuntimeStateRef.current = runtimeState;
-  }, [runtimeState]);
-  useEffect((): void => {
-    currentLastRunAtRef.current = lastRunAt;
-  }, [lastRunAt]);
-  useEffect((): void => {
-    currentSelectedNodeIdRef.current = selectedNodeId;
-  }, [selectedNodeId]);
-
-  // Save immediately when page is about to unload or tab loses focus
-  useEffect((): void | (() => void) => {
-    if (!AUTO_SAVE_ENABLED) return;
-    const flushPendingSaveAsync = (): void => {
-      if (!currentActivePathIdRef.current || loading) return;
-      // Clear any pending debounced save
-      if (autoSaveTimerRef.current) {
-        window.clearTimeout(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = null;
-      }
-      // Check if there are unsaved changes
-      const snapshot = buildPathSnapshot();
-      if (snapshot === lastSavedSnapshotRef.current) return;
-      if (autoSaveInFlightRef.current) return;
-      // Trigger immediate save
-      autoSaveInFlightRef.current = true;
-      void persistPathConfig({ silent: true, includeNodeConfig: false }).finally(() => {
-        autoSaveInFlightRef.current = false;
-      });
-    };
-
-    // Best-effort save on unload using keepalive fetch (allows CSRF headers)
-    // Uses refs to get the LATEST state values, not stale closure values
-    const flushPendingSaveSync = (): void => {
-      const pathId = currentActivePathIdRef.current;
-      if (!pathId) return;
-      // Clear any pending debounced save
-      if (autoSaveTimerRef.current) {
-        window.clearTimeout(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = null;
-      }
-
-      // Always save on navigation - don't skip even if snapshot matches
-      // Build the payload using refs (latest values)
-      const updatedAt = new Date().toISOString();
-      const savedNodes = currentPathConfigsRef.current[pathId]?.nodes ?? [];
-      const savedConfigById = new Map(
-        savedNodes.map((node: AiNode): [string, NodeConfig | undefined] => [node.id, node.config])
-      );
-      const nodesForSave = currentNodesRef.current.map((node: AiNode): AiNode => {
-        if (savedConfigById.has(node.id)) {
-          return { ...node, config: savedConfigById.get(node.id) };
-        }
-        return { ...node };
-      });
-      const config: PathConfig = {
-        id: pathId,
-        version: STORAGE_VERSION,
-        name: currentPathNameRef.current,
-        description: currentPathDescriptionRef.current,
-        trigger: currentActiveTriggerRef.current,
-        executionMode: currentExecutionModeRef.current,
-        flowIntensity: currentFlowIntensityRef.current,
-        runMode: currentRunModeRef.current,
-        nodes: nodesForSave,
-        edges: currentEdgesRef.current,
-        updatedAt,
-        parserSamples: currentParserSamplesRef.current,
-        updaterSamples: currentUpdaterSamplesRef.current,
-        runtimeState: currentRuntimeStateRef.current,
-        lastRunAt: currentLastRunAtRef.current,
-        uiState: {
-          selectedNodeId: currentSelectedNodeIdRef.current,
-        },
-      };
-      const currentPaths = currentPathsRef.current;
-      const nextPaths = currentPaths.map((path: PathMeta): PathMeta =>
-        path.id === pathId ? { ...path, name: currentPathNameRef.current, updatedAt } : path
-      );
-
-      const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
-
-      // Save to settings (the primary storage)
-      const sanitizedConfig = sanitizePathConfig(config);
-      const indexPayload = JSON.stringify({ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) });
-      const configPayload = JSON.stringify({
-        key: `${PATH_CONFIG_PREFIX}${pathId}`,
-        value: JSON.stringify(sanitizedConfig),
-      });
-
-      void fetch('/api/settings', {
-        method: 'POST',
-        headers: csrfHeaders,
-        body: indexPayload,
-        keepalive: true,
-      }).catch((error: unknown) => {
-        console.warn('[AI Paths] Failed to persist path index on unload.', error);
-      });
-      void fetch('/api/settings', {
-        method: 'POST',
-        headers: csrfHeaders,
-        body: configPayload,
-        keepalive: true,
-      }).catch((error: unknown) => {
-        console.warn('[AI Paths] Failed to persist path config on unload.', error);
-      });
-      void fetch('/api/user/preferences', {
-        method: 'PATCH',
-        headers: csrfHeaders,
-        credentials: 'include',
-        body: JSON.stringify({ aiPathsActivePathId: pathId }),
-        keepalive: true,
-      }).catch((error: unknown) => {
-        console.warn('[AI Paths] Failed to persist user preferences on unload.', error);
-      });
-      invalidateSettingsCache();
-    };
-
-    const handleBeforeUnload = (): void => {
-      flushPendingSaveSync();
-    };
-
-    const handleVisibilityChange = (): void => {
-      if (document.visibilityState === 'hidden') {
-        flushPendingSaveAsync();
-      }
-    };
-
-    // Intercept clicks on links to save before Next.js client-side navigation
-    const handleLinkClick = (event: MouseEvent): void => {
-      const target = event.target as HTMLElement;
-      const anchor = target.closest('a');
-      if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
-        // This is a link click - flush save immediately
-        flushPendingSaveSync();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('click', handleLinkClick, true); // Use capture phase
-
-    return (): void => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('click', handleLinkClick, true);
-    };
-  }, [loading, buildPathSnapshot, persistPathConfig]);
 
   const savePathIndex = useCallback(
     async (nextPaths: PathMeta[]): Promise<void> => {
@@ -1217,6 +947,5 @@ export function useAiPathsPersistence({
     persistSettingsBulk,
     savePathIndex,
     saving,
-    syncNodesRef,
   };
 }

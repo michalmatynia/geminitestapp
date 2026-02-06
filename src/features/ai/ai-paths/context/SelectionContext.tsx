@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import type { AiNode } from '@/features/ai/ai-paths/lib';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -17,6 +19,7 @@ export interface SelectionState {
   selectedEdgeId: string | null;
   configOpen: boolean;
   nodeConfigDirty: boolean;
+  nodeConfigDraft: AiNode | null;
   simulationOpenNodeId: string | null;
 }
 
@@ -25,6 +28,7 @@ export interface SelectionActions {
   selectEdge: (edgeId: string | null) => void;
   setConfigOpen: (open: boolean) => void;
   setNodeConfigDirty: (dirty: boolean) => void;
+  setNodeConfigDraft: (draft: AiNode | null) => void;
   setSimulationOpenNodeId: (nodeId: string | null) => void;
   clearSelection: () => void;
 }
@@ -53,6 +57,7 @@ export function SelectionProvider({
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [configOpen, setConfigOpenState] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirtyState] = useState(false);
+  const [nodeConfigDraft, setNodeConfigDraftState] = useState<AiNode | null>(null);
   const [simulationOpenNodeId, setSimulationOpenNodeIdState] = useState<string | null>(null);
 
   // Actions are stable (useMemo with empty deps uses the state setters directly)
@@ -74,12 +79,14 @@ export function SelectionProvider({
       },
       setConfigOpen: setConfigOpenState,
       setNodeConfigDirty: setNodeConfigDirtyState,
+      setNodeConfigDraft: setNodeConfigDraftState,
       setSimulationOpenNodeId: setSimulationOpenNodeIdState,
       clearSelection: () => {
         setSelectedNodeId(null);
         setSelectedEdgeId(null);
         setConfigOpenState(false);
         setNodeConfigDirtyState(false);
+        setNodeConfigDraftState(null);
       },
     }),
     []
@@ -91,9 +98,10 @@ export function SelectionProvider({
       selectedEdgeId,
       configOpen,
       nodeConfigDirty,
+      nodeConfigDraft,
       simulationOpenNodeId,
     }),
-    [selectedNodeId, selectedEdgeId, configOpen, nodeConfigDirty, simulationOpenNodeId]
+    [selectedNodeId, selectedEdgeId, configOpen, nodeConfigDirty, nodeConfigDraft, simulationOpenNodeId]
   );
 
   return (

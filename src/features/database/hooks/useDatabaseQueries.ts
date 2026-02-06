@@ -130,7 +130,7 @@ export function useSqlQueryMutation(): UseMutationResult<
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   }
-> {
+  > {
   return useMutation({
     mutationFn: (input) => executeSqlQuery(input),
   });

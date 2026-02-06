@@ -26,63 +26,55 @@ const productTagCreateSchema = z.object({
  * - catalogId: Filter by catalog (required)
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const catalogId = searchParams.get("catalogId");
+  const { searchParams } = new URL(req.url);
+  const catalogId = searchParams.get("catalogId");
 
-    if (!catalogId) {
-      throw badRequestError("catalogId query parameter is required");
-    }
-
-    const provider = await getProductDataProvider();
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const tags = await db
-        .collection("product_tags")
-        .find({ catalogId })
-        .sort({ name: 1 })
-        .toArray();
-      const normalized = tags.map((tag: Record<string, unknown>) => {
-        const { _id, ...rest } = tag as unknown as {
-          _id?: { toString?: () => string };
-          createdAt?: unknown;
-          updatedAt?: unknown;
-        } & Record<string, unknown>;
-        const fallbackId = _id?.toString ? _id.toString() : undefined;
-        return {
-          ...rest,
-          id: (rest as { id?: string }).id ?? fallbackId,
-          createdAt: rest.createdAt instanceof Date ? rest.createdAt.toISOString() : rest.createdAt,
-          updatedAt: rest.updatedAt instanceof Date ? rest.updatedAt.toISOString() : rest.updatedAt,
-        };
-      });
-      return NextResponse.json(normalized as ProductTag[]);
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product tags require the Postgres product store.");
-    }
-
-    const tags = await prisma.productTag.findMany({
-      where: { catalogId },
-      orderBy: { name: "asc" },
-    });
-    return NextResponse.json(tags.map(tag => ({
-      ...tag,
-      createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
-      updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
-    })) as ProductTag[]);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.tags.GET",
-      fallbackMessage: "Failed to fetch tags",
-    });
+  if (!catalogId) {
+    throw badRequestError("catalogId query parameter is required");
   }
+
+  const provider = await getProductDataProvider();
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
+    }
+    const db = await getMongoDb();
+    const tags = await db
+      .collection("product_tags")
+      .find({ catalogId })
+      .sort({ name: 1 })
+      .toArray();
+    const normalized = tags.map((tag: Record<string, unknown>) => {
+      const { _id, ...rest } = tag as unknown as {
+        _id?: { toString?: () => string };
+        createdAt?: unknown;
+        updatedAt?: unknown;
+      } & Record<string, unknown>;
+      const fallbackId = _id?.toString ? _id.toString() : undefined;
+      return {
+        ...rest,
+        id: (rest as { id?: string }).id ?? fallbackId,
+        createdAt: rest.createdAt instanceof Date ? rest.createdAt.toISOString() : rest.createdAt,
+        updatedAt: rest.updatedAt instanceof Date ? rest.updatedAt.toISOString() : rest.updatedAt,
+      };
+    });
+    return NextResponse.json(normalized as ProductTag[]);
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product tags require the Postgres product store.");
+  }
+
+  const tags = await prisma.productTag.findMany({
+    where: { catalogId },
+    orderBy: { name: "asc" },
+  });
+  return NextResponse.json(tags.map(tag => ({
+    ...tag,
+    createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
+  })) as ProductTag[]);
 }
 
 /**
@@ -90,60 +82,24 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new product tag.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const provider = await getProductDataProvider();
-    const parsed = await parseJsonBody(req, productTagCreateSchema, {
-      logPrefix: "product-tags.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
+  const provider = await getProductDataProvider();
+  const parsed = await parseJsonBody(req, productTagCreateSchema, {
+    logPrefix: "product-tags.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const { name, color, catalogId } = parsed.data;
+
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-
-    const { name, color, catalogId } = parsed.data;
-
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const existing = await db.collection("product_tags").findOne({
-        name,
-        catalogId,
-      });
-      if (existing) {
-        throw conflictError(
-          "A tag with this name already exists in this catalog",
-          { name, catalogId }
-        );
-      }
-      const now = new Date();
-      const tag = {
-        id: randomUUID(),
-        name,
-        color: color ?? "#38bdf8",
-        catalogId,
-        createdAt: now,
-        updatedAt: now,
-      };
-      await db.collection("product_tags").insertOne(tag);
-      const dto: ProductTag = {
-        id: tag.id,
-        name: tag.name,
-        color: tag.color,
-        catalogId: tag.catalogId,
-        createdAt: tag.createdAt.toISOString(),
-        updatedAt: tag.updatedAt.toISOString(),
-      };
-
-      return NextResponse.json(dto, { status: 201 });
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product tags require the Postgres product store.");
-    }
-
-    const existing = await prisma.productTag.findFirst({
-      where: { name, catalogId },
+    const db = await getMongoDb();
+    const existing = await db.collection("product_tags").findOne({
+      name,
+      catalogId,
     });
     if (existing) {
       throw conflictError(
@@ -151,32 +107,60 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         { name, catalogId }
       );
     }
-
-    const tag = await prisma.productTag.create({
-      data: {
-        name,
-        color: color ?? "#38bdf8",
-        catalogId,
-      },
-    });
-
+    const now = new Date();
+    const tag = {
+      id: randomUUID(),
+      name,
+      color: color ?? "#38bdf8",
+      catalogId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.collection("product_tags").insertOne(tag);
     const dto: ProductTag = {
       id: tag.id,
       name: tag.name,
       color: tag.color,
       catalogId: tag.catalogId,
-      createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
-      updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
     };
 
     return NextResponse.json(dto, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "product-tags.POST",
-      fallbackMessage: "Failed to create product tag",
-    });
   }
+
+  if (!process.env.DATABASE_URL) {
+    throw badRequestError("Product tags require the Postgres product store.");
+  }
+
+  const existing = await prisma.productTag.findFirst({
+    where: { name, catalogId },
+  });
+  if (existing) {
+    throw conflictError(
+      "A tag with this name already exists in this catalog",
+      { name, catalogId }
+    );
+  }
+
+  const tag = await prisma.productTag.create({
+    data: {
+      name,
+      color: color ?? "#38bdf8",
+      catalogId,
+    },
+  });
+
+  const dto: ProductTag = {
+    id: tag.id,
+    name: tag.name,
+    color: tag.color,
+    catalogId: tag.catalogId,
+    createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
+  };
+
+  return NextResponse.json(dto, { status: 201 });
 }
 
 export const GET = apiHandler(

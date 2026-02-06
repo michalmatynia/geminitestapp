@@ -22,40 +22,35 @@ const shouldRun = (lastRun: Date | null, minutes: number): boolean => {
 };
 
 export async function tick(): Promise<void> {
-  try {
-    const schedule = await getScheduleSettings();
-    const analyticsLastRun = parseDate(
-      await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt),
+  const schedule = await getScheduleSettings();
+  const analyticsLastRun = parseDate(
+    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt),
+  );
+  const logsLastRun = parseDate(
+    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt),
+  );
+
+  if (schedule.analyticsEnabled && shouldRun(analyticsLastRun, schedule.analyticsMinutes)) {
+    await generateAnalyticsInsight({ source: 'scheduled' });
+  }
+
+  if (schedule.logsEnabled && shouldRun(logsLastRun, schedule.logsMinutes)) {
+    await generateLogsInsight({ source: 'scheduled' });
+  }
+
+  if (schedule.logsAutoOnError) {
+    const latestError = await listSystemLogs({ level: 'error', page: 1, pageSize: 1 });
+    const latest = latestError.logs[0];
+    const lastErrorSeen = parseDate(
+      await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt),
     );
-    const logsLastRun = parseDate(
-      await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt),
-    );
-
-    if (schedule.analyticsEnabled && shouldRun(analyticsLastRun, schedule.analyticsMinutes)) {
-      await generateAnalyticsInsight({ source: 'scheduled' });
-    }
-
-    if (schedule.logsEnabled && shouldRun(logsLastRun, schedule.logsMinutes)) {
-      await generateLogsInsight({ source: 'scheduled' });
-    }
-
-    if (schedule.logsAutoOnError) {
-      const latestError = await listSystemLogs({ level: 'error', page: 1, pageSize: 1 });
-      const latest = latestError.logs[0];
-      const lastErrorSeen = parseDate(
-        await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt),
+    const latestAt = latest ? new Date(latest.createdAt) : null;
+    if (latestAt && (!lastErrorSeen || latestAt.getTime() > lastErrorSeen.getTime())) {
+      await generateLogsInsight({ source: 'auto' });
+      await setAiInsightsMeta(
+        AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
+        latestAt.toISOString(),
       );
-      const latestAt = latest ? new Date(latest.createdAt) : null;
-      if (latestAt && (!lastErrorSeen || latestAt.getTime() > lastErrorSeen.getTime())) {
-        await generateLogsInsight({ source: 'auto' });
-        await setAiInsightsMeta(
-          AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
-          latestAt.toISOString(),
-        );
-      }
     }
-  } catch (error) {
-    // Re-throw so the queue worker handles it and logs it via ErrorSystem
-    throw error;
   }
 }

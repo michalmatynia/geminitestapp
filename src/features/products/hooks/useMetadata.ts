@@ -3,6 +3,7 @@
 
 import { useQuery, useQueries, type UseQueryResult } from '@tanstack/react-query';
 
+import { getLanguages } from '@/features/internationalization/api';
 import type {
   CatalogRecord,
   PriceGroupWithDetails,
@@ -13,7 +14,6 @@ import type {
   ProductParameter,
 } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
-import { getLanguages } from '@/features/internationalization/api';
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({

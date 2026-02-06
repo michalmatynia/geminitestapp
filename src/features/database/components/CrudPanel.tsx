@@ -18,6 +18,7 @@ import {
 } from '@/shared/ui';
 
 import { useCrudMutation, useSqlQueryMutation } from '../hooks/useDatabaseQueries';
+
 import type {
   CrudOperation,
   DatabaseColumnInfo,
@@ -193,7 +194,7 @@ export function CrudPanel({
       setError(null);
       setSuccessMessage(null);
     }
-  }, [defaultTable]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defaultTable]);  
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -288,7 +289,7 @@ export function CrudPanel({
   // Fetch when table or page changes
   useEffect(() => {
     if (selectedTable) fetchRows();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selectedTable, page, pageSize]);
 
   const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> => {

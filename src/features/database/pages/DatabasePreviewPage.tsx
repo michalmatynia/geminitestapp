@@ -717,58 +717,58 @@ function DatabasePreviewPageInner(): React.JSX.Element {
           {/* ── SQL Query Console ── */}
           {previewType === 'postgresql' && (
             <div ref={consoleSectionRef}>
-            <SectionPanel className="p-5">
-              <button
-                type="button"
-                onClick={(): void => setShowConsole(!showConsole)}
-                className="flex w-full items-center justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <TerminalIcon className="size-4 text-emerald-300" />
-                  <h2 className="text-sm font-semibold text-white">SQL Console</h2>
-                </div>
-                {showConsole ? (
-                  <ChevronDownIcon className="size-4 text-gray-400" />
-                ) : (
-                  <ChevronRightIcon className="size-4 text-gray-400" />
+              <SectionPanel className="p-5">
+                <button
+                  type="button"
+                  onClick={(): void => setShowConsole(!showConsole)}
+                  className="flex w-full items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <TerminalIcon className="size-4 text-emerald-300" />
+                    <h2 className="text-sm font-semibold text-white">SQL Console</h2>
+                  </div>
+                  {showConsole ? (
+                    <ChevronDownIcon className="size-4 text-gray-400" />
+                  ) : (
+                    <ChevronRightIcon className="size-4 text-gray-400" />
+                  )}
+                </button>
+                {showConsole && (
+                  <div className="mt-4">
+                    <SqlQueryConsole
+                      defaultDbType="postgresql"
+                      initialSql={consoleSql}
+                    />
+                  </div>
                 )}
-              </button>
-              {showConsole && (
-                <div className="mt-4">
-                  <SqlQueryConsole
-                    defaultDbType="postgresql"
-                    initialSql={consoleSql}
-                  />
-                </div>
-              )}
-            </SectionPanel>
+              </SectionPanel>
             </div>
           )}
 
           {/* ── CRUD Panel ── */}
           {showCrud && tableDetails.length > 0 && (
             <div ref={crudSectionRef}>
-            <SectionPanel className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <SettingsIcon className="size-4 text-emerald-300" />
-                  <h2 className="text-sm font-semibold text-white">Table Manager</h2>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(): void => setShowCrud(false)}
-                  className="text-xs text-gray-400"
-                >
+              <SectionPanel className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <SettingsIcon className="size-4 text-emerald-300" />
+                    <h2 className="text-sm font-semibold text-white">Table Manager</h2>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(): void => setShowCrud(false)}
+                    className="text-xs text-gray-400"
+                  >
                   Close
-                </Button>
-              </div>
-              <CrudPanel
-                tableDetails={tableDetails}
-                defaultTable={crudTable}
-                dbType={(previewType === 'mongodb' ? 'mongodb' : 'postgresql') as DatabaseType}
-              />
-            </SectionPanel>
+                  </Button>
+                </div>
+                <CrudPanel
+                  tableDetails={tableDetails}
+                  defaultTable={crudTable}
+                  dbType={(previewType === 'mongodb' ? 'mongodb' : 'postgresql') as DatabaseType}
+                />
+              </SectionPanel>
             </div>
           )}
 

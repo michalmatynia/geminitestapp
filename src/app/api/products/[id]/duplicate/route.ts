@@ -18,33 +18,22 @@ const duplicateSchema = z.object({
  * Duplicates a product with a new SKU.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  let productId = "";
-  try {
-    const { id } = params;
-    productId = id;
-    if (!id) {
-      throw badRequestError("Product id is required");
-    }
-    const parsed = await parseJsonBody(req, duplicateSchema, {
-      logPrefix: "products.DUPLICATE",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const sku = parsed.data.sku ?? "";
-    const product = await productService.duplicateProduct(id, sku);
-    if (!product) {
-      throw notFoundError("Product not found", { productId });
-    }
-    return NextResponse.json(product);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.DUPLICATE",
-      fallbackMessage: "Failed to duplicate product",
-      ...(productId ? { extra: { productId } } : {}),
-    });
+  const { id } = params;
+  if (!id) {
+    throw badRequestError("Product id is required");
   }
+  const parsed = await parseJsonBody(req, duplicateSchema, {
+    logPrefix: "products.DUPLICATE",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const sku = parsed.data.sku ?? "";
+  const product = await productService.duplicateProduct(id, sku);
+  if (!product) {
+    throw notFoundError("Product not found", { productId: id });
+  }
+  return NextResponse.json(product);
 }
 
 export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "products.[id].duplicate.POST" });

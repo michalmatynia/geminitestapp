@@ -1,3 +1,5 @@
+   change node from 22 to 24
+   
    - Regex Grouper manual-only AI suggestions path + output retention
   - JSON Mapper node input/output changes
   - Node state autosave (selections + UI)
@@ -24,6 +26,8 @@ Websocket install for my polling operations
 Is redis installed "
 
 use Context refactor !
+
+Duplicate run guards
 
 every element in CMS should have an uption to choose the type of backgroun, for image file background, Background lock is like a semi background later used in multiplanar din parallaxes
 

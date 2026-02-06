@@ -5,7 +5,6 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { ObjectId } from "mongodb";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { ErrorSystem } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";

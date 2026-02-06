@@ -5,17 +5,15 @@ import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { noteCreateSchema } from "@/features/notesapp";
 import type { NoteFilters } from "@/shared/types/notes";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { ErrorSystem } from "@/features/observability/server";
 
 /**
  * GET /api/notes
  * Fetches a list of notes with optional filters.
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const { searchParams } = new URL(_req.url);
 
   const filters: NoteFilters = {
     truncateContent: searchParams.get("truncateContent") === "true",
@@ -59,16 +57,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     filters.categoryIds = searchParams.get("categoryIds")!.split(",");
   }
 
-  try {
-    const notes = await noteService.getAll(filters);
-    return NextResponse.json(notes);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.GET",
-      fallbackMessage: "Failed to fetch notes",
-    });
-  }
+  const notes = await noteService.getAll(filters);
+  return NextResponse.json(notes);
 }
 
 /**
@@ -76,28 +66,20 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new note.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, noteCreateSchema, {
-      logPrefix: "notes.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const resolvedNotebookId =
-      parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const note = await noteService.create({
-      ...parsed.data,
-      notebookId: resolvedNotebookId,
-    });
-    return NextResponse.json(note, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.POST",
-      fallbackMessage: "Failed to create note",
-    });
+  const parsed = await parseJsonBody(req, noteCreateSchema, {
+    logPrefix: "notes.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+
+  const resolvedNotebookId =
+    parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
+  const note = await noteService.create({
+    ...parsed.data,
+    notebookId: resolvedNotebookId,
+  });
+  return NextResponse.json(note, { status: 201 });
 }
 
 export const GET = apiHandler(

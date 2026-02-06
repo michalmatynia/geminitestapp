@@ -4,7 +4,6 @@ import path from "path";
 import { promises as fs } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import type { DatabaseInfo } from "@/features/database";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 import {
   pgBackupsDir,
@@ -57,19 +56,11 @@ async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[
 }
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const type = (searchParams.get("type") as "postgresql" | "mongodb") || "postgresql";
+  const { searchParams } = new URL(req.url);
+  const type = (searchParams.get("type") as "postgresql" | "mongodb") || "postgresql";
 
-    const backups = await getBackups(type);
-    return NextResponse.json(backups);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "databases.backups.GET",
-      fallbackMessage: "Failed to list backups",
-    });
-  }
+  const backups = await getBackups(type);
+  return NextResponse.json(backups);
 }
 
 export const GET = apiHandler(

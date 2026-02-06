@@ -14,17 +14,9 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/notes/notebooks
  * Fetches all notebooks (creates a default if none exist).
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const notebooks = await noteService.getAllNotebooks();
-    return NextResponse.json(notebooks);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.notebooks.GET",
-      fallbackMessage: "Failed to fetch notebooks",
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const notebooks = await noteService.getAllNotebooks();
+  return NextResponse.json(notebooks);
 }
 
 /**
@@ -32,22 +24,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a notebook.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, notebookCreateSchema, {
-      logPrefix: "notebooks.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const notebook = await noteService.createNotebook(removeUndefined(parsed.data) as NotebookCreateInput);
-    return NextResponse.json(notebook, { status: 201 });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.notebooks.POST",
-      fallbackMessage: "Failed to create notebook",
-    });
+  const parsed = await parseJsonBody(req, notebookCreateSchema, {
+    logPrefix: "notebooks.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const notebook = await noteService.createNotebook(removeUndefined(parsed.data) as NotebookCreateInput);
+  return NextResponse.json(notebook, { status: 201 });
 }
 
 export const GET = apiHandler(

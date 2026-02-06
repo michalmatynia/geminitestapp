@@ -5,7 +5,6 @@ import { z } from "zod";
 import { enqueueProductAiJob } from "@/features/jobs/server";
 import type { ProductAiJobType } from "@/shared/types/jobs";
 import { startProductAiJobQueue, processSingleJob } from "@/features/jobs/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -17,56 +16,48 @@ const enqueueSchema = z.object({
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, enqueueSchema, {
-      logPrefix: "products.ai-jobs.enqueue.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { productId, type, payload } = parsed.data;
-
-    console.log(`[api/products/ai-jobs/enqueue] Received request - productId: ${productId}, type: ${type}`);
-
-    const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
-    console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} created`);
-
-    const inlineJobs =
-      process.env.AI_JOBS_INLINE === "true" ||
-      process.env.NODE_ENV !== "production";
-
-    if (inlineJobs) {
-      // WORKAROUND: In serverless/development, immediately process this job
-      // since setInterval doesn't persist across function invocations
-      console.log(`[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`);
-
-      // Process the job asynchronously but log any errors
-      processSingleJob(job.id)
-        .then((): void => {
-          console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
-        })
-        .catch(async (err: unknown) => {
-          const { ErrorSystem } = await import("@/features/observability/services/error-system");
-          void ErrorSystem.captureException(err, { 
-            service: "api/products/ai-jobs/enqueue",
-            jobId: job.id,
-            productId: productId
-          });
-        });
-    } else {
-      // Start the queue worker (for persistent servers)
-      startProductAiJobQueue();
-    }
-
-    console.log(`[api/products/ai-jobs/enqueue] Returning response to client`);
-    return NextResponse.json({ success: true, jobId: job.id });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.enqueue.POST",
-      fallbackMessage: "Failed to enqueue job",
-    });
+  const parsed = await parseJsonBody(req, enqueueSchema, {
+    logPrefix: "products.ai-jobs.enqueue.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const { productId, type, payload } = parsed.data;
+
+  console.log(`[api/products/ai-jobs/enqueue] Received request - productId: ${productId}, type: ${type}`);
+
+  const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
+  console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} created`);
+
+  const inlineJobs =
+    process.env.AI_JOBS_INLINE === "true" ||
+    process.env.NODE_ENV !== "production";
+
+  if (inlineJobs) {
+    // WORKAROUND: In serverless/development, immediately process this job
+    // since setInterval doesn't persist across function invocations
+    console.log(`[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`);
+
+    // Process the job asynchronously but log any errors
+    processSingleJob(job.id)
+      .then((): void => {
+        console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
+      })
+      .catch(async (err: unknown) => {
+        const { ErrorSystem } = await import("@/features/observability/services/error-system");
+        void ErrorSystem.captureException(err, { 
+          service: "api/products/ai-jobs/enqueue",
+          jobId: job.id,
+          productId: productId
+        });
+      });
+  } else {
+    // Start the queue worker (for persistent servers)
+    startProductAiJobQueue();
+  }
+
+  console.log(`[api/products/ai-jobs/enqueue] Returning response to client`);
+  return NextResponse.json({ success: true, jobId: job.id });
 }
 
 export const POST = apiHandler(

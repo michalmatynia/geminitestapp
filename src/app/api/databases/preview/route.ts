@@ -33,37 +33,25 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let safePage = 1;
   let safePageSize = 20;
   const dbUrl = process.env.DATABASE_URL ?? "";
-  try {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (_error) {
-      return createErrorResponse(badRequestError("Invalid JSON payload"), {
-        request: req,
-        source: "databases.preview.POST",
-      });
-    }
-    const parsed = body as {
-      backupName?: string;
-      mode?: "backup" | "current";
-      type?: "postgresql" | "mongodb";
-      page?: number;
-      pageSize?: number;
-    };
-    backupName = parsed.backupName;
-    previewMode = parsed.mode === "current" ? "current" : "backup";
-    const previewType = parsed.type === "mongodb" ? "mongodb" : "postgresql";
-    const page = parsed.page;
-    const pageSize = parsed.pageSize;
 
-    if (previewMode === "backup" && !backupName) {
-      return createErrorResponse(
-        badRequestError("Backup name is required"),
-        { request: req, source: "databases.preview.POST" }
-      );
-    }
+  const body = (await req.json()) as {
+    backupName?: string;
+    mode?: "backup" | "current";
+    type?: "postgresql" | "mongodb";
+    page?: number;
+    pageSize?: number;
+  };
+  backupName = body.backupName;
+  previewMode = body.mode === "current" ? "current" : "backup";
+  const previewType = body.type === "mongodb" ? "mongodb" : "postgresql";
+  const page = body.page;
+  const pageSize = body.pageSize;
 
-    stage = "validate";
+  if (previewMode === "backup" && !backupName) {
+    throw badRequestError("Backup name is required");
+  }
+
+  stage = "validate";
     if (previewType === "mongodb") {
       if (previewMode === "backup") {
         assertValidMongoBackupName(backupName ?? "");
@@ -76,10 +64,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       
       if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
-        return createErrorResponse(
-          badRequestError("Preview is only supported for PostgreSQL backups."),
-          { request: req, source: "databases.preview.POST" }
-        );
+        throw badRequestError("Preview is only supported for PostgreSQL backups.");
       }
     }
 
@@ -176,14 +161,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         stderr = result.stderr;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return createErrorResponse(
-          internalError(`Failed to inspect backup: ${message}`),
-          {
-            request: req,
-            source: "databases.preview.POST",
-            extra: { backupName },
-          }
-        );
+        throw internalError(`Failed to inspect backup: ${message}`);
       }
       output = [stdout.trim(), stderr.trim()].filter(Boolean).join("\n");
     }
@@ -567,32 +545,22 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
 
-    const groupObj: Record<string, string[]> = {};
-    for (const [key, val] of Array.from(groups.entries())) {
-      groupObj[key] = Array.from(val);
+      const groupObj: Record<string, string[]> = {};
+      for (const [key, val] of Array.from(groups.entries())) {
+        groupObj[key] = Array.from(val);
+      }
+    
+      return NextResponse.json({
+        stats: {
+          tables: tableStats,
+          groups: groupObj,
+        },
+        data: tableRows,
+        tableDetails,
+        enums: enumTypes,
+        databaseSize,
+      });
     }
-
-    return NextResponse.json({
-      stats: {
-        tables: tableStats,
-        groups: groupObj,
-      },
-      data: tableRows,
-      tableDetails,
-      enums: enumTypes,
-      databaseSize,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "databases.preview.POST",
-      fallbackMessage:
-        error instanceof Error ? error.message : "Internal Server Error",
-      extra: { stage },
-    });
-  }
-}
-
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
  { source: "databases.preview.POST" });

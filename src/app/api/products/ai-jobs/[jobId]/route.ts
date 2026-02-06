@@ -14,67 +14,43 @@ const actionSchema = z.object({
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
-  try {
-    const { jobId } = params;
-    if (!jobId) {
-      throw badRequestError("Job id is required");
-    }
-    const job = await getProductAiJob(jobId);
-    if (!job) {
-      throw notFoundError("Job not found", { jobId });
-    }
-    return NextResponse.json({ job });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.[jobId].GET",
-      fallbackMessage: "Failed to fetch job",
-    });
+  const { jobId } = params;
+  if (!jobId) {
+    throw badRequestError("Job id is required");
   }
+  const job = await getProductAiJob(jobId);
+  if (!job) {
+    throw notFoundError("Job not found", { jobId });
+  }
+  return NextResponse.json({ job });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
-  try {
-    const { jobId } = params;
-    if (!jobId) {
-      throw badRequestError("Job id is required");
-    }
-    const parsed = await parseJsonBody(req, actionSchema, {
-      logPrefix: "products.ai-jobs.job.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { action } = parsed.data;
-    if (action === "cancel") {
-      const job = await cancelProductAiJob(jobId);
-      return NextResponse.json({ success: true, job });
-    }
-    throw badRequestError("Invalid action");
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.[jobId].POST",
-      fallbackMessage: "Failed to update job",
-    });
+  const { jobId } = params;
+  if (!jobId) {
+    throw badRequestError("Job id is required");
   }
+  const parsed = await parseJsonBody(req, actionSchema, {
+    logPrefix: "products.ai-jobs.job.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { action } = parsed.data;
+  if (action === "cancel") {
+    const job = await cancelProductAiJob(jobId);
+    return NextResponse.json({ success: true, job });
+  }
+  throw badRequestError("Invalid action");
 }
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
-  try {
-    const { jobId } = params;
-    if (!jobId) {
-      throw badRequestError("Job id is required");
-    }
-    await deleteProductAiJob(jobId);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.ai-jobs.[jobId].DELETE",
-      fallbackMessage: "Failed to delete job",
-    });
+  const { jobId } = params;
+  if (!jobId) {
+    throw badRequestError("Job id is required");
   }
+  await deleteProductAiJob(jobId);
+  return NextResponse.json({ success: true });
 }
 
 export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, { source: "products.ai-jobs.[jobId].GET" });

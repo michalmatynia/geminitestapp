@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest } from "next/server";
 
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 import type { AiPathRunEventRecord, AiPathRunRecord, AiPathRunNodeRecord } from "@/shared/types/ai-paths";

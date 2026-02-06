@@ -16,44 +16,28 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    const parsed = await parseJsonBody(req, tagUpdateSchema, {
-      logPrefix: "tags.PATCH",
-      allowEmpty: true,
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const tag = await noteService.updateTag(
-      id,
-      removeUndefined(parsed.data) as TagUpdateInput
-    );
-    return NextResponse.json(tag);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.tags.[id].PATCH",
-      fallbackMessage: "Failed to update tag",
-    });
+  const parsed = await parseJsonBody(req, tagUpdateSchema, {
+    logPrefix: "tags.PATCH",
+    allowEmpty: true,
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const tag = await noteService.updateTag(
+    id,
+    removeUndefined(parsed.data) as TagUpdateInput
+  );
+  return NextResponse.json(tag);
 }
 
 /**
  * DELETE /api/notes/tags/[id]
  * Deletes a tag.
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    await noteService.deleteTag(id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.tags.[id].DELETE",
-      fallbackMessage: "Failed to delete tag",
-    });
-  }
+  await noteService.deleteTag(id);
+  return NextResponse.json({ success: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "notes.tags.[id].PATCH" });

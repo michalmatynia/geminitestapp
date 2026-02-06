@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listDrafts, createDraft } from "@/features/drafter/server";
 import type { CreateProductDraftInput } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -54,17 +53,9 @@ const createDraftSchema = z.object({
  * GET /api/drafts
  * List all product drafts
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const drafts = await listDrafts();
-    return NextResponse.json(drafts);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "drafts.GET",
-      fallbackMessage: "Failed to list drafts",
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const drafts = await listDrafts();
+  return NextResponse.json(drafts);
 }
 
 /**
@@ -72,30 +63,22 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Create a new product draft
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, createDraftSchema, {
-      logPrefix: "drafts.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const categoryId =
-      (typeof data.categoryId === "string" && data.categoryId.trim()) ||
-      (Array.isArray(data.categoryIds) ? data.categoryIds.find((id: string) => id.trim()) : null) ||
-      null;
-    const draft = await createDraft({
-      ...data,
-      categoryId,
-    } as CreateProductDraftInput);
-    return NextResponse.json(draft, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "drafts.POST",
-      fallbackMessage: "Failed to create draft",
-    });
+  const parsed = await parseJsonBody(req, createDraftSchema, {
+    logPrefix: "drafts.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  const categoryId =
+    (typeof data.categoryId === "string" && data.categoryId.trim()) ||
+    (Array.isArray(data.categoryIds) ? data.categoryIds.find((id: string) => id.trim()) : null) ||
+    null;
+  const draft = await createDraft({
+    ...data,
+    categoryId,
+  } as CreateProductDraftInput);
+  return NextResponse.json(draft, { status: 201 });
 }
 
 export const GET = apiHandler(

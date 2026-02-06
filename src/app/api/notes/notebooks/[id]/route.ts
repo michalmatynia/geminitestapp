@@ -15,41 +15,25 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    const parsed = await parseJsonBody(req, notebookUpdateSchema, {
-      logPrefix: "notebooks.PATCH",
-      allowEmpty: true,
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data));
-    return NextResponse.json(notebook);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.notebooks.[id].PATCH",
-      fallbackMessage: "Failed to update notebook",
-    });
+  const parsed = await parseJsonBody(req, notebookUpdateSchema, {
+    logPrefix: "notebooks.PATCH",
+    allowEmpty: true,
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data));
+  return NextResponse.json(notebook);
 }
 
 /**
  * DELETE /api/notes/notebooks/[id]
  * Deletes a notebook (and its notes/tags/categories).
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
-  try {
-    await noteService.deleteNotebook(id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.notebooks.[id].DELETE",
-      fallbackMessage: "Failed to delete notebook",
-    });
-  }
+  await noteService.deleteNotebook(id);
+  return NextResponse.json({ success: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "notes.notebooks.[id].PATCH" });

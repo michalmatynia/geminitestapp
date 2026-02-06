@@ -17,6 +17,7 @@ import {
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { useDatabasePreview } from '../hooks/useDatabaseQueries';
+
 import type { DatabaseTableDetail, DatabaseType } from '../types';
 
 export default function DatabaseOperationsPage(): React.JSX.Element {

@@ -325,10 +325,8 @@ async function GET_handler(
     const timings: Record<string, number | null | undefined> = {};
     const refreshPromise = fetchAndCacheSettings(scope, timings)
       .catch((error) => {
-        void ErrorSystem.captureException(error, {
-          service: "api/settings",
-          method: "GET",
-        });
+        // Log refresh error but return stale data to keep app running
+        console.error("[settings] stale refresh failed", error);
         return stale;
       })
       .finally(() => {
@@ -418,9 +416,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
-  }
-  if (shouldLog()) {
-    await ErrorSystem.logInfo("[settings] saved", { service: "api/settings", key: setting.key });
   }
   return NextResponse.json(setting);
 }

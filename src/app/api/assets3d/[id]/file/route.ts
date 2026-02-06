@@ -5,7 +5,6 @@ import { getAsset3DRepository } from "@/features/viewer3d/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

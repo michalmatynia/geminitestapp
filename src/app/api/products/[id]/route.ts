@@ -4,12 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import { z } from "zod";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { ErrorSystem } from "@/features/observability/server";
 import { validateProductUpdateMiddleware } from "@/features/products/validations/middleware";
 
 /**
@@ -17,29 +15,21 @@ import { validateProductUpdateMiddleware } from "@/features/products/validations
  * Fetches a single product by its ID.
  */
 async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    const id = params.id;
-    if (!id) {
-      throw badRequestError("Product id is required");
-    }
-
-    const product = await productService.getProductById(id);
-    if (!product) {
-      throw notFoundError("Product not found", { productId: id });
-    }
-
-    return NextResponse.json(product);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.[id].GET",
-      fallbackMessage: "Failed to fetch product",
-    });
+  const id = params.id;
+  if (!id) {
+    throw badRequestError("Product id is required");
   }
+
+  const product = await productService.getProductById(id);
+  if (!product) {
+    throw notFoundError("Product not found", { productId: id });
+  }
+
+  return NextResponse.json(product);
 }
 
 /**
@@ -51,39 +41,31 @@ async function PUT_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const id = params.id;
+  if (!id) {
+    throw badRequestError("Product id is required");
+  }
+  let formData: FormData;
   try {
-    const id = params.id;
-    if (!id) {
-      throw badRequestError("Product id is required");
-    }
-    let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch (error) {
-      throw badRequestError("Invalid form data payload", {
-        productId: id,
-        error,
-      });
-    }
-
-    // Validate the form data
-    const validation = await validateProductUpdateMiddleware(formData);
-    if (!validation.success) {
-      return validation.response;
-    }
-
-    const product = await productService.updateProduct(id, formData);
-    if (!product) {
-      throw notFoundError("Product not found", { productId: id });
-    }
-    return NextResponse.json(product);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.[id].PUT",
-      fallbackMessage: "Failed to update product",
+    formData = await req.formData();
+  } catch (error) {
+    throw badRequestError("Invalid form data payload", {
+      productId: id,
+      error,
     });
   }
+
+  // Validate the form data
+  const validation = await validateProductUpdateMiddleware(formData);
+  if (!validation.success) {
+    return validation.response;
+  }
+
+  const product = await productService.updateProduct(id, formData);
+  if (!product) {
+    throw notFoundError("Product not found", { productId: id });
+  }
+  return NextResponse.json(product);
 }
 
 const patchProductSchema = z.object({
@@ -100,38 +82,30 @@ async function PATCH_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    const id = params.id;
-    if (!id) {
-      throw badRequestError("Product id is required");
-    }
-
-    const parsed = await parseJsonBody(req, patchProductSchema, {
-      logPrefix: "products.PATCH",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-
-    const updateData: { price?: number; stock?: number } = {};
-    if (data.price !== undefined) updateData.price = data.price;
-    if (data.stock !== undefined) updateData.stock = data.stock;
-
-    const productRepository = await getProductRepository();
-    const product = await productRepository.updateProduct(id, updateData);
-    if (!product) {
-      throw notFoundError("Product not found", { productId: id });
-    }
-
-    return NextResponse.json(product);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.[id].PATCH",
-      fallbackMessage: "Failed to update product",
-    });
+  const id = params.id;
+  if (!id) {
+    throw badRequestError("Product id is required");
   }
+
+  const parsed = await parseJsonBody(req, patchProductSchema, {
+    logPrefix: "products.PATCH",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+
+  const updateData: { price?: number; stock?: number } = {};
+  if (data.price !== undefined) updateData.price = data.price;
+  if (data.stock !== undefined) updateData.stock = data.stock;
+
+  const productRepository = await getProductRepository();
+  const product = await productRepository.updateProduct(id, updateData);
+  if (!product) {
+    throw notFoundError("Product not found", { productId: id });
+  }
+
+  return NextResponse.json(product);
 }
 
 /**
@@ -139,27 +113,19 @@ async function PATCH_handler(
  * Deletes a product.
  */
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    const id = params.id;
-    if (!id) {
-      throw badRequestError("Product id is required");
-    }
-    const product = await productService.deleteProduct(id);
-    if (!product) {
-      throw notFoundError("Product not found", { productId: id });
-    }
-    return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.[id].DELETE",
-      fallbackMessage: "Failed to delete product",
-    });
+  const id = params.id;
+  if (!id) {
+    throw badRequestError("Product id is required");
   }
+  const product = await productService.deleteProduct(id);
+  if (!product) {
+    throw notFoundError("Product not found", { productId: id });
+  }
+  return new Response(null, { status: 204 });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {

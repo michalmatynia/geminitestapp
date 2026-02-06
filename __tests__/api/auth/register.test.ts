@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 
+import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 import { POST } from '@/app/api/auth/register/route';
 
 // Mock the api-handler module

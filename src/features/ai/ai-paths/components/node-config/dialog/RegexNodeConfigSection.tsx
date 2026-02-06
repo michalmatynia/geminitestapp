@@ -147,7 +147,7 @@ const parseRegexCandidate = (raw: string): RegexCandidate | null => {
     const groupByLine = trimmed.match(/(?:^|\n)\s*groupBy\s*[:=]\s*(.+)\s*$/im);
     const extracted = extractRegexLiteral(patternValue);
     return {
-      pattern: extracted ? extracted.pattern : patternValue.replace(/^\"|\"$/g, '').replace(/^'|'$/g, ''),
+      pattern: extracted ? extracted.pattern : patternValue.replace(/^"|"$/g, '').replace(/^'|'$/g, ''),
       flags: normalizeRegexFlags(flagsLine?.[1] ?? (extracted?.flags ?? '')),
       ...(groupByLine?.[1] ? { groupBy: groupByLine[1].trim() } : {}),
     };

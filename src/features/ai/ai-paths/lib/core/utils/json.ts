@@ -72,7 +72,7 @@ export const normalizeMappingPath = (path: string, root?: unknown): string => {
 
 export const parsePathTokens = (path: string): Array<string | number> => {
   const tokens: Array<string | number> = [];
-  const regex = /([^\[.\]]+)|\[(\d+)\]/g;
+  const regex = /([^[.\]]+)|\[(\d+)\]/g;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(path))) {
     if (match[1] !== undefined) {

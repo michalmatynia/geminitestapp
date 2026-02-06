@@ -1,28 +1,13 @@
 'use client';
 
-import {
-  useEffect,
-  useState,
-} from 'react';
-
-
+import { useEffect, useState } from 'react';
 
 import { InternationalizationSettings } from '@/features/internationalization';
-import {
-  useDeleteCurrencyMutation,
-  useDeleteCountryMutation,
-  useDeleteLanguageMutation
-} from '@/features/internationalization/hooks/useInternationalizationMutations';
-import {
-  useCurrencies,
-  useCountries,
-  useLanguages,
-} from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
+import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import { logClientError } from '@/features/observability';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
-
-// New Modals
 import { CatalogModal } from '@/features/products/components/settings/modals/CatalogModal';
 import { CountryModal } from '@/features/products/components/settings/modals/CountryModal';
 import { CurrencyModal } from '@/features/products/components/settings/modals/CurrencyModal';
@@ -30,21 +15,10 @@ import { LanguageModal } from '@/features/products/components/settings/modals/La
 import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
-import { 
-  usePriceGroups, 
-  useCatalogs, 
-  useCategories, 
-  useTags,
-  useUpdatePriceGroupMutation,
-  useDeletePriceGroupMutation,
-  useDeleteCatalogMutation
-} from '@/features/products/hooks/useProductSettingsQueries';
-import {
-  PriceGroup,
-  Catalog,
-} from '@/features/products/types';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
-import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
+import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import { Catalog, PriceGroup } from '@/features/products/types';
+import type { CountryOption, CurrencyOption, Language } from '@/shared/types/internationalization';
+import { Button, SectionHeader, SectionPanel, useToast } from '@/shared/ui';
 
 import {
   settingSections,

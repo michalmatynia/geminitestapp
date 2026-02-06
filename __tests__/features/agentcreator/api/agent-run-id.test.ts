@@ -1,35 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
-    // If ctx is passed, it might be { params: Promise<{...}> } or just { params: {...} }
-    // The handler expects (req, ctx, resolvedParams)
-    const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' 
-      ? ctx.params 
-      : Promise.resolve(ctx?.params ?? {});
-    return handler(req, ctx, resolvedParams);
-  },
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    chatbotAgentRun: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-  },
-}));
-
-vi.mock('@/features/jobs/server', () => ({
-  startAgentQueue: vi.fn(),
-}));
-
-vi.mock('@/features/ai/agent-runtime/server', () => ({
-  logAgentAudit: vi.fn().mockResolvedValue(undefined),
-}));
-
 import { NextRequest } from 'next/server';
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/[runId]/route';

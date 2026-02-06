@@ -1,44 +1,37 @@
 'use client';
 
-import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
+import type { Integration } from '@/features/integrations/types/integrations-ui';
+import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
 
-
-
-const integrations = [
+const AVAILABLE_INTEGRATIONS = [
   {
-    name: 'Tradera',
-    slug: 'tradera',
-    type: 'marketplace' as const,
-    method: 'browser' as const,
-    description:
-      'Sync and list products on Tradera via browser automation (Playwright).',
+    name: 'Base.com',
+    slug: 'baselinker',
+    description: 'Integrate with Base.com for marketplace management and inventory sync.',
+    type: 'platform',
+    method: 'api',
   },
   {
     name: 'Allegro',
     slug: 'allegro',
-    type: 'marketplace' as const,
-    method: 'api' as const,
-    description:
-      'List and sync products on Allegro using the official OAuth API.',
+    description: 'Direct integration with Allegro marketplace via OAuth2.',
+    type: 'marketplace',
+    method: 'api',
   },
   {
-    name: 'Baselinker',
-    slug: 'baselinker',
-    type: 'platform' as const,
-    method: 'api' as const,
-    description:
-      'Import products and sync inventory with Baselinker warehouse management.',
+    name: 'Tradera',
+    slug: 'tradera',
+    description: 'Direct integration with Tradera marketplace.',
+    type: 'marketplace',
+    method: 'api',
   },
-];
-
-import type { Integration } from '@/features/integrations/types/integrations-ui';
+] as const;
 
 export default function AddIntegrationPage(): React.JSX.Element {
   const router = useRouter();
@@ -55,7 +48,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
     toast(message, { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
-  const handleAdd = async (integration: (typeof integrations)[number]): Promise<void> => {
+  const handleAdd = async (integration: (typeof AVAILABLE_INTEGRATIONS)[number]): Promise<void> => {
     try {
       await createIntegrationMutation.mutateAsync({
         name: integration.name,
@@ -92,7 +85,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
         />
 
         <div className="grid gap-6 md:grid-cols-2">
-          {integrations.map((integration: (typeof integrations)[number]) => (
+          {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
             <div
               key={integration.slug}
               className="rounded-xl border bg-card p-5"

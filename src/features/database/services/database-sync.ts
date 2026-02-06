@@ -96,41 +96,7 @@ interface MongoAuthSecurityProfileDoc {
 
 interface MongoUserPreferencesDoc {
   _id?: ObjectId;
-  userId?: string;
-  productListNameLocale?: string | null;
-  productListCatalogFilter?: string | null;
-  productListCurrencyCode?: string | null;
-  productListPageSize?: number | null;
-  productListThumbnailSource?: string | null;
-  aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[];
-  aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: unknown;
-  aiPathsPathConfigs?: unknown;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-}
-
-interface MongoUserPreferencesDoc {
-  _id?: ObjectId;
   id?: string;
-  userId?: string;
-  productListNameLocale?: string | null;
-  productListCatalogFilter?: string | null;
-  productListCurrencyCode?: string | null;
-  productListPageSize?: number | null;
-  productListThumbnailSource?: string | null;
-  aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[];
-  aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: unknown;
-  aiPathsPathConfigs?: unknown;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-}
-
-interface MongoUserPreferencesDoc {
-  _id?: ObjectId;
   userId?: string;
   productListNameLocale?: string | null;
   productListCatalogFilter?: string | null;

@@ -3,14 +3,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type {
-  AiNode,
-  ClusterPreset,
-  NodeDefinition
-} from '@/features/ai/ai-paths/lib';
-import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
-import { Button, Input, Label, UnifiedSelect, SharedModal } from '@/shared/ui';
-
 import { CanvasBoardMigrated } from '../examples/CanvasBoardMigrated';
 import { CanvasSidebarWrapper } from '../examples/CanvasSidebarWrapper';
 import { ClusterPresetsPanelMigrated } from '../examples/ClusterPresetsPanelMigrated';
@@ -21,8 +13,18 @@ import { GraphModelDebugPanel } from '../graph-model-debug-panel';
 import { PresetsDialogWithContext } from '../presets-dialog';
 import { RunDetailDialogWithContext } from '../run-detail-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
+import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
+import { triggers } from '@/features/ai/ai-paths/lib';
+import type { AiNode, ClusterPreset, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
+import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
 
-
+import {
+  DOCS_OVERVIEW_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
+} from './docs-snippets';
 import type { AiPathsSettingsState } from './useAiPathsSettingsState';
 
 type AiPathsSettingsViewProps = {
@@ -38,49 +40,38 @@ export function AiPathsSettingsView({
   onTabChange,
   state,
 }: AiPathsSettingsViewProps): React.JSX.Element {
+  // Domain: Persistence — read from context
+  const { loading, saving, autoSaveStatus, autoSaveAt } = usePersistenceState();
+  const { incrementLoadNonce } = usePersistenceActions();
+
+  // Domain: Runtime — read from context
+  const { runtimeState, lastRunAt, lastError } = useRuntimeState();
+  const { setLastError } = useRuntimeActions();
+
+  // Domain: Graph — read from context (synced state only)
+  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, paths, pathConfigs } = useGraphState();
+
+  // Domain: Selection — read from context
+  const { nodeConfigDirty } = useSelectionState();
+
+  // Utility — imported directly
+  const { toast } = useToast();
+
   const {
-    loading,
-    docsOverviewSnippet,
-    docsWiringSnippet,
-    docsDescriptionSnippet,
-    docsJobsSnippet,
-    handleCopyDocsWiring,
-    handleCopyDocsDescription,
-    handleCopyDocsJobs,
-    autoSaveLabel,
-    autoSaveClasses,
-    saving,
-    nodeConfigDirty,
     handleCreatePath,
     handleSave,
     handleReset,
     handleDeletePath,
-    isPathLocked,
-    isPathActive,
     handleTogglePathLock,
     handleTogglePathActive,
-    activePathId,
-    activeTrigger,
-    executionMode,
-    flowIntensity,
     handleFlowIntensityChange,
     handleExecutionModeChange,
-    triggers,
-    lastError,
-    setLastError,
     persistLastError,
-    setLoadNonce,
-    lastRunAt,
-    pathName,
     setPathName,
     updateActivePathMeta,
-    paths,
-    pathConfigs,
-    pathFlagsById,
     handleSwitchPath,
     savePathIndex,
     setNodes,
-    runtimeState,
     palette,
     handleDragStart,
     handleFireTrigger,
@@ -129,8 +120,39 @@ export function AiPathsSettingsView({
     saveDbNodePresets,
     handleImportPresets,
     reportAiPathsError,
-    toast,
   } = state;
+
+  // Derived from Persistence context
+  const autoSaveLabel = loading
+    ? 'Loading AI Paths...'
+    : saving
+      ? 'Saving...'
+      : autoSaveStatus === 'saved'
+        ? `Saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ''}`
+        : autoSaveStatus === 'error'
+          ? 'Save failed'
+          : 'Manual save only';
+  const autoSaveClasses =
+    autoSaveStatus === 'saved'
+      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+      : autoSaveStatus === 'error'
+        ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+        : autoSaveStatus === 'saving'
+          ? 'border-sky-500/40 bg-sky-500/10 text-sky-200'
+          : 'border bg-card/60 text-gray-300';
+
+  // Derived from Graph context
+  const pathFlagsById = useMemo((): Record<string, { isLocked: boolean; isActive: boolean }> => {
+    const next: Record<string, { isLocked: boolean; isActive: boolean }> = {};
+    paths.forEach((meta: PathMeta) => {
+      const config = pathConfigs[meta.id];
+      next[meta.id] = {
+        isLocked: config?.isLocked ?? false,
+        isActive: config?.isActive ?? true,
+      };
+    });
+    return next;
+  }, [pathConfigs, paths]);
 
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
@@ -302,7 +324,7 @@ export function AiPathsSettingsView({
                           onClick={() => {
                             setLastError(null);
                             void persistLastError(null);
-                            setLoadNonce((prev: number) => prev + 1);
+                            incrementLoadNonce();
                           }}
                         >
                             Retry
@@ -533,13 +555,28 @@ export function AiPathsSettingsView({
 
       {activeTab === 'docs' && (
         <DocsTabPanel
-          docsOverviewSnippet={docsOverviewSnippet}
-          docsWiringSnippet={docsWiringSnippet}
-          docsDescriptionSnippet={docsDescriptionSnippet}
-          docsJobsSnippet={docsJobsSnippet}
-          onCopyDocsWiring={() => void handleCopyDocsWiring()}
-          onCopyDocsDescription={() => void handleCopyDocsDescription()}
-          onCopyDocsJobs={() => void handleCopyDocsJobs()}
+          docsOverviewSnippet={DOCS_OVERVIEW_SNIPPET}
+          docsWiringSnippet={DOCS_WIRING_SNIPPET}
+          docsDescriptionSnippet={DOCS_DESCRIPTION_SNIPPET}
+          docsJobsSnippet={DOCS_JOBS_SNIPPET}
+          onCopyDocsWiring={() => {
+            void navigator.clipboard.writeText(DOCS_WIRING_SNIPPET).then(
+              () => toast('Wiring copied to clipboard.', { variant: 'success' }),
+              (err) => { reportAiPathsError(err, { action: 'copyDocsWiring' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
+            );
+          }}
+          onCopyDocsDescription={() => {
+            void navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET).then(
+              () => toast('AI Description wiring copied.', { variant: 'success' }),
+              (err) => { reportAiPathsError(err, { action: 'copyDocsDescription' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
+            );
+          }}
+          onCopyDocsJobs={() => {
+            void navigator.clipboard.writeText(DOCS_JOBS_SNIPPET).then(
+              () => toast('AI job wiring copied.', { variant: 'success' }),
+              (err) => { reportAiPathsError(err, { action: 'copyDocsJobs' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
+            );
+          }}
         />
       )}
 

@@ -41,13 +41,14 @@ export function useQueryLifecycle(): {
         existing.errorCount++;
         existing.priority = Math.max(existing.priority - 0.5, 0.1);
         break;
-      case 'success':
+      case 'success': {
         existing.priority = Math.min(existing.priority + 0.2, 10);
         const query = queryClient.getQueryCache().find({ queryKey: queryKey as any });
         if (query?.state.data) {
           existing.dataSize = JSON.stringify(query.state.data).length;
         }
         break;
+      }
     }
 
     queryMetadata.current.set(key, existing);

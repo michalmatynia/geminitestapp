@@ -355,7 +355,7 @@ export function NoteForm({
     if (fontValue && fontValue !== 'inherit') {
       styleParts.push(`font-family: ${fontValue}`);
     }
-    const styleAttribute: string = styleParts.length > 0 ? ` style=\" ${styleParts.join('; ')}\"` : '';
+    const styleAttribute: string = styleParts.length > 0 ? ` style=" ${styleParts.join('; ')}"` : '';
     const openingTag: string = `<span${styleAttribute}>`;
     const closingTag: string = '</span>';
     const wrapped: string = `${openingTag}${selected}${closingTag}`;

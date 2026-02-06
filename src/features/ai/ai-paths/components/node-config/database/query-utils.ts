@@ -251,7 +251,7 @@ export const buildMongoQueryValidation = (value: string): QueryValidationResult 
     if (/\bundefined\b/.test(raw)) {
       hints.push('Replace undefined with null or remove the field.');
     }
-    if (/\,\s*[}\]]/.test(raw)) {
+    if (/,\s*[}\]]/.test(raw)) {
       hints.push('Remove trailing commas.');
     }
     if (hints.length === 0) {
@@ -306,7 +306,7 @@ export const buildJsonQueryValidation = (value: string): QueryValidationResult =
     if (raw.includes('\'')) {
       hints.push('Use double quotes for keys and string values.');
     }
-    if (/\,\s*[}\]]/.test(raw)) {
+    if (/,\s*[}\]]/.test(raw)) {
       hints.push('Remove trailing commas.');
     }
     if (hints.length === 0) {

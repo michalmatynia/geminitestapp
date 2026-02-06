@@ -24,12 +24,12 @@ export {
 
 export { SECTION_DEFINITIONS } from './registry/section-definitions';
 
-import type { SectionDefinition, BlockDefinition, SettingsField, PageZone } from '../../types/page-builder';
-
 // Local imports for use in the helpers below
 import { BLOCK_DEFINITIONS } from './registry/block-definitions';
 import { COLUMN_ALLOWED_BLOCK_TYPES, ROW_ALLOWED_BLOCK_TYPES } from './registry/block-definitions';
 import { SECTION_DEFINITIONS } from './registry/section-definitions';
+
+import type { SectionDefinition, BlockDefinition, SettingsField, PageZone } from '../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Helpers

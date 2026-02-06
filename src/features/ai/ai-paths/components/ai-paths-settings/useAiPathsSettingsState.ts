@@ -79,6 +79,8 @@ export interface UseAiPathsSettingsStateReturn {
   handleCopyDocsJobs: () => void;
   autoSaveLabel: string;
   autoSaveClasses: string;
+  autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  autoSaveAt: string | null;
   saving: boolean;
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
@@ -1698,6 +1700,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleCopyDocsJobs,
     autoSaveLabel,
     autoSaveClasses,
+    autoSaveStatus,
+    autoSaveAt: autoSaveAt ?? null,
     saving,
     handleCreatePath,
     handleCreateAiDescriptionPath,

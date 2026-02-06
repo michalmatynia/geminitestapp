@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
-
 import { GET, POST } from '@/app/api/notes/notebooks/route';
 
 // Mock the api-handler module

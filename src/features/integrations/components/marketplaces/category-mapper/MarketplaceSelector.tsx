@@ -1,19 +1,18 @@
 'use client';
 
-import { Button } from '@/shared/ui';
-
 import { Store } from 'lucide-react';
+import Link from 'next/link';
+
+import { Button } from '@/shared/ui';
 
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/types';
 
-type MarketplaceSelectorProps = {
+export interface MarketplaceSelectorProps {
   integrations: IntegrationWithConnections[];
   loading: boolean;
   selectedConnectionId: string | null;
   onSelectConnection: (connectionId: string) => void;
-};
-
-import Link from 'next/link';
+}
 
 export function MarketplaceSelector({
   integrations,

@@ -28,7 +28,7 @@
 
 import { useEffect } from 'react';
 
-import type { AiNode, Edge, RuntimeState, ClusterPreset } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, RuntimeState, ClusterPreset, PathMeta, PathConfig, PathExecutionMode, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
 
 import { useCanvasActions } from '../CanvasContext';
 import { useGraphActions } from '../GraphContext';
@@ -165,6 +165,11 @@ export interface LegacySyncGraphProps {
   pathName?: string | undefined;
   isPathLocked?: boolean | undefined;
   isPathActive?: boolean | undefined;
+  activeTrigger?: string | undefined;
+  executionMode?: PathExecutionMode | undefined;
+  flowIntensity?: PathFlowIntensity | undefined;
+  paths?: PathMeta[] | undefined;
+  pathConfigs?: Record<string, PathConfig> | undefined;
 }
 
 /**
@@ -177,6 +182,11 @@ export function useLegacySyncGraph({
   pathName,
   isPathLocked,
   isPathActive,
+  activeTrigger,
+  executionMode,
+  flowIntensity,
+  paths,
+  pathConfigs,
 }: LegacySyncGraphProps): void {
   const actions = useGraphActions();
 
@@ -211,6 +221,36 @@ export function useLegacySyncGraph({
       actions.setIsPathActive(isPathActive);
     }
   }, [isPathActive, actions]);
+
+  useEffect(() => {
+    if (activeTrigger !== undefined) {
+      actions.setActiveTrigger(activeTrigger);
+    }
+  }, [activeTrigger, actions]);
+
+  useEffect(() => {
+    if (executionMode !== undefined) {
+      actions.setExecutionMode(executionMode);
+    }
+  }, [executionMode, actions]);
+
+  useEffect(() => {
+    if (flowIntensity !== undefined) {
+      actions.setFlowIntensity(flowIntensity);
+    }
+  }, [flowIntensity, actions]);
+
+  useEffect(() => {
+    if (paths !== undefined) {
+      actions.setPaths(paths);
+    }
+  }, [paths, actions]);
+
+  useEffect(() => {
+    if (pathConfigs !== undefined) {
+      actions.setPathConfigs(pathConfigs);
+    }
+  }, [pathConfigs, actions]);
 }
 
 // ---------------------------------------------------------------------------
@@ -257,6 +297,8 @@ export function useLegacySyncRuntime({
 export interface LegacySyncPersistenceProps {
   loading: boolean;
   saving?: boolean | undefined;
+  autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error' | undefined;
+  autoSaveAt?: string | null | undefined;
 }
 
 /**
@@ -265,6 +307,8 @@ export interface LegacySyncPersistenceProps {
 export function useLegacySyncPersistence({
   loading,
   saving,
+  autoSaveStatus,
+  autoSaveAt,
 }: LegacySyncPersistenceProps): void {
   const actions = usePersistenceActions();
 
@@ -277,6 +321,18 @@ export function useLegacySyncPersistence({
       actions.setSaving(saving);
     }
   }, [saving, actions]);
+
+  useEffect(() => {
+    if (autoSaveStatus !== undefined) {
+      actions.setAutoSaveStatus(autoSaveStatus);
+    }
+  }, [autoSaveStatus, actions]);
+
+  useEffect(() => {
+    if (autoSaveAt !== undefined) {
+      actions.setAutoSaveAt(autoSaveAt);
+    }
+  }, [autoSaveAt, actions]);
 }
 
 // ---------------------------------------------------------------------------
@@ -401,6 +457,11 @@ export interface LegacySyncAllProps {
   pathName?: string | undefined;
   isPathLocked?: boolean | undefined;
   isPathActive?: boolean | undefined;
+  activeTrigger?: string | undefined;
+  executionMode?: PathExecutionMode | undefined;
+  flowIntensity?: PathFlowIntensity | undefined;
+  paths?: PathMeta[] | undefined;
+  pathConfigs?: Record<string, PathConfig> | undefined;
   // Runtime
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
@@ -408,6 +469,8 @@ export interface LegacySyncAllProps {
   // Persistence
   loading: boolean;
   saving?: boolean | undefined;
+  autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error' | undefined;
+  autoSaveAt?: string | null | undefined;
   // Presets
   clusterPresets?: ClusterPreset[] | undefined;
   presetDraft?: ClusterPresetDraft | undefined;
@@ -449,6 +512,11 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     pathName: props.pathName,
     isPathLocked: props.isPathLocked,
     isPathActive: props.isPathActive,
+    activeTrigger: props.activeTrigger,
+    executionMode: props.executionMode,
+    flowIntensity: props.flowIntensity,
+    paths: props.paths,
+    pathConfigs: props.pathConfigs,
   });
 
   useLegacySyncRuntime({
@@ -460,6 +528,8 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
   useLegacySyncPersistence({
     loading: props.loading,
     saving: props.saving,
+    autoSaveStatus: props.autoSaveStatus,
+    autoSaveAt: props.autoSaveAt,
   });
 
   useLegacySyncPresets({

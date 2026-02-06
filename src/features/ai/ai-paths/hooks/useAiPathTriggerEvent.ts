@@ -317,7 +317,7 @@ export function useAiPathTriggerEvent(): {
 
       if (triggerCandidates.length === 0) {
         toast(
-          `No AI Path found for trigger \"${args.triggerLabel ?? triggerEventId}\". Add a Trigger node with event \"${triggerEventId}\".`,
+          `No AI Path found for trigger "${args.triggerLabel ?? triggerEventId}". Add a Trigger node with event "${triggerEventId}".`,
           { variant: 'error' }
         );
         return;

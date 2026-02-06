@@ -51,6 +51,12 @@ module.exports = tseslint.config(
       'semi': ['error', 'always'],
       'no-unused-vars': 'off', // Prefer @typescript-eslint/no-unused-vars
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-redeclare': 'off',
+      '@typescript-eslint/no-redeclare': ['error'],
+      'no-dupe-class-members': 'off',
+      '@typescript-eslint/no-dupe-class-members': ['error'],
+      'no-loss-of-precision': 'off',
+      '@typescript-eslint/no-loss-of-precision': ['error'],
       'no-undef': 'off', // Handled by TypeScript and specific globals
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unsafe-assignment': 'warn',

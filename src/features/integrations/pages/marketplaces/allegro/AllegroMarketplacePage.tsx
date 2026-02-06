@@ -1,42 +1,20 @@
-import { SectionHeader, SectionPanel } from '@/shared/ui';
-
 import Link from 'next/link';
+import React from 'react';
 
+import { SectionHeader, SectionPanel } from '@/shared/ui';
 
 const sections = [
   {
-    name: 'Parameter mapping',
-    description: 'Map product fields to Allegro parameters.',
-    href: '/admin/integrations/marketplaces/allegro/parameter-mapping',
+    name: 'Categories Mapping',
+    description: 'Map Allegro categories to local categories.',
+    href: '/admin/integrations/marketplaces/allegro/categories',
   },
   {
-    name: 'Listing management',
-    description: 'Monitor and manage active listings.',
-    href: '/admin/integrations/marketplaces/allegro/listing-management',
-  },
-  {
-    name: 'Shipping price management',
-    description: 'Set shipping price rules and profiles.',
-    href: '/admin/integrations/marketplaces/allegro/shipping-price-management',
-  },
-  {
-    name: 'Listing templates',
-    description: 'Create reusable listing templates.',
-    href: '/admin/integrations/marketplaces/allegro/listing-templates',
-  },
-  {
-    name: 'Connections',
-    description: 'Configure Allegro accounts and tokens.',
-    href: '/admin/integrations/marketplaces/allegro/connections',
-  },
-  {
-    name: 'Messages',
-    description: 'View marketplace communication and inquiries.',
-    href: '/admin/integrations/marketplaces/allegro/messages',
+    name: 'Parameters Mapping',
+    description: 'Map Allegro parameters to product fields.',
+    href: '/admin/integrations/marketplaces/allegro/parameters',
   },
 ];
-
-import React from 'react';
 
 export default function AllegroMarketplacePage(): React.JSX.Element {
   return (

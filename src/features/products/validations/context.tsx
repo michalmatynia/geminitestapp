@@ -35,9 +35,10 @@ function validationReducer(state: ValidationContextState, action: ValidationActi
           [action.field]: { isValid: action.isValid, message: action.message }
         }
       };
-    case 'CLEAR_FIELD_VALIDATION':
+    case 'CLEAR_FIELD_VALIDATION': {
       const { [action.field]: _, ...rest } = state.fieldValidations;
       return { ...state, fieldValidations: rest };
+    }
     case 'SET_VALIDATING':
       return { ...state, isValidating: action.isValidating };
     case 'RESET':

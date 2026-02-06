@@ -33,7 +33,7 @@ export const autoformatMarkdown = (text: string): string => {
 
   // Convert bare URLs to markdown links (but not if already in markdown format)
   // Match URLs that are not already in [text](url) or <url> format
-  const urlRegex = /(?<![(\[])(https?:\/\/[^\s<>\\[\]]+)(?![)\]])/g;
+  const urlRegex = /(?<![([])(https?:\/\/[^\s<>\\\[\]]+)(?![)\]])/g;
   result = result.replace(urlRegex, (url: string) => {
     // Try to extract a readable title from the URL
     try {
@@ -54,7 +54,7 @@ export const autoformatMarkdown = (text: string): string => {
   });
 
   // Normalize bullet list markers (convert * and + to -)
-  result = result.replace(/^(\s*)[\*+]\s+/gm, '$1- ');
+  result = result.replace(/^(\s*)[*+]\s+/gm, '$1- ');
 
   // Ensure proper spacing after list markers
   result = result.replace(/^(\s*)-(?!\s)/gm, '$1- ');

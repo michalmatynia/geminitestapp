@@ -59,6 +59,11 @@ function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPaths
     pathName: state.pathName,
     isPathLocked: state.isPathLocked,
     isPathActive: state.isPathActive,
+    activeTrigger: state.activeTrigger,
+    executionMode: state.executionMode,
+    flowIntensity: state.flowIntensity,
+    paths: state.paths,
+    pathConfigs: state.pathConfigs,
     // Runtime
     runtimeState: state.runtimeState,
     lastRunAt: state.lastRunAt,
@@ -66,6 +71,8 @@ function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPaths
     // Persistence
     loading: state.loading,
     saving: state.saving,
+    autoSaveStatus: state.autoSaveStatus,
+    autoSaveAt: state.autoSaveAt,
     // Presets
     clusterPresets: state.clusterPresets,
     presetDraft: state.presetDraft,

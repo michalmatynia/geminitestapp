@@ -3,18 +3,6 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { GET as listSlugs, POST as createSlug } from '@/app/api/cms/slugs/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-
-vi.mock('@/features/cms/services/cms-repository', () => ({
-  getCmsRepository: vi.fn(),
-}));
-
-vi.mock('@/features/cms/services/cms-domain', () => ({
-  resolveCmsDomainFromRequest: vi.fn().mockResolvedValue({ id: 'd1', domain: 'localhost' }),
-  getSlugsForDomain: vi.fn(),
-  ensureDomainSlug: vi.fn().mockResolvedValue(undefined),
-  getSlugForDomainById: vi.fn(),
-}));
-
 import { getSlugsForDomain, getSlugForDomainById } from '@/features/cms/services/cms-domain';
 
 describe('CMS Slugs API', () => {

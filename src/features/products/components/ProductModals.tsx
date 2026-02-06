@@ -1,24 +1,20 @@
 'use client';
-import { AppModal, Button } from '@/shared/ui';
 
 import dynamic from 'next/dynamic';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
-  ssr: false,
-  loading: () => <div>Loading file manager...</div>
-});
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
 import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import ProductForm from '@/features/products/components/ProductForm';
-import {
-  ProductFormProvider,
-  useProductFormContext,
-} from '@/features/products/context/ProductFormContext';
+import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
+import { AppModal, Button } from '@/shared/ui';
 
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+  ssr: false,
+});
 interface ProductModalsProps {
   isCreateOpen: boolean;
   initialSku: string;

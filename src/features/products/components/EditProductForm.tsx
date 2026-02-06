@@ -1,22 +1,16 @@
 'use client';
-import { Button } from '@/shared/ui';
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
 import ProductForm from '@/features/products/components/ProductForm';
+import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
+import type { ProductWithImages } from '@/features/products/types';
+import { Button } from '@/shared/ui';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
-  loading: () => <div>Loading file manager...</div>
 });
-
-import {
-  ProductFormProvider,
-  useProductFormContext,
-} from '@/features/products/context/ProductFormContext';
-import { ProductWithImages } from '@/features/products/types';
-
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
   return (
     <svg

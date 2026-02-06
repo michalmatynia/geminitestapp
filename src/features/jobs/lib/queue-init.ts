@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { isRedisAvailable } from './redis-connection';
-import { startAllWorkers } from './registry';
+import { isRedisAvailable } from '@/shared/lib/queue/redis-connection';
+import { startAllWorkers } from '@/shared/lib/queue/registry';
 
 let initialized = false;
 

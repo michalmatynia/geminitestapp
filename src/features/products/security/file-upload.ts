@@ -158,9 +158,10 @@ export class SecureFileUpload {
 
   private static sanitizeFileName(fileName: string): string {
     // Remove path traversal attempts
-    let sanitized = fileName.replace(/[\/\\:*?"<>|]/g, '');
+    let sanitized = fileName.replace(/[/\\:*?"<>|]/g, '');
     
     // Remove null bytes and control characters
+    // eslint-disable-next-line no-control-regex
     sanitized = sanitized.replace(/[\x00-\x1f\x80-\x9f]/g, '');
     
     // Limit length

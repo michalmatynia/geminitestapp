@@ -1082,7 +1082,7 @@ export function DatabaseNodeConfigSection({
     const target = dbQueryPresets.find((preset: DbQueryPreset) => preset.id === presetId);
     if (!target) return;
     const confirmed = window.confirm(
-      `Delete query preset \"${target.name}\"?`
+      `Delete query preset "${target.name}"?`
     );
     if (!confirmed) return;
     const previousPresets = dbQueryPresets;

@@ -448,7 +448,7 @@ const buildPresetQueryTemplate = (queryConfig: DbQueryConfig): string => {
     field = queryConfig.idType === 'objectId' ? '_id' : 'id';
     valuePlaceholder = '{{value}}';
   }
-  return `\n{\n  \"${field}\": \"${valuePlaceholder}\"\n}`.trim();
+  return `\n{\n  "${field}": "${valuePlaceholder}"\n}`.trim();
 };
 
 export {

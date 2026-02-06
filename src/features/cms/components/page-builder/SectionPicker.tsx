@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { AppModal, Button } from "@/shared/ui";
 import type { BlockInstance, PageZone, SectionDefinition } from "../../types/page-builder";
 import { getSectionTypesForZone } from "./section-registry";
@@ -10,6 +10,9 @@ import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from "./grid-templates";
+import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, cloneSectionTemplateSection, type SectionTemplateRecord } from "./section-template-store";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { serializeSetting } from "@/shared/utils/settings-json";
 
 interface SectionPickerProps {
   disabled?: boolean;
@@ -21,6 +24,7 @@ type TemplatePreview = {
   template: SectionTemplate;
   blockTypes: string[];
   sectionType: string;
+  templateRecordId?: string | undefined;
 };
 
 type TemplatePreviewGroup = {
@@ -33,6 +37,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
   const { dispatch } = usePageBuilder();
   const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
   const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement"]), []);
   const gridAllowed = useMemo(
@@ -47,20 +52,57 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     );
     return normalizeGridTemplates(stored);
   }, [gridTemplatesRaw]);
+  const sectionTemplatesRaw = settingsStore.get(SECTION_TEMPLATE_SETTINGS_KEY);
+  const savedSectionTemplates = useMemo<SectionTemplateRecord[]>(() => {
+    const stored = parseJsonSetting<unknown>(
+      sectionTemplatesRaw,
+      []
+    );
+    return normalizeSectionTemplates(stored);
+  }, [sectionTemplatesRaw]);
+  const handleDeleteSectionTemplate = useCallback(
+    (templateId: string): void => {
+      const filtered = savedSectionTemplates.filter((record: SectionTemplateRecord) => record.id !== templateId);
+      void updateSetting.mutateAsync({
+        key: SECTION_TEMPLATE_SETTINGS_KEY,
+        value: serializeSetting(filtered),
+      });
+    },
+    [savedSectionTemplates, updateSetting]
+  );
   const groupedTemplates = useMemo(() => {
     const base = getTemplatesByCategory(zone);
-    if (!gridAllowed || savedGridTemplates.length === 0) return base;
-    const savedTemplates: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
-      name: record.name,
-      description: record.description && record.description.length > 0 ? record.description : "Saved grid template",
-      category: "Saved grids",
-      create: () => cloneGridTemplateSection(record.section),
-    }));
+    const result: Record<string, SectionTemplate[]> = {};
+    // Add saved grid templates
+    if (gridAllowed && savedGridTemplates.length > 0) {
+      const savedGrids: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
+        name: record.name,
+        description: record.description && record.description.length > 0 ? record.description : "Saved grid template",
+        category: "Saved grids",
+        create: () => cloneGridTemplateSection(record.section),
+      }));
+      result["Saved grids"] = savedGrids;
+    }
+    // Add saved section templates grouped by category
+    if (savedSectionTemplates.length > 0) {
+      for (const record of savedSectionTemplates) {
+        const category = record.category || "Saved sections";
+        if (!result[category]) {
+          result[category] = [];
+        }
+        result[category]!.push({
+          name: record.name,
+          description: record.description && record.description.length > 0 ? record.description : `Saved ${record.sectionType} template`,
+          category,
+          create: () => cloneSectionTemplateSection(record.section),
+        });
+      }
+    }
     return {
-      "Saved grids": savedTemplates,
+      ...result,
       ...base,
     };
-  }, [zone, gridAllowed, savedGridTemplates]);
+  }, [zone, gridAllowed, savedGridTemplates, savedSectionTemplates]);
   const primitives = useMemo(
     () => sectionTypes.filter((def: SectionDefinition) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]
@@ -92,6 +134,13 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     [dispatch, zone]
   );
 
+  const sectionTemplateIdByName = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    for (const record of savedSectionTemplates) {
+      map.set(`${record.category}::${record.name}`, record.id);
+    }
+    return map;
+  }, [savedSectionTemplates]);
   const templatePreviewGroups = useMemo((): TemplatePreviewGroup[] => {
     if (!isOpen) return [];
     return Object.entries(groupedTemplates).map(([category, templates]: [string, SectionTemplate[]]) => ({
@@ -99,10 +148,11 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
       templates: templates.map((template: SectionTemplate) => {
         const section = template.create();
         const blockTypes = section.blocks?.map((block: BlockInstance) => block.type) ?? [];
-        return { template, blockTypes, sectionType: section.type };
+        const templateRecordId = sectionTemplateIdByName.get(`${category}::${template.name}`);
+        return { template, blockTypes, sectionType: section.type, templateRecordId };
       }),
     }));
-  }, [groupedTemplates, isOpen]);
+  }, [groupedTemplates, isOpen, sectionTemplateIdByName]);
 
   const renderPreview = (blockTypes: string[]): React.ReactNode => {
     const items = blockTypes.slice(0, 4);
@@ -262,22 +312,37 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
                     {group.category}
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    {group.templates.map(({ template, blockTypes, sectionType }: TemplatePreview) => (
-                      <button
-                        key={template.name}
-                        type="button"
-                        onClick={() => handleInsertTemplate(template)}
-                        className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-200">{template.name}</span>
-                          <span className="text-[10px] uppercase tracking-wide text-gray-500">
-                            {sectionType}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500">{template.description}</span>
-                        {renderPreview(blockTypes)}
-                      </button>
+                    {group.templates.map(({ template, blockTypes, sectionType, templateRecordId }: TemplatePreview) => (
+                      <div key={template.name} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => handleInsertTemplate(template)}
+                          className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-200">{template.name}</span>
+                            <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                              {sectionType}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">{template.description}</span>
+                          {renderPreview(blockTypes)}
+                        </button>
+                        {templateRecordId && (
+                          <button
+                            type="button"
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                              e.stopPropagation();
+                              handleDeleteSectionTemplate(templateRecordId);
+                            }}
+                            className="absolute right-1.5 top-1.5 rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400 transition"
+                            title="Delete saved template"
+                            aria-label="Delete saved template"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>

@@ -17,6 +17,7 @@ import { useSettingsStore } from "@/shared/providers/SettingsStoreProvider";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
+import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, type SectionTemplateRecord } from "./section-template-store";
 import { logClientError } from "@/features/observability";
 import {
   getEventEffectsConfig,
@@ -51,7 +52,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const [gridTemplateName, setGridTemplateName] = useState<string>("");
+  const [sectionTemplateName, setSectionTemplateName] = useState<string>("");
+  const [sectionTemplateCategory, setSectionTemplateCategory] = useState<string>("");
   const [cssAiAppend, setCssAiAppend] = useState<boolean>(true);
   const [cssAiAutoApply, setCssAiAutoApply] = useState<boolean>(false);
   const [cssAiLoading, setCssAiLoading] = useState<boolean>(false);
@@ -957,34 +959,67 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return normalizeGridTemplates(stored);
   }, [gridTemplatesRaw]);
 
-  const handleSaveGridTemplate = useCallback(async (): Promise<void> => {
-    if (!selectedSection || selectedSection.type !== "Grid") return;
-    const trimmed = gridTemplateName.trim();
-    const name = trimmed.length > 0 ? trimmed : `Grid template ${gridTemplates.length + 1}`;
+  const sectionTemplatesRaw = settingsStore.get(SECTION_TEMPLATE_SETTINGS_KEY);
+  const sectionTemplates = useMemo<SectionTemplateRecord[]>(() => {
+    const stored = parseJsonSetting<unknown>(
+      sectionTemplatesRaw,
+      []
+    );
+    return normalizeSectionTemplates(stored);
+  }, [sectionTemplatesRaw]);
+
+  const handleSaveSectionTemplate = useCallback(async (): Promise<void> => {
+    if (!selectedSection) return;
+    const trimmedName = sectionTemplateName.trim();
+    const name = trimmedName.length > 0 ? trimmedName : `${selectedSection.type} template ${sectionTemplates.length + 1}`;
+    const category = sectionTemplateCategory.trim().length > 0 ? sectionTemplateCategory.trim() : "Saved sections";
     const sectionClone: SectionInstance = structuredClone({
       ...selectedSection,
       zone: "template",
     });
-    const nextTemplate: GridTemplateRecord = {
-      id: `grid-${Date.now()}`,
+    const nextRecord: SectionTemplateRecord = {
+      id: `section-${Date.now()}`,
       name,
       description: "",
+      category,
+      sectionType: selectedSection.type,
       createdAt: new Date().toISOString(),
       section: sectionClone,
     };
-    const nextTemplates = [...gridTemplates, nextTemplate];
+    const nextTemplates = [...sectionTemplates, nextRecord];
     try {
-      await updateSetting.mutateAsync({
-        key: GRID_TEMPLATE_SETTINGS_KEY,
-        value: serializeSetting(nextTemplates),
-      });
-      setGridTemplateName("");
-      toast("Grid saved as template.", { variant: "success" });
+      const promises: Promise<unknown>[] = [
+        updateSetting.mutateAsync({
+          key: SECTION_TEMPLATE_SETTINGS_KEY,
+          value: serializeSetting(nextTemplates),
+        }),
+      ];
+      // For Grid sections, also save to grid templates for backward compat
+      if (selectedSection.type === "Grid") {
+        const gridRecord: GridTemplateRecord = {
+          id: `grid-${Date.now()}`,
+          name,
+          description: "",
+          createdAt: new Date().toISOString(),
+          section: sectionClone,
+        };
+        const nextGridTemplates = [...gridTemplates, gridRecord];
+        promises.push(
+          updateSetting.mutateAsync({
+            key: GRID_TEMPLATE_SETTINGS_KEY,
+            value: serializeSetting(nextGridTemplates),
+          })
+        );
+      }
+      await Promise.all(promises);
+      setSectionTemplateName("");
+      setSectionTemplateCategory("");
+      toast("Section saved as template.", { variant: "success" });
     } catch (error) {
-      logClientError(error, { context: { source: "ComponentSettingsPanel", action: "saveGridTemplate", templateName: gridTemplateName } });
-      toast("Failed to save grid template.", { variant: "error" });
+      logClientError(error, { context: { source: "ComponentSettingsPanel", action: "saveSectionTemplate", templateName: sectionTemplateName } });
+      toast("Failed to save section template.", { variant: "error" });
     }
-  }, [selectedSection, gridTemplateName, gridTemplates, updateSetting, toast]);
+  }, [selectedSection, sectionTemplateName, sectionTemplateCategory, sectionTemplates, gridTemplates, updateSetting, toast]);
 
   // ---------------------------------------------------------------------------
   // Determine what to show
@@ -1520,30 +1555,36 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   handleSectionSettingChangeWithGridColumns,
                 )}
 
-                {selectedSection.type === "Grid" && (
-                  <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Save grid as template</div>
-                    <p className="mt-1 text-[11px] text-gray-500">
-                      Saved grids appear under Templates when adding sections.
-                    </p>
-                    <div className="mt-2 flex gap-2">
+                <div className="rounded border border-border/40 bg-gray-900/40 p-3">
+                  <div className="text-xs font-semibold text-gray-200">Save section as template</div>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Saved sections appear under Templates when adding sections.
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex gap-2">
                       <Input
-                        value={gridTemplateName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGridTemplateName(e.target.value)}
+                        value={sectionTemplateName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSectionTemplateName(e.target.value)}
                         placeholder="Template name"
                         className="h-8 text-xs"
                       />
-                      <Button
-                        onClick={() => void handleSaveGridTemplate()}
-                        size="sm"
-                        className="h-8"
-                        disabled={updateSetting.isPending || !selectedSection}
-                      >
-                        Save
-                      </Button>
+                      <Input
+                        value={sectionTemplateCategory}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSectionTemplateCategory(e.target.value)}
+                        placeholder="Category"
+                        className="h-8 text-xs"
+                      />
                     </div>
+                    <Button
+                      onClick={() => void handleSaveSectionTemplate()}
+                      size="sm"
+                      className="h-8 w-full"
+                      disabled={updateSetting.isPending || !selectedSection}
+                    >
+                      Save as template
+                    </Button>
                   </div>
-                )}
+                </div>
 
                 <div className="border-t border-border/30 pt-4">
                   <Button

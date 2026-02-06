@@ -338,6 +338,10 @@ export function PreviewSection({
             >
               {section.blocks.length === 0 && section.type !== "Block" ? (
                 <p className="text-sm text-gray-400">Announcement bar</p>
+              ) : section.blocks.length === 0 && section.type === "Block" && showEditorChrome ? (
+                <div className="flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                  Empty block
+                </div>
               ) : (
                 section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem
@@ -640,7 +644,7 @@ export function PreviewSection({
                           style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                           className={`relative cms-node-${row.id} ${hasRowBackground ? "overflow-hidden" : ""} ${
                             isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
-                          }`}
+                          } ${showEditorChrome && !isRowSelected ? "border border-dashed border-gray-800/40" : ""}`}
                         >
                           {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
                           {/* Row background mode images */}
@@ -792,7 +796,9 @@ export function PreviewSection({
                                     style={{ ...columnStyles, ...columnStyle }}
                                     className={`relative h-full text-left transition cursor-pointer cms-node-${column.id} ${
                                       isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
-                                    } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""}`}
+                                    } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""} ${
+                                      showEditorChrome && !isColumnSelected && !isColumnHovered ? "border-x border-dashed border-gray-800/30" : ""
+                                    }`}
                                   >
                                     {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
                                     {/* Column background mode images */}
@@ -802,13 +808,20 @@ export function PreviewSection({
                                       </React.Fragment>
                                     ))}
                                     {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings, mediaStyles)}
-                                    {(column.blocks ?? []).length > 0 && ((): React.ReactNode => {
+                                    {(column.blocks ?? []).length > 0 ? ((): React.ReactNode => {
                                       // Filter out background mode images from regular rendering
                                       const contentBlocks = columnBlocks.filter((b: BlockInstance) => {
                                         if (b.type !== "ImageElement") return true;
                                         const bgTarget = (b.settings?.["backgroundTarget"] as string) || "none";
                                         return bgTarget === "none";
                                       });
+                                      if (contentBlocks.length === 0 && showEditorChrome) {
+                                        return (
+                                          <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                                            Column
+                                          </div>
+                                        );
+                                      }
                                       const isSingleBlock = contentBlocks.length === 1;
                                       const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
                                       const resolvedGapClass = shouldStretch ? "" : columnGapClass;
@@ -857,7 +870,11 @@ export function PreviewSection({
                                           ))}
                                         </div>
                                       );
-                                    })()}
+                                    })() : showEditorChrome ? (
+                                      <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                                        Column
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </InspectorHover>
                               );

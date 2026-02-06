@@ -132,10 +132,10 @@ export function PreviewCarouselBlock({
     if (!showEditorChrome) return null;
     return (
       <div
-        className="flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-600 rounded"
+        className="flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600"
         style={containerStyle}
       >
-        No carousel frames
+        Add frames to carousel
       </div>
     );
   }
@@ -374,8 +374,8 @@ export function PreviewSlideshowBlock({
     <div className={`relative w-full ${stretch ? "h-full" : ""}`}>
       {frames.length === 0 ? (
         showEditorChrome ? (
-          <div className="flex min-h-[120px] items-center justify-center text-sm text-gray-500">
-            Add blocks to create slideshow slides
+          <div className="flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+            Add frames to carousel
           </div>
         ) : null
       ) : (

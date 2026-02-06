@@ -233,6 +233,14 @@ export function getBlockTypographyStyles(settings: Record<string, unknown>): Rea
   const lineHeight = settings["lineHeight"] as number | undefined;
   const letterSpacing = settings["letterSpacing"] as number | undefined;
   const textColor = settings["textColor"] as string | undefined;
+  const textDecoration = settings["textDecoration"] as string | undefined;
+  const textTransform = settings["textTransform"] as string | undefined;
+  const textAlign = settings["textAlign"] as string | undefined;
+  const wordSpacing = settings["wordSpacing"] as number | undefined;
+  const textShadowX = settings["textShadowX"] as number | undefined;
+  const textShadowY = settings["textShadowY"] as number | undefined;
+  const textShadowBlur = settings["textShadowBlur"] as number | undefined;
+  const textShadowColor = settings["textShadowColor"] as string | undefined;
 
   if (fontFamily) styles.fontFamily = fontFamily;
   if (fontWeight) styles.fontWeight = fontWeight;
@@ -241,6 +249,14 @@ export function getBlockTypographyStyles(settings: Record<string, unknown>): Rea
   if (lineHeight && lineHeight > 0) styles.lineHeight = lineHeight;
   if (letterSpacing) styles.letterSpacing = `${letterSpacing}px`;
   if (textColor) styles.color = textColor;
+  if (textDecoration && textDecoration !== "none") styles.textDecoration = textDecoration;
+  if (textTransform && textTransform !== "none") styles.textTransform = textTransform as React.CSSProperties["textTransform"];
+  if (textAlign && textAlign !== "left") styles.textAlign = textAlign as React.CSSProperties["textAlign"];
+  if (wordSpacing && wordSpacing !== 0) styles.wordSpacing = `${wordSpacing}px`;
+  const hasShadow = textShadowX || textShadowY || textShadowBlur;
+  if (hasShadow) {
+    styles.textShadow = `${textShadowX ?? 0}px ${textShadowY ?? 0}px ${textShadowBlur ?? 0}px ${textShadowColor || "#000"}`;
+  }
 
   return styles;
 }

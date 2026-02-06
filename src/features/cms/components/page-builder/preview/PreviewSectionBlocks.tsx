@@ -322,6 +322,7 @@ export function PreviewBlockSectionBlock({
   const shouldStretchChildren = stretch && children.length === 1;
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings["customCss"], blockSelector);
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
 
   return (
     <div
@@ -329,6 +330,11 @@ export function PreviewBlockSectionBlock({
       className={`${stretch ? "h-full" : ""} cms-node-${block.id}`.trim()}
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
+      {children.length === 0 && showEditorChrome ? (
+        <div className="flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+          Empty block
+        </div>
+      ) : (
       <div
         className={`flex ${flexDirClass} ${wrapClass}`}
         style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
@@ -356,6 +362,7 @@ export function PreviewBlockSectionBlock({
           />
         ))}
       </div>
+      )}
     </div>
   );
 }

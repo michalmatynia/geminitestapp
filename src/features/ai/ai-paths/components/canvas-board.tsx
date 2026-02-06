@@ -22,6 +22,7 @@ import {
 import { formatPortLabel } from "../utils/ui-utils";
 
 export type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
+const DEFAULT_NODE_NOTE_COLOR = "#f5e7c3";
 type ConnectionTypeMismatch = {
   fromNode?: AiNode | null;
   toNode?: AiNode | null;
@@ -458,6 +459,21 @@ export function CanvasBoard({
     return result;
   }, [edges, getPortValue, nodes, runtimeState.outputs, triggerConnected]);
 
+  const signalEdgeIds = React.useMemo((): Set<string> => {
+    const result = new Set<string>();
+    edges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.to) return;
+      if (!edge.fromPort || !edge.toPort) return;
+      if (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to)) return;
+      const outputVal = getPortValue("output", edge.from, edge.fromPort);
+      const inputVal = getPortValue("input", edge.to, edge.toPort);
+      if (outputVal !== undefined || inputVal !== undefined) {
+        result.add(edge.id);
+      }
+    });
+    return result;
+  }, [edges, getPortValue, triggerConnected]);
+
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
     const outputHashes: Record<string, Record<string, string>> = {};
@@ -716,7 +732,10 @@ export function CanvasBoard({
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
-            const isFlowing = activeEdgeIds.has(edge.id) || blockingFlowEdgeIds.has(edge.id);
+            const isFlowing =
+              activeEdgeIds.has(edge.id) ||
+              blockingFlowEdgeIds.has(edge.id) ||
+              signalEdgeIds.has(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
             // Check if this is a schema connection (db_schema -> database)
@@ -879,6 +898,13 @@ export function CanvasBoard({
                 : iteratorStatus === "waiting_callback"
                   ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
                   : "border-border bg-card/60 text-gray-200";
+          const noteConfig = node.config?.notes;
+          const noteText = typeof noteConfig?.text === "string" ? noteConfig.text.trim() : "";
+          const noteColor =
+            typeof noteConfig?.color === "string" && noteConfig.color.trim()
+              ? noteConfig.color.trim()
+              : DEFAULT_NODE_NOTE_COLOR;
+          const showNote = Boolean(noteConfig?.showOnCanvas && noteText);
           const isScheduledTrigger =
             node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
           const isInputPulse = inputPulseNodes.has(node.id);
@@ -902,7 +928,7 @@ export function CanvasBoard({
               }}
             >
               <div
-                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 text-xs text-gray-200 shadow-lg backdrop-blur ${
+                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 pb-5 text-xs text-gray-200 shadow-lg backdrop-blur ${
                   style.border
                 } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
               >
@@ -928,6 +954,11 @@ export function CanvasBoard({
                     ) : null}
                   </div>
                 ) : null}
+                <div
+                  className="pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[9px] font-mono text-gray-400/80"
+                >
+                  {node.id}
+                </div>
                 {node.inputs.map((input: string, index: number) => (
                   <div
                     key={`input-${node.id}-${input}`}
@@ -1194,6 +1225,14 @@ export function CanvasBoard({
                   </div>
                 )}
               </div>
+              {showNote ? (
+                <div
+                  className="mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm"
+                  style={{ backgroundColor: noteColor }}
+                >
+                  <div className="whitespace-pre-wrap break-words">{noteText}</div>
+                </div>
+              ) : null}
             </div>
           );
         })}

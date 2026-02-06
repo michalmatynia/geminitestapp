@@ -356,7 +356,7 @@ const VIEWER_INPUT_PORTS = [
   "errors",
   "value",
 ];
-const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result"];
+const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result", "entityId"];
 const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
 const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
 const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -383,17 +383,7 @@ type TreeNode = {
   children: TreeNode[];
 };
 
-function SlotTree({
-  projectId,
-  slots,
-  folders,
-  selectedFolder,
-  selectedSlotId,
-  onSelectFolder,
-  onSelectSlot,
-  onMoveSlot,
-  onMoveFolder,
-}: {
+type ImageStudioSlotTreeContextValue = {
   projectId: string;
   slots: ImageStudioSlotRecord[];
   folders: string[];
@@ -403,7 +393,50 @@ function SlotTree({
   onSelectSlot: (slot: ImageStudioSlotRecord) => void;
   onMoveSlot: (slot: ImageStudioSlotRecord, targetFolder: string) => void;
   onMoveFolder: (folderPath: string, targetFolder: string) => void;
-}): React.JSX.Element {
+};
+
+const ImageStudioSlotTreeContext = createContext<ImageStudioSlotTreeContextValue | null>(null);
+
+function useImageStudioSlotTree(): ImageStudioSlotTreeContextValue {
+  const context = useContext(ImageStudioSlotTreeContext);
+  if (!context) {
+    throw new Error("useImageStudioSlotTree must be used within ImageStudioSlotTreeContext.Provider");
+  }
+  return context;
+}
+
+type ImageStudioParamsContextValue = {
+  paramSpecs: Record<string, ParamSpec> | null;
+  paramUiOverrides: Record<string, ParamUiControl>;
+  paramFlipMap: Record<string, boolean>;
+  issuesByPath: Record<string, ParamIssue[]>;
+  onParamChange: (path: string, value: unknown) => void;
+  onParamFlip: (path: string) => void;
+  onParamUiControlChange: (path: string, control: ParamUiControl) => void;
+};
+
+const ImageStudioParamsContext = createContext<ImageStudioParamsContextValue | null>(null);
+
+function useImageStudioParams(): ImageStudioParamsContextValue {
+  const context = useContext(ImageStudioParamsContext);
+  if (!context) {
+    throw new Error("useImageStudioParams must be used within ImageStudioParamsContext.Provider");
+  }
+  return context;
+}
+
+function SlotTree(): React.JSX.Element {
+  const {
+    projectId,
+    slots,
+    folders,
+    selectedFolder,
+    selectedSlotId,
+    onSelectFolder,
+    onSelectSlot,
+    onMoveSlot,
+    onMoveFolder,
+  } = useImageStudioSlotTree();
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["root"]));
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
@@ -1469,6 +1502,45 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setSelectedSlotId(slot.id);
   }, []);
 
+  const handleSlotMove = useCallback(
+    (slot: ImageStudioSlotRecord, targetFolder: string): void => {
+      void moveSlotMutation.mutateAsync({ slot, targetFolder });
+    },
+    [moveSlotMutation]
+  );
+
+  const handleFolderMove = useCallback(
+    (folderPath: string, targetFolder: string): void => {
+      void handleMoveFolder(folderPath, targetFolder);
+    },
+    [handleMoveFolder]
+  );
+
+  const slotTreeContextValue = useMemo(
+    () => ({
+      projectId,
+      slots,
+      folders,
+      selectedFolder,
+      selectedSlotId,
+      onSelectFolder: setSelectedFolder,
+      onSelectSlot: handleSelectSlot,
+      onMoveSlot: handleSlotMove,
+      onMoveFolder: handleFolderMove,
+    }),
+    [
+      folders,
+      handleFolderMove,
+      handleSelectSlot,
+      handleSlotMove,
+      projectId,
+      selectedFolder,
+      selectedSlotId,
+      setSelectedFolder,
+      slots,
+    ]
+  );
+
   const handleDriveSelection = useCallback(
     async (files: ImageFileSelection[]): Promise<void> => {
       setDriveImportOpen(false);
@@ -2209,6 +2281,57 @@ export function AdminImageStudioPage(): React.JSX.Element {
     const warnings = validationIssues.filter((i: ParamIssue) => i.severity === "warning").length;
     return { errors, warnings };
   }, [validationIssues]);
+
+  const handleParamChange = useCallback((path: string, value: unknown): void => {
+    setParamsState((prev: Record<string, unknown> | null) => {
+      if (!prev) return prev;
+      return setDeepValue(prev, path, value);
+    });
+  }, []);
+
+  const handleParamUiControlChange = useCallback((path: string, nextControl: ParamUiControl): void => {
+    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+      if (nextControl === "auto") {
+        if (!(path in prev)) return prev;
+        const { [path]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [path]: nextControl };
+    });
+  }, []);
+
+  const handleParamFlip = useCallback(
+    (path: string): void => {
+      setParamFlipMap((prev: Record<string, boolean>) => {
+        const next = !prev[path];
+        const updated = { ...prev, [path]: next };
+        void _persistParamFlipMap(updated);
+        return updated;
+      });
+    },
+    [_persistParamFlipMap]
+  );
+
+  const paramsContextValue = useMemo(
+    () => ({
+      paramSpecs,
+      paramUiOverrides,
+      paramFlipMap: _paramFlipMap,
+      issuesByPath,
+      onParamChange: handleParamChange,
+      onParamFlip: handleParamFlip,
+      onParamUiControlChange: handleParamUiControlChange,
+    }),
+    [
+      _paramFlipMap,
+      handleParamChange,
+      handleParamFlip,
+      handleParamUiControlChange,
+      issuesByPath,
+      paramSpecs,
+      paramUiOverrides,
+    ]
+  );
 
   const maskPolygons = useMemo<Point[][]>(() => {
     const polygons: Point[][] = [];
@@ -4035,22 +4158,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
 
           <div className="flex-1 overflow-hidden">
-            <SlotTree
-              key={projectId}
-              projectId={projectId}
-              slots={slots}
-              folders={folders}
-              selectedFolder={selectedFolder}
-              selectedSlotId={selectedSlotId}
-              onSelectFolder={setSelectedFolder}
-              onSelectSlot={handleSelectSlot}
-              onMoveSlot={(slot: ImageStudioSlotRecord, target: string) => {
-                void moveSlotMutation.mutateAsync({ slot, targetFolder: target });
-              }}
-              onMoveFolder={(folderPath: string, targetFolder: string) => {
-                void handleMoveFolder(folderPath, targetFolder);
-              }}
-            />
+            <ImageStudioSlotTreeContext.Provider value={slotTreeContextValue}>
+              <SlotTree key={projectId} />
+            </ImageStudioSlotTreeContext.Provider>
           </div>
           </div>
         </SectionPanel>
@@ -4578,41 +4688,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     </div>
                     <div className="text-gray-500">Hints from inline comments are used for enums/ranges.</div>
                   </div>
-                  {paramLeaves.map((leaf: ParamLeaf) => {
-                    const spec = paramSpecs?.[leaf.path];
-                    return (
-                      <ParamRow
-                        key={leaf.path}
-                        leaf={leaf}
-                        uiControl={paramUiOverrides[leaf.path] ?? "auto"}
-                        flipped={Boolean(_paramFlipMap[leaf.path])}
-                        onFlip={() => {
-                          const next = !_paramFlipMap[leaf.path];
-                          setParamFlipMap((prev: Record<string, boolean>) => {
-                            const updated = { ...prev, [leaf.path]: next };
-                            void _persistParamFlipMap(updated);
-                            return updated;
-                          });
-                        }}
-                        onUiControlChange={(nextControl: ParamUiControl) => {
-                          setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
-                            if (nextControl === "auto") {
-                              if (!(leaf.path in prev)) return prev;
-                              const { [leaf.path]: _removed, ...rest } = prev;
-                              return rest;
-                            }
-                            return { ...prev, [leaf.path]: nextControl };
-                          });
-                        }}
-                        {...(spec ? { spec } : {})}
-                        issues={issuesByPath[leaf.path] ?? []}
-                        onChange={(nextValue: unknown) => {
-                          if (!paramsState) return;
-                          setParamsState(setDeepValue(paramsState, leaf.path, nextValue));
-                        }}
-                      />
-                    );
-                  })}
+                  <ImageStudioParamsContext.Provider value={paramsContextValue}>
+                    {paramLeaves.map((leaf: ParamLeaf) => (
+                      <ParamRow key={leaf.path} leaf={leaf} />
+                    ))}
+                  </ImageStudioParamsContext.Provider>
                 </div>
               ) : (
                 <div className="text-sm text-gray-400">Extract params to edit them as fields.</div>
@@ -4806,25 +4886,23 @@ export function AdminImageStudioPage(): React.JSX.Element {
   );
 }
 
-function ParamRow({
-  leaf,
-  uiControl,
-  flipped,
-  onFlip,
-  onUiControlChange,
-  spec,
-  issues,
-  onChange,
-}: {
-  leaf: ParamLeaf;
-  uiControl: ParamUiControl;
-  flipped: boolean;
-  onFlip: () => void;
-  onUiControlChange: (control: ParamUiControl) => void;
-  spec?: ParamSpec;
-  issues: ParamIssue[];
-  onChange: (value: unknown) => void;
-}): React.JSX.Element {
+function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
+  const {
+    paramSpecs,
+    paramUiOverrides,
+    paramFlipMap,
+    issuesByPath,
+    onParamChange,
+    onParamFlip,
+    onParamUiControlChange,
+  } = useImageStudioParams();
+  const spec = paramSpecs?.[leaf.path];
+  const uiControl = paramUiOverrides[leaf.path] ?? "auto";
+  const flipped = Boolean(paramFlipMap[leaf.path]);
+  const issues = issuesByPath[leaf.path] ?? [];
+  const onChange = (value: unknown): void => onParamChange(leaf.path, value);
+  const onFlip = (): void => onParamFlip(leaf.path);
+  const onUiControlChange = (control: ParamUiControl): void => onParamUiControlChange(leaf.path, control);
   const value = leaf.value;
 
   const errors = issues.filter((i: ParamIssue) => i.severity === "error");

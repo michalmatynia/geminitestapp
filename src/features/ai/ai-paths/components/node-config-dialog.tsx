@@ -35,6 +35,7 @@ import type {
 } from "@/features/ai/ai-paths/lib";
 import { stableStringify } from "@/features/ai/ai-paths/lib";
 import { NodeHistoryTab } from "./node-config/dialog/NodeHistoryTab"; // Keep NodeHistoryTab import
+import { NodeNotesTab } from "./node-config/dialog/NodeNotesTab";
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -285,6 +286,7 @@ export function NodeConfigDialog({
         <Tabs defaultValue="settings" className="mt-2">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           <TabsContent value="settings">
@@ -344,6 +346,12 @@ export function NodeConfigDialog({
               setDbNodePresets={setDbNodePresets}
               saveDbNodePresets={saveDbNodePresets}
               toast={toast}
+            />
+          </TabsContent>
+          <TabsContent value="notes">
+            <NodeNotesTab
+              selectedNode={draftSelectedNode}
+              updateSelectedNodeConfig={updateDraftConfig}
             />
           </TabsContent>
           <TabsContent value="history">

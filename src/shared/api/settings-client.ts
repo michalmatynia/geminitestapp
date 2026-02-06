@@ -31,6 +31,7 @@ async function fetchSettingsFromApi(
     const url = scopeValue === "all" ? "/api/settings?scope=all" : `/api/settings?scope=${scopeValue}`;
     const res = await fetch(url, {
       cache: bypassCache ? "no-store" : "default",
+      credentials: "include",
     });
     if (!res.ok) {
       throw new Error(`Failed to fetch settings (${res.status})`);
@@ -52,6 +53,7 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
   try {
     const res = await fetch("/api/settings/lite", {
       cache: bypassCache ? "no-store" : "default",
+      credentials: "include",
     });
     if (process.env.NODE_ENV === "development" || process.env.DEBUG_SETTINGS === "true") {
       const cacheHeader = res.headers.get("X-Cache");

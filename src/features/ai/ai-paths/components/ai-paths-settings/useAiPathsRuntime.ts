@@ -21,6 +21,8 @@ import {
   PATH_DEBUG_PREFIX,
   STORAGE_VERSION,
   TRIGGER_EVENTS,
+  normalizeNodes,
+  sanitizeEdges,
   appendLocalRun,
   aiJobsApi,
   coerceInput,
@@ -113,6 +115,11 @@ export function useAiPathsRuntime({
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
+  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(nodes), [nodes]);
+  const sanitizedEdges = useMemo(
+    (): Edge[] => sanitizeEdges(normalizedNodes, edges),
+    [edges, normalizedNodes]
+  );
 
   const enqueueAiJobMutation = useMutation({
     mutationFn: async (payload: {
@@ -223,8 +230,8 @@ export function useAiPathsRuntime({
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
-      nodes,
-      edges,
+      nodes: normalizedNodes,
+      edges: sanitizedEdges,
       updatedAt,
       parserSamples,
       updaterSamples,
@@ -237,8 +244,8 @@ export function useAiPathsRuntime({
       pathDescription,
       activeTrigger,
       executionMode,
-      nodes,
-      edges,
+      normalizedNodes,
+      sanitizedEdges,
       parserSamples,
       updaterSamples,
       runtimeState,
@@ -328,7 +335,7 @@ export function useAiPathsRuntime({
   const buildDebugSnapshot = useCallback(
     (pathId: string | null, runAt: string, state: RuntimeState): PathDebugSnapshot | null => {
       if (!pathId) return null;
-      const entries = nodes
+      const entries = normalizedNodes
         .filter((node: AiNode): boolean => node.type === "database")
         .map((node: AiNode): PathDebugEntry | null => {
           const output = state.outputs[node.id] as
@@ -346,7 +353,7 @@ export function useAiPathsRuntime({
       if (entries.length === 0) return null;
       return { pathId, runAt, entries };
     },
-    [nodes]
+    [normalizedNodes]
   );
 
   const persistDebugSnapshot = useCallback(
@@ -485,8 +492,8 @@ export function useAiPathsRuntime({
     pendingSimulationContextRef.current = null;
     try {
       const result = await evaluateGraphWithIteratorAutoContinue({
-        nodes,
-        edges,
+        nodes: normalizedNodes,
+        edges: sanitizedEdges,
         activePathId,
         activePathName: pathName,
         triggerNodeId: triggerNode.id,
@@ -533,7 +540,7 @@ export function useAiPathsRuntime({
         startedAt,
         finishedAt: runAt,
         durationMs: Date.now() - startedAtMs,
-        nodeCount: nodes.length,
+        nodeCount: normalizedNodes.length,
         source: "ai_paths_ui",
       });
     } catch (error) {
@@ -567,14 +574,14 @@ export function useAiPathsRuntime({
         startedAt,
         finishedAt,
         durationMs: Date.now() - startedAtMs,
-        nodeCount: nodes.length,
+        nodeCount: normalizedNodes.length,
         error: error instanceof Error ? error.message : "Local run failed",
         source: "ai_paths_ui",
       });
       return;
     }
 
-  }, [isPathActive, buildTriggerContext, nodes, edges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
+  }, [isPathActive, buildTriggerContext, normalizedNodes, sanitizedEdges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
 
   const runPollUpdate = useCallback(
     async (
@@ -635,7 +642,7 @@ export function useAiPathsRuntime({
           [node.id]: pollOutput ?? runtimeStateRef.current.outputs[node.id] ?? {},
         };
         if (resolvedJobId) {
-          nodes
+          normalizedNodes
             .filter((item: AiNode): boolean => item.type === "model")
             .forEach((modelNode: AiNode) => {
               const modelOutput = updatedOutputs[modelNode.id] as
@@ -657,8 +664,8 @@ export function useAiPathsRuntime({
         const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
         const seededOutputs = updatedOutputs;
         const downstreamState = await evaluateGraph({
-          nodes,
-          edges,
+          nodes: normalizedNodes,
+          edges: sanitizedEdges,
           activePathId,
           activePathName: pathName,
           ...(triggerNodeId ? { triggerNodeId } : {}),
@@ -690,7 +697,7 @@ export function useAiPathsRuntime({
         }
 
         // If the poll completion caused an Iterator to advance, start the next iteration (launch AI jobs).
-        const shouldContinueIterators = nodes.some((n: AiNode): boolean => {
+        const shouldContinueIterators = normalizedNodes.some((n: AiNode): boolean => {
           if (n.type !== "iterator") return false;
           if (n.config?.iterator?.autoContinue === false) return false;
           const status = downstreamState.outputs[n.id]?.status;
@@ -701,8 +708,8 @@ export function useAiPathsRuntime({
           try {
             const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
             const continued = await evaluateGraphWithIteratorAutoContinue({
-              nodes,
-              edges,
+              nodes: normalizedNodes,
+              edges: sanitizedEdges,
               activePathId,
               activePathName: pathName,
               ...(triggerNodeId ? { triggerNodeId } : {}),
@@ -762,8 +769,8 @@ export function useAiPathsRuntime({
       }
     },
     [
-      nodes,
-      edges,
+      normalizedNodes,
+      sanitizedEdges,
       activePathId,
       pathName,
       fetchEntityByType,
@@ -779,7 +786,7 @@ export function useAiPathsRuntime({
 
   const startPendingPolls = useCallback(
     (state: RuntimeState): void => {
-      nodes
+      normalizedNodes
         .filter((node: AiNode): boolean => node.type === "poll")
         .forEach((node: AiNode) => {
           const pollConfig = node.config?.poll;
@@ -799,13 +806,13 @@ export function useAiPathsRuntime({
           void runPollUpdate(node, { jobId, nodeInputs });
         });
     },
-    [nodes, runPollUpdate]
+    [normalizedNodes, runPollUpdate]
   );
 
   useEffect((): void => {
-    if (!runtimeState || nodes.length === 0) return;
+    if (!runtimeState || normalizedNodes.length === 0) return;
     startPendingPolls(runtimeState);
-  }, [nodes, runtimeState, startPendingPolls]);
+  }, [normalizedNodes, runtimeState, startPendingPolls]);
 
   const dispatchTrigger = (eventName: string, entityId: string, entityType?: string): void => {
     if (typeof window === "undefined") return;
@@ -851,7 +858,7 @@ export function useAiPathsRuntime({
       let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "manual";
       if (!triggerEvent) {
         const adjacency = new Map<string, Set<string>>();
-        edges.forEach((edge: Edge) => {
+        sanitizedEdges.forEach((edge: Edge) => {
           if (!edge.from || !edge.to) return;
           const fromSet = adjacency.get(edge.from) ?? new Set<string>();
           fromSet.add(edge.to);
@@ -874,15 +881,15 @@ export function useAiPathsRuntime({
             queue.push(neighbor);
           });
         }
-        const connectedTriggerIds = nodes
+        const connectedTriggerIds = normalizedNodes
           .filter((node: AiNode): boolean => node.type === "trigger" && connected.has(node.id))
           .map((node: AiNode) => node.id);
-        let triggerNode = nodes.find(
+        let triggerNode = normalizedNodes.find(
           (node: AiNode): boolean =>
             node.type === "trigger" && connectedTriggerIds.includes(node.id)
         );
         if (!triggerNode) {
-          const triggerCandidates = nodes.filter((node: AiNode): boolean => node.type === "trigger");
+          const triggerCandidates = normalizedNodes.filter((node: AiNode): boolean => node.type === "trigger");
           if (triggerCandidates.length === 1) {
             triggerNode = triggerCandidates[0] ?? null;
             toast("No Trigger node connected; using the only Trigger in this path.", {
@@ -907,7 +914,7 @@ export function useAiPathsRuntime({
         variant: "success",
       });
     },
-    [edges, fetchEntityByType, nodes, runGraphForTrigger, toast]
+    [sanitizedEdges, fetchEntityByType, normalizedNodes, runGraphForTrigger, toast]
   );
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
@@ -915,7 +922,7 @@ export function useAiPathsRuntime({
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
       const isScheduled = triggerEvent === "scheduled_run";
       const adjacency = new Map<string, Set<string>>();
-      edges.forEach((edge: Edge) => {
+      sanitizedEdges.forEach((edge: Edge) => {
         if (!edge.from || !edge.to) return;
         const fromSet = adjacency.get(edge.from) ?? new Set<string>();
         fromSet.add(edge.to);
@@ -938,15 +945,15 @@ export function useAiPathsRuntime({
           queue.push(neighbor);
         });
       }
-      const connectedSimulationIds = nodes
+      const connectedSimulationIds = normalizedNodes
         .filter((node: AiNode): boolean => node.type === "simulation" && connected.has(node.id))
         .map((node: AiNode) => node.id);
-      let simulationNodes = nodes.filter(
+      let simulationNodes = normalizedNodes.filter(
         (node: AiNode): boolean =>
           node.type === "simulation" && connectedSimulationIds.includes(node.id)
       );
       if (simulationNodes.length === 0) {
-        const fallbackSimulationNodes = nodes.filter(
+        const fallbackSimulationNodes = normalizedNodes.filter(
           (node: AiNode): boolean => node.type === "simulation"
         );
         if (fallbackSimulationNodes.length === 1) {
@@ -981,7 +988,7 @@ export function useAiPathsRuntime({
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === "scheduled_run";
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge: Edge) => {
+    sanitizedEdges.forEach((edge: Edge) => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -1004,15 +1011,15 @@ export function useAiPathsRuntime({
         queue.push(neighbor);
       });
     }
-    const connectedSimulationIds = nodes
+    const connectedSimulationIds = normalizedNodes
       .filter((node: AiNode): boolean => node.type === "simulation" && connected.has(node.id))
       .map((node: AiNode) => node.id);
-    let simulationNodes = nodes.filter(
+    let simulationNodes = normalizedNodes.filter(
       (node: AiNode): boolean =>
         node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
-      const fallbackSimulationNodes = nodes.filter(
+      const fallbackSimulationNodes = normalizedNodes.filter(
         (node: AiNode): boolean => node.type === "simulation"
       );
       if (fallbackSimulationNodes.length === 1) {
@@ -1034,8 +1041,8 @@ export function useAiPathsRuntime({
       const enqueueResult = await runsApi.enqueue({
         pathId: activePathId ?? "default",
         pathName,
-        nodes,
-        edges,
+        nodes: normalizedNodes,
+        edges: sanitizedEdges,
         ...(triggerEvent ? { triggerEvent } : {}),
         triggerNodeId: triggerNode.id,
         triggerContext,
@@ -1070,8 +1077,8 @@ export function useAiPathsRuntime({
     const enqueueResult = await runsApi.enqueue({
       pathId: activePathId ?? "default",
       pathName,
-      nodes,
-      edges,
+      nodes: normalizedNodes,
+      edges: sanitizedEdges,
       ...(triggerEvent ? { triggerEvent } : {}),
       triggerNodeId: triggerNode.id,
       triggerContext,
@@ -1092,7 +1099,7 @@ export function useAiPathsRuntime({
 
   const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
     // Find the source node to determine its type
-    const sourceNode = nodes.find((n: AiNode): boolean => n.id === sourceNodeId);
+    const sourceNode = normalizedNodes.find((n: AiNode): boolean => n.id === sourceNodeId);
     if (!sourceNode) {
       toast("Source node not found.", { variant: "error" });
       return;
@@ -1106,15 +1113,15 @@ export function useAiPathsRuntime({
         : "prompt";
 
     // First try to find edge with preferred port
-    let aiEdge = edges.find(
+    let aiEdge = sanitizedEdges.find(
       (edge: Edge): boolean => edge.from === sourceNodeId && edge.fromPort === preferredPort
     );
 
     // If not found, find any edge that connects to a model node
     if (!aiEdge) {
-      aiEdge = edges.find((edge: Edge): boolean => {
+      aiEdge = sanitizedEdges.find((edge: Edge): boolean => {
         if (edge.from !== sourceNodeId) return false;
-        const targetNode = nodes.find((n: AiNode): boolean => n.id === edge.to);
+        const targetNode = normalizedNodes.find((n: AiNode): boolean => n.id === edge.to);
         return targetNode?.type === "model";
       });
     }
@@ -1123,7 +1130,7 @@ export function useAiPathsRuntime({
       toast("No AI Model connected.", { variant: "error" });
       return;
     }
-    const aiNode = nodes.find((n: AiNode): boolean => n.id === aiEdge.to && n.type === "model");
+    const aiNode = normalizedNodes.find((n: AiNode): boolean => n.id === aiEdge.to && n.type === "model");
     if (!aiNode) {
       toast("Connected node is not an AI Model.", { variant: "error" });
       return;

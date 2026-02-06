@@ -103,6 +103,7 @@ export function useUpdateSetting(): UseMutationResult<
     }): Promise<SystemSetting> => {
       const res = await fetch("/api/settings", {
         method: "POST",
+        credentials: "include",
         headers: withCsrfHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ key, value }),
       });
@@ -133,6 +134,7 @@ export function useUpdateSettingsBulk(): UseMutationResult<
         payloads.map((payload) =>
           fetch("/api/settings", {
             method: "POST",
+            credentials: "include",
             headers: withCsrfHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify(payload),
           }),

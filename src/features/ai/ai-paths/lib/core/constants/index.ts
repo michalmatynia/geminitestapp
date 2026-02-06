@@ -1,14 +1,14 @@
 import type { AiNode, DbQueryConfig, Edge, NodeType } from "@/shared/types/ai-paths";
 
-export const NODE_WIDTH = 280;
-export const NODE_MIN_HEIGHT = 160;
-export const CANVAS_WIDTH = 2200;
-export const CANVAS_HEIGHT = 1400;
+export const NODE_WIDTH = 336;
+export const NODE_MIN_HEIGHT = 192;
+export const CANVAS_WIDTH = 4400;
+export const CANVAS_HEIGHT = 2800;
 export const MIN_SCALE = 0.5;
 export const MAX_SCALE = 1.6;
 export const VIEW_MARGIN = 40;
-export const PORT_GAP = 18;
-export const PORT_SIZE = 10;
+export const PORT_GAP = 22;
+export const PORT_SIZE = 12;
 export const DEFAULT_CONTEXT_ROLE = "entity";
 export const CACHEABLE_NODE_TYPES: NodeType[] = [
   "constant",
@@ -363,7 +363,7 @@ export const VIEWER_INPUT_PORTS = [
   "queryCallback",
   "aiPrompt",
 ];
-export const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result"];
+export const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result", "entityId"];
 export const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
 export const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
 export const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];

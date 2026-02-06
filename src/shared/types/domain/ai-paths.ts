@@ -332,6 +332,11 @@ export type NodeConfig = {
   learnerAgent?: LearnerAgentConfig;
   database?: DatabaseConfig;
   runtime?: NodeRuntimeConfig;
+  notes?: {
+    text?: string;
+    color?: string;
+    showOnCanvas?: boolean;
+  };
 };
 
 export type NodeDefinition = {

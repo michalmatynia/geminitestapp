@@ -136,11 +136,27 @@ export function PromptNodeConfigSection({
           </div>
         )}
         {directPlaceholders.length > 0 && (
-          <div className="mt-3 text-[11px] text-gray-500">
-            Direct inputs:{" "}
-            {directPlaceholders
-              .map((port: string) => formatPlaceholderLabel(port))
-              .join(", ")}
+          <div className="mt-3">
+            <div className="text-[11px] text-gray-500">Direct inputs</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {directPlaceholders.map((port: string) => (
+                <span
+                  key={port}
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
+                  onClick={() => handleInsertPlaceholder(`{{${port}}}`)}
+                  onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleInsertPlaceholder(`{{${port}}}`);
+                    }
+                  }}
+                >
+                  {formatPlaceholderLabel(port)}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -22,31 +22,17 @@ React error overlay ?
 
 use Context !
 
-every element in CMS should have an uption for image file background
+every element in CMS should have an uption to choose the type of backgroun, for image file background, Background lock is like a semi background later used in multiplanar din parallaxes
 
-Node Schema Matrix for extracting Schemas for prompts
-Node Notes and make the canvas bigger
+Maybe my placeholder matrix is better-Node Schema Matrix for extracting Schemas for prompts
 
 There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings
 
-Validator Extractor should be 
+* Validator Extractor should be 
 
-
-Regex grouper PReset (for the whole regex Persona)
-Each node should have an ID so that I can reference them easily
-IN cMS Folder Tree
-Looking at the code structure: 
-  - At section root level, blocks use BlockNodeItem (lines 714-734)             
-  - Inside Grid columns, blocks of SECTION_BLOCK_TYPES (which includes "Block")
-  use SectionBlockNodeItem (lines 1658-1686)                                    
+* Regex grouper PReset (for the whole regex Persona)
    
-  The SectionBlockNodeItem has a dragStart handler but it doesn't have a        
-  console.log. Let me add debug logging to verify which component is actually
-  handling the drag.                                                            
-                                    
-This confuses  AIs and I constantly have problems adding elements that can be draggable and droppable to folders.
-
-Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
+* Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
 
 I need user profiles, that will store KEYS to user settings for each segment of the system
 

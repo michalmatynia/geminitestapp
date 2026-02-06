@@ -28,7 +28,7 @@
 
 import { useEffect } from 'react';
 
-import type { AiNode, Edge, RuntimeState, ClusterPreset, PathMeta, PathConfig, PathExecutionMode, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, RuntimeState, ClusterPreset, PathMeta, PathConfig, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/features/ai/ai-paths/lib';
 
 import { useCanvasActions } from '../CanvasContext';
 import { useGraphActions } from '../GraphContext';
@@ -168,6 +168,7 @@ export interface LegacySyncGraphProps {
   activeTrigger?: string | undefined;
   executionMode?: PathExecutionMode | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
+  runMode?: PathRunMode | undefined;
   paths?: PathMeta[] | undefined;
   pathConfigs?: Record<string, PathConfig> | undefined;
 }
@@ -185,6 +186,7 @@ export function useLegacySyncGraph({
   activeTrigger,
   executionMode,
   flowIntensity,
+  runMode,
   paths,
   pathConfigs,
 }: LegacySyncGraphProps): void {
@@ -239,6 +241,12 @@ export function useLegacySyncGraph({
       actions.setFlowIntensity(flowIntensity);
     }
   }, [flowIntensity, actions]);
+
+  useEffect(() => {
+    if (runMode !== undefined) {
+      actions.setRunMode(runMode);
+    }
+  }, [runMode, actions]);
 
   useEffect(() => {
     if (paths !== undefined) {
@@ -460,6 +468,7 @@ export interface LegacySyncAllProps {
   activeTrigger?: string | undefined;
   executionMode?: PathExecutionMode | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
+  runMode?: PathRunMode | undefined;
   paths?: PathMeta[] | undefined;
   pathConfigs?: Record<string, PathConfig> | undefined;
   // Runtime
@@ -515,6 +524,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     activeTrigger: props.activeTrigger,
     executionMode: props.executionMode,
     flowIntensity: props.flowIntensity,
+    runMode: props.runMode,
     paths: props.paths,
     pathConfigs: props.pathConfigs,
   });

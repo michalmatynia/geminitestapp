@@ -384,7 +384,7 @@ export type Edge = {
 };
 
 export type RuntimePortValues = Record<string, unknown>;
-export type RuntimeHistoryStatus = 'completed' | 'failed' | 'delayed' | 'cached';
+export type RuntimeHistoryStatus = 'completed' | 'failed' | 'delayed' | 'cached' | 'skipped';
 
 export type RuntimeHistoryLink = {
   nodeId: string;
@@ -397,6 +397,7 @@ export type RuntimeHistoryLink = {
 export type RuntimeHistoryEntry = {
   timestamp: string;
   runId?: string | null | undefined;
+  runStartedAt?: string | null | undefined;
   pathId?: string | null | undefined;
   pathName?: string | null | undefined;
   nodeId: string;
@@ -407,6 +408,7 @@ export type RuntimeHistoryEntry = {
   inputs?: RuntimePortValues | null | undefined;
   outputs?: RuntimePortValues | null | undefined;
   inputHash?: string | null | undefined;
+  skipReason?: string | null | undefined;
   error?: string | null | undefined;
   delayMs?: number | null | undefined;
   inputsFrom?: RuntimeHistoryLink[] | undefined;
@@ -514,6 +516,7 @@ export type PathUiState = {
 
 export type PathExecutionMode = 'local' | 'server';
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
+export type PathRunMode = 'block' | 'queue';
 
 export type PathConfig = {
   id: string;
@@ -523,6 +526,7 @@ export type PathConfig = {
   trigger: string;
   executionMode?: PathExecutionMode | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
+  runMode?: PathRunMode | undefined;
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;

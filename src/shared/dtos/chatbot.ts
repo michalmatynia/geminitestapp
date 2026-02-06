@@ -44,6 +44,38 @@ export interface ChatbotMemoryItemDto extends DtoBase {
 }
 
 /**
+ * DTO for creating a chatbot memory item
+ */
+export interface CreateChatbotMemoryItemDto {
+  key: string;
+  value: string;
+  type: string;
+}
+
+/**
+ * DTO for updating a chatbot memory item
+ */
+export interface UpdateChatbotMemoryItemDto extends Partial<CreateChatbotMemoryItemDto> {}
+
+/**
+ * DTO for an agent audit log
+ */
+export interface AgentAuditLogDto extends DtoBase {
+  message: string;
+  metadata?: Record<string, unknown> | null;
+  level: 'info' | 'warning' | 'error';
+}
+
+/**
+ * DTO for an agent browser log
+ */
+export interface AgentBrowserLogDto extends DtoBase {
+  level: string;
+  message: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+/**
  * DTO for a context segment
  */
 export interface ChatbotContextSegmentDto extends DtoBase {

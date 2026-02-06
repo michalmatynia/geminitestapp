@@ -258,6 +258,103 @@ export function PreviewSection({
     );
   };
 
+  // ---------------------------------------------------------------------------
+  // Shared section wrapper — uses getSectionStyles for real inline styles
+  // ---------------------------------------------------------------------------
+  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
+  const selectedRingBase = inspectorActive
+    ? isSectionSelected
+      ? 'ring-4 ring-blue-500/65'
+      : isSectionHovered
+        ? 'ring-4 ring-blue-500/45'
+        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
+    : showEditorChrome
+      ? isSectionSelected
+        ? isInspecting
+          ? 'ring-2 ring-inset ring-blue-500/60'
+          : 'ring-2 ring-inset ring-blue-500/40'
+        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
+      : '';
+  const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
+
+  const sectionImage = section.settings['image'] as string | undefined;
+  const slideshowTransition = (section.settings['transition'] as string) || 'fade';
+  const slideshowTransitionDuration = (section.settings['transitionDuration'] as number) || 700;
+  const slideshowAutoplay = (section.settings['autoplay'] as string) !== 'no';
+  const slideshowAutoplaySpeed = (section.settings['autoplaySpeed'] as number) || 5000;
+  const slideshowPauseOnHover = (section.settings['pauseOnHover'] as string) !== 'no';
+  const { pauseSlideshowOnHoverInEditor } = usePreviewEditorPreferences();
+  const slideshowAllowPauseOnHover = slideshowPauseOnHover && pauseSlideshowOnHoverInEditor;
+  const slideshowLoop = (section.settings['loop'] as string) !== 'no';
+  const slideshowElementAnimationType = (section.settings['elementAnimationType'] as string) || 'fade-in';
+  const slideshowElementAnimationDuration = (section.settings['elementAnimationDuration'] as number) || 400;
+  const slideshowElementAnimationDelay = (section.settings['elementAnimationDelay'] as number) || 0;
+  const slideshowElementAnimationEasing = (section.settings['elementAnimationEasing'] as string) || 'ease-out';
+  const slideshowElementAnimationStagger = (section.settings['elementAnimationStagger'] as number) || 100;
+  const [slideshowIndex, setSlideshowIndex] = useState(0);
+  const [slideshowPaused, setSlideshowPaused] = useState(false);
+  const slideshowFrames = useMemo((): BlockInstance[] => {
+    if (!isSlideshowSection) return [];
+    const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === 'SlideshowFrame');
+    const legacyBlocks = section.blocks.filter((block: BlockInstance) => block.type !== 'SlideshowFrame');
+    if (frameBlocks.length > 0) {
+      if (legacyBlocks.length === 0) return frameBlocks;
+      const legacyFrames = legacyBlocks.map((block: BlockInstance) => ({
+        id: block.id,
+        type: 'SlideshowFrame',
+        settings: {},
+        blocks: [block],
+      }));
+      return [...frameBlocks, ...legacyFrames];
+    }
+    return legacyBlocks.map((block: BlockInstance) => ({
+      id: block.id,
+      type: 'SlideshowFrame',
+      settings: {},
+      blocks: [block],
+    }));
+  }, [isSlideshowSection, section.blocks]);
+  const slideshowCount = slideshowFrames.length;
+  const currentSlideshowIndex = slideshowIndex >= slideshowCount ? 0 : slideshowIndex;
+  const goToNextSlideshow = useCallback((): void => {
+    if (slideshowCount <= 1) return;
+    if (!slideshowLoop && currentSlideshowIndex >= slideshowCount - 1) return;
+    setSlideshowIndex((prev: number) => (prev + 1) % slideshowCount);
+  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
+  const goToPrevSlideshow = useCallback((): void => {
+    if (slideshowCount <= 1) return;
+    if (!slideshowLoop && currentSlideshowIndex <= 0) return;
+    setSlideshowIndex((prev: number) => (prev - 1 + slideshowCount) % slideshowCount);
+  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
+
+  useEffect((): void => {
+    if (!isSlideshowSection) return;
+    if (slideshowIndex >= slideshowCount) {
+      setSlideshowIndex(0);
+    }
+  }, [isSlideshowSection, slideshowCount, slideshowIndex]);
+
+  useEffect((): (() => void) | undefined => {
+    if (!isSlideshowSection) return undefined;
+    if (!slideshowAutoplay || slideshowPaused || slideshowCount <= 1 || slideshowAutoplaySpeed <= 0) {
+      return undefined;
+    }
+    const interval = window.setInterval(goToNextSlideshow, slideshowAutoplaySpeed);
+    return (): void => window.clearInterval(interval);
+  }, [
+    isSlideshowSection,
+    slideshowAutoplay,
+    slideshowPaused,
+    slideshowCount,
+    slideshowAutoplaySpeed,
+    goToNextSlideshow,
+  ]);
+  useEffect((): void => {
+    if (!slideshowAllowPauseOnHover && slideshowPaused) {
+      setSlideshowPaused(false);
+    }
+  }, [slideshowAllowPauseOnHover, slideshowPaused]);
+
   if (isHidden) {
     return null;
   }
@@ -366,103 +463,6 @@ export function PreviewSection({
       )
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Shared section wrapper — uses getSectionStyles for real inline styles
-  // ---------------------------------------------------------------------------
-  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
-  const selectedRingBase = inspectorActive
-    ? isSectionSelected
-      ? 'ring-4 ring-blue-500/65'
-      : isSectionHovered
-        ? 'ring-4 ring-blue-500/45'
-        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
-    : showEditorChrome
-      ? isSectionSelected
-        ? isInspecting
-          ? 'ring-2 ring-inset ring-blue-500/60'
-          : 'ring-2 ring-inset ring-blue-500/40'
-        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
-      : '';
-  const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
-
-  const sectionImage = section.settings['image'] as string | undefined;
-  const slideshowTransition = (section.settings['transition'] as string) || 'fade';
-  const slideshowTransitionDuration = (section.settings['transitionDuration'] as number) || 700;
-  const slideshowAutoplay = (section.settings['autoplay'] as string) !== 'no';
-  const slideshowAutoplaySpeed = (section.settings['autoplaySpeed'] as number) || 5000;
-  const slideshowPauseOnHover = (section.settings['pauseOnHover'] as string) !== 'no';
-  const { pauseSlideshowOnHoverInEditor } = usePreviewEditorPreferences();
-  const slideshowAllowPauseOnHover = slideshowPauseOnHover && pauseSlideshowOnHoverInEditor;
-  const slideshowLoop = (section.settings['loop'] as string) !== 'no';
-  const slideshowElementAnimationType = (section.settings['elementAnimationType'] as string) || 'fade-in';
-  const slideshowElementAnimationDuration = (section.settings['elementAnimationDuration'] as number) || 400;
-  const slideshowElementAnimationDelay = (section.settings['elementAnimationDelay'] as number) || 0;
-  const slideshowElementAnimationEasing = (section.settings['elementAnimationEasing'] as string) || 'ease-out';
-  const slideshowElementAnimationStagger = (section.settings['elementAnimationStagger'] as number) || 100;
-  const [slideshowIndex, setSlideshowIndex] = useState(0);
-  const [slideshowPaused, setSlideshowPaused] = useState(false);
-  const slideshowFrames = useMemo((): BlockInstance[] => {
-    if (!isSlideshowSection) return [];
-    const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === 'SlideshowFrame');
-    const legacyBlocks = section.blocks.filter((block: BlockInstance) => block.type !== 'SlideshowFrame');
-    if (frameBlocks.length > 0) {
-      if (legacyBlocks.length === 0) return frameBlocks;
-      const legacyFrames = legacyBlocks.map((block: BlockInstance) => ({
-        id: block.id,
-        type: 'SlideshowFrame',
-        settings: {},
-        blocks: [block],
-      }));
-      return [...frameBlocks, ...legacyFrames];
-    }
-    return legacyBlocks.map((block: BlockInstance) => ({
-      id: block.id,
-      type: 'SlideshowFrame',
-      settings: {},
-      blocks: [block],
-    }));
-  }, [isSlideshowSection, section.blocks]);
-  const slideshowCount = slideshowFrames.length;
-  const currentSlideshowIndex = slideshowIndex >= slideshowCount ? 0 : slideshowIndex;
-  const goToNextSlideshow = useCallback((): void => {
-    if (slideshowCount <= 1) return;
-    if (!slideshowLoop && currentSlideshowIndex >= slideshowCount - 1) return;
-    setSlideshowIndex((prev: number) => (prev + 1) % slideshowCount);
-  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
-  const goToPrevSlideshow = useCallback((): void => {
-    if (slideshowCount <= 1) return;
-    if (!slideshowLoop && currentSlideshowIndex <= 0) return;
-    setSlideshowIndex((prev: number) => (prev - 1 + slideshowCount) % slideshowCount);
-  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
-
-  useEffect((): void => {
-    if (!isSlideshowSection) return;
-    if (slideshowIndex >= slideshowCount) {
-      setSlideshowIndex(0);
-    }
-  }, [isSlideshowSection, slideshowCount, slideshowIndex]);
-
-  useEffect((): (() => void) | undefined => {
-    if (!isSlideshowSection) return undefined;
-    if (!slideshowAutoplay || slideshowPaused || slideshowCount <= 1 || slideshowAutoplaySpeed <= 0) {
-      return undefined;
-    }
-    const interval = window.setInterval(goToNextSlideshow, slideshowAutoplaySpeed);
-    return (): void => window.clearInterval(interval);
-  }, [
-    isSlideshowSection,
-    slideshowAutoplay,
-    slideshowPaused,
-    slideshowCount,
-    slideshowAutoplaySpeed,
-    goToNextSlideshow,
-  ]);
-  useEffect((): void => {
-    if (!slideshowAllowPauseOnHover && slideshowPaused) {
-      setSlideshowPaused(false);
-    }
-  }, [slideshowAllowPauseOnHover, slideshowPaused]);
 
   // Helper to render blocks list
   const renderBlocks = (emptyText: string): React.ReactNode =>

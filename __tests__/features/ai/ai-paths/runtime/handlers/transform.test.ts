@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { 
-  handleContext, 
+  handleContext,
   handleParser, 
   handleMapper, 
   handleMutator, 
@@ -11,8 +11,26 @@ import {
 import { createMockContext } from '../../test-utils';
 
 describe('Transform Handlers', () => {
+  describe('handleContext', () => {
+    it('should resolve context from input', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'context',
+          title: 'My Context',
+          config: { context: { role: 'manual', entityId: 'p1', entityType: 'product' } }
+        } as any,
+        fetchEntityCached: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product 1' })
+      });
+      const result = await handleContext(ctx);
+      expect(result.entityId).toBe('p1');
+      expect(result.entityType).toBe('product');
+      expect((result.context as any).source).toBe('context-filter');
+    });
+  });
+
   describe('handleParser', () => {
-    it('should parse entity JSON with mappings', () => {
+    it('should parse entity JSON with mappings', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -25,11 +43,11 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { entityJson: { name: 'Product', price: 100 } }
       });
-      const result = handleParser(ctx);
+      const result = await handleParser(ctx);
       expect(result).toEqual({ title: 'Product', price: 100 });
     });
 
-    it('should use fallbacks when value is missing', () => {
+    it('should use fallbacks when value is missing', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -42,13 +60,13 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { entityJson: { name: 'Fallback Name' } }
       });
-      const result = handleParser(ctx);
+      const result = await handleParser(ctx);
       expect(result.title).toBe('Fallback Name');
     });
   });
 
   describe('handleMapper', () => {
-    it('should map values from context', () => {
+    it('should map values from context', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -63,13 +81,13 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { context: { user: { name: 'Alice' } } }
       });
-      const result = handleMapper(ctx);
+      const result = await handleMapper(ctx);
       expect(result).toEqual({ out1: 'Alice' });
     });
   });
 
   describe('handleMutator', () => {
-    it('should mutate context value', () => {
+    it('should mutate context value', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -83,13 +101,13 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { context: { user: { score: 0 } } }
       });
-      const result = handleMutator(ctx);
+      const result = await handleMutator(ctx);
       expect((result.context as any).user.score).toBe('100');
     });
   });
 
   describe('handleValidator', () => {
-    it('should validate presence of paths', () => {
+    it('should validate presence of paths', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -103,21 +121,21 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { context: { user: { name: 'Alice' } } }
       });
-      const result = handleValidator(ctx);
+      const result = await handleValidator(ctx);
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('user.email');
     });
   });
 
   describe('handleRegex', () => {
-    it('should extract matches using regex', () => {
+    it('should extract matches using regex', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
           type: 'regex',
           config: { 
             regex: { 
-              pattern: 'ID-(\d+)', 
+              pattern: 'ID-(\\d+)', 
               flags: 'i',
               mode: 'extract',
               groupBy: '1'
@@ -126,20 +144,20 @@ describe('Transform Handlers', () => {
         } as any,
         nodeInputs: { value: 'Your ID-123 is ready' }
       });
-      const result = handleRegex(ctx);
+      const result = await handleRegex(ctx);
       expect(result.value).toBe('123');
     });
   });
 
   describe('handleIterator', () => {
-    it('should emit items sequentially', () => {
+    it('should emit items sequentially', async () => {
       const items = ['a', 'b', 'c'];
       let ctx = createMockContext({
         nodeInputs: { value: items },
         prevOutputs: {}
       });
       
-      let result = handleIterator(ctx);
+      let result = await handleIterator(ctx);
       expect(result.value).toBe('a');
       expect(result.index).toBe(0);
       expect(result.status).toBe('waiting_callback');
@@ -150,7 +168,7 @@ describe('Transform Handlers', () => {
         prevOutputs: result,
         now: 'step-2'
       });
-      result = handleIterator(ctx);
+      result = await handleIterator(ctx);
       expect(result.status).toBe('advance_pending');
       expect(result.index).toBe(1);
 
@@ -160,7 +178,7 @@ describe('Transform Handlers', () => {
         prevOutputs: result,
         now: 'step-3'
       });
-      result = handleIterator(ctx);
+      result = await handleIterator(ctx);
       expect(result.value).toBe('b');
       expect(result.index).toBe(1);
       expect(result.status).toBe('waiting_callback');

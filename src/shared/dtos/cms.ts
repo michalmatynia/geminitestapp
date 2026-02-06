@@ -1,60 +1,83 @@
 import { DtoBase, NamedDto } from '../types/base';
 
 // CMS DTOs
+export interface CmsThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  surface: string;
+  text: string;
+  muted: string;
+}
+
+export interface CmsThemeTypography {
+  headingFont: string;
+  bodyFont: string;
+  baseSize: number;
+  headingWeight: number;
+  bodyWeight: number;
+}
+
+export interface CmsThemeSpacing {
+  sectionPadding: string;
+  containerMaxWidth: string;
+}
+
+export interface CmsThemeDto extends NamedDto {
+  colors: CmsThemeColors;
+  typography: CmsThemeTypography;
+  spacing: CmsThemeSpacing;
+  customCss?: string;
+  isDefault: boolean;
+}
+
 export interface CmsPageDto extends DtoBase {
-  title: string;
-  slug: string;
-  content: Record<string, unknown>;
-  published: boolean;
+  name: string;
+  status: 'draft' | 'published' | 'scheduled';
+  publishedAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoOgImage?: string;
+  seoCanonical?: string;
+  robotsMeta?: string;
   themeId: string | null;
-  domainIds: string[];
+  showMenu: boolean;
+  components: any[];
+  slugs: any[];
 }
 
 export interface CmsSlugDto extends DtoBase {
   slug: string;
   pageId: string | null;
-  domainIds: string[];
-}
-
-export interface CmsThemeDto extends NamedDto {
-  config: Record<string, unknown>;
   isDefault: boolean;
 }
 
 export interface CmsDomainDto extends NamedDto {
   domain: string;
-  isDefault: boolean;
-  settings: Record<string, unknown>;
+  aliasOf?: string | null;
 }
 
-export interface CreatePageDto {
-  title: string;
-  slug: string;
-  content?: Record<string, unknown>;
-  published?: boolean;
-  themeId?: string;
-  domainIds?: string[];
-}
-
-export interface UpdatePageDto {
-  title?: string;
-  slug?: string;
-  content?: Record<string, unknown>;
-  published?: boolean;
-  themeId?: string;
-  domainIds?: string[];
-}
-
-export interface CreateThemeDto {
+export interface CreateCmsPageDto {
   name: string;
-  description?: string;
-  config?: Record<string, unknown>;
+  status?: 'draft' | 'published' | 'scheduled';
+  seoTitle?: string;
+  seoDescription?: string;
+  themeId?: string;
+  showMenu?: boolean;
+  components?: any[];
+  slugs?: string[];
+}
+
+export interface UpdateCmsPageDto extends Partial<CreateCmsPageDto> {}
+
+export interface CreateCmsThemeDto {
+  name: string;
+  colors: CmsThemeColors;
+  typography: CmsThemeTypography;
+  spacing: CmsThemeSpacing;
+  customCss?: string;
   isDefault?: boolean;
 }
 
-export interface UpdateThemeDto {
-  name?: string;
-  description?: string;
-  config?: Record<string, unknown>;
-  isDefault?: boolean;
-}
+export interface UpdateCmsThemeDto extends Partial<CreateCmsThemeDto> {}

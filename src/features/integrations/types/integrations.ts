@@ -6,8 +6,8 @@ export type {
   CategoryMappingDto,
   CreateIntegrationDto,
   UpdateIntegrationDto,
-  CreateConnectionDto,
-  UpdateConnectionDto
+  CreateIntegrationConnectionDto as CreateConnectionDto,
+  UpdateIntegrationConnectionDto as UpdateConnectionDto
 } from '@/shared/dtos';
 
 // Legacy types for backward compatibility

@@ -240,6 +240,8 @@ export const handleLearnerAgent: NodeHandler = async ({
   executed,
   toast,
   reportAiPathsError,
+  runId,
+  runStartedAt,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (node.type !== 'learner_agent') return prevOutputs;
   if (skipAiJobs) {
@@ -282,7 +284,7 @@ export const handleLearnerAgent: NodeHandler = async ({
 
   const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
   const payload = { agentId, messages };
-  const payloadHash = hashRuntimeValue(payload);
+  const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =
     typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
       ? ((prevOutputs as Record<string, unknown>).payloadHash as string)

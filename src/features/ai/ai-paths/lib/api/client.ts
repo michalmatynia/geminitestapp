@@ -480,14 +480,19 @@ export const aiJobsApi = {
   /**
    * Poll for AI job status
    */
-  async poll(jobId: string): Promise<ApiResponse<{
+  async poll(
+    jobId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ApiResponse<{
     status: string;
     result?: unknown;
     error?: string;
   }>> {
     const response = await apiFetch<{
       job?: { status?: string; result?: unknown; errorMessage?: string | null };
-    }>(`/api/products/ai-jobs/${encodeURIComponent(jobId)}`);
+    }>(`/api/products/ai-jobs/${encodeURIComponent(jobId)}`, {
+      ...(options?.signal ? { signal: options.signal } : {}),
+    });
 
     if (!response.ok) {
       return response;

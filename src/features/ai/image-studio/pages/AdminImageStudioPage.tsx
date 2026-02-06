@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
   SharedModal,
+  ClientOnly,
   Tabs,
   TabsContent,
   Textarea,
@@ -3222,13 +3223,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
   return (
     <div className="container mx-auto max-w-none flex min-h-[calc(100vh-5rem)] flex-col gap-4 py-6">
-      <Tabs
-        id="image-studio-tabs"
-        value={activeTab}
-        onValueChange={handleTabChange}
-        className="flex min-h-0 flex-1 flex-col gap-4"
-      >
-        <TabsContent value="studio" className="mt-0 flex min-h-0 flex-1 flex-col gap-4">
+      <ClientOnly fallback={<div className="flex min-h-0 flex-1" />}>
+        <Tabs
+          id="image-studio-tabs"
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="flex min-h-0 flex-1 flex-col gap-4"
+        >
+          <TabsContent value="studio" className="mt-0 flex min-h-0 flex-1 flex-col gap-4">
 
           <SharedModal
             open={driveImportOpen}
@@ -4882,7 +4884,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
             onSaved={handleRefreshSettings}
           />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ClientOnly>
     </div>
   );
 }

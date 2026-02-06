@@ -110,6 +110,65 @@ describe('Page Builder Reducer', () => {
     expect(state.sections[0]!.settings.imageHeight).toBe('small');
   });
 
+  it('should handle MOVE_BLOCK', () => {
+    // 1. Setup two sections
+    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    const fromSectionId = state.sections[0]!.id;
+    state = pageBuilderReducer(state, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    const toSectionId = state.sections[1]!.id;
+
+    // 2. Add block to first section
+    state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId: fromSectionId, blockType: 'Heading' });
+    const blockId = state.sections[0]!.blocks[0]!.id;
+
+    // 3. Move block to second section
+    state = pageBuilderReducer(state, { 
+      type: 'MOVE_BLOCK', 
+      blockId, 
+      fromSectionId, 
+      toSectionId, 
+      toIndex: 0 
+    });
+
+    expect(state.sections[0]!.blocks).toHaveLength(0);
+    expect(state.sections[1]!.blocks).toHaveLength(1);
+    expect(state.sections[1]!.blocks[0]!.id).toBe(blockId);
+  });
+
+  it('should handle REORDER_BLOCKS', () => {
+    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    const sectionId = state.sections[0]!.id;
+
+    state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId, blockType: 'Heading' });
+    const id1 = state.sections[0]!.blocks[0]!.id;
+    state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId, blockType: 'Text' });
+    const id2 = state.sections[0]!.blocks[1]!.id;
+
+    // Initial order: id1, id2
+    expect(state.sections[0]!.blocks[0]!.id).toBe(id1);
+
+    // Reorder: move index 0 to index 1
+    state = pageBuilderReducer(state, { type: 'REORDER_BLOCKS', sectionId, fromIndex: 0, toIndex: 1 });
+    expect(state.sections[0]!.blocks[0]!.id).toBe(id2);
+    expect(state.sections[0]!.blocks[1]!.id).toBe(id1);
+  });
+
+  it('should handle UPDATE_BLOCK_SETTINGS', () => {
+    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    const sectionId = state.sections[0]!.id;
+    state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId, blockType: 'Heading' });
+    const blockId = state.sections[0]!.blocks[0]!.id;
+
+    state = pageBuilderReducer(state, { 
+      type: 'UPDATE_BLOCK_SETTINGS', 
+      sectionId, 
+      blockId, 
+      settings: { content: 'Updated Content' } 
+    });
+
+    expect(state.sections[0]!.blocks[0]!.settings.content).toBe('Updated Content');
+  });
+
   describe('Grid Operations', () => {
     it('should handle SET_GRID_COLUMNS', () => {
       const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'Grid', zone: 'template' as const };

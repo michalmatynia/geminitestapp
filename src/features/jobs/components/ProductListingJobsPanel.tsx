@@ -12,7 +12,7 @@ import { useMemo, useState } from 'react';
 import { useCancelListingMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
-import type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/listing-jobs';
+import type { ListingJob, ProductJob } from '@/shared/types/listing-jobs';
 import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
 import { JobTable, type JobRowData } from './JobTable';
@@ -24,8 +24,6 @@ type ProductListingJobsPanelProps = {
 type ListingRow = {
   job: ProductJob;
   listing: ListingJob;
-  attempt: ListingAttempt | null;
-  attemptIndex: number | null;
 };
 
 const getStatusIcon = (status: string): React.JSX.Element => {
@@ -66,11 +64,7 @@ export default function ProductListingJobsPanel({
   const [selectedListing, setSelectedListing] = useState<{
     job: ProductJob;
     listing: ListingJob;
-    attempt: ListingAttempt | null;
-    attemptIndex: number | null;
   } | null>(null);
-  const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [historySort, setHistorySort] = useState<'desc' | 'asc'>('desc');
 
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
     if (!window.confirm('Cancel this listing job? This will remove it from the queue.')) {
@@ -91,34 +85,18 @@ export default function ProductListingJobsPanel({
     return date.toLocaleString();
   };
 
-  const getSortedHistory = (history: ListingJob['exportHistory']): ListingAttempt[] => {
-    if (!history?.length) return [];
-    const sorted = [...history].sort((a: ListingAttempt, b: ListingAttempt) => {
-      const aTime: number = new Date(a.exportedAt).getTime();
-      const bTime: number = new Date(b.exportedAt).getTime();
-      return historySort === 'asc' ? aTime - bTime : bTime - aTime;
-    });
-    return sorted;
-  };
-
-  const listingRows: ListingRow[] = useMemo(() => 
-    jobs.flatMap((job: ProductJob) =>
-      job.listings.flatMap((listing: ListingJob): ListingRow[] => {
-        const history = listing.exportHistory ?? [];
-        if (history.length === 0) {
-          return [{ job, listing, attempt: null, attemptIndex: null }];
-        }
-        return history.map((attempt: ListingAttempt, index: number) => ({
+  const listingRows: ListingRow[] = useMemo(
+    () =>
+      jobs.flatMap((job: ProductJob) =>
+        job.listings.map((listing: ListingJob) => ({
           job,
           listing,
-          attempt,
-          attemptIndex: index,
-        }));
-      })
-    ), [jobs]
+        }))
+      ),
+    [jobs]
   );
 
-  const filteredRows = useMemo(() => listingRows.filter(({ job, listing, attempt }: ListingRow) => {
+  const filteredRows = useMemo(() => listingRows.filter(({ job, listing }: ListingRow) => {
     if (!query.trim()) return true;
     const target = [
       job.productName,
@@ -126,14 +104,9 @@ export default function ProductListingJobsPanel({
       job.productId,
       listing.integrationName,
       listing.connectionName,
-      attempt?.status ?? listing.status,
       listing.id,
       listing.externalListingId ?? '',
-      attempt?.inventoryId ?? '',
-      attempt?.templateId ?? '',
-      attempt?.warehouseId ?? '',
-      attempt?.externalListingId ?? '',
-      ...(attempt?.fields ?? []),
+      listing.inventoryId ?? '',
     ]
       .join(' ')
       .toLowerCase();
@@ -141,8 +114,8 @@ export default function ProductListingJobsPanel({
   }), [listingRows, query]);
 
   const sortedRows = useMemo(() => [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
-    const aTime: number = new Date(a.attempt?.exportedAt ?? a.listing.updatedAt ?? a.listing.createdAt).getTime();
-    const bTime: number = new Date(b.attempt?.exportedAt ?? b.listing.updatedAt ?? b.listing.createdAt).getTime();
+    const aTime: number = new Date(a.listing.updatedAt ?? a.listing.createdAt).getTime();
+    const bTime: number = new Date(b.listing.updatedAt ?? b.listing.createdAt).getTime();
     return bTime - aTime;
   }), [filteredRows]);
 
@@ -153,8 +126,7 @@ export default function ProductListingJobsPanel({
   const endIndex = startIndex + pageSize;
   const pagedRows = sortedRows.slice(startIndex, endIndex);
 
-  const selectedAttempt = selectedListing?.attempt ?? null;
-  const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? '';
+  const selectedStatus = selectedListing?.listing.status ?? '';
 
   const header = (
     <SectionHeader
@@ -229,21 +201,19 @@ export default function ProductListingJobsPanel({
         ) : !jobsQuery.error ? (
           <JobTable
             data={pagedRows.map((row: ListingRow): JobRowData => {
-              const { job, listing, attempt, attemptIndex } = row;
-              const status = attempt?.status ?? listing.status ?? 'unknown';
+              const { job, listing } = row;
+              const status = listing.status ?? 'unknown';
               const typeLabel =
                 status === 'deleted' || status === 'removed' ? 'Removal' : 'Export';
-              const attemptLabel =
-                attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : 'Listing';
               
               return {
                 id: listing.id,
                 type: `${typeLabel}: ${listing.integrationName}`,
                 status: status as JobRowData['status'],
                 entityName: job.productName,
-                entitySubText: `SKU: ${job.productSku || 'N/A'} · ${attemptLabel}`,
+                entitySubText: `SKU: ${job.productSku || 'N/A'} · Listing`,
                 productId: job.productId,
-                createdAt: attempt?.exportedAt ?? listing.createdAt,
+                createdAt: listing.createdAt,
                 finishedAt: listing.updatedAt,
               };
             })}
@@ -373,141 +343,6 @@ export default function ProductListingJobsPanel({
               </div>
             </div>
 
-            <div className="rounded-md border border-border bg-card/60 p-4">
-              <div className="text-gray-400 font-bold text-xs uppercase mb-3">
-                  Export Attempt
-              </div>
-              {selectedAttempt ? (
-                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Attempt</div>
-                    <div>{selectedListing.attemptIndex !== null ? selectedListing.attemptIndex + 1 : '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Status</div>
-                    <div>{selectedAttempt.status ?? '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Exported At</div>
-                    <div>{formatDateTime(selectedAttempt.exportedAt)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
-                    <div>{selectedAttempt.inventoryId ?? '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Template ID</div>
-                    <div>{selectedAttempt.templateId ?? '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
-                    <div>{selectedAttempt.warehouseId ?? '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-gray-500">External ID</div>
-                    <div>{selectedAttempt.externalListingId ?? '—'}</div>
-                  </div>
-                  <div className="col-span-2">
-                    <div className="text-[10px] uppercase text-gray-500">Fields</div>
-                    <div className="text-gray-400">
-                      {selectedAttempt.fields?.length ? selectedAttempt.fields.join(', ') : '—'}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-xs text-gray-500">No export attempt selected.</div>
-              )}
-            </div>
-
-            <div className="rounded-md border border-border bg-card/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-gray-400 font-bold text-xs uppercase">
-                    Export History
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                    onClick={(): void =>
-                      setHistorySort((prev: 'desc' | 'asc') => (prev === 'desc' ? 'asc' : 'desc'))
-                    }
-                    aria-label="Toggle export history sort"
-                  >
-                    {historySort === 'desc' ? 'Newest first' : 'Oldest first'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                    onClick={(): void => setHistoryExpanded((prev: boolean) => !prev)}
-                    aria-expanded={historyExpanded}
-                  >
-                    {historyExpanded ? 'Collapse' : 'Expand'}
-                  </Button>
-                </div>
-              </div>
-              {historyExpanded && (
-                <>
-                  {selectedListing.listing.exportHistory?.length ? (
-                    <div className="mt-3 space-y-3">
-                      {getSortedHistory(selectedListing.listing.exportHistory).map(
-                        (event: ListingAttempt, index: number) => (
-                          <div
-                            key={`${selectedListing.listing.id}-history-${index}`}
-                            className="rounded border border-border bg-card/60 p-3 text-xs text-gray-300"
-                          >
-                            <div className="flex flex-wrap gap-4">
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">Exported At</div>
-                                <div>{formatDateTime(event.exportedAt)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">Status</div>
-                                <div className="mt-1">
-                                  <StatusBadge 
-                                    status={event.status ?? 'success'} 
-                                    icon={getStatusIcon(event.status ?? 'success')}
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
-                                <div>{event.inventoryId ?? '—'}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">Template ID</div>
-                                <div>{event.templateId ?? '—'}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
-                                <div>{event.warehouseId ?? '—'}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase text-gray-500">External ID</div>
-                                <div>{event.externalListingId ?? '—'}</div>
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <div className="text-[10px] uppercase text-gray-500">Fields</div>
-                              <div className="text-gray-400">
-                                {event.fields?.length ? event.fields.join(', ') : '—'}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <div className="mt-3 text-xs text-gray-500">
-                        No export history recorded.
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
 
             <div className="grid grid-cols-1 gap-6">
               <div className="space-y-2">

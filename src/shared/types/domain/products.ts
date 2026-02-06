@@ -9,8 +9,8 @@ import type {
   ProductCategoryDto,
   CreateProductDto,
   UpdateProductDto,
-  CreateCategoryDto,
-  UpdateCategoryDto
+  CreateProductCategoryDto as CreateCategoryDto,
+  UpdateProductCategoryDto as UpdateCategoryDto
 } from '../../dtos/index';
 
 export type {

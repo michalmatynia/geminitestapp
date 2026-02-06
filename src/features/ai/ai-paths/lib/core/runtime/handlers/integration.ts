@@ -265,6 +265,7 @@ export const handlePoll: NodeHandler = async ({
   deferPoll,
   executed,
   reportAiPathsError,
+  abortSignal,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (deferPoll) {
     const existingStatus: string | null =
@@ -309,15 +310,20 @@ export const handlePoll: NodeHandler = async ({
     const queryConfig: DbQueryConfig =
       { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
     try {
-      const response: { result: unknown; status: string; bundle: Record<string, unknown> } = await pollDatabaseQuery(nodeInputs, {
-        intervalMs: pollConfig.intervalMs ?? 2000,
-        maxAttempts: pollConfig.maxAttempts ?? 30,
-        dbQuery: queryConfig,
-        successPath: pollConfig.successPath ?? 'status',
-        successOperator: pollConfig.successOperator ?? 'equals',
-        successValue: pollConfig.successValue ?? 'completed',
-        resultPath: pollConfig.resultPath ?? 'result',
-      });
+      const response: { result: unknown; status: string; bundle: Record<string, unknown> } =
+        await pollDatabaseQuery(
+          nodeInputs,
+          {
+            intervalMs: pollConfig.intervalMs ?? 2000,
+            maxAttempts: pollConfig.maxAttempts ?? 30,
+            dbQuery: queryConfig,
+            successPath: pollConfig.successPath ?? 'status',
+            successOperator: pollConfig.successOperator ?? 'equals',
+            successValue: pollConfig.successValue ?? 'completed',
+            resultPath: pollConfig.resultPath ?? 'result',
+          },
+          abortSignal ? { signal: abortSignal } : {}
+        );
       return {
         result: response.result,
         status: response.status,
@@ -353,6 +359,7 @@ export const handlePoll: NodeHandler = async ({
     const result: unknown = await pollGraphJob(jobId, {
       intervalMs: pollConfig.intervalMs,
       maxAttempts: pollConfig.maxAttempts,
+      ...(abortSignal ? { signal: abortSignal } : {}),
     });
     return {
       result,
@@ -385,6 +392,7 @@ export const handleHttp: NodeHandler = async ({
   prevOutputs,
   executed,
   reportAiPathsError,
+  abortSignal,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.http.has(node.id)) return prevOutputs;
 
@@ -452,6 +460,9 @@ export const handleHttp: NodeHandler = async ({
   };
   if (body !== undefined) {
     fetchInit.body = body;
+  }
+  if (abortSignal) {
+    fetchInit.signal = abortSignal;
   }
   try {
     const res: Response = await fetch(resolvedUrl, fetchInit);

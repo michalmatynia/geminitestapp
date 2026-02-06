@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { 
@@ -9,6 +9,10 @@ import {
 } from '@/features/ai/ai-paths/services/path-run-service';
 import prisma from '@/shared/lib/db/prisma';
 import type { AiNode } from '@/shared/types/ai-paths';
+
+vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
+  enqueuePathRunJob: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('PathRunService', () => {
   let repo: any;

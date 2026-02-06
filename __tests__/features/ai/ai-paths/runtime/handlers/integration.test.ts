@@ -4,7 +4,8 @@ import {
   handleNotification, 
   handlePoll, 
   handleHttp, 
-  handleDatabase 
+  handleDatabase,
+  handleDbSchema
 } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration';
 import { createMockContext } from '../../test-utils';
 import * as api from '@/features/ai/ai-paths/lib/api';
@@ -108,6 +109,56 @@ describe('Integration Handlers', () => {
       const result = await handleHttp(ctx);
       expect(result.value).toEqual({ data: 'success' });
       expect(global.fetch).toHaveBeenCalledWith('https://api.example.com', expect.anything());
+    });
+  });
+
+  describe('handleDbSchema', () => {
+    it('should fetch and format database schema', async () => {
+      const mockSchema = {
+        provider: 'mongodb',
+        collections: [
+          { name: 'products', fields: [{ name: 'id', type: 'string' }] }
+        ]
+      };
+      vi.mocked(api.dbApi.schema).mockResolvedValue({ ok: true, data: mockSchema } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'db_schema',
+          config: { 
+            db_schema: { 
+              mode: 'all', 
+              formatAs: 'text',
+              includeFields: true
+            } 
+          }
+        } as any
+      });
+      const result = await handleDbSchema(ctx);
+      expect((result.context as any).schemaText).toContain('DATABASE SCHEMA');
+      expect((result.context as any).schemaText).toContain('Collection: products');
+    });
+  });
+
+  describe('handlePoll', () => {
+    it('should poll for job completion', async () => {
+      vi.mocked(api.aiJobsApi.poll).mockResolvedValue({
+        ok: true,
+        data: { status: 'completed', result: 'Job done' }
+      } as any);
+
+      const ctx = createMockContext({
+        nodeInputs: { jobId: 'job-123' },
+        node: {
+          id: 'n1',
+          type: 'poll',
+          config: { poll: { mode: 'job', intervalMs: 10, maxAttempts: 5 } }
+        } as any
+      });
+      const result = await handlePoll(ctx);
+      expect(result.status).toBe('completed');
+      expect(result.result).toBe('Job done');
     });
   });
 });

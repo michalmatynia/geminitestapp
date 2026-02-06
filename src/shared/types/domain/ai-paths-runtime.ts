@@ -13,6 +13,8 @@ export type NodeHandlerContext = {
   edges: Edge[];
   nodes: AiNode[];
   nodeById?: Map<string, AiNode> | undefined;
+  runId: string;
+  runStartedAt: string;
   activePathId: string | null;
   triggerNodeId: string | undefined;
   triggerEvent: string | undefined;
@@ -20,6 +22,7 @@ export type NodeHandlerContext = {
   deferPoll: boolean | undefined;
   skipAiJobs: boolean | undefined;
   now: string;
+  abortSignal?: AbortSignal | undefined;
   
   // Global State (for accessing other nodes' data)
   allOutputs: Record<string, RuntimePortValues>;

@@ -10,7 +10,12 @@ import type {
   AgentSnapshotDto,
   AgentPlanStepDto,
   CreateChatSessionDto,
-  UpdateChatSessionDto
+  UpdateChatSessionDto,
+  ChatbotMemoryItemDto,
+  CreateChatbotMemoryItemDto,
+  UpdateChatbotMemoryItemDto,
+  AgentAuditLogDto,
+  AgentBrowserLogDto
 } from '../../dtos/chatbot';
 import type { ObjectId } from 'mongodb';
 
@@ -24,7 +29,12 @@ export type {
   AgentSnapshotDto,
   AgentPlanStepDto,
   CreateChatSessionDto,
-  UpdateChatSessionDto
+  UpdateChatSessionDto,
+  ChatbotMemoryItemDto,
+  CreateChatbotMemoryItemDto,
+  UpdateChatbotMemoryItemDto,
+  AgentAuditLogDto,
+  AgentBrowserLogDto
 };
 
 /**
@@ -78,21 +88,9 @@ export type ChatbotSettingsPayload = ChatbotSettingsDto;
 export type AgentSnapshot = AgentSnapshotDto;
 export type AgentPlanStep = AgentPlanStepDto;
 
-export type AgentAuditLog = {
-  id: string;
-  message: string;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  level: 'info' | 'warning' | 'error';
-};
+export type AgentAuditLog = AgentAuditLogDto;
 
-export type AgentBrowserLog = {
-  id: string;
-  level: string;
-  message: string;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-};
+export type AgentBrowserLog = AgentBrowserLogDto;
 
 export type TimelineEntry = {
   id: string;

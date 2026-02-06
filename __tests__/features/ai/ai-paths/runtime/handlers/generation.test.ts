@@ -26,7 +26,7 @@ describe('Generation Handlers', () => {
   });
 
   describe('handleTemplate', () => {
-    it('should render template with inputs', () => {
+    it('should render template with inputs', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -35,13 +35,13 @@ describe('Generation Handlers', () => {
         } as any,
         nodeInputs: { name: 'World' }
       });
-      const result = handleTemplate(ctx);
+      const result = await handleTemplate(ctx);
       expect(result.prompt).toBe('Hello World');
     });
   });
 
   describe('handlePrompt', () => {
-    it('should build prompt output', () => {
+    it('should build prompt output', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -50,8 +50,31 @@ describe('Generation Handlers', () => {
         } as any,
         nodeInputs: { value: 'Translate this' }
       });
-      const result = handlePrompt(ctx);
+      const result = await handlePrompt(ctx);
       expect(result.prompt).toBe('Task: Translate this');
+    });
+  });
+
+  describe('handleModel', () => {
+    it('should enqueue AI model job', async () => {
+      vi.mocked(api.aiJobsApi.enqueue).mockResolvedValue({
+        ok: true,
+        data: { jobId: 'job-123' }
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'model',
+          inputs: ['prompt'],
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+        } as any,
+        nodeInputs: { prompt: 'Do something' }
+      });
+      const result = await handleModel(ctx);
+      expect(result.jobId).toBe('job-123');
+      expect(result.status).toBe('queued');
+      expect(api.aiJobsApi.enqueue).toHaveBeenCalled();
     });
   });
 

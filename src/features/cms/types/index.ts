@@ -4,10 +4,10 @@ export type {
   CmsSlugDto,
   CmsThemeDto,
   CmsDomainDto,
-  CreatePageDto,
-  UpdatePageDto,
-  CreateThemeDto,
-  UpdateThemeDto
+  CreateCmsPageDto as CreatePageDto,
+  UpdateCmsPageDto as UpdatePageDto,
+  CreateCmsThemeDto as CreateThemeDto,
+  UpdateCmsThemeDto as UpdateThemeDto
 } from '@/shared/dtos';
 
 export type {

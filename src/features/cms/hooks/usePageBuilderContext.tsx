@@ -70,8 +70,14 @@ const PageBuilderContext = createContext<PageBuilderContextValue | undefined>(
   undefined
 );
 
-export function PageBuilderProvider({ children }: { children: ReactNode }): React.ReactNode {
-  const [state, dispatch] = useReducer(pageBuilderReducer, initialState);
+export function PageBuilderProvider({ 
+  children, 
+  initialState: customInitialState = initialState 
+}: { 
+  children: ReactNode;
+  initialState?: PageBuilderState;
+}): React.ReactNode {
+  const [state, dispatch] = useReducer(pageBuilderReducer, customInitialState);
   const [vectorOverlay, setVectorOverlay] = useState<VectorOverlayRequest | null>(null);
 
   const openVectorOverlay = useCallback((request: VectorOverlayRequest): void => {

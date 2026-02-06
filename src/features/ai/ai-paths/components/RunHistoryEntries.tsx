@@ -14,6 +14,7 @@ const statusStyles: Record<string, string> = {
   failed: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
   delayed: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
   cached: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
+  skipped: 'border-zinc-500/40 bg-zinc-500/10 text-zinc-200',
 };
 
 const formatHistoryValue = (value: unknown): string => {
@@ -35,6 +36,12 @@ const formatPortData = (value: unknown): string => {
   if (keys.length === 0) return '-';
   return formatHistoryValue(value);
 };
+
+const formatSkipReason = (value: string): string =>
+  value
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export function RunHistoryEntries({
   entries,
@@ -84,6 +91,11 @@ export function RunHistoryEntries({
             {entry.error && (
               <div className="mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-xs text-rose-200">
                 Error: {entry.error}
+              </div>
+            )}
+            {entry.skipReason && (
+              <div className="mt-2 rounded-md border border-zinc-500/30 bg-zinc-500/10 p-2 text-xs text-zinc-200">
+                Skip reason: {formatSkipReason(entry.skipReason)}
               </div>
             )}
             {entry.delayMs !== null && entry.delayMs !== undefined && (

@@ -206,10 +206,32 @@ export const handleDelay: NodeHandler = async ({
   node,
   nodeInputs,
   executed,
+  abortSignal,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (!executed.delay.has(node.id)) {
     const delayMs = node.config?.delay?.ms ?? 300;
-    await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, delayMs)));
+    if (abortSignal?.aborted) {
+      const abortError = new Error('Operation aborted.');
+      (abortError as { name?: string }).name = 'AbortError';
+      throw abortError;
+    }
+    await new Promise<void>((resolve, reject) => {
+      if (!abortSignal) {
+        setTimeout(resolve, Math.max(0, delayMs));
+        return;
+      }
+      const onAbort = (): void => {
+        clearTimeout(timer);
+        const abortError = new Error('Operation aborted.');
+        (abortError as { name?: string }).name = 'AbortError';
+        reject(abortError);
+      };
+      const timer = setTimeout(() => {
+        abortSignal.removeEventListener('abort', onAbort);
+        resolve();
+      }, Math.max(0, delayMs));
+      abortSignal.addEventListener('abort', onAbort, { once: true });
+    });
     executed.delay.add(node.id);
   }
   const delayed: Record<string, unknown> = {};

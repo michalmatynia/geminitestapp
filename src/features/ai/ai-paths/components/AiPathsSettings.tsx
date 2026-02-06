@@ -78,6 +78,7 @@ function AiPathsSettingsInner({
     activeTrigger: state.activeTrigger,
     executionMode: state.executionMode,
     flowIntensity: state.flowIntensity,
+    runMode: state.runMode,
     paths: state.paths,
     pathConfigs: state.pathConfigs,
     // Runtime

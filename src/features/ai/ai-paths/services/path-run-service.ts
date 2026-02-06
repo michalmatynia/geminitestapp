@@ -22,6 +22,13 @@ type EnqueueRunInput = {
   meta?: Record<string, unknown> | null;
 };
 
+const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
+  if (!run.startedAt) return null;
+  if (typeof run.startedAt === 'string') return run.startedAt;
+  if (run.startedAt instanceof Date) return run.startedAt.toISOString();
+  return null;
+};
+
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   const repo = getPathRunRepository();
   const nodes = normalizeNodes(input.nodes ?? []);
@@ -49,7 +56,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     runId: run.id,
     level: 'info',
     message: 'Run queued.',
-    metadata: { pathId: run.pathId },
+    metadata: { pathId: run.pathId, runStartedAt: resolveRunStartedAt(run) },
   });
 
   // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
@@ -82,6 +89,7 @@ export const resumePathRun = async (
     runId,
     level: 'info',
     message: `Run resumed (${mode}).`,
+    metadata: { runStartedAt: resolveRunStartedAt(updated) },
   });
   return updated;
 };
@@ -120,6 +128,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     runId,
     level: 'info',
     message: `Retry node ${nodeId}.`,
+    metadata: { runStartedAt: resolveRunStartedAt(updated) },
   });
   return updated;
 };
@@ -136,6 +145,7 @@ export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => 
     runId,
     level: 'warning',
     message: 'Run canceled.',
+    metadata: { runStartedAt: resolveRunStartedAt(updated) },
   });
   return updated;
 };

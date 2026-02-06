@@ -11,6 +11,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  PathRunMode,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -96,8 +97,10 @@ export interface UseAiPathsSettingsStateReturn {
   activeTrigger: string;
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
+  runMode: PathRunMode;
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
+  handleRunModeChange: (mode: PathRunMode) => void;
   triggers: string[];
   isPathLocked: boolean;
   isPathActive: boolean;
@@ -366,6 +369,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? '');
   const [executionMode, setExecutionMode] = useState<PathExecutionMode>('server');
   const [flowIntensity, setFlowIntensity] = useState<PathFlowIntensity>('medium');
+  const [runMode, setRunMode] = useState<PathRunMode>('block');
   const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
     {}
   );
@@ -883,6 +887,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     pathDescription,
     pathName,
     paths,
+    runMode,
     selectedNodeId,
     runtimeState,
     updaterSamples,
@@ -913,6 +918,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDescription,
     setExecutionMode,
     setFlowIntensity,
+    setRunMode,
     setPathName,
     setPaths,
     setRuntimeState,
@@ -956,6 +962,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleRunSimulation,
     handleFireTrigger,
     handleFireTriggerPersistent,
+    handlePauseRun,
+    handleResumeRun,
+    handleStepRun,
+    handleCancelRun,
+    runStatus,
     handleSendToAi,
     sendingToAi,
   } = useAiPathsRuntime({
@@ -963,6 +974,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activeTab,
     activeTrigger,
     executionMode,
+    runMode,
     isPathActive,
     edges,
     nodes,
@@ -999,6 +1011,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges: [],
       updatedAt,
@@ -1041,6 +1054,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       updatedAt,
@@ -1093,6 +1107,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       updatedAt,
@@ -1147,6 +1162,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       updatedAt,
@@ -1317,6 +1333,22 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     });
   };
 
+  const handleRunModeChange = (mode: PathRunMode): void => {
+    if (!activePathId) {
+      setRunMode(mode);
+      return;
+    }
+    if (isPathLocked) {
+      toast('This path is locked. Unlock it to change run mode.', { variant: 'info' });
+      return;
+    }
+    setRunMode(mode);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+      const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+      return { ...prev, [activePathId]: { ...base, runMode: mode } };
+    });
+  };
+
   const handleTogglePathLock = (): void => {
     if (!activePathId) return;
     const nextLocked = !isPathLocked;
@@ -1330,6 +1362,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       updatedAt,
@@ -1375,6 +1408,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       updatedAt,
@@ -1424,6 +1458,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
     setExecutionMode(resetConfig.executionMode ?? 'server');
     setFlowIntensity(resetConfig.flowIntensity ?? 'medium');
+    setRunMode(resetConfig.runMode ?? 'block');
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setIsPathLocked(Boolean(resetConfig.isLocked));
@@ -1444,6 +1479,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       trigger: triggers[0] ?? 'Product Modal - Context Filter',
       executionMode: 'server',
       flowIntensity: 'medium',
+      runMode: 'block',
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -1474,6 +1510,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? 'server');
     setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples({});
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
@@ -1505,6 +1542,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? 'server');
     setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1540,6 +1578,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setActiveTrigger(normalizeTriggerLabel(fallback.trigger));
       setExecutionMode(fallback.executionMode ?? 'server');
       setFlowIntensity(fallback.flowIntensity ?? 'medium');
+      setRunMode(fallback.runMode ?? 'block');
       setParserSamples(fallback.parserSamples ?? {});
       setUpdaterSamples(fallback.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(fallback.runtimeState));
@@ -1570,6 +1609,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setActiveTrigger(normalizeTriggerLabel(nextConfig.trigger));
       setExecutionMode(nextConfig.executionMode ?? 'server');
       setFlowIntensity(nextConfig.flowIntensity ?? 'medium');
+      setRunMode(nextConfig.runMode ?? 'block');
       setParserSamples(nextConfig.parserSamples ?? {});
       setUpdaterSamples(nextConfig.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
@@ -1614,6 +1654,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? 'server');
     setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1712,8 +1753,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activeTrigger,
     executionMode,
     flowIntensity,
+    runMode,
     handleExecutionModeChange,
     handleFlowIntensityChange,
+    handleRunModeChange,
     triggers,
     isPathLocked,
     isPathActive,
@@ -1825,6 +1868,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     clearRuntimeForNode,
     handleSendToAi,
     sendingToAi,
+    handlePauseRun,
+    handleResumeRun,
+    handleStepRun,
+    handleCancelRun,
+    runStatus,
     dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,

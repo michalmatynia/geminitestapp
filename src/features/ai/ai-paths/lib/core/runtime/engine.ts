@@ -53,6 +53,77 @@ import {
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
+export type RuntimeProfileEvent =
+  | {
+    type: 'run';
+    phase: 'start' | 'end';
+    runId: string;
+    runStartedAt: string;
+    nodeCount: number;
+    edgeCount: number;
+    durationMs?: number;
+    iterationCount?: number;
+  }
+  | {
+    type: 'iteration';
+    runId: string;
+    runStartedAt: string;
+    iteration: number;
+    durationMs: number;
+    changed: boolean;
+  }
+  | {
+    type: 'node';
+    runId: string;
+    runStartedAt: string;
+    nodeId: string;
+    nodeType: string;
+    iteration: number;
+    status: 'executed' | 'cached' | 'skipped' | 'error';
+    durationMs: number;
+    hashMs?: number | undefined;
+    reason?: string | undefined;
+  };
+
+export type RuntimeProfileNodeStats = {
+  nodeId: string;
+  nodeType: string;
+  count: number;
+  totalMs: number;
+  maxMs: number;
+  cachedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  hashCount: number;
+  hashTotalMs: number;
+  hashMaxMs: number;
+};
+
+export type RuntimeProfileSummary = {
+  runId: string;
+  durationMs: number;
+  iterationCount: number;
+  nodeCount: number;
+  edgeCount: number;
+  nodes: Array<
+  RuntimeProfileNodeStats & {
+    avgMs: number;
+    hashAvgMs: number;
+  }
+  >;
+  hottestNodes: Array<
+  RuntimeProfileNodeStats & {
+    avgMs: number;
+    hashAvgMs: number;
+  }
+  >;
+};
+
+export type RuntimeProfileOptions = {
+  onEvent?: (event: RuntimeProfileEvent) => void;
+  onSummary?: (summary: RuntimeProfileSummary) => void;
+};
+
 export class GraphExecutionError extends Error {
   state: RuntimeState;
   nodeId?: string | null;
@@ -60,6 +131,36 @@ export class GraphExecutionError extends Error {
   constructor(message: string, state: RuntimeState, nodeId?: string | null, cause?: unknown) {
     super(message);
     this.name = 'GraphExecutionError';
+    this.state = state;
+    this.nodeId = nodeId ?? null;
+    if (cause && typeof (this as { cause?: unknown }).cause === 'undefined') {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
+export type RuntimeExecutionHaltReason = 'step_limit' | 'completed' | 'cancelled';
+
+export type RuntimeExecutionHalt = {
+  reason: RuntimeExecutionHaltReason;
+  stepCount: number;
+  iteration: number;
+};
+
+export type RuntimeExecutionControl = {
+  mode?: 'run' | 'step';
+  stepLimit?: number;
+  signal?: AbortSignal;
+  onHalt?: (payload: RuntimeExecutionHalt) => void;
+};
+
+export class GraphExecutionCancelled extends Error {
+  state: RuntimeState;
+  nodeId?: string | null;
+
+  constructor(message: string, state: RuntimeState, nodeId?: string | null, cause?: unknown) {
+    super(message);
+    this.name = 'GraphExecutionCancelled';
     this.state = state;
     this.nodeId = nodeId ?? null;
     if (cause && typeof (this as { cause?: unknown }).cause === 'undefined') {
@@ -89,12 +190,16 @@ export type EvaluateGraphOptions = {
   historyLimit?: number | undefined;
   skipNodeIds?: Set<string> | string[] | undefined;
   onNodeStart?: (payload: {
+    runId: string;
+    runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues;
     iteration: number;
   }) => void | Promise<void>;
   onNodeFinish?: (payload: {
+    runId: string;
+    runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues;
@@ -104,6 +209,8 @@ export type EvaluateGraphOptions = {
     cached?: boolean;
   }) => void | Promise<void>;
   onNodeError?: (payload: {
+    runId: string;
+    runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues;
@@ -111,12 +218,16 @@ export type EvaluateGraphOptions = {
     iteration: number;
   }) => void | Promise<void>;
   onIterationEnd?: (payload: {
+    runId: string;
+    runStartedAt: string;
     iteration: number;
     inputs: Record<string, RuntimePortValues>;
     outputs: Record<string, RuntimePortValues>;
     hashes?: Record<string, string> | undefined;
     history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   }) => void | Promise<void>;
+  control?: RuntimeExecutionControl | undefined;
+  profile?: RuntimeProfileOptions | undefined;
   fetchEntityByType: (
     entityType: string,
     entityId: string
@@ -132,6 +243,11 @@ export type EvaluateGraphOptions = {
 const CACHE_VERSION = 1;
 const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env.AI_PATHS_NODE_TIMEOUT_MS ?? '', 10) || 120_000);
 const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env.AI_PATHS_NODE_RETRY_BACKOFF_MS ?? '', 10) || 750);
+
+const nowMs = (): number =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
@@ -153,11 +269,17 @@ const withRetries = async <T>(
   task: () => Promise<T>,
   attempts: number,
   backoffMs: number,
-  label: string
+  label: string,
+  signal?: AbortSignal
 ): Promise<T> => {
   let lastError: unknown = null;
   const maxAttempts = Math.max(1, attempts);
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (signal?.aborted) {
+      const abortError = new Error('Operation aborted.');
+      (abortError as { name?: string }).name = 'AbortError';
+      throw abortError;
+    }
     try {
       return await task();
     } catch (error) {
@@ -168,6 +290,12 @@ const withRetries = async <T>(
     }
   }
   throw lastError instanceof Error ? lastError : new Error(`${label} failed after ${maxAttempts} attempt(s)`);
+};
+
+const isAbortError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const name = (error as { name?: string }).name;
+  return name === 'AbortError' || name === 'CanceledError' || name === 'AbortSignal';
 };
 
 const buildNodeInputHash = (
@@ -367,10 +495,111 @@ export async function evaluateGraph({
   onNodeFinish,
   onNodeError,
   onIterationEnd,
+  control,
+  profile,
   fetchEntityByType,
   reportAiPathsError,
   toast,
 }: EvaluateGraphOptions): Promise<RuntimeState> {
+  const profileEnabled = Boolean(profile?.onEvent || profile?.onSummary);
+  const profileRunStartMs = profileEnabled ? nowMs() : 0;
+  const nodeProfile = profileEnabled ? new Map<string, RuntimeProfileNodeStats>() : null;
+  const emitProfileEvent = (event: RuntimeProfileEvent): void => {
+    if (!profile?.onEvent) return;
+    try {
+      profile.onEvent(event);
+    } catch {
+      // Profiling should never break runtime execution.
+    }
+  };
+  const getNodeProfile = (node: AiNode): RuntimeProfileNodeStats => {
+    if (!nodeProfile) {
+      return {
+        nodeId: node.id,
+        nodeType: node.type,
+        count: 0,
+        totalMs: 0,
+        maxMs: 0,
+        cachedCount: 0,
+        skippedCount: 0,
+        errorCount: 0,
+        hashCount: 0,
+        hashTotalMs: 0,
+        hashMaxMs: 0,
+      };
+    }
+    const existing = nodeProfile.get(node.id);
+    if (existing) return existing;
+    const created: RuntimeProfileNodeStats = {
+      nodeId: node.id,
+      nodeType: node.type,
+      count: 0,
+      totalMs: 0,
+      maxMs: 0,
+      cachedCount: 0,
+      skippedCount: 0,
+      errorCount: 0,
+      hashCount: 0,
+      hashTotalMs: 0,
+      hashMaxMs: 0,
+    };
+    nodeProfile.set(node.id, created);
+    return created;
+  };
+  const recordHashProfile = (node: AiNode, hashMs: number): void => {
+    if (!nodeProfile) return;
+    const stats = getNodeProfile(node);
+    stats.hashCount += 1;
+    stats.hashTotalMs += hashMs;
+    stats.hashMaxMs = Math.max(stats.hashMaxMs, hashMs);
+  };
+  const recordNodeProfile = (
+    node: AiNode,
+    payload: {
+      durationMs: number;
+      status: 'executed' | 'cached' | 'skipped' | 'error';
+    }
+  ): void => {
+    if (!nodeProfile) return;
+    const stats = getNodeProfile(node);
+    if (payload.status === 'executed') {
+      stats.count += 1;
+      stats.totalMs += payload.durationMs;
+      stats.maxMs = Math.max(stats.maxMs, payload.durationMs);
+      return;
+    }
+    if (payload.status === 'cached') {
+      stats.cachedCount += 1;
+      return;
+    }
+    if (payload.status === 'skipped') {
+      stats.skippedCount += 1;
+      return;
+    }
+    if (payload.status === 'error') {
+      stats.errorCount += 1;
+    }
+  };
+  const controlMode = control?.mode ?? 'run';
+  const resolvedStepLimit =
+    typeof control?.stepLimit === 'number' && Number.isFinite(control.stepLimit) && control.stepLimit > 0
+      ? control.stepLimit
+      : controlMode === 'step'
+        ? 1
+        : null;
+  const shouldLimitSteps = typeof resolvedStepLimit === 'number' && resolvedStepLimit > 0;
+  let stepCount = 0;
+  let haltReason: RuntimeExecutionHaltReason | null = null;
+  let haltIteration = 0;
+  let currentIteration = 0;
+  const emitHalt = (reason: RuntimeExecutionHaltReason, iteration: number): void => {
+    if (!control?.onHalt) return;
+    try {
+      control.onHalt({ reason, stepCount, iteration });
+    } catch {
+      // Halt callbacks should never break runtime execution.
+    }
+  };
   const sanitizedEdges = sanitizeEdges(nodes, edges);
   const buildRunId = (): string =>
     `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
@@ -379,13 +608,26 @@ export async function evaluateGraph({
     runStartedAt ??
     (seedRunId && seedRunId === resolvedRunId ? seedRunStartedAt : undefined) ??
     new Date().toISOString();
+  emitProfileEvent({
+    type: 'run',
+    phase: 'start',
+    runId: resolvedRunId,
+    runStartedAt: resolvedRunStartedAt,
+    nodeCount: nodes.length,
+    edgeCount: sanitizedEdges.length,
+  });
   const outputs: Record<string, RuntimePortValues> = seedOutputs
     ? Object.fromEntries(
       Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
     )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
-  const shouldReuseHashes = Boolean(seedRunId && seedRunId === resolvedRunId);
+  const shouldReuseHashes = Boolean(
+    seedRunId &&
+    seedRunStartedAt &&
+    seedRunId === resolvedRunId &&
+    seedRunStartedAt === resolvedRunStartedAt
+  );
   const inputHashes = new Map<string, string>(
     shouldReuseHashes && seedHashes ? Object.entries(seedHashes) : []
   );
@@ -404,6 +646,7 @@ export async function evaluateGraph({
       if (!Array.isArray(entries)) return;
       entries.forEach((entry: RuntimeHistoryEntry) => {
         if (!entry || entry.runId !== resolvedRunId) return;
+        if (entry.runStartedAt !== resolvedRunStartedAt) return;
         const hash = entry.inputHash;
         if (!hash) return;
         const set = runFencesByNode.get(nodeId) ?? new Set<string>();
@@ -412,6 +655,35 @@ export async function evaluateGraph({
       });
     });
   }
+  const buildHistorySnapshot = (): Record<string, RuntimeHistoryEntry[]> | undefined =>
+    recordHistory && history.size
+      ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
+      : undefined;
+  const buildRuntimeStateSnapshot = (
+    inputsSnapshot: Record<string, RuntimePortValues>
+  ): RuntimeState => ({
+    runId: resolvedRunId,
+    runStartedAt: resolvedRunStartedAt,
+    inputs: cloneValue(inputsSnapshot) as Record<string, RuntimePortValues>,
+    outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
+    hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+    history: buildHistorySnapshot(),
+  });
+  const throwCancelled = (
+    inputsSnapshot: Record<string, RuntimePortValues>,
+    nodeId?: string | null,
+    cause?: unknown
+  ): never => {
+    emitHalt('cancelled', currentIteration);
+    throw new GraphExecutionCancelled('Run cancelled.', buildRuntimeStateSnapshot(inputsSnapshot), nodeId, cause);
+  };
+  const ensureNotCancelled = (
+    inputsSnapshot?: Record<string, RuntimePortValues>,
+    nodeId?: string | null
+  ): void => {
+    if (!control?.signal?.aborted) return;
+    throwCancelled(inputsSnapshot ?? inputs, nodeId);
+  };
   const now = resolvedRunStartedAt;
   const entityCache = new Map<string, Record<string, unknown> | null>();
   const activeNodeIds = new Set<string>();
@@ -591,15 +863,23 @@ export async function evaluateGraph({
       );
     const anyConnected = (ports: string[]): boolean =>
       ports.some((port: string) => connectedPorts.has(port));
+    const allConnectedHaveValues = (ports: string[]): boolean =>
+      ports.every((port: string) =>
+        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput(rawInputs[port]))
+      );
 
     if (operation === 'query') {
       const queryPorts = ['aiQuery', 'query', 'queryCallback'];
       const idPorts = ['value', 'entityId', 'productId'];
-      if (anyConnected(queryPorts)) {
-        return hasAnyValue(queryPorts);
+      const queryGroup = [...queryPorts, ...idPorts];
+      if (anyConnected(queryGroup) && !hasAnyValue(queryGroup)) {
+        return false;
       }
-      if (anyConnected(idPorts)) {
-        return hasAnyValue(idPorts);
+      const nonQueryPorts = Array.from(connectedPorts).filter(
+        (port: string) => !queryGroup.includes(port)
+      );
+      if (!allConnectedHaveValues(nonQueryPorts)) {
+        return false;
       }
       return true;
     }
@@ -662,7 +942,9 @@ export async function evaluateGraph({
     if (
       last &&
       last.runId === entry.runId &&
+      last.runStartedAt === entry.runStartedAt &&
       last.status === entry.status &&
+      last.skipReason === entry.skipReason &&
       stableStringify(last.inputs) === stableStringify(entry.inputs) &&
       stableStringify(last.outputs) === stableStringify(entry.outputs)
     ) {
@@ -673,6 +955,40 @@ export async function evaluateGraph({
       existing.splice(0, existing.length - historyMax);
     }
     history.set(nodeId, existing);
+  };
+
+  const pushSkipEntry = (
+    node: AiNode,
+    nodeInputs: RuntimePortValues,
+    prevOutputs: RuntimePortValues,
+    options: {
+      status: RuntimeHistoryEntry['status'];
+      reason: string;
+      iteration: number;
+      inputHash?: string | null;
+    }
+  ): void => {
+    if (!recordHistory) return;
+    const entry: RuntimeHistoryEntry = {
+      timestamp: new Date().toISOString(),
+      runId: resolvedRunId,
+      runStartedAt: resolvedRunStartedAt,
+      pathId: resolvedPathId ?? null,
+      pathName: resolvedPathName ?? null,
+      nodeId: node.id,
+      nodeType: node.type,
+      nodeTitle: node.title ?? null,
+      status: options.status,
+      iteration: options.iteration,
+      inputs: cloneValue(nodeInputs),
+      outputs: cloneValue(prevOutputs),
+      inputHash: options.inputHash ?? null,
+      skipReason: options.reason,
+      inputsFrom: buildInputLinks(node.id, nodeInputs),
+      outputsTo: buildOutputLinks(node.id, prevOutputs),
+      delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
+    };
+    pushHistoryEntry(node.id, entry);
   };
 
   const getRunFence = (nodeId: string): Set<string> => {
@@ -716,6 +1032,18 @@ export async function evaluateGraph({
   const skipNodeSet = skipNodeIds
     ? new Set(Array.isArray(skipNodeIds) ? skipNodeIds : Array.from(skipNodeIds))
     : null;
+  const markStep = (node: AiNode): boolean => {
+    if (!shouldLimitSteps) return false;
+    if (!isActiveNode(node)) return false;
+    if (node.type === 'simulation') return false;
+    stepCount += 1;
+    if (stepCount >= (resolvedStepLimit ?? 0)) {
+      haltReason = 'step_limit';
+      haltIteration = currentIteration;
+      return true;
+    }
+    return false;
+  };
 
   const fetchEntityCached = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
     if (!entityType || !entityId) return null;
@@ -771,6 +1099,7 @@ export async function evaluateGraph({
         ? await fetchEntityCached(triggerEntityType, triggerEntityId)
         : null;
   const fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
+  ensureNotCancelled();
 
   const deriveDatabaseInputs = (
     rawInputs: RuntimePortValues
@@ -873,6 +1202,14 @@ export async function evaluateGraph({
     if (!resolvedEntityType && simulationEntityType) {
       next.entityType = simulationEntityType;
     }
+    if (!pickString(next.value)) {
+      const fallbackValue =
+        pickString(next.entityId) ??
+        pickString(next.productId);
+      if (fallbackValue) {
+        next.value = fallbackValue;
+      }
+    }
     return next;
   };
 
@@ -935,8 +1272,13 @@ export async function evaluateGraph({
     ai: new Set<string>(),
     schema: new Set<string>(),
   };
+  let iterationCount = 0;
+  ensureNotCancelled();
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    currentIteration = iteration;
+    ensureNotCancelled();
+    const iterationStartMs = profileEnabled ? nowMs() : 0;
     const nextInputs: Record<string, RuntimePortValues> = {};
     orderedNodes.forEach((node: AiNode): void => {
       nextInputs[node.id] = collectNodeInputs(node.id);
@@ -944,17 +1286,41 @@ export async function evaluateGraph({
 
     let changed = false;
     for (const node of orderedNodes) {
+      ensureNotCancelled(nextInputs, node.id);
       const nodeInputsSnapshot = nextInputs[node.id] ?? {};
-      const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
-      if (shouldWaitForInputs) {
-        if (!hasRequiredInputs(node, nodeInputsSnapshot)) {
-          nextInputs[node.id] = nodeInputsSnapshot;
-          continue;
-        }
-      }
       let nodeInputs = nodeInputsSnapshot;
       if (node.type === 'database') {
         nodeInputs = deriveDatabaseInputs(nodeInputs);
+      }
+      const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
+      if (shouldWaitForInputs) {
+        if (!hasRequiredInputs(node, nodeInputs)) {
+          nextInputs[node.id] = nodeInputs;
+          if (isActiveNode(node)) {
+            const prevOutputs = outputs[node.id] ?? {};
+            pushSkipEntry(node, nodeInputs, prevOutputs, {
+              status: 'skipped',
+              reason: 'missing_inputs',
+              iteration,
+            });
+            recordNodeProfile(node, { durationMs: 0, status: 'skipped' });
+            emitProfileEvent({
+              type: 'node',
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              nodeId: node.id,
+              nodeType: node.type,
+              iteration,
+              status: 'skipped',
+              durationMs: 0,
+              reason: 'missing_inputs',
+            });
+            if (markStep(node)) {
+              break;
+            }
+          }
+          continue;
+        }
       }
       nextInputs[node.id] = nodeInputs;
 
@@ -969,6 +1335,9 @@ export async function evaluateGraph({
         if (!outputs[node.id]) {
           outputs[node.id] = prevOutputs;
         }
+        if (markStep(node)) {
+          break;
+        }
         continue;
       }
 
@@ -977,21 +1346,51 @@ export async function evaluateGraph({
       if (!isCacheable && inputHashes.has(node.id)) {
         inputHashes.delete(node.id);
       }
-      const fenceHash =
-        node.type === 'database'
-          ? buildDatabaseInputHash(node, nodeInputs)
-          : null;
-      const inputHash = isCacheable
-        ? (node.type === 'database'
-          ? fenceHash
-          : buildNodeInputHash(node, nodeInputs))
-        : null;
-      const historyInputHash = node.type === 'database' ? (fenceHash ?? inputHash) : inputHash;
+      let hashMs: number | undefined;
+      let fenceHash: string;
+      if (profileEnabled) {
+        const hashStartMs = nowMs();
+        fenceHash =
+          node.type === 'database'
+            ? buildDatabaseInputHash(node, nodeInputs)
+            : buildNodeInputHash(node, nodeInputs);
+        hashMs = nowMs() - hashStartMs;
+        recordHashProfile(node, hashMs);
+      } else {
+        fenceHash =
+          node.type === 'database'
+            ? buildDatabaseInputHash(node, nodeInputs)
+            : buildNodeInputHash(node, nodeInputs);
+      }
+      const inputHash = isCacheable ? fenceHash : null;
+      const historyInputHash = fenceHash ?? null;
+      const profileHashMs = typeof hashMs === 'number' ? hashMs : undefined;
       if (fenceHash) {
         const fenceSet = getRunFence(node.id);
         if (fenceSet.has(fenceHash)) {
+          pushSkipEntry(node, nodeInputs, prevOutputs, {
+            status: 'cached',
+            reason: 'run_fence',
+            iteration,
+            inputHash: historyInputHash ?? null,
+          });
+          recordNodeProfile(node, { durationMs: 0, status: 'cached' });
+          emitProfileEvent({
+            type: 'node',
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            nodeId: node.id,
+            nodeType: node.type,
+            iteration,
+            status: 'cached',
+            durationMs: 0,
+            hashMs: profileHashMs,
+            reason: 'run_fence',
+          });
           if (onNodeFinish) {
             await onNodeFinish({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
               node,
               nodeInputs,
               prevOutputs,
@@ -1000,6 +1399,9 @@ export async function evaluateGraph({
               iteration,
               cached: true,
             });
+          }
+          if (markStep(node)) {
+            break;
           }
           continue;
         }
@@ -1014,8 +1416,29 @@ export async function evaluateGraph({
         if (fenceHash) {
           getRunFence(node.id).add(fenceHash);
         }
+        pushSkipEntry(node, nodeInputs, prevOutputs, {
+          status: 'cached',
+          reason: 'cache_hit',
+          iteration,
+          inputHash: historyInputHash ?? null,
+        });
+        recordNodeProfile(node, { durationMs: 0, status: 'cached' });
+        emitProfileEvent({
+          type: 'node',
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          nodeId: node.id,
+          nodeType: node.type,
+          iteration,
+          status: 'cached',
+          durationMs: 0,
+          hashMs: profileHashMs,
+          reason: 'cache_hit',
+        });
         if (onNodeFinish) {
           await onNodeFinish({
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
             node,
             nodeInputs,
             prevOutputs,
@@ -1025,15 +1448,28 @@ export async function evaluateGraph({
             cached: true,
           });
         }
+        if (markStep(node)) {
+          break;
+        }
         continue;
       }
 
       const handler = HANDLERS[node.type];
       if (handler) {
+        ensureNotCancelled(nextInputs, node.id);
         if (onNodeStart) {
-          await onNodeStart({ node, nodeInputs, prevOutputs, iteration });
+          await onNodeStart({
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            node,
+            nodeInputs,
+            prevOutputs,
+            iteration,
+          });
         }
+        const nodeStartMs = profileEnabled ? nowMs() : 0;
         try {
+          ensureNotCancelled(nextInputs, node.id);
           const timeoutMs = node.config?.runtime?.timeoutMs ?? DEFAULT_NODE_TIMEOUT_MS;
           const retryAttempts = node.config?.runtime?.retry?.attempts ?? 1;
           const retryBackoffMs = node.config?.runtime?.retry?.backoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
@@ -1048,6 +1484,8 @@ export async function evaluateGraph({
                     edges: sanitizedEdges,
                     nodes,
                     nodeById,
+                    runId: resolvedRunId,
+                    runStartedAt: resolvedRunStartedAt,
                     activePathId,
                     triggerNodeId,
                     triggerEvent,
@@ -1055,6 +1493,7 @@ export async function evaluateGraph({
                     deferPoll,
                     skipAiJobs,
                     now,
+                    abortSignal: control?.signal,
                     allOutputs: outputs,
                     allInputs: nextInputs,
                     fetchEntityCached,
@@ -1072,14 +1511,49 @@ export async function evaluateGraph({
               ),
             retryAttempts,
             retryBackoffMs,
-            `${node.type}:${node.id}`
+            `${node.type}:${node.id}`,
+            control?.signal
           );
+          ensureNotCancelled(nextInputs, node.id);
           nextOutputs = result;
+          const durationMs = profileEnabled ? nowMs() - nodeStartMs : 0;
+          recordNodeProfile(node, { durationMs, status: 'executed' });
+          emitProfileEvent({
+            type: 'node',
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            nodeId: node.id,
+            nodeType: node.type,
+            iteration,
+            status: 'executed',
+            durationMs,
+            hashMs: profileHashMs,
+          });
         } catch (error) {
+          if (error instanceof GraphExecutionCancelled) {
+            throw error;
+          }
+          if (control?.signal?.aborted || isAbortError(error)) {
+            throwCancelled(nextInputs, node.id, error);
+          }
+          const durationMs = profileEnabled ? nowMs() - nodeStartMs : 0;
+          recordNodeProfile(node, { durationMs, status: 'error' });
+          emitProfileEvent({
+            type: 'node',
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            nodeId: node.id,
+            nodeType: node.type,
+            iteration,
+            status: 'error',
+            durationMs,
+            hashMs: profileHashMs,
+          });
           if (recordHistory) {
             const entry: RuntimeHistoryEntry = {
               timestamp: new Date().toISOString(),
               runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
               pathId: resolvedPathId ?? null,
               pathName: resolvedPathName ?? null,
               nodeId: node.id,
@@ -1098,7 +1572,15 @@ export async function evaluateGraph({
             pushHistoryEntry(node.id, entry);
           }
           if (onNodeError) {
-            await onNodeError({ node, nodeInputs, prevOutputs, error, iteration });
+            await onNodeError({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              error,
+              iteration,
+            });
           }
           const historySnapshot =
             recordHistory && history.size
@@ -1126,6 +1608,7 @@ export async function evaluateGraph({
         const entry: RuntimeHistoryEntry = {
           timestamp: new Date().toISOString(),
           runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
           pathId: resolvedPathId ?? null,
           pathName: resolvedPathName ?? null,
           nodeId: node.id,
@@ -1172,6 +1655,8 @@ export async function evaluateGraph({
       }
       if (handler && onNodeFinish) {
         await onNodeFinish({
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
           node,
           nodeInputs,
           prevOutputs,
@@ -1180,11 +1665,16 @@ export async function evaluateGraph({
           iteration,
         });
       }
+      if (markStep(node)) {
+        break;
+      }
     }
 
     inputs = nextInputs;
     if (onIterationEnd) {
       await onIterationEnd({
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
         iteration,
         inputs,
         outputs,
@@ -1193,10 +1683,23 @@ export async function evaluateGraph({
           recordHistory && history.size ? Object.fromEntries(history) : undefined,
       });
     }
+    if (profileEnabled) {
+      const iterationDurationMs = nowMs() - iterationStartMs;
+      emitProfileEvent({
+        type: 'iteration',
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
+        iteration,
+        durationMs: iterationDurationMs,
+        changed,
+      });
+    }
+    iterationCount += 1;
+    if (haltReason === 'step_limit') break;
     if (!changed) break;
   }
 
-  return {
+  const result: RuntimeState = {
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
     inputs,
@@ -1204,6 +1707,52 @@ export async function evaluateGraph({
     hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
     history: recordHistory && history.size ? Object.fromEntries(history) : undefined,
   };
+  if (haltReason === 'step_limit') {
+    emitHalt('step_limit', haltIteration);
+  } else {
+    emitHalt('completed', Math.max(0, iterationCount - 1));
+  }
+  if (haltReason !== 'step_limit') {
+    if (profile?.onSummary && nodeProfile) {
+      const durationMs = nowMs() - profileRunStartMs;
+      const nodesSummary = Array.from(nodeProfile.values()).map((stats: RuntimeProfileNodeStats) => ({
+        ...stats,
+        avgMs: stats.count > 0 ? stats.totalMs / stats.count : 0,
+        hashAvgMs: stats.hashCount > 0 ? stats.hashTotalMs / stats.hashCount : 0,
+      }));
+      const hottestNodes = nodesSummary
+        .slice()
+        .sort((a, b) => b.totalMs - a.totalMs)
+        .slice(0, Math.min(5, nodesSummary.length));
+      try {
+        profile.onSummary({
+          runId: resolvedRunId,
+          durationMs,
+          iterationCount,
+          nodeCount: nodes.length,
+          edgeCount: sanitizedEdges.length,
+          nodes: nodesSummary,
+          hottestNodes,
+        });
+      } catch {
+        // Profiling should never break runtime execution.
+      }
+    }
+    if (profileEnabled) {
+      const durationMs = nowMs() - profileRunStartMs;
+      emitProfileEvent({
+        type: 'run',
+        phase: 'end',
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
+        nodeCount: nodes.length,
+        edgeCount: sanitizedEdges.length,
+        durationMs,
+        iterationCount,
+      });
+    }
+  }
+  return result;
 }
 
 const getIteratorMaxSteps = (nodes: AiNode[]): number => {
@@ -1240,6 +1789,11 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
   };
+  const hasStepLimit =
+    typeof options.control?.stepLimit === 'number' && options.control.stepLimit > 0;
+  if (options.control?.mode === 'step' || hasStepLimit) {
+    return evaluateGraph(baseOptions);
+  }
   let current = await evaluateGraph(baseOptions);
   if (!options.nodes.some((node: AiNode): boolean => node.type === 'iterator')) {
     return current;

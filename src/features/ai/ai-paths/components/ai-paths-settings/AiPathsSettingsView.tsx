@@ -54,7 +54,7 @@ export function AiPathsSettingsView({
   const { setLastError } = useRuntimeActions();
 
   // Domain: Graph — read from context (synced state only)
-  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, paths, pathConfigs } = useGraphState();
+  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs } = useGraphState();
 
   // Domain: Selection — read from context
   const { nodeConfigDirty } = useSelectionState();
@@ -71,6 +71,7 @@ export function AiPathsSettingsView({
     handleTogglePathActive,
     handleFlowIntensityChange,
     handleExecutionModeChange,
+    handleRunModeChange,
     persistLastError,
     setPathName,
     updateActivePathMeta,
@@ -198,6 +199,13 @@ export function AiPathsSettingsView({
       { value: 'low', label: 'Flow: Low' },
       { value: 'medium', label: 'Flow: Medium' },
       { value: 'high', label: 'Flow: High' },
+    ],
+    []
+  );
+  const runModeOptions = useMemo(
+    () => [
+      { value: 'block', label: 'Run: Block' },
+      { value: 'queue', label: 'Run: Queue' },
     ],
     []
   );
@@ -393,6 +401,21 @@ export function AiPathsSettingsView({
                       }
                     }}
                     options={flowOptions}
+                    className="w-[160px]"
+                    triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                    disabled={isPathLocked}
+                  />
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Label className="text-[10px] uppercase text-gray-500">Run Mode</Label>
+                  <UnifiedSelect
+                    value={runMode}
+                    onValueChange={(value: string): void => {
+                      if (value !== runMode) {
+                        handleRunModeChange(value as 'block' | 'queue');
+                      }
+                    }}
+                    options={runModeOptions}
                     className="w-[160px]"
                     triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
                     disabled={isPathLocked}

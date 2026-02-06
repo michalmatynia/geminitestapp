@@ -14,6 +14,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  PathRunMode,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -79,6 +80,7 @@ type UseAiPathsPersistenceArgs = {
   paths: PathMeta[];
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
+  runMode: PathRunMode;
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -115,6 +117,7 @@ type UseAiPathsPersistenceArgs = {
   setPathDescription: (value: string) => void;
   setExecutionMode: (value: PathExecutionMode) => void;
   setFlowIntensity: (value: PathFlowIntensity) => void;
+  setRunMode: (value: PathRunMode) => void;
   setPathName: (value: string) => void;
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
@@ -169,6 +172,7 @@ export function useAiPathsPersistence({
   paths,
   executionMode,
   flowIntensity,
+  runMode,
   selectedNodeId,
   runtimeState,
   updaterSamples,
@@ -197,6 +201,7 @@ export function useAiPathsPersistence({
   setPathDescription,
   setExecutionMode,
   setFlowIntensity,
+  setRunMode,
   setPathName,
   setPaths,
   setRuntimeState,
@@ -251,6 +256,7 @@ export function useAiPathsPersistence({
   const currentActiveTriggerRef = useRef(triggers[0] ?? 'Product Modal - Context Filter');
   const currentExecutionModeRef = useRef<PathExecutionMode>('server');
   const currentFlowIntensityRef = useRef<PathFlowIntensity>('medium');
+  const currentRunModeRef = useRef<PathRunMode>('block');
   const currentParserSamplesRef = useRef<Record<string, ParserSampleState>>({});
   const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
   const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
@@ -572,6 +578,7 @@ export function useAiPathsPersistence({
         setActiveTrigger(normalizeTriggerLabel(activeConfig.trigger));
         setExecutionMode(activeConfig.executionMode ?? 'server');
         setFlowIntensity(activeConfig.flowIntensity ?? 'medium');
+        setRunMode(activeConfig.runMode ?? 'block');
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -695,6 +702,7 @@ export function useAiPathsPersistence({
         trigger: activeTrigger,
         executionMode,
         flowIntensity,
+        runMode,
         isLocked: isPathLocked,
         isActive: isPathActive,
         uiState: {
@@ -716,6 +724,7 @@ export function useAiPathsPersistence({
       activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       isPathLocked,
       isPathActive,
       selectedNodeId,
@@ -738,6 +747,7 @@ export function useAiPathsPersistence({
       trigger: activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes: nodesOverride ?? nodes,
       edges,
       updatedAt,
@@ -758,6 +768,7 @@ export function useAiPathsPersistence({
       activeTrigger,
       executionMode,
       flowIntensity,
+      runMode,
       nodes,
       edges,
       isPathLocked,
@@ -998,6 +1009,9 @@ export function useAiPathsPersistence({
     currentFlowIntensityRef.current = flowIntensity;
   }, [flowIntensity]);
   useEffect((): void => {
+    currentRunModeRef.current = runMode;
+  }, [runMode]);
+  useEffect((): void => {
     currentParserSamplesRef.current = parserSamples;
   }, [parserSamples]);
   useEffect((): void => {
@@ -1066,6 +1080,7 @@ export function useAiPathsPersistence({
         trigger: currentActiveTriggerRef.current,
         executionMode: currentExecutionModeRef.current,
         flowIntensity: currentFlowIntensityRef.current,
+        runMode: currentRunModeRef.current,
         nodes: nodesForSave,
         edges: currentEdgesRef.current,
         updatedAt,

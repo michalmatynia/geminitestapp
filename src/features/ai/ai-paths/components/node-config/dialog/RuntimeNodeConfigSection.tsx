@@ -1,7 +1,7 @@
 'use client';
 
 import type { AiNode, NodeCacheMode, NodeConfig } from '@/features/ai/ai-paths/lib';
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@/shared/ui';
 
 type RuntimeNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -15,6 +15,8 @@ export function RuntimeNodeConfigSection({
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
+  const defaultWaitForInputs = selectedNode.type === 'database';
+  const waitForInputs = runtimeConfig.waitForInputs ?? defaultWaitForInputs;
 
   return (
     <div className="space-y-3 rounded-md border border-border bg-card/50 p-3">
@@ -50,6 +52,25 @@ export function RuntimeNodeConfigSection({
       <p className="text-[11px] text-gray-500">
         Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).
       </p>
+      <div className="mt-3 flex items-center justify-between gap-4">
+        <div>
+          <div className="text-[11px] text-gray-200">Require inputs</div>
+          <div className="text-[11px] text-gray-500">
+            Wait for connected inputs to be present before execution.
+          </div>
+        </div>
+        <Switch
+          checked={waitForInputs}
+          onCheckedChange={(checked: boolean): void =>
+            updateSelectedNodeConfig({
+              runtime: {
+                ...runtimeConfig,
+                waitForInputs: checked,
+              },
+            })
+          }
+        />
+      </div>
     </div>
   );
 }

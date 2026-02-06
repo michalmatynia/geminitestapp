@@ -641,18 +641,19 @@ export function PagePreviewPanel(): React.ReactNode {
         onPointerDown={handleCanvasPointerDown}
       >
         {!state.currentPage ? (
-          <div className="flex h-full items-center justify-center p-6 text-gray-500">
+          <div className="flex h-full items-center justify-center p-6 text-gray-500" data-testid="preview-no-page">
             Select a page from the left panel to preview it
           </div>
         ) : !hasSections ? (
-          <div className="flex h-full items-center justify-center p-6 text-gray-500">
+          <div className="flex h-full items-center justify-center p-6 text-gray-500" data-testid="preview-empty">
             No sections yet. Use the left panel to add sections.
           </div>
         ) : (
           <>
-            <div className="p-0" style={scaledCanvasWrapperStyle}>
+            <div className="p-0" style={scaledCanvasWrapperStyle} data-testid="preview-canvas-wrapper">
               <div
                 data-cms-canvas="true"
+                data-testid="preview-canvas"
                 ref={canvasRef}
                 className={`cms-hover-scope relative mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? 'p-3' : ''} ${
                   state.inspectorEnabled ? 'cursor-crosshair' : ''

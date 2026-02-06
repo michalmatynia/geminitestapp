@@ -35,6 +35,33 @@ export const DEFAULT_DB_QUERY: DbQueryConfig = {
   single: false,
 };
 
+const createAbortError = (): Error => {
+  const error = new Error('Operation aborted.');
+  (error as { name?: string }).name = 'AbortError';
+  return error;
+};
+
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (!signal) {
+      setTimeout(resolve, ms);
+      return;
+    }
+    if (signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(createAbortError());
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+
 export const toJsonSafe = (value: unknown): unknown => {
   const seen = new WeakSet();
   const replacer = (_key: string, val: unknown): unknown => {
@@ -272,7 +299,8 @@ export const pollDatabaseQuery = async (
     successOperator: 'truthy' | 'equals' | 'contains' | 'notEquals';
     successValue: string;
     resultPath: string;
-  }
+  },
+  options?: { signal?: AbortSignal }
 ): Promise<{ result: unknown; status: string; bundle: Record<string, unknown> }> => {
   const maxAttempts = config.maxAttempts;
   const intervalMs = config.intervalMs;
@@ -282,6 +310,9 @@ export const pollDatabaseQuery = async (
   const resultPath = config.resultPath || '';
   let lastBundle: Record<string, unknown> | null = null;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (options?.signal?.aborted) {
+      throw createAbortError();
+    }
     const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
     const queryResult = await dbApi.query<{ item?: unknown; items?: unknown[] }>(payload);
     if (!queryResult.ok) {
@@ -322,7 +353,7 @@ export const pollDatabaseQuery = async (
       };
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await sleep(Math.max(0, intervalMs), options?.signal);
     }
   }
   return {
@@ -334,13 +365,20 @@ export const pollDatabaseQuery = async (
 
 export const pollGraphJob = async (
   jobId: string,
-  options?: { intervalMs?: number; maxAttempts?: number }
+  options?: { intervalMs?: number; maxAttempts?: number; signal?: AbortSignal }
 ): Promise<string> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
+  const signal = options?.signal;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const pollResult = await aiJobsApi.poll(jobId);
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+    const pollResult = await aiJobsApi.poll(jobId, signal ? { signal } : {});
     if (!pollResult.ok) {
+      if (signal?.aborted) {
+        throw createAbortError();
+      }
       throw new Error('Failed to fetch job status.');
     }
     const { status, result: jobResult, error: jobError } = pollResult.data;
@@ -363,7 +401,7 @@ export const pollGraphJob = async (
       throw new Error('AI job was canceled.');
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await sleep(Math.max(0, intervalMs), signal);
     }
   }
   throw new Error('AI job timed out.');

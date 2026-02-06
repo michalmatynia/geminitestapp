@@ -58,6 +58,8 @@ export const handleModel: NodeHandler = async ({
   edges,
   nodes,
   nodeById,
+  runId,
+  runStartedAt,
   activePathId,
   simulationEntityType,
   simulationEntityId,
@@ -65,6 +67,7 @@ export const handleModel: NodeHandler = async ({
   executed,
   toast,
   reportAiPathsError,
+  abortSignal,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (skipAiJobs) {
     return prevOutputs;
@@ -201,7 +204,7 @@ export const handleModel: NodeHandler = async ({
     },
   };
   const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);
-  const payloadHash = hashRuntimeValue(payload);
+  const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
 
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
@@ -210,11 +213,7 @@ export const handleModel: NodeHandler = async ({
   const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
     ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
     : '';
-  const prevDebugPayloadHash =
-    (prevOutputs as Record<string, unknown>).debugPayload !== undefined
-      ? hashRuntimeValue((prevOutputs as Record<string, unknown>).debugPayload)
-      : '';
-  if (prevJobId && (prevPayloadHash === payloadHash || prevDebugPayloadHash === payloadHash)) {
+  if (prevJobId && prevPayloadHash === payloadHash) {
     return { ...prevOutputs, payloadHash };
   }
   let enqueuedJobId: string | undefined;
@@ -238,7 +237,7 @@ export const handleModel: NodeHandler = async ({
         payloadHash,
       };
     }
-    const result = await pollGraphJob(enqueueResult.data.jobId);
+    const result = await pollGraphJob(enqueueResult.data.jobId, abortSignal ? { signal: abortSignal } : {});
     return {
       result,
       jobId: enqueueResult.data.jobId,

@@ -170,6 +170,24 @@ describe('evaluateGraph', () => {
   it('should evaluate a parser node with JSON input', async () => {
     const nodes: AiNode[] = [
       {
+        id: 'seed-node',
+        type: 'constant',
+        title: 'Seed',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: -200, y: 0 },
+        config: {
+          constant: {
+            valueType: 'json',
+            value: JSON.stringify({
+              name: 'Test Product',
+              details: { price: 99.99 },
+            }),
+          },
+        },
+      },
+      {
         id: 'node-parser',
         type: 'parser',
         title: 'Parser',
@@ -187,20 +205,12 @@ describe('evaluateGraph', () => {
         },
       },
     ];
-    const seedOutputs = {
-      'trigger-node': {
-        entityJson: {
-          name: 'Test Product',
-          details: { price: 99.99 },
-        },
-      },
-    };
-    const edgesWithSeed: Edge[] = [
+    const edges: Edge[] = [
       {
         id: 'e-seed',
-        from: 'trigger-node',
+        from: 'seed-node',
         to: 'node-parser',
-        fromPort: 'entityJson',
+        fromPort: 'value',
         toPort: 'entityJson',
       },
     ];
@@ -208,8 +218,7 @@ describe('evaluateGraph', () => {
     const result = await evaluateGraph({
       ...defaultOptions,
       nodes,
-      edges: edgesWithSeed,
-      seedOutputs,
+      edges,
     });
 
     expect(result.outputs['node-parser']).toEqual({
@@ -360,5 +369,107 @@ describe('evaluateGraph', () => {
     // It should stop at 3 or 4 depending on loop logic.
     expect(result.outputs['n1']!.value).toBeGreaterThanOrEqual(2);
     expect(result.outputs['n1']!.value).toBeLessThanOrEqual(4);
+  });
+
+  describe('Graph Caching', () => {
+    const triggerNode: AiNode = {
+      id: 'trigger',
+      type: 'trigger',
+      title: 'Trigger',
+      description: '',
+      inputs: [],
+      outputs: ['value'],
+      position: { x: -200, y: 0 },
+      config: {},
+    };
+
+    it('should not re-execute a node if inputs and config have not changed', async () => {
+      const nodes: AiNode[] = [
+        {
+          id: 'n1',
+          type: 'constant',
+          title: 'Const',
+          description: '',
+          inputs: [],
+          outputs: ['value'],
+          position: { x: 0, y: 0 },
+          config: {
+            constant: { valueType: 'string', value: 'initial' },
+            runtime: { cache: { mode: 'auto' } }
+          },
+        },
+      ];
+
+      // First run
+      const result1 = await evaluateGraph({
+        ...defaultOptions,
+        nodes: [triggerNode, ...nodes],
+        edges: [],
+      });
+
+      expect(result1.outputs['n1']).toEqual({ value: 'initial' });
+      const hash1 = result1.hashes?.['n1'];
+      expect(hash1).toBeDefined();
+
+      const onNodeStart = vi.fn();
+      await evaluateGraph({
+        ...defaultOptions,
+        runId: result1.runId as string,
+        seedRunId: result1.runId as string,
+        runStartedAt: result1.runStartedAt as string,
+        seedRunStartedAt: result1.runStartedAt as string,
+        nodes: [triggerNode, ...nodes],
+        edges: [],
+        seedOutputs: result1.outputs,
+        seedHashes: result1.hashes,
+        onNodeStart,
+      });
+
+      expect(onNodeStart).not.toHaveBeenCalled();
+    });
+
+    it('should re-execute if cache is disabled', async () => {
+      const nodes: AiNode[] = [
+        {
+          id: 'n1',
+          type: 'constant',
+          title: 'Const',
+          description: '',
+          inputs: [],
+          outputs: ['value'],
+          position: { x: 0, y: 0 },
+          config: {
+            constant: { valueType: 'string', value: 'initial' },
+            runtime: { cache: { mode: 'disabled' } }
+          },
+        },
+      ];
+
+      const onNodeStart = vi.fn();
+      
+      const result1 = await evaluateGraph({
+        ...defaultOptions,
+        nodes: [triggerNode, ...nodes],
+        edges: [],
+      });
+
+      await evaluateGraph({
+        ...defaultOptions,
+        runId: result1.runId as string,
+        seedRunId: result1.runId as string,
+        runStartedAt: result1.runStartedAt as string,
+        seedRunStartedAt: result1.runStartedAt as string,
+        nodes: [triggerNode, ...nodes],
+        edges: [],
+        seedOutputs: result1.outputs,
+        seedHashes: result1.hashes,
+        onNodeStart,
+      });
+
+      // trigger node is cached, but n1 is NOT cacheable (disabled), so it runs.
+      const executedNodeIds = onNodeStart.mock.calls.map(args => args[0].node.id);
+      expect(executedNodeIds).not.toContain('trigger');
+      expect(executedNodeIds).toContain('n1');
+    });
   });
 });

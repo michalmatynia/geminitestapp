@@ -120,6 +120,13 @@ export interface AiDbQueryPresetDto extends NamedDto {
 }
 
 /**
+ * DTO for a database node preset
+ */
+export interface AiDbNodePresetDto extends NamedDto {
+  config: Record<string, unknown>;
+}
+
+/**
  * DTO for creating an AI Path
  */
 export interface CreateAiPathDto {

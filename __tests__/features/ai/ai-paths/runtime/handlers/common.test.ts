@@ -90,7 +90,7 @@ describe('Common Handlers', () => {
   });
 
   describe('handleCompare', () => {
-    it('should compare equality', () => {
+    it('should compare equality', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -99,11 +99,11 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { value: 'test' }
       });
-      const result = handleCompare(ctx);
+      const result = await handleCompare(ctx);
       expect(result.valid).toBe(true);
     });
 
-    it('should handle case insensitivity', () => {
+    it('should handle case insensitivity', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -112,27 +112,27 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { value: 'test' }
       });
-      const result = handleCompare(ctx);
+      const result = await handleCompare(ctx);
       expect(result.valid).toBe(true);
     });
   });
 
   describe('handleRouter', () => {
-    it('should pass truthy value in valid mode', () => {
+    it('should pass truthy value in valid mode', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
           type: 'router',
           config: { router: { mode: 'valid', matchMode: 'truthy' } }
         } as any,
-        nodeInputs: { valid: true, data: 'some-data' }
+        nodeInputs: { valid: true, value: 'some-value' }
       });
-      const result = handleRouter(ctx);
+      const result = await handleRouter(ctx);
       expect(result.valid).toBe(true);
-      expect(result.data).toBe('some-data');
+      expect(result.value).toBe('some-value');
     });
 
-    it('should block falsy value', () => {
+    it('should block falsy value', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -141,14 +141,14 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { valid: false }
       });
-      const result = handleRouter(ctx);
+      const result = await handleRouter(ctx);
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Router blocked');
     });
   });
 
   describe('handleGate', () => {
-    it('should pass through when valid is true', () => {
+    it('should pass through when valid is true', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -157,12 +157,12 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { valid: true, context: { user: 'admin' } }
       });
-      const result = handleGate(ctx);
+      const result = await handleGate(ctx);
       expect(result.valid).toBe(true);
       expect(result.context).toEqual({ user: 'admin' });
     });
 
-    it('should block when valid is false', () => {
+    it('should block when valid is false', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -171,7 +171,7 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { valid: false }
       });
-      const result = handleGate(ctx);
+      const result = await handleGate(ctx);
       expect(result.valid).toBe(false);
       expect(result.context).toBeNull();
       expect(result.errors).toContain('Denied');
@@ -179,7 +179,7 @@ describe('Common Handlers', () => {
   });
 
   describe('handleBundle', () => {
-    it('should bundle specified ports', () => {
+    it('should bundle specified ports', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n1',
@@ -188,7 +188,7 @@ describe('Common Handlers', () => {
         } as any,
         nodeInputs: { a: 1, b: 2, c: 3 }
       });
-      const result = handleBundle(ctx);
+      const result = await handleBundle(ctx);
       expect(result.bundle).toEqual({ a: 1, b: 2 });
     });
   });

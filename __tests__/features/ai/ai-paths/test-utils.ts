@@ -19,6 +19,8 @@ export const createMockContext = (overrides: Partial<NodeHandlerContext> = {}): 
     edges: [],
     nodes: [],
     nodeById: new Map(),
+    runId: 'test-run-id',
+    runStartedAt: new Date().toISOString(),
     activePathId: 'test-path',
     triggerNodeId: undefined,
     triggerEvent: undefined,

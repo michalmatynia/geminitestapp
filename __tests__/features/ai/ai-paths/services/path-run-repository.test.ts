@@ -70,8 +70,12 @@ describe('AiPathRunRepository', () => {
   });
 
   it('should list runs with filters', async () => {
-    await repo.createRun({ pathId: 'path-1', pathName: 'Alpha' });
-    await repo.createRun({ pathId: 'path-2', pathName: 'Beta' });
+    const r1 = await repo.createRun({ pathId: 'path-1', pathName: 'Alpha' });
+    await repo.updateRun(r1.id, { status: 'completed' });
+    
+    const r2 = await repo.createRun({ pathId: 'path-2', pathName: 'Beta' });
+    await repo.updateRun(r2.id, { status: 'failed' });
+
     await repo.createRun({ pathId: 'path-3', pathName: 'Gamma' });
 
     const all = await repo.listRuns();

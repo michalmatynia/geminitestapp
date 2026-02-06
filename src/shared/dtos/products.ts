@@ -117,7 +117,7 @@ export interface UpdateProductDto {
   imageBase64s?: string[];
 }
 
-export interface CreateCategoryDto {
+export interface CreateProductCategoryDto {
   name: string;
   description?: string;
   color?: string;
@@ -125,7 +125,7 @@ export interface CreateCategoryDto {
   catalogId: string;
 }
 
-export interface UpdateCategoryDto {
+export interface UpdateProductCategoryDto {
   name?: string;
   description?: string;
   color?: string;

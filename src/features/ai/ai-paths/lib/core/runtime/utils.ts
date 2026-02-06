@@ -22,6 +22,33 @@ import {
 export const looksLikeObjectId = (value: unknown): boolean =>
   typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
 
+const createAbortError = (): Error => {
+  const error = new Error('Operation aborted.');
+  (error as { name?: string }).name = 'AbortError';
+  return error;
+};
+
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (!signal) {
+      setTimeout(resolve, ms);
+      return;
+    }
+    if (signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(createAbortError());
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+
 export function extractImageUrls(value: unknown, seen: Set<object> = new Set<object>()): string[] {
   if (!value) return [];
   if (typeof value === 'string') {
@@ -229,14 +256,21 @@ export const resolveEntityIdFromInputs = (
 
 export const pollGraphJob = async (
   jobId: string,
-  options?: { intervalMs?: number; maxAttempts?: number }
+  options?: { intervalMs?: number; maxAttempts?: number; signal?: AbortSignal }
 ): Promise<string> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
+  const signal = options?.signal;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
     try {
-      const pollResult = await aiJobsApi.poll(jobId);
+      const pollResult = await aiJobsApi.poll(jobId, signal ? { signal } : {});
       if (!pollResult.ok) {
+        if (signal?.aborted) {
+          throw createAbortError();
+        }
         throw new Error(`Connection error: ${pollResult.error}`);
       }
       const { status, result: jobResult, error: jobError } = pollResult.data;
@@ -259,14 +293,17 @@ export const pollGraphJob = async (
         throw new Error('AI job was canceled.');
       }
       if (attempt < maxAttempts - 1) {
-        await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
+        await sleep(Math.max(0, intervalMs), signal);
       }
     } catch (error) {
+      if (signal?.aborted) {
+        throw createAbortError();
+      }
       if (attempt === maxAttempts - 1) {
         throw new Error(`Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`);
       }
       // Wait before retrying on connection errors
-      await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await sleep(Math.max(0, intervalMs), signal);
     }
   }
   throw new Error('AI job timed out.');
@@ -370,7 +407,8 @@ export const pollDatabaseQuery = async (
     successOperator: 'truthy' | 'equals' | 'contains' | 'notEquals';
     successValue: string;
     resultPath: string;
-  }
+  },
+  options?: { signal?: AbortSignal }
 ): Promise<{ result: unknown; status: string; bundle: Record<string, unknown> }> => {
   const evaluateMatch = (value: unknown): boolean => {
     if (config.successOperator === 'truthy') return Boolean(value);
@@ -406,6 +444,9 @@ export const pollDatabaseQuery = async (
   let lastResult: unknown = null;
   let lastBundle: Record<string, unknown> = {};
   for (let attempt = 0; attempt < config.maxAttempts; attempt += 1) {
+    if (options?.signal?.aborted) {
+      throw createAbortError();
+    }
     const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
     const queryResult = await dbApi.query<{
       items?: unknown[];
@@ -461,7 +502,7 @@ export const pollDatabaseQuery = async (
       };
     }
     if (attempt < config.maxAttempts - 1) {
-      await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, config.intervalMs)));
+      await sleep(Math.max(0, config.intervalMs), options?.signal);
     }
   }
   const fallbackResult = config.resultPath?.trim()

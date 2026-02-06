@@ -8,8 +8,8 @@ export type {
   PriceGroupDto,
   CreateProductDto,
   UpdateProductDto,
-  CreateCategoryDto,
-  UpdateCategoryDto,
+  CreateProductCategoryDto as CreateCategoryDto,
+  UpdateProductCategoryDto as UpdateCategoryDto,
   ProductCategoryDto,
   ProductCategoryDto as ProductCategory
 } from '@/shared/dtos';

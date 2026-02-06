@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { Tabs, TabsList, TabsTrigger, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 
@@ -46,11 +46,11 @@ export function AdminAiPathsPage(): React.JSX.Element {
         <div id="ai-paths-name" className="text-sm text-gray-300" />
       </div>
       <SectionPanel className={isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'}>
-        <SectionHeader
-          title="AI Paths"
-          actions={<div id="ai-paths-actions" className="flex items-center gap-3" />}
-          className={isFocusMode ? 'hidden' : ''}
-        />
+        {!isFocusMode ? (
+          <div className="mb-4 flex items-center justify-end">
+            <div id="ai-paths-actions" className="flex items-center gap-3" />
+          </div>
+        ) : null}
         <AiPathsSettings
           activeTab={activeTab}
           renderActions={(actions: React.ReactNode) => (

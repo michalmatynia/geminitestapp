@@ -424,7 +424,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   trigger: ['trigger', 'value', 'result'],
   triggerName: ['triggerName', 'value', 'result'],
   prompt: ['prompt'],
-  result: ['result', 'value', 'queryCallback', 'aiQuery', 'callback', 'regexCallback'],
+  result: ['result', 'value', 'entityJson', 'queryCallback', 'aiQuery', 'callback', 'regexCallback'],
   sources: ['sources', 'value', 'result', 'bundle'],
   images: ['images', 'value', 'result'],
   title: ['title', 'value', 'result', 'prompt', 'aiPrompt'],
@@ -436,6 +436,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   value: [
     'value',
     'result',
+    'entityJson',
     'query',
     'jobId',
     'status',

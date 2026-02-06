@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { evaluateGraph } from '@/features/ai/ai-paths/lib';
+import { 
+  evaluateGraphWithIteratorAutoContinue 
+} from '@/features/ai/ai-paths/lib';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type { AiNode, Edge } from '@/shared/types/ai-paths';
 
-// Mock evaluateGraph to avoid real runtime complexity
+// Mock evaluateGraphWithIteratorAutoContinue to avoid real runtime complexity
 vi.mock('@/features/ai/ai-paths/lib', async () => {
   const actual = await vi.importActual('@/features/ai/ai-paths/lib');
   return {
     ...actual,
-    evaluateGraph: vi.fn(),
+    evaluateGraphWithIteratorAutoContinue: vi.fn(),
   };
 });
 
@@ -42,7 +44,7 @@ describe('PathRunExecutor', () => {
   const mockEdges: Edge[] = [];
 
   it('should execute a run successfully', async () => {
-    (evaluateGraph as any).mockResolvedValue({
+    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
       inputs: { 'node-1': {} },
       outputs: { 'node-1': { value: 'test' } },
       hashes: { 'node-1': 'hash' }
@@ -78,8 +80,8 @@ describe('PathRunExecutor', () => {
   });
 
   it('should update node records during execution', async () => {
-    // Setup evaluateGraph to call onNodeStart and onNodeFinish
-    (evaluateGraph as any).mockImplementation(async (options: any) => {
+    // Setup evaluateGraphWithIteratorAutoContinue to call onNodeStart and onNodeFinish
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
       options.onNodeStart({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {} });
       await options.onNodeFinish({ node: mockNodes[0], nodeInputs: {}, nextOutputs: { value: 'done' }, iteration: 0 });
       return { outputs: { 'node-1': { value: 'done' } } };
@@ -102,7 +104,7 @@ describe('PathRunExecutor', () => {
   });
 
   it('should handle node errors correctly', async () => {
-    (evaluateGraph as any).mockImplementation(async (options: any) => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
       await options.onNodeError({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {}, error: new Error('Node failed') });
       throw new Error('Execution failed');
     });

@@ -169,6 +169,12 @@ const fetchEntityByType = async (entityType: string, entityId: string): Promise<
 
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const repo = getPathRunRepository();
+  const runStartedAt =
+    typeof run.startedAt === 'string'
+      ? run.startedAt
+      : run.startedAt instanceof Date
+        ? run.startedAt.toISOString()
+        : new Date().toISOString();
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     await repo.updateRun(run.id, {
@@ -180,6 +186,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       runId: run.id,
       level: 'error',
       message: 'Run graph is missing or invalid.',
+      metadata: { runStartedAt },
     });
     return;
   }
@@ -194,12 +201,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
 
   const runtimeState = parseRuntimeState(run.runtimeState);
-  const runStartedAt =
-    typeof run.startedAt === 'string'
-      ? run.startedAt
-      : run.startedAt instanceof Date
-        ? run.startedAt.toISOString()
-        : new Date().toISOString();
   const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? '', 10);
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
@@ -224,6 +225,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       message: summary ?? 'AI Paths runtime error',
       metadata: {
         error: error instanceof Error ? error.message : String(error),
+        runStartedAt,
         ...meta,
       },
     });
@@ -254,7 +256,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         void reportAiPathsError(error, meta, summary);
       },
       toast,
-      onNodeStart: async ({ node, nodeInputs, prevOutputs }: { node: AiNode; nodeInputs: RuntimePortValues; prevOutputs: RuntimePortValues }) => {
+      onNodeStart: async ({ node, nodeInputs, prevOutputs, iteration, runStartedAt }) => {
         const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
         nodeAttemptMap.set(node.id, nextAttempt);
         await repo.upsertRunNode(run.id, node.id, {
@@ -277,6 +279,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'running',
             attempt: nextAttempt,
+            iteration,
+            runStartedAt,
           },
         });
       },
@@ -286,12 +290,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         nextOutputs,
         cached,
         iteration,
+        runStartedAt,
+        runId: _runId,
       }: {
         node: AiNode;
         nodeInputs: RuntimePortValues;
         nextOutputs: RuntimePortValues;
         cached?: boolean;
         iteration: number;
+        runStartedAt: string;
+        runId: string;
       }) => {
         if (cached) {
           if (iteration === 0) {
@@ -316,6 +324,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 status: 'completed',
                 cached: true,
                 attempt: nodeAttemptMap.get(node.id) ?? 0,
+                iteration,
+                runStartedAt,
               },
             });
           }
@@ -341,10 +351,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'completed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
+            iteration,
+            runStartedAt,
           },
         });
       },
-      onNodeError: async ({ node, nodeInputs, prevOutputs, error }: { node: AiNode; nodeInputs: RuntimePortValues; prevOutputs: RuntimePortValues; error: unknown }) => {
+      onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt }) => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
@@ -366,16 +378,22 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             status: 'failed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
             error: error instanceof Error ? error.message : String(error),
+            iteration,
+            runStartedAt,
           },
         });
       },
       onIterationEnd: async ({
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
         iteration: _iteration,
         inputs,
         outputs,
         hashes,
         history,
       }: {
+        runId: string;
+        runStartedAt: string;
         iteration: number;
         inputs: Record<string, RuntimePortValues>;
         outputs: Record<string, RuntimePortValues>;
@@ -383,7 +401,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         history?: Record<string, RuntimeHistoryEntry[]> | undefined;
       }) => {
         await repo.updateRun(run.id, {
-          runtimeState: sanitizeRuntimeState({ inputs, outputs, hashes, history }),
+          runtimeState: sanitizeRuntimeState({
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            inputs,
+            outputs,
+            hashes,
+            history,
+          }),
         });
       },
     });
@@ -403,6 +428,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       runId: run.id,
       level: 'info',
       message: 'Run completed successfully.',
+      metadata: { runStartedAt },
     });
   } catch (error) {
     await repo.updateRun(run.id, {
@@ -416,6 +442,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       message: 'Run failed.',
       metadata: {
         error: error instanceof Error ? error.message : String(error),
+        runStartedAt,
       },
     });
     throw error;

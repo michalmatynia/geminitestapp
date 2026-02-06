@@ -12,12 +12,13 @@ import {
   cloneValue,
   coerceInput,
   hashRuntimeValue,
+  stableStringify,
   sanitizeEdges,
   getPortDataTypes,
   isValueCompatibleWithTypes,
 } from '../utils';
-import { extractImageUrls } from './utils';
-import { CACHEABLE_NODE_TYPE_SET } from '../constants';
+import { DEFAULT_DB_QUERY } from '../constants';
+import { buildDbQueryPayload, extractImageUrls } from './utils';
 import {
   NodeHandler,
   handleAiDescription,
@@ -72,6 +73,10 @@ export type EvaluateGraphOptions = {
   edges: Edge[];
   activePathId: string | null;
   activePathName?: string | null | undefined;
+  runId?: string | undefined;
+  runStartedAt?: string | undefined;
+  seedRunId?: string | undefined;
+  seedRunStartedAt?: string | undefined;
   triggerNodeId?: string | undefined;
   triggerEvent?: string | undefined;
   triggerContext?: Record<string, unknown> | null | undefined;
@@ -180,6 +185,132 @@ const buildNodeInputHash = (
     outputPorts: node.outputs ?? [],
   });
 
+const buildDatabaseInputHash = (
+  node: AiNode,
+  nodeInputs: RuntimePortValues
+): string => {
+  const dbConfig = node.config?.database ?? { operation: 'query' };
+  const operation = dbConfig.operation ?? 'query';
+  const queryConfig = {
+    ...DEFAULT_DB_QUERY,
+    ...(dbConfig.query ?? {}),
+  };
+  const mappings = Array.isArray(dbConfig.mappings)
+    ? dbConfig.mappings.map((mapping) => ({
+      sourcePort: mapping?.sourcePort ?? null,
+      sourcePath: mapping?.sourcePath ?? null,
+      targetPath: mapping?.targetPath ?? null,
+    }))
+    : [];
+  const baseConfig = {
+    operation,
+    entityType: dbConfig.entityType ?? 'product',
+    idField: dbConfig.idField ?? 'entityId',
+    mode: dbConfig.mode ?? 'replace',
+    updateStrategy: dbConfig.updateStrategy ?? 'one',
+    useMongoActions: dbConfig.useMongoActions ?? false,
+    actionCategory: dbConfig.actionCategory ?? null,
+    action: dbConfig.action ?? null,
+    distinctField: dbConfig.distinctField ?? '',
+    updateTemplate: dbConfig.updateTemplate ?? '',
+    writeSource: dbConfig.writeSource ?? 'bundle',
+    writeSourcePath: dbConfig.writeSourcePath ?? '',
+    dryRun: dbConfig.dryRun ?? false,
+    query: {
+      provider: queryConfig.provider,
+      collection: queryConfig.collection,
+      mode: queryConfig.mode,
+      preset: queryConfig.preset,
+      field: queryConfig.field,
+      idType: queryConfig.idType,
+      queryTemplate: queryConfig.queryTemplate,
+      limit: queryConfig.limit,
+      sort: queryConfig.sort,
+      projection: queryConfig.projection,
+      single: queryConfig.single,
+    },
+    ...(mappings.length ? { mappings } : {}),
+  };
+  const inputs: Record<string, unknown> = {};
+  const includeInput = (key: string): void => {
+    if (nodeInputs[key] === undefined) return;
+    inputs[key] = coerceInput(nodeInputs[key]);
+  };
+  if (operation === 'query') {
+    const payload = buildDbQueryPayload(nodeInputs, queryConfig);
+    return hashRuntimeValue({
+      v: CACHE_VERSION,
+      id: node.id,
+      type: node.type,
+      config: baseConfig,
+      query: payload,
+    });
+  }
+  if (operation === 'update') {
+    const sourcePorts = mappings.length
+      ? mappings
+        .map((mapping) => mapping.sourcePort)
+        .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
+      : [node.inputs.includes('result') ? 'result' : 'content_en'];
+    sourcePorts.forEach(includeInput);
+    includeInput('entityId');
+    includeInput('productId');
+    includeInput('entityType');
+    includeInput('value');
+    includeInput('query');
+    includeInput('queryCallback');
+    includeInput('aiQuery');
+    includeInput('jobId');
+    if ((dbConfig.updateStrategy ?? 'one') === 'many') {
+      const payload = buildDbQueryPayload(nodeInputs, queryConfig);
+      inputs.queryPayload = payload;
+    }
+    return hashRuntimeValue({
+      v: CACHE_VERSION,
+      id: node.id,
+      type: node.type,
+      config: baseConfig,
+      inputs,
+    });
+  }
+  if (operation === 'insert') {
+    const writeSource = dbConfig.writeSource ?? 'bundle';
+    includeInput(writeSource);
+    includeInput('queryCallback');
+    includeInput('entityType');
+    return hashRuntimeValue({
+      v: CACHE_VERSION,
+      id: node.id,
+      type: node.type,
+      config: baseConfig,
+      inputs,
+    });
+  }
+  if (operation === 'delete') {
+    includeInput('entityId');
+    includeInput('productId');
+    includeInput('entityType');
+    includeInput('value');
+    includeInput('query');
+    includeInput('queryCallback');
+    includeInput('aiQuery');
+    return hashRuntimeValue({
+      v: CACHE_VERSION,
+      id: node.id,
+      type: node.type,
+      config: baseConfig,
+      inputs,
+    });
+  }
+  return hashRuntimeValue({
+    v: CACHE_VERSION,
+    id: node.id,
+    type: node.type,
+    config: baseConfig,
+    inputs,
+  });
+};
+
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
   notification: handleNotification,
@@ -217,6 +348,10 @@ export async function evaluateGraph({
   edges,
   activePathId,
   activePathName,
+  runId,
+  runStartedAt,
+  seedRunId,
+  seedRunStartedAt,
   triggerNodeId,
   triggerEvent,
   triggerContext,
@@ -237,14 +372,22 @@ export async function evaluateGraph({
   toast,
 }: EvaluateGraphOptions): Promise<RuntimeState> {
   const sanitizedEdges = sanitizeEdges(nodes, edges);
+  const buildRunId = (): string =>
+    `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+  const resolvedRunId = runId ?? seedRunId ?? buildRunId();
+  const resolvedRunStartedAt =
+    runStartedAt ??
+    (seedRunId && seedRunId === resolvedRunId ? seedRunStartedAt : undefined) ??
+    new Date().toISOString();
   const outputs: Record<string, RuntimePortValues> = seedOutputs
     ? Object.fromEntries(
       Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
     )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
+  const shouldReuseHashes = Boolean(seedRunId && seedRunId === resolvedRunId);
   const inputHashes = new Map<string, string>(
-    seedHashes ? Object.entries(seedHashes) : []
+    shouldReuseHashes && seedHashes ? Object.entries(seedHashes) : []
   );
   const historyMax = Math.max(1, historyLimit ?? 50);
   const history = new Map<string, RuntimeHistoryEntry[]>(
@@ -255,7 +398,21 @@ export async function evaluateGraph({
       ])
       : []
   );
-  const now = new Date().toISOString();
+  const runFencesByNode = new Map<string, Set<string>>();
+  if (seedHistory) {
+    Object.entries(seedHistory).forEach(([nodeId, entries]: [string, RuntimeHistoryEntry[]]) => {
+      if (!Array.isArray(entries)) return;
+      entries.forEach((entry: RuntimeHistoryEntry) => {
+        if (!entry || entry.runId !== resolvedRunId) return;
+        const hash = entry.inputHash;
+        if (!hash) return;
+        const set = runFencesByNode.get(nodeId) ?? new Set<string>();
+        set.add(hash);
+        runFencesByNode.set(nodeId, set);
+      });
+    });
+  }
+  const now = resolvedRunStartedAt;
   const entityCache = new Map<string, Record<string, unknown> | null>();
   const activeNodeIds = new Set<string>();
   const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
@@ -270,6 +427,57 @@ export async function evaluateGraph({
     outgoing.push(edge);
     outgoingEdgesByNode.set(edge.from, outgoing);
   });
+  const orderNodesByDependencies = (): AiNode[] => {
+    if (nodes.length <= 1) return nodes;
+    const indegree = new Map<string, number>();
+    nodes.forEach((node: AiNode) => {
+      indegree.set(node.id, 0);
+    });
+    const adjacency = new Map<string, Set<string>>();
+    sanitizedEdges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.to) return;
+      if (!indegree.has(edge.from) || !indegree.has(edge.to)) return;
+      const neighbors = adjacency.get(edge.from) ?? new Set<string>();
+      if (!neighbors.has(edge.to)) {
+        neighbors.add(edge.to);
+        adjacency.set(edge.from, neighbors);
+        indegree.set(edge.to, (indegree.get(edge.to) ?? 0) + 1);
+      }
+    });
+    const queue: AiNode[] = [];
+    nodes.forEach((node: AiNode) => {
+      if ((indegree.get(node.id) ?? 0) === 0) {
+        queue.push(node);
+      }
+    });
+    const ordered: AiNode[] = [];
+    const processed = new Set<string>();
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current || processed.has(current.id)) continue;
+      processed.add(current.id);
+      ordered.push(current);
+      const neighbors = adjacency.get(current.id);
+      if (!neighbors) continue;
+      neighbors.forEach((neighborId: string) => {
+        const nextIndegree = (indegree.get(neighborId) ?? 0) - 1;
+        indegree.set(neighborId, nextIndegree);
+        if (nextIndegree === 0) {
+          const neighbor = nodeById.get(neighborId);
+          if (neighbor) {
+            queue.push(neighbor);
+          }
+        }
+      });
+    }
+    if (ordered.length < nodes.length) {
+      nodes.forEach((node: AiNode) => {
+        if (!processed.has(node.id)) ordered.push(node);
+      });
+    }
+    return ordered;
+  };
+  const orderedNodes = orderNodesByDependencies();
   const triggerSource =
     triggerContext && typeof triggerContext === 'object'
       ? (triggerContext).source
@@ -332,14 +540,147 @@ export async function evaluateGraph({
       .filter((link: RuntimeHistoryLink | null): link is RuntimeHistoryLink => Boolean(link));
   };
 
+  const collectNodeInputs = (nodeId: string): RuntimePortValues => {
+    const incoming = incomingEdgesByNode.get(nodeId) ?? [];
+    if (incoming.length === 0) return {};
+    const collected: RuntimePortValues = {};
+    incoming.forEach((edge: Edge) => {
+      const fromOutput = outputs[edge.from];
+      if (!fromOutput || !edge.fromPort || !edge.toPort) return;
+      const value = fromOutput[edge.fromPort];
+      if (value === undefined) return;
+      const expectedTypes = getPortDataTypes(edge.toPort);
+      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
+      const existing = collected[edge.toPort];
+      collected[edge.toPort] = appendInputValue(existing, value);
+    });
+    return collected;
+  };
+
+  const hasMeaningfulValue = (value: unknown): boolean => {
+    if (value === undefined || value === null) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+    return true;
+  };
+
+  const hasRequiredInputs = (node: AiNode, rawInputs: RuntimePortValues): boolean => {
+    const incoming = incomingEdgesByNode.get(node.id) ?? [];
+    if (incoming.length === 0) return true;
+    if (node.type !== 'database') {
+      const connectedPorts = new Set<string>();
+      incoming.forEach((edge: Edge) => {
+        if (edge.toPort) connectedPorts.add(edge.toPort);
+      });
+      if (connectedPorts.size === 0) return true;
+      return Array.from(connectedPorts).every((port: string) =>
+        rawInputs[port] !== undefined
+      );
+    }
+    const connectedPorts = new Set<string>();
+    incoming.forEach((edge: Edge) => {
+      if (edge.toPort) connectedPorts.add(edge.toPort);
+    });
+    if (connectedPorts.size === 0) return true;
+    const dbConfig = node.config?.database ?? { operation: 'query' };
+    const operation = dbConfig.operation ?? 'query';
+    const hasAnyValue = (ports: string[]): boolean =>
+      ports.some((port: string) =>
+        hasMeaningfulValue(coerceInput(rawInputs[port]))
+      );
+    const anyConnected = (ports: string[]): boolean =>
+      ports.some((port: string) => connectedPorts.has(port));
+
+    if (operation === 'query') {
+      const queryPorts = ['aiQuery', 'query', 'queryCallback'];
+      const idPorts = ['value', 'entityId', 'productId'];
+      if (anyConnected(queryPorts)) {
+        return hasAnyValue(queryPorts);
+      }
+      if (anyConnected(idPorts)) {
+        return hasAnyValue(idPorts);
+      }
+      return true;
+    }
+
+    if (operation === 'delete') {
+      const idPorts = ['entityId', 'productId', 'value'];
+      if (anyConnected(idPorts)) {
+        return hasAnyValue(idPorts);
+      }
+      return true;
+    }
+
+    if (operation === 'insert') {
+      const writeSource = dbConfig.writeSource ?? 'bundle';
+      if (connectedPorts.has(writeSource)) {
+        return hasAnyValue([writeSource]);
+      }
+      return true;
+    }
+
+    if (operation === 'update') {
+      const mappings = Array.isArray(dbConfig.mappings) ? dbConfig.mappings : [];
+      const sourcePorts = mappings.length
+        ? mappings
+          .map((mapping) => mapping?.sourcePort)
+          .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
+        : [node.inputs.includes('result') ? 'result' : 'content_en'];
+      const connectedSources = sourcePorts.filter((port: string) => connectedPorts.has(port));
+      if (connectedSources.length > 0) {
+        const allSourcesReady = connectedSources.every((port: string) =>
+          hasMeaningfulValue(coerceInput(rawInputs[port]))
+        );
+        if (!allSourcesReady) return false;
+      }
+
+      const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+      if (entityType !== 'custom') {
+        const idPorts = ['entityId', 'productId', 'value'];
+        if (anyConnected(idPorts) && !hasAnyValue(idPorts)) {
+          return false;
+        }
+      }
+
+      if ((dbConfig.updateStrategy ?? 'one') === 'many') {
+        const queryPorts = ['aiQuery', 'query', 'queryCallback', 'value', 'entityId', 'productId'];
+        if (anyConnected(queryPorts) && !hasAnyValue(queryPorts)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return true;
+  };
+
   const pushHistoryEntry = (nodeId: string, entry: RuntimeHistoryEntry): void => {
     if (!recordHistory) return;
     const existing = history.get(nodeId) ?? [];
+    const last = existing.length ? existing[existing.length - 1] : undefined;
+    if (
+      last &&
+      last.runId === entry.runId &&
+      last.status === entry.status &&
+      stableStringify(last.inputs) === stableStringify(entry.inputs) &&
+      stableStringify(last.outputs) === stableStringify(entry.outputs)
+    ) {
+      return;
+    }
     existing.push(entry);
     if (existing.length > historyMax) {
       existing.splice(0, existing.length - historyMax);
     }
     history.set(nodeId, existing);
+  };
+
+  const getRunFence = (nodeId: string): Set<string> => {
+    const existing = runFencesByNode.get(nodeId);
+    if (existing) return existing;
+    const created = new Set<string>();
+    runFencesByNode.set(nodeId, created);
+    return created;
   };
 
   if (triggerNodeId) {
@@ -597,33 +938,30 @@ export async function evaluateGraph({
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const nextInputs: Record<string, RuntimePortValues> = {};
-    sanitizedEdges.forEach((edge: Edge) => {
-      const fromOutput = outputs[edge.from];
-      if (!fromOutput || !edge.fromPort || !edge.toPort) return;
-      const value = fromOutput[edge.fromPort];
-      if (value === undefined) return;
-      const expectedTypes = getPortDataTypes(edge.toPort);
-      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = nextInputs[edge.to]?.[edge.toPort];
-      const mergedValue = appendInputValue(existing, value);
-      nextInputs[edge.to] = {
-        ...(nextInputs[edge.to] ?? {}),
-        [edge.toPort]: mergedValue,
-      };
+    orderedNodes.forEach((node: AiNode): void => {
+      nextInputs[node.id] = collectNodeInputs(node.id);
     });
 
     let changed = false;
-    for (const node of nodes) {
+    for (const node of orderedNodes) {
+      const nodeInputsSnapshot = nextInputs[node.id] ?? {};
+      const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
+      if (shouldWaitForInputs) {
+        if (!hasRequiredInputs(node, nodeInputsSnapshot)) {
+          nextInputs[node.id] = nodeInputsSnapshot;
+          continue;
+        }
+      }
+      let nodeInputs = nodeInputsSnapshot;
+      if (node.type === 'database') {
+        nodeInputs = deriveDatabaseInputs(nodeInputs);
+      }
+      nextInputs[node.id] = nodeInputs;
+
       if (!isActiveNode(node)) {
         continue;
       }
       if (node.type === 'simulation') continue; // Already handled
-
-      let nodeInputs = nextInputs[node.id] ?? {};
-      if (node.type === 'database') {
-        nodeInputs = deriveDatabaseInputs(nodeInputs);
-        nextInputs[node.id] = nodeInputs;
-      }
       const prevOutputs = outputs[node.id] ?? {};
       let nextOutputs: RuntimePortValues = prevOutputs;
 
@@ -635,16 +973,37 @@ export async function evaluateGraph({
       }
 
       const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
-      const isCacheable =
-        cacheMode === 'force'
-          ? true
-          : cacheMode === 'disabled'
-            ? false
-            : CACHEABLE_NODE_TYPE_SET.has(node.type);
+      const isCacheable = cacheMode !== 'disabled';
       if (!isCacheable && inputHashes.has(node.id)) {
         inputHashes.delete(node.id);
       }
-      const inputHash = isCacheable ? buildNodeInputHash(node, nodeInputs) : null;
+      const fenceHash =
+        node.type === 'database'
+          ? buildDatabaseInputHash(node, nodeInputs)
+          : null;
+      const inputHash = isCacheable
+        ? (node.type === 'database'
+          ? fenceHash
+          : buildNodeInputHash(node, nodeInputs))
+        : null;
+      const historyInputHash = node.type === 'database' ? (fenceHash ?? inputHash) : inputHash;
+      if (fenceHash) {
+        const fenceSet = getRunFence(node.id);
+        if (fenceSet.has(fenceHash)) {
+          if (onNodeFinish) {
+            await onNodeFinish({
+              node,
+              nodeInputs,
+              prevOutputs,
+              nextOutputs: prevOutputs,
+              changed: false,
+              iteration,
+              cached: true,
+            });
+          }
+          continue;
+        }
+      }
       const hasCachedOutput =
         isCacheable &&
         inputHash !== null &&
@@ -652,23 +1011,8 @@ export async function evaluateGraph({
         outputs[node.id] !== undefined;
 
       if (hasCachedOutput) {
-        if (recordHistory) {
-          const entry: RuntimeHistoryEntry = {
-            timestamp: new Date().toISOString(),
-            pathId: resolvedPathId ?? null,
-            pathName: resolvedPathName ?? null,
-            nodeId: node.id,
-            nodeType: node.type,
-            nodeTitle: node.title ?? null,
-            status: 'cached',
-            iteration,
-            inputs: cloneValue(nodeInputs),
-            outputs: cloneValue(prevOutputs),
-            inputsFrom: buildInputLinks(node.id, nodeInputs),
-            outputsTo: buildOutputLinks(node.id, prevOutputs),
-            delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
-          };
-          pushHistoryEntry(node.id, entry);
+        if (fenceHash) {
+          getRunFence(node.id).add(fenceHash);
         }
         if (onNodeFinish) {
           await onNodeFinish({
@@ -735,6 +1079,7 @@ export async function evaluateGraph({
           if (recordHistory) {
             const entry: RuntimeHistoryEntry = {
               timestamp: new Date().toISOString(),
+              runId: resolvedRunId,
               pathId: resolvedPathId ?? null,
               pathName: resolvedPathName ?? null,
               nodeId: node.id,
@@ -744,6 +1089,7 @@ export async function evaluateGraph({
               iteration,
               inputs: cloneValue(nodeInputs),
               outputs: cloneValue(prevOutputs),
+              inputHash: historyInputHash ?? null,
               error: error instanceof Error ? error.message : String(error),
               inputsFrom: buildInputLinks(node.id, nodeInputs),
               outputsTo: buildOutputLinks(node.id, prevOutputs),
@@ -759,6 +1105,8 @@ export async function evaluateGraph({
               ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
               : undefined;
           const errorState: RuntimeState = {
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
             inputs: cloneValue(nextInputs) as Record<string, RuntimePortValues>,
             outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
             hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
@@ -777,6 +1125,7 @@ export async function evaluateGraph({
       if (recordHistory) {
         const entry: RuntimeHistoryEntry = {
           timestamp: new Date().toISOString(),
+          runId: resolvedRunId,
           pathId: resolvedPathId ?? null,
           pathName: resolvedPathName ?? null,
           nodeId: node.id,
@@ -786,11 +1135,15 @@ export async function evaluateGraph({
           iteration,
           inputs: cloneValue(nodeInputs),
           outputs: cloneValue(nextOutputs),
+          inputHash: historyInputHash ?? null,
           inputsFrom: buildInputLinks(node.id, nodeInputs),
           outputsTo: buildOutputLinks(node.id, nextOutputs),
           delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
         };
         pushHistoryEntry(node.id, entry);
+      }
+      if (fenceHash) {
+        getRunFence(node.id).add(fenceHash);
       }
       if (isCacheable && inputHash) {
         inputHashes.set(node.id, inputHash);
@@ -799,6 +1152,23 @@ export async function evaluateGraph({
       if (didChange) {
         outputs[node.id] = nextOutputs;
         changed = true;
+        const outgoing = outgoingEdgesByNode.get(node.id) ?? [];
+        if (outgoing.length > 0) {
+          const touched = new Set<string>();
+          outgoing.forEach((edge: Edge) => {
+            if (edge.to) {
+              touched.add(edge.to);
+            }
+          });
+          touched.forEach((targetId: string) => {
+            let updatedInputs = collectNodeInputs(targetId);
+            const targetNode = nodeById.get(targetId);
+            if (targetNode?.type === 'database') {
+              updatedInputs = deriveDatabaseInputs(updatedInputs);
+            }
+            nextInputs[targetId] = updatedInputs;
+          });
+        }
       }
       if (handler && onNodeFinish) {
         await onNodeFinish({
@@ -827,6 +1197,8 @@ export async function evaluateGraph({
   }
 
   return {
+    runId: resolvedRunId,
+    runStartedAt: resolvedRunStartedAt,
     inputs,
     outputs,
     hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
@@ -858,7 +1230,17 @@ const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolea
  * iterator nodes have either completed or are waiting for a callback.
  */
 export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGraphOptions): Promise<RuntimeState> {
-  let current = await evaluateGraph(options);
+  const buildRunId = (): string =>
+    `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+  const resolvedRunId = options.runId ?? options.seedRunId ?? buildRunId();
+  const resolvedRunStartedAt =
+    options.runStartedAt ?? options.seedRunStartedAt ?? new Date().toISOString();
+  const baseOptions: EvaluateGraphOptions = {
+    ...options,
+    runId: resolvedRunId,
+    runStartedAt: resolvedRunStartedAt,
+  };
+  let current = await evaluateGraph(baseOptions);
   if (!options.nodes.some((node: AiNode): boolean => node.type === 'iterator')) {
     return current;
   }
@@ -867,10 +1249,12 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
   for (let step = 0; step < maxSteps; step += 1) {
     if (!hasPendingIteratorAdvance(options.nodes, current)) break;
     current = await evaluateGraph({
-      ...options,
+      ...baseOptions,
       seedOutputs: current.outputs,
       seedHashes: current.hashes ?? undefined,
       seedHistory: current.history ?? undefined,
+      seedRunId: current.runId ?? resolvedRunId,
+      seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,
     });
   }
   return current;

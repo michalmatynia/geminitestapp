@@ -78,6 +78,7 @@ import { CanvasBoard } from '../canvas-board';
  */
 export type CanvasBoardMigratedProps = {
   flowIntensity?: PathFlowIntensity | undefined;
+  viewportClassName?: string | undefined;
   // Callbacks - remain as props since they involve orchestration
   onRemoveEdge: (edgeId: string) => void;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
@@ -114,6 +115,7 @@ export type CanvasBoardMigratedProps = {
  */
 export function CanvasBoardMigrated({
   flowIntensity,
+  viewportClassName,
   onRemoveEdge,
   onDisconnectPort,
   onReconnectInput,
@@ -176,6 +178,7 @@ export function CanvasBoardMigrated({
       // State from SelectionContext
       selectedNodeId={selectedNodeId}
       selectedEdgeId={selectedEdgeId}
+      viewportClassName={viewportClassName}
       // Selection actions from context
       onSelectEdgeId={selectEdge}
       onSelectNode={selectNode}

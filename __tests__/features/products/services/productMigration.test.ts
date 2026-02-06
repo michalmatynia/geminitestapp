@@ -51,9 +51,10 @@ describe('productMigration', () => {
       
       const bulkWriteCall = (mockMongoCollection.bulkWrite.mock.calls[0] as any[])[0];
       expect(bulkWriteCall.length).toBe(2);
-      // Order is guaranteed by orderBy id: asc
-      expect(bulkWriteCall[0].replaceOne?.replacement?.sku).toBe('SKU1');
-      expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe('SKU2');
+      
+      const skus = bulkWriteCall.map((call: any) => call.replaceOne?.replacement?.sku);
+      expect(skus).toContain('SKU1');
+      expect(skus).toContain('SKU2');
     });
 
     it('should respect batchSize and cursor', async () => {

@@ -1,56 +1,51 @@
 import { NextRequest } from 'next/server';
-
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
-import { POST } from '@/app/api/auth/register/route';
 
-// Mock the api-handler module
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
+import { POST } from '@/app/api/auth/register/route';
+import { getAuthUserPageSettings, validatePasswordStrength } from '@/features/auth/server';
+
+// Hoist mock definitions so they can be used in vi.mock
+const { mockCollection, mockInsertOne, mockFindOne } = vi.hoisted(() => {
+  const mockInsertOne = vi.fn();
+  const mockFindOne = vi.fn();
+  const mockCollection = vi.fn(() => ({
+    findOne: mockFindOne,
+    insertOne: mockInsertOne,
+  }));
+  return { mockCollection, mockInsertOne, mockFindOne };
+});
+
+// Mock server modules
+vi.mock('@/features/auth/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/auth/server')>();
+  return {
+    ...actual,
+    getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
+    getAuthUserPageSettings: vi.fn().mockResolvedValue({
+      allowSignup: true,
+      requireEmailVerification: false,
+    }),
+    getAuthSecurityPolicy: vi.fn().mockResolvedValue({}),
+    validatePasswordStrength: vi.fn().mockReturnValue({ ok: true, errors: [] }),
+    normalizeAuthEmail: (email: string) => email.toLowerCase().trim(),
+  };
+});
+
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn().mockResolvedValue({
+    collection: mockCollection,
+  }),
 }));
 
 // Mock bcryptjs
 vi.mock('bcryptjs', () => ({
-  hash: vi.fn().mockResolvedValue('hashed-password'),
+  hash: vi.fn().mockResolvedValue('hashed_password'),
 }));
 
-const { mockCollection } = vi.hoisted(() => ({
-  mockCollection: {
-    findOne: vi.fn(),
-    insertOne: vi.fn().mockResolvedValue({ insertedId: 'user-id' }),
-  }
+// Mock apiHandler
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler: (handler: any) => handler,
 }));
-
-vi.mock('@/shared/lib/db/mongo-client', () => ({
-  getMongoDb: vi.fn().mockResolvedValue({
-    collection: vi.fn().mockReturnValue(mockCollection),
-  }),
-}));
-
-// Mock auth server functions
-vi.mock('@/features/auth/server', () => ({
-  normalizeAuthEmail: (email: string) => email.toLowerCase(),
-  getAuthSecurityPolicy: vi.fn().mockResolvedValue({}),
-  validatePasswordStrength: vi.fn().mockReturnValue({ ok: true }),
-  getAuthUserPageSettings: vi.fn().mockResolvedValue({ allowSignup: true }),
-}));
-
-// Mock products server (for parseJsonBody)
-vi.mock('@/features/products/server', () => ({
-  parseJsonBody: async (req: any, schema: any) => {
-    try {
-      const body = await req.json();
-      const result = schema.safeParse(body);
-      if (!result.success) {
-        return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
-      }
-      return { ok: true, data: result.data };
-    } catch {
-      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
-    }
-  },
-}));
-
-import { getAuthUserPageSettings, validatePasswordStrength } from '@/features/auth/server';
 
 describe('Auth Register API', () => {
   beforeEach(() => {
@@ -64,7 +59,8 @@ describe('Auth Register API', () => {
   });
 
   it('should successfully register a new user', async () => {
-    mockCollection.findOne.mockResolvedValue(null);
+    mockFindOne.mockResolvedValue(null);
+    mockInsertOne.mockResolvedValue({ insertedId: 'user-id' });
 
     const payload = {
       email: 'test@example.com',
@@ -86,7 +82,7 @@ describe('Auth Register API', () => {
   });
 
   it('should return 409 if user already exists', async () => {
-    mockCollection.findOne.mockResolvedValue({ email: 'existing@example.com' });
+    mockFindOne.mockResolvedValue({ email: 'existing@example.com' });
 
     const payload = {
       email: 'existing@example.com',

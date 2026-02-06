@@ -1,36 +1,7 @@
 import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
+
 import { GET, POST } from '@/app/api/notes/notebooks/route';
-
-// Mock the api-handler module
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-}));
-
-// Mock noteService
-vi.mock('@/features/notesapp/server', () => ({
-  noteService: {
-    getAllNotebooks: vi.fn().mockResolvedValue([]),
-    createNotebook: vi.fn().mockResolvedValue({ id: 'nb1', name: 'New Notebook' }),
-  },
-}));
-
-// Mock products server (for parseJsonBody)
-vi.mock('@/features/products/server', () => ({
-  parseJsonBody: async (req: any, schema: any) => {
-    try {
-      const body = await req.json();
-      const result = schema.safeParse(body);
-      if (!result.success) {
-        return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
-      }
-      return { ok: true, data: result.data };
-    } catch {
-      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
-    }
-  },
-}));
-
 import { noteService } from '@/features/notesapp/server';
 
 describe('Notes Notebooks API', () => {

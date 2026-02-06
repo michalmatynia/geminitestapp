@@ -73,8 +73,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     });
     return NextResponse.json(tags.map(tag => ({
       ...tag,
-      createdAt: tag.createdAt.toISOString(),
-      updatedAt: tag.updatedAt.toISOString(),
+      createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
     })) as ProductTag[]);
   } catch (error) {
     return createErrorResponse(error, {
@@ -165,8 +165,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       name: tag.name,
       color: tag.color,
       catalogId: tag.catalogId,
-      createdAt: tag.createdAt.toISOString(),
-      updatedAt: tag.updatedAt.toISOString(),
+      createdAt: tag.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: tag.updatedAt?.toISOString() ?? new Date().toISOString(),
     };
 
     return NextResponse.json(dto, { status: 201 });

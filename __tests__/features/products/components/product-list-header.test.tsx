@@ -1,7 +1,18 @@
-import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
+
+import { render, screen, fireEvent } from '../../../test-utils';
+
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
+  return {
+    ...actual,
+    useToast: () => ({
+      toast: vi.fn(),
+    }),
+  };
+});
 
 describe('ProductListHeader Component', () => {
   const mockProps = {

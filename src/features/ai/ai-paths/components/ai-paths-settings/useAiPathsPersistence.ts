@@ -130,6 +130,9 @@ type AiPathsUiState = {
   expandedGroups?: string[];
   paletteCollapsed?: boolean;
 };
+type AiPathsUserPreferences = {
+  aiPathsActivePathId?: string | null;
+};
 
 type UseAiPathsPersistenceResult = {
   autoSaveAt: string | null;
@@ -210,6 +213,17 @@ export function useAiPathsPersistence({
     },
     enabled: false,
   });
+  const userPreferencesQuery = useQuery({
+    queryKey: ['user-preferences', 'ai-paths'],
+    queryFn: async (): Promise<AiPathsUserPreferences> => {
+      const res = await fetch('/api/user/preferences', { credentials: 'include' });
+      if (!res.ok) {
+        throw new Error('Failed to load user preferences');
+      }
+      return (await res.json()) as AiPathsUserPreferences;
+    },
+    enabled: false,
+  });
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
@@ -222,6 +236,7 @@ export function useAiPathsPersistence({
   const autoSaveInFlightRef = useRef(false);
   const lastUiStatePayloadRef = useRef<string>('');
   const lastSettingsPayloadRef = useRef<string>('');
+  const lastUserPrefsActivePathIdRef = useRef<string | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
 
@@ -270,6 +285,18 @@ export function useAiPathsPersistence({
     },
     [updateSettingsBulkMutation]
   );
+  const persistUserPreferences = useCallback(async (pathId: string | null): Promise<void> => {
+    const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
+    const res = await fetch('/api/user/preferences', {
+      method: 'PATCH',
+      headers: csrfHeaders,
+      credentials: 'include',
+      body: JSON.stringify({ aiPathsActivePathId: pathId }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to update user preferences');
+    }
+  }, []);
 
   useEffect((): void => {
     if (loadInFlightRef.current) return;
@@ -279,10 +306,14 @@ export function useAiPathsPersistence({
     setLoading(true);
     const loadConfig = async (): Promise<void> => {
       try {
-        const settingsResult = await settingsQuery.refetch();
+        const [settingsResult, userPreferencesResult] = await Promise.all([
+          settingsQuery.refetch(),
+          userPreferencesQuery.refetch(),
+        ]);
         if (settingsResult.error || !settingsResult.data) {
           throw settingsResult.error ?? new Error('Failed to load AI Paths settings.');
         }
+        const userPreferences = userPreferencesResult?.data;
         const data = settingsResult.data as Array<{ key: string; value: string }>;
         const map = new Map(
           data.map((item: { key: string; value: string }): [string, string] => [
@@ -296,8 +327,13 @@ export function useAiPathsPersistence({
           uiStateParsed && typeof uiStateParsed === 'object'
             ? (uiStateParsed as Record<string, unknown>)
             : null;
-        const preferredPathId =
+        const preferredPathIdFromUi =
           typeof uiState?.activePathId === 'string' ? uiState.activePathId : null;
+        const preferredPathIdFromUser =
+          typeof userPreferences?.aiPathsActivePathId === 'string' &&
+          userPreferences.aiPathsActivePathId.trim().length > 0
+            ? userPreferences.aiPathsActivePathId.trim()
+            : null;
         const preferredGroups = Array.isArray(uiState?.expandedGroups)
           ? uiState.expandedGroups.filter(
             (value: unknown): value is string =>
@@ -500,7 +536,14 @@ export function useAiPathsPersistence({
         setPathConfigs(configs);
         const firstPathCandidate = normalizedMetas[0]?.id ?? Object.keys(configs)[0] ?? 'default';
         const firstPath =
-          preferredPathId && configs[preferredPathId] ? preferredPathId : firstPathCandidate;
+          preferredPathIdFromUser && configs[preferredPathIdFromUser]
+            ? preferredPathIdFromUser
+            : preferredPathIdFromUi && configs[preferredPathIdFromUi]
+              ? preferredPathIdFromUi
+              : firstPathCandidate;
+        if (preferredPathIdFromUser && configs[preferredPathIdFromUser]) {
+          lastUserPrefsActivePathIdRef.current = preferredPathIdFromUser;
+        }
         const firstConfigForSettings = configs[firstPath];
         if (firstConfigForSettings) {
           lastSettingsPayloadRef.current = stableStringify({
@@ -562,6 +605,7 @@ export function useAiPathsPersistence({
     reportAiPathsError,
     loadNonce,
     settingsQuery,
+    userPreferencesQuery,
     updateSettingsBulkMutation,
     normalizeConfigForHash,
     persistLastError,
@@ -579,13 +623,24 @@ export function useAiPathsPersistence({
     const payloadKey = stableStringify(payload);
     if (payloadKey === lastUiStatePayloadRef.current) return;
     lastUiStatePayloadRef.current = payloadKey;
+    const nextActivePathId = activePathId ?? null;
+    const shouldPersistUserPrefs = nextActivePathId !== lastUserPrefsActivePathIdRef.current;
     const timeout = setTimeout((): void => {
       void persistUiState(payload).catch((error: unknown) => {
         console.warn('[AI Paths] Failed to persist UI state.', error);
       });
+      if (shouldPersistUserPrefs) {
+        void persistUserPreferences(nextActivePathId)
+          .then(() => {
+            lastUserPrefsActivePathIdRef.current = nextActivePathId;
+          })
+          .catch((error: unknown) => {
+            console.warn('[AI Paths] Failed to persist user preferences.', error);
+          });
+      }
     }, 200);
     return (): void => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, persistUiState]);
+  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, persistUiState, persistUserPreferences]);
 
   const persistPathSettings = useCallback(
     async (nextPaths: PathMeta[], configId: string, config: PathConfig): Promise<void> => {
@@ -1052,6 +1107,14 @@ export function useAiPathsPersistence({
         keepalive: true,
       }).catch((error: unknown) => {
         console.warn('[AI Paths] Failed to persist path config on unload.', error);
+      });
+      void fetch('/api/user/preferences', {
+        method: 'POST',
+        headers: csrfHeaders,
+        body: JSON.stringify({ aiPathsActivePathId: pathId }),
+        keepalive: true,
+      }).catch((error: unknown) => {
+        console.warn('[AI Paths] Failed to persist user preferences on unload.', error);
       });
       invalidateSettingsCache();
     };

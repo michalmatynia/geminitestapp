@@ -1,12 +1,35 @@
 import { NamedDto } from '../types/base';
 
 export interface ProductDto extends NamedDto {
+  sku: string | null;
+  baseProductId: string | null;
+  defaultPriceGroupId: string | null;
+  ean: string | null;
+  gtin: string | null;
+  asin: string | null;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  description_en: string | null;
+  description_pl: string | null;
+  description_de: string | null;
+  supplierName: string | null;
+  supplierLink: string | null;
+  priceComment: string | null;
+  stock: number | null;
   price: number | null;
+  sizeLength: number | null;
+  sizeWidth: number | null;
+  weight: number | null;
+  length: number | null;
   published: boolean;
   categoryId: string | null;
   catalogId: string;
   tags: string[];
   images: string[];
+  imageLinks: string[];
+  imageBase64s: string[];
+  noteIds: string[];
 }
 
 export interface ProductCategoryDto extends NamedDto {
@@ -41,22 +64,57 @@ export interface PriceGroupDto extends NamedDto {
 }
 
 export interface CreateProductDto {
-  name: string;
-  description?: string;
-  price?: number;
+  sku: string;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
+  price?: number | null;
+  stock?: number | null;
+  weight?: number | null;
+  length?: number | null;
+  sizeLength?: number | null;
+  sizeWidth?: number | null;
+  supplierName?: string | null;
+  supplierLink?: string | null;
+  priceComment?: string | null;
   published?: boolean;
-  categoryId?: string;
-  catalogId: string;
-  tags?: string[];
+  categoryId?: string | null;
+  catalogIds?: string[];
+  tagIds?: string[];
+  producerIds?: string[];
+  noteIds?: string[];
+  imageLinks?: string[];
+  imageBase64s?: string[];
 }
 
 export interface UpdateProductDto {
-  name?: string;
-  description?: string;
-  price?: number;
+  sku?: string;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
+  price?: number | null;
+  stock?: number | null;
+  weight?: number | null;
+  length?: number | null;
+  sizeLength?: number | null;
+  sizeWidth?: number | null;
+  supplierName?: string | null;
+  supplierLink?: string | null;
+  priceComment?: string | null;
   published?: boolean;
-  categoryId?: string;
-  tags?: string[];
+  categoryId?: string | null;
+  catalogIds?: string[];
+  tagIds?: string[];
+  producerIds?: string[];
+  noteIds?: string[];
+  imageLinks?: string[];
+  imageBase64s?: string[];
 }
 
 export interface CreateCategoryDto {

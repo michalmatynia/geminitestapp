@@ -1034,7 +1034,7 @@ export default function Menu(): React.ReactNode {
       if (seen.has(id)) return;
       const item = byId.get(id);
       if (!item) return;
-      const { children, ...rest } = item;
+      const { children: _children, ...rest } = item;
       items.push(rest);
       seen.add(id);
     });

@@ -25,6 +25,9 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    systemLog: {
+      create: vi.fn().mockResolvedValue({}),
+    },
     $disconnect: vi.fn(),
   },
 }));

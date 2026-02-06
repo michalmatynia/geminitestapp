@@ -194,6 +194,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
 
   const runtimeState = parseRuntimeState(run.runtimeState);
+  const runStartedAt =
+    typeof run.startedAt === 'string'
+      ? run.startedAt
+      : run.startedAt instanceof Date
+        ? run.startedAt.toISOString()
+        : new Date().toISOString();
   const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? '', 10);
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
@@ -230,12 +236,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       edges,
       activePathId: run.pathId ?? null,
       activePathName: run.pathName ?? null,
+      runId: run.id,
+      runStartedAt,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
       seedHashes: runtimeState.hashes ?? undefined,
       seedHistory: runtimeState.history ?? undefined,
+      seedRunId: runtimeState.runId ?? undefined,
+      seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
       recordHistory: true,
       historyLimit: resolvedHistoryLimit,
       skipNodeIds: skipNodes,

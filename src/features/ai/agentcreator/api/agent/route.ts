@@ -111,7 +111,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     try {
       body = (await req.json()) as typeof body;
-    } catch (_error) {
+    } catch {
       return createErrorResponse(badRequestError('Invalid JSON payload'), {
         request: req,
         source: 'chatbot.agent.POST',

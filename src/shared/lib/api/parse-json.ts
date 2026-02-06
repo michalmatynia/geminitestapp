@@ -14,7 +14,7 @@ export async function parseJsonBody<T>(
 
   try {
     body = await req.json();
-  } catch (_error) {
+  } catch {
     if (options?.allowEmpty) {
       body = {};
     } else {

@@ -55,7 +55,10 @@ export function DynamicFilters({
     >
       {fields.map((field) => (
         <div key={field.key} className={field.colSpan}>
-          <Label className="text-[11px] font-medium text-gray-400 mb-1.5 block">
+          <Label 
+            htmlFor={`filter-${field.key}`}
+            className="text-[11px] font-medium text-gray-400 mb-1.5 block"
+          >
             {field.label}
           </Label>
           
@@ -69,6 +72,7 @@ export function DynamicFilters({
             />
           ) : field.type === 'search' ? (
             <SearchInput
+              id={`filter-${field.key}`}
               placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
@@ -77,6 +81,7 @@ export function DynamicFilters({
             />
           ) : (
             <Input
+              id={`filter-${field.key}`}
               type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'}
               placeholder={field.placeholder ?? field.label}
               value={String(values[field.key] ?? '')}

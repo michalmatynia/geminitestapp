@@ -417,7 +417,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
 
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
-    } catch (_error: unknown) {
+    } catch {
       // Fallback to local storage or defaults
     }
   }, [

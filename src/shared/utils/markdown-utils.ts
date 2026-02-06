@@ -33,7 +33,7 @@ export const autoformatMarkdown = (text: string): string => {
 
   // Convert bare URLs to markdown links (but not if already in markdown format)
   // Match URLs that are not already in [text](url) or <url> format
-  const urlRegex = /(?<![([])(https?:\/\/[^\s<>\\\[\]]+)(?![)\]])/g;
+  const urlRegex = new RegExp('(?<![([])(https?://[^\\s<>\\[\\]]+)(?![)\\]])', 'g');
   result = result.replace(urlRegex, (url: string) => {
     // Try to extract a readable title from the URL
     try {

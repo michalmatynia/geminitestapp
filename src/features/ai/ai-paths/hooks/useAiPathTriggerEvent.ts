@@ -485,6 +485,10 @@ export function useAiPathTriggerEvent(): {
       const executionMode = selectedConfig.executionMode ?? 'server';
       const startedAt = new Date().toISOString();
       const startedAtMs = Date.now();
+      const runId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 
       if (executionMode === 'local') {
         try {
@@ -493,6 +497,8 @@ export function useAiPathTriggerEvent(): {
             edges,
             activePathId: selectedConfig.id ?? null,
             activePathName: selectedConfig.name ?? null,
+            runId,
+            runStartedAt: startedAt,
             triggerNodeId: triggerNode.id,
             triggerEvent: triggerEventId,
             triggerContext,

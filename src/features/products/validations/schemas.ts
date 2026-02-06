@@ -24,6 +24,10 @@ function jsonToValue(value: unknown): unknown {
   ) {
     return tryParseJson(trimmed);
   }
+  // Handle CSV
+  if (trimmed.includes(',')) {
+    return trimmed.split(',').map((s) => s.trim()).filter(Boolean);
+  }
   return value;
 }
 

@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { GET as listSlugs, POST as createSlug } from '@/app/api/cms/slugs/route';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getSlugsForDomain, getSlugForDomainById } from '@/features/cms/services/cms-domain';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
 
 describe('CMS Slugs API', () => {
   const mockRepo = {

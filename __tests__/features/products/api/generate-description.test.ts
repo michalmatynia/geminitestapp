@@ -9,6 +9,42 @@ import { vi, Mock } from 'vitest';
 import { POST } from '@/app/api/generate-description/route';
 import prisma from '@/shared/lib/db/prisma';
 
+// Mock CSRF
+vi.mock('@/shared/lib/security/csrf', () => ({
+  CSRF_SAFE_METHODS: new Set(['GET', 'HEAD', 'OPTIONS']),
+  isSameOriginRequest: vi.fn().mockReturnValue(true),
+  getCsrfTokenFromRequest: vi.fn().mockReturnValue('mock-csrf'),
+  getCsrfTokenFromHeaders: vi.fn().mockReturnValue('mock-csrf'),
+}));
+
+// Mock Prisma client
+const settingsStore = new Map<string, string>();
+vi.mock('@/shared/lib/db/prisma', () => ({
+  default: {
+    setting: {
+      deleteMany: vi.fn().mockImplementation(async () => {
+        settingsStore.clear();
+      }),
+      create: vi.fn().mockImplementation(async ({ data }) => {
+        settingsStore.set(data.key, data.value);
+        return data;
+      }),
+      createMany: vi.fn().mockImplementation(async ({ data }) => {
+        data.forEach((item: any) => settingsStore.set(item.key, item.value));
+        return { count: data.length };
+      }),
+      findUnique: vi.fn().mockImplementation(async ({ where }) => {
+        const value = settingsStore.get(where.key);
+        return value ? { key: where.key, value } : null;
+      }),
+    },
+    systemLog: {
+      create: vi.fn().mockResolvedValue({}),
+    },
+    $disconnect: vi.fn(),
+  },
+}));
+
 const { mockCreate } = vi.hoisted(() => {
   return {
     mockCreate: vi.fn(),
@@ -47,8 +83,12 @@ describe('AI Description Generation API', () => {
   });
 
   it('should return a generated description', async () => {
-    await prisma.setting.create({
-      data: { key: 'openai_api_key', value: 'test-api-key' },
+    await prisma.setting.createMany({
+      data: [
+        { key: 'openai_api_key', value: 'test-api-key' },
+        { key: 'ai_vision_model', value: 'gpt-4o' },
+        { key: 'openai_model', value: 'gpt-3.5-turbo' },
+      ],
     });
 
     const mockCompletion = {
@@ -61,7 +101,7 @@ describe('AI Description Generation API', () => {
       {
         method: 'POST',
         body: JSON.stringify({
-          productData: { name_en: 'Test Product' },
+          productData: { name_en: 'Test Product', sku: 'TEST-SKU' },
           imageUrls: [],
         }),
       }
@@ -74,6 +114,9 @@ describe('AI Description Generation API', () => {
     expect(data.description).toBe('This is a test description.');
     // Called once for vision, once for generation
     expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: 'gpt-3.5-turbo' })
+    );
   });
 
   it('should fail if product name is missing', async () => {
@@ -104,7 +147,7 @@ describe('AI Description Generation API', () => {
       {
         method: 'POST',
         body: JSON.stringify({
-          productData: { name_en: 'Test Product' },
+          productData: { name_en: 'Test Product', sku: 'TEST-SKU' },
           imageUrls: [],
         }),
       }
@@ -118,6 +161,7 @@ describe('AI Description Generation API', () => {
     await prisma.setting.createMany({
       data: [
         { key: 'openai_api_key', value: 'test-api-key' },
+        { key: 'ai_vision_model', value: 'gpt-4o' },
         {
           key: 'openai_model',
           value: 'gpt-3.5-turbo',
@@ -139,7 +183,7 @@ describe('AI Description Generation API', () => {
       {
         method: 'POST',
         body: JSON.stringify({
-          productData: { name_en: 'Test Product' },
+          productData: { name_en: 'Test Product', sku: 'TEST-SKU' },
           imageUrls: [],
         }),
       }

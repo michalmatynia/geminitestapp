@@ -24,7 +24,7 @@ type LegacyUpdaterConfig = {
   mode?: 'replace' | 'append';
 };
 
-const NODE_WIDTH = 404;
+const NODE_WIDTH = 340;
 const NODE_MIN_HEIGHT = 230;
 const CANVAS_WIDTH = 8800;
 const CANVAS_HEIGHT = 5600;

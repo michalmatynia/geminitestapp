@@ -9,7 +9,7 @@ const importPlugin = require('eslint-plugin-import');
 module.exports = tseslint.config(
   {
     // Global ignores and common configurations
-    ignores: ['node_modules/', '.next/', 'dist/', 'public/', 'build/', 'temp/', 'tmp/'],
+    ignores: ['node_modules/', '.next/', 'dist/', 'public/', 'build/', 'temp/', 'tmp/', '__tests__/mocks/'],
   },
   {
     // Configuration for all files

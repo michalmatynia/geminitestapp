@@ -14,7 +14,7 @@ export function FrontendModel3DElementSection({
   settings,
 }: FrontendModel3DElementSectionProps): React.ReactNode {
   const blockSettings = useMemo(() => {
-    const { gsapAnimation, ...rest } = settings;
+    const { gsapAnimation: _gsapAnimation, ...rest } = settings;
     return rest;
   }, [settings]);
 

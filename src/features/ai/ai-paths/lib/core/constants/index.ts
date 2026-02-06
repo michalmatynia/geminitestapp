@@ -1,6 +1,6 @@
 import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/types/ai-paths';
 
-export const NODE_WIDTH = 404;
+export const NODE_WIDTH = 340;
 export const NODE_MIN_HEIGHT = 230;
 export const CANVAS_WIDTH = 8800;
 export const CANVAS_HEIGHT = 5600;

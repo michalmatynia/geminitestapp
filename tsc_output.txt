@@ -1,2 +1,0 @@
-src/features/products/components/ProductModals.tsx(3,1): error TS6133: 'dynamic' is declared but its value is never read.
-src/features/products/components/ProductModals.tsx(245,10): error TS2304: Cannot find name 'FileManager'.

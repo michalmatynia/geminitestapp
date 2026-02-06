@@ -70,6 +70,7 @@ type CanvasBoardProps = {
   selectedNodeId: string | null;
   draggingNodeId: string | null;
   selectedEdgeId: string | null;
+  viewportClassName?: string | undefined;
   onSelectEdgeId: (edgeId: string | null) => void;
   onRemoveEdge: (edgeId: string) => void;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
@@ -117,6 +118,7 @@ export function CanvasBoard({
   selectedNodeId,
   draggingNodeId,
   selectedEdgeId,
+  viewportClassName,
   onSelectEdgeId,
   onRemoveEdge,
   onDisconnectPort,
@@ -143,11 +145,14 @@ export function CanvasBoard({
   const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
   const [inputPulseNodes, setInputPulseNodes] = React.useState<Set<string>>(() => new Set());
   const [outputPulseNodes, setOutputPulseNodes] = React.useState<Set<string>>(() => new Set());
+  const [flowActiveTick, setFlowActiveTick] = React.useState<number>(0);
   const prevHashesRef = React.useRef<RuntimeHashes | null>(null);
   const edgePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const flowActiveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const FLOW_ANIMATION_MS = 1600;
   const NODE_PULSE_MS = 1400;
+  const FLOW_ACTIVE_WINDOW_MS = Math.max(900, FLOW_ANIMATION_MS * 2);
   const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
   const flowEnabled = resolvedFlowIntensity !== 'off';
   const flowStyle = React.useMemo<React.CSSProperties>(() => {
@@ -611,6 +616,18 @@ export function CanvasBoard({
     [NODE_PULSE_MS]
   );
 
+  const markFlowActive = React.useCallback((): void => {
+    const now = Date.now();
+    setFlowActiveTick(now);
+    if (flowActiveTimeoutRef.current) {
+      clearTimeout(flowActiveTimeoutRef.current);
+    }
+    flowActiveTimeoutRef.current = setTimeout(() => {
+      setFlowActiveTick((prev) => (Date.now() - prev >= FLOW_ACTIVE_WINDOW_MS ? 0 : prev));
+      flowActiveTimeoutRef.current = null;
+    }, FLOW_ACTIVE_WINDOW_MS);
+  }, [FLOW_ACTIVE_WINDOW_MS]);
+
   React.useEffect(() => {
     const nextHashes = buildRuntimeHashes();
     const prevHashes = prevHashesRef.current;
@@ -637,6 +654,7 @@ export function CanvasBoard({
       });
     });
     if (outputChanges.length === 0 && inputChanges.length === 0) return;
+    markFlowActive();
     const edgeIds = new Set<string>();
     const inputNodes = new Set<string>();
     const outputNodes = new Set<string>();
@@ -682,6 +700,7 @@ export function CanvasBoard({
     edgesByFromPort,
     edgesByToPort,
     getPortValue,
+    markFlowActive,
     nodeById,
     scheduleEdgePulse,
     scheduleNodePulse,
@@ -693,6 +712,10 @@ export function CanvasBoard({
     return (): void => {
       epTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
       npTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+      if (flowActiveTimeoutRef.current) {
+        clearTimeout(flowActiveTimeoutRef.current);
+        flowActiveTimeoutRef.current = null;
+      }
       epTimeouts.clear();
       npTimeouts.clear();
     };
@@ -703,7 +726,7 @@ export function CanvasBoard({
       ref={viewportRef}
       className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden ${
         panState ? 'cursor-grabbing' : 'cursor-grab'
-      }`}
+      } ${viewportClassName ?? ''}`}
       style={flowStyle}
       onDrop={onDrop}
       onDragOver={onDragOver}
@@ -790,10 +813,12 @@ export function CanvasBoard({
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
+            const allowSignalFlow =
+              blockingFlowEdgeIds.size > 0 || flowActiveTick > 0;
             const isFlowing =
               activeEdgeIds.has(edge.id) ||
               blockingFlowEdgeIds.has(edge.id) ||
-              signalEdgeIds.has(edge.id);
+              (allowSignalFlow && signalEdgeIds.has(edge.id));
             const isManualConnector =
               edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
             // Check if this is a schema connection (db_schema -> database)

@@ -1469,7 +1469,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     let created = { count: 0 };
     if (data.length > 0) {
       created = await prisma.product.createMany({
-        data: data.map(({ images, catalogs, categories, tags, producers, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
+        data: data.map(({ images: _images, catalogs: _catalogs, categories: _categories, tags: _tags, producers: _producers, ...rest }) => rest) as Prisma.ProductCreateManyInput[],
       });
     }
 
@@ -1873,7 +1873,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const deleted = await prisma.page.deleteMany();
     const created = data.length
       ? await prisma.page.createMany({
-        data: data.map(({ components, ...rest }) => rest) as Prisma.PageCreateManyInput[],
+        data: data.map(({ components: _components, ...rest }) => rest) as Prisma.PageCreateManyInput[],
       })
       : { count: 0 };
 

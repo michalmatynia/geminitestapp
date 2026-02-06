@@ -1,4 +1,5 @@
 import type { ProductParameterValue } from '@/features/products/types';
+import type { CreateProductDto } from '@/shared/dtos';
 
 export type ProductDraft = {
   id: string;
@@ -56,37 +57,18 @@ export type ProductDraft = {
   updatedAt: Date | string;
 };
 
-export type CreateProductDraftInput = {
-  name: string;
-  description?: string | null | undefined;
-  sku?: string | null | undefined;
-  ean?: string | null | undefined;
-  gtin?: string | null | undefined;
-  asin?: string | null | undefined;
-  name_en?: string | null | undefined;
-  name_pl?: string | null | undefined;
-  name_de?: string | null | undefined;
-  description_en?: string | null | undefined;
-  description_pl?: string | null | undefined;
-  description_de?: string | null | undefined;
-  weight?: number | null | undefined;
-  sizeLength?: number | null | undefined;
-  sizeWidth?: number | null | undefined;
-  length?: number | null | undefined;
-  price?: number | null | undefined;
-  supplierName?: string | null | undefined;
-  supplierLink?: string | null | undefined;
-  priceComment?: string | null | undefined;
-  stock?: number | null | undefined;
-  catalogIds?: string[] | undefined;
-  categoryId?: string | null | undefined;
-  tagIds?: string[] | undefined;
-  parameters?: ProductParameterValue[] | undefined;
-  defaultPriceGroupId?: string | null | undefined;
-  active?: boolean | undefined;
-  icon?: string | null | undefined;
-  imageLinks?: string[] | undefined;
-  baseProductId?: string | null | undefined;
-};
+export interface CreateProductDraftInput extends Omit<CreateProductDto, 'sku'> {
+  name: string; // Draft internal name
+  description?: string | null; // Draft internal description
+  sku?: string | null; // Drafts might not have SKU yet or it might be optional
+  active?: boolean;
+  icon?: string | null;
+  baseProductId?: string | null;
+  parameters?: ProductParameterValue[];
+  defaultPriceGroupId?: string | null;
+  ean?: string | null;
+  gtin?: string | null;
+  asin?: string | null;
+}
 
 export type UpdateProductDraftInput = Partial<CreateProductDraftInput>;

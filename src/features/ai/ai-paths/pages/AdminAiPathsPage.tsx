@@ -13,15 +13,20 @@ export function AdminAiPathsPage(): React.JSX.Element {
     'canvas'
   );
   const [mounted, setMounted] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   useEffect((): void | (() => void) => {
     const id = requestAnimationFrame(() => setMounted(true));
     return (): void => cancelAnimationFrame(id);
   }, []);
 
+  const wrapperClass = isFocusMode
+    ? 'h-[calc(100%+2rem)] w-[calc(100%+2rem)] -m-4'
+    : 'container mx-auto py-10';
+
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-4 flex items-center justify-between gap-4">
+    <div className={wrapperClass}>
+      <div className={`mb-4 flex items-center justify-between gap-4 ${isFocusMode ? 'hidden' : ''}`}>
         {mounted ? (
           <Tabs
             value={activeTab}
@@ -40,10 +45,11 @@ export function AdminAiPathsPage(): React.JSX.Element {
         )}
         <div id="ai-paths-name" className="text-sm text-gray-300" />
       </div>
-      <SectionPanel className="p-6">
+      <SectionPanel className={isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'}>
         <SectionHeader
           title="AI Paths"
           actions={<div id="ai-paths-actions" className="flex items-center gap-3" />}
+          className={isFocusMode ? 'hidden' : ''}
         />
         <AiPathsSettings
           activeTab={activeTab}
@@ -51,6 +57,8 @@ export function AdminAiPathsPage(): React.JSX.Element {
             <div className="flex items-center gap-3">{actions}</div>
           )}
           onTabChange={setActiveTab}
+          isFocusMode={isFocusMode}
+          onFocusModeChange={setIsFocusMode}
         />
       </SectionPanel>
     </div>

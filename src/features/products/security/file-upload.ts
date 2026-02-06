@@ -93,7 +93,7 @@ export class SecureFileUpload {
         if (cfg.maxHeight && dimensions.height > cfg.maxHeight) {
           errors.push(`Image height ${dimensions.height}px exceeds ${cfg.maxHeight}px limit`);
         }
-      } catch (_error) {
+      } catch {
         errors.push('Unable to read image dimensions');
       }
     }
@@ -273,7 +273,7 @@ export async function withSecureFileUpload(
       sanitizedFiles
     };
 
-  } catch (_error) {
+  } catch {
     return {
       isValid: false,
       errors: ['Failed to process file upload']

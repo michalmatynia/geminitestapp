@@ -366,6 +366,25 @@ export function NodeConfigDialog({
               />
             </TabsContent>
           </Tabs>
+          <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
+            <span className="text-[11px] uppercase tracking-wide text-gray-500">Node ID</span>
+            <span className="max-w-[260px] truncate font-mono text-xs text-gray-300">
+              {selectedNode.id}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50"
+              onClick={() => {
+                void navigator.clipboard.writeText(selectedNode.id).then(
+                  () => toast('Node ID copied.', { variant: 'success' }),
+                  () => toast('Failed to copy Node ID.', { variant: 'error' })
+                );
+              }}
+            >
+              Copy
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       <AlertDialog open={closePromptOpen} onOpenChange={setClosePromptOpen}>

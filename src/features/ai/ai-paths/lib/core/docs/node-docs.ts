@@ -27,6 +27,12 @@ const COMMON_RUNTIME_FIELDS: NodeConfigDocField[] = [
       'Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.',
     defaultValue: 'auto',
   },
+  {
+    path: 'runtime.waitForInputs',
+    description:
+      'If true, wait until all connected input ports have values before executing the node.',
+    defaultValue: 'false',
+  },
 ];
 
 const dbQueryFields = (prefix: string): NodeConfigDocField[] => [

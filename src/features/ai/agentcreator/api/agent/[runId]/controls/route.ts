@@ -29,7 +29,7 @@ async function POST_handler(req: NextRequest,
     };
     try {
       body = (await req.json()) as typeof body;
-    } catch (_error) {
+    } catch {
       return createErrorResponse(badRequestError('Invalid JSON payload'), {
         request: req,
         source: 'chatbot.agent.[runId].controls.POST',

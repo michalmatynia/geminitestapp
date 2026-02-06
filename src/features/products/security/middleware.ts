@@ -74,7 +74,7 @@ export class SecurityMiddleware {
             };
           }
         }
-      } catch (_error) {
+      } catch {
         return {
           allowed: false,
           status: 400,
@@ -197,7 +197,7 @@ export function withSecurity(
       // Add security headers to response
       return addSecurityHeaders(response as NextResponse);
 
-    } catch (_error) {
+    } catch {
       const errorResponse = NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
@@ -237,7 +237,7 @@ export function withFileUploadSecurity(
       const response = await handler(req, validation.files || [], ...args);
       return addSecurityHeaders(response as NextResponse);
 
-    } catch (_error) {
+    } catch {
       const errorResponse = NextResponse.json(
         { error: 'File upload failed' },
         { status: 500 }

@@ -8,6 +8,8 @@ type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
   renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
   onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
+  isFocusMode?: boolean | undefined;
+  onFocusModeChange?: ((next: boolean) => void) | undefined;
 };
 
 /**
@@ -17,13 +19,21 @@ type AiPathsSettingsProps = {
  * Migration note: Currently still uses useAiPathsSettingsState for backwards compatibility.
  * Child components can progressively migrate to use context hooks (useGraph, useSelection, etc.)
  */
-export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): React.JSX.Element {
+export function AiPathsSettings({
+  activeTab,
+  renderActions,
+  onTabChange,
+  isFocusMode,
+  onFocusModeChange,
+}: AiPathsSettingsProps): React.JSX.Element {
   return (
     <AiPathsProvider>
       <AiPathsSettingsInner
         activeTab={activeTab}
         renderActions={renderActions}
         onTabChange={onTabChange}
+        isFocusMode={isFocusMode}
+        onFocusModeChange={onFocusModeChange}
       />
     </AiPathsProvider>
   );
@@ -34,7 +44,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
  * This allows child components to consume state via context hooks while
  * the legacy state management continues to work.
  */
-function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): React.JSX.Element {
+function AiPathsSettingsInner({
+  activeTab,
+  renderActions,
+  onTabChange,
+  isFocusMode,
+  onFocusModeChange,
+}: AiPathsSettingsProps): React.JSX.Element {
   const state: AiPathsSettingsState = useAiPathsSettingsState({ activeTab });
 
   // Sync legacy state to contexts so child components can use context hooks
@@ -90,6 +106,8 @@ function AiPathsSettingsInner({ activeTab, renderActions, onTabChange }: AiPaths
       activeTab={activeTab}
       renderActions={renderActions}
       onTabChange={onTabChange}
+      isFocusMode={isFocusMode}
+      onFocusModeChange={onFocusModeChange}
       state={state}
     />
   );

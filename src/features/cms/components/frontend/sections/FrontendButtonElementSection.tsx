@@ -14,7 +14,7 @@ export function FrontendButtonElementSection({
   settings,
 }: FrontendButtonElementSectionProps): React.ReactNode {
   const blockSettings = useMemo(() => {
-    const { gsapAnimation, ...rest } = settings;
+    const { gsapAnimation: _gsapAnimation, ...rest } = settings;
     return rest;
   }, [settings]);
 

@@ -413,12 +413,19 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         const inferredUseMongoActions =
         databaseConfig.useMongoActions ??
         Boolean(databaseConfig.actionCategory || databaseConfig.action);
+        const runtimeConfig = node.config?.runtime
+          ? {
+            ...node.config.runtime,
+            ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
+          }
+          : { waitForInputs: true };
         return {
           ...node,
           inputs: ensureUniquePorts(node.inputs, [...DATABASE_INPUT_PORTS, ...forcedInputs]),
           outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en', 'aiPrompt']),
           config: {
             ...node.config,
+            ...(runtimeConfig ? { runtime: runtimeConfig } : {}),
             database: {
               ...databaseConfig,
               operation: databaseConfig.operation ?? 'query',
@@ -479,6 +486,12 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         const legacyDbConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
         const inferredUseMongoActions =
         legacyDbConfig.useMongoActions ?? Boolean(legacyDbConfig.actionCategory || legacyDbConfig.action);
+        const runtimeConfig = node.config?.runtime
+          ? {
+            ...node.config.runtime,
+            ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
+          }
+          : { waitForInputs: true };
         return {
           ...node,
           type: 'database',
@@ -486,6 +499,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en', 'aiPrompt']),
           config: {
             ...node.config,
+            ...(runtimeConfig ? { runtime: runtimeConfig } : {}),
             database: {
               operation: 'query',
               entityType: legacyDbConfig.entityType ?? 'product',

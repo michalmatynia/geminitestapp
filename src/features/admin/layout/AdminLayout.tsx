@@ -29,17 +29,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
   const hydratedUserRef = useRef<string | null>(null);
-  const menuCookieKey = 'adminMenuCollapsed';
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferencesMutation();
-
-  const setMenuCookie = useCallback((collapsed: boolean): void => {
-    if (typeof document === 'undefined') return;
-    const maxAge = 60 * 60 * 24 * 365;
-    document.cookie = `${menuCookieKey}=${collapsed ? 'true' : 'false'}; path=/; max-age=${maxAge}; samesite=lax`;
-  }, []);
 
   const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
     try {
@@ -61,10 +54,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
       preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
       setIsMenuCollapsed(preferences.adminMenuCollapsed);
-      setMenuCookie(preferences.adminMenuCollapsed);
       hydratedUserRef.current = userId;
     }
-  }, [session, status, preferences, setIsMenuCollapsed, setMenuCookie]);
+  }, [session, status, preferences, setIsMenuCollapsed]);
 
   useEffect(() => {
     if (isProgrammaticallyCollapsed && pathname !== '/admin/cms/pages/create') {
@@ -84,7 +76,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     preferredMenuCollapsedRef.current = nextCollapsed;
     setIsMenuCollapsed(nextCollapsed);
     setIsProgrammaticallyCollapsed(false);
-    setMenuCookie(nextCollapsed);
     void persistMenuCollapsed(nextCollapsed);
   };
 

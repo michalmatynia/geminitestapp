@@ -20,7 +20,10 @@
 
 React error overlay ? 
 
-use Context !
+Websocket install for my polling operations
+Is redis installed "
+
+use Context refactor !
 
 every element in CMS should have an uption to choose the type of backgroun, for image file background, Background lock is like a semi background later used in multiplanar din parallaxes
 

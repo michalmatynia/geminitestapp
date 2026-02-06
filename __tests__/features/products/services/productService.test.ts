@@ -39,6 +39,7 @@ describe('productService', () => {
     // Order matters because of foreign keys
     await prisma.productCategoryAssignment.deleteMany({});
     await prisma.productTagAssignment.deleteMany({});
+    await prisma.productProducerAssignment.deleteMany({});
     await prisma.productCatalog.deleteMany({});
     await prisma.productImage.deleteMany({});
     await prisma.imageFile.deleteMany({});
@@ -105,6 +106,20 @@ describe('productService', () => {
     });
 
     it('should link catalogs if provided', async () => {
+      const now = new Date();
+      const mockCatalog = { 
+        id: 'c1', 
+        name: 'Test Catalog', 
+        description: null, 
+        isDefault: false, 
+        priceGroupIds: [], 
+        languageIds: [],
+        createdAt: now,
+        updatedAt: now
+      };
+      vi.mocked(prisma.catalog.create).mockResolvedValue(mockCatalog as any);
+      vi.mocked(prisma.catalog.findUnique).mockResolvedValue(mockCatalog as any);
+
       const catalog = await prisma.catalog.create({
         data: { name: 'Test Catalog' },
       });

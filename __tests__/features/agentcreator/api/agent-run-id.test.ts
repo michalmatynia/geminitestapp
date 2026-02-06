@@ -1,5 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler: (handler: any) => handler,
+  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
+    const resolvedParams = ctx?.params && typeof ctx.params.then === 'function'
+      ? ctx.params
+      : Promise.resolve(ctx?.params ?? {});
+    return resolvedParams.then((params: any) => handler(req, ctx, params));
+  },
+}));
+
+vi.mock('@/shared/lib/db/prisma', () => ({
+  default: {
+    chatbotAgentRun: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('@/features/jobs/server', () => ({
+  startAgentQueue: vi.fn(),
+}));
+
+vi.mock('@/features/ai/agent-runtime/server', () => ({
+  logAgentAudit: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/[runId]/route';
 import prisma from '@/shared/lib/db/prisma';

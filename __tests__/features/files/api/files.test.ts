@@ -60,10 +60,14 @@ describe('Files API', () => {
     const imagePath2 = path.join(process.cwd(), 'public', 'test-image2.jpg');
     try {
       await fs.unlink(imagePath1);
-    } catch {}
+    } catch (error) {
+      console.error('Failed to unlink imagePath1:', error);
+    }
     try {
       await fs.unlink(imagePath2);
-    } catch {}
+    } catch (error) {
+      console.error('Failed to unlink imagePath2:', error);
+    }
   });
 
   describe('GET /api/files', () => {

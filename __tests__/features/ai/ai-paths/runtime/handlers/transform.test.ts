@@ -1,0 +1,169 @@
+import { describe, it, expect, vi } from 'vitest';
+import { 
+  handleContext, 
+  handleParser, 
+  handleMapper, 
+  handleMutator, 
+  handleValidator, 
+  handleRegex, 
+  handleIterator 
+} from '@/features/ai/ai-paths/lib/core/runtime/handlers/transform';
+import { createMockContext } from '../../test-utils';
+
+describe('Transform Handlers', () => {
+  describe('handleParser', () => {
+    it('should parse entity JSON with mappings', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'parser',
+          config: { 
+            parser: { 
+              mappings: { title: '$.name', price: '$.price' } 
+            } 
+          }
+        } as any,
+        nodeInputs: { entityJson: { name: 'Product', price: 100 } }
+      });
+      const result = handleParser(ctx);
+      expect(result).toEqual({ title: 'Product', price: 100 });
+    });
+
+    it('should use fallbacks when value is missing', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'parser',
+          config: { 
+            parser: { 
+              mappings: { title: '$.missing' } 
+            } 
+          }
+        } as any,
+        nodeInputs: { entityJson: { name: 'Fallback Name' } }
+      });
+      const result = handleParser(ctx);
+      expect(result.title).toBe('Fallback Name');
+    });
+  });
+
+  describe('handleMapper', () => {
+    it('should map values from context', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'mapper',
+          outputs: ['out1'],
+          config: { 
+            mapper: { 
+              outputs: ['out1'],
+              mappings: { out1: '$.user.name' } 
+            } 
+          }
+        } as any,
+        nodeInputs: { context: { user: { name: 'Alice' } } }
+      });
+      const result = handleMapper(ctx);
+      expect(result).toEqual({ out1: 'Alice' });
+    });
+  });
+
+  describe('handleMutator', () => {
+    it('should mutate context value', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'mutator',
+          config: { 
+            mutator: { 
+              path: 'user.score', 
+              valueTemplate: '100' 
+            } 
+          }
+        } as any,
+        nodeInputs: { context: { user: { score: 0 } } }
+      });
+      const result = handleMutator(ctx);
+      expect((result.context as any).user.score).toBe('100');
+    });
+  });
+
+  describe('handleValidator', () => {
+    it('should validate presence of paths', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'validator',
+          config: { 
+            validator: { 
+              requiredPaths: ['user.name', 'user.email'],
+              mode: 'all'
+            } 
+          }
+        } as any,
+        nodeInputs: { context: { user: { name: 'Alice' } } }
+      });
+      const result = handleValidator(ctx);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('user.email');
+    });
+  });
+
+  describe('handleRegex', () => {
+    it('should extract matches using regex', () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'regex',
+          config: { 
+            regex: { 
+              pattern: 'ID-(\d+)', 
+              flags: 'i',
+              mode: 'extract',
+              groupBy: '1'
+            } 
+          }
+        } as any,
+        nodeInputs: { value: 'Your ID-123 is ready' }
+      });
+      const result = handleRegex(ctx);
+      expect(result.value).toBe('123');
+    });
+  });
+
+  describe('handleIterator', () => {
+    it('should emit items sequentially', () => {
+      const items = ['a', 'b', 'c'];
+      let ctx = createMockContext({
+        nodeInputs: { value: items },
+        prevOutputs: {}
+      });
+      
+      let result = handleIterator(ctx);
+      expect(result.value).toBe('a');
+      expect(result.index).toBe(0);
+      expect(result.status).toBe('waiting_callback');
+
+      // Simulate callback
+      ctx = createMockContext({
+        nodeInputs: { value: items, callback: 'ack-a' },
+        prevOutputs: result,
+        now: 'step-2'
+      });
+      result = handleIterator(ctx);
+      expect(result.status).toBe('advance_pending');
+      expect(result.index).toBe(1);
+
+      // Next evaluateGraph call (different 'now')
+      ctx = createMockContext({
+        nodeInputs: { value: items },
+        prevOutputs: result,
+        now: 'step-3'
+      });
+      result = handleIterator(ctx);
+      expect(result.value).toBe('b');
+      expect(result.index).toBe(1);
+      expect(result.status).toBe('waiting_callback');
+    });
+  });
+});

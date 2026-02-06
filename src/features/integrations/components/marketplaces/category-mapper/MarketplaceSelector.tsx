@@ -3,9 +3,9 @@
 import { Store } from 'lucide-react';
 import Link from 'next/link';
 
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/types';
 import { Button } from '@/shared/ui';
 
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/types';
 
 export interface MarketplaceSelectorProps {
   integrations: IntegrationWithConnections[];

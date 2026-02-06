@@ -1,7 +1,6 @@
 'use client';
 
 import type { AiNode, NodeCacheMode, NodeConfig } from '@/features/ai/ai-paths/lib';
-import { CACHEABLE_NODE_TYPES } from '@/features/ai/ai-paths/lib';
 import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type RuntimeNodeConfigSectionProps = {
@@ -16,7 +15,6 @@ export function RuntimeNodeConfigSection({
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
-  const isAutoCacheable = CACHEABLE_NODE_TYPES.includes(selectedNode.type);
 
   return (
     <div className="space-y-3 rounded-md border border-border bg-card/50 p-3">
@@ -47,10 +45,10 @@ export function RuntimeNodeConfigSection({
         </Select>
       </div>
       <p className="text-[11px] text-gray-500">
-        Auto caches deterministic nodes. {isAutoCacheable ? 'This node supports auto caching.' : 'Auto caching is off for this node type.'}
+        Auto caching skips re-execution when inputs are unchanged within a run.
       </p>
       <p className="text-[11px] text-gray-500">
-        Force cache reuses outputs even for side-effect nodes (HTTP, DB writes, AI, delays, notifications).
+        Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).
       </p>
     </div>
   );

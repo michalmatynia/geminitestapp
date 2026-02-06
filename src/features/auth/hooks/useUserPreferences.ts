@@ -2,8 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+
 export interface UserPreferences {
   adminMenuCollapsed?: boolean | null;
+  aiPathsActivePathId?: string | null;
 }
 
 const USER_PREFERENCES_STALE_MS = 10_000;
@@ -32,7 +35,7 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPrefer
     mutationFn: async (data: UserPreferences): Promise<UserPreferences> => {
       const res = await fetch('/api/user/preferences', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify(data),
       });

@@ -318,9 +318,9 @@ vi.mock("@/shared/lib/db/prisma", () => {
       const newItem = {
         id: data.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...(MODEL_DEFAULTS[name] || {}),
-        ...data,
         createdAt: new Date(),
         updatedAt: new Date(),
+        ...data,
       };
       
       // Handle nested connects (simplified)
@@ -335,12 +335,13 @@ vi.mock("@/shared/lib/db/prisma", () => {
     }),
     createMany: vi.fn().mockImplementation(async (args) => {
       const data = Array.isArray(args?.data) ? args.data : [args?.data];
+      const now = new Date();
       const newItems = data.map((item: any) => ({
         id: item.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...(MODEL_DEFAULTS[name] || {}),
+        createdAt: now,
+        updatedAt: now,
         ...item,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       }));
       getStore(name).push(...newItems);
       return { count: newItems.length, length: newItems.length };
@@ -466,6 +467,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
     productCategoryAssignment: createMockModel("productCategoryAssignment"),
     productTag: createMockModel("productTag"),
     productTagAssignment: createMockModel("productTagAssignment"),
+    productProducerAssignment: createMockModel("productProducerAssignment"),
     aiPathRun: createMockModel("aiPathRun"),
     aiPathRunNode: createMockModel("aiPathRunNode"),
     aiPathRunEvent: createMockModel("aiPathRunEvent"),
@@ -555,19 +557,21 @@ if (!global.crypto.randomUUID) {
 }
 
 // Polyfill for window.matchMedia (GSAP needs this)
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
 /**
  * MSW Server Setup for Vitest

@@ -1,6 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
-import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the module where pollQueue resides, exporting pollQueue for testing.
 // stopChatbotJobQueue is explicitly exported from the real module, so it's not mocked here.
@@ -12,9 +10,6 @@ vi.mock('@/features/jobs/workers/chatbotJobQueue', async (importOriginal) => {
     pollQueue: mockPollQueue, // Export the mock pollQueue
   };
 });
-
-// Import after the mock to ensure the mocked version is used
-import { stopChatbotJobQueue } from '@/features/jobs/workers/chatbotJobQueue';
 
 vi.mock('@/features/ai/chatbot/services/chatbot-job-repository', () => ({
   chatbotJobRepository: {
@@ -29,6 +24,11 @@ vi.mock('@/features/ai/chatbot/services/chatbot-session-repository', () => ({
     addMessage: vi.fn(),
   },
 }));
+
+// Import after the mock to ensure the mocked version is used
+import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
+import { stopChatbotJobQueue } from '@/features/jobs/workers/chatbotJobQueue';
 
 const globalFetch = global.fetch;
 

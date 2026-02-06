@@ -1,9 +1,8 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
-import { auth } from '@/features/auth/server';
+import { auth, getUserPreferences } from '@/features/auth/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 export const dynamic = 'force-dynamic';
@@ -17,16 +16,19 @@ export default async function Layout({
   let session = null;
   try {
     session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       redirect('/auth/signin');
     }
     if (session.user.accountDisabled || session.user.accountBanned) {
       redirect('/auth/signin?error=AccountDisabled');
     }
-    const cookieStore = await cookies();
-    const cookieValue = cookieStore.get('adminMenuCollapsed')?.value;
-    if (cookieValue === 'true' || cookieValue === '1') {
-      initialMenuCollapsed = true;
+    try {
+      const preferences = await getUserPreferences(session.user.id);
+      if (typeof preferences.adminMenuCollapsed === 'boolean') {
+        initialMenuCollapsed = preferences.adminMenuCollapsed;
+      }
+    } catch {
+      // Fallback to cookie-derived value when preferences are unavailable.
     }
   } catch {
     redirect('/auth/signin');

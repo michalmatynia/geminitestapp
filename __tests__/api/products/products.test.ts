@@ -1,14 +1,75 @@
-import { vi, beforeEach, afterAll } from 'vitest';
-import { describe, it, expect } from 'vitest';
+import { Product } from '@prisma/client';
 import { NextRequest } from 'next/server';
+import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
+
+// Mock the api-handler module
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler: (handler: any) => handler,
+  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
+    const resolvedParams =
+      ctx?.params && typeof ctx.params.then === 'function'
+        ? ctx.params
+        : Promise.resolve(ctx?.params ?? {});
+    return resolvedParams.then((params: any) => handler(req, ctx, params));
+  },
+}));
+
+// Mock Prisma client
+vi.mock('@/shared/lib/db/prisma', () => ({
+  default: {
+    product: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      count: vi.fn(),
+    },
+    productImage: {
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    imageFile: {
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
+    productCatalog: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    productCategoryAssignment: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    productTagAssignment: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    productProducerAssignment: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    catalog: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    systemLog: {
+      create: vi.fn().mockResolvedValue({}),
+    },
+    $disconnect: vi.fn(),
+  },
+}));
 
 import { POST as POST_DUPLICATE } from '@/app/api/products/[id]/duplicate/route';
 import { PUT, DELETE } from '@/app/api/products/[id]/route';
 import { GET as GET_LIST, POST } from '@/app/api/products/route';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
 import prisma from '@/shared/lib/db/prisma';
-
-import { Product } from '@prisma/client';
 
 // Helper to create mock product data
 const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
@@ -33,6 +94,9 @@ const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
   updatedAt: new Date(),
   images: [],
   catalogs: [],
+  categories: [],
+  tags: [],
+  producers: [],
   ...overrides,
 });
 
@@ -169,7 +233,7 @@ describe('Products API', () => {
       formData.append('length', '30');
 
       const req = {
-        headers: new Headers(),
+        headers: new Headers({ 'Content-Type': 'multipart/form-data' }),
         formData: () => Promise.resolve(formData),
         url: 'http://localhost/api/products',
         method: 'POST',

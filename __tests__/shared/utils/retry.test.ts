@@ -79,7 +79,10 @@ describe('Retry Utils', () => {
       const op = vi.fn().mockRejectedValue(new Error('Fail'));
       
       for (let i = 0; i < 5; i++) {
-        try { await withCircuitBreaker(op, { circuitId }); } catch {}
+        try { await withCircuitBreaker(op, { circuitId }); } catch (error) {
+          // Expected failure to trip circuit breaker
+          console.log('Expected failure during circuit breaker trip:', error);
+        }
       }
 
       // Move time forward

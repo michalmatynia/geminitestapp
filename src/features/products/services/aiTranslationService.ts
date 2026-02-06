@@ -59,13 +59,13 @@ function extractJson(text: string): unknown {
   try {
     // 1. Try direct parse
     return JSON.parse(text);
-  } catch (_e) {
+  } catch {
     // 2. Try to find JSON block
     const match = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
     if (match && match[1]) {
       try {
         return JSON.parse(match[1].trim());
-      } catch (_e2) {
+      } catch {
         // Continue to fallback
       }
     }
@@ -77,7 +77,7 @@ function extractJson(text: string): unknown {
       const candidate = text.substring(firstBrace, lastBrace + 1);
       try {
         return JSON.parse(candidate);
-      } catch (_e3) {
+      } catch {
         // Continue to fallback
       }
     }

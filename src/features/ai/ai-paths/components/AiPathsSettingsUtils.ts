@@ -168,7 +168,12 @@ export const buildPersistedRuntimeState = (
       }));
     }
   });
-  const payload: Record<string, unknown> = { inputs, outputs };
+  const payload: Record<string, unknown> = {
+    inputs,
+    outputs,
+    ...(state.runId ? { runId: state.runId } : {}),
+    ...(state.runStartedAt ? { runStartedAt: state.runStartedAt } : {}),
+  };
   if (Object.keys(history).length > 0) {
     payload.history = history;
   }

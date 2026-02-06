@@ -114,6 +114,9 @@ export function useAiPathsRuntime({
   const lastTriggerNodeIdRef = useRef<string | null>(null);
   const triggerContextRef = useRef<Record<string, unknown> | null>(null);
   const pendingSimulationContextRef = useRef<Record<string, unknown> | null>(null);
+  const currentRunIdRef = useRef<string | null>(null);
+  const currentRunStartedAtRef = useRef<string | null>(null);
+  const runInFlightRef = useRef(false);
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
@@ -158,6 +161,13 @@ export function useAiPathsRuntime({
       email: user.email ?? null,
     };
   }, [sessionQuery.data]);
+
+  const createRunId = useCallback((): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+  }, []);
 
   useEffect((): void => {
     runtimeStateRef.current = runtimeState;
@@ -480,6 +490,14 @@ export function useAiPathsRuntime({
       toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
     }
+    if (runInFlightRef.current) {
+      toast('A run is already in progress.', { variant: 'info' });
+      return;
+    }
+    runInFlightRef.current = true;
+    const runId = createRunId();
+    currentRunIdRef.current = runId;
+    currentRunStartedAtRef.current = startedAt;
     const triggerEvent =
       triggerNode.config?.trigger?.event ??
       TRIGGER_EVENTS[0]?.id ??
@@ -498,6 +516,8 @@ export function useAiPathsRuntime({
         edges: sanitizedEdges,
         activePathId,
         activePathName: pathName,
+        runId,
+        runStartedAt: startedAt,
         triggerNodeId: triggerNode.id,
         triggerEvent,
         triggerContext,
@@ -505,6 +525,9 @@ export function useAiPathsRuntime({
         recordHistory: true,
         historyLimit: 50,
         seedHistory: runtimeStateRef.current.history ?? undefined,
+        seedRunId: runtimeStateRef.current.runId ?? undefined,
+        seedRunStartedAt: runtimeStateRef.current.runStartedAt ?? undefined,
+        seedHashes: runtimeStateRef.current.hashes ?? undefined,
         fetchEntityByType,
         reportAiPathsError,
         toast,
@@ -581,6 +604,8 @@ export function useAiPathsRuntime({
         source: 'ai_paths_ui',
       });
       return;
+    } finally {
+      runInFlightRef.current = false;
     }
 
   }, [isPathActive, buildTriggerContext, normalizedNodes, sanitizedEdges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
@@ -663,6 +688,12 @@ export function useAiPathsRuntime({
           ...prev,
           outputs: updatedOutputs,
         }));
+        const runId =
+          runtimeStateRef.current.runId ?? currentRunIdRef.current ?? undefined;
+        const runStartedAt =
+          runtimeStateRef.current.runStartedAt ??
+          currentRunStartedAtRef.current ??
+          undefined;
         const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
         const seededOutputs = updatedOutputs;
         const downstreamState = await evaluateGraph({
@@ -670,6 +701,8 @@ export function useAiPathsRuntime({
           edges: sanitizedEdges,
           activePathId,
           activePathName: pathName,
+          ...(runId ? { runId } : {}),
+          ...(runStartedAt ? { runStartedAt } : {}),
           ...(triggerNodeId ? { triggerNodeId } : {}),
           triggerContext: triggerContextRef.current,
           deferPoll: true,
@@ -677,6 +710,8 @@ export function useAiPathsRuntime({
           seedOutputs: seededOutputs,
           seedHashes: runtimeStateRef.current.hashes ?? undefined,
           seedHistory: runtimeStateRef.current.history ?? undefined,
+          seedRunId: runtimeStateRef.current.runId ?? undefined,
+          seedRunStartedAt: runtimeStateRef.current.runStartedAt ?? undefined,
           recordHistory: true,
           historyLimit: 50,
           fetchEntityByType,
@@ -714,6 +749,8 @@ export function useAiPathsRuntime({
               edges: sanitizedEdges,
               activePathId,
               activePathName: pathName,
+              ...(runId ? { runId } : {}),
+              ...(runStartedAt ? { runStartedAt } : {}),
               ...(triggerNodeId ? { triggerNodeId } : {}),
               triggerContext: triggerContextRef.current,
               deferPoll: true,
@@ -722,6 +759,8 @@ export function useAiPathsRuntime({
               seedOutputs: downstreamState.outputs,
               seedHashes: downstreamState.hashes ?? undefined,
               seedHistory: downstreamState.history ?? undefined,
+              seedRunId: downstreamState.runId ?? runtimeStateRef.current.runId ?? undefined,
+              seedRunStartedAt: downstreamState.runStartedAt ?? runtimeStateRef.current.runStartedAt ?? undefined,
               fetchEntityByType,
               reportAiPathsError,
               toast,

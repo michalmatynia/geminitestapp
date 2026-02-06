@@ -20,6 +20,7 @@ const updatePreferencesSchema = z.object({
   productListCurrencyCode: z.string().optional().nullable(),
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
   productListThumbnailSource: z.enum(["file", "link", "base64"]).optional().nullable(),
+  aiPathsActivePathId: z.string().optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
   cmsActiveDomainId: z.string().optional().nullable(),
@@ -48,6 +49,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         productListCurrencyCode: "PLN",
         productListPageSize: 12,
         productListThumbnailSource: "file",
+        aiPathsActivePathId: null,
         adminMenuCollapsed: false,
         cmsLastPageId: null,
         cmsActiveDomainId: null,
@@ -73,6 +75,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       productListCurrencyCode: preferences.productListCurrencyCode ?? "PLN",
       productListPageSize: preferences.productListPageSize ?? 12,
       productListThumbnailSource: preferences.productListThumbnailSource ?? "file",
+      aiPathsActivePathId: preferences.aiPathsActivePathId ?? null,
       adminMenuCollapsed: preferences.adminMenuCollapsed ?? false,
       cmsLastPageId: preferences.cmsLastPageId ?? null,
       cmsActiveDomainId: preferences.cmsActiveDomainId ?? null,
@@ -130,6 +133,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
     if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
     if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
+    if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
     if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
     if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
     if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;

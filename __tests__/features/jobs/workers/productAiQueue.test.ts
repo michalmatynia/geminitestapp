@@ -1,16 +1,43 @@
 import OpenAI from 'openai';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ErrorSystem } from '@/features/observability/server';
-import { generateProductDescription, translateProduct, getProductRepository } from '@/features/products/server';
+// Mock the module where pollQueue resides, exporting pollQueue for testing.
+const mockPollQueue = vi.fn();
+vi.mock('@/features/jobs/workers/productAiQueue', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/jobs/workers/productAiQueue')>();
+  return {
+    ...actual,
+    pollQueue: mockPollQueue,
+  };
+});
+
+vi.mock('@/features/jobs/services/product-ai-job-repository', () => ({
+  getProductAiJobRepository: vi.fn(),
+}));
+
+vi.mock('@/features/products/server', () => ({
+  generateProductDescription: vi.fn(),
+  translateProduct: vi.fn(),
+  getProductRepository: vi.fn(),
+  getSettingValue: vi.fn().mockResolvedValue('mock-value'),
+}));
+
+vi.mock('@/features/observability/server', () => ({
+  ErrorSystem: {
+    captureException: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/internationalization/services/internationalization-provider', () => ({
+  getInternationalizationProvider: vi.fn().mockResolvedValue('prisma'),
+}));
+
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
 import { resetProductAiJobQueue } from '@/features/jobs/workers/productAiQueue';
-
-vi.mock('openai');
+import { ErrorSystem } from '@/features/observability/server';
+import { generateProductDescription, translateProduct, getProductRepository } from '@/features/products/server';
 
 describe('Product AI Job Queue Worker', () => {
-  let mockPollQueue: any;
-
   const mockJobRepo = {
     markStaleRunningJobs: vi.fn().mockResolvedValue({ count: 0 }),
     claimNextPendingJob: vi.fn(),
@@ -32,7 +59,7 @@ describe('Product AI Job Queue Worker', () => {
   };
 
   beforeEach(() => {
-    mockPollQueue = vi.fn(); // Assign here
+    mockPollQueue.mockClear();
     vi.clearAllMocks();
     mockJobRepo.markStaleRunningJobs.mockClear();
     mockJobRepo.claimNextPendingJob.mockClear();

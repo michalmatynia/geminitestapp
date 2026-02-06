@@ -7,7 +7,7 @@ export const readErrorResponse = async (res: Response): Promise<{ message: strin
       message: data.error || defaultErrorMessage,
       ...(typeof data.errorId === 'string' ? { errorId: data.errorId } : {}),
     };
-  } catch (_error) {
+  } catch {
     try {
       const text = await res.text();
       return { message: text || defaultErrorMessage };

@@ -3,6 +3,12 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { triggers } from '@/features/ai/ai-paths/lib';
+import type { AiNode, ClusterPreset, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
+import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
+
+import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
 import { CanvasBoardMigrated } from '../examples/CanvasBoardMigrated';
 import { CanvasSidebarWrapper } from '../examples/CanvasSidebarWrapper';
 import { ClusterPresetsPanelMigrated } from '../examples/ClusterPresetsPanelMigrated';
@@ -13,24 +19,21 @@ import { GraphModelDebugPanel } from '../graph-model-debug-panel';
 import { PresetsDialogWithContext } from '../presets-dialog';
 import { RunDetailDialogWithContext } from '../run-detail-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
-import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
-import { triggers } from '@/features/ai/ai-paths/lib';
-import type { AiNode, ClusterPreset, NodeDefinition } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
-import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
-
 import {
   DOCS_OVERVIEW_SNIPPET,
   DOCS_WIRING_SNIPPET,
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
+
 import type { AiPathsSettingsState } from './useAiPathsSettingsState';
 
 type AiPathsSettingsViewProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
   renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
   onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
+  isFocusMode?: boolean | undefined;
+  onFocusModeChange?: ((next: boolean) => void) | undefined;
   state: AiPathsSettingsState;
 };
 
@@ -38,6 +41,8 @@ export function AiPathsSettingsView({
   activeTab,
   renderActions,
   onTabChange,
+  isFocusMode: isFocusModeProp,
+  onFocusModeChange,
   state,
 }: AiPathsSettingsViewProps): React.JSX.Element {
   // Domain: Persistence — read from context
@@ -156,9 +161,11 @@ export function AiPathsSettingsView({
 
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
-  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isFocusModeInternal, setIsFocusModeInternal] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
+  const isFocusMode = isFocusModeProp ?? isFocusModeInternal;
+  const setIsFocusMode = onFocusModeChange ?? setIsFocusModeInternal;
 
   const activePathConfig: PathConfig | undefined = activePathId ? pathConfigs?.[activePathId] : undefined;
   const groupKey: string | null =
@@ -210,10 +217,10 @@ export function AiPathsSettingsView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
       {activeTab === 'canvas' && (
-        <div className="space-y-6">
-          {typeof document !== 'undefined' && renderActions
+        <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
+          {!isFocusMode && typeof document !== 'undefined' && renderActions
             ? createPortal(
               renderActions(
                 <div className="flex flex-wrap items-center gap-3">
@@ -261,7 +268,7 @@ export function AiPathsSettingsView({
                   <Button
                     type="button"
                     className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
-                    onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+                    onClick={() => setIsFocusMode(!isFocusMode)}
                     title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
                   >
                     {isFocusMode ? 'Edit' : 'Show'}
@@ -350,7 +357,7 @@ export function AiPathsSettingsView({
               document.getElementById('ai-paths-actions') ?? document.body
             )
             : null}
-          {typeof document !== 'undefined' && activePathId
+          {!isFocusMode && typeof document !== 'undefined' && activePathId
             ? createPortal(
               <div className="flex items-center justify-end gap-2">
                 <div className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}>
@@ -470,14 +477,16 @@ export function AiPathsSettingsView({
             </div>
           </SharedModal>
 
-          <div className="flex flex-wrap items-start gap-6">
-            <div className="min-w-[240px] flex-1 space-y-4" />
-            <div className="min-w-[220px] space-y-4" />
-          </div>
+          {!isFocusMode ? (
+            <div className="flex flex-wrap items-start gap-6">
+              <div className="min-w-[240px] flex-1 space-y-4" />
+              <div className="min-w-[220px] space-y-4" />
+            </div>
+          ) : null}
 
           <div
-            className={`grid grid-cols-1 transition-[grid-template-columns] duration-300 ease-in-out ${
-              isFocusMode ? 'gap-3 xl:grid-cols-[0px_1fr]' : 'gap-6 xl:grid-cols-[280px_1fr]'
+            className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${
+              isFocusMode ? 'h-full gap-0 xl:grid-cols-[0px_1fr]' : 'gap-6 xl:grid-cols-[280px_1fr]'
             }`}
           >
             <div
@@ -514,26 +523,41 @@ export function AiPathsSettingsView({
                 onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
               />
             </div>
-            <CanvasBoardMigrated
-              flowIntensity={flowIntensity}
-              onRemoveEdge={handleRemoveEdge}
-              onDisconnectPort={handleDisconnectPort}
-              onReconnectInput={handleReconnectInput}
-              onFireTrigger={(node) => void handleFireTrigger(node)}
-              onPointerDownNode={handlePointerDown}
-              onPointerMoveNode={handlePointerMove}
-              onPointerUpNode={handlePointerUp}
-              onStartConnection={handleStartConnection}
-              onCompleteConnection={handleCompleteConnection}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onPanStart={handlePanStart}
-              onPanMove={handlePanMove}
-              onPanEnd={handlePanEnd}
-              onZoomTo={zoomTo}
-              onFitToNodes={fitToNodes}
-              onResetView={resetView}
-            />
+            <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
+              {isFocusMode ? (
+                <div className="absolute right-3 top-3 z-20">
+                  <Button
+                    type="button"
+                    className="h-9 rounded-md border border-border bg-card/80 px-3 text-sm text-gray-200 hover:bg-card/60"
+                    onClick={() => setIsFocusMode(false)}
+                    title="Show side panels"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ) : null}
+              <CanvasBoardMigrated
+                flowIntensity={flowIntensity}
+                viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
+                onRemoveEdge={handleRemoveEdge}
+                onDisconnectPort={handleDisconnectPort}
+                onReconnectInput={handleReconnectInput}
+                onFireTrigger={(node) => void handleFireTrigger(node)}
+                onPointerDownNode={handlePointerDown}
+                onPointerMoveNode={handlePointerMove}
+                onPointerUpNode={handlePointerUp}
+                onStartConnection={handleStartConnection}
+                onCompleteConnection={handleCompleteConnection}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onPanStart={handlePanStart}
+                onPanMove={handlePanMove}
+                onPanEnd={handlePanEnd}
+                onZoomTo={zoomTo}
+                onFitToNodes={fitToNodes}
+                onResetView={resetView}
+              />
+            </div>
           </div>
         </div>
       )}

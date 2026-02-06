@@ -2,7 +2,9 @@
 
 import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2 } from 'lucide-react';
 import NextImage from 'next/image';
-import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
+
+import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
@@ -41,9 +43,8 @@ import {
   shouldShowSectionDivider,
   isBackgroundModeImage,
   collectBackgroundImages,
+  type MediaReplaceTarget,
 } from './preview/preview-utils';
-
-export type { MediaReplaceTarget } from './preview/preview-utils';
 import {
   PreviewCarouselBlock,
   PreviewSlideshowBlock,
@@ -59,8 +60,9 @@ import {
   registerPreviewBlockItem,
 } from './preview/PreviewSectionBlocks';
 
-import type { MediaReplaceTarget } from './preview/preview-utils';
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from '../../types/page-builder';
+
+export type { MediaReplaceTarget };
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 
@@ -3216,4 +3218,3 @@ function PreviewBlockItem({
 // Register PreviewBlockItem with extracted modules to avoid circular imports
 registerPreviewBlockItem(PreviewBlockItem);
 registerCarouselPreviewBlockItem(PreviewBlockItem);
-

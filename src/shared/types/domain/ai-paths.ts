@@ -314,6 +314,7 @@ export type NodeRuntimeConfig = {
   cache?: {
     mode?: NodeCacheMode;
   };
+  waitForInputs?: boolean;
   timeoutMs?: number;
   retry?: {
     attempts?: number;
@@ -395,6 +396,7 @@ export type RuntimeHistoryLink = {
 
 export type RuntimeHistoryEntry = {
   timestamp: string;
+  runId?: string | null | undefined;
   pathId?: string | null | undefined;
   pathName?: string | null | undefined;
   nodeId: string;
@@ -404,6 +406,7 @@ export type RuntimeHistoryEntry = {
   iteration?: number | undefined;
   inputs?: RuntimePortValues | null | undefined;
   outputs?: RuntimePortValues | null | undefined;
+  inputHash?: string | null | undefined;
   error?: string | null | undefined;
   delayMs?: number | null | undefined;
   inputsFrom?: RuntimeHistoryLink[] | undefined;
@@ -411,6 +414,8 @@ export type RuntimeHistoryEntry = {
 };
 
 export type RuntimeState = {
+  runId?: string | null | undefined;
+  runStartedAt?: string | null | undefined;
   inputs: Record<string, RuntimePortValues>;
   outputs: Record<string, RuntimePortValues>;
   hashes?: Record<string, string> | undefined;

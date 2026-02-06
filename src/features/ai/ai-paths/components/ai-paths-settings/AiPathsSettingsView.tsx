@@ -3,16 +3,16 @@
 import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
 import { Button, Input, Label, UnifiedSelect, SharedModal } from "@/shared/ui";
-import { CanvasBoard } from "../canvas-board";
-import { CanvasSidebar } from "../canvas-sidebar";
-import { ClusterPresetsPanel } from "../cluster-presets-panel";
+import { CanvasBoardMigrated } from "../examples/CanvasBoardMigrated";
+import { CanvasSidebarWrapper } from "../examples/CanvasSidebarWrapper";
+import { ClusterPresetsPanelMigrated } from "../examples/ClusterPresetsPanelMigrated";
 import { DocsTabPanel, PathsTabPanel } from "../ui-panels";
 import { GraphModelDebugPanel } from "../graph-model-debug-panel";
-import { NodeConfigDialog } from "../node-config-dialog";
-import { PresetsDialog } from "../presets-dialog";
-import { RunDetailDialog } from "../run-detail-dialog";
-import { RunHistoryPanel } from "../run-history-panel";
-import { SimulationDialog } from "../simulation-dialog";
+import { NodeConfigDialogMigrated } from "../examples/NodeConfigDialogMigrated";
+import { PresetsDialogWithContext } from "../presets-dialog";
+import { RunDetailDialogWithContext } from "../run-detail-dialog";
+import { RunHistoryPanelMigrated } from "../examples/RunHistoryPanelMigrated";
+import { SimulationDialogMigrated } from "../examples/SimulationDialogMigrated";
 import type {
   AiNode,
   ClusterPreset,
@@ -73,27 +73,11 @@ export function AiPathsSettingsView({
     pathFlagsById,
     handleSwitchPath,
     savePathIndex,
-    nodes,
     setNodes,
-    edges,
     runtimeState,
     edgePaths,
-    view,
-    panState,
-    lastDrop,
-    connecting,
-    connectingPos,
-    connectingFromNode,
-    selectedNodeId,
-    dragState,
-    selectedEdgeId,
     palette,
-    paletteCollapsed,
-    setPaletteCollapsed,
-    expandedPaletteGroups,
-    togglePaletteGroup,
     handleDragStart,
-    selectedNode,
     handleSelectEdge,
     handleFireTrigger,
     handleFireTriggerPersistent,
@@ -105,7 +89,6 @@ export function AiPathsSettingsView({
     handleClearWires,
     handleClearConnectorData,
     handleClearHistory,
-    handleClearNodeHistory,
     handleDisconnectPort,
     handleReconnectInput,
     handleSelectNode,
@@ -122,76 +105,28 @@ export function AiPathsSettingsView({
     zoomTo,
     fitToNodes,
     resetView,
-    presetDraft,
-    setPresetDraft,
-    editingPresetId,
-    handleResetPresetDraft,
     handlePresetFromSelection,
     handleSavePreset,
-    clusterPresets,
-    handleLoadPreset,
     handleApplyPreset,
     handleDeletePreset,
     handleExportPresets,
     lastGraphModelPayload,
     runList,
     runsQuery,
-    runFilter,
-    setRunFilter,
-    expandedRunHistory,
-    setExpandedRunHistory,
-    runHistorySelection,
-    setRunHistorySelection,
     handleOpenRunDetail,
     handleResumeRun,
     handleCancelRun,
     handleRequeueDeadLetter,
-    viewportRef,
-    canvasRef,
-    configOpen,
     setNodeConfigDirty,
     modelOptions,
-    parserSamples,
-    setParserSamples,
-    parserSampleLoading,
-    updaterSamples,
-    setUpdaterSamples,
-    updaterSampleLoading,
-    pathDebugSnapshots,
     updateSelectedNodeConfig,
     handleFetchParserSample,
     handleFetchUpdaterSample,
     handleRunSimulation,
-    clearRuntimeForNode,
     handleSendToAi,
-    sendingToAi,
-    dbQueryPresets,
-    setDbQueryPresets,
     saveDbQueryPresets,
-    dbNodePresets,
-    setDbNodePresets,
     saveDbNodePresets,
-    runDetailOpen,
-    setRunDetailOpen,
-    runDetailLoading,
-    runDetail,
-    setRunDetail,
-    runStreamStatus,
-    runStreamPaused,
-    setRunStreamPaused,
-    runNodeSummary,
-    runEventsOverflow,
-    runEventsBatchLimit,
-    runDetailHistoryOptions,
-    runDetailSelectedHistoryNodeId,
-    setRunHistoryNodeId,
-    runDetailSelectedHistoryEntries,
-    presetsModalOpen,
-    setPresetsModalOpen,
-    presetsJson,
-    setPresetsJson,
     handleImportPresets,
-    simulationOpenNodeId,
     reportAiPathsError,
     toast,
   } = state;
@@ -486,18 +421,9 @@ export function AiPathsSettingsView({
 
           <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
             <div className="space-y-4">
-              <CanvasSidebar
+              <CanvasSidebarWrapper
                 palette={palette}
-                paletteCollapsed={paletteCollapsed}
-                onTogglePaletteCollapsed={() => setPaletteCollapsed((prev: boolean) => !prev)}
-                expandedPaletteGroups={expandedPaletteGroups}
-                onTogglePaletteGroup={togglePaletteGroup}
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
-                selectedNode={selectedNode ?? null}
-                nodes={nodes}
-                edges={edges}
-                selectedEdgeId={selectedEdgeId}
-                onSelectEdge={handleSelectEdge}
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
                 onOpenSimulation={setSimulationOpenNodeId}
@@ -507,52 +433,26 @@ export function AiPathsSettingsView({
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
               />
-              <ClusterPresetsPanel
-                presetDraft={presetDraft}
-                setPresetDraft={setPresetDraft}
-                editingPresetId={editingPresetId}
-                onResetPresetDraft={handleResetPresetDraft}
+              <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
                 onSavePreset={() => void handleSavePreset()}
-                clusterPresets={clusterPresets}
-                onLoadPreset={(preset: ClusterPreset) => void handleLoadPreset(preset)}
                 onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
                 onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
                 onExportPresets={handleExportPresets}
               />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
-              <RunHistoryPanel
+              <RunHistoryPanelMigrated
                 runs={runList}
                 isRefreshing={runsQuery.isFetching}
                 onRefresh={() => { void runsQuery.refetch(); }}
-                runFilter={runFilter}
-                setRunFilter={setRunFilter}
-                expandedRunHistory={expandedRunHistory}
-                setExpandedRunHistory={setExpandedRunHistory}
-                runHistorySelection={runHistorySelection}
-                setRunHistorySelection={setRunHistorySelection}
                 onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
                 onResumeRun={(runId: string, mode: "resume" | "replay") => void handleResumeRun(runId, mode)}
                 onCancelRun={(runId: string) => void handleCancelRun(runId)}
                 onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
               />
             </div>
-            <CanvasBoard
-              viewportRef={viewportRef}
-              canvasRef={canvasRef}
-              nodes={nodes}
-              edges={edges}
-              runtimeState={runtimeState}
+            <CanvasBoardMigrated
               edgePaths={edgePaths}
-              view={view}
-              panState={panState}
-              lastDrop={lastDrop}
-              connecting={connecting}
-              connectingPos={connectingPos}
-              connectingFromNode={connectingFromNode}
-              selectedNodeId={selectedNodeId}
-              draggingNodeId={dragState?.nodeId ?? null}
-              selectedEdgeId={selectedEdgeId}
               onSelectEdgeId={handleSelectEdge}
               onRemoveEdge={handleRemoveEdge}
               onDisconnectPort={handleDisconnectPort}
@@ -605,80 +505,29 @@ export function AiPathsSettingsView({
         />
       )}
 
-      <NodeConfigDialog
-        configOpen={configOpen}
-        setConfigOpen={setConfigOpen}
-        selectedNode={selectedNode ?? null}
-        nodes={nodes}
-        edges={edges}
-        isPathLocked={isPathLocked}
+      <NodeConfigDialogMigrated
         modelOptions={modelOptions}
-        parserSamples={parserSamples}
-        setParserSamples={setParserSamples}
-        parserSampleLoading={parserSampleLoading}
-        updaterSamples={updaterSamples}
-        setUpdaterSamples={setUpdaterSamples}
-        updaterSampleLoading={updaterSampleLoading}
-        runtimeState={runtimeState}
-        pathDebugSnapshot={
-          (activePathId ? pathDebugSnapshots[activePathId] : null) ?? null
-        }
         updateSelectedNode={updateSelectedNode}
         updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={(node) => void handleRunSimulation(node.id)}
-        clearRuntimeForNode={clearRuntimeForNode}
-        clearNodeHistory={handleClearNodeHistory}
         onSendToAi={(id, prompt) => handleSendToAi(id, prompt)}
-        sendingToAi={sendingToAi}
-        dbQueryPresets={dbQueryPresets}
-        setDbQueryPresets={setDbQueryPresets}
         saveDbQueryPresets={saveDbQueryPresets}
-        dbNodePresets={dbNodePresets}
-        setDbNodePresets={setDbNodePresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
         onDirtyChange={setNodeConfigDirty}
         savePathConfig={handleSave}
       />
-      <RunDetailDialog
-        open={runDetailOpen}
-        onOpenChange={(open: boolean): void => {
-          setRunDetailOpen(open);
-          if (open) setRunStreamPaused(false);
-          if (!open) setRunDetail(null);
-        }}
-        runDetailLoading={runDetailLoading}
-        runDetail={runDetail}
-        runStreamStatus={runStreamStatus as "connecting" | "live" | "stopped" | "paused"}
-        runStreamPaused={runStreamPaused}
-        onToggleStreamPause={() => setRunStreamPaused((prev: boolean) => !prev)}
-        runNodeSummary={runNodeSummary}
-        runEventsOverflow={runEventsOverflow}
-        runEventsBatchLimit={runEventsBatchLimit}
-        historyOptions={runDetailHistoryOptions}
-        selectedHistoryNodeId={runDetailSelectedHistoryNodeId}
-        onSelectHistoryNode={(value: string) => setRunHistoryNodeId(value)}
-        historyEntries={runDetailSelectedHistoryEntries}
-      />
-      <PresetsDialog
-        open={presetsModalOpen}
-        onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}
-        presetsJson={presetsJson}
-        setPresetsJson={setPresetsJson}
-        clusterPresets={clusterPresets}
+      <RunDetailDialogWithContext />
+      <PresetsDialogWithContext
         onImportPresets={() => void handleImportPresets("merge")}
         toast={toast}
         reportAiPathsError={reportAiPathsError}
       />
 
-      <SimulationDialog
-        openNodeId={simulationOpenNodeId}
-        onClose={() => setSimulationOpenNodeId(null)}
-        nodes={nodes}
+      <SimulationDialogMigrated
         setNodes={setNodesFromUser}
-        isPathLocked={isPathLocked}
         onRunSimulation={(node) => void handleRunSimulation(node.id)}
       />
     </div>

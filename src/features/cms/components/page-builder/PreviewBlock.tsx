@@ -66,6 +66,12 @@ const resolveAlignItems = (value: unknown): React.CSSProperties["alignItems"] | 
   return undefined;
 };
 
+const normalizeSlideshowAnimationType = (value?: string): string => {
+  if (!value) return "fade";
+  if (value === "fade-in") return "fade";
+  return value;
+};
+
 const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   Heading: 48,
   Text: 64,
@@ -483,6 +489,7 @@ export function PreviewSection({
   onToggleSectionVisibility,
   onRemoveRow,
 }: PreviewSectionProps): React.ReactNode {
+  const isSlideshowSection = section.type === "Slideshow";
   const isSectionSelected = selectedNodeId === section.id;
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const isHidden = Boolean(section.settings["isHidden"]);
@@ -734,6 +741,75 @@ export function PreviewSection({
   const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
 
   const sectionImage = section.settings["image"] as string | undefined;
+  const slideshowTransition = (section.settings["transition"] as string) || "fade";
+  const slideshowTransitionDuration = (section.settings["transitionDuration"] as number) || 700;
+  const slideshowAutoplay = (section.settings["autoplay"] as string) !== "no";
+  const slideshowAutoplaySpeed = (section.settings["autoplaySpeed"] as number) || 5000;
+  const slideshowPauseOnHover = (section.settings["pauseOnHover"] as string) !== "no";
+  const slideshowLoop = (section.settings["loop"] as string) !== "no";
+  const slideshowElementAnimationType = (section.settings["elementAnimationType"] as string) || "fade-in";
+  const slideshowElementAnimationDuration = (section.settings["elementAnimationDuration"] as number) || 400;
+  const slideshowElementAnimationDelay = (section.settings["elementAnimationDelay"] as number) || 0;
+  const slideshowElementAnimationEasing = (section.settings["elementAnimationEasing"] as string) || "ease-out";
+  const slideshowElementAnimationStagger = (section.settings["elementAnimationStagger"] as number) || 100;
+  const [slideshowIndex, setSlideshowIndex] = useState(0);
+  const [slideshowPaused, setSlideshowPaused] = useState(false);
+  const slideshowFrames = useMemo((): BlockInstance[] => {
+    if (!isSlideshowSection) return [];
+    const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
+    const legacyBlocks = section.blocks.filter((block: BlockInstance) => block.type !== "SlideshowFrame");
+    if (frameBlocks.length > 0) {
+      if (legacyBlocks.length === 0) return frameBlocks;
+      const legacyFrames = legacyBlocks.map((block: BlockInstance) => ({
+        id: block.id,
+        type: "SlideshowFrame",
+        settings: {},
+        blocks: [block],
+      }));
+      return [...frameBlocks, ...legacyFrames];
+    }
+    return legacyBlocks.map((block: BlockInstance) => ({
+      id: block.id,
+      type: "SlideshowFrame",
+      settings: {},
+      blocks: [block],
+    }));
+  }, [isSlideshowSection, section.blocks]);
+  const slideshowCount = slideshowFrames.length;
+  const currentSlideshowIndex = slideshowIndex >= slideshowCount ? 0 : slideshowIndex;
+  const goToNextSlideshow = useCallback((): void => {
+    if (slideshowCount <= 1) return;
+    if (!slideshowLoop && currentSlideshowIndex >= slideshowCount - 1) return;
+    setSlideshowIndex((prev: number) => (prev + 1) % slideshowCount);
+  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
+  const goToPrevSlideshow = useCallback((): void => {
+    if (slideshowCount <= 1) return;
+    if (!slideshowLoop && currentSlideshowIndex <= 0) return;
+    setSlideshowIndex((prev: number) => (prev - 1 + slideshowCount) % slideshowCount);
+  }, [slideshowCount, slideshowLoop, currentSlideshowIndex]);
+
+  useEffect((): void => {
+    if (!isSlideshowSection) return;
+    if (slideshowIndex >= slideshowCount) {
+      setSlideshowIndex(0);
+    }
+  }, [isSlideshowSection, slideshowCount, slideshowIndex]);
+
+  useEffect((): (() => void) | undefined => {
+    if (!isSlideshowSection) return undefined;
+    if (!slideshowAutoplay || slideshowPaused || slideshowCount <= 1 || slideshowAutoplaySpeed <= 0) {
+      return undefined;
+    }
+    const interval = window.setInterval(goToNextSlideshow, slideshowAutoplaySpeed);
+    return (): void => window.clearInterval(interval);
+  }, [
+    isSlideshowSection,
+    slideshowAutoplay,
+    slideshowPaused,
+    slideshowCount,
+    slideshowAutoplaySpeed,
+    goToNextSlideshow,
+  ]);
 
   // Helper to render blocks list
   const renderBlocks = (emptyText: string): React.ReactNode =>
@@ -1979,57 +2055,12 @@ export function PreviewSection({
 
   // Slideshow section
   if (section.type === "Slideshow") {
-    const transition = (section.settings["transition"] as string) || "fade";
     const showArrows = (section.settings["showArrows"] as string) !== "no";
     const showDots = (section.settings["showDots"] as string) !== "no";
     const heightMode = (section.settings["heightMode"] as string) || "auto";
     const height = (section.settings["height"] as number) || 360;
-    const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
-    const legacyBlocks = section.blocks.filter((block: BlockInstance) => block.type !== "SlideshowFrame");
-    const frames =
-      frameBlocks.length > 0
-        ? [
-            ...frameBlocks,
-            ...legacyBlocks.map((block: BlockInstance) => ({
-              id: block.id,
-              type: "SlideshowFrame",
-              settings: {},
-              blocks: [block],
-            })),
-          ]
-        : legacyBlocks.map((block: BlockInstance) => ({
-            id: block.id,
-            type: "SlideshowFrame",
-            settings: {},
-            blocks: [block],
-          }));
+    const frames = slideshowFrames;
     const slideCount = frames.length;
-    const firstFrame = frames[0];
-    const frameChildren = firstFrame?.blocks ?? [];
-    const frameSettings = (firstFrame?.settings ?? {}) as Record<string, unknown>;
-    const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
-    const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
-    const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
-    const paddingTop = (frameSettings["paddingTop"] as number) || 0;
-    const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
-    const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
-    const paddingRight = (frameSettings["paddingRight"] as number) || 0;
-    const frameStyle: React.CSSProperties = {
-      backgroundColor: backgroundColor || undefined,
-      padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
-      alignItems:
-        contentAlignment === "center"
-          ? "center"
-          : contentAlignment === "right"
-            ? "flex-end"
-            : "flex-start",
-      justifyContent:
-        verticalAlignment === "center"
-          ? "center"
-          : verticalAlignment === "bottom"
-            ? "flex-end"
-            : "flex-start",
-    };
     const slideHeightStyle: React.CSSProperties | undefined =
       heightMode === "fixed" && height > 0 ? { height: `${height}px` } : undefined;
 
@@ -2054,49 +2085,129 @@ export function PreviewSection({
               </div>
             ) : null
           ) : (
-            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-              <div className="relative overflow-hidden rounded-lg min-h-[300px]" style={slideHeightStyle}>
-                {firstFrame && (
-                  <div
-                    className={`${transition === "fade" ? "absolute inset-0" : "absolute inset-0"} flex items-center justify-center`}
-                    style={{ opacity: 1 }}
-                  >
-                    <div className="flex h-full w-full flex-col" style={frameStyle}>
-                      {frameChildren.length > 0 ? (
-                        frameChildren.map((child: BlockInstance) => (
-                          <PreviewBlockItem
-                            key={child.id}
-                            block={child}
-                            isSelected={selectedNodeId === child.id}
-                            isInspecting={isInspecting}
-                            inspectorSettings={inspectorSettings}
-                            hoveredNodeId={hoveredNodeId}
-                            onHoverNode={onHoverNode}
-                            onSelect={onSelect}
-                            contained
-                            selectedNodeId={selectedNodeId}
-                            sectionId={section.id}
-                            sectionType={section.type}
-                            sectionZone={section.zone}
-                            parentBlockId={firstFrame?.id}
-                            onOpenMedia={onOpenMedia}
-                            mediaStyles={mediaStyles}
-                          />
-                        ))
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
-                          Empty slide
-                        </div>
-                      )}
+            <div className={getSectionContainerClass({ fullWidth: true, paddingClass: "px-0" })}>
+              <div
+                className="relative overflow-hidden min-h-[300px]"
+                style={slideHeightStyle}
+                onMouseEnter={slideshowPauseOnHover ? (): void => setSlideshowPaused(true) : undefined}
+                onMouseLeave={slideshowPauseOnHover ? (): void => setSlideshowPaused(false) : undefined}
+              >
+                {frames.map((frame: BlockInstance, idx: number) => {
+                  const frameSettings = (frame.settings ?? {}) as Record<string, unknown>;
+                  const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
+                  const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
+                  const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+                  const fillContent = frameSettings["fillContent"] === true || frameSettings["fillContent"] === "yes";
+                  const paddingTop = (frameSettings["paddingTop"] as number) || 0;
+                  const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
+                  const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
+                  const paddingRight = (frameSettings["paddingRight"] as number) || 0;
+                  const frameStyle: React.CSSProperties = {
+                    backgroundColor: backgroundColor || undefined,
+                    padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+                    alignItems:
+                      contentAlignment === "center"
+                        ? "center"
+                        : contentAlignment === "right"
+                          ? "flex-end"
+                          : "flex-start",
+                    justifyContent:
+                      verticalAlignment === "center"
+                        ? "center"
+                        : verticalAlignment === "bottom"
+                          ? "flex-end"
+                          : "flex-start",
+                  };
+                  const frameAnimType = frameSettings["animationType"] as string | undefined;
+                  const animationType =
+                    frameAnimType === "inherit" || !frameAnimType
+                      ? slideshowElementAnimationType
+                      : frameAnimType;
+                  const resolvedAnimationType = normalizeSlideshowAnimationType(animationType);
+                  const animationDuration =
+                    (frameSettings["animationDuration"] as number) ?? slideshowElementAnimationDuration;
+                  const animationDelay =
+                    (frameSettings["animationDelay"] as number) ?? slideshowElementAnimationDelay;
+                  const frameAnimEasing = frameSettings["animationEasing"] as string | undefined;
+                  const animationEasing =
+                    frameAnimEasing === "inherit" || !frameAnimEasing
+                      ? slideshowElementAnimationEasing
+                      : frameAnimEasing;
+                  const stagger = slideshowElementAnimationStagger;
+                  const isActiveFrame = idx === currentSlideshowIndex;
+                  const frameBlocks = frame.blocks ?? [];
+
+                  return (
+                    <div
+                      key={frame.id}
+                      className={`${slideshowTransition === "fade" ? "absolute inset-0 transition-opacity" : "absolute inset-0 transition-transform"} flex flex-col`}
+                      style={
+                        slideshowTransition === "fade"
+                          ? {
+                              opacity: isActiveFrame ? 1 : 0,
+                              pointerEvents: isActiveFrame ? "auto" : "none",
+                              transitionDuration: `${slideshowTransitionDuration}ms`,
+                            }
+                          : {
+                              transform: `translateX(${(idx - currentSlideshowIndex) * 100}%)`,
+                              transitionDuration: `${slideshowTransitionDuration}ms`,
+                            }
+                      }
+                    >
+                      <div className="flex h-full w-full flex-col" style={frameStyle}>
+                        {frameBlocks.length > 0 ? (
+                          frameBlocks.map((child: BlockInstance, blockIdx: number) => {
+                            const blockDelay = animationDelay + blockIdx * stagger;
+                            const animationStyle: React.CSSProperties =
+                              isActiveFrame && resolvedAnimationType !== "none"
+                                ? {
+                                    animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                                  }
+                                : {};
+                            const shouldFillBlock = fillContent && (child.type === "Image" || child.type === "ImageElement");
+                            const wrapperStyle: React.CSSProperties = shouldFillBlock
+                              ? { ...animationStyle, width: "100%", height: "100%", alignSelf: "stretch" }
+                              : animationStyle;
+                            const triggerKey = `${child.id}-${currentSlideshowIndex}-${blockIdx}`;
+                            return (
+                              <div key={triggerKey} style={wrapperStyle}>
+                                <PreviewBlockItem
+                                  block={child}
+                                  isSelected={selectedNodeId === child.id}
+                                  isInspecting={isInspecting}
+                                  inspectorSettings={inspectorSettings}
+                                  hoveredNodeId={hoveredNodeId}
+                                  onHoverNode={onHoverNode}
+                                  onSelect={onSelect}
+                                  contained
+                                  selectedNodeId={selectedNodeId}
+                                  sectionId={section.id}
+                                  sectionType={section.type}
+                                  sectionZone={section.zone}
+                                  parentBlockId={frame.id}
+                                  onOpenMedia={onOpenMedia}
+                                  mediaStyles={null}
+                                  stretch={shouldFillBlock}
+                                />
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                            Empty slide
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
               {slideCount > 1 && (showArrows || showDots) && (
                 <div className="mt-4 flex items-center justify-center gap-4">
                   {showArrows && (
                     <button
                       type="button"
+                      onClick={goToPrevSlideshow}
                       className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
                     >
                       <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -2105,9 +2216,11 @@ export function PreviewSection({
                   {showDots && (
                     <div className="flex gap-2">
                       {frames.map((_: BlockInstance, idx: number) => (
-                        <div
+                        <button
                           key={idx}
-                          className={`size-2 rounded-full transition ${idx === 0 ? "bg-white" : "bg-gray-600"}`}
+                          type="button"
+                          onClick={(): void => setSlideshowIndex(idx)}
+                          className={`size-2 rounded-full transition ${idx === currentSlideshowIndex ? "bg-white" : "bg-gray-600"}`}
                         />
                       ))}
                     </div>
@@ -2115,6 +2228,7 @@ export function PreviewSection({
                   {showArrows && (
                     <button
                       type="button"
+                      onClick={goToNextSlideshow}
                       className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
                     >
                       <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -2810,9 +2924,15 @@ function PreviewBlockItem({
     }
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
     const wrapperStyles = stretch
-      ? { ...presentation.wrapperStyles, height: "100%" }
+      ? { ...presentation.wrapperStyles, width: "100%", height: "100%" }
       : presentation.wrapperStyles;
-    const useFill = stretch ? true : presentation.useFill;
+    const imageStyles: React.CSSProperties = {
+      ...presentation.imageStyles,
+      display: "block",
+      maxHeight: "100%",
+    };
+    delete (imageStyles as { width?: string | number }).width;
+    delete (imageStyles as { height?: string | number }).height;
 
     return (
       wrapBlock(
@@ -2836,12 +2956,7 @@ function PreviewBlockItem({
                 src={src}
                 alt={alt}
                 fill
-                style={{
-                  ...presentation.imageStyles,
-                  display: "block",
-                  height: useFill ? "100%" : "auto",
-                  maxHeight: "100%",
-                }}
+                style={imageStyles}
               />
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
@@ -4061,6 +4176,16 @@ function PreviewSlideshowBlock({
 }: PreviewSectionBlockProps): React.ReactNode {
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings["transition"] as string) || "fade";
+  const transitionDuration = (block.settings["transitionDuration"] as number) || 700;
+  const autoplay = (block.settings["autoplay"] as string) !== "no";
+  const autoplaySpeed = (block.settings["autoplaySpeed"] as number) || 5000;
+  const pauseOnHover = (block.settings["pauseOnHover"] as string) !== "no";
+  const loop = (block.settings["loop"] as string) !== "no";
+  const elementAnimationType = (block.settings["elementAnimationType"] as string) || "fade-in";
+  const elementAnimationDuration = (block.settings["elementAnimationDuration"] as number) || 400;
+  const elementAnimationDelay = (block.settings["elementAnimationDelay"] as number) || 0;
+  const elementAnimationEasing = (block.settings["elementAnimationEasing"] as string) || "ease-out";
+  const elementAnimationStagger = (block.settings["elementAnimationStagger"] as number) || 100;
   const showArrows = (block.settings["showArrows"] as string) !== "no";
   const showDots = (block.settings["showDots"] as string) !== "no";
   const heightMode = (block.settings["heightMode"] as string) || "auto";
@@ -4084,32 +4209,32 @@ function PreviewSlideshowBlock({
           settings: {},
           blocks: [b],
         }));
-  const firstFrame = frames[0];
-  const frameChildren = firstFrame?.blocks ?? [];
-  const frameSettings = (firstFrame?.settings ?? {}) as Record<string, unknown>;
-  const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
-  const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
-  const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
-  const paddingTop = (frameSettings["paddingTop"] as number) || 0;
-  const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
-  const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
-  const paddingRight = (frameSettings["paddingRight"] as number) || 0;
-  const frameStyle: React.CSSProperties = {
-    backgroundColor: backgroundColor || undefined,
-    padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
-    alignItems:
-      contentAlignment === "center"
-        ? "center"
-        : contentAlignment === "right"
-          ? "flex-end"
-          : "flex-start",
-    justifyContent:
-      verticalAlignment === "center"
-        ? "center"
-        : verticalAlignment === "bottom"
-          ? "flex-end"
-          : "flex-start",
-  };
+  const slideCount = frames.length;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const currentActiveIndex = activeIndex >= slideCount ? 0 : activeIndex;
+  const goToNext = useCallback((): void => {
+    if (slideCount <= 1) return;
+    if (!loop && currentActiveIndex >= slideCount - 1) return;
+    setActiveIndex((prev: number) => (prev + 1) % slideCount);
+  }, [slideCount, loop, currentActiveIndex]);
+  const goToPrev = useCallback((): void => {
+    if (slideCount <= 1) return;
+    if (!loop && currentActiveIndex <= 0) return;
+    setActiveIndex((prev: number) => (prev - 1 + slideCount) % slideCount);
+  }, [slideCount, loop, currentActiveIndex]);
+
+  useEffect((): void => {
+    if (activeIndex >= slideCount && slideCount > 0) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, slideCount]);
+
+  useEffect((): (() => void) | undefined => {
+    if (!autoplay || isPaused || slideCount <= 1 || autoplaySpeed <= 0) return undefined;
+    const interval = window.setInterval(goToNext, autoplaySpeed);
+    return (): void => window.clearInterval(interval);
+  }, [autoplay, autoplaySpeed, isPaused, slideCount, goToNext]);
   const slideHeightStyle: React.CSSProperties | undefined =
     heightMode === "fixed" && height > 0 ? { height: `${height}px` } : undefined;
 
@@ -4127,49 +4252,129 @@ function PreviewSlideshowBlock({
         ) : null
       ) : (
         <>
-          <div className="relative overflow-hidden rounded-lg min-h-[200px]" style={slideHeightStyle}>
-            {firstFrame && (
-              <div
-                className={`${transition === "fade" ? "absolute inset-0" : "absolute inset-0"} flex items-center justify-center`}
-                style={{ opacity: 1 }}
-              >
-                <div className="flex h-full w-full flex-col" style={frameStyle}>
-                  {frameChildren.length > 0 ? (
-                    frameChildren.map((child: BlockInstance) => (
-                      <PreviewBlockItem
-                        key={child.id}
-                        block={child}
-                        isSelected={selectedNodeId === child.id}
-                        isInspecting={isInspecting}
-                        inspectorSettings={inspectorSettings}
-                        hoveredNodeId={hoveredNodeId}
-                        onHoverNode={onHoverNode}
-                        onSelect={onSelect}
-                        contained
-                        selectedNodeId={selectedNodeId}
-                        sectionId={sectionId}
-                        sectionType={sectionType}
-                        sectionZone={sectionZone}
-                        columnId={columnId}
-                        parentBlockId={firstFrame?.id}
-                        onOpenMedia={onOpenMedia}
-                        mediaStyles={mediaStyles}
-                      />
-                    ))
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
-                      Empty slide
-                    </div>
-                  )}
+          <div
+            className="relative overflow-hidden min-h-[200px]"
+            style={slideHeightStyle}
+            onMouseEnter={pauseOnHover ? (): void => setIsPaused(true) : undefined}
+            onMouseLeave={pauseOnHover ? (): void => setIsPaused(false) : undefined}
+          >
+            {frames.map((frame: BlockInstance, idx: number) => {
+              const frameSettings = (frame.settings ?? {}) as Record<string, unknown>;
+              const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
+              const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
+              const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+              const fillContent = frameSettings["fillContent"] === true || frameSettings["fillContent"] === "yes";
+              const paddingTop = (frameSettings["paddingTop"] as number) || 0;
+              const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
+              const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
+              const paddingRight = (frameSettings["paddingRight"] as number) || 0;
+              const frameStyle: React.CSSProperties = {
+                backgroundColor: backgroundColor || undefined,
+                padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+                alignItems:
+                  contentAlignment === "center"
+                    ? "center"
+                    : contentAlignment === "right"
+                      ? "flex-end"
+                      : "flex-start",
+                justifyContent:
+                  verticalAlignment === "center"
+                    ? "center"
+                    : verticalAlignment === "bottom"
+                      ? "flex-end"
+                      : "flex-start",
+              };
+              const frameAnimType = frameSettings["animationType"] as string | undefined;
+              const animationType =
+                frameAnimType === "inherit" || !frameAnimType
+                  ? elementAnimationType
+                  : frameAnimType;
+              const resolvedAnimationType = normalizeSlideshowAnimationType(animationType);
+              const animationDuration =
+                (frameSettings["animationDuration"] as number) ?? elementAnimationDuration;
+              const animationDelay =
+                (frameSettings["animationDelay"] as number) ?? elementAnimationDelay;
+              const frameAnimEasing = frameSettings["animationEasing"] as string | undefined;
+              const animationEasing =
+                frameAnimEasing === "inherit" || !frameAnimEasing
+                  ? elementAnimationEasing
+                  : frameAnimEasing;
+              const stagger = elementAnimationStagger;
+              const isActiveFrame = idx === currentActiveIndex;
+              const frameChildren = frame.blocks ?? [];
+
+              return (
+                <div
+                  key={frame.id}
+                  className={`${transition === "fade" ? "absolute inset-0 transition-opacity" : "absolute inset-0 transition-transform"} flex flex-col`}
+                  style={
+                    transition === "fade"
+                      ? {
+                          opacity: isActiveFrame ? 1 : 0,
+                          pointerEvents: isActiveFrame ? "auto" : "none",
+                          transitionDuration: `${transitionDuration}ms`,
+                        }
+                      : {
+                          transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
+                          transitionDuration: `${transitionDuration}ms`,
+                        }
+                  }
+                >
+                  <div className="flex h-full w-full flex-col" style={frameStyle}>
+                    {frameChildren.length > 0 ? (
+                      frameChildren.map((child: BlockInstance, blockIdx: number) => {
+                        const blockDelay = animationDelay + blockIdx * stagger;
+                        const animationStyle: React.CSSProperties =
+                          isActiveFrame && resolvedAnimationType !== "none"
+                            ? {
+                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                              }
+                            : {};
+                        const shouldFillBlock = fillContent && (child.type === "Image" || child.type === "ImageElement");
+                        const wrapperStyle: React.CSSProperties = shouldFillBlock
+                          ? { ...animationStyle, width: "100%", height: "100%", alignSelf: "stretch" }
+                          : animationStyle;
+                        const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
+                        return (
+                          <div key={triggerKey} style={wrapperStyle}>
+                            <PreviewBlockItem
+                              block={child}
+                              isSelected={selectedNodeId === child.id}
+                              isInspecting={isInspecting}
+                              inspectorSettings={inspectorSettings}
+                              hoveredNodeId={hoveredNodeId}
+                              onHoverNode={onHoverNode}
+                              onSelect={onSelect}
+                              contained
+                              selectedNodeId={selectedNodeId}
+                              sectionId={sectionId}
+                              sectionType={sectionType}
+                              sectionZone={sectionZone}
+                              columnId={columnId}
+                              parentBlockId={frame.id}
+                              onOpenMedia={onOpenMedia}
+                              mediaStyles={null}
+                              stretch={shouldFillBlock}
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                        Empty slide
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })}
           </div>
           {frames.length > 1 && (showArrows || showDots) && (
             <div className="mt-4 flex items-center justify-center gap-4">
               {showArrows && (
                 <button
                   type="button"
+                  onClick={goToPrev}
                   className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
                 >
                   <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -4178,9 +4383,11 @@ function PreviewSlideshowBlock({
               {showDots && (
                 <div className="flex gap-2">
                   {frames.map((_: BlockInstance, idx: number) => (
-                    <div
+                    <button
                       key={idx}
-                      className={`size-2 rounded-full transition ${idx === 0 ? "bg-white" : "bg-gray-600"}`}
+                      type="button"
+                      onClick={(): void => setActiveIndex(idx)}
+                      className={`size-2 rounded-full transition ${idx === currentActiveIndex ? "bg-white" : "bg-gray-600"}`}
                     />
                   ))}
                 </div>
@@ -4188,6 +4395,7 @@ function PreviewSlideshowBlock({
               {showArrows && (
                 <button
                   type="button"
+                  onClick={goToNext}
                   className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
                 >
                   <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>

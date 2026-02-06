@@ -381,7 +381,10 @@ function ImageElementBlock({
   };
   if (height > 0) wrapperStyles.height = `${height}px`;
   if (aspectRatio !== "auto") wrapperStyles.aspectRatio = aspectRatio;
-  if (stretch) wrapperStyles.height = "100%";
+  if (stretch) {
+    wrapperStyles.width = "100%";
+    wrapperStyles.height = "100%";
+  }
   if (borderWidth > 0 && borderStyle !== "none") {
     wrapperStyles.borderWidth = `${borderWidth}px`;
     wrapperStyles.borderStyle = borderStyle;
@@ -432,7 +435,6 @@ function ImageElementBlock({
     transform: transforms.length ? transforms.join(" ") : undefined,
     display: "block",
   };
-
   const overlayStyles: React.CSSProperties = {};
   if (overlayType === "solid") {
     overlayStyles.backgroundColor = overlayColor;
@@ -455,15 +457,30 @@ function ImageElementBlock({
       </div>
     );
   }
+  const useFill = stretch || height > 0 || aspectRatio !== "auto";
+  const imageStylesForFill: React.CSSProperties = { ...imageStyles };
+  delete (imageStylesForFill as { width?: string | number }).width;
+  delete (imageStylesForFill as { height?: string | number }).height;
 
   return (
     <div className="relative" style={wrapperStyles}>
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        style={imageStyles}
-      />
+      {useFill ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          style={imageStylesForFill}
+        />
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            ...imageStyles,
+            height: "auto",
+          }}
+        />
+      )}
       {overlayType !== "none" && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
       )}
@@ -503,17 +520,22 @@ function ImageBlock({
 
   const wrapperStyles: React.CSSProperties = {
     width: `${width}%`,
-    ...(stretch ? { height: "100%" } : {}),
+    ...(stretch ? { width: "100%", height: "100%" } : {}),
     ...resolvedStyles,
     ...(clipOverflow ? { overflow: "hidden" } : {}),
   };
   const imageClassName = stretch
     ? "block h-full w-full object-cover"
     : "block h-auto w-full max-h-full object-cover";
+  const useFill = stretch;
 
   return (
     <div className="cms-media" style={wrapperStyles}>
-      <Image src={src} alt={alt} fill className={imageClassName} />
+      {useFill ? (
+        <Image src={src} alt={alt} fill className={imageClassName} />
+      ) : (
+        <img src={src} alt={alt} className={imageClassName} />
+      )}
     </div>
   );
 }

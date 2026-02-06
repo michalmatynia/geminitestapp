@@ -271,10 +271,40 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     }
     const configuredProvider = await getAuthDataProvider();
     const provider = requireAuthProvider(configuredProvider);
-    const adapter =
-      provider === "prisma"
-        ? PrismaAdapter(prisma)
-        : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
+    let adapter: ReturnType<typeof PrismaAdapter> | ReturnType<typeof MongoDBAdapter> | undefined;
+    try {
+      adapter =
+        provider === "prisma"
+          ? PrismaAdapter(prisma)
+          : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
+    } catch (error) {
+      await ErrorSystem.logWarning("[AUTH] Adapter initialization failed; attempting fallback.", {
+        service: "auth",
+        provider,
+        error,
+      });
+      if (provider === "mongodb" && process.env.DATABASE_URL) {
+        try {
+          adapter = PrismaAdapter(prisma);
+        } catch (fallbackError) {
+          await ErrorSystem.logWarning("[AUTH] Prisma adapter fallback failed.", {
+            service: "auth",
+            provider: "prisma",
+            error: fallbackError,
+          });
+        }
+      } else if (provider === "prisma" && process.env.MONGODB_URI) {
+        try {
+          adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
+        } catch (fallbackError) {
+          await ErrorSystem.logWarning("[AUTH] Mongo adapter fallback failed.", {
+            service: "auth",
+            provider: "mongodb",
+            error: fallbackError,
+          });
+        }
+      }
+    }
     if (authLoggingEnabled) {
       console.log(`[AUTH] Adapter configured for ${provider}.`);
     }

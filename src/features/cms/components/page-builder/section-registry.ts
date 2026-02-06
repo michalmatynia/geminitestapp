@@ -596,6 +596,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       paddingRight: 0,
       contentAlignment: "center",
       verticalAlignment: "center",
+      fillContent: "no",
       // Animation settings for this frame
       animationType: "inherit",
       animationDuration: 500,
@@ -625,6 +626,16 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
           { label: "Bottom", value: "bottom" },
         ],
         defaultValue: "center",
+      },
+      {
+        key: "fillContent",
+        label: "Fill frame with image",
+        type: "select",
+        options: [
+          { label: "No", value: "no" },
+          { label: "Yes", value: "yes" },
+        ],
+        defaultValue: "no",
       },
       { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 0 },
       { key: "paddingRight", label: "Right padding", type: "number", defaultValue: 0 },

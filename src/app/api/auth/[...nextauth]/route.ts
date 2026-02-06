@@ -1,5 +1,5 @@
 import { handlers } from "@/features/auth/server";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -14,6 +14,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     await logAuthEvent({ req, action: "auth.nextauth", stage: "success", status: response.status });
     return response;
   } catch (error) {
+    if (req.nextUrl.pathname.endsWith("/session")) {
+      const response = NextResponse.json(null, { status: 200 });
+      response.headers.set("Cache-Control", "no-store");
+      await logAuthEvent({ req, action: "auth.nextauth", stage: "failure", status: 200, outcome: "session-fallback" });
+      return response;
+    }
     return createErrorResponse(error, {
       request: req,
       source: "auth.[...nextauth].GET",

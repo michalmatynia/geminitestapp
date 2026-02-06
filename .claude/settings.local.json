@@ -54,7 +54,8 @@
       "Bash(git checkout:*)",
       "Bash(xargs -I {} sh -c 'head -5 {} | grep -q \"\"^import\"\" && echo {}')",
       "Bash(grep:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(tree:*)"
     ]
   }
 }

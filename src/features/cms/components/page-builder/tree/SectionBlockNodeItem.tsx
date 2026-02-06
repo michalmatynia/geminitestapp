@@ -1,0 +1,271 @@
+"use client";
+
+import React, { useMemo, useState } from "react";
+import { Box, Trash2, GripVertical, type LucideIcon } from "lucide-react";
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from "@/shared/ui";
+import { readBlockDragData, setBlockDragData } from "../../../utils/page-builder-dnd";
+import { DRAG_KEYS, hasDragType } from "@/shared/utils/drag-drop";
+import type { BlockInstance } from "../../../types/page-builder";
+import { useDragStateExtract } from "../../../hooks/useDragStateExtract";
+import { ColumnBlockPicker } from "../ColumnBlockPicker";
+import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from "./tree-constants";
+import { BlockNodeItem } from "./BlockNodeItem";
+import type { SectionBlockNodeItemProps } from "./tree-types";
+
+export function SectionBlockNodeItem({
+  block,
+  index,
+  sectionId,
+  columnId,
+  selectedNodeId,
+  onSelect,
+  onAddElementToNestedBlock,
+  onDropBlockToColumn,
+  expandedIds,
+  onToggleExpand,
+  onDropSectionToColumn,
+  onRemoveBlock,
+}: SectionBlockNodeItemProps): React.ReactNode {
+  // Drag state from context
+  const drag = useDragStateExtract();
+  const { startBlockDrag, endBlockDrag, endSectionDrag } = drag.actions;
+
+  const draggedBlockId = drag.block.id;
+  const draggedBlockType = drag.block.type;
+  const draggedFromSectionId = drag.block.fromSectionId;
+  const draggedFromColumnId = drag.block.fromColumnId;
+  const draggedFromParentBlockId = drag.block.fromParentBlockId;
+  const draggedSectionId = drag.section.id;
+  const draggedSectionType = drag.section.type;
+
+  const isSelected = selectedNodeId === block.id;
+  const isExpanded = expandedIds.has(block.id);
+  const hasChildren = (block.blocks ?? []).length > 0;
+  const Icon: LucideIcon = BLOCK_ICONS[block.type] ?? Box;
+  const [isDragOver, setIsDragOver] = useState(false);
+  const isDragging = draggedBlockId === block.id;
+  const isTextAtom = block.type === "TextAtom";
+  const blockLabel = resolveBlockLabel(block, block.type);
+  const sectionBlockMenuItems: TreeContextMenuItem[] = useMemo(
+    () => [
+      {
+        id: "remove-block",
+        label: "Remove block",
+        icon: <Trash2 className="size-3.5" />,
+        tone: "danger",
+        disabled: !onRemoveBlock,
+        onSelect: (): void => {
+          if (onRemoveBlock) onRemoveBlock(sectionId, block.id, columnId);
+        },
+      },
+    ],
+    [onRemoveBlock, sectionId, block.id, columnId]
+  );
+
+  return (
+    <div className="group/sblock">
+      <TreeContextMenu items={sectionBlockMenuItems}>
+        <TreeRow
+        tone="none"
+        role="button"
+        tabIndex={0}
+        draggable
+        onClick={() => onSelect(block.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(block.id);
+          }
+        }}
+        onDragStart={(e: React.DragEvent) => {
+          setBlockDragData(e.dataTransfer, {
+            id: block.id,
+            type: block.type,
+            fromSectionId: sectionId,
+            fromColumnId: columnId ?? "",
+            fromParentBlockId: "",
+          });
+          // Defer state updates to prevent re-render from cancelling drag
+          setTimeout(() => {
+            startBlockDrag({
+              id: block.id,
+              type: block.type,
+              fromSectionId: sectionId,
+              fromColumnId: columnId,
+              fromParentBlockId: null,
+            });
+          }, 0);
+        }}
+        onDragEnd={() => {
+          endBlockDrag();
+        }}
+        onDragOver={(e: React.DragEvent) => {
+          const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+          const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
+          if (isTextAtom) {
+            if (!isBlockDrop) return;
+          } else if (!isBlockDrop && !isSectionDrop) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(true);
+        }}
+        onDragLeave={(e: React.DragEvent) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+        }}
+        onDrop={(e: React.DragEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          const blockDrag = readBlockDragData(e.dataTransfer, {
+            id: draggedBlockId,
+            type: draggedBlockType,
+            fromSectionId: draggedFromSectionId,
+            fromColumnId: draggedFromColumnId,
+            fromParentBlockId: draggedFromParentBlockId,
+          });
+          const dragId = blockDrag.id;
+          const fromSection = blockDrag.fromSectionId ?? sectionId;
+          const fromColumn = blockDrag.fromColumnId;
+          const fromParent = blockDrag.fromParentBlockId;
+          if (isTextAtom) {
+            if (!dragId || dragId === block.id) return;
+            const draggedType = blockDrag.type ?? "";
+            const shouldNest = draggedType === "TextAtomLetter";
+            onDropBlockToColumn(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              columnId,
+              shouldNest ? (block.blocks ?? []).length : index,
+              fromParent || undefined,
+              shouldNest ? block.id : undefined
+            );
+            endBlockDrag();
+            return;
+          }
+          if (dragId && dragId !== block.id) {
+            onDropBlockToColumn(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              columnId,
+              (block.blocks ?? []).length,
+              fromParent || undefined,
+              block.id
+            );
+            endBlockDrag();
+          } else if (draggedSectionId && draggedSectionId !== sectionId) {
+            onDropSectionToColumn(draggedSectionId, sectionId, columnId, (block.blocks ?? []).length, block.id);
+            endSectionDrag();
+          }
+        }}
+        className={`flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
+          isDragOver
+            ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
+            : isSelected
+            ? "bg-blue-600/80 text-white"
+            : isDragging
+            ? "opacity-40 text-gray-400"
+            : "text-gray-300 hover:bg-muted/40"
+        }`}
+      >
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse block" : "Expand block"}
+          onToggle={(): void => onToggleExpand(block.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
+        <Icon className="size-3.5 shrink-0" />
+        <span className="flex-1 truncate text-left">{blockLabel}</span>
+        {isDragOver && (
+          <span className="text-[10px] text-emerald-300">Drop here</span>
+        )}
+        <div
+          draggable
+          onDragStart={(e: React.DragEvent) => {
+            e.stopPropagation();
+            setBlockDragData(e.dataTransfer, {
+              id: block.id,
+              type: block.type,
+              fromSectionId: sectionId,
+              fromColumnId: columnId ?? "",
+              fromParentBlockId: "",
+            });
+            // Defer state updates to prevent re-render from cancelling drag
+            setTimeout(() => {
+              startBlockDrag({
+                id: block.id,
+                type: block.type,
+                fromSectionId: sectionId,
+                fromColumnId: columnId,
+                fromParentBlockId: null,
+              });
+            }, 0);
+          }}
+          onDragEnd={() => {
+            endBlockDrag();
+          }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="flex items-center justify-center opacity-0 group-hover/sblock:opacity-100"
+          aria-label="Drag element"
+        >
+          <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+        </div>
+        {!isTextAtom && (
+          <TreeActionSlot show="always" align="inline">
+            <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
+              <ColumnBlockPicker
+                onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+              />
+            </div>
+          </TreeActionSlot>
+        )}
+        {/* Delete button for section-type blocks */}
+        {onRemoveBlock && !isDragOver && (
+          <TreeActionSlot show="hover" align="inline">
+            <TreeActionButton
+              tone="danger"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onRemoveBlock(sectionId, block.id, columnId);
+              }}
+              title="Remove block"
+            >
+              <Trash2 className="size-3" />
+            </TreeActionButton>
+          </TreeActionSlot>
+        )}
+        </TreeRow>
+      </TreeContextMenu>
+
+      {isExpanded && hasChildren && (
+        <div className="ml-5 border-l border-border/30 pl-1">
+          {(block.blocks ?? []).map((child: BlockInstance, childIndex: number) => (
+            <BlockNodeItem
+              key={child.id}
+              block={child}
+              index={childIndex}
+              sectionId={sectionId}
+              columnId={columnId}
+              parentBlockId={block.id}
+              selectedNodeId={selectedNodeId}
+              onSelect={onSelect}
+              onDropBlock={() => {}}
+              onDropBlockToColumn={onDropBlockToColumn}
+              onRemoveBlock={onRemoveBlock}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

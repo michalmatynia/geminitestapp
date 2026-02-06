@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { MediaStylesProvider } from "../media-styles-context";
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendSlideshowSectionProps {
@@ -34,9 +35,21 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
   const [isPaused, setIsPaused] = useState(false);
   // Track animation trigger count per frame to re-trigger animations on frame change
   const [animTrigger, setAnimTrigger] = useState<Record<number, number>>({});
+  const prevActiveIndexRef = React.useRef<number | null>(null);
 
-  // Increment trigger when active frame changes to re-trigger animations
+  const normalizeAnimationType = useCallback((value: string): string => {
+    if (value === "fade-in") return "fade";
+    return value;
+  }, []);
+
+  // Increment trigger when active frame changes (skip initial mount)
   useEffect(() => {
+    if (prevActiveIndexRef.current === null) {
+      prevActiveIndexRef.current = activeIndex;
+      return;
+    }
+    if (prevActiveIndexRef.current === activeIndex) return;
+    prevActiveIndexRef.current = activeIndex;
     setAnimTrigger((prev) => ({
       ...prev,
       [activeIndex]: (prev[activeIndex] ?? 0) + 1,
@@ -100,9 +113,9 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+      <div className={getSectionContainerClass({ fullWidth: true, paddingClass: "px-0" })}>
         <div
-          className="relative overflow-hidden rounded-lg min-h-[300px]"
+          className="relative overflow-hidden min-h-[300px]"
           style={slideHeightStyle}
           onMouseEnter={pauseOnHover ? (): void => setIsPaused(true) : undefined}
           onMouseLeave={pauseOnHover ? (): void => setIsPaused(false) : undefined}
@@ -112,6 +125,7 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
             const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
             const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
             const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+            const fillContent = frameSettings["fillContent"] === true || frameSettings["fillContent"] === "yes";
             const paddingTop = (frameSettings["paddingTop"] as number) || 0;
             const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
             const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
@@ -137,9 +151,10 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
 
             // Get animation settings with inheritance from Slideshow defaults
             const frameAnimType = frameSettings["animationType"] as string | undefined;
-            const animationType = frameAnimType === "inherit" || !frameAnimType
+            const animationTypeRaw = frameAnimType === "inherit" || !frameAnimType
               ? elementAnimationType
               : frameAnimType;
+            const animationType = normalizeAnimationType(animationTypeRaw);
             const animationDuration = (frameSettings["animationDuration"] as number) ?? elementAnimationDuration;
             const animationDelay = (frameSettings["animationDelay"] as number) ?? elementAnimationDelay;
             const frameAnimEasing = frameSettings["animationEasing"] as string | undefined;
@@ -168,7 +183,8 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
                     }
               }
             >
-              <div className="flex h-full w-full flex-col" style={frameStyle}>
+              <MediaStylesProvider value={null}>
+                <div className="flex h-full w-full flex-col" style={frameStyle}>
                 {frameBlocks.length > 0 ? (
                   frameBlocks.map((block: BlockInstance, blockIdx: number) => {
                     const blockDelay = animationDelay + (blockIdx * stagger);
@@ -177,11 +193,15 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
                           animation: `cms-anim-${animationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
                         }
                       : {};
+                    const shouldFillBlock = fillContent && (block.type === "Image" || block.type === "ImageElement");
+                    const wrapperStyle: React.CSSProperties = shouldFillBlock
+                      ? { ...animationStyle, width: "100%", height: "100%", alignSelf: "stretch" }
+                      : animationStyle;
                     // Use trigger count in key to re-mount and re-trigger animation
                     const triggerKey = `${block.id}-${animTrigger[idx] ?? 0}`;
                     return (
-                      <div key={triggerKey} style={animationStyle}>
-                        <FrontendBlockRenderer block={block} />
+                      <div key={triggerKey} style={wrapperStyle}>
+                        <FrontendBlockRenderer block={block} stretch={shouldFillBlock} />
                       </div>
                     );
                   })
@@ -190,7 +210,8 @@ export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layou
                     Empty slide
                   </div>
                 )}
-              </div>
+                </div>
+              </MediaStylesProvider>
             </div>
           );
           })}

@@ -18,6 +18,7 @@ import type {
   ParserSampleState,
   PathConfig,
   PathExecutionMode,
+  PathFlowIntensity,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -50,8 +51,12 @@ import {
 } from "../AiPathsSettingsUtils";
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
+const AUTO_SAVE_ENABLED = false;
 
-type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
+type ToastFn = (
+  message: string,
+  options?: { variant?: "success" | "error" | "info" | "warning" }
+) => void;
 
 type UseAiPathsPersistenceArgs = {
   activePathId: string | null;
@@ -71,6 +76,7 @@ type UseAiPathsPersistenceArgs = {
   pathName: string;
   paths: PathMeta[];
   executionMode: PathExecutionMode;
+  flowIntensity: PathFlowIntensity;
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -106,6 +112,7 @@ type UseAiPathsPersistenceArgs = {
   setPathDebugSnapshots: React.Dispatch<React.SetStateAction<Record<string, PathDebugSnapshot>>>;
   setPathDescription: (value: string) => void;
   setExecutionMode: (value: PathExecutionMode) => void;
+  setFlowIntensity: (value: PathFlowIntensity) => void;
   setPathName: (value: string) => void;
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
@@ -126,10 +133,10 @@ type UseAiPathsPersistenceResult = {
   autoSaveAt: string | null;
   autoSaveStatus: "idle" | "saving" | "saved" | "error";
   handleSave: (options?: {
-    silent?: boolean;
-    includeNodeConfig?: boolean;
-    force?: boolean;
-    nodesOverride?: AiNode[];
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
   persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
@@ -156,6 +163,7 @@ export function useAiPathsPersistence({
   pathName,
   paths,
   executionMode,
+  flowIntensity,
   selectedNodeId,
   runtimeState,
   updaterSamples,
@@ -183,6 +191,7 @@ export function useAiPathsPersistence({
   setPathDebugSnapshots,
   setPathDescription,
   setExecutionMode,
+  setFlowIntensity,
   setPathName,
   setPaths,
   setRuntimeState,
@@ -224,6 +233,7 @@ export function useAiPathsPersistence({
   const currentPathDescriptionRef = useRef("");
   const currentActiveTriggerRef = useRef(triggers[0] ?? "Product Modal - Context Filter");
   const currentExecutionModeRef = useRef<PathExecutionMode>("server");
+  const currentFlowIntensityRef = useRef<PathFlowIntensity>("medium");
   const currentParserSamplesRef = useRef<Record<string, ParserSampleState>>({});
   const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
   const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
@@ -434,6 +444,7 @@ export function useAiPathsPersistence({
               name: parsed.pathName ?? "AI Description Path",
               description: parsed.description ?? "",
               trigger: parsed.trigger ?? (triggers[0] ?? "Product Modal - Context Filter"),
+              flowIntensity: "medium",
               nodes: Array.isArray(parsed.nodes) ? parsed.nodes : initialNodes,
               edges: Array.isArray(parsed.edges) ? parsed.edges : initialEdges,
               updatedAt: new Date().toISOString(),
@@ -515,6 +526,7 @@ export function useAiPathsPersistence({
         setPathDescription(activeConfig.description);
         setActiveTrigger(normalizeTriggerLabel(activeConfig.trigger));
         setExecutionMode(activeConfig.executionMode ?? "server");
+        setFlowIntensity(activeConfig.flowIntensity ?? "medium");
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -625,6 +637,7 @@ export function useAiPathsPersistence({
         description: pathDescription,
         trigger: activeTrigger,
         executionMode,
+        flowIntensity,
         isLocked: isPathLocked,
         isActive: isPathActive,
         uiState: {
@@ -645,6 +658,7 @@ export function useAiPathsPersistence({
       pathDescription,
       activeTrigger,
       executionMode,
+      flowIntensity,
       isPathLocked,
       isPathActive,
       selectedNodeId,
@@ -666,6 +680,7 @@ export function useAiPathsPersistence({
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes: nodesOverride ?? nodes,
       edges,
       updatedAt,
@@ -685,6 +700,7 @@ export function useAiPathsPersistence({
       pathDescription,
       activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       isPathLocked,
@@ -699,15 +715,26 @@ export function useAiPathsPersistence({
 
   const persistPathConfig = useCallback(
     async (options?: {
-      silent?: boolean;
-      force?: boolean;
-      includeNodeConfig?: boolean;
-      nodesOverride?: AiNode[];
+      silent?: boolean | undefined;
+      force?: boolean | undefined;
+      includeNodeConfig?: boolean | undefined;
+      nodesOverride?: AiNode[] | undefined;
     }): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
       const force = options?.force ?? false;
       const includeNodeConfig = options?.includeNodeConfig ?? true;
+      if (isPathLocked || !isPathActive) {
+        if (!silent) {
+          toast(
+            isPathLocked
+              ? "This path is locked. Unlock it to save."
+              : "This path is deactivated. Activate it to save.",
+            { variant: "info" }
+          );
+        }
+        return false;
+      }
       if (!force) {
         const snapshot = buildPathSnapshot();
         if (snapshot && snapshot === lastSavedSnapshotRef.current) {
@@ -758,6 +785,8 @@ export function useAiPathsPersistence({
       buildActivePathConfig,
       buildNodesForAutoSave,
       nodes,
+      isPathLocked,
+      isPathActive,
       persistPathSettings,
       buildPathSnapshot,
       reportAiPathsError,
@@ -771,12 +800,23 @@ export function useAiPathsPersistence({
 
   const handleSave = useCallback(
     async (options?: {
-      silent?: boolean;
-      includeNodeConfig?: boolean;
-      force?: boolean;
-      nodesOverride?: AiNode[];
+      silent?: boolean | undefined;
+      includeNodeConfig?: boolean | undefined;
+      force?: boolean | undefined;
+      nodesOverride?: AiNode[] | undefined;
     }): Promise<void> => {
       const silent = options?.silent ?? false;
+      if (isPathLocked || !isPathActive) {
+        if (!silent) {
+          toast(
+            isPathLocked
+              ? "This path is locked. Unlock it to save."
+              : "This path is deactivated. Activate it to save.",
+            { variant: "info" }
+          );
+        }
+        return;
+      }
       const ok = await persistPathConfig({
         force: options?.force ?? true,
         silent,
@@ -791,7 +831,7 @@ export function useAiPathsPersistence({
         setAutoSaveStatus("error");
       }
     },
-    [persistPathConfig]
+    [isPathActive, isPathLocked, persistPathConfig, toast]
   );
 
   useEffect((): void => {
@@ -800,7 +840,21 @@ export function useAiPathsPersistence({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePathId, loading]);
 
+  useEffect((): void => {
+    if (loading || !activePathId) return;
+    const snapshot = buildPathSnapshot();
+    if (lastSavedSnapshotRef.current && snapshot !== lastSavedSnapshotRef.current) {
+      if (autoSaveStatus !== "idle") {
+        setAutoSaveStatus("idle");
+      }
+      if (autoSaveAt) {
+        setAutoSaveAt(null);
+      }
+    }
+  }, [activePathId, autoSaveAt, autoSaveStatus, buildPathSnapshot, loading]);
+
   useEffect((): void | (() => void) => {
+    if (!AUTO_SAVE_ENABLED) return;
     if (loading || !activePathId) return;
     if (saving || autoSaveInFlightRef.current) return;
     const snapshot = buildPathSnapshot();
@@ -884,6 +938,9 @@ export function useAiPathsPersistence({
     currentExecutionModeRef.current = executionMode;
   }, [executionMode]);
   useEffect((): void => {
+    currentFlowIntensityRef.current = flowIntensity;
+  }, [flowIntensity]);
+  useEffect((): void => {
     currentParserSamplesRef.current = parserSamples;
   }, [parserSamples]);
   useEffect((): void => {
@@ -901,6 +958,7 @@ export function useAiPathsPersistence({
 
   // Save immediately when page is about to unload or tab loses focus
   useEffect((): void | (() => void) => {
+    if (!AUTO_SAVE_ENABLED) return;
     const flushPendingSaveAsync = (): void => {
       if (!currentActivePathIdRef.current || loading) return;
       // Clear any pending debounced save
@@ -950,6 +1008,7 @@ export function useAiPathsPersistence({
         description: currentPathDescriptionRef.current,
         trigger: currentActiveTriggerRef.current,
         executionMode: currentExecutionModeRef.current,
+        flowIntensity: currentFlowIntensityRef.current,
         nodes: nodesForSave,
         edges: currentEdgesRef.current,
         updatedAt,

@@ -13,7 +13,7 @@ interface FrontendSlideshowSectionProps {
   layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layout }: FrontendSlideshowSectionProps): React.ReactNode {
+export function FrontendSlideshowSection({ settings, blocks, colorSchemes }: FrontendSlideshowSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const transition = (settings["transition"] as string) || "fade";
   const transitionDuration = (settings["transitionDuration"] as number) || 700;

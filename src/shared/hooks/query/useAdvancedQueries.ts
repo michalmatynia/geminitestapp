@@ -77,7 +77,9 @@ export function useParallelQueries<T extends Record<string, unknown>>(
     
     queryResults.forEach((result, index) => {
       const key = keys[index];
-      data[key] = result.data as T[keyof T];
+      if (key) {
+        data[key] = result.data as T[keyof T];
+      }
     });
 
     return {

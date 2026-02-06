@@ -6,7 +6,7 @@ import {
   renderTemplate,
   safeStringify,
 } from "../../utils";
-import { DEFAULT_DB_QUERY } from "../../constants";
+import { DEFAULT_DB_QUERY, DB_PROVIDER_PLACEHOLDERS } from "../../constants";
 import type {
   DbSchemaConfig,
   DatabaseConfig,
@@ -32,6 +32,7 @@ import {
 import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
 import { dbApi, entityApi, ApiResponse } from "../../../api";
+import type { SchemaResponse } from "../../../api";
 
 interface PromptCandidate {
   edge: Edge;
@@ -603,17 +604,108 @@ export const handleDatabase: NodeHandler = async ({
   const queryConfig: DbQueryConfig = { ...defaultQuery, ...(dbConfig.query ?? {}) };
   const dryRun: boolean = dbConfig.dryRun ?? false;
   const writeSourcePath: string = dbConfig.writeSourcePath?.trim() ?? "";
-  const aiPrompt: string = dbConfig.aiPrompt ?? "";
+  const aiPromptTemplate: string = dbConfig.aiPrompt ?? "";
   const useMongoActions: boolean = Boolean(
     dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action,
   );
 
+  const templateInputValue: unknown =
+    coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
+  const templateSources: string[] = [
+    aiPromptTemplate,
+    queryConfig.queryTemplate ?? "",
+    dbConfig.updateTemplate ?? "",
+  ].filter((value: string): boolean => value.trim().length > 0);
+  const wantsSchemaPlaceholders = templateSources.some((value: string) =>
+    value.includes("{{Collection:")
+  );
+  const schemaInput = resolvedInputs.schema;
+  let schemaData: SchemaResponse | null = null;
+  if (wantsSchemaPlaceholders) {
+    if (
+      schemaInput &&
+      typeof schemaInput === "object" &&
+      "collections" in (schemaInput as Record<string, unknown>)
+    ) {
+      schemaData = schemaInput as SchemaResponse;
+    } else {
+      const schemaResult = await dbApi.schema();
+      if (schemaResult.ok) {
+        schemaData = schemaResult.data as SchemaResponse;
+      }
+    }
+  }
+
+  const toTitleCase = (value: string): string =>
+    value
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .filter(Boolean)
+      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  const singularize = (value: string): string => {
+    if (value.endsWith("ies") && value.length > 3) {
+      return `${value.slice(0, -3)}y`;
+    }
+    if (value.endsWith("ses") && value.length > 3) {
+      return value.slice(0, -2);
+    }
+    if (value.endsWith("s") && !value.endsWith("ss") && value.length > 1) {
+      return value.slice(0, -1);
+    }
+    return value;
+  };
+  const normalizeSchemaType = (value: string): string => {
+    const normalized = value.trim();
+    const lower = normalized.toLowerCase();
+    if (lower === "string") return "string";
+    if (lower === "int" || lower === "float" || lower === "decimal" || lower === "number") return "number";
+    if (lower === "boolean" || lower === "bool") return "boolean";
+    if (lower === "datetime" || lower === "date") return "string";
+    if (lower === "json") return "Record<string, unknown>";
+    return normalized || "unknown";
+  };
+  const formatCollectionSchema = (collectionName: string, fields: Array<{ name: string; type: string }> = []): string => {
+    const interfaceName = toTitleCase(singularize(collectionName));
+    if (!fields.length) {
+      return `interface ${interfaceName} {}`;
+    }
+    const lines = fields.map((field: { name: string; type: string }) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+    return `interface ${interfaceName} {\n${lines.join("\n")}\n}`;
+  };
+
+  const placeholderContext: Record<string, unknown> = {
+    "Date: Current": new Date().toISOString(),
+  };
+  DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
+    placeholderContext[`DB Provider: ${provider}`] = provider;
+  });
+  if (schemaData?.collections?.length) {
+    schemaData.collections.forEach((collection) => {
+      const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+      const displayName = toTitleCase(singularize(collection.name));
+      const nameSet = new Set<string>([collection.name, displayName]);
+      nameSet.forEach((name: string) => {
+        placeholderContext[`Collection: ${name}`] = schemaText;
+      });
+    });
+  }
+
+  const templateContext: Record<string, unknown> = {
+    ...resolvedInputs,
+    ...placeholderContext,
+  };
+  const aiPrompt: string = aiPromptTemplate.trim()
+    ? renderTemplate(aiPromptTemplate, templateContext, templateInputValue ?? "")
+    : "";
+
   if (useMongoActions) {
     const actionCategory: DatabaseActionCategory = dbConfig.actionCategory ?? "read";
     const action: DatabaseAction = dbConfig.action ?? "find";
-    const inputValue: unknown =
-      coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
-    const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
+    const inputValue: unknown = templateInputValue;
+    const queryPayload = buildDbQueryPayload(templateContext as RuntimePortValues, queryConfig);
     const filter = (queryPayload.query) ?? {};
     const projection = queryPayload.projection;
     const sort = queryPayload.sort;
@@ -627,7 +719,7 @@ export const handleDatabase: NodeHandler = async ({
       parseJsonSafe(
         renderJsonTemplate(
           template,
-          resolvedInputs,
+          templateContext,
           inputValue ?? "",
         ),
       );
@@ -1206,7 +1298,7 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityType,
       simulationEntityId,
     );
-    const inputValue: unknown = coerceInput(resolvedInputs.value);
+    const inputValue: unknown = templateInputValue;
     const entityIdInput: unknown = coerceInput(resolvedInputs.entityId);
     const productIdInput: unknown = coerceInput(resolvedInputs.productId);
     const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
@@ -1282,7 +1374,7 @@ export const handleDatabase: NodeHandler = async ({
         const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
             callbackTemplate,
-            resolvedInputs,
+            templateContext,
             inputValue ?? "",
           ),
         );
@@ -1335,7 +1427,7 @@ export const handleDatabase: NodeHandler = async ({
         const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
             queryConfig.queryTemplate ?? "{}",
-            resolvedInputs,
+            templateContext,
             inputValue ?? "",
           ),
         );
@@ -1867,12 +1959,12 @@ type CollectionSchema = {
   relations?: string[];
 };
 
-type SchemaResponse = {
+type LocalSchemaResponse = {
   provider: "mongodb" | "prisma";
   collections: CollectionSchema[];
 };
 
-function formatSchemaAsText(schema: SchemaResponse): string {
+function formatSchemaAsText(schema: LocalSchemaResponse): string {
   const lines: string[] = [
     "DATABASE SCHEMA",
     "===============",

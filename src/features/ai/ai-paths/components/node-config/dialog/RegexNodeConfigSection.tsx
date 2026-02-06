@@ -11,14 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Textarea,
   Tooltip,
   useToast,
 } from "@/shared/ui";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import type { AiNode, Edge, NodeConfig, RegexConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
-import { parseJsonSafe, renderTemplate } from "@/features/ai/ai-paths/lib";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { serializeSetting } from "@/shared/utils/settings-json";
+import type { AiNode, Edge, NodeConfig, RegexConfig, RegexTemplate, RuntimeState } from "@/features/ai/ai-paths/lib";
+import {
+  AI_PATHS_REGEX_TEMPLATES_KEY,
+  buildRegexTemplatesStore,
+  createRegexTemplateId,
+  parseRegexTemplatesStore,
+  parseJsonSafe,
+  renderTemplate,
+} from "@/features/ai/ai-paths/lib";
 
 type RegexCandidate = {
   pattern: string;
@@ -280,6 +293,154 @@ export function RegexNodeConfigSection({
   const hasAiProposal = Boolean(regexConfig.aiProposal?.pattern?.trim());
   const activeVariant = regexConfig.activeVariant ?? "manual";
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
+  const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
+  const settingsQuery = useSettingsMap({ scope: "heavy" });
+  const updateSettingMutation = useUpdateSetting();
+  const globalTemplatesRaw = settingsQuery.data?.get(AI_PATHS_REGEX_TEMPLATES_KEY) ?? null;
+  const parsedGlobalTemplates = React.useMemo(
+    () => parseRegexTemplatesStore(globalTemplatesRaw).templates,
+    [globalTemplatesRaw]
+  );
+  const [globalTemplates, setGlobalTemplates] = React.useState<RegexTemplate[]>(parsedGlobalTemplates);
+  const lastSyncedGlobalTemplatesRef = React.useRef<RegexTemplate[]>(parsedGlobalTemplates);
+  const [activeTab, setActiveTab] = React.useState<"config" | "templates">("config");
+  const [templateName, setTemplateName] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (!settingsQuery.isSuccess) return;
+    setGlobalTemplates(parsedGlobalTemplates);
+    lastSyncedGlobalTemplatesRef.current = parsedGlobalTemplates;
+  }, [parsedGlobalTemplates, settingsQuery.dataUpdatedAt, settingsQuery.isSuccess]);
+
+  const saveRegexTemplate = React.useCallback((): void => {
+    const name = templateName.trim();
+    if (!name) {
+      toast("Template name is required.", { variant: "error" });
+      return;
+    }
+    const newTemplate: RegexTemplate = {
+      id: createRegexTemplateId(),
+      name,
+      pattern: regexConfig.pattern ?? "",
+      flags: regexConfig.flags ?? "",
+      mode: regexConfig.mode ?? "group",
+      matchMode: regexConfig.matchMode ?? "first",
+      groupBy: regexConfig.groupBy ?? "match",
+      outputMode: regexConfig.outputMode ?? "object",
+      includeUnmatched: regexConfig.includeUnmatched ?? true,
+      unmatchedKey: regexConfig.unmatchedKey ?? "__unmatched__",
+      splitLines: regexConfig.splitLines ?? true,
+      createdAt: new Date().toISOString(),
+    };
+    updateRegex({ templates: [newTemplate, ...regexTemplates] });
+    setTemplateName("");
+    toast("Regex template saved.", { variant: "success" });
+  }, [regexConfig, regexTemplates, templateName, toast, updateRegex]);
+
+  const persistGlobalTemplates = React.useCallback(
+    async (nextTemplates: RegexTemplate[], successMessage?: string): Promise<void> => {
+      setGlobalTemplates(nextTemplates);
+      try {
+        await updateSettingMutation.mutateAsync({
+          key: AI_PATHS_REGEX_TEMPLATES_KEY,
+          value: serializeSetting(buildRegexTemplatesStore(nextTemplates)),
+        });
+        if (successMessage) {
+          toast(successMessage, { variant: "success" });
+        }
+      } catch {
+        setGlobalTemplates(lastSyncedGlobalTemplatesRef.current);
+        toast("Failed to update global regex templates.", { variant: "error" });
+      }
+    },
+    [toast, updateSettingMutation]
+  );
+
+  const saveGlobalRegexTemplate = React.useCallback((): void => {
+    const name = templateName.trim();
+    if (!name) {
+      toast("Template name is required.", { variant: "error" });
+      return;
+    }
+    const newTemplate: RegexTemplate = {
+      id: createRegexTemplateId(),
+      name,
+      pattern: regexConfig.pattern ?? "",
+      flags: regexConfig.flags ?? "",
+      mode: regexConfig.mode ?? "group",
+      matchMode: regexConfig.matchMode ?? "first",
+      groupBy: regexConfig.groupBy ?? "match",
+      outputMode: regexConfig.outputMode ?? "object",
+      includeUnmatched: regexConfig.includeUnmatched ?? true,
+      unmatchedKey: regexConfig.unmatchedKey ?? "__unmatched__",
+      splitLines: regexConfig.splitLines ?? true,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [newTemplate, ...globalTemplates];
+    void persistGlobalTemplates(next, "Global regex template saved.");
+    setTemplateName("");
+  }, [globalTemplates, persistGlobalTemplates, regexConfig, templateName, toast]);
+
+  const applyRegexTemplate = React.useCallback(
+    (template: RegexTemplate, label?: string): void => {
+      updateRegex({
+        pattern: template.pattern,
+        flags: template.flags ?? "",
+        mode: template.mode ?? regexConfig.mode,
+        matchMode: template.matchMode ?? regexConfig.matchMode,
+        groupBy: template.groupBy ?? "match",
+        outputMode: template.outputMode ?? regexConfig.outputMode,
+        includeUnmatched: template.includeUnmatched ?? regexConfig.includeUnmatched,
+        unmatchedKey: template.unmatchedKey ?? regexConfig.unmatchedKey,
+        splitLines: template.splitLines ?? regexConfig.splitLines,
+        activeVariant: "manual",
+      });
+      const prefix = label ? `${label} template applied: ` : "Template applied: ";
+      toast(`${prefix}${template.name}`, { variant: "success" });
+    },
+    [regexConfig, toast, updateRegex]
+  );
+
+  const updateGlobalTemplate = React.useCallback(
+    (templateId: string, patch: Partial<RegexTemplate>): void => {
+      const next = globalTemplates.map((template: RegexTemplate): RegexTemplate =>
+        template.id === templateId
+          ? { ...template, ...patch, updatedAt: new Date().toISOString() }
+          : template
+      );
+      void persistGlobalTemplates(next);
+    },
+    [globalTemplates, persistGlobalTemplates]
+  );
+
+  const removeGlobalTemplate = React.useCallback(
+    (templateId: string): void => {
+      const next = globalTemplates.filter((template: RegexTemplate) => template.id !== templateId);
+      void persistGlobalTemplates(next, "Global template removed.");
+    },
+    [globalTemplates, persistGlobalTemplates]
+  );
+
+  const updateRegexTemplate = React.useCallback(
+    (templateId: string, patch: Partial<RegexTemplate>): void => {
+      const next = regexTemplates.map((template: RegexTemplate): RegexTemplate =>
+        template.id === templateId
+          ? { ...template, ...patch, updatedAt: new Date().toISOString() }
+          : template
+      );
+      updateRegex({ templates: next });
+    },
+    [regexTemplates, updateRegex]
+  );
+
+  const removeRegexTemplate = React.useCallback(
+    (templateId: string): void => {
+      const next = regexTemplates.filter((template: RegexTemplate) => template.id !== templateId);
+      updateRegex({ templates: next });
+      toast("Template removed.", { variant: "success" });
+    },
+    [regexTemplates, toast, updateRegex]
+  );
 
   const applyVariant = React.useCallback(
     (variant: "manual" | "ai"): void => {
@@ -758,7 +919,7 @@ export function RegexNodeConfigSection({
   const regexMode = regexConfig.mode ?? "group";
   const isExtractMode = regexMode === "extract" || regexMode === "extract_json";
 
-  return (
+  const configContent = (
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
@@ -874,6 +1035,40 @@ export function RegexNodeConfigSection({
                 Normalize
               </Button>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-card/50 p-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-xs text-gray-400">Save Regex Template</Label>
+              <Input
+                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                value={templateName}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTemplateName(event.target.value)}
+                placeholder="Template name"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                className="h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20"
+                onClick={saveRegexTemplate}
+              >
+                Save Node
+              </Button>
+              <Button
+                type="button"
+                className="h-8 rounded-md border border-sky-600/50 bg-sky-500/10 px-3 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-60"
+                onClick={saveGlobalRegexTemplate}
+                disabled={updateSettingMutation.isPending}
+              >
+                {updateSettingMutation.isPending ? "Saving..." : "Save Global"}
+              </Button>
+            </div>
+          </div>
+          <div className="mt-2 text-[11px] text-gray-500">
+            Saved templates can be managed in the Templates tab. Global templates are shared across nodes/paths.
           </div>
         </div>
 
@@ -1141,6 +1336,399 @@ export function RegexNodeConfigSection({
           </Button>
         </div>
       </div>
+    </div>
+  );
+
+  const templatesContent = (
+    <div className="space-y-6">
+      <div className="rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400">
+        Local templates live on this node. Global templates are shared across all nodes/paths.
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-400">Node Templates</Label>
+          <span className="text-[11px] text-gray-500">{regexTemplates.length} saved</span>
+        </div>
+        {regexTemplates.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400">
+            No node templates yet. Save one from the Config tab.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {regexTemplates.map((template: RegexTemplate) => (
+              <div key={template.id} className="rounded-md border border-border bg-card/60 p-3 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-[220px] flex-1">
+                    <Label className="text-[10px] text-gray-400">Template Name</Label>
+                    <Input
+                      className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                      value={template.name}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateRegexTemplate(template.id, { name: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      className="h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20"
+                      onClick={() => applyRegexTemplate(template)}
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-8 rounded-md border border-rose-600/50 bg-rose-500/10 px-3 text-[11px] text-rose-200 hover:bg-rose-500/20"
+                      onClick={() => removeRegexTemplate(template.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Pattern</Label>
+                    <Input
+                      className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                      value={template.pattern}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateRegexTemplate(template.id, { pattern: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[10px] text-gray-400">Flags</Label>
+                      <Input
+                        className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={template.flags ?? ""}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateRegexTemplate(template.id, { flags: event.target.value })
+                        }
+                        placeholder="gim"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-gray-400">Group By</Label>
+                      <Input
+                        className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={template.groupBy ?? "match"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateRegexTemplate(template.id, { groupBy: event.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Mode</Label>
+                    <Select
+                      value={template.mode ?? "group"}
+                      onValueChange={(value: string): void =>
+                        updateRegexTemplate(template.id, { mode: value as RegexConfig["mode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="group">Group matches</SelectItem>
+                        <SelectItem value="extract">Extract value</SelectItem>
+                        <SelectItem value="extract_json">Extract JSON/object</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Match Mode</Label>
+                    <Select
+                      value={template.matchMode ?? "first"}
+                      onValueChange={(value: string): void =>
+                        updateRegexTemplate(template.id, { matchMode: value as RegexConfig["matchMode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="first">First match</SelectItem>
+                        <SelectItem value="first_overall">First overall</SelectItem>
+                        <SelectItem value="all">All matches</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Output Mode</Label>
+                    <Select
+                      value={template.outputMode ?? "object"}
+                      onValueChange={(value: string): void =>
+                        updateRegexTemplate(template.id, { outputMode: value as RegexConfig["outputMode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select output" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="object">Object (Record)</SelectItem>
+                        <SelectItem value="array">Array (Groups list)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
+                    <div>
+                      <div className="text-[11px] text-gray-300">Split lines</div>
+                      <div className="text-[11px] text-gray-500">Treat each line as an input item.</div>
+                    </div>
+                    <Switch
+                      checked={template.splitLines ?? true}
+                      onCheckedChange={(checked: boolean) => updateRegexTemplate(template.id, { splitLines: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
+                    <div>
+                      <div className="text-[11px] text-gray-300">Include unmatched</div>
+                      <div className="text-[11px] text-gray-500">
+                        Keep non-matching inputs under a group key.
+                      </div>
+                    </div>
+                    <Switch
+                      checked={template.includeUnmatched ?? true}
+                      onCheckedChange={(checked: boolean) =>
+                        updateRegexTemplate(template.id, { includeUnmatched: checked })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-[10px] text-gray-400">Unmatched Key</Label>
+                  <Input
+                    className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                    value={template.unmatchedKey ?? "__unmatched__"}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateRegexTemplate(template.id, { unmatchedKey: event.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="text-[10px] text-gray-500">
+                  Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : "—"}
+                  {template.updatedAt ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}` : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-400">Global Templates</Label>
+          <span className="text-[11px] text-gray-500">{globalTemplates.length} shared</span>
+        </div>
+        {settingsQuery.isLoading && globalTemplates.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400">
+            Loading global templates…
+          </div>
+        ) : globalTemplates.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400">
+            No global templates yet. Save one from the Config tab.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {globalTemplates.map((template: RegexTemplate) => (
+              <div key={template.id} className="rounded-md border border-border bg-card/60 p-3 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-[220px] flex-1">
+                    <Label className="text-[10px] text-gray-400">Template Name</Label>
+                    <Input
+                      className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                      value={template.name}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateGlobalTemplate(template.id, { name: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      className="h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20"
+                      onClick={() => applyRegexTemplate(template, "Global")}
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-8 rounded-md border border-rose-600/50 bg-rose-500/10 px-3 text-[11px] text-rose-200 hover:bg-rose-500/20"
+                      onClick={() => removeGlobalTemplate(template.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Pattern</Label>
+                    <Input
+                      className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                      value={template.pattern}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateGlobalTemplate(template.id, { pattern: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[10px] text-gray-400">Flags</Label>
+                      <Input
+                        className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={template.flags ?? ""}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateGlobalTemplate(template.id, { flags: event.target.value })
+                        }
+                        placeholder="gim"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-gray-400">Group By</Label>
+                      <Input
+                        className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={template.groupBy ?? "match"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateGlobalTemplate(template.id, { groupBy: event.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Mode</Label>
+                    <Select
+                      value={template.mode ?? "group"}
+                      onValueChange={(value: string): void =>
+                        updateGlobalTemplate(template.id, { mode: value as RegexConfig["mode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="group">Group matches</SelectItem>
+                        <SelectItem value="extract">Extract value</SelectItem>
+                        <SelectItem value="extract_json">Extract JSON/object</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Match Mode</Label>
+                    <Select
+                      value={template.matchMode ?? "first"}
+                      onValueChange={(value: string): void =>
+                        updateGlobalTemplate(template.id, { matchMode: value as RegexConfig["matchMode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="first">First match</SelectItem>
+                        <SelectItem value="first_overall">First overall</SelectItem>
+                        <SelectItem value="all">All matches</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-gray-400">Output Mode</Label>
+                    <Select
+                      value={template.outputMode ?? "object"}
+                      onValueChange={(value: string): void =>
+                        updateGlobalTemplate(template.id, { outputMode: value as RegexConfig["outputMode"] })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 w-full border-border bg-card/70 text-xs text-white">
+                        <SelectValue placeholder="Select output" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="object">Object (Record)</SelectItem>
+                        <SelectItem value="array">Array (Groups list)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
+                    <div>
+                      <div className="text-[11px] text-gray-300">Split lines</div>
+                      <div className="text-[11px] text-gray-500">Treat each line as an input item.</div>
+                    </div>
+                    <Switch
+                      checked={template.splitLines ?? true}
+                      onCheckedChange={(checked: boolean) => updateGlobalTemplate(template.id, { splitLines: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
+                    <div>
+                      <div className="text-[11px] text-gray-300">Include unmatched</div>
+                      <div className="text-[11px] text-gray-500">
+                        Keep non-matching inputs under a group key.
+                      </div>
+                    </div>
+                    <Switch
+                      checked={template.includeUnmatched ?? true}
+                      onCheckedChange={(checked: boolean) =>
+                        updateGlobalTemplate(template.id, { includeUnmatched: checked })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-[10px] text-gray-400">Unmatched Key</Label>
+                  <Input
+                    className="mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                    value={template.unmatchedKey ?? "__unmatched__"}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateGlobalTemplate(template.id, { unmatchedKey: event.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="text-[10px] text-gray-500">
+                  Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : "—"}
+                  {template.updatedAt ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}` : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value: string): void => setActiveTab(value as "config" | "templates")}
+        className="space-y-4"
+      >
+        <TabsList className="h-9 border border-border bg-card/60">
+          <TabsTrigger value="config">Config</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+        <TabsContent value="config">{configContent}</TabsContent>
+        <TabsContent value="templates">{templatesContent}</TabsContent>
+      </Tabs>
     </div>
   );
 }

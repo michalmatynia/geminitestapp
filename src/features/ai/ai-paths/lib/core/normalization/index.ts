@@ -439,6 +439,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             skipEmpty: databaseConfig.skipEmpty ?? false,
             trimStrings: databaseConfig.trimStrings ?? false,
             aiPrompt: databaseConfig.aiPrompt ?? "",
+            validationRuleIds: databaseConfig.validationRuleIds ?? [],
           },
         },
       };
@@ -504,6 +505,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             skipEmpty: legacyDbConfig.skipEmpty ?? false,
             trimStrings: legacyDbConfig.trimStrings ?? false,
             aiPrompt: legacyDbConfig.aiPrompt ?? "",
+            validationRuleIds: legacyDbConfig.validationRuleIds ?? [],
           },
         },
       };
@@ -622,6 +624,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
             aiPrompt: node.config?.database?.aiPrompt ?? "",
+            validationRuleIds: node.config?.database?.validationRuleIds ?? [],
           },
         },
       };

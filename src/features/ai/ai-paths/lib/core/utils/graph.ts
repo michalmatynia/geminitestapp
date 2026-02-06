@@ -4,7 +4,7 @@ import {
   CANVAS_WIDTH,
   MAX_SCALE,
   MIN_SCALE,
-  NODE_MIN_HEIGHT,
+  PORT_STACK_TOP,
   PORT_GAP,
   PORT_COMPATIBILITY,
 } from "../constants";
@@ -14,10 +14,8 @@ import {
   getPortDataTypes,
 } from "./port-types";
 
-export const getPortOffsetY = (index: number, totalPorts: number): number => {
-  const totalHeight = (totalPorts - 1) * PORT_GAP;
-  const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
-  return startY + index * PORT_GAP;
+export const getPortOffsetY = (index: number, _totalPorts: number): number => {
+  return PORT_STACK_TOP + index * PORT_GAP;
 };
 
 export const normalizePortName = (port: string): string => {

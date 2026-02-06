@@ -1,6 +1,6 @@
 "use client";
 
-import type { RuntimeHistoryEntry } from "@/features/ai/ai-paths/lib";
+import type { RuntimeHistoryEntry, RuntimeHistoryLink } from "@/features/ai/ai-paths/lib";
 import { formatRuntimeValue } from "@/features/ai/ai-paths/lib";
 
 type RunHistoryEntriesProps = {
@@ -110,7 +110,7 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">From</div>
                 {entry.inputsFrom && entry.inputsFrom.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.inputsFrom.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
+                    {entry.inputsFrom.map((link: RuntimeHistoryLink, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
                         {link.nodeType ? ` (${link.nodeType})` : ""}
@@ -133,7 +133,7 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">To</div>
                 {entry.outputsTo && entry.outputsTo.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.outputsTo.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
+                    {entry.outputsTo.map((link: RuntimeHistoryLink, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
                         {link.nodeType ? ` (${link.nodeType})` : ""}

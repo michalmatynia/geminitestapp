@@ -891,7 +891,7 @@ export function useAiPathsRuntime({
         if (!triggerNode) {
           const triggerCandidates = normalizedNodes.filter((node: AiNode): boolean => node.type === "trigger");
           if (triggerCandidates.length === 1) {
-            triggerNode = triggerCandidates[0] ?? null;
+            triggerNode = triggerCandidates[0];
             toast("No Trigger node connected; using the only Trigger in this path.", {
               variant: "info",
             });

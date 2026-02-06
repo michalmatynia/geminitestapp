@@ -8,13 +8,8 @@ import { useEffect } from "react";
 import type { ProductDto, ProductCategoryDto, ProductTagDto } from "@/shared/dtos";
 
 interface EnhancedProductsQueryResult {
-  products: ReturnType<typeof useNormalizedQuery<ProductDto[]>>;
-  stats: {
-    total: number;
-    published: number;
-    categories: number;
-    avgPrice: number;
-  };
+  products: ReturnType<typeof useNormalizedQuery<ProductDto>>;
+  stats: any;
   selectById: (id: string) => ProductDto | undefined;
   selectMany: (ids: string[]) => ProductDto[];
 }
@@ -24,7 +19,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const scheduler = useQueryScheduler();
 
   // Normalized products query
-  const productsQuery = useNormalizedQuery<ProductDto[]>(
+  const productsQuery = useNormalizedQuery<ProductDto>(
     ['products', 'enhanced'],
     async (): Promise<ProductDto[]> => {
       const res = await fetch('/api/products');
@@ -59,7 +54,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
         if (!catalogsRes.ok) return [];
         type Catalog = { id: string };
         const catalogs = (await catalogsRes.json()) as Catalog[];
-        const catalogId = Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0].id : undefined;
+        const catalogId = Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];
         const res = await fetch(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`

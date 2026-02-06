@@ -282,23 +282,6 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
-        <TreeCaret
-          isOpen={isExpanded}
-          hasChildren={canToggle}
-          ariaLabel={isExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
-          onToggle={canToggle ? (): void => onToggleExpand(section.id) : undefined}
-          placeholderClassName="block size-3.5 shrink-0 pointer-events-none"
-        />
-        <Icon className="size-4 shrink-0 pointer-events-none" />
-        <span className="flex-1 truncate text-left pointer-events-none">
-          {resolveNodeLabel(section.type, section.settings["label"])}
-        </span>
-        {isSectionDragOver && (
-          <span className="text-[10px] text-purple-300 pointer-events-none">Move here</span>
-        )}
-        {isDragOver && (
-          <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
-        )}
         <div
           draggable
           onDragStart={(e: React.DragEvent) => {
@@ -332,6 +315,23 @@ export function SectionNodeItem({
         >
           <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
         </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={canToggle}
+          ariaLabel={isExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
+          onToggle={canToggle ? (): void => onToggleExpand(section.id) : undefined}
+          placeholderClassName="block size-3.5 shrink-0 pointer-events-none"
+        />
+        <Icon className="size-4 shrink-0 pointer-events-none" />
+        <span className="flex-1 truncate text-left pointer-events-none">
+          {resolveNodeLabel(section.type, section.settings["label"])}
+        </span>
+        {isSectionDragOver && (
+          <span className="text-[10px] text-purple-300 pointer-events-none">Move here</span>
+        )}
+        {isDragOver && (
+          <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
+        )}
         <TreeActionSlot
           show="hover"
           isVisible={isSelected}

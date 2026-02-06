@@ -106,7 +106,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-                id: (latest as { id?: string; _id?: string }).id ?? String(latest._id),
+                id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest._id),
                 status: latest.status as ProductAiJobStatus,
                 createdAt: toIso(latest.createdAt as Date | string | null),
                 productId: latest.productId as string | null,

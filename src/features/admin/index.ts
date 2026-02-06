@@ -6,3 +6,4 @@ export * from "./pages/AdminNotificationsSettingsPage";
 export * from "./pages/AdminSettingsHomePage";
 export * from "./pages/AdminMenuSettingsPage";
 export * from "./pages/AdminTypographySettingsPage";
+export * from "./pages/AdminRouteMapPage";

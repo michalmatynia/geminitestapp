@@ -158,19 +158,6 @@ export function SlideshowFrameNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <TreeCaret
-          isOpen={isExpanded}
-          hasChildren={true}
-          ariaLabel={isExpanded ? "Collapse frame" : "Expand frame"}
-          onToggle={(): void => onToggleExpand(frame.id)}
-          iconClassName="size-3"
-          placeholderClassName="block size-3 shrink-0"
-        />
-        <Icon className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">{blockLabel}</span>
-        {isDragOver && (
-          <span className="text-[10px] text-emerald-300">Drop here</span>
-        )}
         <div
           draggable
           onDragStart={(e: React.DragEvent) => {
@@ -202,6 +189,19 @@ export function SlideshowFrameNodeItem({
         >
           <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
         </div>
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={true}
+          ariaLabel={isExpanded ? "Collapse frame" : "Expand frame"}
+          onToggle={(): void => onToggleExpand(frame.id)}
+          iconClassName="size-3"
+          placeholderClassName="block size-3 shrink-0"
+        />
+        <Icon className="size-3.5 shrink-0" />
+        <span className="flex-1 truncate text-left">{blockLabel}</span>
+        {isDragOver && (
+          <span className="text-[10px] text-emerald-300">Drop here</span>
+        )}
         <TreeActionSlot show="always" align="inline">
           <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
             <ColumnBlockPicker

@@ -1,10 +1,98 @@
+export type QueryValidationStatus = "empty" | "valid" | "warning" | "error";
+
+export type QueryValidationIssue = {
+  id: string;
+  severity: "error" | "warning" | "info";
+  title: string;
+  message: string;
+};
+
+export type ValidationPaletteRule = {
+  id: string;
+  title: string;
+  severity: "error" | "warning" | "info";
+  message: string;
+  pattern: string;
+  flags?: string | undefined;
+};
+
 export type QueryValidationResult = {
-  status: "empty" | "valid" | "error";
+  status: QueryValidationStatus;
   message: string;
   line?: number;
   column?: number;
   snippet?: string;
   hints?: string[];
+  issues?: QueryValidationIssue[];
+};
+
+const compileRegex = (pattern: string, flags?: string | undefined): RegExp | null => {
+  try {
+    return new RegExp(pattern, flags);
+  } catch {
+    return null;
+  }
+};
+
+export const buildValidationIssues = (
+  value: string,
+  rules: ValidationPaletteRule[]
+): QueryValidationIssue[] => {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed || rules.length === 0) return [];
+  const issues: QueryValidationIssue[] = [];
+  rules.forEach((rule: ValidationPaletteRule) => {
+    const regex = compileRegex(rule.pattern, rule.flags);
+    if (!regex) {
+      issues.push({
+        id: rule.id,
+        severity: "warning",
+        title: rule.title,
+        message: `Invalid regex pattern for "${rule.title}".`,
+      });
+      return;
+    }
+    if (regex.test(trimmed)) return;
+    issues.push({
+      id: rule.id,
+      severity: rule.severity,
+      title: rule.title,
+      message: rule.message || `Missing expected pattern: ${rule.title}.`,
+    });
+  });
+  return issues;
+};
+
+export const mergeValidationIssues = (
+  base: QueryValidationResult,
+  issues: QueryValidationIssue[]
+): QueryValidationResult => {
+  if (!issues.length) return base;
+  if (base.status === "empty") return base;
+  const hasError = issues.some((issue: QueryValidationIssue) => issue.severity === "error");
+  const hasWarning = issues.some((issue: QueryValidationIssue) => issue.severity === "warning");
+  const nextStatus: QueryValidationStatus =
+    base.status === "error"
+      ? "error"
+      : hasError
+        ? "error"
+        : hasWarning
+          ? "warning"
+          : base.status;
+  const nextMessage =
+    base.status === "valid"
+      ? hasError
+        ? "Validation errors detected."
+        : hasWarning
+          ? "Validation warnings detected."
+          : base.message
+      : base.message;
+  return {
+    ...base,
+    status: nextStatus,
+    message: nextMessage,
+    issues,
+  };
 };
 
 export const getQueryPlaceholderByOperation = (operation: string): string => {

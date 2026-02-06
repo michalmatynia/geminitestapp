@@ -49,6 +49,9 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
+  const [promptValidationEnabled, setPromptValidationEnabled] = useState<boolean>(
+    defaultPromptEngineSettings.promptValidation.enabled
+  );
   const [promptValidationRulesText, setPromptValidationRulesText] = useState<string>(
     JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
   );
@@ -89,6 +92,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setPromptValidationEnabled(promptEngineStored.promptValidation.enabled);
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setSettingsLoaded(true);
@@ -172,7 +176,11 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting({
           ...promptEngineSettings,
-          promptValidation: { ...promptEngineSettings.promptValidation, rules: parsedRules.rules },
+          promptValidation: {
+            ...promptEngineSettings.promptValidation,
+            enabled: promptValidationEnabled,
+            rules: parsedRules.rules,
+          },
         }),
       });
       toast("Image Studio settings saved.", { variant: "success" });
@@ -180,12 +188,22 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
       logClientError(error, { context: { source: "AdminImageStudioSettingsPage", action: "saveSettings" } });
       toast("Failed to save Image Studio settings.", { variant: "error" });
     }
-  }, [advancedOverridesError, promptValidationRulesError, studioSettings, promptValidationRulesText, promptEngineSettings, toast, updateSetting]);
+  }, [
+    advancedOverridesError,
+    promptValidationEnabled,
+    promptValidationRulesError,
+    studioSettings,
+    promptValidationRulesText,
+    promptEngineSettings,
+    toast,
+    updateSetting,
+  ]);
 
   const resetStudioSettings = useCallback((): void => {
     setStudioSettings(defaultImageStudioSettings);
     setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
     setAdvancedOverridesError(null);
+    setPromptValidationEnabled(defaultPromptEngineSettings.promptValidation.enabled);
     setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
   }, []);
@@ -385,12 +403,9 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
               <label className="flex items-center gap-2 text-xs text-gray-200">
                 <input
                   type="checkbox"
-                  checked={studioSettings.promptValidation.enabled}
+                  checked={promptValidationEnabled}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setStudioSettings((prev: ImageStudioSettings) => ({
-                      ...prev,
-                      promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
-                    }))
+                    setPromptValidationEnabled(e.target.checked)
                   }
                 />
                 Enabled

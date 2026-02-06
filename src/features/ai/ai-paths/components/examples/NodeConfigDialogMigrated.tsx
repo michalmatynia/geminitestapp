@@ -89,13 +89,16 @@ export type NodeConfigDialogMigratedProps = {
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
 
   // Utility callbacks
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: "success" | "error" | "info" | "warning" }
+  ) => void;
   onDirtyChange?: ((dirty: boolean) => void) | undefined;
   savePathConfig?: ((options?: {
-    silent?: boolean;
-    includeNodeConfig?: boolean;
-    force?: boolean;
-    nodesOverride?: AiNode[];
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>) | undefined;
 };
 

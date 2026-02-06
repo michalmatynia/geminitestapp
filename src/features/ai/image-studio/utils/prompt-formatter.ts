@@ -1,5 +1,5 @@
-import { validateProgrammaticPrompt } from "./prompt-validator";
-import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from "./studio-settings";
+import { validateProgrammaticPrompt } from "@/features/prompt-engine/prompt-validator";
+import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from "@/features/prompt-engine/settings";
 
 type AppliedFix = {
   ruleId: string;

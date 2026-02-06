@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, type Query } from "@tanstack/react-query";
+import { useQuery, type Query, type UseQueryResult } from "@tanstack/react-query";
 import {
   runsApi,
   type AiPathRunEventRecord,
@@ -12,7 +12,10 @@ import {
 import { buildHistoryNodeOptions, type HistoryNodeOption } from "../run-history-utils";
 import type { RunHistoryFilter } from "../run-history-panel";
 
-type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
+type ToastFn = (
+  message: string,
+  options?: { variant?: "success" | "error" | "info" | "warning" }
+) => void;
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
@@ -20,7 +23,7 @@ type UseAiPathsRunHistoryArgs = {
 };
 
 type UseAiPathsRunHistoryResult = {
-  runsQuery: ReturnType<typeof useQuery>;
+  runsQuery: UseQueryResult<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>;
   runList: AiPathRunRecord[];
   runFilter: RunHistoryFilter;
   setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
@@ -243,7 +246,7 @@ export function useAiPathsRunHistory({
       ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
       : [];
 
-  const runsQuery = useQuery({
+  const runsQuery = useQuery<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>({
     queryKey: ["ai-paths-runs", activePathId],
     queryFn: async () => {
       const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });

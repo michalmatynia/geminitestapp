@@ -8,6 +8,7 @@ import { FolderTree } from "@/features/foldertree/components/FolderTree";
 import { NoteListView } from "@/features/notesapp/components/NoteListView";
 import { NoteDetailView } from "@/features/notesapp/components/NoteDetailView";
 import { CreateNoteModal } from "@/features/notesapp/components/CreateNoteModal";
+import { NotesAppProvider } from "@/features/notesapp/hooks/NotesAppContext";
 import { 
   useNoteData,
   useUpdateNoteMutation,
@@ -170,6 +171,10 @@ export function AdminNotesPage(): React.JSX.Element {
     void fetchFolderTree();
   }, [fetchNotes, fetchFolderTree]);
 
+  const handleFilterByTag = useCallback((tagId: string): void => {
+    filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing);
+  }, [filters, setSelectedFolderId, setSelectedNote, setIsEditing]);
+
   const handleUpdateSuccess = useCallback((): void => {
     setIsEditing(false);
     void fetchNotes();
@@ -312,164 +317,154 @@ export function AdminNotesPage(): React.JSX.Element {
     [undoStack, formatUndoLabel]
   );
 
+  const contextValue = useMemo(
+    () => ({
+      settings,
+      updateSettings,
+      filters,
+      folderTree,
+      tags,
+      themes,
+      loading,
+      selectedNote,
+      setSelectedNote,
+      selectedFolderId: settings.selectedFolderId,
+      selectedNotebookId: settings.selectedNotebookId,
+      isEditing,
+      setIsEditing,
+      isCreating,
+      setIsCreating,
+      isFolderTreeCollapsed,
+      setIsFolderTreeCollapsed,
+      draggedNoteId,
+      setDraggedNoteId,
+      sortedNotes,
+      pagedNotes,
+      totalPages,
+      noteLayoutClassName,
+      availableTagsInScope,
+      selectedFolderThemeId: themeLogic.selectedFolderThemeId,
+      selectedFolderTheme: themeLogic.selectedFolderTheme,
+      selectedNoteTheme: themeLogic.selectedNoteTheme,
+      getThemeForNote: themeLogic.getThemeForNote,
+      handleThemeChange: themeLogic.handleThemeChange,
+      fetchTags: () => {
+        void fetchTags();
+      },
+      setSelectedFolderId,
+      handleSelectNoteFromTree,
+      handleToggleFavorite,
+      handleDeleteNote,
+      handleUpdateSuccess,
+      handleCreateSuccess,
+      handleUnlinkRelatedNote,
+      handleFilterByTag,
+    }),
+    [
+      settings,
+      updateSettings,
+      filters,
+      folderTree,
+      tags,
+      themes,
+      loading,
+      selectedNote,
+      setSelectedNote,
+      isEditing,
+      setIsEditing,
+      isCreating,
+      setIsCreating,
+      isFolderTreeCollapsed,
+      setIsFolderTreeCollapsed,
+      draggedNoteId,
+      setDraggedNoteId,
+      sortedNotes,
+      pagedNotes,
+      totalPages,
+      noteLayoutClassName,
+      availableTagsInScope,
+      themeLogic,
+      fetchTags,
+      setSelectedFolderId,
+      handleSelectNoteFromTree,
+      handleToggleFavorite,
+      handleDeleteNote,
+      handleUpdateSuccess,
+      handleCreateSuccess,
+      handleUnlinkRelatedNote,
+      handleFilterByTag,
+    ]
+  );
+
   return (
-    <div className="w-full">
-      <div
-        className={`grid h-[calc(100vh-120px)] w-full grid-cols-1 gap-6 ${
-          isFolderTreeCollapsed
-            ? ""
-            : isMenuCollapsed
-              ? "lg:grid-cols-[360px_minmax(0,1fr)]"
-              : "lg:grid-cols-[420px_minmax(0,1fr)]"
-        }`}
-      >
-        {/* Sidebar */}
-        {!isFolderTreeCollapsed && (
-          <SectionPanel className="hidden overflow-hidden p-0 lg:block">
-            <FolderTree
-              folders={folderTree}
-              selectedFolderId={settings.selectedFolderId}
-              selectedNotebookId={settings.selectedNotebookId}
-              onSelectFolder={(id: string | null): void => {
-                setSelectedFolderId(id);
-                setSelectedNote(null);
-                setIsEditing(false);
-              }}
-              onCreateFolder={(parentId?: string | null): void => { void operations.handleCreateFolder(parentId ?? null); }}
-              onCreateNote={(folderId: string | null): void => {
-                setSelectedFolderId(folderId);
-                setIsCreating(true);
-                setSelectedNote(null);
-              }}
-              onDeleteFolder={(id: string): void => { void operations.handleDeleteFolder(id); }}
-              onRenameFolder={(id: string, name: string): void => { void operations.handleRenameFolder(id, name); }}
-              onSelectNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
-              onDuplicateNote={(id: string): void => { void operations.handleDuplicateNote(id); }}
-              onDeleteNote={(id: string): void => { void operations.handleDeleteNoteFromTree(id); }}
-              onRenameNote={(id: string, title: string): void => { void operations.handleRenameNote(id, title); }}
-              onRelateNotes={(id1: string, id2: string): void => { void operations.handleRelateNotes(id1, id2); }}
-              selectedNoteId={selectedNote?.id}
-              onDropNote={(id: string, folderId: string | null): void => { void operations.handleMoveNoteToFolder(id, folderId); }}
-              onDropFolder={(id: string, parentId: string | null): void => { void operations.handleMoveFolderToFolder(id, parentId); }}
-              onReorderFolder={(id: string, targetId: string, position: "before" | "after"): void => {
-                void operations.handleReorderFolder(id, targetId, position);
-              }}
-              draggedNoteId={draggedNoteId}
-              setDraggedNoteId={setDraggedNoteId}
-              onToggleCollapse={(): void => setIsFolderTreeCollapsed(true)}
-              isFavoritesActive={filters.filterFavorite === true}
-              onToggleFavorites={(): void => filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing)}
-              canUndo={undoStack.length > 0}
-              onUndo={(): void => { void handleUndoFolderTree(1); }}
-              undoHistory={undoHistory}
-              onUndoAtIndex={handleUndoAtIndex}
-              onRefreshFolders={async (): Promise<void> => { await fetchFolderTree(); }}
-            />
-          </SectionPanel>
-        )}
+    <NotesAppProvider value={contextValue}>
+      <div className="w-full">
+        <div
+          className={`grid h-[calc(100vh-120px)] w-full grid-cols-1 gap-6 ${
+            isFolderTreeCollapsed
+              ? ""
+              : isMenuCollapsed
+                ? "lg:grid-cols-[360px_minmax(0,1fr)]"
+                : "lg:grid-cols-[420px_minmax(0,1fr)]"
+          }`}
+        >
+          {/* Sidebar */}
+          {!isFolderTreeCollapsed && (
+            <SectionPanel className="hidden overflow-hidden p-0 lg:block">
+              <FolderTree
+                folders={folderTree}
+                selectedFolderId={settings.selectedFolderId}
+                selectedNotebookId={settings.selectedNotebookId}
+                onSelectFolder={(id: string | null): void => {
+                  setSelectedFolderId(id);
+                  setSelectedNote(null);
+                  setIsEditing(false);
+                }}
+                onCreateFolder={(parentId?: string | null): void => { void operations.handleCreateFolder(parentId ?? null); }}
+                onCreateNote={(folderId: string | null): void => {
+                  setSelectedFolderId(folderId);
+                  setIsCreating(true);
+                  setSelectedNote(null);
+                }}
+                onDeleteFolder={(id: string): void => { void operations.handleDeleteFolder(id); }}
+                onRenameFolder={(id: string, name: string): void => { void operations.handleRenameFolder(id, name); }}
+                onSelectNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
+                onDuplicateNote={(id: string): void => { void operations.handleDuplicateNote(id); }}
+                onDeleteNote={(id: string): void => { void operations.handleDeleteNoteFromTree(id); }}
+                onRenameNote={(id: string, title: string): void => { void operations.handleRenameNote(id, title); }}
+                onRelateNotes={(id1: string, id2: string): void => { void operations.handleRelateNotes(id1, id2); }}
+                selectedNoteId={selectedNote?.id}
+                onDropNote={(id: string, folderId: string | null): void => { void operations.handleMoveNoteToFolder(id, folderId); }}
+                onDropFolder={(id: string, parentId: string | null): void => { void operations.handleMoveFolderToFolder(id, parentId); }}
+                onReorderFolder={(id: string, targetId: string, position: "before" | "after"): void => {
+                  void operations.handleReorderFolder(id, targetId, position);
+                }}
+                draggedNoteId={draggedNoteId}
+                setDraggedNoteId={setDraggedNoteId}
+                onToggleCollapse={(): void => setIsFolderTreeCollapsed(true)}
+                isFavoritesActive={filters.filterFavorite === true}
+                onToggleFavorites={(): void => filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing)}
+                canUndo={undoStack.length > 0}
+                onUndo={(): void => { void handleUndoFolderTree(1); }}
+                undoHistory={undoHistory}
+                onUndoAtIndex={handleUndoAtIndex}
+                onRefreshFolders={async (): Promise<void> => { await fetchFolderTree(); }}
+              />
+            </SectionPanel>
+          )}
 
         {/* Main Content */}
-        <SectionPanel className="flex min-h-0 flex-col overflow-hidden p-6">
-          {selectedNote ? (
-            <NoteDetailView
-              selectedNote={selectedNote}
-              folderTree={folderTree}
-              selectedFolderId={settings.selectedFolderId}
-              isFolderTreeCollapsed={isFolderTreeCollapsed}
-              onExpandFolderTree={(): void => setIsFolderTreeCollapsed(false)}
-              setSelectedFolderId={setSelectedFolderId}
-              setSelectedNote={setSelectedNote}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-              onToggleFavorite={(note: NoteWithRelations): void => { void handleToggleFavorite(note); }}
-              onDeleteNote={handleDeleteNote}
-              tags={tags}
-              selectedNotebookId={settings.selectedNotebookId}
-              onUpdateSuccess={handleUpdateSuccess}
-              fetchTags={(): void => { void fetchTags(); }}
-              selectedNoteTheme={themeLogic.selectedNoteTheme}
-              onSelectRelatedNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
-              onFilterByTag={(tagId: string): void => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
-              onUnlinkRelatedNote={async (id: string): Promise<void> => { await handleUnlinkRelatedNote(id); }}
-            />
-          ) : (
-            <NoteListView
-              loading={loading}
-              sortedNotes={sortedNotes}
-              pagedNotes={pagedNotes}
-              page={filters.page}
-              totalPages={totalPages}
-              setPage={filters.setPage}
-              pageSize={filters.pageSize}
-              setPageSize={filters.setPageSize}
-              selectedFolderId={settings.selectedFolderId}
-              folderTree={folderTree}
-              isFolderTreeCollapsed={isFolderTreeCollapsed}
-              onExpandFolderTree={(): void => setIsFolderTreeCollapsed(false)}
-              onCreateNote={(): void => {
-                setIsCreating(true);
-                setSelectedNote(null);
-              }}
-              selectedFolderThemeId={themeLogic.selectedFolderThemeId}
-              themes={themes}
-              onThemeChange={(themeId: string | null): void => { void themeLogic.handleThemeChange(themeId); }}
-              availableTagsInScope={availableTagsInScope}
-              filterTagIds={filters.filterTagIds}
-              setFilterTagIds={filters.setFilterTagIds}
-              searchQuery={filters.searchQuery}
-              setSearchQuery={filters.setSearchQuery}
-              searchScope={settings.searchScope}
-              updateSettings={updateSettings}
-              sortBy={settings.sortBy}
-              sortOrder={settings.sortOrder}
-              showTimestamps={settings.showTimestamps}
-              showBreadcrumbs={settings.showBreadcrumbs}
-              showRelatedNotes={settings.showRelatedNotes}
-              viewMode={settings.viewMode}
-              gridDensity={settings.gridDensity}
-              highlightTagId={filters.highlightTagId}
-              filterPinned={filters.filterPinned}
-              setFilterPinned={filters.setFilterPinned}
-              filterArchived={filters.filterArchived}
-              setFilterArchived={filters.setFilterArchived}
-              noteLayoutClassName={noteLayoutClassName}
-              getThemeForNote={themeLogic.getThemeForNote}
-              onSelectNote={(note: NoteWithRelations): void => {
-                setSelectedNote(note);
-                setIsEditing(false);
-              }}
-              onSelectFolderFromCard={(id: string | null): void => {
-                setSelectedFolderId(id);
-                setSelectedNote(null);
-                setIsEditing(false);
-              }}
-              onToggleFavorite={(note: NoteWithRelations): void => { void handleToggleFavorite(note); }}
-              onDragStart={setDraggedNoteId}
-              onDragEnd={(): void => setDraggedNoteId(null)}
-              setSelectedFolderId={setSelectedFolderId}
-              setSelectedNote={setSelectedNote}
-              setIsEditing={setIsEditing}
-            />
-          )}
-        </SectionPanel>
+          <SectionPanel className="flex min-h-0 flex-col overflow-hidden p-6">
+            {selectedNote ? <NoteDetailView /> : <NoteListView />}
+          </SectionPanel>
 
-        {/* Modals */}
-        <CreateNoteModal
-          isOpen={isCreating}
-          onClose={(): void => setIsCreating(false)}
-          folderTree={folderTree}
-          selectedFolderId={settings.selectedFolderId}
-          tags={tags}
-          selectedNotebookId={settings.selectedNotebookId}
-          onSuccess={handleCreateSuccess}
-          onTagCreated={(): void => { void fetchTags(); }}
-          folderTheme={themeLogic.selectedFolderTheme}
-          onSelectRelatedNote={(id: string): void => {
-            setIsCreating(false);
-            void handleSelectNoteFromTree(id);
-          }}
-        />
+          {/* Modals */}
+          <CreateNoteModal
+            isOpen={isCreating}
+            onClose={(): void => setIsCreating(false)}
+          />
+        </div>
       </div>
-    </div>
+    </NotesAppProvider>
   );
 }

@@ -6,10 +6,17 @@ import { cn, setNoteDragData } from "@/shared/utils";
 
 import Image from "next/image";
 import { ChevronRight, Pin, Star } from "lucide-react";
-import type { ThemeRecord, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource, NoteFileRecord } from "@/shared/types/notes";
-import type { NoteCardProps } from "@/features/notesapp/types/notes-ui";
+import type {
+  ThemeRecord,
+  RelatedNote,
+  NoteRelationWithTarget,
+  NoteRelationWithSource,
+  NoteFileRecord,
+  NoteWithRelations,
+} from "@/shared/types/notes";
+import { useNotesAppContext } from "@/features/notesapp/hooks/NotesAppContext";
 
-import { darkenColor, renderMarkdownToHtml } from "../utils";
+import { buildBreadcrumbPath, darkenColor, renderMarkdownToHtml } from "../utils";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name" | "notebookId"> = {
@@ -25,23 +32,44 @@ const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name
   relatedNoteTextColor: "#e5e7eb",     // gray-200
 };
 
-function NoteCardBase({
-  note,
-  folderTree,
-  showTimestamps,
-  showBreadcrumbs,
-  showRelatedNotes,
-  enableDrag = true,
-  onSelectNote,
-  onSelectFolder,
-  onToggleFavorite,
-  onDragStart,
-  onDragEnd,
-  buildBreadcrumbPath,
-  theme,
-}: NoteCardProps): React.JSX.Element {
+type NoteCardProps = {
+  note: NoteWithRelations;
+};
+
+function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
+  const {
+    folderTree,
+    settings,
+    isFolderTreeCollapsed,
+    setSelectedNote,
+    setSelectedFolderId,
+    setIsEditing,
+    setDraggedNoteId,
+    getThemeForNote,
+    handleToggleFavorite,
+  } = useNotesAppContext();
+
+  const showTimestamps = settings.showTimestamps;
+  const showBreadcrumbs = settings.showBreadcrumbs;
+  const showRelatedNotes = settings.showRelatedNotes;
+  const enableDrag = !isFolderTreeCollapsed;
+  const onSelectNote = (next: NoteWithRelations): void => {
+    setSelectedNote(next);
+    setIsEditing(false);
+  };
+  const onSelectFolder = (folderId: string | null): void => {
+    setSelectedFolderId(folderId);
+    setSelectedNote(null);
+    setIsEditing(false);
+  };
+  const onToggleFavorite = (target: NoteWithRelations): void => {
+    void handleToggleFavorite(target);
+  };
+  const onDragStart = (noteId: string): void => setDraggedNoteId(noteId);
+  const onDragEnd = (): void => setDraggedNoteId(null);
+
   // Use provided theme or fall back to dark mode theme
-  const effectiveTheme = theme ?? FALLBACK_THEME;
+  const effectiveTheme = getThemeForNote(note) ?? FALLBACK_THEME;
   const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(

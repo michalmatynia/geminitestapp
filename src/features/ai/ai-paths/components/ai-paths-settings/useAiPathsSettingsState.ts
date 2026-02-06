@@ -19,6 +19,7 @@ import type {
   ParserSampleState,
   PathConfig,
   PathExecutionMode,
+  PathFlowIntensity,
   PathDebugSnapshot,
   PathMeta,
   RuntimeState,
@@ -78,17 +79,19 @@ export interface UseAiPathsSettingsStateReturn {
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
   handleSave: (options?: {
-    silent?: boolean;
-    includeNodeConfig?: boolean;
-    force?: boolean;
-    nodesOverride?: AiNode[];
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
   handleReset: () => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   activePathId: string | null;
   activeTrigger: string;
   executionMode: PathExecutionMode;
+  flowIntensity: PathFlowIntensity;
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
+  handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   triggers: string[];
   isPathLocked: boolean;
   isPathActive: boolean;
@@ -118,7 +121,7 @@ export interface UseAiPathsSettingsStateReturn {
   pathConfigs: Record<string, PathConfig>;
   pathFlagsById: Record<string, { isLocked: boolean; isActive: boolean }>;
   handleSwitchPath: (pathId: string) => void;
-  savePathIndex: (pathId: string) => Promise<void>;
+  savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   edges: Edge[];
@@ -156,7 +159,7 @@ export interface UseAiPathsSettingsStateReturn {
   setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   expandedPaletteGroups: Set<string>;
   togglePaletteGroup: (group: string) => void;
-  handleDragStart: (e: React.DragEvent, node: NodeDefinition) => void;
+  handleDragStart: (e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   selectedNode: AiNode | null;
   handleSelectEdge: (edgeId: string | null) => void;
   handleFireTrigger: (triggerNode: AiNode, event?: React.MouseEvent) => void;
@@ -267,7 +270,7 @@ export interface UseAiPathsSettingsStateReturn {
     entityType: string,
     entityId: string
   ) => Promise<void>;
-  handleRunSimulation: (nodeId: string) => void;
+  handleRunSimulation: (node: AiNode, triggerEvent?: string) => void;
   clearRuntimeForNode: (nodeId: string) => void;
   handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
@@ -356,6 +359,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   );
   const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? "");
   const [executionMode, setExecutionMode] = useState<PathExecutionMode>("server");
+  const [flowIntensity, setFlowIntensity] = useState<PathFlowIntensity>("medium");
   const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
     {}
   );
@@ -877,6 +881,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     runtimeState,
     updaterSamples,
     executionMode,
+    flowIntensity,
     normalizeDbNodePreset,
     normalizeDbQueryPreset,
     normalizeTriggerLabel,
@@ -901,6 +906,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDebugSnapshots,
     setPathDescription,
     setExecutionMode,
+    setFlowIntensity,
     setPathName,
     setPaths,
     setRuntimeState,
@@ -986,6 +992,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges: [],
       updatedAt,
@@ -1027,6 +1034,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       updatedAt,
@@ -1078,6 +1086,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       updatedAt,
@@ -1131,6 +1140,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       updatedAt,
@@ -1285,6 +1295,22 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     });
   };
 
+  const handleFlowIntensityChange = (intensity: PathFlowIntensity): void => {
+    if (!activePathId) {
+      setFlowIntensity(intensity);
+      return;
+    }
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to change flow intensity.", { variant: "info" });
+      return;
+    }
+    setFlowIntensity(intensity);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+      const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+      return { ...prev, [activePathId]: { ...base, flowIntensity: intensity } };
+    });
+  };
+
   const handleTogglePathLock = (): void => {
     if (!activePathId) return;
     const nextLocked = !isPathLocked;
@@ -1297,6 +1323,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       updatedAt,
@@ -1341,6 +1368,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: pathDescription,
       trigger: activeTrigger,
       executionMode,
+      flowIntensity,
       nodes,
       edges,
       updatedAt,
@@ -1389,6 +1417,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDescription(resetConfig.description);
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
     setExecutionMode(resetConfig.executionMode ?? "server");
+    setFlowIntensity(resetConfig.flowIntensity ?? "medium");
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setIsPathLocked(Boolean(resetConfig.isLocked));
@@ -1408,6 +1437,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       description: "",
       trigger: triggers[0] ?? "Product Modal - Context Filter",
       executionMode: "server",
+      flowIntensity: "medium",
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -1437,6 +1467,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDescription("");
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? "server");
+    setFlowIntensity(config.flowIntensity ?? "medium");
     setParserSamples({});
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
@@ -1467,6 +1498,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? "server");
+    setFlowIntensity(config.flowIntensity ?? "medium");
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1501,6 +1533,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setPathDescription(fallback.description);
       setActiveTrigger(normalizeTriggerLabel(fallback.trigger));
       setExecutionMode(fallback.executionMode ?? "server");
+      setFlowIntensity(fallback.flowIntensity ?? "medium");
       setParserSamples(fallback.parserSamples ?? {});
       setUpdaterSamples(fallback.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(fallback.runtimeState));
@@ -1530,6 +1563,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setPathDescription(nextConfig.description);
       setActiveTrigger(normalizeTriggerLabel(nextConfig.trigger));
       setExecutionMode(nextConfig.executionMode ?? "server");
+      setFlowIntensity(nextConfig.flowIntensity ?? "medium");
       setParserSamples(nextConfig.parserSamples ?? {});
       setUpdaterSamples(nextConfig.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
@@ -1573,6 +1607,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setExecutionMode(config.executionMode ?? "server");
+    setFlowIntensity(config.flowIntensity ?? "medium");
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -1620,13 +1655,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   const autoSaveLabel = loading
     ? "Loading AI Paths..."
-    : autoSaveStatus === "saving"
-      ? "Auto-saving..."
+    : saving
+      ? "Saving..."
       : autoSaveStatus === "saved"
-        ? `Auto-saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ""}`
+        ? `Saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ""}`
         : autoSaveStatus === "error"
-          ? "Auto-save failed"
-          : "Auto-save ready";
+          ? "Save failed"
+          : "Manual save only";
   const autoSaveClasses =
     autoSaveStatus === "saved"
       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
@@ -1668,7 +1703,9 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activePathId,
     activeTrigger,
     executionMode,
+    flowIntensity,
     handleExecutionModeChange,
+    handleFlowIntensityChange,
     triggers,
     isPathLocked,
     isPathActive,

@@ -20,6 +20,7 @@ import {
   ChevronRightIcon,
   StarIcon,
   SparklesIcon,
+  MapIcon,
 } from "lucide-react";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -849,6 +850,13 @@ export const buildAdminNav = (handlers: {
           { id: "system/settings/database", label: "Database", href: "/admin/settings/database" },
           { id: "system/settings/menu", label: "Admin Menu", href: "/admin/settings/menu" },
         ],
+      },
+      {
+        id: "system/routes",
+        label: "Route Map",
+        href: "/admin/routes",
+        icon: <MapIcon className="size-4" />,
+        keywords: ["routes", "navigation", "map"],
       },
       {
         id: "system/analytics",

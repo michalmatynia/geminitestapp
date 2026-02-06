@@ -6,30 +6,39 @@ import { logClientError } from "@/features/observability";
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
 import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
-import type { NoteDetailViewProps } from "@/features/notesapp/types/notes-ui";
 import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
+import { useNotesAppContext } from "@/features/notesapp/hooks/NotesAppContext";
 
-export function NoteDetailView({
-  selectedNote,
-  folderTree,
-  selectedFolderId,
-  isFolderTreeCollapsed,
-  onExpandFolderTree,
-  setSelectedFolderId,
-  setSelectedNote,
-  isEditing,
-  setIsEditing,
-  onToggleFavorite,
-  onDeleteNote,
-  tags,
-  selectedNotebookId,
-  onUpdateSuccess,
-  fetchTags,
-  selectedNoteTheme,
-  onSelectRelatedNote,
-  onFilterByTag,
-  onUnlinkRelatedNote,
-}: NoteDetailViewProps): React.JSX.Element {
+export function NoteDetailView(): React.JSX.Element | null {
+  const {
+    selectedNote,
+    folderTree,
+    isFolderTreeCollapsed,
+    setIsFolderTreeCollapsed,
+    setSelectedFolderId,
+    setSelectedNote,
+    isEditing,
+    setIsEditing,
+    selectedNoteTheme,
+    handleToggleFavorite,
+    handleDeleteNote,
+    handleUpdateSuccess,
+    handleSelectNoteFromTree,
+    handleUnlinkRelatedNote,
+  } = useNotesAppContext();
+
+  if (!selectedNote) return null;
+
+  const onExpandFolderTree = (): void => setIsFolderTreeCollapsed(false);
+  const onToggleFavorite = (note: NoteWithRelations): void => {
+    void handleToggleFavorite(note);
+  };
+  const onDeleteNote = (): Promise<void> => handleDeleteNote();
+  const onUpdateSuccess = (): void => handleUpdateSuccess();
+  const onSelectRelatedNote = (id: string): void => {
+    void handleSelectNoteFromTree(id);
+  };
+  const onUnlinkRelatedNote = (id: string): Promise<void> => handleUnlinkRelatedNote(id);
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
@@ -344,15 +353,7 @@ export function NoteDetailView({
         <div className="flex-1 overflow-y-auto">
           <NoteForm
             note={selectedNote}
-            folderTree={folderTree}
-            defaultFolderId={selectedFolderId}
-            availableTags={tags}
-            notebookId={selectedNotebookId}
             onSuccess={onUpdateSuccess}
-            onTagCreated={fetchTags}
-            folderTheme={selectedNoteTheme}
-            onSelectRelatedNote={onSelectRelatedNote}
-            onTagClick={onFilterByTag}
           />
         </div>
       ) : (

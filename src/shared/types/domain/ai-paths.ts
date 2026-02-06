@@ -91,24 +91,25 @@ export type DatabaseAction =
 
 export type DatabaseConfig = {
   operation: DatabaseOperation;
-  entityType?: string;
-  idField?: string;
-  mode?: "replace" | "append";
-  updateStrategy?: "one" | "many";
-  useMongoActions?: boolean;
-  actionCategory?: DatabaseActionCategory;
-  action?: DatabaseAction;
-  distinctField?: string;
-  updateTemplate?: string;
-  mappings?: UpdaterMapping[];
-  query?: DbQueryConfig;
-  writeSource?: string;
-  writeSourcePath?: string;
-  dryRun?: boolean;
-  presetId?: string;
-  skipEmpty?: boolean;
-  trimStrings?: boolean;
-  aiPrompt?: string;
+  entityType?: string | undefined;
+  idField?: string | undefined;
+  mode?: "replace" | "append" | undefined;
+  updateStrategy?: "one" | "many" | undefined;
+  useMongoActions?: boolean | undefined;
+  actionCategory?: DatabaseActionCategory | undefined;
+  action?: DatabaseAction | undefined;
+  distinctField?: string | undefined;
+  updateTemplate?: string | undefined;
+  mappings?: UpdaterMapping[] | undefined;
+  query?: DbQueryConfig | undefined;
+  writeSource?: string | undefined;
+  writeSourcePath?: string | undefined;
+  dryRun?: boolean | undefined;
+  presetId?: string | undefined;
+  skipEmpty?: boolean | undefined;
+  trimStrings?: boolean | undefined;
+  aiPrompt?: string | undefined;
+  validationRuleIds?: string[] | undefined;
 };
 
 export type UpdaterSampleState = {
@@ -125,19 +126,19 @@ export type TriggerConfig = {
 
 export type SimulationConfig = {
   productId: string;
-  entityType?: string;
-  entityId?: string;
+  entityType?: string | undefined;
+  entityId?: string | undefined;
 };
 
 export type ViewerConfig = {
   outputs: Record<string, string>;
-  showImagesAsJson?: boolean;
+  showImagesAsJson?: boolean | undefined;
 };
 
 export type ContextConfig = {
   role: string;
-  entityType?: string;
-  entityIdSource?: "simulation" | "manual" | "context";
+  entityType?: string | undefined;
+  entityIdSource?: "simulation" | "manual" | "context" | undefined;
   entityId?: string;
   scopeMode?: "full" | "include" | "exclude";
   scopeTarget?: "entity" | "context";
@@ -184,6 +185,22 @@ export type RegexMatchMode = "first" | "first_overall" | "all";
 export type RegexGroupOutputMode = "object" | "array";
 export type RegexMode = "group" | "extract" | "extract_json";
 
+export type RegexTemplate = {
+  id: string;
+  name: string;
+  pattern: string;
+  flags?: string | undefined;
+  mode?: RegexMode | undefined;
+  matchMode?: RegexMatchMode | undefined;
+  groupBy?: string | undefined;
+  outputMode?: RegexGroupOutputMode | undefined;
+  includeUnmatched?: boolean | undefined;
+  unmatchedKey?: string | undefined;
+  splitLines?: boolean | undefined;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
+};
+
 export type RegexConfig = {
   pattern: string;
   flags?: string | undefined;
@@ -201,6 +218,7 @@ export type RegexConfig = {
   manual?: { pattern: string; flags?: string | undefined; groupBy?: string | undefined } | undefined;
   aiProposal?: { pattern: string; flags?: string | undefined; groupBy?: string | undefined } | undefined;
   aiProposals?: Array<{ pattern: string; flags?: string | undefined; groupBy?: string | undefined; createdAt: string }> | undefined;
+  templates?: RegexTemplate[] | undefined;
 };
 
 export type IteratorConfig = {
@@ -345,22 +363,22 @@ export type NodeDefinition = {
   description: string;
   inputs: string[];
   outputs: string[];
-  config?: NodeConfig;
+  config?: NodeConfig | undefined;
 };
 
 export type AiNode = NodeDefinition & {
   id: string;
   position: { x: number; y: number };
-  config?: NodeConfig;
+  config?: NodeConfig | undefined;
 };
 
 export type Edge = {
   id: string;
   from: string;
   to: string;
-  label?: string;
-  fromPort?: string;
-  toPort?: string;
+  label?: string | undefined;
+  fromPort?: string | undefined;
+  toPort?: string | undefined;
 };
 
 export type RuntimePortValues = Record<string, unknown>;
@@ -368,27 +386,27 @@ export type RuntimeHistoryStatus = "completed" | "failed" | "delayed" | "cached"
 
 export type RuntimeHistoryLink = {
   nodeId: string;
-  nodeType?: string | null;
-  nodeTitle?: string | null;
-  fromPort?: string | null;
-  toPort?: string | null;
+  nodeType?: string | null | undefined;
+  nodeTitle?: string | null | undefined;
+  fromPort?: string | null | undefined;
+  toPort?: string | null | undefined;
 };
 
 export type RuntimeHistoryEntry = {
   timestamp: string;
-  pathId?: string | null;
-  pathName?: string | null;
+  pathId?: string | null | undefined;
+  pathName?: string | null | undefined;
   nodeId: string;
   nodeType: string;
-  nodeTitle?: string | null;
+  nodeTitle?: string | null | undefined;
   status: RuntimeHistoryStatus;
-  iteration?: number;
-  inputs?: RuntimePortValues | null;
-  outputs?: RuntimePortValues | null;
-  error?: string | null;
-  delayMs?: number | null;
-  inputsFrom?: RuntimeHistoryLink[];
-  outputsTo?: RuntimeHistoryLink[];
+  iteration?: number | undefined;
+  inputs?: RuntimePortValues | null | undefined;
+  outputs?: RuntimePortValues | null | undefined;
+  error?: string | null | undefined;
+  delayMs?: number | null | undefined;
+  inputsFrom?: RuntimeHistoryLink[] | undefined;
+  outputsTo?: RuntimeHistoryLink[] | undefined;
 };
 
 export type RuntimeState = {
@@ -413,41 +431,41 @@ export type AiPathRunEventLevel = "info" | "warning" | "error";
 
 export type AiPathRunRecord = {
   id: string;
-  userId?: string | null;
-  pathId?: string | null;
-  pathName?: string | null;
+  userId?: string | null | undefined;
+  pathId?: string | null | undefined;
+  pathName?: string | null | undefined;
   status: AiPathRunStatus;
-  prompt?: string | null;
-  model?: string | null;
-  tools?: string[];
-  searchProvider?: string | null;
-  agentBrowser?: string | null;
-  runHeadless?: boolean;
-  logLines?: string[];
-  requiresHumanIntervention?: boolean;
-  errorMessage?: string | null;
-  memoryKey?: string | null;
-  recordingPath?: string | null;
-  planState?: Record<string, unknown> | null;
-  activeStepId?: string | null;
-  checkpointedAt?: Date | string | null;
-  triggerEvent?: string | null;
-  triggerNodeId?: string | null;
-  triggerContext?: Record<string, unknown> | null;
-  graph?: { nodes: AiNode[]; edges: Edge[] } | null;
-  runtimeState?: RuntimeState | null;
-  meta?: Record<string, unknown> | null;
-  entityId?: string | null;
-  entityType?: string | null;
-  retryCount?: number | null;
-  maxAttempts?: number | null;
-  nextRetryAt?: Date | string | null;
-  deadLetteredAt?: Date | string | null;
-  startedAt?: Date | string | null;
-  finishedAt?: Date | string | null;
+  prompt?: string | null | undefined;
+  model?: string | null | undefined;
+  tools?: string[] | undefined;
+  searchProvider?: string | null | undefined;
+  agentBrowser?: string | null | undefined;
+  runHeadless?: boolean | undefined;
+  logLines?: string[] | undefined;
+  requiresHumanIntervention?: boolean | undefined;
+  errorMessage?: string | null | undefined;
+  memoryKey?: string | null | undefined;
+  recordingPath?: string | null | undefined;
+  planState?: Record<string, unknown> | null | undefined;
+  activeStepId?: string | null | undefined;
+  checkpointedAt?: Date | string | null | undefined;
+  triggerEvent?: string | null | undefined;
+  triggerNodeId?: string | null | undefined;
+  triggerContext?: Record<string, unknown> | null | undefined;
+  graph?: { nodes: AiNode[]; edges: Edge[] } | null | undefined;
+  runtimeState?: RuntimeState | null | undefined;
+  meta?: Record<string, unknown> | null | undefined;
+  entityId?: string | null | undefined;
+  entityType?: string | null | undefined;
+  retryCount?: number | null | undefined;
+  maxAttempts?: number | null | undefined;
+  nextRetryAt?: Date | string | null | undefined;
+  deadLetteredAt?: Date | string | null | undefined;
+  startedAt?: Date | string | null | undefined;
+  finishedAt?: Date | string | null | undefined;
   createdAt: Date | string;
-  updatedAt?: Date | string | null;
-  _count?: { browserSnapshots?: number; browserLogs?: number } | null;
+  updatedAt?: Date | string | null | undefined;
+  _count?: { browserSnapshots?: number; browserLogs?: number } | null | undefined;
 };
 
 export type AiPathRunNodeRecord = {
@@ -455,16 +473,16 @@ export type AiPathRunNodeRecord = {
   runId: string;
   nodeId: string;
   nodeType: string;
-  nodeTitle?: string | null;
+  nodeTitle?: string | null | undefined;
   status: AiPathNodeStatus;
   attempt: number;
-  inputs?: RuntimePortValues | null;
-  outputs?: RuntimePortValues | null;
-  errorMessage?: string | null;
-  startedAt?: Date | string | null;
-  finishedAt?: Date | string | null;
+  inputs?: RuntimePortValues | null | undefined;
+  outputs?: RuntimePortValues | null | undefined;
+  errorMessage?: string | null | undefined;
+  startedAt?: Date | string | null | undefined;
+  finishedAt?: Date | string | null | undefined;
   createdAt: Date | string;
-  updatedAt?: Date | string | null;
+  updatedAt?: Date | string | null | undefined;
 };
 
 export type AiPathRunEventRecord = {
@@ -472,7 +490,7 @@ export type AiPathRunEventRecord = {
   runId: string;
   level: AiPathRunEventLevel;
   message: string;
-  metadata?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null | undefined;
   createdAt: Date | string;
 };
 
@@ -484,11 +502,12 @@ export type PathMeta = {
 };
 
 export type PathUiState = {
-  selectedNodeId?: string | null;
-  configOpen?: boolean;
+  selectedNodeId?: string | null | undefined;
+  configOpen?: boolean | undefined;
 };
 
 export type PathExecutionMode = "local" | "server";
+export type PathFlowIntensity = "off" | "low" | "medium" | "high";
 
 export type PathConfig = {
   id: string;
@@ -496,17 +515,18 @@ export type PathConfig = {
   name: string;
   description: string;
   trigger: string;
-  executionMode?: PathExecutionMode;
+  executionMode?: PathExecutionMode | undefined;
+  flowIntensity?: PathFlowIntensity | undefined;
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;
-  isLocked?: boolean;
-  isActive?: boolean;
-  parserSamples?: Record<string, ParserSampleState>;
-  updaterSamples?: Record<string, UpdaterSampleState>;
-  runtimeState?: RuntimeState | string | null;
-  lastRunAt?: string | null;
-  uiState?: PathUiState;
+  isLocked?: boolean | undefined;
+  isActive?: boolean | undefined;
+  parserSamples?: Record<string, ParserSampleState> | undefined;
+  updaterSamples?: Record<string, UpdaterSampleState> | undefined;
+  runtimeState?: RuntimeState | string | null | undefined;
+  lastRunAt?: string | null | undefined;
+  uiState?: PathUiState | undefined;
 };
 
 export type PathDebugEntry = {

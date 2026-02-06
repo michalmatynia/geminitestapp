@@ -17,7 +17,6 @@ import { NoteUpdateInput } from "@/shared/types/notes";
 import {
   enforceAiPathsActionRateLimit,
   ensureAiPathsPermission,
-  requireAiPathsAccess,
   requireAiPathsAccessOrInternal,
 } from "@/features/ai/ai-paths/server";
 

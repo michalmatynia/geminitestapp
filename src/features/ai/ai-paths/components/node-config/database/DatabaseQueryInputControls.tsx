@@ -34,6 +34,8 @@ type DatabaseQueryInputControlsProps = {
   onToggleValidator: () => void;
   onRunQuery: () => void;
   onQueryChange: (value: string) => void;
+  onQueryFocus?: () => void;
+  onFilterFocus?: () => void;
 };
 
 export function DatabaseQueryInputControls({
@@ -62,6 +64,8 @@ export function DatabaseQueryInputControls({
   onToggleValidator,
   onRunQuery,
   onQueryChange,
+  onQueryFocus,
+  onFilterFocus,
 }: DatabaseQueryInputControlsProps): React.JSX.Element {
   const isPrismaProvider = provider === "prisma";
   const filterLabel = isPrismaProvider ? "Where" : "Filter";
@@ -111,7 +115,9 @@ export function DatabaseQueryInputControls({
                 ? "border bg-gray-800/50 text-gray-400 hover:bg-muted/50"
                 : queryValidation && queryValidation.status === "error"
                 ? "border-amber-700 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
-                : "border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
+                : queryValidation && queryValidation.status === "warning"
+                  ? "border-amber-500/60 bg-amber-500/5 text-amber-200 hover:bg-amber-500/15"
+                  : "border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
             }`}
             onClick={onFormatClick}
             onContextMenu={(event: React.MouseEvent<HTMLButtonElement>): void => onFormatContextMenu(event)}
@@ -119,8 +125,10 @@ export function DatabaseQueryInputControls({
             {!queryFormatterEnabled
               ? "Format"
               : queryValidation && queryValidation.status === "error"
-              ? "Fix Issues"
-              : "Format ✓"}
+                ? "Fix Issues"
+                : queryValidation && queryValidation.status === "warning"
+                  ? "Review"
+                  : "Format ✓"}
           </Button>
           <Button
             type="button"
@@ -167,6 +175,7 @@ export function DatabaseQueryInputControls({
           <Textarea
             className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
             value={filterTemplateValue ?? ""}
+            onFocus={onFilterFocus}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onFilterChange?.(event.target.value)}
             placeholder={(filterTemplateValue ?? "").trim() === "" ? filterPlaceholder : undefined}
           />
@@ -184,6 +193,7 @@ export function DatabaseQueryInputControls({
             ref={queryTemplateRef}
             className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={queryTemplateValue}
+            onFocus={onQueryFocus}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
             placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
           />
@@ -193,6 +203,7 @@ export function DatabaseQueryInputControls({
           ref={queryTemplateRef}
           className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={queryTemplateValue}
+          onFocus={onQueryFocus}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
           placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
         />

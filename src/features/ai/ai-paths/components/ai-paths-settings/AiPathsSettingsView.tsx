@@ -58,6 +58,8 @@ export function AiPathsSettingsView({
     activePathId,
     activeTrigger,
     executionMode,
+    flowIntensity,
+    handleFlowIntensityChange,
     handleExecutionModeChange,
     triggers,
     lastError,
@@ -128,6 +130,7 @@ export function AiPathsSettingsView({
 
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState("");
 
@@ -153,6 +156,15 @@ export function AiPathsSettingsView({
     () => [
       { value: "server", label: "Run on Server" },
       { value: "local", label: "Run Locally" },
+    ],
+    []
+  );
+  const flowOptions = useMemo(
+    () => [
+      { value: "off", label: "Flow: Off" },
+      { value: "low", label: "Flow: Low" },
+      { value: "medium", label: "Flow: Medium" },
+      { value: "high", label: "Flow: High" },
     ],
     []
   );
@@ -219,6 +231,14 @@ export function AiPathsSettingsView({
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save Path"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                      onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+                      title={isFocusMode ? "Show side panels" : "Show canvas only"}
+                    >
+                      {isFocusMode ? "Edit" : "Show"}
                     </Button>
                     <Button
                       className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
@@ -330,6 +350,21 @@ export function AiPathsSettingsView({
                       disabled={isPathLocked}
                     />
                   </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Label className="text-[10px] uppercase text-gray-500">Flow</Label>
+                    <UnifiedSelect
+                      value={flowIntensity}
+                      onValueChange={(value: string): void => {
+                        if (value !== flowIntensity) {
+                          handleFlowIntensityChange(value as "off" | "low" | "medium" | "high");
+                        }
+                      }}
+                      options={flowOptions}
+                      className="w-[160px]"
+                      triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                      disabled={isPathLocked}
+                    />
+                  </div>
                   <UnifiedSelect
                     value={activePathId}
                     onValueChange={(value: string): void => {
@@ -414,8 +449,17 @@ export function AiPathsSettingsView({
             <div className="min-w-[220px] space-y-4" />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
-            <div className="space-y-4">
+          <div
+            className={`grid grid-cols-1 transition-[grid-template-columns] duration-300 ease-in-out ${
+              isFocusMode ? "gap-3 xl:grid-cols-[0px_1fr]" : "gap-6 xl:grid-cols-[280px_1fr]"
+            }`}
+          >
+            <div
+              className={`space-y-4 transition-all duration-300 ease-in-out ${
+                isFocusMode ? "pointer-events-none opacity-0 -translate-x-2 max-h-0 overflow-hidden" : "opacity-100"
+              }`}
+              aria-hidden={isFocusMode}
+            >
               <CanvasSidebarWrapper
                 palette={palette}
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
@@ -445,6 +489,7 @@ export function AiPathsSettingsView({
               />
             </div>
             <CanvasBoardMigrated
+              flowIntensity={flowIntensity}
               onRemoveEdge={handleRemoveEdge}
               onDisconnectPort={handleDisconnectPort}
               onReconnectInput={handleReconnectInput}
@@ -472,7 +517,7 @@ export function AiPathsSettingsView({
           paths={paths}
           pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
-                          onSaveList={() => { void savePathIndex(paths[0]?.id ?? ''); }}          onEditPath={(pathId: string): void => {
+                          onSaveList={() => { void savePathIndex(paths); }}          onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");
           }}
@@ -500,7 +545,7 @@ export function AiPathsSettingsView({
         updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
-        handleRunSimulation={(node) => void handleRunSimulation(node.id)}
+        handleRunSimulation={(node) => void handleRunSimulation(node)}
         onSendToAi={(id, prompt) => handleSendToAi(id, prompt)}
         saveDbQueryPresets={saveDbQueryPresets}
         saveDbNodePresets={saveDbNodePresets}
@@ -517,7 +562,7 @@ export function AiPathsSettingsView({
 
       <SimulationDialogMigrated
         setNodes={setNodesFromUser}
-        onRunSimulation={(node) => void handleRunSimulation(node.id)}
+        onRunSimulation={(node) => void handleRunSimulation(node)}
       />
     </div>
   );

@@ -45,7 +45,9 @@ export function DatabaseQueryValidatorPanel({
           ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100"
           : queryValidation.status === "empty"
             ? "border-amber-500/40 bg-amber-500/10 text-amber-100"
-            : "border-rose-500/40 bg-rose-500/10 text-rose-100"
+            : queryValidation.status === "warning"
+              ? "border-amber-500/50 bg-amber-500/10 text-amber-100"
+              : "border-rose-500/40 bg-rose-500/10 text-rose-100"
       }`}
     >
       <div className="font-medium">{providerLabel} Query Validator</div>
@@ -64,6 +66,35 @@ export function DatabaseQueryValidatorPanel({
         <div className="mt-2 space-y-1 text-[11px] text-rose-100/90">
           {queryValidation.hints.map((hint: string): React.JSX.Element => (
             <div key={hint}>- {hint}</div>
+          ))}
+        </div>
+      )}
+      {queryValidation.issues && queryValidation.issues.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <div className="text-[10px] uppercase tracking-wide text-gray-300">
+            Validation Palette
+          </div>
+          {queryValidation.issues.map((issue) => (
+            <div
+              key={issue.id}
+              className="rounded-md border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-200"
+            >
+              <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wide text-gray-300">
+                <span>{issue.title}</span>
+                <span
+                  className={
+                    issue.severity === "error"
+                      ? "text-rose-200"
+                      : issue.severity === "warning"
+                        ? "text-amber-200"
+                        : "text-cyan-200"
+                  }
+                >
+                  {issue.severity}
+                </span>
+              </div>
+              <div className="mt-1 text-[11px] text-gray-200">{issue.message}</div>
+            </div>
           ))}
         </div>
       )}

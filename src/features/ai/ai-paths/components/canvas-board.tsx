@@ -1,10 +1,11 @@
 import React from "react";
 import { Button, Tooltip, SectionPanel } from "@/shared/ui";
 
-import type { AiNode, Edge, RuntimeState } from "@/features/ai/ai-paths/lib";
+import type { AiNode, Edge, RuntimeState, PathFlowIntensity } from "@/features/ai/ai-paths/lib";
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
+  NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
   getPortOffsetY,
@@ -56,6 +57,7 @@ type CanvasBoardProps = {
   nodes: AiNode[];
   edges: Edge[];
   runtimeState: RuntimeState;
+  flowIntensity?: PathFlowIntensity | undefined;
   edgePaths: EdgePath[];
   view: { x: number; y: number; scale: number };
   panState: { startX: number; startY: number; originX: number; originY: number } | null;
@@ -102,6 +104,7 @@ export function CanvasBoard({
   nodes,
   edges,
   runtimeState,
+  flowIntensity = "medium",
   edgePaths,
   view,
   panState,
@@ -143,6 +146,41 @@ export function CanvasBoard({
   const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const FLOW_ANIMATION_MS = 1600;
   const NODE_PULSE_MS = 1400;
+  const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? "medium";
+  const flowEnabled = resolvedFlowIntensity !== "off";
+  const flowStyle = React.useMemo<React.CSSProperties>(() => {
+    switch (resolvedFlowIntensity) {
+      case "off":
+        return {
+          '--ai-paths-flow-duration': "0s",
+          '--ai-paths-flow-opacity': "0",
+          '--ai-paths-flow-dash': "0 0",
+          '--ai-paths-flow-glow': "0px",
+        };
+      case "low":
+        return {
+          '--ai-paths-flow-duration': "1.6s",
+          '--ai-paths-flow-opacity': "0.45",
+          '--ai-paths-flow-dash': "8 10",
+          '--ai-paths-flow-glow': "2px",
+        };
+      case "high":
+        return {
+          '--ai-paths-flow-duration': "0.55s",
+          '--ai-paths-flow-opacity': "1",
+          '--ai-paths-flow-dash': "4 4",
+          '--ai-paths-flow-glow': "10px",
+        };
+      case "medium":
+      default:
+        return {
+          '--ai-paths-flow-duration': "0.9s",
+          '--ai-paths-flow-opacity': "0.9",
+          '--ai-paths-flow-dash': "6 6",
+          '--ai-paths-flow-glow': "6px",
+        };
+    }
+  }, [resolvedFlowIntensity]);
 
   const buildConnectorKey = (
     direction: "input" | "output",
@@ -207,7 +245,14 @@ export function CanvasBoard({
     (direction: "input" | "output", nodeId: string, port: string): unknown => {
       const source = direction === "input" ? runtimeState.inputs : runtimeState.outputs;
       const nodeValues = source?.[nodeId] ?? {};
-      return (nodeValues as Record<string, unknown>)[port];
+      const directValue = (nodeValues as Record<string, unknown>)[port];
+      if (directValue !== undefined) return directValue;
+      const history = runtimeState.history?.[nodeId];
+      if (!Array.isArray(history) || history.length === 0) return directValue;
+      const lastEntry = history[history.length - 1];
+      const fallbackSource =
+        direction === "input" ? lastEntry?.inputs : lastEntry?.outputs;
+      return (fallbackSource as Record<string, unknown> | undefined)?.[port];
     },
     [runtimeState]
   );
@@ -400,6 +445,10 @@ export function CanvasBoard({
     }
     return visited;
   }, [nodes, edges]);
+  const hasTriggers = React.useMemo(
+    (): boolean => nodes.some((node: AiNode) => node.type === "trigger"),
+    [nodes]
+  );
   const edgeMetaMap = React.useMemo(
     (): Map<string, Edge> => new Map(edges.map((edge: Edge) => [edge.id, edge])),
     [edges]
@@ -432,6 +481,7 @@ export function CanvasBoard({
   // blocker emits its downstream outputs.
   const blockingFlowEdgeIds = React.useMemo((): Set<string> => {
     const result = new Set<string>();
+    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
     const blockerTypes = new Set<string>(["poll", "model", "agent", "delay"]);
     const outputs = runtimeState.outputs ?? {};
     nodes.forEach((node: AiNode) => {
@@ -447,7 +497,9 @@ export function CanvasBoard({
         if (edge.to !== node.id) return;
         if (!edge.from || !edge.to) return;
         if (!edge.fromPort || !edge.toPort) return;
-        if (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to)) return;
+        if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
+          return;
+        }
 
         // Mark the edge as "flowing" if it is currently feeding meaningful inputs into the blocker.
         const inputVal = getPortValue("input", edge.to, edge.toPort);
@@ -457,14 +509,17 @@ export function CanvasBoard({
       });
     });
     return result;
-  }, [edges, getPortValue, nodes, runtimeState.outputs, triggerConnected]);
+  }, [edges, getPortValue, hasTriggers, nodes, runtimeState.outputs, triggerConnected]);
 
   const signalEdgeIds = React.useMemo((): Set<string> => {
     const result = new Set<string>();
+    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
     edges.forEach((edge: Edge) => {
       if (!edge.from || !edge.to) return;
       if (!edge.fromPort || !edge.toPort) return;
-      if (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to)) return;
+      if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
+        return;
+      }
       const outputVal = getPortValue("output", edge.from, edge.fromPort);
       const inputVal = getPortValue("input", edge.to, edge.toPort);
       if (outputVal !== undefined || inputVal !== undefined) {
@@ -472,7 +527,7 @@ export function CanvasBoard({
       }
     });
     return result;
-  }, [edges, getPortValue, triggerConnected]);
+  }, [edges, getPortValue, hasTriggers, triggerConnected]);
 
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
@@ -647,6 +702,7 @@ export function CanvasBoard({
       className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden ${
         panState ? "cursor-grabbing" : "cursor-grab"
       }`}
+      style={flowStyle}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onPointerDown={onPanStart}
@@ -785,7 +841,7 @@ export function CanvasBoard({
                   fill="none"
                   style={{ pointerEvents: "none" }}
                 />
-                {isFlowing ? (
+                {isFlowing && flowEnabled ? (
                   <path
                     d={edge.path}
                     className={`${edgeClass} ai-paths-wire-flow`}
@@ -931,6 +987,7 @@ export function CanvasBoard({
                 className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 pb-5 text-xs text-gray-200 shadow-lg backdrop-blur ${
                   style.border
                 } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
+                style={{ minHeight: NODE_MIN_HEIGHT }}
               >
                 {isInputPulse || isOutputPulse ? (
                   <div className="absolute -top-2 right-2 flex items-center gap-1">

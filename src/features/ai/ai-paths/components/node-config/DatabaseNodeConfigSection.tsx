@@ -1,16 +1,11 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
+import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Checkbox } from "@/shared/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { dbApi } from "@/features/ai/ai-paths/lib/api";
-
-
-
-
-
-
-
+import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from "@/features/prompt-engine/settings";
 import type {
   AiNode,
   DatabaseAction,
@@ -42,6 +37,7 @@ type ActionResult = {
 };
 import {
   DB_COLLECTION_OPTIONS,
+  DB_PROVIDER_PLACEHOLDERS,
   createParserMappings,
   createPresetId,
   extractJsonPathEntries,
@@ -63,11 +59,71 @@ import { DatabaseSettingsTab } from "./database/DatabaseSettingsTab";
 import {
   buildJsonQueryValidation,
   buildMongoQueryValidation,
+  buildValidationIssues,
   formatAndFixMongoQuery,
   getQueryPlaceholderByAction,
   getUpdatePlaceholderByAction,
+  mergeValidationIssues,
+  type ValidationPaletteRule,
 } from "./database/query-utils";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./database/types";
+
+const toTitleCase = (value: string): string =>
+  value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+const singularize = (value: string): string => {
+  if (value.endsWith("ies") && value.length > 3) {
+    return `${value.slice(0, -3)}y`;
+  }
+  if (value.endsWith("ses") && value.length > 3) {
+    return value.slice(0, -2);
+  }
+  if (value.endsWith("s") && !value.endsWith("ss") && value.length > 1) {
+    return value.slice(0, -1);
+  }
+  return value;
+};
+
+const normalizeSchemaType = (value: string): string => {
+  const normalized = value.trim();
+  const lower = normalized.toLowerCase();
+  if (lower === "string") return "string";
+  if (lower === "int" || lower === "float" || lower === "decimal" || lower === "number") return "number";
+  if (lower === "boolean" || lower === "bool") return "boolean";
+  if (lower === "datetime" || lower === "date") return "string";
+  if (lower === "json") return "Record<string, unknown>";
+  return normalized || "unknown";
+};
+
+const formatCollectionSchema = (collectionName: string, fields: Array<{ name: string; type: string }> = []): string => {
+  const interfaceName = toTitleCase(singularize(collectionName));
+  if (!fields.length) {
+    return `interface ${interfaceName} {}`;
+  }
+  const lines = fields.map((field: { name: string; type: string }) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  return `interface ${interfaceName} {\n${lines.join("\n")}\n}`;
+};
+
+const buildSchemaPlaceholderContext = (schema: SchemaData | null): Record<string, string> => {
+  const context: Record<string, string> = {};
+  if (!schema?.collections?.length) return context;
+  schema.collections.forEach((collection: { name: string; fields: Array<{ name: string; type: string }> }) => {
+    const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+    const displayName = toTitleCase(singularize(collection.name));
+    const nameSet = new Set<string>([collection.name, displayName]);
+    nameSet.forEach((name: string) => {
+      context[`Collection: ${name}`] = schemaText;
+    });
+  });
+  return context;
+};
 
 type SchemaConfig = {
   mode?: "all" | "selected";
@@ -135,6 +191,28 @@ export function DatabaseNodeConfigSection({
   const aiPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastInjectedResponseRef = React.useRef<string>("");
   const lastAutoFetchedRef = React.useRef<string>("");
+  const settingsQuery = useSettingsMap();
+  const rawPromptEngineSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
+  const promptEngineSettings = React.useMemo(
+    () => parsePromptEngineSettings(rawPromptEngineSettings),
+    [rawPromptEngineSettings]
+  );
+  const validationPaletteRules = React.useMemo<ValidationPaletteRule[]>(() => {
+    const rules: PromptValidationRule[] = [
+      ...(promptEngineSettings.promptValidation.rules ?? []),
+      ...(promptEngineSettings.promptValidation.learnedRules ?? []),
+    ];
+    return rules
+      .filter((rule: PromptValidationRule) => rule.kind === "regex" && rule.enabled)
+      .map((rule: PromptValidationRule) => ({
+        id: rule.id,
+        title: rule.title,
+        severity: rule.severity,
+        message: rule.message,
+        pattern: rule.pattern,
+        flags: rule.flags,
+      }));
+  }, [promptEngineSettings]);
   const incomingEdges = React.useMemo(
     (): Edge[] => edges.filter((edge: Edge) => edge.to === selectedNode.id),
     [edges, selectedNode.id]
@@ -184,6 +262,7 @@ export function DatabaseNodeConfigSection({
     return { ...schemaQuery.data, collections };
   }, [schemaConnection.hasSchemaConnection, schemaConnection.schemaConfig, schemaQuery.data]);
   const schemaLoading = schemaQuery.isFetching;
+  const schemaMatrix = schemaQuery.data ?? null;
 
   const dbActionMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>): Promise<unknown> => {
@@ -341,6 +420,41 @@ export function DatabaseNodeConfigSection({
                   skipEmpty: persistedDatabase?.skipEmpty ?? false,
                   trimStrings: persistedDatabase?.trimStrings ?? false,
                   aiPrompt: persistedDatabase?.aiPrompt ?? "",
+                  validationRuleIds: persistedDatabase?.validationRuleIds ?? [],
+                };
+                const selectedValidationRuleIds = databaseConfig.validationRuleIds ?? [];
+                const selectedValidationRules = selectedValidationRuleIds.length
+                  ? validationPaletteRules.filter((rule: ValidationPaletteRule) => selectedValidationRuleIds.includes(rule.id))
+                  : [];
+                const handleToggleValidationRule = (ruleId: string): void => {
+                  const nextIds = selectedValidationRuleIds.includes(ruleId)
+                    ? selectedValidationRuleIds.filter((id: string) => id !== ruleId)
+                    : [...selectedValidationRuleIds, ruleId];
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      validationRuleIds: nextIds,
+                    },
+                  });
+                };
+                const handleClearValidationRules = (): void => {
+                  if (selectedValidationRuleIds.length === 0) return;
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      validationRuleIds: [],
+                    },
+                  });
+                };
+                const handleSelectAllValidationRules = (): void => {
+                  if (validationPaletteRules.length === 0) return;
+                  const allIds = validationPaletteRules.map((rule: ValidationPaletteRule) => rule.id);
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      validationRuleIds: allIds,
+                    },
+                  });
                 };
                 const deriveCategoryFromOperation = (op: string): DatabaseActionCategory => {
                   if (op === "insert") return "create";
@@ -572,11 +686,11 @@ export function DatabaseNodeConfigSection({
                       sourcePort: port,
                     });
                   });
-                                    if (nextMappings.length > 0) {
-                                      updateMappings(nextMappings);
-                                    }
-                                  };
-                                  const presetOptions: DatabasePresetOption[] = [
+                  if (nextMappings.length > 0) {
+                    updateMappings(nextMappings);
+                  }
+                };
+                const presetOptions: DatabasePresetOption[] = [
                   {
                     id: "custom",
                     label: "Custom",
@@ -1121,10 +1235,16 @@ export function DatabaseNodeConfigSection({
                 const activeQueryPlaceholder = isUpdateAction
                   ? updatePlaceholder
                   : queryPlaceholder;
-                const queryValidation = queryValidatorEnabled
+                const baseValidation = queryValidatorEnabled
                   ? isPrismaProvider
                     ? buildJsonQueryValidation(activeQueryValue)
                     : buildMongoQueryValidation(activeQueryValue)
+                  : null;
+                const paletteIssues = queryValidatorEnabled && selectedValidationRules.length > 0
+                  ? buildValidationIssues(activeQueryValue, selectedValidationRules)
+                  : [];
+                const queryValidation = baseValidation
+                  ? mergeValidationIssues(baseValidation, paletteIssues)
                   : null;
                 const applyActionConfig = (
                   nextCategory: DatabaseActionCategory,
@@ -1244,7 +1364,14 @@ export function DatabaseNodeConfigSection({
                   try {
                     const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
                     const runtimeOutputs = (runtimeState.outputs[selectedNode.id] ?? {}) as Record<string, unknown>;
-                    const templateContext = { ...runtimeOutputs, ...runtimeInputs };
+                    const placeholderContext: Record<string, unknown> = {
+                      "Date: Current": new Date().toISOString(),
+                      ...buildSchemaPlaceholderContext(schemaMatrix),
+                    };
+                    DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
+                      placeholderContext[`DB Provider: ${provider}`] = provider;
+                    });
+                    const templateContext = { ...runtimeOutputs, ...runtimeInputs, ...placeholderContext };
                     const rawValue =
                       runtimeInputs.value ??
                       runtimeInputs.jobId ??
@@ -1739,6 +1866,78 @@ export function DatabaseNodeConfigSection({
                         toast={toast}
                       />
                     )}
+                    {queryValidatorEnabled && (
+                      <div className="rounded-md border border-border bg-card/50 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <Label className="text-xs text-gray-400">Validation Palette</Label>
+                            <div className="text-[11px] text-gray-500">
+                              Select global validation patterns to apply to this query.
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              className="h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                              disabled={validationPaletteRules.length === 0}
+                              onClick={handleSelectAllValidationRules}
+                            >
+                              Select all
+                            </Button>
+                            <Button
+                              type="button"
+                              className="h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                              disabled={selectedValidationRuleIds.length === 0}
+                              onClick={handleClearValidationRules}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        </div>
+                        {validationPaletteRules.length === 0 ? (
+                          <div className="mt-2 text-[11px] text-gray-500">
+                            No global validation patterns found. Add them in Admin → Prompt Engine → Validation Patterns.
+                          </div>
+                        ) : (
+                          <div className="mt-3 grid gap-2">
+                            {validationPaletteRules.map((rule: ValidationPaletteRule) => {
+                              const checked = selectedValidationRuleIds.includes(rule.id);
+                              return (
+                                <label
+                                  key={rule.id}
+                                  className="flex items-start gap-2 rounded-md border border-border/60 bg-card/40 px-2 py-2 text-xs text-gray-200"
+                                >
+                                  <Checkbox
+                                    checked={checked}
+                                    onCheckedChange={() => handleToggleValidationRule(rule.id)}
+                                    className="mt-0.5"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="text-[11px] font-semibold text-gray-200">
+                                      {rule.title}
+                                    </div>
+                                    <div className="text-[10px] text-gray-500">
+                                      {rule.message}
+                                    </div>
+                                  </div>
+                                  <span
+                                    className={`rounded border px-2 py-0.5 text-[9px] uppercase tracking-wide ${
+                                      rule.severity === "error"
+                                        ? "border-rose-500/40 text-rose-200"
+                                        : rule.severity === "warning"
+                                          ? "border-amber-500/40 text-amber-200"
+                                          : "border-cyan-500/40 text-cyan-200"
+                                    }`}
+                                  >
+                                    {rule.severity}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <Label className="text-xs text-gray-400">Provider</Label>
@@ -2126,6 +2325,9 @@ export function DatabaseNodeConfigSection({
                     connectedPlaceholders={connectedPlaceholders}
                     hasSchemaConnection={hasSchemaConnection}
                     fetchedDbSchema={fetchedDbSchema}
+                    schemaMatrix={schemaMatrix}
+                    onSyncSchema={() => void schemaQuery.refetch()}
+                    schemaSyncing={schemaQuery.isFetching}
                     schemaLoading={schemaLoading}
                     nodes={nodes}
                     edges={edges}

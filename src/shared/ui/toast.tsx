@@ -9,9 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { X, CheckCircle, AlertCircle, Info, type LucideIcon } from "lucide-react";
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } from "lucide-react";
 
-type ToastVariant = "success" | "error" | "info";
+type ToastVariant = "success" | "error" | "info" | "warning";
 
 type ToastItem = {
   id: string;
@@ -28,7 +28,7 @@ type ToastSettings = {
 type ToastContextValue = {
   toast: (
     message: string,
-    options?: Partial<Omit<ToastItem, "id" | "message">>
+    options?: Partial<Omit<ToastItem, "id" | "message">> | undefined
   ) => void;
 };
 
@@ -102,6 +102,12 @@ const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"])
       icon: "text-red-400",
     };
   }
+  if (variant === "warning") {
+    return {
+      container: "border-amber-500/40 bg-amber-500/10 text-amber-100",
+      icon: "text-amber-400",
+    };
+  }
   const accentStyle = accentStyles[accent];
   return {
     container: `${accentStyle.border} ${accentStyle.bg} ${accentStyle.text}`,
@@ -115,6 +121,8 @@ const getToastIcon = (variant: ToastVariant): LucideIcon => {
       return CheckCircle;
     case "error":
       return AlertCircle;
+    case "warning":
+      return AlertTriangle;
     case "info":
       return Info;
   }

@@ -54,22 +54,25 @@ type NodeConfigurationSectionsProps = {
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
-  pathDebugSnapshot?: PathDebugSnapshot | null;
+  pathDebugSnapshot?: PathDebugSnapshot | null | undefined;
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
-  clearRuntimeForNode?: (nodeId: string) => void;
-  onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
+  clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
+  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
+  sendingToAi?: boolean | undefined;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
   dbNodePresets: DbNodePreset[];
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: "success" | "error" | "info" | "warning" }
+  ) => void;
 };
 
 export function NodeConfigurationSections({
@@ -170,6 +173,9 @@ export function NodeConfigurationSections({
       />
       <TemplateNodeConfigSection
         selectedNode={selectedNode}
+        nodes={nodes}
+        edges={edges}
+        runtimeState={runtimeState}
         updateSelectedNodeConfig={updateSelectedNodeConfig}
       />
       <BundleNodeConfigSection

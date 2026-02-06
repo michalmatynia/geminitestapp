@@ -54,7 +54,7 @@ import { useGraphState } from "../../context/GraphContext";
 import { useSelectionState, useSelectionActions } from "../../context/SelectionContext";
 import { useRuntimeState } from "../../context/RuntimeContext";
 import { useEdgePaths } from "../../context/hooks/useEdgePaths";
-import type { AiNode } from "@/features/ai/ai-paths/lib";
+import type { AiNode, PathFlowIntensity } from "@/features/ai/ai-paths/lib";
 
 /**
  * Props for CanvasBoardMigrated - only callbacks.
@@ -74,6 +74,7 @@ import type { AiNode } from "@/features/ai/ai-paths/lib";
  * - onOpenNodeConfig → SelectionContext.setConfigOpen
  */
 export type CanvasBoardMigratedProps = {
+  flowIntensity?: PathFlowIntensity | undefined;
   // Callbacks - remain as props since they involve orchestration
   onRemoveEdge: (edgeId: string) => void;
   onDisconnectPort: (direction: "input" | "output", nodeId: string, port: string) => void;
@@ -109,6 +110,7 @@ export type CanvasBoardMigratedProps = {
  * This enables incremental migration without modifying the original component.
  */
 export function CanvasBoardMigrated({
+  flowIntensity,
   onRemoveEdge,
   onDisconnectPort,
   onReconnectInput,
@@ -148,6 +150,7 @@ export function CanvasBoardMigrated({
 
   return (
     <CanvasBoard
+      flowIntensity={flowIntensity}
       // Refs from CanvasContext
       viewportRef={viewportRef}
       canvasRef={canvasRef}

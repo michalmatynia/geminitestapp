@@ -24,15 +24,16 @@ type LegacyUpdaterConfig = {
   mode?: "replace" | "append";
 };
 
-const NODE_WIDTH = 280;
-const NODE_MIN_HEIGHT = 160;
-const CANVAS_WIDTH = 2200;
-const CANVAS_HEIGHT = 1400;
+const NODE_WIDTH = 404;
+const NODE_MIN_HEIGHT = 230;
+const CANVAS_WIDTH = 8800;
+const CANVAS_HEIGHT = 5600;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 1.6;
 const VIEW_MARGIN = 40;
-const PORT_GAP = 18;
-const PORT_SIZE = 10;
+const PORT_GAP = 26;
+const PORT_SIZE = 14;
+const PORT_STACK_TOP = Math.round(NODE_MIN_HEIGHT * 0.3);
 const DEFAULT_CONTEXT_ROLE = "entity";
 const TRIGGER_INPUT_PORTS = ["context"];
 const TRIGGER_OUTPUT_PORTS = ["trigger", "triggerName", "context", "meta", "entityId", "entityType"];
@@ -919,6 +920,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
             dryRun: node.config?.database?.dryRun ?? false,
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
+            validationRuleIds: node.config?.database?.validationRuleIds ?? [],
           },
         },
       };
@@ -957,6 +959,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
             dryRun: node.config?.database?.dryRun ?? false,
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
+            validationRuleIds: node.config?.database?.validationRuleIds ?? [],
           },
         },
       };
@@ -1297,10 +1300,8 @@ const toNumber = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const getPortOffsetY = (index: number, totalPorts: number): number => {
-  const totalHeight = (totalPorts - 1) * PORT_GAP;
-  const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
-  return startY + index * PORT_GAP;
+const getPortOffsetY = (index: number, _totalPorts: number): number => {
+  return PORT_STACK_TOP + index * PORT_GAP;
 };
 
 function safeStringify(value: unknown): string {
@@ -2317,6 +2318,7 @@ const createDefaultPathConfig = (id: string): PathConfig => {
     description: "Visual analysis + description generation with structured updates.",
     trigger: triggers[0] ?? "Product Modal - Context Filter",
     executionMode: "server",
+    flowIntensity: "medium",
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
@@ -2490,6 +2492,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
     description: "Generates product descriptions via AI and updates the product.",
     trigger: (triggers[0] as string) ?? "Product Modal - Context Filter",
     executionMode: "server",
+    flowIntensity: "medium",
     nodes,
     edges,
     updatedAt: now,

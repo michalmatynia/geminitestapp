@@ -8,7 +8,12 @@ import React from "react";
 import { Button, Label, Textarea, useToast } from "@/shared/ui";
 import type { AiNode, Edge, NodeConfig, PromptConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from "@/features/ai/ai-paths/lib";
-import { formatPlaceholderLabel } from "@/features/ai/ai-paths/utils/ui-utils";
+import { formatPlaceholderLabel, formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
+import {
+  PlaceholderMatrixDialog,
+  type PlaceholderGroup,
+  type PlaceholderTarget,
+} from "../database/PlaceholderMatrixDialog";
 
 type PromptNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -30,6 +35,9 @@ export function PromptNodeConfigSection({
   sendingToAi,
 }: PromptNodeConfigSectionProps): React.JSX.Element | null {
   const { toast } = useToast();
+  const promptTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
+  const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>("prompt");
 
   const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
     template: "",
@@ -43,11 +51,28 @@ export function PromptNodeConfigSection({
   }, [selectedNode.type, selectedNode.id, selectedNode.config?.prompt, runtimeState.inputs]);
 
   if (selectedNode.type !== "prompt") return null;
-  const handleInsertPlaceholder = (placeholder: string): void => {
-    const current = promptConfig.template ?? "";
-    const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";
-    const next = `${current}${separator}${placeholder}`;
-    updateSelectedNodeConfig({ prompt: { template: next } });
+  const insertPromptPlaceholder = (placeholder: string): void => {
+    const currentTemplate = promptConfig.template ?? "";
+    const textArea = promptTemplateRef.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentTemplate.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentTemplate.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const prefix = currentTemplate.slice(0, rangeStart);
+    const needsSeparator = prefix.length > 0 && !prefix.endsWith(" ") && !prefix.endsWith("\n");
+    const separator = needsSeparator ? " " : "";
+    const nextTemplate = `${prefix}${separator}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+    updateSelectedNodeConfig({ prompt: { template: nextTemplate } });
+
+    window.setTimeout(() => {
+      const node = promptTemplateRef.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + separator.length + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
   };
   const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
   const inputPorts = incomingEdges
@@ -84,6 +109,92 @@ export function PromptNodeConfigSection({
     }
   });
   const directPlaceholders = inputPorts.filter((port: string) => port !== "bundle");
+  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const placeholderGroups: PlaceholderGroup[] = React.useMemo(() => {
+    const groups: PlaceholderGroup[] = [];
+    const uniqueDirect = Array.from(new Set(directPlaceholders));
+    if (uniqueDirect.length > 0) {
+      const directEntries = uniqueDirect.map((port: string, index: number) => {
+        const value = runtimeInputs[port];
+        return {
+          id: `direct-${port}-${index}`,
+          label: formatPortLabel(port),
+          token: `{{${port}}}`,
+          resolvesTo:
+            value !== undefined ? formatRuntimeValue(value) : "Connected input placeholder.",
+        };
+      });
+      groups.push({
+        id: "direct",
+        title: "Connected Inputs",
+        description: "Placeholders from wired input ports.",
+        entries: directEntries,
+      });
+    }
+
+    const bundleEntries: PlaceholderGroup["entries"] = [];
+    if (bundleKeys.size > 0) {
+      let bundleContext: Record<string, unknown> | null = null;
+      const bundleValue = runtimeInputs.bundle;
+      if (bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)) {
+        bundleContext = bundleValue as Record<string, unknown>;
+      } else if (typeof bundleValue === "string") {
+        try {
+          const parsed = JSON.parse(bundleValue) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            bundleContext = parsed as Record<string, unknown>;
+          }
+        } catch {
+          bundleContext = null;
+        }
+      }
+      Array.from(bundleKeys).forEach((key: string, index: number) => {
+        const resolved = bundleContext ? bundleContext[key] : undefined;
+        bundleEntries.push({
+          id: `bundle-${key}-${index}`,
+          label: key,
+          token: `{{${key}}}`,
+          resolvesTo:
+            resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
+        });
+      });
+    }
+    if (bundleEntries.length > 0) {
+      groups.push({
+        id: "bundle",
+        title: "Bundle Keys",
+        description: "Keys from connected Parser/Bundle/Mapper outputs.",
+        entries: bundleEntries,
+      });
+    }
+
+    const currentValue = runtimeInputs.result ?? runtimeInputs.value;
+    const currentResolved =
+      currentValue !== undefined ? formatRuntimeValue(currentValue) : "—";
+    groups.push({
+      id: "special",
+      title: "Current Value",
+      description: "Special placeholders bound to the current value.",
+      entries: [
+        {
+          id: "current-value",
+          label: "Current value",
+          token: "{{value}}",
+          resolvesTo: currentResolved,
+          dynamic: true,
+        },
+        {
+          id: "current",
+          label: "Current",
+          token: "{{current}}",
+          resolvesTo: currentResolved,
+          dynamic: true,
+        },
+      ],
+    });
+
+    return groups;
+  }, [directPlaceholders, bundleKeys, runtimeInputs]);
 
   return (
     <div className="space-y-4">
@@ -91,6 +202,7 @@ export function PromptNodeConfigSection({
         <Label className="text-xs text-gray-400">Prompt Template</Label>
         <Textarea
           className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          ref={promptTemplateRef}
           value={promptConfig.template}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
             updateSelectedNodeConfig({
@@ -108,7 +220,16 @@ export function PromptNodeConfigSection({
         </p>
       </div>
       <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
-        <div className="text-gray-300">Available placeholders</div>
+        <div className="flex items-center justify-between gap-2 text-gray-300">
+          <span>Available placeholders</span>
+          <Button
+            type="button"
+            className="h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50"
+            onClick={() => setPlaceholderMatrixOpen(true)}
+          >
+            Placeholders
+          </Button>
+        </div>
         {bundleKeys.size > 0 ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {Array.from(bundleKeys).map((key: string) => (
@@ -117,11 +238,11 @@ export function PromptNodeConfigSection({
                 role="button"
                 tabIndex={0}
                 className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
-                onClick={() => handleInsertPlaceholder(`{{${key}}}`)}
+                onClick={() => insertPromptPlaceholder(`{{${key}}}`)}
                 onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    handleInsertPlaceholder(`{{${key}}}`);
+                    insertPromptPlaceholder(`{{${key}}}`);
                   }
                 }}
               >
@@ -145,11 +266,11 @@ export function PromptNodeConfigSection({
                   role="button"
                   tabIndex={0}
                   className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
-                  onClick={() => handleInsertPlaceholder(`{{${port}}}`)}
+                  onClick={() => insertPromptPlaceholder(`{{${port}}}`)}
                   onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      handleInsertPlaceholder(`{{${port}}}`);
+                      insertPromptPlaceholder(`{{${port}}}`);
                     }
                   }}
                 >
@@ -160,6 +281,15 @@ export function PromptNodeConfigSection({
           </div>
         )}
       </div>
+      <PlaceholderMatrixDialog
+        open={placeholderMatrixOpen}
+        onOpenChange={setPlaceholderMatrixOpen}
+        groups={placeholderGroups}
+        target={placeholderTarget}
+        onTargetChange={setPlaceholderTarget}
+        targetOptions={[{ value: "prompt", label: "Prompt template" }]}
+        onInsert={(token: string, _target: PlaceholderTarget) => insertPromptPlaceholder(token)}
+      />
       {(() : React.JSX.Element => {
         const outgoingEdges = edges.filter(
           (edge: Edge) => edge.from === selectedNode.id

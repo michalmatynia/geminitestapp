@@ -3,23 +3,6 @@
 import React from "react";
 import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from "@/shared/ui";
 import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
-
-
-/** Extract code blocks from markdown-style ``` delimiters */
-function extractCodeSnippets(text: string): string[] {
-  const regex = /```[\w]*\n?([\s\S]*?)```/g;
-  const snippets: string[] = [];
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    const code = match[1]?.trim();
-    if (code) snippets.push(code);
-  }
-  return snippets;
-}
-
-
-
-
 import type {
   AiNode,
   DatabaseConfig,
@@ -48,7 +31,64 @@ import {
   AGGREGATION_STAGE_SNIPPETS,
   PRISMA_AGGREGATION_STAGE_SNIPPETS,
 } from "@/features/ai/ai-paths/config/query-presets";
+import { DB_PROVIDER_PLACEHOLDERS } from "@/features/ai/ai-paths/lib";
 import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema, SchemaData } from "./types";
+import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from "./PlaceholderMatrixDialog";
+
+/** Extract code blocks from markdown-style ``` delimiters */
+function extractCodeSnippets(text: string): string[] {
+  const regex = /```[\w]*\n?([\s\S]*?)```/g;
+  const snippets: string[] = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const code = match[1]?.trim();
+    if (code) snippets.push(code);
+  }
+  return snippets;
+}
+
+const toTitleCase = (value: string): string =>
+  value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+const singularize = (value: string): string => {
+  if (value.endsWith("ies") && value.length > 3) {
+    return `${value.slice(0, -3)}y`;
+  }
+  if (value.endsWith("ses") && value.length > 3) {
+    return value.slice(0, -2);
+  }
+  if (value.endsWith("s") && !value.endsWith("ss") && value.length > 1) {
+    return value.slice(0, -1);
+  }
+  return value;
+};
+
+const normalizeSchemaType = (value: string): string => {
+  const normalized = value.trim();
+  const lower = normalized.toLowerCase();
+  if (lower === "string") return "string";
+  if (lower === "int" || lower === "float" || lower === "decimal" || lower === "number") return "number";
+  if (lower === "boolean" || lower === "bool") return "boolean";
+  if (lower === "datetime" || lower === "date") return "string";
+  if (lower === "json") return "Record<string, unknown>";
+  return normalized || "unknown";
+};
+
+const formatCollectionSchema = (collectionName: string, fields: FieldSchema[]): string => {
+  const interfaceName = toTitleCase(singularize(collectionName));
+  if (!fields || fields.length === 0) {
+    return `interface ${interfaceName} {}`;
+  }
+  const lines = fields.map((field: FieldSchema) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  return `interface ${interfaceName} {\n${lines.join("\n")}\n}`;
+};
 
 type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;
@@ -79,6 +119,9 @@ type DatabaseConstructorTabProps = {
   connectedPlaceholders: string[];
   hasSchemaConnection: boolean;
   fetchedDbSchema: SchemaData | null;
+  schemaMatrix: SchemaData | null;
+  onSyncSchema?: () => void;
+  schemaSyncing?: boolean;
   schemaLoading: boolean;
   nodes: AiNode[];
   edges: Edge[];
@@ -125,6 +168,9 @@ export function DatabaseConstructorTab({
   connectedPlaceholders,
   hasSchemaConnection,
   fetchedDbSchema,
+  schemaMatrix,
+  onSyncSchema,
+  schemaSyncing,
   schemaLoading,
   nodes,
   edges,
@@ -160,6 +206,8 @@ export function DatabaseConstructorTab({
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   // State for template snippets modal
   const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);
+  const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
+  const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>("query");
 
   // Extract code snippets from pending AI query
   const codeSnippets = React.useMemo((): string[] => {
@@ -228,6 +276,33 @@ export function DatabaseConstructorTab({
     }, 0);
   };
 
+  const insertAiPromptPlaceholder = (placeholder: string): void => {
+    const currentValue = databaseConfig.aiPrompt ?? "";
+    const textArea = aiPromptRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentValue.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentValue.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
+    const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
+
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        aiPrompt: nextValue,
+      },
+    });
+
+    window.setTimeout(() => {
+      const node = aiPromptRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  };
+
   const insertTemplateSnippet = (snippet: string): void => {
     const currentTemplate = queryTemplateValue ?? "";
     const textArea = queryTemplateRef?.current;
@@ -249,6 +324,127 @@ export function DatabaseConstructorTab({
       node.setSelectionRange(cursorPosition, cursorPosition);
     }, 0);
   };
+
+  const handleInsertPlaceholder = (placeholder: string, target: PlaceholderTarget): void => {
+    if (target === "aiPrompt") {
+      insertAiPromptPlaceholder(placeholder);
+      return;
+    }
+    insertQueryPlaceholder(placeholder);
+  };
+
+  const placeholderGroups = React.useMemo((): PlaceholderGroup[] => {
+    const groups: PlaceholderGroup[] = [];
+    const connectedEntries = connectedPlaceholders.map((token: string, index: number) => {
+      const raw = token.replace(/^\{\{|\}\}$/g, "").trim();
+      let description = "Connected input placeholder.";
+      if (raw.startsWith("bundle.")) {
+        description = `Bundle key: ${raw.replace("bundle.", "")}`;
+      } else if (raw.startsWith("context.")) {
+        description = `Context value: ${raw.replace("context.", "")}`;
+      } else if (raw.startsWith("meta.")) {
+        description = `Meta value: ${raw.replace("meta.", "")}`;
+      }
+      return {
+        id: `connected-${index}-${raw}`,
+        label: raw || token,
+        token,
+        resolvesTo: description,
+      };
+    });
+    if (connectedEntries.length > 0) {
+      groups.push({
+        id: "connected",
+        title: "Connected Inputs",
+        description: "Placeholders derived from currently wired inputs.",
+        entries: connectedEntries,
+      });
+    }
+
+    const activeEntries: PlaceholderGroup = {
+      id: "active",
+      title: "Active Query Context",
+      description: "Current operation & selection placeholders.",
+      entries: [
+        {
+          id: `operation-${operation}`,
+          label: `Operation: ${operation}`,
+          token: `{{operation:${operation}}}`,
+          resolvesTo: operation,
+        },
+        {
+          id: `collection-${queryConfig.collection}`,
+          label: `Collection: ${queryConfig.collection}`,
+          token: `{{collection:${queryConfig.collection}}}`,
+          resolvesTo: queryConfig.collection,
+        },
+        {
+          id: `provider-${queryConfig.provider}`,
+          label: `Provider: ${queryConfig.provider === "auto" ? "auto" : queryConfig.provider}`,
+          token: `{{provider:${queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider}}}`,
+          resolvesTo: queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider,
+        },
+      ],
+    };
+    groups.push(activeEntries);
+
+    const providerEntries = DB_PROVIDER_PLACEHOLDERS.map((provider: string) => ({
+      id: `db-provider-${provider}`,
+      label: provider,
+      token: `{{DB Provider: ${provider}}}`,
+      resolvesTo: provider,
+    }));
+    if (providerEntries.length > 0) {
+      groups.push({
+        id: "providers",
+        title: "Database Providers",
+        description: "Static provider placeholders.",
+        entries: providerEntries,
+      });
+    }
+
+    const dateEntry = {
+      id: "date-current",
+      label: "Date: Current",
+      token: "{{Date: Current}}",
+      resolvesTo: new Date().toISOString(),
+      dynamic: true,
+    };
+    groups.push({
+      id: "dates",
+      title: "Dynamic Dates",
+      description: "Runtime date placeholders.",
+      entries: [dateEntry],
+    });
+
+    const schemaEntries: PlaceholderGroup["entries"] = [];
+    if (schemaMatrix?.collections?.length) {
+      schemaMatrix.collections.forEach((collection: CollectionSchema, index: number) => {
+        const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+        const displayName = toTitleCase(singularize(collection.name));
+        const nameSet = new Set<string>([collection.name, displayName]);
+        Array.from(nameSet).forEach((name: string) => {
+          schemaEntries.push({
+            id: `schema-${index}-${name}`,
+            label: `Collection: ${name}`,
+            token: `{{Collection: ${name}}}`,
+            resolvesTo: schemaText,
+            dynamic: true,
+          });
+        });
+      });
+    }
+    if (schemaEntries.length > 0) {
+      groups.push({
+        id: "schemas",
+        title: "Collection Schemas",
+        description: "Synchronized schema snapshots for use in prompts or queries.",
+        entries: schemaEntries,
+      });
+    }
+
+    return groups;
+  }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaMatrix]);
 
   const pendingAiQuerySection = pendingAiQuery ? (
     <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
@@ -366,7 +562,9 @@ export function DatabaseConstructorTab({
 
   return (
     <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
-      {queryInputControls}
+      <div onFocusCapture={(): void => setPlaceholderTarget("query")}>
+        {queryInputControls}
+      </div>
 
       {pendingAiQuerySection}
 
@@ -450,30 +648,33 @@ export function DatabaseConstructorTab({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-400">Connected Placeholders</Label>
-        <div className="flex flex-wrap items-center gap-2">
-          {connectedPlaceholders.length > 0 ? (
-            <>
-              {connectedPlaceholders.map((chip: string): React.JSX.Element => (
-                <Button
-                  key={chip}
-                  type="button"
-                  className="rounded-md border border-emerald-700/50 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
-                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => event.preventDefault()}
-                  onClick={(): void => insertQueryPlaceholder(chip)}
-                >
-                  {chip}
-                </Button>
-              ))}
-            </>
-          ) : (
-            <span className="text-[10px] text-gray-500 italic">
-              Connect inputs to see available placeholders
-            </span>
-          )}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2">
+        <div>
+          <div className="text-xs font-medium text-gray-200">Placeholders</div>
+          <div className="text-[10px] text-gray-400">
+            Open the matrix to insert any placeholder into queries or prompts.
+          </div>
         </div>
+        <Button
+          type="button"
+          className="h-7 rounded-md border border-sky-500/40 px-3 text-[10px] text-sky-100 hover:bg-sky-500/10"
+          onClick={(): void => setPlaceholderMatrixOpen(true)}
+        >
+          <LayoutGrid className="mr-2 h-3.5 w-3.5" />
+          Placeholders
+        </Button>
       </div>
+
+      <PlaceholderMatrixDialog
+        open={placeholderMatrixOpen}
+        onOpenChange={setPlaceholderMatrixOpen}
+        groups={placeholderGroups}
+        target={placeholderTarget}
+        onTargetChange={setPlaceholderTarget}
+        onInsert={handleInsertPlaceholder}
+        onSync={onSyncSchema}
+        syncing={schemaSyncing}
+      />
 
       {hasSchemaConnection && (
         <div className="rounded-md border border-purple-800/50 bg-purple-950/20 p-3">
@@ -795,6 +996,7 @@ export function DatabaseConstructorTab({
           ref={aiPromptRef}
           className="min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={databaseConfig.aiPrompt ?? ""}
+          onFocus={(): void => setPlaceholderTarget("aiPrompt")}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               database: {
@@ -814,104 +1016,6 @@ export function DatabaseConstructorTab({
           }}
           placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
         />
-        <div className="flex flex-wrap gap-2">
-          <div className="text-[11px] text-gray-400">Context placeholders:</div>
-          <Tooltip
-            content={`{{operation:${operation}}}`}
-            side="bottom"
-          >
-            <Button
-              type="button"
-              className="rounded-md border border-emerald-700 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
-              onClick={(): void => {
-                const placeholder = `{{operation:${operation}}}`;
-                const currentValue = databaseConfig.aiPrompt ?? "";
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    aiPrompt: currentValue + placeholder,
-                  },
-                });
-              }}
-            >
-              Operation: {operation}
-            </Button>
-          </Tooltip>
-          {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
-            fetchedDbSchema.collections.map((coll: CollectionSchema): React.JSX.Element => {
-              const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(", ") ?? "";
-              const resolvedPlaceholder = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || "unknown"}}}`;
-              return (
-                <Tooltip
-                  key={coll.name}
-                  content={resolvedPlaceholder}
-                  side="bottom"
-                  maxWidth="500px"
-                >
-                  <Button
-                    type="button"
-                    className="rounded-md border border-cyan-700 bg-cyan-500/10 px-2 py-1 text-[10px] text-cyan-200 hover:bg-cyan-500/20"
-                    onClick={(): void => {
-                      const placeholder = `{{ schema: ${coll.name} }}`;
-                      const currentValue = databaseConfig.aiPrompt ?? "";
-                      updateSelectedNodeConfig({
-                        database: {
-                          ...databaseConfig,
-                          aiPrompt: currentValue + placeholder,
-                        },
-                      });
-                    }}
-                  >
-                    Schema: {coll.name}
-                  </Button>
-                </Tooltip>
-              );
-            })
-          ) : (
-            <Tooltip
-              content={`{{collection:${queryConfig.collection}}}`}
-              side="bottom"
-            >
-              <Button
-                type="button"
-                className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
-                              onClick={(): void => {
-                                const placeholder = `{{collection:${queryConfig.collection}}}`;
-                                const currentValue = databaseConfig.aiPrompt ?? "";
-                                updateSelectedNodeConfig({
-                                  database: {
-                                    ...databaseConfig,
-                                    aiPrompt: currentValue + placeholder,
-                                  },
-                                });
-                              }}              >
-                Collection: {queryConfig.collection}
-              </Button>
-            </Tooltip>
-          )}
-          <Tooltip
-            content={`{{provider:${queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider}}}`}
-            side="bottom"
-          >
-            <Button
-              type="button"
-              className="rounded-md border border-purple-700 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-200 hover:bg-purple-500/20"
-              onClick={(): void => {
-                const providerName = queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider;
-                const placeholder = `{{provider:${providerName}}}`;
-                const currentValue = databaseConfig.aiPrompt ?? "";
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    aiPrompt: currentValue + placeholder,
-                  },
-                });
-              }}
-            >
-              Provider: {queryConfig.provider === "auto" ? "auto" : queryConfig.provider}
-            </Button>
-          </Tooltip>
-        </div>
         {((): React.JSX.Element => {
           const aiPromptEdges = edges.filter(
             (edge: Edge): boolean => edge.from === selectedNode.id && edge.fromPort === "aiPrompt"

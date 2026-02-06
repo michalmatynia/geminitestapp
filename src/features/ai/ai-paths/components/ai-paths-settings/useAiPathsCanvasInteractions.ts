@@ -666,9 +666,15 @@ export function useAiPathsCanvasInteractions({
           ...payload.config,
         }
       : defaultConfig;
+    const createNodeId = (): string => {
+      if (globalThis.crypto?.randomUUID) {
+        return `node-${globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+      }
+      return `node-${Math.random().toString(36).slice(2, 10)}`;
+    };
     const newNode: AiNode = {
       ...payload,
-      id: `node-${Math.random().toString(36).slice(2, 8)}`,
+      id: createNodeId(),
       position: { x: nextX, y: nextY },
       ...(mergedConfig ? { config: mergedConfig } : {}),
     };

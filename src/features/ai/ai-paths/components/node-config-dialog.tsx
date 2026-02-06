@@ -58,23 +58,26 @@ type NodeConfigDialogProps = {
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
-  clearRuntimeForNode?: (nodeId: string) => void;
-  clearNodeHistory?: (nodeId: string) => void | Promise<void>;
-  onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
+  clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
+  clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
+  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
+  sendingToAi?: boolean | undefined;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
   dbNodePresets: DbNodePreset[];
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: "success" | "error" | "info" | "warning" }
+  ) => void;
   onDirtyChange?: (dirty: boolean) => void;
   savePathConfig?: (options?: {
-    silent?: boolean;
-    includeNodeConfig?: boolean;
-    force?: boolean;
-    nodesOverride?: AiNode[];
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
 };
 
@@ -95,7 +98,6 @@ export function NodeConfigDialog({
   runtimeState,
   pathDebugSnapshot,
   updateSelectedNode,
-  updateSelectedNodeConfig,
   handleFetchParserSample,
   handleFetchUpdaterSample,
   handleRunSimulation,

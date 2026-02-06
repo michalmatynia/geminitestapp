@@ -177,13 +177,7 @@ export function BlockNodeItem({
             : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
         }`}
       >
-      <Icon className="size-3.5 shrink-0" />
-      <span className="flex-1 truncate">{blockLabel}</span>
-      {isBackgroundMode ? (
-        <span title={`Locked as ${backgroundTarget} background`}>
-          <Lock className="size-3 shrink-0 text-amber-500" />
-        </span>
-      ) : canDrag ? (
+      {canDrag ? (
         <div
           draggable
           onDragStart={(e: React.DragEvent) => {
@@ -220,6 +214,13 @@ export function BlockNodeItem({
         </div>
       ) : (
         <span className="size-3 shrink-0" />
+      )}
+      <Icon className="size-3.5 shrink-0" />
+      <span className="flex-1 truncate">{blockLabel}</span>
+      {isBackgroundMode && (
+        <span title={`Locked as ${backgroundTarget} background`}>
+          <Lock className="size-3 shrink-0 text-amber-500" />
+        </span>
       )}
       {isBackgroundMode && (
         <span className="text-[9px] text-amber-500/70 uppercase">{backgroundTarget} bg</span>

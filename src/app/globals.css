@@ -277,11 +277,11 @@
     }
   }
   .ai-paths-wire-flow {
-    stroke-dasharray: 6 6;
+    stroke-dasharray: var(--ai-paths-flow-dash, 6 6);
     stroke-linecap: round;
-    animation: ai-paths-wire-flow 0.9s linear infinite;
-    opacity: 0.9;
-    filter: drop-shadow(0 0 6px currentColor);
+    animation: ai-paths-wire-flow var(--ai-paths-flow-duration, 0.9s) linear infinite;
+    opacity: var(--ai-paths-flow-opacity, 0.9);
+    filter: drop-shadow(0 0 var(--ai-paths-flow-glow, 6px) currentColor);
   }
 
   .cms-hover-scope {

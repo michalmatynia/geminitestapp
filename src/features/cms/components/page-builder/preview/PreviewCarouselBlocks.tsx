@@ -293,7 +293,6 @@ export function PreviewSlideshowBlock({
   stretch = false,
   onHoverNode,
   onOpenMedia,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings["transition"] as string) || "fade";

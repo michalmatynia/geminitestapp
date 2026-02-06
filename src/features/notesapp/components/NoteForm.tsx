@@ -16,6 +16,7 @@ import { useEditorMode } from "../hooks/useEditorMode";
 import { useNoteFileAttachments } from "../hooks/useNoteFileAttachments";
 import { useNoteTags } from "../hooks/useNoteTags";
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { useNotesAppContext } from "@/features/notesapp/hooks/NotesAppContext";
 import { MarkdownToolbar } from "./editor/MarkdownToolbar";
 import { FileAttachments } from "./editor/FileAttachments";
 import { NoteMetadata } from "./editor/NoteMetadata";
@@ -55,17 +56,21 @@ interface RelatedNoteItem {
 
 export function NoteForm({
   note,
-  folderTree,
-  defaultFolderId,
-  availableTags,
   onSuccess,
-  onTagCreated,
-  onSelectRelatedNote,
-  onTagClick,
-  notebookId,
-  folderTheme,
   formRef,
 }: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }): React.JSX.Element {
+  const {
+    folderTree,
+    tags: availableTags,
+    selectedNotebookId,
+    selectedFolderId: defaultFolderId,
+    selectedFolderTheme,
+    selectedNoteTheme,
+    fetchTags,
+    handleSelectNoteFromTree,
+    handleFilterByTag,
+    setIsCreating,
+  } = useNotesAppContext();
   const { toast } = useToast();
   
   // Content & undo/redo
@@ -148,9 +153,9 @@ export function NoteForm({
   } = useNoteTags(
     note?.tags.map((t: { tagId: string; tag: TagRecord }): string => t.tagId) || [],
     availableTags,
-    notebookId,
+    selectedNotebookId,
     note?.notebookId,
-    onTagCreated
+    fetchTags
   );
 
   // Remaining UI state
@@ -205,14 +210,14 @@ export function NoteForm({
   const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
   
   const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = useQuery({
-    queryKey: ["notes-search", { query: relatedNoteQuery, notebookId }],
+    queryKey: ["notes-search", { query: relatedNoteQuery, notebookId: selectedNotebookId }],
     queryFn: async (): Promise<NoteWithRelations[]> => {
       if (!relatedNoteQuery) return [];
       const params = new URLSearchParams({
         search: relatedNoteQuery,
         searchScope: "title",
       });
-      const resolvedNotebookId = notebookId ?? note?.notebookId ?? null;
+      const resolvedNotebookId = selectedNotebookId ?? note?.notebookId ?? null;
       if (resolvedNotebookId) params.append("notebookId", resolvedNotebookId);
       const res = await fetch(`/api/notes?${params.toString()}`);
       if (!res.ok) return [];
@@ -238,7 +243,8 @@ export function NoteForm({
   }, [note?.id, note?.content, resetHistory]);
 
   // Use provided theme or fall back to dark mode theme
-  const effectiveTheme = (folderTheme ?? FALLBACK_THEME) as ThemeRecord;
+  const resolvedFolderTheme = note ? selectedNoteTheme : selectedFolderTheme;
+  const effectiveTheme = (resolvedFolderTheme ?? FALLBACK_THEME) as ThemeRecord;
   const hasCustomColor: boolean = color !== "#ffffff";
   const contentBackground: string = hasCustomColor
     ? color
@@ -657,7 +663,7 @@ export function NoteForm({
         tagIds: selectedTagIds,
         relatedNoteIds: selectedRelatedNotes.map((rel: { id: string }): string => rel.id),
         categoryIds: selectedFolderId ? [selectedFolderId] : [],
-        notebookId: notebookId ?? note?.notebookId ?? null,
+        notebookId: selectedNotebookId ?? note?.notebookId ?? null,
       };
 
       if (note) {
@@ -673,6 +679,17 @@ export function NoteForm({
       const message = error instanceof Error ? error.message : "Failed to save note";
       toast(message, { variant: "error" });
     }
+  };
+
+  const handleSelectRelatedNote = (noteId: string): void => {
+    if (!note) {
+      setIsCreating(false);
+    }
+    void handleSelectNoteFromTree(noteId);
+  };
+
+  const handleTagClick = (tagId: string): void => {
+    handleFilterByTag(tagId);
   };
 
   return (
@@ -795,7 +812,7 @@ export function NoteForm({
         onAddTag={handleAddTag}
         onCreateTag={handleCreateTag}
         onRemoveTag={handleRemoveTag}
-        onTagClick={onTagClick}
+        onTagClick={handleTagClick}
         selectedRelatedNotes={selectedRelatedNotes}
         setSelectedRelatedNotes={setSelectedRelatedNotes}
         relatedNoteQuery={relatedNoteQuery}
@@ -804,7 +821,7 @@ export function NoteForm({
         setIsRelatedDropdownOpen={setIsRelatedDropdownOpen}
         relatedNoteResults={relatedNoteResults}
         isRelatedLoading={isRelatedLoading}
-        onSelectRelatedNote={onSelectRelatedNote}
+        onSelectRelatedNote={handleSelectRelatedNote}
         effectiveTheme={effectiveTheme}
         noteId={note?.id}
       />

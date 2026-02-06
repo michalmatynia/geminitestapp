@@ -8,7 +8,15 @@
 import "server-only";
 
 import { ObjectId } from "mongodb";
-import { Prisma } from "@prisma/client";
+import {
+  Prisma,
+  ChatbotJobStatus,
+  CurrencyCode,
+  ProductAiJobStatus,
+  AiPathRunStatus,
+  AiPathNodeStatus,
+  AiPathRunEventLevel,
+} from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createFullDatabaseBackup } from "@/features/database/services/database-backup";
@@ -412,65 +420,7 @@ interface MongoProductDoc {
   producers?: Array<{ producerId: string; assignedAt?: Date }>;
 }
 
-interface _MongoIntegrationDoc {
-  _id?: ObjectId;
-  id?: string;
-  name?: string;
-  slug?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 
-interface _MongoIntegrationConnectionDoc {
-  _id?: ObjectId;
-  id?: string;
-  integrationId?: string;
-  status?: string;
-  config?: unknown;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-interface _MongoAsset3DDoc {
-  _id?: ObjectId;
-  id?: string;
-  name?: string;
-  filename?: string;
-  filepath?: string;
-  mimetype?: string;
-  size?: number;
-  tags?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-interface _MongoProductDraftDoc {
-  _id?: ObjectId;
-  id?: string;
-  productId?: string | null;
-  baseProductId?: string | null;
-  name?: string | null;
-  status?: string;
-  content?: unknown;
-  metadata?: unknown;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-interface _MongoNoteDoc {
-  _id?: ObjectId;
-  id?: string;
-  title?: string;
-  content?: string;
-  isPinned?: boolean;
-  isArchived?: boolean;
-  color?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-  tags?: Array<{ tagId: string; assignedAt?: Date }>;
-  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
-  relationsFrom?: Array<{ targetNoteId: string; assignedAt?: Date }>;
-}
 
 const isObjectIdString = (value: string): boolean =>
   /^[a-fA-F0-9]{24}$/.test(value);
@@ -488,12 +438,12 @@ const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-const toJsonValue = (value: unknown): Prisma.JsonValue => {
+const toJsonValue = (value: unknown): any => {
   if (value === undefined || value === null) return null;
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();
   if (Array.isArray(value)) {
-    return value.map((entry: unknown) => toJsonValue(entry)) as Prisma.JsonValue;
+    return value.map((entry: unknown) => toJsonValue(entry));
   }
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
@@ -501,12 +451,12 @@ const toJsonValue = (value: unknown): Prisma.JsonValue => {
       key,
       toJsonValue(entry),
     ]);
-    return Object.fromEntries(entries) as Prisma.JsonValue;
+    return Object.fromEntries(entries);
   }
-  return value as Prisma.JsonValue;
+  return value;
 };
 
-const normalizeId = (doc: Record<string, unknown>): string => {
+const normalizeId = (doc: any): string => {
   const direct = doc.id;
   if (typeof direct === "string" && direct.trim()) return direct;
   const raw = doc._id;
@@ -677,7 +627,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("sessions");
     const docs = (await mongo.collection("sessions").find({}).toArray()) as unknown as MongoSessionDoc[];
     const data = docs
-      .map((doc: MongoSessionDoc) => {
+      .map((doc: MongoSessionDoc): Prisma.SessionCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         const userIdRaw = doc.userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? "");
@@ -701,7 +651,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     handledCollections.add("verification_tokens");
     const docs = (await mongo.collection("verification_tokens").find({}).toArray()) as unknown as MongoVerificationTokenDoc[];
     const data = docs
-      .map((doc: MongoVerificationTokenDoc) => {
+      .map((doc: MongoVerificationTokenDoc): Prisma.VerificationTokenCreateManyInput | null => {
         const identifier = doc.identifier;
         const token = doc.token;
         const expires = toDate(doc.expires);
@@ -989,7 +939,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           sessionId,
-          status: doc.status ?? "pending",
+          status: (doc.status as ChatbotJobStatus) ?? "pending",
           model: doc.model ?? null,
           payload: toJsonValue(doc.payload ?? null),
           resultText: doc.resultText ?? null,
@@ -1022,7 +972,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         const id = doc.id ?? code;
         return {
           id,
-          code,
+          code: code as CurrencyCode,
           name: doc.name ?? code,
           symbol: doc.symbol ?? null,
           createdAt: doc.createdAt ?? new Date(),
@@ -2245,16 +2195,6 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("notes", async () => {
     handledCollections.add("notes");
-    const _availableNotebookIds = new Set<string>(
-      (await prisma.notebook.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
-    );
-    const _availableTagIds = new Set<string>(
-      (await prisma.tag.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
-    );
-    const _availableCategoryIds = new Set<string>(
-      (await prisma.category.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
-    );
-    const _warnings: string[] = [];
     const notes = await prisma.note.findMany({
       include: {
         tags: true,
@@ -2263,12 +2203,15 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         files: true,
       },
     });
+    const tags = await prisma.tag.findMany();
+    const categories = await prisma.category.findMany();
+
     const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
     const categoryMap = new Map(categories.map((category) => [category.id, category]));
     const noteMap = new Map(notes.map((note) => [note.id, note]));
 
     const docs = notes.map((note) => {
-      const tagEntries = note.tags.map((entry: any) => {
+      const tagEntries = note.tags.map((entry: Prisma.NoteTagGetPayload<object>) => {
         const tag = tagMap.get(entry.tagId);
         return {
           noteId: entry.noteId,
@@ -2286,7 +2229,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
             : { id: entry.tagId, name: "", color: null, notebookId: null, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const categoryEntries = note.categories.map((entry: any) => {
+      const categoryEntries = note.categories.map((entry: Prisma.NoteCategoryGetPayload<object>) => {
         const category = categoryMap.get(entry.categoryId);
         return {
           noteId: entry.noteId,
@@ -2308,7 +2251,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
             : { id: entry.categoryId, name: "", description: null, color: null, parentId: null, themeId: null, notebookId: null, sortIndex: 0, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const relationsFromEntries = note.relationsFrom.map((entry: any) => {
+      const relationsFromEntries = note.relationsFrom.map((entry: Prisma.NoteRelationGetPayload<object>) => {
         const targetNote = noteMap.get(entry.targetNoteId);
         return {
           sourceNoteId: entry.sourceNoteId,
@@ -2400,7 +2343,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           productId,
-          status: (doc as { status?: string }).status ?? "pending",
+          status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? "pending",
           type: (doc as { type?: string }).type ?? "description_generation",
           payload: (doc as { payload?: any }).payload ?? {},
           result: (doc as { result?: any }).result ?? null,
@@ -2428,7 +2371,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           userId: (doc as { userId?: string | null }).userId ?? null,
           pathId: (doc as { pathId?: string }).pathId ?? "",
           pathName: (doc as { pathName?: string | null }).pathName ?? null,
-          status: (doc as { status?: string }).status ?? "queued",
+          status: ((doc as { status?: string }).status as AiPathRunStatus) ?? "queued",
           triggerEvent: (doc as { triggerEvent?: string | null }).triggerEvent ?? null,
           triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
           triggerContext: (doc as { triggerContext?: any | null }).triggerContext ?? null,
@@ -2470,7 +2413,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           nodeId: (doc as { nodeId?: string }).nodeId ?? "",
           nodeType: (doc as { nodeType?: string }).nodeType ?? "",
           nodeTitle: (doc as { nodeTitle?: string | null }).nodeTitle ?? null,
-          status: (doc as { status?: string }).status ?? "pending",
+          status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? "pending",
           attempt: (doc as { attempt?: number }).attempt ?? 0,
           inputs: (doc as { inputs?: any | null }).inputs ?? null,
           outputs: (doc as { outputs?: any | null }).outputs ?? null,
@@ -2498,7 +2441,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
         return {
           id,
           runId,
-          level: (doc as { level?: string }).level ?? "info",
+          level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? "info",
           message: (doc as { message?: string }).message ?? "",
           metadata: (doc as { metadata?: any | null }).metadata ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),

@@ -191,6 +191,7 @@ export function RowNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
+        <GripVertical className="size-3.5 shrink-0" />
         <TreeCaret
           isOpen={isExpanded}
           hasChildren={true}
@@ -199,7 +200,6 @@ export function RowNodeItem({
           iconClassName="size-3"
           placeholderClassName="block size-3 shrink-0"
         />
-        <GripVertical className="size-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{rowLabel}</span>
         <TreeActionSlot show="always" align="inline">
           <TreeActionButton

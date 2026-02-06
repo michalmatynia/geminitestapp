@@ -1,10 +1,11 @@
-import type { NoteRepository } from "@/features/notesapp/services/notes/types/note-repository";
-import * as notebookImpl from "./prisma/notebook-impl";
-import * as noteImpl from "./prisma/note-impl";
-import * as tagImpl from "./prisma/tag-impl";
-import * as categoryImpl from "./prisma/category-impl";
-import * as themeImpl from "./prisma/theme-impl";
-import * as fileImpl from "./prisma/file-impl";
+import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
+
+import * as categoryImpl from './prisma/category-impl';
+import * as fileImpl from './prisma/file-impl';
+import * as noteImpl from './prisma/note-impl';
+import * as notebookImpl from './prisma/notebook-impl';
+import * as tagImpl from './prisma/tag-impl';
+import * as themeImpl from './prisma/theme-impl';
 
 export const prismaNoteRepository: NoteRepository = {
   // Notebooks

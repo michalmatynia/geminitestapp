@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { Button, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
-import Link from "next/link";
-import { PlusIcon, SettingsIcon } from "lucide-react";
-import { Integration, integrationDefinitions } from "@/features/integrations/types/integrations-ui";
+import { PlusIcon, SettingsIcon } from 'lucide-react';
+import Link from 'next/link';
+
+import { Integration, integrationDefinitions } from '@/features/integrations/types/integrations-ui';
+import { Button, ListPanel, SectionHeader, SectionPanel } from '@/shared/ui';
 
 
 
@@ -51,7 +52,7 @@ export function IntegrationList({
               <p className="mt-2 text-xl font-semibold">Stardb Hub</p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {integrationSlugs.includes("tradera") && (
+              {integrationSlugs.includes('tradera') && (
                 <div className="flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200">
                   <span className="rounded bg-orange-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-orange-100">
                     Browser
@@ -67,7 +68,7 @@ export function IntegrationList({
                   </Button>
                 </div>
               )}
-              {integrationSlugs.includes("allegro") && (
+              {integrationSlugs.includes('allegro') && (
                 <div className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">
                   <span className="rounded bg-blue-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-blue-100">
                     API
@@ -83,7 +84,7 @@ export function IntegrationList({
                   </Button>
                 </div>
               )}
-              {integrationSlugs.includes("baselinker") && (
+              {integrationSlugs.includes('baselinker') && (
                 <div className="flex items-center gap-2 rounded-full border border-purple-400/50 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-200">
                   <span className="rounded bg-purple-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-purple-100">
                     Platform

@@ -1,15 +1,16 @@
-import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from "react";
-import type { Template, BaseInventory } from "@/features/data-import-export";
+import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
+
+import type { Template, BaseInventory } from '@/features/data-import-export';
+import {
+  useUpdatePreferredTemplate,
+  useUpdatePreferredInventory,
+} from '@/features/integrations/hooks/useIntegrationMutations';
 import {
   useExportTemplates,
   useActiveExportTemplate,
   useDefaultExportInventory,
   useBaseInventories,
-} from "@/features/integrations/hooks/useIntegrationQueries";
-import {
-  useUpdatePreferredTemplate,
-  useUpdatePreferredInventory,
-} from "@/features/integrations/hooks/useIntegrationMutations";
+} from '@/features/integrations/hooks/useIntegrationQueries';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping
@@ -27,8 +28,8 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: Dispatch<SetStateAction<boolean>>;
 } {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none');
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string>('');
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const hasInitializedTemplate = useRef(false);
   const hasInitializedInventory = useRef(false);
@@ -52,7 +53,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (isBaseComIntegration && preferredTemplateId && !hasInitializedTemplate.current) {
-      if (selectedTemplateId === "none") {
+      if (selectedTemplateId === 'none') {
         timer = setTimeout(() => {
           setSelectedTemplateId(preferredTemplateId);
           hasInitializedTemplate.current = true;
@@ -73,7 +74,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
           setSelectedInventoryId(preferredInventoryId);
           hasInitializedInventory.current = true;
         } else {
-          setSelectedInventoryId(inventories[0]?.id ?? "");
+          setSelectedInventoryId(inventories[0]?.id ?? '');
           hasInitializedInventory.current = true;
         }
       }, 0);
@@ -85,7 +86,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
 
   // Sync template preference when selected changes
   useEffect((): void => {
-    if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === "none") return;
+    if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === 'none') return;
     if (selectedTemplateId !== preferredTemplateId) {
       void updatePreferredTemplateMutation.mutateAsync({ templateId: selectedTemplateId });
     }

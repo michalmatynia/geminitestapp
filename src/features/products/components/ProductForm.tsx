@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 
-import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import DebugPanel from "@/features/products/components/DebugPanel";
-import ProductFormGeneral from "./form/ProductFormGeneral";
-import ProductFormOther from "./form/ProductFormOther";
-import ProductFormImages from "./form/ProductFormImages";
-import ProductFormImportInfo from "./form/ProductFormImportInfo";
-import ProductFormParameters from "./form/ProductFormParameters";
-import ProductFormNoteLink from "./form/ProductFormNoteLink";
+import DebugPanel from '@/features/products/components/DebugPanel';
+import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+
+import ProductFormGeneral from './form/ProductFormGeneral';
+import ProductFormImages from './form/ProductFormImages';
+import ProductFormImportInfo from './form/ProductFormImportInfo';
+import ProductFormNoteLink from './form/ProductFormNoteLink';
+import ProductFormOther from './form/ProductFormOther';
+import ProductFormParameters from './form/ProductFormParameters';
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -37,7 +38,7 @@ export default function ProductForm({
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   useEffect(() => {
-    setIsDebugOpen(searchParams.get("debug") === "true");
+    setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
 
   return (

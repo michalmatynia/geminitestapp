@@ -1,5 +1,27 @@
 import { Entity } from '../base-types';
 
+import type {
+  NoteDto,
+  NotebookDto,
+  NoteCategoryDto,
+  NoteTagDto,
+  CreateNoteDto,
+  UpdateNoteDto,
+  CreateNotebookDto,
+  UpdateNotebookDto
+} from '../dtos';
+
+export type {
+  NoteDto,
+  NotebookDto,
+  NoteCategoryDto,
+  NoteTagDto,
+  CreateNoteDto,
+  UpdateNoteDto,
+  CreateNotebookDto,
+  UpdateNotebookDto
+};
+
 export type NotebookRecord = Entity & {
   name: string;
   color: string | null;
@@ -101,7 +123,7 @@ export type CategoryWithChildren = CategoryRecord & {
   };
 };
 
-export type NoteEditorType = "markdown" | "wysiwyg" | "code";
+export type NoteEditorType = 'markdown' | 'wysiwyg' | 'code';
 
 export type NoteCreateInput = {
   title: string;
@@ -170,7 +192,7 @@ export type TagUpdateInput = Partial<TagCreateInput>;
 
 export type NoteFilters = {
   search?: string;
-  searchScope?: "both" | "title" | "content";
+  searchScope?: 'both' | 'title' | 'content';
   isPinned?: boolean;
   isArchived?: boolean;
   isFavorite?: boolean;

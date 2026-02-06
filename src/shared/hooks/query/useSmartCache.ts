@@ -1,8 +1,10 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQuery, useQueryClient, type Query } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useQuery, useQueryClient, type Query } from '@tanstack/react-query';
+import { useCallback } from 'react';
+
+import { fetchSettingsCached } from '@/shared/api/settings-client';
 
 // Predefined cache strategies
 export const cacheStrategies = {
@@ -44,7 +46,7 @@ export function useSmartCache(): {
   optimizeCache: () => void;
   getCacheStats: () => { totalQueries: number; activeQueries: number; staleQueries: number; errorQueries: number; totalSize: number; avgSize: number };
   preloadCriticalData: (criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<unknown> }>) => Promise<void>;
-} {
+  } {
   const queryClient = useQueryClient();
 
   const optimizeCache = useCallback((): void => {
@@ -67,7 +69,7 @@ export function useSmartCache(): {
         if (typeof (query as any).setOptions === 'function') {
           (query as any).setOptions({
             staleTime: observers > 2 ? cacheStrategies.realtime.staleTime : 
-                     cacheStrategies.standard.staleTime,
+              cacheStrategies.standard.staleTime,
           });
         }
       }
@@ -130,7 +132,7 @@ export function useCacheWarming(): {
   warmUserSpecificData: (userId: string) => Promise<void>;
   warmNavigationData: (routes: string[]) => Promise<void>;
   warmFrequentlyAccessedData: () => Promise<void>;
-} {
+  } {
   const queryClient = useQueryClient();
 
   const warmUserSpecificData = useCallback(async (userId: string): Promise<void> => {
@@ -170,34 +172,10 @@ export function useCacheWarming(): {
   }, [queryClient]);
 
   const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
-    const resolveWarmCatalogId = async (): Promise<string | null> => {
-      try {
-        const catalogsRes = await fetch("/api/catalogs");
-        if (!catalogsRes.ok) return null;
-        const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
-        if (!Array.isArray(catalogs) || catalogs.length === 0) return null;
-        return catalogs[0]?.id ?? null;
-      } catch {
-        return null;
-      }
-    };
-
     const frequentQueries = [
       {
-        queryKey: ['products', 'categories'],
-        queryFn: async (): Promise<any> => {
-          const catalogId = await resolveWarmCatalogId();
-          if (!catalogId) return [];
-          const response = await fetch(
-            `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
-          );
-          if (!response.ok) return [];
-          return response.json();
-        },
-      },
-      {
-        queryKey: ['settings', 'global'],
-        queryFn: async (): Promise<any> => await fetch('/api/settings').then((r: Response) => r.json()),
+        queryKey: ['settings', 'light'],
+        queryFn: async (): Promise<any> => await fetchSettingsCached({ scope: 'light' }),
       },
     ];
 

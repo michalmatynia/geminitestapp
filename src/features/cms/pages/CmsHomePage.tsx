@@ -1,6 +1,7 @@
 
-import { SectionHeader } from "@/shared/ui";
-import Link from "next/link";
+import Link from 'next/link';
+
+import { SectionHeader } from '@/shared/ui';
 
 export default function CmsPage(): React.ReactNode {
   return (

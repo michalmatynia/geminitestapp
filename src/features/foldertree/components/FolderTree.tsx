@@ -1,16 +1,19 @@
-"use client";
+'use client';
 
-import { Button, useToast } from "@/shared/ui";
-import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from "lucide-react";
+import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
+import { useImportFolderMutation } from '@/features/foldertree/hooks/useFolderMutations';
+import type { FolderTreeProps } from '@/features/foldertree/types/folder-tree-ui';
+import { parseMultipleFolders, countMultipleFolders } from '@/features/foldertree/utils/folderImporter';
+import { logClientError } from '@/features/observability';
+import type { CategoryWithChildren } from '@/shared/types/notes';
+import { Button, TreeHeader, useToast } from '@/shared/ui';
+import { FolderTreePanel } from '@/shared/ui';
+import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
-import type { CategoryWithChildren } from "@/shared/types/notes";
-import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui";
-import { FolderNode } from "./tree/FolderNode";
-import { parseMultipleFolders, countMultipleFolders } from "@/features/foldertree/utils/folderImporter";
+import { FolderNode } from './tree/FolderNode';
 
-import { useImportFolderMutation } from "@/features/foldertree/hooks/useFolderMutations";
 
 function FolderTreeBase({
   folders,
@@ -143,7 +146,7 @@ function FolderTreeBase({
     setIsDropzoneActive(false);
 
     if (!selectedNotebookId) {
-      toast("Please select a notebook first", { variant: "error" });
+      toast('Please select a notebook first', { variant: 'error' });
       return;
     }
 
@@ -153,14 +156,14 @@ function FolderTreeBase({
       const structures = await parseMultipleFolders(e.dataTransfer.items);
 
       if (!structures || structures.length === 0) {
-        toast("No valid folder structure found", { variant: "error" });
+        toast('No valid folder structure found', { variant: 'error' });
         setIsImporting(false);
         return;
       }
 
       const counts = countMultipleFolders(structures);
 
-      const folderNames = structures.map((s: { name: string }) => s.name).join(", ");
+      const folderNames = structures.map((s: { name: string }) => s.name).join(', ');
       const displayName = structures.length === 1
         ? `folder "${structures[0]!.name}"`
         : `${structures.length} folders (${folderNames})`;
@@ -186,9 +189,9 @@ function FolderTreeBase({
         await onRefreshFolders();
       }
     } catch (error) {
-      console.error("Failed to import folder:", error);
-      const message = error instanceof Error ? error.message : "An unexpected error occurred while importing";
-      toast(message, { variant: "error" });
+      logClientError(error, { context: { source: 'FolderTree', action: 'importFolder' } });
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred while importing';
+      toast(message, { variant: 'error' });
     } finally {
       setIsImporting(false);
     }
@@ -274,8 +277,9 @@ function FolderTreeBase({
   );
 
   return (
-    <div
-      className="flex h-full flex-col bg-gray-900 border-r border-border"
+    <FolderTreePanel
+      className="bg-gray-900 border-r border-border"
+      bodyClassName="flex min-h-0 flex-1 flex-col"
       onDragEnterCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
@@ -283,19 +287,19 @@ function FolderTreeBase({
       onDragOverCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
+        e.dataTransfer.dropEffect = 'move';
       }}
       onDropCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
-        const target = (e.target as HTMLElement).closest("[data-note-id]");
-        const targetId = target?.getAttribute("data-note-id");
+        const target = (e.target as HTMLElement).closest('[data-note-id]');
+        const targetId = target?.getAttribute('data-note-id');
         if (!targetId) {
-          toast("Nothing to drop here", { variant: "info" });
+          toast('Nothing to drop here', { variant: 'info' });
           return;
         }
         if (targetId === draggedNoteId) {
-          toast("Can't link a note to itself", { variant: "info" });
+          toast('Can\'t link a note to itself', { variant: 'info' });
           return;
         }
         onRelateNotes(draggedNoteId, targetId);
@@ -307,169 +311,168 @@ function FolderTreeBase({
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
-        const target = (e.target as HTMLElement).closest("[data-note-id]");
-        const targetId = target?.getAttribute("data-note-id");
+        const target = (e.target as HTMLElement).closest('[data-note-id]');
+        const targetId = target?.getAttribute('data-note-id');
         if (!targetId) {
-          toast("Nothing to drop here", { variant: "info" });
+          toast('Nothing to drop here', { variant: 'info' });
           return;
         }
         if (targetId === draggedNoteId) {
-          toast("Can't link a note to itself", { variant: "info" });
+          toast('Can\'t link a note to itself', { variant: 'info' });
           return;
         }
         onRelateNotes(draggedNoteId, targetId);
       }}
-    >
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-white">Folders</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={(): void => setShowDropzone(!showDropzone)}
-              size="sm"
-              variant="outline"
-              className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
-                showDropzone ? "bg-blue-600/20 text-blue-400" : "text-gray-300"
-              }`}
-              aria-label={showDropzone ? "Hide dropzone" : "Show dropzone"}
-            >
-              <Upload className="size-4" />
-            </Button>
-            <Button
-              onClick={(): void => onCreateFolder(null)}
-              size="sm"
-              className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
-              aria-label="Add folder"
-            >
-              <Plus className="size-4" />
-            </Button>
-            {onUndo && (
+      header={(
+        <TreeHeader
+          title="Folders"
+          actions={(
+            <>
               <Button
-                onClick={(): void => onUndo()}
+                onClick={(): void => setShowDropzone(!showDropzone)}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
-                disabled={!canUndo}
+                className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
+                  showDropzone ? 'bg-blue-600/20 text-blue-400' : 'text-gray-300'
+                }`}
+                aria-label={showDropzone ? 'Hide dropzone' : 'Show dropzone'}
               >
-                Undo
+                <Upload className="size-4" />
               </Button>
-            )}
-            <Button
-              onClick={handleToggleSelectedCollapse}
-              size="sm"
-              variant="outline"
-              className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
-              disabled={!selectedFolderId}
-              aria-label={isSelectedSubtreeExpanded ? "Collapse folder" : "Expand folder"}
-            >
-              {isSelectedSubtreeExpanded ? (
-                <ChevronDown className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )}
-            </Button>
-            {onToggleCollapse && (
               <Button
-                onClick={(): void => onToggleCollapse()}
+                onClick={(): void => onCreateFolder(null)}
+                size="sm"
+                className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
+                aria-label="Add folder"
+              >
+                <Plus className="size-4" />
+              </Button>
+              {onUndo && (
+                <Button
+                  onClick={(): void => onUndo()}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
+                  disabled={!canUndo}
+                >
+                  Undo
+                </Button>
+              )}
+              <Button
+                onClick={handleToggleSelectedCollapse}
                 size="sm"
                 variant="outline"
                 className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
-                aria-label="Collapse folder tree"
+                disabled={!selectedFolderId}
+                aria-label={isSelectedSubtreeExpanded ? 'Collapse folder' : 'Expand folder'}
               >
-                <ChevronLeft className="size-4" />
+                {isSelectedSubtreeExpanded ? (
+                  <ChevronDown className="size-4" />
+                ) : (
+                  <ChevronRight className="size-4" />
+                )}
               </Button>
-            )}
-          </div>
-        </div>
-        <Button
-          onClick={(): void => onSelectFolder(null)}
-          onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            setIsAllNotesDragOver(true);
-          }}
-          onDragLeave={(): void => {
-            setIsAllNotesDragOver(false);
-          }}
-          onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            setIsAllNotesDragOver(false);
-            const noteId =
-              e.dataTransfer.getData("noteId") ||
-              e.dataTransfer.getData("text/plain") ||
-              draggedNoteId ||
-              "";
-            const folderId = e.dataTransfer.getData("folderId");
-            if (noteId) {
-              onDropNote(noteId, null);
-            } else if (folderId) {
-              onDropFolder(folderId, null);
-            } else {
-              toast("Nothing to drop here", { variant: "info" });
-            }
-          }}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
-            selectedFolderId === null && !selectedNoteId
-              ? "bg-blue-600 text-white"
-              : isAllNotesDragOver
-              ? "bg-green-600 text-white"
-              : "text-gray-300 hover:bg-muted/50"
-          } justify-start text-left`}
+              {onToggleCollapse && (
+                <Button
+                  onClick={(): void => onToggleCollapse()}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
+                  aria-label="Collapse folder tree"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+              )}
+            </>
+          )}
         >
-          <Folder className="size-4" />
-          <span>All Notes</span>
-        </Button>
-        {onToggleFavorites && (
           <Button
-            onClick={(): void => onToggleFavorites()}
-            className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
-              isFavoritesActive
-                ? "bg-yellow-500/20 text-yellow-200"
-                : "text-gray-300 hover:bg-muted/50"
+            onClick={(): void => onSelectFolder(null)}
+            onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
+              e.preventDefault();
+              setIsAllNotesDragOver(true);
+            }}
+            onDragLeave={(): void => {
+              setIsAllNotesDragOver(false);
+            }}
+            onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
+              e.preventDefault();
+              setIsAllNotesDragOver(false);
+              const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || '';
+              const folderId = getFolderDragId(e.dataTransfer);
+              if (noteId) {
+                onDropNote(noteId, null);
+              } else if (folderId) {
+                onDropFolder(folderId, null);
+              } else {
+                toast('Nothing to drop here', { variant: 'info' });
+              }
+            }}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
+              selectedFolderId === null && !selectedNoteId
+                ? 'bg-blue-600 text-white'
+                : isAllNotesDragOver
+                  ? 'bg-green-600 text-white'
+                  : 'text-gray-300 hover:bg-muted/50'
             } justify-start text-left`}
           >
-            <Star className="size-4" />
-            <span>Favorites</span>
+            <Folder className="size-4" />
+            <span>All Notes</span>
           </Button>
-        )}
-        {undoHistory && undoHistory.length > 0 && (
-          <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
+          {onToggleFavorites && (
             <Button
-              onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
-              className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+              onClick={(): void => onToggleFavorites()}
+              className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
+                isFavoritesActive
+                  ? 'bg-yellow-500/20 text-yellow-200'
+                  : 'text-gray-300 hover:bg-muted/50'
+              } justify-start text-left`}
             >
-              <span>History</span>
-              {isHistoryExpanded ? (
-                <ChevronDown className="size-3" />
-              ) : (
-                <ChevronRight className="size-3" />
-              )}
+              <Star className="size-4" />
+              <span>Favorites</span>
             </Button>
-            {isHistoryExpanded && (
-              <div className="space-y-1">
-                {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
-                  <Button
-                    key={`${entry.label}-${index}`}
-                    type="button"
-                    onClick={(): void => onUndoAtIndex?.(index)}
-                    className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
-                  >
-                    <span className="truncate">{entry.label}</span>
-                    <span className="text-[10px] text-gray-500">Undo</span>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+          {undoHistory && undoHistory.length > 0 && (
+            <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
+              <Button
+                onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
+                className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+              >
+                <span>History</span>
+                {isHistoryExpanded ? (
+                  <ChevronDown className="size-3" />
+                ) : (
+                  <ChevronRight className="size-3" />
+                )}
+              </Button>
+              {isHistoryExpanded && (
+                <div className="space-y-1">
+                  {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
+                    <Button
+                      key={`${entry.label}-${index}`}
+                      type="button"
+                      onClick={(): void => onUndoAtIndex?.(index)}
+                      className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
+                    >
+                      <span className="truncate">{entry.label}</span>
+                      <span className="text-[10px] text-gray-500">Undo</span>
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </TreeHeader>
+      )}
+    >
 
       {showDropzone && (
         <div
           className={`mx-4 mt-2 mb-3 border-2 border-dashed rounded-lg transition-all ${
             isDropzoneActive
-              ? "border-blue-500 bg-blue-500/10"
-              : "border bg-gray-800/30"
-          } ${isImporting ? "opacity-50 pointer-events-none" : ""}`}
+              ? 'border-blue-500 bg-blue-500/10'
+              : 'border bg-gray-800/30'
+          } ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
           onDragOver={handleDropzoneDragOver}
           onDragLeave={handleDropzoneDragLeave}
           onDrop={(e: React.DragEvent<HTMLDivElement>): void => { void handleFolderImport(e); }}
@@ -477,13 +480,13 @@ function FolderTreeBase({
           <div className="p-4 text-center">
             <Upload
               className={`mx-auto mb-2 size-6 ${
-                isDropzoneActive ? "text-blue-400" : "text-gray-500"
+                isDropzoneActive ? 'text-blue-400' : 'text-gray-500'
               }`}
             />
             <p className="text-xs text-gray-400">
               {isImporting
-                ? "Importing folder structure..."
-                : "Drop folder(s) here to import"}
+                ? 'Importing folder structure...'
+                : 'Drop folder(s) here to import'}
             </p>
             <p className="text-[10px] text-gray-600 mt-1">
               Supports multiple folders · Markdown files (.md) will be converted to notes
@@ -501,9 +504,9 @@ function FolderTreeBase({
           <div className="space-y-0.5">{folderNodes}</div>
         )}
       </div>
-    </div>
+    </FolderTreePanel>
   );
 }
 
 export const FolderTree = React.memo(FolderTreeBase);
-FolderTree.displayName = "FolderTree";
+FolderTree.displayName = 'FolderTree';

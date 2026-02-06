@@ -1,35 +1,36 @@
+import type { RuntimePortValues } from '@/shared/types/ai-paths';
+import type { AiNode, Edge } from '@/shared/types/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+
+import { aiJobsApi, aiGenerationApi } from '../../../api';
 import {
   coerceInput,
   coerceInputArray,
   formatRuntimeValue,
   hashRuntimeValue,
   renderTemplate,
-} from "../../utils";
+} from '../../utils';
 import {
   buildPromptOutput,
   extractImageUrls,
   pollGraphJob,
   resolveJobProductId,
-} from "../utils";
-import type { RuntimePortValues } from "@/shared/types/ai-paths";
-import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
-import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { aiJobsApi, aiGenerationApi } from "../../../api";
+} from '../utils';
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const templateConfig = node.config?.template ?? { template: "" };
+  const templateConfig = node.config?.template ?? { template: '' };
   const data = { ...nodeInputs };
-  const currentValue = coerceInput(nodeInputs.value) ?? "";
+  const currentValue = coerceInput(nodeInputs.value) ?? '';
   const prompt = templateConfig.template
     ? renderTemplate(
-        templateConfig.template,
+      templateConfig.template,
         data as Record<string, unknown>,
         currentValue
-      )
+    )
     : Object.entries(nodeInputs as Record<string, unknown>)
-        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-        .join("\n");
-  return { prompt: prompt || "Prompt: (no template)" };
+      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+      .join('\n');
+  return { prompt: prompt || 'Prompt: (no template)' };
 };
 
 export const handlePrompt: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
@@ -70,25 +71,25 @@ export const handleModel: NodeHandler = async ({
   }
   const promptInputs = coerceInputArray(nodeInputs.prompt);
   const promptCandidates = edges
-    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
+    .filter((edge: Edge) => edge.to === node.id && edge.toPort === 'prompt')
     .map((edge: Edge): PromptCandidate => ({
       edge,
       fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
-      value: allOutputs[edge.from]?.[edge.fromPort ?? "prompt"],
+      value: allOutputs[edge.from]?.[edge.fromPort ?? 'prompt'],
     }))
-    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === "prompt");
+    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === 'prompt');
   const promptEdge = promptCandidates.find(
     (entry: PromptCandidate): boolean =>
       entry.value !== undefined &&
       entry.value !== null &&
-      (typeof entry.value !== "string" || entry.value.trim() !== "")
+      (typeof entry.value !== 'string' || entry.value.trim() !== '')
   );
   const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
-    if (typeof value === "string") return value.trim().length > 0;
+    if (typeof value === 'string') return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "object") return Object.keys(value).length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
     return true;
   };
   if (promptSourceNode) {
@@ -119,7 +120,7 @@ export const handleModel: NodeHandler = async ({
       .reverse()
       .find((value: unknown): boolean => {
         if (value === undefined || value === null) return false;
-        if (typeof value === "string") return Boolean(value.trim());
+        if (typeof value === 'string') return Boolean(value.trim());
         return true;
       });
   if (promptInput === undefined || promptInput === null) {
@@ -127,22 +128,22 @@ export const handleModel: NodeHandler = async ({
   }
   if (executed.ai.has(node.id)) return prevOutputs;
   const modelConfig = node.config?.model ?? {
-    modelId: "gpt-4o",
+    modelId: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 800,
-    vision: node.inputs.includes("images"),
+    vision: node.inputs.includes('images'),
   };
   const hasResultConsumers = edges.some(
     (edge: Edge): boolean =>
       edge.from === node.id &&
-      (edge.fromPort === "result" ||
-        (edge.fromPort === undefined && edge.toPort === "result"))
+      (edge.fromPort === 'result' ||
+        (edge.fromPort === undefined && edge.toPort === 'result'))
   );
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== node.id) return false;
-    if (edge.fromPort && edge.fromPort !== "jobId") return false;
+    if (edge.fromPort && edge.fromPort !== 'jobId') return false;
     const targetNode = nodeById?.get(edge.to) ?? nodes.find((item: AiNode) => item.id === edge.to);
-    return targetNode?.type === "poll";
+    return targetNode?.type === 'poll';
   });
   const waitPreference = modelConfig.waitForResult;
   let shouldWait = !hasPollConsumer && (waitPreference ?? hasResultConsumers);
@@ -153,22 +154,22 @@ export const handleModel: NodeHandler = async ({
     shouldWait = true;
   }
   const prompt =
-    typeof promptInput === "string"
+    typeof promptInput === 'string'
       ? promptInput.trim()
       : formatRuntimeValue(promptInput);
-  if (!prompt || prompt === "—") {
+  if (!prompt || prompt === '—') {
     return prevOutputs;
   }
   const imageEdge = edges
-    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === "images")
+    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === 'images')
     .map((edge: Edge): PromptCandidate => ({
       edge,
       fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
-      value: allOutputs[edge.from]?.[edge.fromPort ?? "images"],
+      value: allOutputs[edge.from]?.[edge.fromPort ?? 'images'],
     }))
     .find(
       (entry: PromptCandidate): boolean =>
-        entry.fromNode?.type === "prompt" &&
+        entry.fromNode?.type === 'prompt' &&
         entry.value !== undefined &&
         entry.value !== null
     );
@@ -192,7 +193,7 @@ export const handleModel: NodeHandler = async ({
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,
     vision: modelConfig.vision,
-    source: "ai_paths",
+    source: 'ai_paths',
     graph: {
       pathId: activePathId ?? undefined,
       nodeId: node.id,
@@ -205,14 +206,14 @@ export const handleModel: NodeHandler = async ({
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
   // or iterator auto-continue.
-  const prevJobId = typeof prevOutputs.jobId === "string" ? prevOutputs.jobId.trim() : "";
-  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>).payloadHash === "string"
+  const prevJobId = typeof prevOutputs.jobId === 'string' ? prevOutputs.jobId.trim() : '';
+  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
     ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
-    : "";
+    : '';
   const prevDebugPayloadHash =
     (prevOutputs as Record<string, unknown>).debugPayload !== undefined
       ? hashRuntimeValue((prevOutputs as Record<string, unknown>).debugPayload)
-      : "";
+      : '';
   if (prevJobId && (prevPayloadHash === payloadHash || prevDebugPayloadHash === payloadHash)) {
     return { ...prevOutputs, payloadHash };
   }
@@ -220,19 +221,19 @@ export const handleModel: NodeHandler = async ({
   try {
     const enqueueResult = await aiJobsApi.enqueue({
       productId,
-      type: "graph_model",
+      type: 'graph_model',
       payload,
     });
     if (!enqueueResult.ok) {
-      throw new Error(enqueueResult.error || "Failed to enqueue AI job.");
+      throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
     }
     enqueuedJobId = enqueueResult.data.jobId;
-    toast("AI model job queued.", { variant: "success" });
+    toast('AI model job queued.', { variant: 'success' });
     executed.ai.add(node.id);
     if (!shouldWait) {
       return {
         jobId: enqueueResult.data.jobId,
-        status: "queued",
+        status: 'queued',
         debugPayload: payload,
         payloadHash,
       };
@@ -241,22 +242,22 @@ export const handleModel: NodeHandler = async ({
     return {
       result,
       jobId: enqueueResult.data.jobId,
-      status: "completed",
+      status: 'completed',
       debugPayload: payload,
       payloadHash,
     };
   } catch (error) {
     reportAiPathsError(
       error,
-      { action: "graphModel", nodeId: node.id },
-      "AI model job failed:"
+      { action: 'graphModel', nodeId: node.id },
+      'AI model job failed:'
     );
-    toast("AI model job failed.", { variant: "error" });
+    toast('AI model job failed.', { variant: 'error' });
     executed.ai.add(node.id);
     return {
-      result: "",
+      result: '',
       jobId: enqueuedJobId,
-      status: "failed",
+      status: 'failed',
       debugPayload: payload,
       payloadHash,
     };
@@ -284,10 +285,10 @@ export const handleAiDescription: NodeHandler = async ({
     [];
   const imageUrls = rawImages
     .map((item: unknown) => {
-      if (typeof item === "string") return item;
-      if (item && typeof item === "object") {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
         const url = (item as { url?: string }).url;
-        if (typeof url === "string") return url;
+        if (typeof url === 'string') return url;
       }
       return null;
     })
@@ -303,17 +304,17 @@ export const handleAiDescription: NodeHandler = async ({
   try {
     const result = await aiGenerationApi.generateDescription(body);
     if (!result.ok) {
-      throw new Error("AI description generation failed.");
+      throw new Error('AI description generation failed.');
     }
     executed.ai.add(node.id);
-    return { description_en: result.data.description ?? "" };
+    return { description_en: result.data.description ?? '' };
   } catch (error) {
     reportAiPathsError(
       error,
-      { action: "aiDescription", nodeId: node.id },
-      "AI description failed:"
+      { action: 'aiDescription', nodeId: node.id },
+      'AI description failed:'
     );
-    return { description_en: "" };
+    return { description_en: '' };
   }
 };
 
@@ -335,8 +336,8 @@ export const handleDescriptionUpdater: NodeHandler = async ({
   if (!updateResult.ok) {
     reportAiPathsError(
       new Error(updateResult.error),
-      { action: "updateDescription", productId, nodeId: node.id },
-      "Failed to update description:"
+      { action: 'updateDescription', productId, nodeId: node.id },
+      'Failed to update description:'
     );
   }
   return { description_en: description };

@@ -1,4 +1,4 @@
-declare module "pdf-parse" {
+declare module 'pdf-parse' {
   export interface PdfParseResult {
     text: string;
     // pdf-parse returns more fields too, but you only use text

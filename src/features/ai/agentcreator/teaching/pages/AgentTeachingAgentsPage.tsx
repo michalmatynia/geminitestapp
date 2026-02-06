@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import React from "react";
-import { Input, ItemLibrary, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
-import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
-import { buildModelProfile } from "@/features/ai/chatbot/utils";
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
-import { useDeleteTeachingAgentMutation, useTeachingAgents, useTeachingCollections, useUpsertTeachingAgentMutation } from "../hooks/useAgentTeaching";
+import Link from 'next/link';
+import React from 'react';
+
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { buildModelProfile } from '@/features/ai/chatbot/utils';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from '@/shared/ui';
+
+import { useDeleteTeachingAgentMutation, useTeachingAgents, useTeachingCollections, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
@@ -37,17 +39,17 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
   const handleSave = async (draft: Partial<AgentTeachingAgentRecord>): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
-      toast("Agent name is required.", { variant: "error" });
+      toast('Agent name is required.', { variant: 'error' });
       return;
     }
     const llmModel = draft.llmModel?.trim();
     if (!llmModel) {
-      toast("LLM model is required.", { variant: "error" });
+      toast('LLM model is required.', { variant: 'error' });
       return;
     }
     const embeddingModel = draft.embeddingModel?.trim();
     if (!embeddingModel) {
-      toast("Embedding model is required.", { variant: "error" });
+      toast('Embedding model is required.', { variant: 'error' });
       return;
     }
 
@@ -60,19 +62,19 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       toast(
         `Embedding model mismatch: ${mismatchedCollections
           .map((c: AgentTeachingEmbeddingCollectionRecord) => c.name)
-          .join(", ")}`,
-        { variant: "error" }
+          .join(', ')}`,
+        { variant: 'error' }
       );
       return;
     }
 
     try {
-      const temperatureRaw = typeof draft.temperature === "number" ? draft.temperature : 0.2;
+      const temperatureRaw = typeof draft.temperature === 'number' ? draft.temperature : 0.2;
       const temperature = Number.isFinite(temperatureRaw) ? Math.max(0, Math.min(temperatureRaw, 2)) : 0.2;
-      const maxTokensRaw = typeof draft.maxTokens === "number" ? draft.maxTokens : 800;
+      const maxTokensRaw = typeof draft.maxTokens === 'number' ? draft.maxTokens : 800;
       const maxTokens = Number.isFinite(maxTokensRaw) ? Math.max(1, Math.round(maxTokensRaw)) : 800;
       const maxDocsPerCollectionRaw =
-        typeof draft.maxDocsPerCollection === "number" ? draft.maxDocsPerCollection : 400;
+        typeof draft.maxDocsPerCollection === 'number' ? draft.maxDocsPerCollection : 400;
       const maxDocsPerCollection = Number.isFinite(maxDocsPerCollectionRaw)
         ? Math.max(10, Math.min(Math.round(maxDocsPerCollectionRaw), 2000))
         : 400;
@@ -80,21 +82,21 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       await upsert({
         ...(draft.id ? { id: draft.id } : {}),
         name,
-        description: typeof draft.description === "string" ? draft.description : null,
+        description: typeof draft.description === 'string' ? draft.description : null,
         llmModel,
         embeddingModel,
-        systemPrompt: draft.systemPrompt ?? "",
+        systemPrompt: draft.systemPrompt ?? '',
         collectionIds: selectedCollectionIds,
         temperature,
         maxTokens,
-        retrievalTopK: typeof draft.retrievalTopK === "number" ? draft.retrievalTopK : 6,
+        retrievalTopK: typeof draft.retrievalTopK === 'number' ? draft.retrievalTopK : 6,
         retrievalMinScore:
-          typeof draft.retrievalMinScore === "number" ? draft.retrievalMinScore : 0.15,
+          typeof draft.retrievalMinScore === 'number' ? draft.retrievalMinScore : 0.15,
         maxDocsPerCollection,
       });
-      toast(draft.id ? "Learner agent updated." : "Learner agent created.", { variant: "success" });
+      toast(draft.id ? 'Learner agent updated.' : 'Learner agent created.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save learner agent.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to save learner agent.', { variant: 'error' });
       throw error;
     }
   };
@@ -102,9 +104,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
   const handleDelete = async (agent: AgentTeachingAgentRecord): Promise<void> => {
     try {
       await remove({ id: agent.id });
-      toast("Learner agent deleted.", { variant: "success" });
+      toast('Learner agent deleted.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to delete learner agent.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', { variant: 'error' });
       throw error;
     }
   };
@@ -127,11 +129,11 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         </Link>
       )}
       buildDefaultItem={() => ({
-        name: "",
-        description: "",
-        llmModel: chatModels[0] ?? "",
-        embeddingModel: embeddingModels[0] ?? "",
-        systemPrompt: "",
+        name: '',
+        description: '',
+        llmModel: chatModels[0] ?? '',
+        embeddingModel: embeddingModels[0] ?? '',
+        systemPrompt: '',
         collectionIds: [],
         temperature: 0.2,
         maxTokens: 800,
@@ -140,31 +142,22 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         maxDocsPerCollection: 400,
       })}
       renderItemTags={(agent: AgentTeachingAgentRecord) => [
-        `LLM: ${agent.llmModel || "—"}`,
-        `Embed: ${agent.embeddingModel || "—"}`,
+        `LLM: ${agent.llmModel || '—'}`,
+        `Embed: ${agent.embeddingModel || '—'}`,
         `KB: ${(agent.collectionIds ?? []).length}`,
-        `Temp: ${(typeof agent.temperature === "number" ? agent.temperature : 0.2).toFixed(2)}`,
+        `Temp: ${(typeof agent.temperature === 'number' ? agent.temperature : 0.2).toFixed(2)}`,
       ]}
       renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange: (changes: Partial<AgentTeachingAgentRecord>) => void) => (
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>LLM model</Label>
-              <Select
-                value={draft.llmModel ?? ""}
+              <UnifiedSelect
+                value={draft.llmModel ?? ''}
                 onValueChange={(value: string) => onChange({ llmModel: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select LLM model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chatModels.map((model: string) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={chatModels.map((model: string) => ({ value: model, label: model }))}
+                placeholder="Select LLM model"
+              />
               <div className="text-[11px] text-gray-500">
                 Model used to answer questions.
               </div>
@@ -172,21 +165,12 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
 
             <div className="space-y-2">
               <Label>Embedding model</Label>
-              <Select
-                value={draft.embeddingModel ?? ""}
+              <UnifiedSelect
+                value={draft.embeddingModel ?? ''}
                 onValueChange={(value: string) => onChange({ embeddingModel: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select embedding model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {embeddingModels.map((model: string) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
+                placeholder="Select embedding model"
+              />
               <div className="text-[11px] text-gray-500">
                 Must match the embedding collections you attach.
               </div>
@@ -196,7 +180,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
           <div className="space-y-2">
             <Label>System prompt</Label>
             <Textarea
-              value={draft.systemPrompt ?? ""}
+              value={draft.systemPrompt ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ systemPrompt: event.target.value })}
               placeholder="Optional instructions (tone, scope, rules)..."
               className="min-h-[120px]"
@@ -302,8 +286,8 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                     <label
                       key={collection.id}
                       className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
-                        checked ? "border-emerald-500/40 bg-emerald-500/10" : "border-border bg-card/40"
-                      } ${sameModel ? "" : "opacity-60"}`}
+                        checked ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-border bg-card/40'
+                      } ${sameModel ? '' : 'opacity-60'}`}
                       title={
                         sameModel
                           ? undefined
@@ -335,7 +319,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
             )}
             {draft.collectionIds && draft.collectionIds.length > 0 && (
               <div className="text-[11px] text-gray-500">
-                Connected: {draft.collectionIds.map(resolveCollectionName).join(", ")}
+                Connected: {draft.collectionIds.map(resolveCollectionName).join(', ')}
               </div>
             )}
           </div>

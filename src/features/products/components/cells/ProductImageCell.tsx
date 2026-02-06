@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { MissingImagePlaceholder } from "@/shared/ui";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import Image from 'next/image';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { MissingImagePlaceholder } from '@/shared/ui';
 
 interface ProductImageCellProps {
   imageUrl: string | null;
@@ -38,9 +39,9 @@ export const ProductImageCell = React.memo(function ProductImageCell({
       setViewport({ w: window.innerWidth, h: window.innerHeight });
     };
     updateViewport();
-    window.addEventListener("resize", updateViewport);
+    window.addEventListener('resize', updateViewport);
     return (): void => {
-      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener('resize', updateViewport);
       if (rafRef.current !== null) {
         window.cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -66,7 +67,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
         width={64}
         height={64}
         className="size-16 rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80"
-        style={{ width: "auto", height: "auto" }}
+        style={{ width: 'auto', height: 'auto' }}
       />
 
       {showPreview && (
@@ -102,7 +103,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
               width={PREVIEW_SIZE}
               height={PREVIEW_SIZE}
               className="rounded-lg object-cover"
-              style={{ width: "auto", height: "auto" }}
+              style={{ width: 'auto', height: 'auto' }}
               priority
               quality={90}
             />

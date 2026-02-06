@@ -1,7 +1,8 @@
-import "server-only";
+import 'server-only';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentMetadata } from "@/shared/types/agent-teaching";
-import { listEmbeddingDocumentsForRetrieval } from "./repository";
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentMetadata } from '@/shared/types/agent-teaching';
+
+import { listEmbeddingDocumentsForRetrieval } from './repository';
 
 type ScoredDocument = {
   documentId: string;

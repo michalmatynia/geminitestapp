@@ -1,13 +1,15 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
+import { Prisma, type Theme } from '@prisma/client';
+
+import prisma from '@/shared/lib/db/prisma';
 import type {
   ThemeRecord,
   ThemeCreateInput,
   ThemeUpdateInput,
-} from "@/shared/types/notes";
-import { Prisma, type Theme } from "@prisma/client";
-import { getOrCreateDefaultNotebook } from "./notebook-impl";
+} from '@/shared/types/notes';
+
+import { getOrCreateDefaultNotebook } from './notebook-impl';
 
 export const getAllThemes = async (
   notebookId?: string | null
@@ -16,7 +18,7 @@ export const getAllThemes = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const themes = await prisma.theme.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: { name: "asc" },
+    orderBy: { name: 'asc' },
   });
   return themes.map((theme: Theme) => ({
     ...theme,

@@ -1,6 +1,7 @@
+import { DtoBase, NamedDto } from '../types/base';
+
 // Notes App DTOs
-export interface NoteDto {
-  id: string;
+export interface NoteDto extends DtoBase {
   title: string;
   content: string;
   notebookId: string | null;
@@ -8,34 +9,19 @@ export interface NoteDto {
   tags: string[];
   pinned: boolean;
   archived: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface NotebookDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface NotebookDto extends NamedDto {
   color: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface NoteCategoryDto {
-  id: string;
-  name: string;
+export interface NoteCategoryDto extends NamedDto {
   color: string | null;
   parentId: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface NoteTagDto {
-  id: string;
-  name: string;
+export interface NoteTagDto extends NamedDto {
   color: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateNoteDto {

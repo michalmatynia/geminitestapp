@@ -1,25 +1,58 @@
-"use client";
+'use client';
 
-import { Button, Input, Label } from "@/shared/ui";
-import Link from "next/link";
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
-import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useState, Suspense, useEffect } from 'react';
+
+import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from '@/features/auth/utils/auth-user-pages';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { Button, Input, Label, Alert } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 
 
 function SignInPageLoader(): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const [isClient, setIsClient] = useState(false);
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const settingsQuery = useSettingsMap({ enabled: isClient });
+
+  if (!isClient || settingsQuery.isLoading || !settingsQuery.data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
-        <div className="text-gray-400">Loading...</div>
+        <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg animate-pulse">
+          <div className="space-y-2">
+            <div className="h-6 w-32 rounded bg-gray-800" />
+            <div className="h-4 w-48 rounded bg-gray-800" />
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="h-3 w-16 rounded bg-gray-800" />
+              <div className="h-10 w-full rounded bg-gray-800" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-20 rounded bg-gray-800" />
+              <div className="h-10 w-full rounded bg-gray-800" />
+            </div>
+            <div className="h-10 w-full rounded bg-gray-800" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span className="h-px flex-1 bg-gray-800" />
+              <span className="h-3 w-10 rounded bg-gray-800" />
+              <span className="h-px flex-1 bg-gray-800" />
+            </div>
+            <div className="h-9 w-full rounded bg-gray-800" />
+            <div className="h-9 w-full rounded bg-gray-800" />
+          </div>
+          <div className="h-3 w-40 rounded bg-gray-800" />
+        </div>
       </div>
     );
   }
@@ -35,17 +68,17 @@ function SignInPageLoader(): React.JSX.Element {
 
 function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.JSX.Element {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const error = searchParams.get('error');
   const errorMessage =
-    error === "AccountDisabled"
-      ? "Account is disabled or banned."
+    error === 'AccountDisabled'
+      ? 'Account is disabled or banned.'
       : error
-      ? "Sign-in failed. Please check your credentials and try again."
-      : null;
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [recoveryCode, setRecoveryCode] = useState("");
+        ? 'Sign-in failed. Please check your credentials and try again.'
+        : null;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -61,7 +94,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
       try {
         const { ok, payload } = await verifyCredentialsMutation.mutateAsync({ email, password });
         if (!ok || !payload.ok) {
-          setMessage(payload.message ?? "Sign-in failed. Check your credentials.");
+          setMessage(payload.message ?? 'Sign-in failed. Check your credentials.');
           setIsSubmitting(false);
           return;
         }
@@ -74,17 +107,17 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         }
 
         try {
-          await signIn("credentials", {
+          await signIn('credentials', {
             email,
             password,
             challengeId: payload.challengeId ?? undefined,
-            callbackUrl: "/admin",
+            callbackUrl: '/admin',
           });
         } catch (error) {
           const message =
             error instanceof Error
               ? error.message
-              : "Sign-in failed. Please try again.";
+              : 'Sign-in failed. Please try again.';
           setMessage(message);
         } finally {
           setIsSubmitting(false);
@@ -94,7 +127,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         const message =
           error instanceof Error
             ? error.message
-            : "Unable to verify credentials. Check your connection.";
+            : 'Unable to verify credentials. Check your connection.';
         setMessage(message);
         setIsSubmitting(false);
         return;
@@ -102,19 +135,19 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
     }
 
     try {
-      await signIn("credentials", {
+      await signIn('credentials', {
         email,
         password,
         otp,
         recoveryCode,
         challengeId: challengeId ?? undefined,
-        callbackUrl: "/admin",
+        callbackUrl: '/admin',
       });
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Sign-in failed. Please try again.";
+          : 'Sign-in failed. Please try again.';
       setMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -131,14 +164,14 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
           </p>
         </div>
         {message ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {message}
-          </div>
+          </Alert>
         ) : null}
         {errorMessage ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {errorMessage}
-          </div>
+          </Alert>
         ) : null}
         <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">
@@ -202,7 +235,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Signing in..." : mfaRequired ? "Verify & sign in" : "Sign in"}
+            {isSubmitting ? 'Signing in...' : mfaRequired ? 'Verify & sign in' : 'Sign in'}
           </Button>
         </form>
         {allowSocialLogin ? (
@@ -215,21 +248,21 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
             <Button
               className="w-full rounded-md border px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
-              onClick={() => void signIn("google", { callbackUrl: "/admin" })}
+              onClick={() => void signIn('google', { callbackUrl: '/admin' })}
             >
               Continue with Google
             </Button>
             <Button
               className="w-full rounded-md border px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
-              onClick={() => void signIn("facebook", { callbackUrl: "/admin" })}
+              onClick={() => void signIn('facebook', { callbackUrl: '/admin' })}
             >
               Continue with Facebook
             </Button>
           </div>
         ) : null}
         <p className="text-xs text-gray-400">
-          No account?{" "}
+          No account?{' '}
           <Link href="/auth/register" className="text-white hover:underline">
             Create one
           </Link>

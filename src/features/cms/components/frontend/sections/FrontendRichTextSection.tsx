@@ -1,7 +1,8 @@
 
-import type { BlockInstance } from "../../../types/page-builder";
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendRichTextSectionProps {
   settings: Record<string, unknown>;
@@ -15,7 +16,7 @@ export function FrontendRichTextSection({ settings, blocks, colorSchemes, layout
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-3xl' })}>
         <div className="space-y-4">
           {blocks.map((block: BlockInstance) => (
             <FrontendBlockRenderer key={block.id} block={block} />

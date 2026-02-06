@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import { useState } from "react";
-import { useFormContext } from "react-hook-form";
-import { useProductFormContext } from "@/features/products/context/ProductFormContext";
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { cn } from "@/shared/utils";
-import { ProductFormData } from "@/features/products/types";
+import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { ProductFormData } from '@/features/products/types';
+import { Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -16,22 +16,22 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
   const { register, getValues, watch } = useFormContext<ProductFormData>();
 
-  const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">((): "ean" | "gtin" | "asin" => {
+  const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
-    if (vals.asin) return "asin";
-    if (vals.gtin) return "gtin";
-    return "ean";
+    if (vals.asin) return 'asin';
+    if (vals.gtin) return 'gtin';
+    return 'ean';
   });
   const allValues = watch();
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {!hasCatalogs && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.
-        </div>
+        <FormSection variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 text-amber-100">
+          <p className="text-sm">Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.</p>
+        </FormSection>
       )}
 
       {hasCatalogs && !languagesReady && (
@@ -59,9 +59,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
       )}
 
       {hasCatalogs && languagesReady && (
-        <>
-          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
-            <TabsList>
+        <FormSection>
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : 'english-name'} className="w-full">
+            <TabsList className="mb-4">
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
                 const fieldValue = allValues[fieldName] as string | undefined;
@@ -71,38 +71,34 @@ export default function ProductFormGeneral(): React.JSX.Element {
                     value={`${language.name.toLowerCase()}-name`}
                     className={cn(
                       !fieldValue?.trim()
-                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                        ? 'text-muted-foreground/90 data-[state=active]:text-muted-foreground/90'
+                        : 'text-foreground data-[state=inactive]:text-foreground font-medium'
                     )}
                   >
-                    {language.name} Name
+                    {language.name}
                   </TabsTrigger>
                 );
               })}
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
-              const error = errors[fieldName];
+              const error = errors[fieldName]?.message;
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
-                  <Label htmlFor={fieldName}>{language.name} Name</Label>
-                  <Input
-                    id={fieldName}
-                    {...register(fieldName)}
-                    aria-invalid={error ? "true" : "false"}
-                  />
-                  {error && (
-                    <p className="text-red-500 text-sm mt-1" role="alert">
-                      {error.message}
-                    </p>
-                  )}
+                  <FormField label={`${language.name} Name`} error={error} id={fieldName}>
+                    <Input
+                      id={fieldName}
+                      {...register(fieldName)}
+                      placeholder={`Enter product name in ${language.name}`}
+                    />
+                  </FormField>
                 </TabsContent>
               );
             })}
           </Tabs>
 
-          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
-            <TabsList>
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : 'english-description'} className="w-full mt-4">
+            <TabsList className="mb-4">
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
                 const fieldValue = allValues[fieldName] as string | undefined;
@@ -112,162 +108,128 @@ export default function ProductFormGeneral(): React.JSX.Element {
                     value={`${language.name.toLowerCase()}-description`}
                     className={cn(
                       !fieldValue?.trim()
-                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                        ? 'text-muted-foreground/90 data-[state=active]:text-muted-foreground/90'
+                        : 'text-foreground data-[state=inactive]:text-foreground font-medium'
                     )}
                   >
-                    {language.name} Description
+                    {language.name}
                   </TabsTrigger>
                 );
               })}
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
-              const error = errors[fieldName];
+              const error = errors[fieldName]?.message;
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
-                  <Label htmlFor={fieldName}>{language.name} Description</Label>
-                  <Textarea
-                    id={fieldName}
-                    {...register(fieldName)}
-                    aria-invalid={error ? "true" : "false"}
-                  />
-                  {error && (
-                    <p className="text-red-500 text-sm mt-1" role="alert">
-                      {error.message}
-                    </p>
-                  )}
+                  <FormField label={`${language.name} Description`} error={error} id={fieldName}>
+                    <Textarea
+                      id={fieldName}
+                      {...register(fieldName)}
+                      placeholder={`Enter product description in ${language.name}`}
+                      rows={4}
+                    />
+                  </FormField>
                 </TabsContent>
               );
             })}
           </Tabs>
-        </>
+        </FormSection>
       )}
 
-      <div className="mb-4 flex flex-col gap-4 md:flex-row">
-        <div className="w-full md:w-1/3">
-          <Label htmlFor="sku">SKU *</Label>
+      <FormSection title="Identifiers" gridClassName="md:grid-cols-2">
+        <FormField label="SKU" required error={errors.sku?.message} id="sku">
           <Input
             id="sku"
-            {...register("sku")}
-            aria-invalid={errors.sku ? "true" : "false"}
-            aria-required="true"
+            {...register('sku')}
+            placeholder="Unique stock keeping unit"
           />
-          {errors.sku && (
-            <p className="text-red-500 text-sm mt-1" role="alert">
-              {errors.sku.message}
-            </p>
-          )}
-        </div>
-        <div className="flex-1">
-          <Label>Product Identifier</Label>
+        </FormField>
+        
+        <FormField label="Product Identifier" description="EAN, GTIN or ASIN code.">
           <div className="flex gap-2">
-            <Select
+            <UnifiedSelect
               value={identifierType}
               onValueChange={(value: string): void =>
-                setIdentifierType(value as "ean" | "gtin" | "asin")
+                setIdentifierType(value as 'ean' | 'gtin' | 'asin')
               }
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ean">EAN</SelectItem>
-                <SelectItem value="gtin">GTIN</SelectItem>
-                <SelectItem value="asin">ASIN</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'ean', label: 'EAN' },
+                { value: 'gtin', label: 'GTIN' },
+                { value: 'asin', label: 'ASIN' },
+              ]}
+              className="w-[100px]"
+            />
             <Input
               id={identifierType}
               {...register(identifierType)}
               placeholder={`Enter ${identifierType.toUpperCase()}`}
             />
           </div>
-        </div>
-      </div>
+        </FormField>
+      </FormSection>
 
-      <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="space-y-1">
-          <Label htmlFor="weight">Weight</Label>
-          <div className="relative max-w-[160px]">
+      <FormSection title="Dimensions & Weight" gridClassName="grid-cols-2 md:grid-cols-4">
+        <FormField label="Weight (kg)" error={errors.weight?.message} id="weight">
+          <div className="relative">
             <Input
               id="weight"
               type="number"
-              className="pr-10"
-              {...register("weight", { valueAsNumber: true })}
-              aria-invalid={errors.weight ? "true" : "false"}
+              step="0.01"
+              className="pr-8"
+              {...register('weight', { valueAsNumber: true })}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-              kg
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500">
+              KG
             </span>
           </div>
-          {errors.weight && (
-            <p className="text-red-500 text-sm" role="alert">
-              {errors.weight.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="sizeLength">Length</Label>
-          <div className="relative max-w-[160px]">
+        </FormField>
+
+        <FormField label="Length (cm)" error={errors.sizeLength?.message} id="sizeLength">
+          <div className="relative">
             <Input
               id="sizeLength"
               type="number"
-              className="pr-10"
-              {...register("sizeLength", { valueAsNumber: true })}
-              aria-invalid={errors.sizeLength ? "true" : "false"}
+              step="0.1"
+              className="pr-8"
+              {...register('sizeLength', { valueAsNumber: true })}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-              cm
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500">
+              CM
             </span>
           </div>
-          {errors.sizeLength && (
-            <p className="text-red-500 text-sm" role="alert">
-              {errors.sizeLength.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="sizeWidth">Width</Label>
-          <div className="relative max-w-[160px]">
+        </FormField>
+
+        <FormField label="Width (cm)" error={errors.sizeWidth?.message} id="sizeWidth">
+          <div className="relative">
             <Input
               id="sizeWidth"
               type="number"
-              className="pr-10"
-              {...register("sizeWidth", { valueAsNumber: true })}
-              aria-invalid={errors.sizeWidth ? "true" : "false"}
+              step="0.1"
+              className="pr-8"
+              {...register('sizeWidth', { valueAsNumber: true })}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-              cm
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500">
+              CM
             </span>
           </div>
-          {errors.sizeWidth && (
-            <p className="text-red-500 text-sm" role="alert">
-              {errors.sizeWidth.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="length">Height</Label>
-          <div className="relative max-w-[160px]">
+        </FormField>
+
+        <FormField label="Height (cm)" error={errors.length?.message} id="length">
+          <div className="relative">
             <Input
               id="length"
               type="number"
-              className="pr-10"
-              {...register("length", { valueAsNumber: true })}
-              aria-invalid={errors.length ? "true" : "false"}
+              step="0.1"
+              className="pr-8"
+              {...register('length', { valueAsNumber: true })}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-              cm
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500">
+              CM
             </span>
           </div>
-          {errors.length && (
-            <p className="text-red-500 text-sm" role="alert">
-              {errors.length.message}
-            </p>
-          )}
-        </div>
-      </div>
+        </FormField>
+      </FormSection>
     </div>
   );
 }

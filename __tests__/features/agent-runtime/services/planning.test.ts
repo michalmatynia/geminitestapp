@@ -1,11 +1,12 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
-import { buildPlanWithLLM, evaluatePlanWithLLM } from "@/features/ai/agent-runtime/planning/llm";
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+import { buildPlanWithLLM, evaluatePlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
 
 // Mock fetch for Ollama inside tests
 // global.fetch = vi.fn();
 
 // Mock prisma used in logging
-vi.mock("@/shared/lib/db/prisma", () => ({
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     agentAuditLog: {
       create: vi.fn(),
@@ -13,20 +14,20 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-describe("Agent Runtime - Planning", () => {
+describe('Agent Runtime - Planning', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
   });
 
-  describe("buildPlanWithLLM", () => {
-    it("should build a plan from LLM response (Happy Path)", async () => {
+  describe('buildPlanWithLLM', () => {
+    it('should build a plan from LLM response (Happy Path)', async () => {
       const mockPlan = {
-        decision: { action: "tool", toolName: "playwright", reason: "Need to browse" },
+        decision: { action: 'tool', toolName: 'playwright', reason: 'Need to browse' },
         steps: [
-          { title: "Step 1", tool: "playwright", expectedObservation: "Obs 1" },
+          { title: 'Step 1', tool: 'playwright', expectedObservation: 'Obs 1' },
         ],
-        summary: "Plan summary",
+        summary: 'Plan summary',
       };
       
       const mockDedupe = { steps: mockPlan.steps };
@@ -45,48 +46,48 @@ describe("Agent Runtime - Planning", () => {
           json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockDedupe) } }),
         })
         .mockResolvedValueOnce({
-            ok: true,
-            json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockGuard) } }),
+          ok: true,
+          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockGuard) } }),
         })
         .mockResolvedValueOnce({
-            ok: true,
-            json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockEval) } }),
+          ok: true,
+          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockEval) } }),
         })
         .mockResolvedValueOnce({
-            ok: true,
-            json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockOptimize) } }),
+          ok: true,
+          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockOptimize) } }),
         });
 
       const result = await buildPlanWithLLM({
-        prompt: "Search for X",
+        prompt: 'Search for X',
         memory: [],
-        model: "llama3",
+        model: 'llama3',
       });
 
-      expect(result.source).toBe("llm");
+      expect(result.source).toBe('llm');
       expect(result.steps).toHaveLength(1);
-      expect(result.steps[0]?.title).toBe("Step 1");
-      expect(result.decision.action).toBe("tool");
+      expect(result.steps[0]?.title).toBe('Step 1');
+      expect(result.decision.action).toBe('tool');
     });
 
-    it("should fallback to heuristic on LLM failure", async () => {
-      (global.fetch as any).mockRejectedValue(new Error("LLM Down"));
+    it('should fallback to heuristic on LLM failure', async () => {
+      (global.fetch as any).mockRejectedValue(new Error('LLM Down'));
 
       const result = await buildPlanWithLLM({
-        prompt: "Search for X",
+        prompt: 'Search for X',
         memory: [],
-        model: "llama3",
+        model: 'llama3',
       });
 
-      expect(result.source).toBe("heuristic");
+      expect(result.source).toBe('heuristic');
       expect(result.steps).not.toHaveLength(0); // Should have fallback steps
       expect(result.decision).toBeDefined();
     });
 
-     it("should fallback to heuristic on Invalid JSON", async () => {
-       const mockResponse = {
+    it('should fallback to heuristic on Invalid JSON', async () => {
+      const mockResponse = {
         message: {
-          content: "Not JSON",
+          content: 'Not JSON',
         },
       };
       (global.fetch as any).mockResolvedValue({
@@ -95,18 +96,18 @@ describe("Agent Runtime - Planning", () => {
       });
 
       const result = await buildPlanWithLLM({
-        prompt: "Search for X",
+        prompt: 'Search for X',
         memory: [],
-        model: "llama3",
+        model: 'llama3',
       });
 
-      expect(result.source).toBe("heuristic");
+      expect(result.source).toBe('heuristic');
     });
   });
 
-  describe("evaluatePlanWithLLM", () => {
-    it("should return evaluation score", async () => {
-       const mockEval = {
+  describe('evaluatePlanWithLLM', () => {
+    it('should return evaluation score', async () => {
+      const mockEval = {
         score: 85,
         issues: [],
         revisedSteps: [],
@@ -124,8 +125,8 @@ describe("Agent Runtime - Planning", () => {
       });
 
       const result = await evaluatePlanWithLLM({
-        prompt: "Task",
-        model: "llama3",
+        prompt: 'Task',
+        model: 'llama3',
         memory: [],
         steps: [],
         hierarchy: null,

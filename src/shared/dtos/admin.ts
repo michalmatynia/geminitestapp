@@ -1,3 +1,5 @@
+import { DtoBase } from '../types/base';
+
 // Admin DTOs
 export interface AdminDashboardStatsDto {
   totalUsers: number;
@@ -7,12 +9,10 @@ export interface AdminDashboardStatsDto {
   recentActivity: AdminActivityDto[];
 }
 
-export interface AdminActivityDto {
-  id: string;
+export interface AdminActivityDto extends DtoBase {
   type: string;
   description: string;
   userId: string | null;
-  timestamp: string;
   metadata: Record<string, unknown>;
 }
 
@@ -25,12 +25,10 @@ export interface AdminSystemInfoDto {
   databaseStatus: 'healthy' | 'warning' | 'error';
 }
 
-export interface AdminLogDto {
-  id: string;
+export interface AdminLogDto extends DtoBase {
   level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   source: string;
-  timestamp: string;
   metadata: Record<string, unknown> | null;
 }
 

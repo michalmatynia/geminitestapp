@@ -1,15 +1,17 @@
-"use client";
+'use client';
 
-import { useToast, Button, Input } from "@/shared/ui";
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Folder, FolderOpen, ChevronRight, ChevronDown, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
+import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import type { CategoryWithChildren } from "@/shared/types/notes";
-import type { FolderNodeProps } from "@/features/foldertree/types/folder-tree-ui";
-import { NoteItem } from "./NoteItem";
+import type { FolderNodeProps } from '@/features/foldertree/types/folder-tree-ui';
+import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { NoteRecord } from '@/shared/types/notes';
+import type { TreeContextMenuItem } from '@/shared/ui';
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot } from '@/shared/ui';
+import { useToast, Input, TreeContextMenu } from '@/shared/ui';
+import { getFolderDragId, getNoteDragId, hasDragType, resolveVerticalDropPosition, setFolderDragData, DRAG_KEYS } from '@/shared/utils/drag-drop';
 
-
-import type { NoteRecord } from "@/shared/types/notes";
+import { NoteItem } from './NoteItem';
 
 export const FolderNode = React.memo(function FolderNode({
   folder,
@@ -46,7 +48,7 @@ export const FolderNode = React.memo(function FolderNode({
 }: FolderNodeProps): React.JSX.Element {
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = useState(false);
-  const [reorderHover, setReorderHover] = useState<"above" | "below" | null>(null);
+  const [reorderHover, setReorderHover] = useState<'above' | 'below' | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(folder.name);
   const hasChildren = folder.children.length > 0;
@@ -54,6 +56,16 @@ export const FolderNode = React.memo(function FolderNode({
   const isExpanded = expandedFolderIds.has(folder.id);
   const isSelected = selectedFolderId === folder.id && !selectedNoteId;
   const isRenaming = renamingFolderId === folder.id;
+  const contextMenuItems = useMemo<TreeContextMenuItem[]>(
+    () => [
+      { id: 'new-note', label: 'New note', icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folder.id) },
+      { id: 'new-folder', label: 'New folder', icon: <FolderPlus className="size-3.5" />, onSelect: (): void => onCreateSubfolder(folder.id) },
+      { id: 'rename', label: 'Rename', icon: <Edit2 className="size-3.5" />, onSelect: (): void => onStartRename(folder.id) },
+      { id: 'separator-1', separator: true },
+      { id: 'delete', label: 'Delete', icon: <Trash2 className="size-3.5" />, tone: 'danger', onSelect: (): void => onDelete(folder.id) },
+    ],
+    [folder.id, onCreateNote, onCreateSubfolder, onStartRename, onDelete]
+  );
 
   // Focus input when entering rename mode
   useEffect(() => {
@@ -74,10 +86,10 @@ export const FolderNode = React.memo(function FolderNode({
   };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent): void => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleRenameSubmit();
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       e.preventDefault();
       renameValueRef.current = folder.name;
       if (renameInputRef.current) {
@@ -112,35 +124,31 @@ export const FolderNode = React.memo(function FolderNode({
   }, [draggedFolderId, folder.id, allFolders]);
 
   const showReorderZones = Boolean(onReorderFolder) && Boolean(draggedFolderId) && draggedFolderId !== folder.id;
-  const resolveReorderPosition = (clientY: number, rect: DOMRect): "before" | "after" | null => {
-    const threshold = Math.max(10, rect.height * 0.4);
-    if (clientY - rect.top <= threshold) return "before";
-    if (rect.bottom - clientY <= threshold) return "after";
-    return null;
-  };
+  const resolveReorderPosition = (clientY: number, rect: DOMRect): 'before' | 'after' | null =>
+    resolveVerticalDropPosition(clientY, rect, { thresholdRatio: 0.4, thresholdPx: 10 });
 
-  const handleReorderDragOver = (position: "above" | "below") => (e: React.DragEvent<HTMLDivElement>): void => {
+  const handleReorderDragOver = (position: 'above' | 'below') => (e: React.DragEvent<HTMLDivElement>): void => {
     if (!draggedFolderId) return;
     e.preventDefault();
     e.stopPropagation();
     if (!canDropHere) return;
     setReorderHover(position);
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleReorderDragLeave = (position: "above" | "below") => (): void => {
+  const handleReorderDragLeave = (position: 'above' | 'below') => (): void => {
     if (reorderHover === position) {
       setReorderHover(null);
     }
   };
 
-  const handleReorderDrop = (position: "before" | "after") => (e: React.DragEvent<HTMLDivElement>): void => {
+  const handleReorderDrop = (position: 'before' | 'after') => (e: React.DragEvent<HTMLDivElement>): void => {
     if (!draggedFolderId) return;
     e.preventDefault();
     e.stopPropagation();
     setReorderHover(null);
     if (!canDropHere) {
-      toast("Can't move a folder into itself", { variant: "info" });
+      toast('Can\'t move a folder into itself', { variant: 'info' });
       return;
     }
     onReorderFolder?.(draggedFolderId, folder.id, position);
@@ -154,7 +162,10 @@ export const FolderNode = React.memo(function FolderNode({
   return (
     <div
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!draggedNoteId) return;
+        const hasNotePayload =
+          Boolean(draggedNoteId) ||
+          hasDragType(e.dataTransfer, [DRAG_KEYS.NOTE_ID, DRAG_KEYS.TEXT]);
+        if (!hasNotePayload) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(true);
@@ -163,210 +174,204 @@ export const FolderNode = React.memo(function FolderNode({
         setIsDragOver(false);
       }}
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!draggedNoteId) return;
+        const noteId = getNoteDragId(e.dataTransfer, draggedNoteId);
+        if (!noteId) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
-        if (draggedNoteId === folder.id) {
-          toast("Can't link a note to itself", { variant: "info" });
+        if (noteId === folder.id) {
+          toast('Can\'t link a note to itself', { variant: 'info' });
           return;
         }
-        onRelateNotes(draggedNoteId, folder.id);
+        onRelateNotes(noteId, folder.id);
       }}
     >
       {showReorderZones && (
         <div
-          onDragOver={handleReorderDragOver("above")}
-          onDragLeave={handleReorderDragLeave("above")}
-          onDrop={handleReorderDrop("before")}
+          onDragOver={handleReorderDragOver('above')}
+          onDragLeave={handleReorderDragLeave('above')}
+          onDrop={handleReorderDrop('before')}
           className={`h-1 rounded transition ${
-            reorderHover === "above" ? "bg-blue-500/80" : "bg-transparent"
+            reorderHover === 'above' ? 'bg-blue-500/80' : 'bg-transparent'
           }`}
           style={{ marginLeft: `${level * 16 + 8}px` }}
         />
       )}
-      <div
-        draggable
-        onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.stopPropagation();
-          e.dataTransfer.setData("folderId", folder.id);
-          e.dataTransfer.effectAllowed = "move";
-          onDragStartProp(folder.id);
-          const target = e.currentTarget as HTMLElement;
-          target.style.opacity = "0.5";
-        }}
-        onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
-          const target = e.currentTarget as HTMLElement;
-          target.style.opacity = "1";
-          setReorderHover(null);
-          onDragEndProp();
-        }}
-        className={`group relative flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-          isSelected
-            ? "bg-blue-600 text-white"
-            : isDragOver && canDropHere
-            ? "bg-green-600 text-white"
-            : "text-gray-300 hover:bg-muted/50"
-        }`}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
-        onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (draggedFolderId) {
-            if (!canDropHere) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const position = resolveReorderPosition(e.clientY, rect);
-            setReorderHover(position === "before" ? "above" : position === "after" ? "below" : null);
-            setIsDragOver(!position);
-            e.dataTransfer.dropEffect = "move";
-            return;
-          }
-          if (canDropHere) setIsDragOver(true);
-        }}
-        onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.stopPropagation();
-          setIsDragOver(false);
-          if (draggedFolderId) {
+      <TreeContextMenu items={contextMenuItems}>
+        <TreeRow
+          draggable
+          tone="primary"
+          selected={isSelected}
+          dragOver={isDragOver && canDropHere}
+          dragOverClassName="bg-green-600 text-white"
+          depth={level}
+          className="cursor-pointer active:cursor-grabbing gap-1"
+          onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.stopPropagation();
+            setFolderDragData(e.dataTransfer, folder.id);
+            onDragStartProp(folder.id);
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = '0.5';
+          }}
+          onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = '1';
             setReorderHover(null);
-          }
-        }}
-        onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          setReorderHover(null);
-
-          const noteId =
-            e.dataTransfer.getData("noteId") ||
-            e.dataTransfer.getData("text/plain") ||
-            draggedNoteId ||
-            "";
-          const folderId = e.dataTransfer.getData("folderId") || draggedFolderId || "";
-
-          if (noteId) {
-            if (noteId === folder.id) {
-              toast("Can't link a note to itself", { variant: "info" });
+            onDragEndProp();
+          }}
+          onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (draggedFolderId) {
+              if (!canDropHere) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const position = resolveReorderPosition(e.clientY, rect);
+              setReorderHover(position === 'before' ? 'above' : position === 'after' ? 'below' : null);
+              setIsDragOver(!position);
+              e.dataTransfer.dropEffect = 'move';
               return;
             }
-            onDropNote(noteId, folder.id);
-          } else if (folderId) {
-            if (!canDropHere) {
-              toast("Can't move a folder into itself", { variant: "info" });
-              return;
+            if (canDropHere) setIsDragOver(true);
+          }}
+          onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.stopPropagation();
+            setIsDragOver(false);
+            if (draggedFolderId) {
+              setReorderHover(null);
             }
-            const rect = e.currentTarget.getBoundingClientRect();
-            const position = resolveReorderPosition(e.clientY, rect);
-            if (position && onReorderFolder) {
-              onReorderFolder(folderId, folder.id, position);
-              return;
-            }
-            onDropFolder(folderId, folder.id);
-          } else {
-            toast("Nothing to drop here", { variant: "info" });
-          }
-        }}
-      >
-        {reorderHover === "above" && (
-          <div className="absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90" />
-        )}
-        {reorderHover === "below" && (
-          <div className="absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90" />
-        )}
-        {hasChildren || hasNotes ? (
-          <Button
-            onClick={(): void => onToggleExpand(folder.id)}
-            className="p-0.5 hover:bg-gray-700 rounded"
-            aria-label={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-4" />
-            ) : (
-              <ChevronRight className="size-4" />
-            )}
-          </Button>
-        ) : (
-          <div className="w-5" />
-        )}
+          }}
+          onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            setReorderHover(null);
 
-        <div
-          onClick={(): void => { if (!isRenaming) onSelect(folder.id); }}
-          className="flex items-center gap-2 flex-1 min-w-0"
+            const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || '';
+            const folderId = getFolderDragId(e.dataTransfer, draggedFolderId) || '';
+
+            if (noteId) {
+              if (noteId === folder.id) {
+                toast('Can\'t link a note to itself', { variant: 'info' });
+                return;
+              }
+              onDropNote(noteId, folder.id);
+            } else if (folderId) {
+              if (!canDropHere) {
+                toast('Can\'t move a folder into itself', { variant: 'info' });
+                return;
+              }
+              const rect = e.currentTarget.getBoundingClientRect();
+              const position = resolveReorderPosition(e.clientY, rect);
+              if (position && onReorderFolder) {
+                onReorderFolder(folderId, folder.id, position);
+                return;
+              }
+              onDropFolder(folderId, folder.id);
+            } else {
+              toast('Nothing to drop here', { variant: 'info' });
+            }
+          }}
         >
-          {isExpanded || !hasChildren ? (
-            <FolderOpen className="size-4 flex-shrink-0" />
-          ) : (
-            <Folder className="size-4 flex-shrink-0" />
+          {reorderHover === 'above' && (
+            <div className="absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90" />
           )}
-          {isRenaming ? (
-            <Input
-              ref={renameInputRef}
-              type="text"
-              defaultValue={folder.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                renameValueRef.current = e.target.value;
-              }}
-              onKeyDown={handleRenameKeyDown}
-              onBlur={handleRenameSubmit}
-              onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
-              className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
-            />
-          ) : (
-            <span className="text-sm truncate">{folder.name}</span>
+          {reorderHover === 'below' && (
+            <div className="absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90" />
           )}
-        </div>
+          <TreeCaret
+            isOpen={isExpanded}
+            hasChildren={hasChildren || hasNotes}
+            ariaLabel={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
+            onToggle={(): void => onToggleExpand(folder.id)}
+            iconClassName="size-4"
+            buttonClassName="hover:bg-gray-700"
+            placeholderClassName="w-5"
+          />
 
-        {!isRenaming && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-            <Button
-              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-                e.stopPropagation();
-                onCreateNote(folder.id);
-              }}
-              className="p-1 hover:bg-gray-700 rounded"
-              title="Add note"
-            >
-              <FilePlus className="size-3" />
-            </Button>
-            <Button
-              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-                e.stopPropagation();
-                onCreateSubfolder(folder.id);
-              }}
-              className="p-1 hover:bg-gray-700 rounded"
-              title="Add subfolder"
-            >
-              <FolderPlus className="size-3" />
-            </Button>
-            <Button
-              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-                e.stopPropagation();
-                onStartRename(folder.id);
-              }}
-              className="p-1 hover:bg-gray-700 rounded"
-              title="Rename folder"
-            >
-              <Edit2 className="size-3" />
-            </Button>
-            <Button
-              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-                e.stopPropagation();
-                onDelete(folder.id);
-              }}
-              className="p-1 hover:bg-red-600 rounded"
-              title="Delete folder and all contents"
-            >
-              <Trash2 className="size-3" />
-            </Button>
+          <div
+            onClick={(): void => { if (!isRenaming) onSelect(folder.id); }}
+            className="flex items-center gap-2 flex-1 min-w-0"
+          >
+            {isExpanded || !hasChildren ? (
+              <FolderOpen className="size-4 flex-shrink-0" />
+            ) : (
+              <Folder className="size-4 flex-shrink-0" />
+            )}
+            {isRenaming ? (
+              <Input
+                ref={renameInputRef}
+                type="text"
+                defaultValue={folder.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                  renameValueRef.current = e.target.value;
+                }}
+                onKeyDown={handleRenameKeyDown}
+                onBlur={handleRenameSubmit}
+                onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
+                className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
+              />
+            ) : (
+              <span className="text-sm truncate">{folder.name}</span>
+            )}
           </div>
-        )}
-      </div>
+
+          {!isRenaming && (
+            <TreeActionSlot show="hover" isVisible={isSelected}>
+              <TreeActionButton
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                  e.stopPropagation();
+                  onCreateNote(folder.id);
+                }}
+                size="sm"
+                tone="muted"
+                title="Add note"
+              >
+                <FilePlus className="size-3" />
+              </TreeActionButton>
+              <TreeActionButton
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                  e.stopPropagation();
+                  onCreateSubfolder(folder.id);
+                }}
+                size="sm"
+                tone="muted"
+                title="Add subfolder"
+              >
+                <FolderPlus className="size-3" />
+              </TreeActionButton>
+              <TreeActionButton
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                  e.stopPropagation();
+                  onStartRename(folder.id);
+                }}
+                size="sm"
+                tone="muted"
+                title="Rename folder"
+              >
+                <Edit2 className="size-3" />
+              </TreeActionButton>
+              <TreeActionButton
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                  e.stopPropagation();
+                  onDelete(folder.id);
+                }}
+                size="sm"
+                tone="danger"
+                title="Delete folder and all contents"
+              >
+                <Trash2 className="size-3" />
+              </TreeActionButton>
+            </TreeActionSlot>
+          )}
+        </TreeRow>
+      </TreeContextMenu>
       {showReorderZones && (
         <div
-          onDragOver={handleReorderDragOver("below")}
-          onDragLeave={handleReorderDragLeave("below")}
-          onDrop={handleReorderDrop("after")}
+          onDragOver={handleReorderDragOver('below')}
+          onDragLeave={handleReorderDragLeave('below')}
+          onDrop={handleReorderDrop('after')}
           className={`h-1 rounded transition ${
-            reorderHover === "below" ? "bg-blue-500/80" : "bg-transparent"
+            reorderHover === 'below' ? 'bg-blue-500/80' : 'bg-transparent'
           }`}
           style={{ marginLeft: `${level * 16 + 8}px` }}
         />

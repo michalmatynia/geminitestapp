@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
 
 
 
-import { Button, Label, Textarea } from "@/shared/ui";
-import type { AiNode, Edge, NodeConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
-import { createViewerOutputs, formatRuntimeValue } from "@/features/ai/ai-paths/lib";
-import { extractImageUrls, formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
+import Image from 'next/image';
+
+import type { AiNode, Edge, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
+import { createViewerOutputs, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { Button, Label, Textarea } from '@/shared/ui';
+
 
 type ViewerNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -25,7 +28,7 @@ export function ViewerNodeConfigSection({
   updateSelectedNodeConfig,
   clearRuntimeForNode,
 }: ViewerNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "viewer") return null;
+  if (selectedNode.type !== 'viewer') return null;
 
   const viewerConfig = selectedNode.config?.viewer ?? {
     outputs: createViewerOutputs(selectedNode.inputs),
@@ -34,7 +37,7 @@ export function ViewerNodeConfigSection({
   const showImagesAsJson = viewerConfig.showImagesAsJson ?? false;
   const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
   const isConnectedToTrigger = ((): boolean => {
-    const triggerIds = nodes.filter((node: AiNode): boolean => node.type === "trigger").map((node: AiNode): string => node.id);
+    const triggerIds = nodes.filter((node: AiNode): boolean => node.type === 'trigger').map((node: AiNode): string => node.id);
     if (triggerIds.length === 0) return false;
     const adjacency = new Map<string, Set<string>>();
     edges.forEach((edge: Edge): void => {
@@ -129,7 +132,7 @@ export function ViewerNodeConfigSection({
             })
           }
         >
-          {showImagesAsJson ? "Images: JSON" : "Images: Thumbnails"}
+          {showImagesAsJson ? 'Images: JSON' : 'Images: Thumbnails'}
         </Button>
       </div>
       {!isConnectedToTrigger && (
@@ -144,16 +147,16 @@ export function ViewerNodeConfigSection({
           .map((edge: Edge): string | null => {
             const fromNode = nodes.find((node: AiNode): boolean => node.id === edge.from);
             if (!fromNode) return null;
-            const portLabel = edge.fromPort ? `:${edge.fromPort}` : "";
+            const portLabel = edge.fromPort ? `:${edge.fromPort}` : '';
             return `${fromNode.title}${portLabel}`;
           })
           .filter(Boolean)
-          .join(", ");
+          .join(', ');
         const runtimeValue = resolvedRuntimeInputs[input];
         const imageUrls =
-          input === "images" ? extractImageUrls(runtimeValue) : [];
+          input === 'images' ? extractImageUrls(runtimeValue) : [];
         const hasImagePreview =
-          input === "images" && imageUrls.length > 0 && !showImagesAsJson;
+          input === 'images' && imageUrls.length > 0 && !showImagesAsJson;
         return (
           <div key={input} className="space-y-2">
             <div className="flex items-center justify-between text-xs text-gray-400">
@@ -175,7 +178,7 @@ export function ViewerNodeConfigSection({
                   <>
                     <div className="text-[10px] text-emerald-200">
                       Detected {imageUrls.length} image
-                      {imageUrls.length === 1 ? "" : "s"}
+                      {imageUrls.length === 1 ? '' : 's'}
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       {imageUrls.map((url: string, index: number): React.JSX.Element => (
@@ -183,12 +186,13 @@ export function ViewerNodeConfigSection({
                           key={`${url}-${index}`}
                           className="overflow-hidden rounded border border-emerald-500/30 bg-black/30"
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={url}
                             alt={`Image ${index + 1}`}
                             className="h-20 w-full object-cover"
                             loading="lazy"
+                            width={80}
+                            height={80}
                           />
                         </div>
                       ))}
@@ -203,7 +207,7 @@ export function ViewerNodeConfigSection({
             )}
             <Textarea
               className="min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-              value={outputValues[input] ?? ""}
+              value={outputValues[input] ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 updateSelectedNodeConfig({
                   viewer: {

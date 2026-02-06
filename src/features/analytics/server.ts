@@ -1,4 +1,4 @@
-import "server-only";
+import 'server-only';
 
-export * from "./server/repository";
+export * from './server/repository';
 

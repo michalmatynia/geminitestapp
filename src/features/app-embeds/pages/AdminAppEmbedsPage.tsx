@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Button, Checkbox, SectionHeader, SectionPanel, useToast } from "@/shared/ui";
-import { APP_EMBED_OPTIONS, type AppEmbedId, APP_EMBED_SETTING_KEY } from "@/features/app-embeds/lib/constants";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+
+import { APP_EMBED_OPTIONS, type AppEmbedId, APP_EMBED_SETTING_KEY } from '@/features/app-embeds/lib/constants';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Checkbox, SectionHeader, SectionPanel, useToast } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export function AdminAppEmbedsPage(): React.ReactNode {
   const settingsQuery = useSettingsMap();
@@ -55,10 +57,10 @@ function AdminAppEmbedsContent({
         key: APP_EMBED_SETTING_KEY,
         value: serializeSetting(Array.from(enabled)),
       });
-      toast("App embed settings saved.", { variant: "success" });
+      toast('App embed settings saved.', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save app embed settings:", error);
-      toast("Failed to save app embed settings.", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminAppEmbedsPage', action: 'saveSettings' } });
+      toast('Failed to save app embed settings.', { variant: 'error' });
     }
   };
 
@@ -88,7 +90,7 @@ function AdminAppEmbedsContent({
                   <label className="flex items-center gap-2 text-xs text-gray-300">
                     <Checkbox
                       checked={isEnabled}
-                      onCheckedChange={(checked: boolean | "indeterminate") => toggleOption(option.id, checked === true)}
+                      onCheckedChange={(checked: boolean | 'indeterminate') => toggleOption(option.id, checked === true)}
                     />
                     Enable
                   </label>
@@ -109,7 +111,7 @@ function AdminAppEmbedsContent({
             onClick={() => { void handleSave(); }}
             disabled={updateSetting.isPending}
           >
-            {updateSetting.isPending ? "Saving..." : "Save"}
+            {updateSetting.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </SectionPanel>

@@ -1,14 +1,13 @@
-"use client";
-import React, { JSX, memo, useState } from "react";
+'use client';
+import { Table as ReactTable, Row } from '@tanstack/react-table';
+import { Trash2, Image as ImageIcon } from 'lucide-react';
+import React, { JSX, memo, useState } from 'react';
 
-import { Button, useToast, ConfirmDialog } from "@/shared/ui";
-import { Table as ReactTable, Row } from "@tanstack/react-table";
-
-import { ProductWithImages } from "@/features/products/types";
-import { logger } from "@/shared/utils/logger";
+import { ProductWithImages } from '@/features/products/types';
+import { Button, useToast, ConfirmDialog } from '@/shared/ui';
+import { logger } from '@/shared/utils/logger';
 
 
-import { Trash2, Image as ImageIcon } from "lucide-react";
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;
@@ -28,21 +27,21 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
   const [showBase64Confirm, setShowBase64Confirm] = useState(false);
 
   const handleMassDelete = async (): Promise<void> => {
-    logger.log("Mass delete initiated.");
+    logger.log('Mass delete initiated.');
     const selectedProductIds = table
       .getSelectedRowModel()
       .rows.map((row: Row<TData>) => (row.original as ProductWithImages)?.id)
       .filter(Boolean);
 
     if (selectedProductIds.length === 0) {
-      setActionError("Please select products to delete.");
+      setActionError('Please select products to delete.');
       return;
     }
 
     try {
       const deletePromises = selectedProductIds.map((id: string) =>
         fetch(`/api/products/${id}`, {
-          method: "DELETE",
+          method: 'DELETE',
         })
       );
       const results = await Promise.all(deletePromises);
@@ -50,7 +49,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       const failedDeletions = results.filter((res: Response) => !res.ok);
 
       if (failedDeletions.length > 0) {
-        let errorIdSuffix = "";
+        let errorIdSuffix = '';
         try {
           const firstFailed = failedDeletions[0];
           if (firstFailed) {
@@ -62,25 +61,25 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
             }
           }
         } catch {
-          errorIdSuffix = "";
+          errorIdSuffix = '';
         }
         setActionError(`Some products could not be deleted.${errorIdSuffix}`);
-        toast("Some products could not be deleted", {
-          variant: "error",
+        toast('Some products could not be deleted', {
+          variant: 'error',
         });
       } else {
-        toast("Selected products deleted successfully.", {
-          variant: "success",
+        toast('Selected products deleted successfully.', {
+          variant: 'success',
         });
       }
       table.setRowSelection({}); // Clear selection after deletion
       setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
-      logger.error("Error during mass deletion:", error);
-      setActionError("An error occurred during deletion.");
-      toast("An error occurred during deletion", {
-        variant: "error",
+      logger.error('Error during mass deletion:', error);
+      setActionError('An error occurred during deletion.');
+      toast('An error occurred during deletion', {
+        variant: 'error',
       });
     }
   };
@@ -92,31 +91,31 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       .filter(Boolean);
 
     if (selectedProductIds.length === 0) {
-      setActionError("Please select products to convert.");
+      setActionError('Please select products to convert.');
       return;
     }
 
     try {
-      const res = await fetch("/api/products/images/base64", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/products/images/base64', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productIds: selectedProductIds }),
       });
       if (!res.ok) {
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || "Failed to convert images");
+        throw new Error(payload.error || 'Failed to convert images');
       }
-      toast("Base64 images generated for selected products.", {
-        variant: "success",
+      toast('Base64 images generated for selected products.', {
+        variant: 'success',
       });
       table.setRowSelection({});
       setRefreshTrigger((prev: number) => prev + 1);
       setShowBase64Confirm(false);
     } catch (error) {
-      logger.error("Error during base64 conversion:", error);
-      setActionError("An error occurred during base64 conversion.");
-      toast("An error occurred during base64 conversion", {
-        variant: "error",
+      logger.error('Error during base64 conversion:', error);
+      setActionError('An error occurred during base64 conversion.');
+      toast('An error occurred during base64 conversion', {
+        variant: 'error',
       });
     }
   };
@@ -126,8 +125,8 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       <div className="space-y-3 border-t bg-muted/50 px-4 py-4">
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <div className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{selectedCount}</span>{" "}
-            of <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span>{" "}
+            <span className="font-medium text-foreground">{selectedCount}</span>{' '}
+            of <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span>{' '}
             row(s) selected.
           </div>
           <Button
@@ -158,7 +157,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         title="Delete selected products?"
-        description={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? "product" : "products"}? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This action cannot be undone.`}
         onConfirm={() => void handleMassDelete()}
         confirmText="Delete"
         variant="destructive"
@@ -168,7 +167,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
         open={showBase64Confirm}
         onOpenChange={setShowBase64Confirm}
         title="Generate Base64 images?"
-        description={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? "product" : "products"}? This can be heavy for large images.`}
+        description={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This can be heavy for large images.`}
         onConfirm={() => void handleMassBase64()}
         confirmText="Convert"
         variant="success"

@@ -7,7 +7,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import { deleteTeachingAgent, getTeachingAgentById, upsertTeachingAgent } from "@/features/ai/agentcreator/teaching/server/repository";
 
@@ -36,7 +36,7 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<
     }
     const existing = await getTeachingAgentById(agentId);
     if (!existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return createErrorResponse(notFoundError("Not found"), { request: req, source: "agentcreator.teaching.agents.PATCH" });
     }
     const parsed = await parseJsonBody(req, updateAgentSchema, {
       logPrefix: "agentcreator.teaching.agents.PATCH",

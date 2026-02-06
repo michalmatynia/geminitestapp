@@ -1,51 +1,82 @@
-"use client";
+'use client';
 
-import React from "react";
-import { BreadcrumbScroller, Button, CopyButton, Card, CardContent, CardFooter, CardHeader, Tag } from "@/shared/ui";
+import { ChevronRight, Pin, Star } from 'lucide-react';
+import Image from 'next/image';
+import React from 'react';
 
-import Image from "next/image";
-import { ChevronRight, Pin, Star } from "lucide-react";
-import type { ThemeRecord, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource, NoteFileRecord } from "@/shared/types/notes";
-import type { NoteCardProps } from "@/features/notesapp/types/notes-ui";
+import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import type {
+  ThemeRecord,
+  RelatedNote,
+  NoteRelationWithTarget,
+  NoteRelationWithSource,
+  NoteFileRecord,
+  NoteWithRelations,
+} from '@/shared/types/notes';
+import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from '@/shared/ui';
+import { cn, setNoteDragData } from '@/shared/utils';
 
-import { darkenColor, renderMarkdownToHtml } from "../utils";
+
+
+import { buildBreadcrumbPath, darkenColor, renderMarkdownToHtml } from '../utils';
 
 // Hardcoded dark mode fallback theme - consistent with page styling
-const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name" | "notebookId"> = {
-  textColor: "#e5e7eb",                // gray-200
-  backgroundColor: "#111827",          // gray-900
-  markdownHeadingColor: "#ffffff",     // white
-  markdownLinkColor: "#60a5fa",        // blue-400
-  markdownCodeBackground: "#1f2937",   // gray-800
-  markdownCodeText: "#e5e7eb",         // gray-200
+const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> = {
+  textColor: '#e5e7eb',                // gray-200
+  backgroundColor: '#111827',          // gray-900
+  markdownHeadingColor: '#ffffff',     // white
+  markdownLinkColor: '#60a5fa',        // blue-400
+  markdownCodeBackground: '#1f2937',   // gray-800
+  markdownCodeText: '#e5e7eb',         // gray-200
   relatedNoteBorderWidth: 1,
-  relatedNoteBorderColor: "#374151",   // gray-700
-  relatedNoteBackgroundColor: "#1f2937", // gray-800
-  relatedNoteTextColor: "#e5e7eb",     // gray-200
+  relatedNoteBorderColor: '#374151',   // gray-700
+  relatedNoteBackgroundColor: '#1f2937', // gray-800
+  relatedNoteTextColor: '#e5e7eb',     // gray-200
 };
 
-function NoteCardBase({
-  note,
-  folderTree,
-  showTimestamps,
-  showBreadcrumbs,
-  showRelatedNotes,
-  enableDrag = true,
-  onSelectNote,
-  onSelectFolder,
-  onToggleFavorite,
-  onDragStart,
-  onDragEnd,
-  buildBreadcrumbPath,
-  theme,
-}: NoteCardProps): React.JSX.Element {
+type NoteCardProps = {
+  note: NoteWithRelations;
+};
+
+function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
+  const {
+    folderTree,
+    settings,
+    isFolderTreeCollapsed,
+    setSelectedNote,
+    setSelectedFolderId,
+    setIsEditing,
+    setDraggedNoteId,
+    getThemeForNote,
+    handleToggleFavorite,
+  } = useNotesAppContext();
+
+  const showTimestamps = settings.showTimestamps;
+  const showBreadcrumbs = settings.showBreadcrumbs;
+  const showRelatedNotes = settings.showRelatedNotes;
+  const enableDrag = !isFolderTreeCollapsed;
+  const onSelectNote = (next: NoteWithRelations): void => {
+    setSelectedNote(next);
+    setIsEditing(false);
+  };
+  const onSelectFolder = (folderId: string | null): void => {
+    setSelectedFolderId(folderId);
+    setSelectedNote(null);
+    setIsEditing(false);
+  };
+  const onToggleFavorite = (target: NoteWithRelations): void => {
+    void handleToggleFavorite(target);
+  };
+  const onDragStart = (noteId: string): void => setDraggedNoteId(noteId);
+  const onDragEnd = (): void => setDraggedNoteId(null);
+
   // Use provided theme or fall back to dark mode theme
-  const effectiveTheme = theme ?? FALLBACK_THEME;
-  const isCodeNote = note.editorType === "code";
+  const effectiveTheme = getThemeForNote(note) ?? FALLBACK_THEME;
+  const isCodeNote = note.editorType === 'code';
 
   const contentHtml = React.useMemo(
     (): string => {
-      let html = note.editorType === "wysiwyg"
+      let html = note.editorType === 'wysiwyg'
         ? note.content
         : renderMarkdownToHtml(note.content);
       // Remove image tags from preview to avoid duplication with thumbnail
@@ -58,20 +89,20 @@ function NoteCardBase({
   );
   const normalizedColor = note.color?.toLowerCase().trim();
   // Only use note's custom color if it's not white (default)
-  const hasCustomColor = normalizedColor && normalizedColor !== "#ffffff";
+  const hasCustomColor = normalizedColor && normalizedColor !== '#ffffff';
   const backgroundColor = hasCustomColor
     ? normalizedColor
     : effectiveTheme.backgroundColor;
   const getReadableTextColor = (hexColor: string): string => {
-    const normalized = hexColor.replace("#", "");
+    const normalized = hexColor.replace('#', '');
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-      return "#111827";
+      return '#111827';
     }
     const r = parseInt(normalized.slice(0, 2), 16);
     const g = parseInt(normalized.slice(2, 4), 16);
     const b = parseInt(normalized.slice(4, 6), 16);
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.7 ? "#111827" : "#f8fafc";
+    return luminance > 0.7 ? '#111827' : '#f8fafc';
   };
   const textColor = hasCustomColor
     ? getReadableTextColor(backgroundColor)
@@ -91,7 +122,7 @@ function NoteCardBase({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ): RelatedNote | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): RelatedNote | null => (id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null);
 
     const fromRelations = (note.relationsFrom ?? [])
       .map((relation: NoteRelationWithTarget) =>
@@ -116,61 +147,59 @@ function NoteCardBase({
     return [...fromRelations, ...toRelations];
   })();
   const thumbnailFile = note.files?.find(
-    (file: NoteFileRecord) => file.mimetype?.startsWith("image/") && file.filepath
+    (file: NoteFileRecord) => file.mimetype?.startsWith('image/') && file.filepath
   );
 
   return (
-    <Card
+    <SectionPanel
       key={note.id}
       draggable={enableDrag}
       onDragStart={
         enableDrag
           ? (e: React.DragEvent): void => {
-              e.dataTransfer.setData("noteId", note.id);
-              e.dataTransfer.setData("text/plain", note.id);
-              e.dataTransfer.effectAllowed = "linkMove";
-              const target = e.currentTarget as HTMLElement;
-              target.style.opacity = "0.5";
-              onDragStart(note.id);
-            }
+            setNoteDragData(e.dataTransfer, note.id);
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = '0.5';
+            onDragStart(note.id);
+          }
           : undefined
       }
       onDragEnd={
         enableDrag
           ? (e: React.DragEvent): void => {
-              const target = e.currentTarget as HTMLElement;
-              target.style.opacity = "1";
-              onDragEnd();
-            }
+            const target = e.currentTarget as HTMLElement;
+            target.style.opacity = '1';
+            onDragEnd();
+          }
           : undefined
       }
       onClick={(): void => onSelectNote(note)}
       style={{
         backgroundColor,
         color: textColor,
-        ["--tw-prose-body" as never]: textColor,
-        ["--tw-prose-headings" as never]:
+        ['--tw-prose-body' as never]: textColor,
+        ['--tw-prose-headings' as never]:
           effectiveTheme.markdownHeadingColor ?? textColor,
-        ["--note-link-color" as never]: effectiveTheme.markdownLinkColor ?? "#38bdf8",
-        ["--note-code-bg" as never]: effectiveTheme.markdownCodeBackground ?? "#0f172a",
-        ["--note-code-text" as never]: effectiveTheme.markdownCodeText ?? "#e2e8f0",
-        ["--note-inline-code-bg" as never]:
-          effectiveTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+        ['--note-link-color' as never]: effectiveTheme.markdownLinkColor ?? '#38bdf8',
+        ['--note-code-bg' as never]: effectiveTheme.markdownCodeBackground ?? '#0f172a',
+        ['--note-code-text' as never]: effectiveTheme.markdownCodeText ?? '#e2e8f0',
+        ['--note-inline-code-bg' as never]:
+          effectiveTheme.markdownCodeBackground ?? 'rgba(15, 23, 42, 0.12)',
       }}
-      className={`rounded-lg border p-4 shadow-sm transition ${
+      className={cn(
+        'p-4 transition',
         enableDrag
-          ? "cursor-grab active:cursor-grabbing hover:shadow-md"
-          : "cursor-pointer hover:shadow-md hover:brightness-90"
-      }`}
+          ? 'cursor-grab active:cursor-grabbing hover:shadow-md'
+          : 'cursor-pointer hover:shadow-md hover:brightness-90',
+      )}
     >
-      <CardHeader className="p-4 pb-2">
-        <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{note.title}</h3>
           {isCodeNote && (
-            <span className="rounded bg-green-600/20 px-1.5 py-0.5 text-[10px] font-medium text-green-400 border border-green-500/30">
+            <Badge variant="success" className="text-[10px] h-4">
               CODE
-            </span>
+            </Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -181,29 +210,28 @@ function NoteCardBase({
             />
           )}
           <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500"
-              onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
-              onClick={(event: React.MouseEvent): void => {
-                event.stopPropagation();
-                onToggleFavorite(note);
-              }}
-              aria-label={note.isFavorite ? "Unfavorite note" : "Favorite note"}
-              title={note.isFavorite ? "Remove favorite" : "Add favorite"}
-            >
-              <Star
-                size={16}
-                className={note.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
-              />
-            </Button>
-            {note.isPinned && <Pin size={16} className="text-blue-600" />}
-          </div>
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500"
+            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+            onClick={(event: React.MouseEvent): void => {
+              event.stopPropagation();
+              onToggleFavorite(note);
+            }}
+            aria-label={note.isFavorite ? 'Unfavorite note' : 'Favorite note'}
+            title={note.isFavorite ? 'Remove favorite' : 'Add favorite'}
+          >
+            <Star
+              size={16}
+              className={note.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
+            />
+          </Button>
+          {note.isPinned && <Pin size={16} className="text-blue-600" />}
         </div>
-      </CardHeader>
+      </div>
       
-      <CardContent className="p-4 pt-0">
+      <div className="pt-0">
         {thumbnailFile && (
           <div className="mb-3 overflow-hidden rounded-md border">
             <Image
@@ -229,10 +257,10 @@ function NoteCardBase({
             />
           ))}
         </div>
-      </CardContent>
+      </div>
 
       {(showTimestamps || showBreadcrumbs || (showRelatedNotes && relatedNotes.length > 0)) && (
-        <CardFooter className="flex flex-col items-stretch p-4 pt-0">
+        <div className="flex flex-col items-stretch pt-2 mt-2 border-t border-white/10">
           {showTimestamps && (
             <div className="flex flex-col gap-0.5 text-[10px] text-gray-500">
               <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
@@ -240,7 +268,7 @@ function NoteCardBase({
             </div>
           )}
           {showBreadcrumbs && (
-            <div className={showTimestamps ? "mt-3" : ""}>
+            <div className={showTimestamps ? 'mt-3' : ''}>
               <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
                 {buildBreadcrumbPath(
                   note.categories[0]?.categoryId || null,
@@ -285,11 +313,11 @@ function NoteCardBase({
                 ))}
             </div>
           )}
-        </CardFooter>
+        </div>
       )}
-    </Card>
+    </SectionPanel>
   );
 }
 
 export const NoteCard = React.memo(NoteCardBase);
-NoteCard.displayName = "NoteCard";
+NoteCard.displayName = 'NoteCard';

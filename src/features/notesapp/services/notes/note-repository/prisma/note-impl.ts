@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import type { Prisma } from "@prisma/client";
-import prisma from "@/shared/lib/db/prisma";
+import prisma from '@/shared/lib/db/prisma';
 import type {
   NoteFilters,
   NoteWithRelations,
   NoteCreateInput,
   NoteUpdateInput,
-} from "@/shared/types/notes";
-import { getOrCreateDefaultNotebook } from "./notebook-impl";
+} from '@/shared/types/notes';
+
+import { getOrCreateDefaultNotebook } from './notebook-impl';
+
+import type { Prisma } from '@prisma/client';
 
 const noteInclude = {
   tags: { include: { tag: true } },
@@ -23,7 +25,7 @@ const noteInclude = {
       sourceNote: { select: { id: true, title: true, color: true } },
     },
   },
-  files: { orderBy: { slotIndex: "asc" } },
+  files: { orderBy: { slotIndex: 'asc' } },
 } as const;
 
 type NotePrismaResult = Prisma.NoteGetPayload<{
@@ -42,7 +44,7 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
   notebookId: note.notebookId,
   createdAt: note.createdAt.toISOString(),
   updatedAt: note.updatedAt.toISOString(),
-  tags: note.tags.map((t: NotePrismaResult["tags"][number]) => ({
+  tags: note.tags.map((t: NotePrismaResult['tags'][number]) => ({
     noteId: t.noteId,
     tagId: t.tagId,
     assignedAt: t.assignedAt,
@@ -55,7 +57,7 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
       updatedAt: t.tag.updatedAt.toISOString(),
     },
   })),
-  categories: note.categories.map((c: NotePrismaResult["categories"][number]) => ({
+  categories: note.categories.map((c: NotePrismaResult['categories'][number]) => ({
     noteId: c.noteId,
     categoryId: c.categoryId,
     assignedAt: c.assignedAt,
@@ -72,19 +74,19 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
       updatedAt: c.category.updatedAt,
     },
   })),
-  relationsFrom: note.relationsFrom.map((r: NotePrismaResult["relationsFrom"][number]) => ({
+  relationsFrom: note.relationsFrom.map((r: NotePrismaResult['relationsFrom'][number]) => ({
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
     assignedAt: r.assignedAt,
     targetNote: r.targetNote,
   })),
-  relationsTo: note.relationsTo.map((r: NotePrismaResult["relationsTo"][number]) => ({
+  relationsTo: note.relationsTo.map((r: NotePrismaResult['relationsTo'][number]) => ({
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
     assignedAt: r.assignedAt,
     sourceNote: r.sourceNote,
   })),
-  files: note.files.map((f: NotePrismaResult["files"][number]) => ({
+  files: note.files.map((f: NotePrismaResult['files'][number]) => ({
     id: f.id,
     noteId: f.noteId,
     slotIndex: f.slotIndex,
@@ -104,7 +106,7 @@ export const getAll = async (
 ): Promise<NoteWithRelations[]> => {
   const {
     search,
-    searchScope = "both",
+    searchScope = 'both',
     isPinned,
     isArchived,
     isFavorite,
@@ -119,21 +121,21 @@ export const getAll = async (
   where.notebookId = resolvedNotebookId;
 
   if (search) {
-    if (searchScope === "both") {
+    if (searchScope === 'both') {
       where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { content: { contains: search, mode: "insensitive" } },
+        { title: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } },
       ];
-    } else if (searchScope === "title") {
-      where.title = { contains: search, mode: "insensitive" };
-    } else if (searchScope === "content") {
-      where.content = { contains: search, mode: "insensitive" };
+    } else if (searchScope === 'title') {
+      where.title = { contains: search, mode: 'insensitive' };
+    } else if (searchScope === 'content') {
+      where.content = { contains: search, mode: 'insensitive' };
     }
   }
 
-  if (typeof isPinned === "boolean") where.isPinned = isPinned;
-  if (typeof isArchived === "boolean") where.isArchived = isArchived;
-  if (typeof isFavorite === "boolean") where.isFavorite = isFavorite;
+  if (typeof isPinned === 'boolean') where.isPinned = isPinned;
+  if (typeof isArchived === 'boolean') where.isArchived = isArchived;
+  if (typeof isFavorite === 'boolean') where.isFavorite = isFavorite;
 
   if (tagIds && tagIds.length > 0) {
     where.tags = { some: { tagId: { in: tagIds } } };
@@ -146,7 +148,7 @@ export const getAll = async (
   const notes = await prisma.note.findMany({
     where,
     include: noteInclude,
-    orderBy: { updatedAt: "desc" },
+    orderBy: { updatedAt: 'desc' },
   });
 
   if (filters.truncateContent) {
@@ -156,7 +158,7 @@ export const getAll = async (
         ...converted,
         content:
           converted.content.length > 300
-            ? converted.content.slice(0, 300) + "..."
+            ? converted.content.slice(0, 300) + '...'
             : converted.content,
       };
     });

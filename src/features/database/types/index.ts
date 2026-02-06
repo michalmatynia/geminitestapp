@@ -9,10 +9,10 @@ export type {
   DatabaseColumnDto,
   DatabaseIndexDto,
   DatabaseConstraintDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
-export type DatabaseType = "postgresql" | "mongodb";
-export type DatabasePreviewMode = "backup" | "current";
+export type DatabaseType = 'postgresql' | 'mongodb';
+export type DatabasePreviewMode = 'backup' | 'current';
 
 // Legacy types for backward compatibility
 export type DatabaseInfo = {

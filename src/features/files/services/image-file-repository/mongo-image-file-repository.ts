@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import type { WithId } from "mongodb";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { randomUUID } from 'crypto';
+
 import type {
   ImageFileCreateInput,
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from "@/features/files/types/services/image-file-repository";
+} from '@/features/files/types/services/image-file-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+import type { WithId } from 'mongodb';
 
 type ImageFileDocument = {
   _id: string;
@@ -24,7 +26,7 @@ type ImageFileDocument = {
   updatedAt: Date;
 };
 
-const IMAGE_FILE_COLLECTION = "image_files";
+const IMAGE_FILE_COLLECTION = 'image_files';
 
 const toRecord = (doc: WithId<ImageFileDocument>): ImageFileRecord => ({
   id: doc.id ?? doc._id,
@@ -75,7 +77,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
     const tags = (filters?.tags ?? []).filter(Boolean);
     const query: Record<string, unknown> = {};
     if (filename) {
-      query.filename = { $regex: filename, $options: "i" };
+      query.filename = { $regex: filename, $options: 'i' };
     }
     if (tags.length > 0) {
       query.tags = { $in: tags };
@@ -104,7 +106,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: id }, { id }] },
         { $set: { filepath, updatedAt: new Date() } },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
     if (!result) return null;
     return toRecord({ ...result, _id: result._id });
@@ -117,7 +119,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: id }, { id }] },
         { $set: { tags, updatedAt: new Date() } },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
     if (!result) return null;
     return toRecord({ ...result, _id: result._id });

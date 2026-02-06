@@ -1,0 +1,72 @@
+'use client';
+
+import type { IntegrationWithConnections } from '@/shared/types';
+
+import { Label } from './label';
+import { UnifiedSelect } from './unified-select';
+
+interface IntegrationSelectorProps {
+  integrations: IntegrationWithConnections[];
+  selectedIntegrationId: string;
+  onIntegrationChange: (id: string) => void;
+  selectedConnectionId: string;
+  onConnectionChange: (id: string) => void;
+  disabled?: boolean;
+  loading?: boolean;
+  className?: string;
+}
+
+export function IntegrationSelector({
+  integrations,
+  selectedIntegrationId,
+  onIntegrationChange,
+  selectedConnectionId,
+  onConnectionChange,
+  disabled = false,
+  loading = false,
+  className = 'space-y-4',
+}: IntegrationSelectorProps) {
+  const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
+
+  return (
+    <div className={className}>
+      <div>
+        <Label className="mb-2 block text-sm font-medium text-gray-300">
+          Integration
+        </Label>
+        <UnifiedSelect
+          value={selectedIntegrationId}
+          onValueChange={onIntegrationChange}
+          disabled={disabled || loading}
+          options={integrations
+            .filter((integration) => !!integration.id)
+            .map((integration) => ({
+              value: integration.id,
+              label: integration.name
+            }))}
+          placeholder="Select an integration..."
+        />
+      </div>
+
+      {selectedIntegration && selectedIntegration.connections.length > 0 && (
+        <div>
+          <Label className="mb-2 block text-sm font-medium text-gray-300">
+            Account / Connection
+          </Label>
+          <UnifiedSelect
+            value={selectedConnectionId}
+            onValueChange={onConnectionChange}
+            disabled={disabled || loading}
+            options={selectedIntegration.connections
+              .filter((connection) => !!connection.id)
+              .map((connection) => ({
+                value: connection.id,
+                label: connection.name
+              }))}
+            placeholder="Select an account..."
+          />
+        </div>
+      )}
+    </div>
+  );
+}

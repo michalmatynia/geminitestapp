@@ -1,15 +1,15 @@
-import { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
+import { ImageFileRecord, ImageFileSelection } from '@/shared/types/files';
 
 export type ProductImageSlot =
   | {
-      type: "file"; // A new File object
+      type: 'file'; // A new File object
       data: File;
       previewUrl: string;
       slotId: string;
       originalIndex?: number | undefined; // Optional: original index if moved
     }
   | {
-      type: "existing"; // An existing ImageFile from the DB
+      type: 'existing'; // An existing ImageFile from the DB
       data: ImageFileSelection;
       previewUrl: string; // The filepath of the existing image
       slotId: string;
@@ -35,9 +35,9 @@ export type DebugInfo = {
 };
 
 export type ProductListPreferences = {
-  nameLocale: "name_en" | "name_pl" | "name_de";
+  nameLocale: 'name_en' | 'name_pl' | 'name_de';
   catalogFilter: string;
   currencyCode: string | null;
   pageSize: number;
-  thumbnailSource: "file" | "link" | "base64";
+  thumbnailSource: 'file' | 'link' | 'base64';
 };

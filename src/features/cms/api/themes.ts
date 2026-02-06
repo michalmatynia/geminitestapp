@@ -1,4 +1,4 @@
-import type { CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../types";
+import type { CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '../types';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -9,9 +9,9 @@ const safeJson = async <T>(res: Response): Promise<T> => {
 };
 
 export const fetchThemes = async (): Promise<CmsTheme[]> => {
-  const res = await fetch("/api/cms/themes");
+  const res = await fetch('/api/cms/themes');
   if (!res.ok) {
-    throw new Error("Failed to fetch themes");
+    throw new Error('Failed to fetch themes');
   }
   return res.json() as Promise<CmsTheme[]>;
 };
@@ -19,15 +19,15 @@ export const fetchThemes = async (): Promise<CmsTheme[]> => {
 export const fetchTheme = async (id: string): Promise<CmsTheme> => {
   const res = await fetch(`/api/cms/themes/${id}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch theme");
+    throw new Error('Failed to fetch theme');
   }
   return res.json() as Promise<CmsTheme>;
 };
 
 export const createTheme = async (input: CmsThemeCreateInput): Promise<{ ok: boolean; payload: CmsTheme }> => {
-  const res = await fetch("/api/cms/themes", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/cms/themes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<CmsTheme>(res);
@@ -36,8 +36,8 @@ export const createTheme = async (input: CmsThemeCreateInput): Promise<{ ok: boo
 
 export const updateTheme = async (id: string, input: CmsThemeUpdateInput): Promise<{ ok: boolean; payload: CmsTheme }> => {
   const res = await fetch(`/api/cms/themes/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<CmsTheme>(res);
@@ -46,7 +46,7 @@ export const updateTheme = async (id: string, input: CmsThemeUpdateInput): Promi
 
 export const deleteTheme = async (id: string): Promise<{ ok: boolean }> => {
   const res = await fetch(`/api/cms/themes/${id}`, {
-    method: "DELETE",
+    method: 'DELETE',
   });
   return { ok: res.ok };
 };

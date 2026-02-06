@@ -1,11 +1,13 @@
-import React, { useRef } from "react";
-import { Upload, X } from "lucide-react";
-import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
-import dynamic from "next/dynamic";
-import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
-import { useUploadCmsMedia } from "../../hooks/useCmsQueries";
+import { Upload, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/files';
+import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+
+import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
+
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>
 });
@@ -14,20 +16,21 @@ interface MediaLibraryPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (filepaths: string[]) => void;
-  selectionMode?: "single" | "multiple";
+  selectionMode?: 'single' | 'multiple';
   autoConfirmSelection?: boolean;
+  onFilesSelected?: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
 }
 
 export function MediaLibraryPanel({
   open,
   onOpenChange,
   onSelect,
-  selectionMode = "single",
+  selectionMode = 'single',
   autoConfirmSelection,
-}: MediaLibraryPanelProps): React.ReactNode {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  onFilesSelected,
+}: MediaLibraryPanelProps): React.JSX.Element {
   const { toast } = useToast();
-  const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === "single";
+  const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === 'single';
 
   const uploadMutation = useUploadCmsMedia();
 
@@ -35,26 +38,33 @@ export function MediaLibraryPanel({
     const filepaths = files.map((file: ImageFileSelection) => file.filepath).filter(Boolean);
     if (filepaths.length === 0) return;
     onSelect(filepaths);
-    if (selectionMode === "single") {
+    if (selectionMode === 'single') {
       onOpenChange(false);
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const files = event.target.files;
-    event.target.value = "";
+  const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     if (!files || files.length === 0) return;
 
     try {
-      const list = Array.from(files);
       const uploaded: ImageFileRecord[] = [];
-      for (const file of list) {
-        const result = await uploadMutation.mutateAsync(file);
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index]!;
+        const result = await uploadMutation.mutateAsync({
+          file,
+          onProgress: (loaded: number, total?: number) => {
+            if (!helpers) return;
+            if (!total) return;
+            const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+            const combined = Math.round(((index + pct / 100) / files.length) * 100);
+            helpers.setProgress(combined);
+          },
+        });
         uploaded.push(result);
       }
       
       if (uploaded.length > 0) {
-        toast("Upload complete.", { variant: "success" });
+        toast('Upload complete.', { variant: 'success' });
         if (shouldAutoConfirm) {
           const selections: ImageFileSelection[] = uploaded
             .map((file: ImageFileRecord): ImageFileSelection => ({ id: file.id, filepath: file.filepath }))
@@ -65,8 +75,8 @@ export function MediaLibraryPanel({
         }
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
-      toast(message, { variant: "error" });
+      const message = error instanceof Error ? error.message : 'Upload failed';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -83,24 +93,19 @@ export function MediaLibraryPanel({
         </DialogHeader>
 
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
+          <FileUploadButton
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadMutation.isPending}
-          >
-            <Upload className="mr-2 size-4" />
-            {uploadMutation.isPending ? "Uploading..." : "Upload images"}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
             accept="image/*"
             multiple
-            className="hidden"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { void handleUpload(e); }}
-          />
+            disabled={uploadMutation.isPending}
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
+              onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
+            }
+          >
+            <Upload className="mr-2 size-4" />
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
+          </FileUploadButton>
           <p className="text-xs text-gray-500">Supported formats: images</p>
         </div>
 
@@ -111,7 +116,7 @@ export function MediaLibraryPanel({
             autoConfirmSelection={shouldAutoConfirm}
             showFolderFilter
             defaultFolder="cms"
-            showBulkActions={selectionMode === "multiple"}
+            showBulkActions={selectionMode === 'multiple'}
             showTagSearch
           />
         </div>

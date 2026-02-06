@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
-import { GET, POST } from "@/app/api/price-groups/route";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from 'next/server';
+
+import { GET, POST } from '@/app/api/price-groups/route';
+import prisma from '@/shared/lib/db/prisma';
 
 type PriceGroupResponse = {
   id: string;
@@ -13,7 +14,7 @@ type PriceGroupResponse = {
   sourceGroupId?: string | null;
 };
 
-describe("Price Groups API", () => {
+describe('Price Groups API', () => {
   beforeEach(async () => {
     await prisma.priceGroup.deleteMany({});
     await prisma.currency.deleteMany({});
@@ -23,55 +24,55 @@ describe("Price Groups API", () => {
     await prisma.$disconnect();
   });
 
-  describe("GET /api/price-groups", () => {
-    it("should return empty list initially", async () => {
-      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
+  describe('GET /api/price-groups', () => {
+    it('should return empty list initially', async () => {
+      const res = await GET(new NextRequest('http://localhost/api/price-groups'));
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toEqual([]);
     });
 
-    it("should return created price groups", async () => {
+    it('should return created price groups', async () => {
       const currency = await prisma.currency.create({
-        data: { code: "USD", name: "US Dollar" },
+        data: { code: 'USD', name: 'US Dollar' },
       });
       await prisma.priceGroup.create({
         data: {
-          groupId: "PG1",
-          name: "Group 1",
+          groupId: 'PG1',
+          name: 'Group 1',
           currencyId: currency.id,
-          type: "standard",
-          basePriceField: "price",
+          type: 'standard',
+          basePriceField: 'price',
         },
       });
 
-      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
+      const res = await GET(new NextRequest('http://localhost/api/price-groups'));
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toHaveLength(1);
-      expect(groups[0]!.groupId).toBe("PG1");
+      expect(groups[0]!.groupId).toBe('PG1');
     });
   });
 
-  describe("POST /api/price-groups", () => {
-    it("should create a standard price group", async () => {
+  describe('POST /api/price-groups', () => {
+    it('should create a standard price group', async () => {
       const currency = await prisma.currency.create({
-        data: { code: "USD", name: "US Dollar" },
+        data: { code: 'USD', name: 'US Dollar' },
       });
 
       const newGroup = {
-        groupId: "STD",
-        name: "Standard Group",
+        groupId: 'STD',
+        name: 'Standard Group',
         currencyId: currency.id,
-        type: "standard",
-        basePriceField: "price",
+        type: 'standard',
+        basePriceField: 'price',
         priceMultiplier: 1,
         addToPrice: 0,
         isDefault: true,
       };
 
-      const req = new NextRequest("http://localhost/api/price-groups", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/price-groups', {
+        method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
@@ -79,37 +80,37 @@ describe("Price Groups API", () => {
       const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
-      expect(group.groupId).toBe("STD");
+      expect(group.groupId).toBe('STD');
       expect(group.isDefault).toBe(true);
     });
 
-    it("should create a dependent price group", async () => {
+    it('should create a dependent price group', async () => {
       const currency = await prisma.currency.create({
-        data: { code: "EUR", name: "Euro" },
+        data: { code: 'EUR', name: 'Euro' },
       });
       const sourceGroup = await prisma.priceGroup.create({
         data: {
-          groupId: "BASE",
-          name: "Base Group",
+          groupId: 'BASE',
+          name: 'Base Group',
           currencyId: currency.id,
-          type: "standard",
-          basePriceField: "price",
+          type: 'standard',
+          basePriceField: 'price',
         },
       });
 
       const newGroup = {
-        groupId: "DEP",
-        name: "Dependent Group",
+        groupId: 'DEP',
+        name: 'Dependent Group',
         currencyId: currency.id,
-        type: "dependent",
-        basePriceField: "price",
+        type: 'dependent',
+        basePriceField: 'price',
         sourceGroupId: sourceGroup.id,
         priceMultiplier: 1.2,
         addToPrice: 10,
       };
 
-      const req = new NextRequest("http://localhost/api/price-groups", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/price-groups', {
+        method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
@@ -117,35 +118,35 @@ describe("Price Groups API", () => {
       const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
-      expect(group.type).toBe("dependent");
+      expect(group.type).toBe('dependent');
       expect(group.sourceGroupId).toBe(sourceGroup.id);
     });
 
-    it("should fail validation for dependent group without source", async () => {
+    it('should fail validation for dependent group without source', async () => {
       const currency = await prisma.currency.create({
-        data: { code: "EUR", name: "Euro" },
+        data: { code: 'EUR', name: 'Euro' },
       });
 
       const newGroup = {
-        groupId: "DEP_FAIL",
-        name: "Dependent Fail",
+        groupId: 'DEP_FAIL',
+        name: 'Dependent Fail',
         currencyId: currency.id,
-        type: "dependent",
-        basePriceField: "price",
+        type: 'dependent',
+        basePriceField: 'price',
         // sourceGroupId missing
         priceMultiplier: 1.2,
         addToPrice: 10,
       };
 
-      const req = new NextRequest("http://localhost/api/price-groups", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/price-groups', {
+        method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
       const res = await POST(req);
       expect(res.status).toEqual(400);
       const body = (await res.json()) as { error: string };
-      expect(body.error).toContain("Invalid payload");
+      expect(body.error).toContain('Invalid payload');
     });
   });
 });

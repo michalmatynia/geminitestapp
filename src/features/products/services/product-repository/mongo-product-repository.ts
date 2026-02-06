@@ -1,32 +1,35 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import type { Document, Filter, WithId } from "mongodb";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { conflictError } from "@/shared/errors/app-error";
-import type { ProductRecord, ProductWithImages, ProductImageRecord, CatalogRecord } from "@/features/products/types";
-import type { ImageFileRecord } from "@/shared/types/files";
-import { mongoCatalogRepository } from "@/features/products/services/catalog-repository/mongo-catalog-repository";
-import { mongoImageFileRepository } from "@/features/files/server";
+import { randomUUID } from 'crypto';
+
+import { mongoImageFileRepository } from '@/features/files/server';
+import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
+import type { ProductRecord, ProductWithImages, ProductImageRecord, CatalogRecord } from '@/features/products/types';
 import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from "@/features/products/types/services/product-repository";
+} from '@/features/products/types/services/product-repository';
+import { conflictError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { ImageFileRecord } from '@/shared/types/files';
 
-type ProductDocument = Omit<ProductRecord, "createdAt" | "updatedAt"> & {
+import type { Document, Filter, WithId } from 'mongodb';
+
+type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
   _id: string;
   createdAt: Date;
   updatedAt: Date;
-  images?: ProductWithImages["images"];
-  catalogs?: ProductWithImages["catalogs"];
-  categories?: ProductWithImages["categories"];
-  tags?: ProductWithImages["tags"];
-  producers?: ProductWithImages["producers"];
+  images?: ProductWithImages['images'];
+  catalogs?: ProductWithImages['catalogs'];
+  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
+  categoryId?: string | null;
+  tags?: ProductWithImages['tags'];
+  producers?: ProductWithImages['producers'];
 };
 
-const productCollectionName = "products";
+const productCollectionName = 'products';
 
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
   id: doc.id ?? doc._id,
@@ -61,7 +64,12 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
   images: Array.isArray(doc.images) ? doc.images : [],
   catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
-  categories: Array.isArray(doc.categories) ? doc.categories : [],
+  categoryId:
+    typeof doc.categoryId === 'string'
+      ? doc.categoryId
+      : Array.isArray(doc.categories)
+        ? doc.categories[0]?.categoryId ?? null
+        : null,
   tags: Array.isArray(doc.tags) ? doc.tags : [],
   producers: Array.isArray(doc.producers) ? doc.producers : [],
 });
@@ -104,11 +112,11 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
   const andConditions: Filter<ProductDocument>[] = [];
 
   if (filters.sku) {
-    filter.sku = { $regex: filters.sku, $options: "i" };
+    filter.sku = { $regex: filters.sku, $options: 'i' };
   }
 
   if (filters.search) {
-    const regex = { $regex: filters.search, $options: "i" };
+    const regex = { $regex: filters.search, $options: 'i' };
     // If a specific language is selected, only search in that language's name field
     if (filters.searchLanguage) {
       // searchLanguage is like "name_en", "name_pl", "name_de"
@@ -149,7 +157,7 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
   }
 
   if (filters.catalogId) {
-    if (filters.catalogId === "unassigned") {
+    if (filters.catalogId === 'unassigned') {
       // Backward compatibility:
       // older documents may store catalog relation in different fields/shapes.
       andConditions.push({
@@ -160,7 +168,7 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
           { catalogIds: { $size: 0 } },
           { catalogId: { $exists: false } },
           { catalogId: null as unknown as string },
-          { catalogId: "" },
+          { catalogId: '' },
         ],
       });
     } else {
@@ -254,7 +262,7 @@ export const mongoProductRepository: ProductRepository = {
         .collection<ProductDocument>(productCollectionName)
         .findOne({ sku: data.sku });
       if (existing) {
-        throw conflictError("A product with this SKU already exists.", {
+        throw conflictError('A product with this SKU already exists.', {
           sku: data.sku,
           productId: existing.id ?? existing._id,
         });
@@ -263,38 +271,38 @@ export const mongoProductRepository: ProductRepository = {
     const document: ProductDocument = {
       _id: id,
       id,
-      sku: typeof data.sku === "string" ? data.sku : null,
+      sku: typeof data.sku === 'string' ? data.sku : null,
       baseProductId:
-        typeof data.baseProductId === "string" ? data.baseProductId : null,
+        typeof data.baseProductId === 'string' ? data.baseProductId : null,
       defaultPriceGroupId:
-        typeof data.defaultPriceGroupId === "string"
+        typeof data.defaultPriceGroupId === 'string'
           ? data.defaultPriceGroupId
           : null,
-      ean: typeof data.ean === "string" ? data.ean : null,
-      gtin: typeof data.gtin === "string" ? data.gtin : null,
-      asin: typeof data.asin === "string" ? data.asin : null,
-      name_en: typeof data.name_en === "string" ? data.name_en : null,
-      name_pl: typeof data.name_pl === "string" ? data.name_pl : null,
-      name_de: typeof data.name_de === "string" ? data.name_de : null,
+      ean: typeof data.ean === 'string' ? data.ean : null,
+      gtin: typeof data.gtin === 'string' ? data.gtin : null,
+      asin: typeof data.asin === 'string' ? data.asin : null,
+      name_en: typeof data.name_en === 'string' ? data.name_en : null,
+      name_pl: typeof data.name_pl === 'string' ? data.name_pl : null,
+      name_de: typeof data.name_de === 'string' ? data.name_de : null,
       description_en:
-        typeof data.description_en === "string" ? data.description_en : null,
+        typeof data.description_en === 'string' ? data.description_en : null,
       description_pl:
-        typeof data.description_pl === "string" ? data.description_pl : null,
+        typeof data.description_pl === 'string' ? data.description_pl : null,
       description_de:
-        typeof data.description_de === "string" ? data.description_de : null,
+        typeof data.description_de === 'string' ? data.description_de : null,
       supplierName:
-        typeof data.supplierName === "string" ? data.supplierName : null,
+        typeof data.supplierName === 'string' ? data.supplierName : null,
       supplierLink:
-        typeof data.supplierLink === "string" ? data.supplierLink : null,
+        typeof data.supplierLink === 'string' ? data.supplierLink : null,
       priceComment:
-        typeof data.priceComment === "string" ? data.priceComment : null,
-      stock: typeof data.stock === "number" ? data.stock : null,
-      price: typeof data.price === "number" ? data.price : null,
-      sizeLength: typeof data.sizeLength === "number" ? data.sizeLength : null,
-      sizeWidth: typeof data.sizeWidth === "number" ? data.sizeWidth : null,
-      weight: typeof data.weight === "number" ? data.weight : null,
-      length: typeof data.length === "number" ? data.length : null,
-      parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+        typeof data.priceComment === 'string' ? data.priceComment : null,
+      stock: typeof data.stock === 'number' ? data.stock : null,
+      price: typeof data.price === 'number' ? data.price : null,
+      sizeLength: typeof data.sizeLength === 'number' ? data.sizeLength : null,
+      sizeWidth: typeof data.sizeWidth === 'number' ? data.sizeWidth : null,
+      weight: typeof data.weight === 'number' ? data.weight : null,
+      length: typeof data.length === 'number' ? data.length : null,
+      parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || '' })) : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
       noteIds: [],
@@ -356,22 +364,22 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-            parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
-          }
+          parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || '' })) : [],
+        }
         : null),
       ...(data.imageLinks !== undefined
         ? {
-            imageLinks: Array.isArray(data.imageLinks)
-              ? data.imageLinks
-              : [],
-          }
+          imageLinks: Array.isArray(data.imageLinks)
+            ? data.imageLinks
+            : [],
+        }
         : null),
       ...(data.imageBase64s !== undefined
         ? {
-            imageBase64s: Array.isArray(data.imageBase64s)
-              ? data.imageBase64s
-              : [],
-          }
+          imageBase64s: Array.isArray(data.imageBase64s)
+            ? data.imageBase64s
+            : [],
+        }
         : null),
     };
     const result = await db
@@ -379,7 +387,7 @@ export const mongoProductRepository: ProductRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: id }, { id }] },
         { $set: updateDoc },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
     if (!result) return null;
     return toProductBase({
@@ -411,7 +419,7 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .findOne({ sku });
     if (skuExists) {
-      throw conflictError("A product with this SKU already exists.", {
+      throw conflictError('A product with this SKU already exists.', {
         sku,
         productId: skuExists.id ?? skuExists._id,
       });
@@ -523,33 +531,44 @@ export const mongoProductRepository: ProductRepository = {
       );
   },
 
-  async replaceProductCategories(productId: string, categoryIds: string[]) {
+  async replaceProductCategory(productId: string, categoryId: string | null) {
     const db = await getMongoDb();
-    if (categoryIds.length === 0) {
+    const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
+    if (!normalized) {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
           { $or: [{ _id: productId }, { id: productId }] },
-          { $set: { categories: [], updatedAt: new Date() } }
+          { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
         );
       return;
     }
-    const uniqueIds = Array.from(new Set(categoryIds));
     const categories = await db
-      .collection("product_categories")
-      .find({ id: { $in: uniqueIds } })
+      .collection('product_categories')
+      .find({ id: normalized })
       .toArray();
+    if (categories.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          { $or: [{ _id: productId }, { id: productId }] },
+          { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
+        );
+      return;
+    }
     const now = new Date();
-    const categoryEntries = categories.map((category: Document) => ({
-      productId,
-      categoryId: (category as unknown as { id: string }).id,
-      assignedAt: now,
-    }));
+    const categoryEntries = [
+      {
+        productId,
+        categoryId: (categories[0] as unknown as { id: string }).id,
+        assignedAt: now,
+      },
+    ];
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
         { $or: [{ _id: productId }, { id: productId }] },
-        { $set: { categories: categoryEntries, updatedAt: new Date() } }
+        { $set: { categories: categoryEntries, categoryId: categoryEntries[0]?.categoryId ?? null, updatedAt: new Date() } }
       );
   },
 
@@ -566,7 +585,7 @@ export const mongoProductRepository: ProductRepository = {
     }
     const uniqueIds = Array.from(new Set(tagIds));
     const tags = await db
-      .collection("product_tags")
+      .collection('product_tags')
       .find({ id: { $in: uniqueIds } })
       .toArray();
     const now = new Date();
@@ -596,7 +615,7 @@ export const mongoProductRepository: ProductRepository = {
     }
     const uniqueIds = Array.from(new Set(producerIds));
     const producers = await db
-      .collection("product_producers")
+      .collection('product_producers')
       .find({ id: { $in: uniqueIds } })
       .toArray();
     const now = new Date();
@@ -646,6 +665,6 @@ export const mongoProductRepository: ProductRepository = {
     const db = await getMongoDb();
     return db
       .collection<ProductDocument>(productCollectionName)
-      .countDocuments({ "images.imageFileId": imageFileId });
+      .countDocuments({ 'images.imageFileId': imageFileId });
   },
 };

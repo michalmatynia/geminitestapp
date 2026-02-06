@@ -1,8 +1,8 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 
 export type AuthSecurityProfile = {
   userId: string;
@@ -29,7 +29,7 @@ type MongoProfileDoc = {
   updatedAt?: Date;
 };
 
-const PROFILES_COLLECTION = "auth_security_profiles";
+const PROFILES_COLLECTION = 'auth_security_profiles';
 
 const buildDefaultProfile = (userId: string): AuthSecurityProfile => ({
   userId,
@@ -49,44 +49,87 @@ const normalizeProfile = (profile: AuthSecurityProfile): AuthSecurityProfile => 
   allowedIps: Array.isArray(profile.allowedIps) ? profile.allowedIps : [],
 });
 
+const parseNumber = (value: string | undefined, fallback: number): number => {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const AUTH_SECURITY_CACHE_TTL_MS = parseNumber(
+  process.env.AUTH_SECURITY_CACHE_TTL_MS ?? process.env.AUTH_TOKEN_REFRESH_TTL_MS,
+  60_000
+);
+
+const securityCache = new Map<string, { value: AuthSecurityProfile; ts: number }>();
+const securityInflight = new Map<string, Promise<AuthSecurityProfile>>();
+
+export const invalidateAuthSecurityProfileCache = (userId?: string): void => {
+  if (userId) {
+    securityCache.delete(userId);
+    securityInflight.delete(userId);
+    return;
+  }
+  securityCache.clear();
+  securityInflight.clear();
+};
+
 export const getAuthSecurityProfile = async (
   userId: string
 ): Promise<AuthSecurityProfile> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
-    const profile = await prisma.authSecurityProfile.findUnique({
-      where: { userId },
-    });
-    if (!profile) return buildDefaultProfile(userId);
-    return normalizeProfile({
-      userId: profile.userId,
-      mfaEnabled: profile.mfaEnabled,
-      mfaSecret: profile.mfaSecret ?? null,
-      recoveryCodes: profile.recoveryCodes ?? [],
-      allowedIps: profile.allowedIps ?? [],
-      disabledAt: profile.disabledAt ?? null,
-      bannedAt: profile.bannedAt ?? null,
-      createdAt: profile.createdAt,
-      updatedAt: profile.updatedAt,
-    });
+  const now = Date.now();
+  const cached = securityCache.get(userId);
+  if (cached && now - cached.ts < AUTH_SECURITY_CACHE_TTL_MS) {
+    return cached.value;
   }
-  if (!process.env.MONGODB_URI) return buildDefaultProfile(userId);
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoProfileDoc>(PROFILES_COLLECTION)
-    .findOne({ _id: userId });
-  if (!doc) return buildDefaultProfile(userId);
-  return normalizeProfile({
-    userId: doc.userId ?? doc._id,
-    mfaEnabled: Boolean(doc.mfaEnabled),
-    mfaSecret: doc.mfaSecret ?? null,
-    recoveryCodes: doc.recoveryCodes ?? [],
-    allowedIps: doc.allowedIps ?? [],
-    disabledAt: doc.disabledAt ?? null,
-    bannedAt: doc.bannedAt ?? null,
-    createdAt: doc.createdAt ?? new Date(),
-    updatedAt: doc.updatedAt ?? new Date(),
-  });
+  const inflight = securityInflight.get(userId);
+  if (inflight) return inflight;
+
+  const promise = (async (): Promise<AuthSecurityProfile> => {
+    const provider = requireAuthProvider(await getAuthDataProvider());
+    if (provider === 'prisma') {
+      const profile = await prisma.authSecurityProfile.findUnique({
+        where: { userId },
+      });
+      if (!profile) return buildDefaultProfile(userId);
+      return normalizeProfile({
+        userId: profile.userId,
+        mfaEnabled: profile.mfaEnabled,
+        mfaSecret: profile.mfaSecret ?? null,
+        recoveryCodes: profile.recoveryCodes ?? [],
+        allowedIps: profile.allowedIps ?? [],
+        disabledAt: profile.disabledAt ?? null,
+        bannedAt: profile.bannedAt ?? null,
+        createdAt: profile.createdAt,
+        updatedAt: profile.updatedAt,
+      });
+    }
+    if (!process.env.MONGODB_URI) return buildDefaultProfile(userId);
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<MongoProfileDoc>(PROFILES_COLLECTION)
+      .findOne({ _id: userId });
+    if (!doc) return buildDefaultProfile(userId);
+    return normalizeProfile({
+      userId: doc.userId ?? doc._id,
+      mfaEnabled: Boolean(doc.mfaEnabled),
+      mfaSecret: doc.mfaSecret ?? null,
+      recoveryCodes: doc.recoveryCodes ?? [],
+      allowedIps: doc.allowedIps ?? [],
+      disabledAt: doc.disabledAt ?? null,
+      bannedAt: doc.bannedAt ?? null,
+      createdAt: doc.createdAt ?? new Date(),
+      updatedAt: doc.updatedAt ?? new Date(),
+    });
+  })();
+
+  securityInflight.set(userId, promise);
+  try {
+    const value = await promise;
+    securityCache.set(userId, { value, ts: Date.now() });
+    return value;
+  } finally {
+    securityInflight.delete(userId);
+  }
 };
 
 export const updateAuthSecurityProfile = async (
@@ -97,7 +140,7 @@ export const updateAuthSecurityProfile = async (
   const payload: Partial<AuthSecurityProfile> = {
     updatedAt: now,
   };
-  if (typeof updates.mfaEnabled === "boolean") {
+  if (typeof updates.mfaEnabled === 'boolean') {
     payload.mfaEnabled = updates.mfaEnabled;
   }
   if (updates.mfaSecret !== undefined) {
@@ -117,7 +160,7 @@ export const updateAuthSecurityProfile = async (
   }
 
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     await prisma.authSecurityProfile.upsert({
       where: { userId },
       update: payload,
@@ -133,6 +176,7 @@ export const updateAuthSecurityProfile = async (
         updatedAt: now,
       },
     });
+    invalidateAuthSecurityProfileCache(userId);
     return getAuthSecurityProfile(userId);
   }
   if (!process.env.MONGODB_URI) return buildDefaultProfile(userId);
@@ -149,5 +193,6 @@ export const updateAuthSecurityProfile = async (
     },
     { upsert: true }
   );
+  invalidateAuthSecurityProfileCache(userId);
   return getAuthSecurityProfile(userId);
 };

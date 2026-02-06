@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 
 
-import { Input, Label } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { toNumber } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { toNumber } from '@/features/ai/ai-paths/lib';
+import { Input, Label } from '@/shared/ui';
 
 type DelayNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -15,7 +15,7 @@ export function DelayNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: DelayNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "delay") return null;
+  if (selectedNode.type !== 'delay') return null;
 
   const delayConfig = selectedNode.config?.delay ?? { ms: 300 };
 

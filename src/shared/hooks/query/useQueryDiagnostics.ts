@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQueryClient, type QueryClient, type Query } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type QueryDiagnosticsItem = {
   key: readonly unknown[];
@@ -32,7 +32,7 @@ const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
       const observers = query.getObserversCount();
       const isInvalidated = Boolean(query.state.isInvalidated);
       const isStale =
-        typeof (query as unknown as { isStale: () => boolean }).isStale === "function"
+        typeof (query as unknown as { isStale: () => boolean }).isStale === 'function'
           ? (query as unknown as { isStale: () => boolean }).isStale()
           : isInvalidated;
       let dataSize: number | null = null;

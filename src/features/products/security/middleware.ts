@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { withSecureFileUpload } from './file-upload';
 import { InputSanitizer, ProductSanitizationRules, validateProductInput, type SanitizationOptions } from './input-sanitization';
 import { withRateLimit, rateLimiters } from './rate-limiting';
-import { withSecureFileUpload } from './file-upload';
 
 type SecurityConfig = {
   enableRateLimit?: boolean | undefined;
@@ -139,7 +140,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    'default-src \'self\'; img-src \'self\' data: https:; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\''
   );
 
   // Other security headers
@@ -186,9 +187,9 @@ export function withSecurity(
       // Call original handler with sanitized data
       const modifiedReq = validation.sanitizedData 
         ? new NextRequest(req.url, {
-            ...req,
-            body: JSON.stringify(validation.sanitizedData)
-          })
+          ...req,
+          body: JSON.stringify(validation.sanitizedData)
+        })
         : req;
 
       const response = await handler(modifiedReq, ...args);

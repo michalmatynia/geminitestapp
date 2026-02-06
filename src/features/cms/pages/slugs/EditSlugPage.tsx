@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, Switch, SectionHeader, Checkbox } from "@/shared/ui";
-import { useMemo, useState, useEffect } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
-
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useMemo, useState, useEffect } from 'react';
 
 
 
-import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from "@/features/cms/hooks/useCmsQueries";
-import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import type { CmsDomain, Slug } from "@/features/cms/types";
+
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from '@/features/cms/hooks/useCmsQueries';
+import type { CmsDomain, Slug } from '@/features/cms/types';
+import { Button, Input, Label, Switch, SectionHeader, Checkbox } from '@/shared/ui';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
   const id = params.id as string;
   const searchParams = useSearchParams();
-  const domainId = searchParams.get("domainId") ?? undefined;
+  const domainId = searchParams.get('domainId') ?? undefined;
   const slugQuery = useCmsSlug(id, domainId);
 
   if (slugQuery.isLoading || !slugQuery.data) {
@@ -63,7 +63,7 @@ function EditSlugForm({
     if (!slug) return;
 
     if (zoningEnabled && selectedDomainIds.length === 0) {
-      alert("Assign this slug to at least one zone.");
+      alert('Assign this slug to at least one zone.');
       return;
     }
 
@@ -73,7 +73,7 @@ function EditSlugForm({
     if (zoningEnabled) {
       await updateSlugDomains.mutateAsync({ id, domainIds: selectedDomainIds });
     }
-    const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";
+    const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : '/admin/cms/slugs';
     router.push(next);
   };
 
@@ -130,7 +130,7 @@ function EditSlugForm({
                       {domain.domain}
                       {domain.aliasOf ? (
                         <span className="text-[11px] text-muted-foreground">
-                          (alias of {domains.find((item: CmsDomain) => item.id === domain.aliasOf)?.domain ?? "zone"})
+                          (alias of {domains.find((item: CmsDomain) => item.id === domain.aliasOf)?.domain ?? 'zone'})
                         </span>
                       ) : null}
                     </label>

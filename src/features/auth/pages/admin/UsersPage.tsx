@@ -1,27 +1,7 @@
-"use client";
+'use client';
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox } from "@/shared/ui";
-
-
-
-
-
-
-
-
-
-
-import {
-  AUTH_SETTINGS_KEYS,
-  DEFAULT_AUTH_ROLES,
-  mergeDefaultRoles,
-  type AuthRole,
-  type AuthUserRoleMap,
-} from "@/features/auth/utils/auth-management";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
-import type { AuthUserSummary } from "@/features/auth/types";
+import { useSession } from 'next-auth/react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useAuthUsers,
@@ -30,76 +10,106 @@ import {
   useRegisterUser,
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
-} from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+} from '@/features/auth/hooks/useAuthQueries';
+import type { AuthUserSummary } from '@/features/auth/types';
+import {
+  AUTH_SETTINGS_KEYS,
+  DEFAULT_AUTH_ROLES,
+  mergeDefaultRoles,
+  type AuthRole,
+  type AuthUserRoleMap,
+} from '@/features/auth/utils/auth-management';
+import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
 
-const EMPTY_CREATE = { name: "", email: "", password: "", roleId: "none", verified: false };
+const EMPTY_CREATE = { name: '', email: '', password: '', roleId: 'none', verified: false };
 
 export default function AuthUsersPage(): React.JSX.Element {
   const { toast } = useToast();
   const [users, setUsers] = useState<AuthUserSummary[]>([]);
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
   const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [dirtyRoles, setDirtyRoles] = useState(false);
 
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [editVerified, setEditVerified] = useState(false);
   const [editDisabled, setEditDisabled] = useState(false);
   const [editBanned, setEditBanned] = useState(false);
-  const [editAllowedIps, setEditAllowedIps] = useState("");
+  const [editAllowedIps, setEditAllowedIps] = useState('');
   const [editMfaEnabled, setEditMfaEnabled] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
 
-  const [mockEmail, setMockEmail] = useState("");
-  const [mockPassword, setMockPassword] = useState("");
-  const [mockStatus, setMockStatus] = useState<"idle" | "success" | "error">("idle");
-  const [mockMessage, setMockMessage] = useState("");
+  const [mockEmail, setMockEmail] = useState('');
+  const [mockPassword, setMockPassword] = useState('');
+  const [mockStatus, setMockStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [mockMessage, setMockMessage] = useState('');
   const [mockOpen, setMockOpen] = useState(false);
-  const authUsersQuery = useAuthUsers();
+  const { data: session } = useSession();
+  const lastSettingsRef = useRef<{ roles: string | null; userRoles: string | null } | null>(null);
+  const canReadUsers = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.read')
+  );
+  const authUsersQuery = useAuthUsers(canReadUsers);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const updateAuthUserMutation = useUpdateAuthUser();
   const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
   const registerUserMutation = useRegisterUser();
   const mockSignInMutation = useMockSignIn();
-  const userSecurityQuery = useAuthUserSecurity(editingUser?.id);
-  const loading = authUsersQuery.isPending || settingsQuery.isPending;
-  const loadingSecurity = userSecurityQuery.isPending;
-  const provider = authUsersQuery.data?.provider ?? "mongodb";
+  const canManageSecurity = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write')
+  );
+  const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
+  const loading = (canReadUsers && authUsersQuery.isPending) || settingsQuery.isPending;
+  const loadingSecurity = canManageSecurity && userSecurityQuery.isPending;
+  const provider = authUsersQuery.data?.provider ?? 'mongodb';
   const rolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles) ?? null;
   const userRolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles) ?? null;
 
   useEffect(() => {
-    if (!authUsersQuery.error) return;
-    console.error("Failed to load users:", authUsersQuery.error);
-    toast("Failed to load users", { variant: "error" });
-  }, [authUsersQuery.error, toast]);
+    if (!authUsersQuery.error || !canReadUsers) return;
+    logClientError(authUsersQuery.error, { context: { source: 'AuthUsersPage', action: 'loadUsers' } });
+    toast('Failed to load users', { variant: 'error' });
+  }, [authUsersQuery.error, toast, canReadUsers]);
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load user roles:", settingsQuery.error);
-    toast("Failed to load user roles", { variant: "error" });
+    logClientError(settingsQuery.error, { context: { source: 'AuthUsersPage', action: 'loadRoles' } });
+    toast('Failed to load user roles', { variant: 'error' });
   }, [settingsQuery.error, toast]);
 
   useEffect(() => {
-    if (!userSecurityQuery.error) return;
-    console.error("Failed to load security profile:", userSecurityQuery.error);
-  }, [userSecurityQuery.error]);
+    if (!userSecurityQuery.error || !canManageSecurity) return;
+    logClientError(userSecurityQuery.error, { context: { source: 'AuthUsersPage', action: 'loadSecurityProfile', userId: editingUser?.id } });
+  }, [userSecurityQuery.error, editingUser?.id, canManageSecurity]);
 
   useEffect(() => {
+    if (!canReadUsers) {
+      setUsers([]);
+      return;
+    }
     if (!authUsersQuery.data) return;
     setUsers(authUsersQuery.data.users ?? []);
-  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt]);
+  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt, canReadUsers]);
 
   useEffect(() => {
     if (!settingsQuery.data) return;
+    if (
+      lastSettingsRef.current?.roles === rolesSettingRaw &&
+      lastSettingsRef.current?.userRoles === userRolesSettingRaw
+    ) {
+      return;
+    }
     const storedRoles = mergeDefaultRoles(
       parseJsonSetting<AuthRole[]>(
         settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
@@ -113,7 +123,8 @@ export default function AuthUsersPage(): React.JSX.Element {
     setRoles(storedRoles);
     setUserRoles(storedUserRoles);
     setDirtyRoles(false);
-  }, [settingsQuery.data, rolesSettingRaw, userRolesSettingRaw]);
+    lastSettingsRef.current = { roles: rolesSettingRaw, userRoles: userRolesSettingRaw };
+  }, [rolesSettingRaw, userRolesSettingRaw, settingsQuery.data, settingsQuery.dataUpdatedAt]);
 
   const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();
@@ -130,7 +141,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   const handleRoleChange = (userId: string, roleId: string): void => {
     setUserRoles((prev: AuthUserRoleMap) => {
       const next = { ...prev };
-      if (!roleId || roleId === "none") {
+      if (!roleId || roleId === 'none') {
         delete next[userId];
       } else {
         next[userId] = roleId;
@@ -147,21 +158,21 @@ export default function AuthUsersPage(): React.JSX.Element {
         value: serializeSetting(userRoles),
       });
       setDirtyRoles(false);
-      toast("User roles updated", { variant: "success" });
+      toast('User roles updated', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save user roles:", error);
-      toast("Failed to save user roles", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthUsersPage', action: 'saveRoles' } });
+      toast('Failed to save user roles', { variant: 'error' });
     }
   };
 
   const handleOpenEdit = (user: AuthUserSummary): void => {
     setEditingUser(user);
-    setEditName(user.name ?? "");
-    setEditEmail(user.email ?? "");
+    setEditName(user.name ?? '');
+    setEditEmail(user.email ?? '');
     setEditVerified(Boolean(user.emailVerified));
     setEditDisabled(false);
     setEditBanned(false);
-    setEditAllowedIps("");
+    setEditAllowedIps('');
     setEditMfaEnabled(false);
   };
 
@@ -169,14 +180,14 @@ export default function AuthUsersPage(): React.JSX.Element {
     if (!userSecurityQuery.data || !editingUser) return;
     setEditDisabled(Boolean(userSecurityQuery.data.disabledAt));
     setEditBanned(Boolean(userSecurityQuery.data.bannedAt));
-    setEditAllowedIps((userSecurityQuery.data.allowedIps ?? []).join("\n"));
+    setEditAllowedIps((userSecurityQuery.data.allowedIps ?? []).join('\n'));
     setEditMfaEnabled(Boolean(userSecurityQuery.data.mfaEnabled));
   }, [userSecurityQuery.data, editingUser]);
 
   const handleSaveUser = async (): Promise<void> => {
     if (!editingUser) return;
     if (!editEmail.trim()) {
-      toast("Email is required", { variant: "error" });
+      toast('Email is required', { variant: 'error' });
       return;
     }
     try {
@@ -201,44 +212,46 @@ export default function AuthUsersPage(): React.JSX.Element {
           .map((entry: string) => entry.trim())
           .filter(Boolean),
       };
-      await updateAuthUserSecurityMutation.mutateAsync({
-        userId: editingUser.id,
-        input: securityPayload,
-      });
+      if (canManageSecurity) {
+        await updateAuthUserSecurityMutation.mutateAsync({
+          userId: editingUser.id,
+          input: securityPayload,
+        });
+      }
       setUsers((prev: AuthUserSummary[]) =>
         prev.map((user: AuthUserSummary) => (user.id === updated.id ? updated : user))
       );
-      toast("User updated", { variant: "success" });
+      toast('User updated', { variant: 'success' });
       setEditingUser(null);
     } catch (error) {
-      console.error("Failed to update user:", error);
-      toast("Failed to update user", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthUsersPage', action: 'saveUser', userId: editingUser.id } });
+      toast('Failed to update user', { variant: 'error' });
     }
   };
 
   const handleDisableMfa = async (): Promise<void> => {
-    if (!editingUser) return;
+    if (!editingUser || !canManageSecurity) return;
     try {
       await updateAuthUserSecurityMutation.mutateAsync({
         userId: editingUser.id,
         input: { disableMfa: true },
       });
       setEditMfaEnabled(false);
-      toast("MFA disabled for user", { variant: "success" });
+      toast('MFA disabled for user', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to disable MFA:", error);
-      toast("Failed to disable MFA", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthUsersPage', action: 'disableMfa', userId: editingUser.id } });
+      toast('Failed to disable MFA', { variant: 'error' });
     }
   };
 
   const handleCreateUser = async (): Promise<void> => {
     if (!createForm.email.trim() || !createForm.password.trim()) {
-      toast("Email and password are required", { variant: "error" });
+      toast('Email and password are required', { variant: 'error' });
       return;
     }
     if (createForm.password.trim().length < DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength) {
       toast(`Password must be at least ${DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters`, {
-        variant: "error",
+        variant: 'error',
       });
       return;
     }
@@ -255,18 +268,18 @@ export default function AuthUsersPage(): React.JSX.Element {
 
       if (!res.ok) {
         const errorPayload = res.payload;
-        const details = errorPayload?.details?.issues?.join(" ") ?? "";
+        const details = errorPayload?.details?.issues?.join(' ') ?? '';
         toast(
           errorPayload?.error
-            ? `${errorPayload.error}${details ? ` ${details}` : ""}`
-            : "Failed to create user",
-          { variant: "error" }
+            ? `${errorPayload.error}${details ? ` ${details}` : ''}`
+            : 'Failed to create user',
+          { variant: 'error' }
         );
         return;
       }
       const created = res.payload;
 
-      if (createForm.roleId && createForm.roleId !== "none") {
+      if (createForm.roleId && createForm.roleId !== 'none') {
         const nextRoles = { ...userRoles, [created.id]: createForm.roleId };
         try {
           await updateSetting.mutateAsync({
@@ -275,8 +288,8 @@ export default function AuthUsersPage(): React.JSX.Element {
           });
           setUserRoles(nextRoles);
           setDirtyRoles(false);
-        } catch {
-          // ignore role save errors here; user was created
+        } catch (roleError) {
+          logClientError(roleError, { context: { source: 'AuthUsersPage', action: 'assignRoleAfterCreate', userId: created.id, roleId: createForm.roleId } });
         }
       }
 
@@ -287,46 +300,55 @@ export default function AuthUsersPage(): React.JSX.Element {
         });
       }
 
-      toast("User created", { variant: "success" });
+      toast('User created', { variant: 'success' });
       setCreateOpen(false);
       setCreateForm(EMPTY_CREATE);
       void authUsersQuery.refetch();
     } catch (error) {
-      console.error("Failed to create user:", error);
-      toast("Failed to create user", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthUsersPage', action: 'createUser' } });
+      toast('Failed to create user', { variant: 'error' });
     }
   };
 
   const handleMockSignIn = async (): Promise<void> => {
     if (!mockEmail.trim() || !mockPassword.trim()) {
-      setMockStatus("error");
-      setMockMessage("Email and password are required.");
+      setMockStatus('error');
+      setMockMessage('Email and password are required.');
       return;
     }
     try {
-      setMockStatus("idle");
-      setMockMessage("");
+      setMockStatus('idle');
+      setMockMessage('');
       const res = await mockSignInMutation.mutateAsync({
         email: mockEmail.trim(),
         password: mockPassword,
       });
       if (!res.ok) {
-        throw new Error("Mock sign-in failed");
+        throw new Error('Mock sign-in failed');
       }
       const payload = res.payload as { ok?: boolean; message?: string };
       if (payload.ok) {
-        setMockStatus("success");
-        setMockMessage(payload.message ?? "Credentials are valid.");
+        setMockStatus('success');
+        setMockMessage(payload.message ?? 'Credentials are valid.');
       } else {
-        setMockStatus("error");
-        setMockMessage(payload.message ?? "Sign-in failed. Check credentials.");
+        setMockStatus('error');
+        setMockMessage(payload.message ?? 'Sign-in failed. Check credentials.');
       }
     } catch (error) {
-      console.error("Mock sign-in failed:", error);
-      setMockStatus("error");
-      setMockMessage("Sign-in failed. Check server logs.");
+      logClientError(error, { context: { source: 'AuthUsersPage', action: 'mockSignIn', email: mockEmail } });
+      setMockStatus('error');
+      setMockMessage('Sign-in failed. Check server logs.');
     }
   };
+
+  if (!canReadUsers) {
+    return (
+      <SectionPanel className="p-6 text-sm text-amber-300">
+        You don&apos;t have permission to view user accounts. Ask an admin to grant
+        `auth.users.read` or elevate your account.
+      </SectionPanel>
+    );
+  }
 
   return (
     <>
@@ -357,7 +379,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                   onClick={() => void handleSaveRoles()}
                   disabled={!dirtyRoles || updateSetting.isPending}
                 >
-                  {updateSetting.isPending ? "Saving..." : "Save Roles"}
+                  {updateSetting.isPending ? 'Saving...' : 'Save Roles'}
                 </Button>
               </>
             }
@@ -373,7 +395,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 className="h-8 text-sm sm:max-w-xs"
               />
               <div className="text-xs text-gray-500">
-                {dirtyRoles ? "Unsaved role changes" : "Roles are up to date"}
+                {dirtyRoles ? 'Unsaved role changes' : 'Roles are up to date'}
               </div>
             </div>
           </SectionPanel>
@@ -404,24 +426,24 @@ export default function AuthUsersPage(): React.JSX.Element {
               ) : (
                 filteredUsers.map((user: AuthUserSummary) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name ?? "Unnamed"}</TableCell>
-                    <TableCell className="text-gray-300">{user.email ?? "No email"}</TableCell>
+                    <TableCell className="font-medium">{user.name ?? 'Unnamed'}</TableCell>
+                    <TableCell className="text-gray-300">{user.email ?? 'No email'}</TableCell>
                     <TableCell>
                       {user.emailVerified ? (
-                        <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs text-green-200">
+                        <Badge variant="success">
                           Verified
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+                        <Badge variant="warning">
                           Pending
-                        </span>
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className="min-w-[180px]">
                       {(() : React.ReactNode => {
                         const currentRoleId = userRoles[user.id];
                         const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
-                        const selectValue = isValidRole ? currentRoleId : "none";
+                        const selectValue = isValidRole ? currentRoleId : 'none';
                         return (
                           <Select
                             value={selectValue}
@@ -486,7 +508,7 @@ export default function AuthUsersPage(): React.JSX.Element {
             <div className="flex items-center gap-2">
               <Checkbox
                 id="edit-verified"
-                checked={editVerified} onCheckedChange={(checked: boolean | "indeterminate") => setEditVerified(Boolean(checked))}
+                checked={editVerified} onCheckedChange={(checked: boolean | 'indeterminate') => setEditVerified(Boolean(checked))}
                 className="h-4 w-4 rounded border bg-gray-900"
               />
               <Label htmlFor="edit-verified" className="text-xs text-gray-300">
@@ -500,10 +522,17 @@ export default function AuthUsersPage(): React.JSX.Element {
               {loadingSecurity ? (
                 <div className="text-xs text-gray-500">Loading security profile...</div>
               ) : null}
+              {!canManageSecurity ? (
+                <div className="text-xs text-amber-300">
+                  You don&apos;t have permission to view or edit security controls.
+                </div>
+              ) : null}
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-disabled"
-                  checked={editDisabled} onCheckedChange={(checked: boolean | "indeterminate") => setEditDisabled(Boolean(checked))}
+                  checked={editDisabled}
+                  onCheckedChange={(checked: boolean | 'indeterminate') => setEditDisabled(Boolean(checked))}
+                  disabled={!canManageSecurity}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
@@ -513,7 +542,9 @@ export default function AuthUsersPage(): React.JSX.Element {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-banned"
-                  checked={editBanned} onCheckedChange={(checked: boolean | "indeterminate") => setEditBanned(Boolean(checked))}
+                  checked={editBanned}
+                  onCheckedChange={(checked: boolean | 'indeterminate') => setEditBanned(Boolean(checked))}
+                  disabled={!canManageSecurity}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-banned" className="text-xs text-gray-300">
@@ -528,12 +559,13 @@ export default function AuthUsersPage(): React.JSX.Element {
                   id="edit-allowed-ips"
                   value={editAllowedIps}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
+                  disabled={!canManageSecurity}
                   className="min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white"
                   placeholder="One IP per line or comma-separated"
                 />
               </div>
               <div className="text-xs text-gray-500">
-                MFA status: {editMfaEnabled ? "enabled" : "disabled"}
+                MFA status: {editMfaEnabled ? 'enabled' : 'disabled'}
               </div>
               {editMfaEnabled ? (
                 <Button
@@ -541,6 +573,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                   variant="outline"
                   size="sm"
                   onClick={() => void handleDisableMfa()}
+                  disabled={!canManageSecurity}
                 >
                   Disable MFA
                 </Button>
@@ -556,8 +589,8 @@ export default function AuthUsersPage(): React.JSX.Element {
               disabled={updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending}
             >
               {updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending
-                ? "Saving..."
-                : "Save changes"}
+                ? 'Saving...'
+                : 'Save changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -635,7 +668,7 @@ export default function AuthUsersPage(): React.JSX.Element {
             <div className="flex items-center gap-2">
               <Checkbox
                 id="create-verified"
-                checked={createForm.verified} onCheckedChange={(checked: boolean | "indeterminate") =>
+                checked={createForm.verified} onCheckedChange={(checked: boolean | 'indeterminate') =>
                   setCreateForm((prev: CreateUserForm) => ({
                     ...prev,
                     verified: Boolean(checked),
@@ -653,7 +686,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               Cancel
             </Button>
             <Button onClick={() => void handleCreateUser()} disabled={registerUserMutation.isPending}>
-              {registerUserMutation.isPending ? "Creating..." : "Create user"}
+              {registerUserMutation.isPending ? 'Creating...' : 'Create user'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -691,12 +724,12 @@ export default function AuthUsersPage(): React.JSX.Element {
                 className="bg-gray-900 border text-white"
               />
             </div>
-            {mockStatus !== "idle" ? (
+            {mockStatus !== 'idle' ? (
               <div
                 className={`rounded-md border px-3 py-2 text-xs ${
-                  mockStatus === "success"
-                    ? "border-green-500/40 bg-green-500/10 text-green-200"
-                    : "border-red-500/40 bg-red-500/10 text-red-200"
+                  mockStatus === 'success'
+                    ? 'border-green-500/40 bg-green-500/10 text-green-200'
+                    : 'border-red-500/40 bg-red-500/10 text-red-200'
                 }`}
               >
                 {mockMessage}
@@ -708,7 +741,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               Close
             </Button>
             <Button onClick={() => void handleMockSignIn()} disabled={mockSignInMutation.isPending}>
-              {mockSignInMutation.isPending ? "Testing..." : "Test Sign-in"}
+              {mockSignInMutation.isPending ? 'Testing...' : 'Test Sign-in'}
             </Button>
           </DialogFooter>
         </DialogContent>

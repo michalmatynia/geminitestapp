@@ -1,13 +1,19 @@
-import React from "react";
+import React from 'react';
+
+import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
+import { logClientError } from '@/features/observability';
+import type { CurrencyOption } from '@/shared/types/internationalization';
 import {
-  Button,
   Input,
   Label,
-  SharedModal,
   useToast,
-} from "@/shared/ui";
-import type { CurrencyOption } from "@/shared/types/internationalization";
-import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  FormModal,
+} from '@/shared/ui';
 
 interface CurrencyModalProps {
   isOpen: boolean;
@@ -25,9 +31,9 @@ export function CurrencyModal({
   const { toast } = useToast();
   const saveMutation = useSaveCurrencyMutation();
   const [form, setForm] = React.useState({
-    code: "",
-    name: "",
-    symbol: "",
+    code: '',
+    name: '',
+    symbol: '',
   });
 
   React.useEffect((): void => {
@@ -35,16 +41,16 @@ export function CurrencyModal({
       setForm({
         code: currency.code,
         name: currency.name,
-        symbol: currency.symbol ?? "",
+        symbol: currency.symbol ?? '',
       });
     } else {
-      setForm({ code: "PLN", name: "Polish Zloty", symbol: "zł" });
+      setForm({ code: 'PLN', name: 'Polish Zloty', symbol: 'zł' });
     }
   }, [currency]);
 
   const handleSubmit = async (): Promise<void> => {
     if (!form.code.trim() || !form.name.trim()) {
-      toast("Required fields missing.", { variant: "error" });
+      toast('Required fields missing.', { variant: 'error' });
       return;
     }
 
@@ -58,65 +64,47 @@ export function CurrencyModal({
         },
       });
 
-      toast("Currency saved.", { variant: "success" });
+      toast('Currency saved.', { variant: 'success' });
       onSuccess();
     } catch (err) {
-      console.error(err);
-      toast("Failed to save currency.", { variant: "error" });
+      logClientError(err, { context: { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id } });
+      toast('Failed to save currency.', { variant: 'error' });
     }
   };
 
-  const header: React.JSX.Element = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={(): void => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : currency ? "Update" : "Add"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {currency ? "Edit Currency" : "Add Currency"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
-      title={currency ? "Edit Currency" : "Add Currency"}
-      header={header}
+      title={currency ? 'Edit Currency' : 'Add Currency'}
+      onSave={(): void => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={currency ? 'Update' : 'Add'}
+      cancelText="Close"
       size="md"
     >
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="currency-code">Code</Label>
-          <select
-            id="currency-code"
-            className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+          <Select
             value={form.code}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-              setForm((p: typeof form) => ({ ...p, code: e.target.value }));
+            onValueChange={(value: string): void => {
+              setForm((p: typeof form) => ({ ...p, code: value }));
             }}
           >
-            {["PLN", "EUR", "USD", "GBP", "SEK"].map((code: string) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
+              <SelectValue placeholder="Select code" />
+            </SelectTrigger>
+            <SelectContent>
+              {['PLN', 'EUR', 'USD', 'GBP', 'SEK'].map((code: string) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="currency-name">Name</Label>
@@ -136,6 +124,6 @@ export function CurrencyModal({
           />
         </div>
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

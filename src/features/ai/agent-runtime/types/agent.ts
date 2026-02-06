@@ -1,5 +1,5 @@
 export type AgentDecision = {
-  action: "respond" | "tool" | "wait_human";
+  action: 'respond' | 'tool' | 'wait_human';
   reason: string;
   toolName?: string;
 };
@@ -7,13 +7,13 @@ export type AgentDecision = {
 export type PlanStep = {
   id: string;
   title: string;
-  status: "pending" | "running" | "completed" | "failed";
-  tool?: "playwright" | "none";
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  tool?: 'playwright' | 'none';
   expectedObservation?: string | null;
   successCriteria?: string | null;
   goalId?: string | null;
   subgoalId?: string | null;
-  phase?: "observe" | "act" | "verify" | "recover" | null;
+  phase?: 'observe' | 'act' | 'verify' | 'recover' | null;
   priority?: number | null;
   dependsOn?: string[] | null;
   attempts?: number;
@@ -49,7 +49,7 @@ export type PlannerMeta = {
   alternatives?: PlannerAlternative[] | null;
   safetyChecks?: string[];
   questions?: string[];
-  taskType?: "web_task" | "extract_info";
+  taskType?: 'web_task' | 'extract_info';
   summary?: string | null;
   constraints?: string[];
   successSignals?: string[];
@@ -85,7 +85,7 @@ export type AgentCheckpoint = {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
-  taskType?: PlannerMeta["taskType"] | null;
+  taskType?: PlannerMeta['taskType'] | null;
   resumeRequestedAt?: string | null;
   resumeProcessedAt?: string | null;
   approvalRequestedStepId?: string | null;
@@ -106,7 +106,7 @@ export type LoopSignal = {
   pattern: string;
   titles: string[];
   urls: Array<string | null>;
-  statuses: Array<PlanStep["status"]>;
+  statuses: Array<PlanStep['status']>;
 };
 
 export type ApprovalRequest = {
@@ -115,12 +115,12 @@ export type ApprovalRequest = {
   stepId: string;
   action: string;
   context?: Record<string, unknown>;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   requestedAt: Date;
   decidedAt?: Date;
 };
 
-export type AuditLevel = "info" | "warning" | "error";
+export type AuditLevel = 'info' | 'warning' | 'error';
 
 export type PlanHierarchy = {
   goals: Array<{
@@ -136,7 +136,7 @@ export type PlanHierarchy = {
   }>;
 };
 
-export type MemoryScope = "session" | "longterm";
+export type MemoryScope = 'session' | 'longterm';
 
 export type AgentToolRequest = {
   tool: string;
@@ -152,7 +152,7 @@ export type AgentToolResult = {
   observation?: string;
 };
 
-export type AgentRunStatusType = "queued" | "running" | "waiting_human" | "stopped" | "failed" | "completed";
+export type AgentRunStatusType = 'queued' | 'running' | 'waiting_human' | 'stopped' | 'failed' | 'completed';
 
 export type AgentAuditLogRecord = {
   id: string;

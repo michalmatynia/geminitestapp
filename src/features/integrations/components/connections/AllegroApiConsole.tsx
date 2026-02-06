@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { ApiConsole, type ApiPreset } from "./ApiConsole";
+import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+
+import { ApiConsole, type ApiPreset } from './ApiConsole';
 
 type AllegroApiConsoleProps = {
   activeConnection: IntegrationConnection | null;
@@ -38,13 +39,13 @@ export function AllegroApiConsole({
   isConnected,
 }: AllegroApiConsoleProps): React.JSX.Element {
   const allegroApiPresets: ApiPreset[] = [
-    { label: "Categories", method: "GET", path: "/sale/categories" },
-    { label: "Offers", method: "GET", path: "/sale/offers?limit=10" },
-    { label: "Offer Events", method: "GET", path: "/sale/offer-events?limit=10" },
-    { label: "Checkout Forms", method: "GET", path: "/order/checkout-forms?limit=10" },
-    { label: "Shipping Rates", method: "GET", path: "/sale/shipping-rates" },
-    { label: "Return Policies", method: "GET", path: "/after-sales-service-returns" },
-    { label: "Implied Warranties", method: "GET", path: "/after-sales-service-conditions" },
+    { label: 'Categories', method: 'GET', path: '/sale/categories' },
+    { label: 'Offers', method: 'GET', path: '/sale/offers?limit=10' },
+    { label: 'Offer Events', method: 'GET', path: '/sale/offer-events?limit=10' },
+    { label: 'Checkout Forms', method: 'GET', path: '/order/checkout-forms?limit=10' },
+    { label: 'Shipping Rates', method: 'GET', path: '/sale/shipping-rates' },
+    { label: 'Return Policies', method: 'GET', path: '/after-sales-service-returns' },
+    { label: 'Implied Warranties', method: 'GET', path: '/after-sales-service-conditions' },
   ];
 
   return (
@@ -66,8 +67,8 @@ export function AllegroApiConsole({
       isConnected={isConnected}
       connectionWarning="Connect Allegro to enable API requests."
       baseUrl={activeConnection?.allegroUseSandbox
-        ? "https://api.allegro.pl.allegrosandbox.pl"
-        : "https://api.allegro.pl"}
+        ? 'https://api.allegro.pl.allegrosandbox.pl'
+        : 'https://api.allegro.pl'}
       methodType="select"
     />
   );

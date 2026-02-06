@@ -1,6 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
+
+import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
+import type { AiNode, AgentConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
@@ -10,9 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from "@/shared/ui";
-import type { AiNode, AgentConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { useAgentPersonas } from "@/features/ai/agentcreator/hooks/useAgentPersonas";
+} from '@/shared/ui';
 
 type AgentNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -20,12 +21,12 @@ type AgentNodeConfigSectionProps = {
 };
 
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
-  personaId: "",
-  promptTemplate: "",
+  personaId: '',
+  promptTemplate: '',
   waitForResult: true,
 };
 
-const RUNTIME_PERSONA_VALUE = "__runtime__";
+const RUNTIME_PERSONA_VALUE = '__runtime__';
 
 export function AgentNodeConfigSection({
   selectedNode,
@@ -33,7 +34,7 @@ export function AgentNodeConfigSection({
 }: AgentNodeConfigSectionProps): React.JSX.Element | null {
   const personasQuery = useAgentPersonas();
   
-  if (selectedNode.type !== "agent") return null;
+  if (selectedNode.type !== 'agent') return null;
 
   const personas = personasQuery.data ?? [];
   const agentConfig = selectedNode.config?.agent ?? DEFAULT_AGENT_CONFIG;
@@ -64,7 +65,7 @@ export function AgentNodeConfigSection({
         value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({
-            agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? "" : value },
+            agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? '' : value },
           })
         }
       >
@@ -98,7 +99,7 @@ export function AgentNodeConfigSection({
         <Label className="text-xs text-gray-400">Prompt Template</Label>
         <Textarea
           className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-          value={agentConfig.promptTemplate ?? ""}
+          value={agentConfig.promptTemplate ?? ''}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               agent: { ...agentConfig, promptTemplate: event.target.value },
@@ -107,7 +108,7 @@ export function AgentNodeConfigSection({
           placeholder="Use {{bundle}} or {{context}} placeholders to build the agent prompt."
         />
         <div className="mt-1 text-[11px] text-gray-500">
-          Leave empty to use the incoming <span className="text-gray-300">prompt</span> or{" "}
+          Leave empty to use the incoming <span className="text-gray-300">prompt</span> or{' '}
           <span className="text-gray-300">value</span> input directly.
         </div>
       </div>
@@ -117,8 +118,8 @@ export function AgentNodeConfigSection({
           type="button"
           className={`rounded border px-3 py-1 text-xs ${
             agentConfig.waitForResult !== false
-              ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-muted/50"
+              ? 'text-emerald-200 hover:bg-emerald-500/10'
+              : 'text-gray-300 hover:bg-muted/50'
           }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
@@ -129,13 +130,13 @@ export function AgentNodeConfigSection({
             })
           }
         >
-          {agentConfig.waitForResult === false ? "Disabled" : "Enabled"}
+          {agentConfig.waitForResult === false ? 'Disabled' : 'Enabled'}
         </Button>
       </div>
       <p className="text-[11px] text-gray-500">
-        When enabled, the agent waits for completion and emits a{" "}
-        <span className="text-gray-300">result</span> summary. Disable to emit only{" "}
-        <span className="text-gray-300">jobId</span> and{" "}
+        When enabled, the agent waits for completion and emits a{' '}
+        <span className="text-gray-300">result</span> summary. Disable to emit only{' '}
+        <span className="text-gray-300">jobId</span> and{' '}
         <span className="text-gray-300">status</span>.
       </p>
     </div>

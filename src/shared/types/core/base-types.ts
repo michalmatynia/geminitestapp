@@ -1,11 +1,9 @@
+import { DtoBase } from '../base';
+
 // Minimal types - single source of truth
 export type Status = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
-export interface Entity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type Entity = DtoBase;
 
 export type MongoSettingRecord = { _id: string; key: string; value: string };
 

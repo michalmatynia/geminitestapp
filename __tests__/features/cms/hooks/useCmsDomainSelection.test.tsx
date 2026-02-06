@@ -1,18 +1,19 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { vi, describe, it, expect, beforeEach } from "vitest";
-import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
+import { server } from '@/mocks/server';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 
 // Mock the hooks
-vi.mock("@/features/cms/hooks/useCmsQueries", () => ({
+vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsDomains: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/use-settings", () => ({
+vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
 }));
 
@@ -25,11 +26,11 @@ const createTestQueryClient = () =>
     },
   });
 
-describe("useCmsDomainSelection Hook", () => {
+describe('useCmsDomainSelection Hook', () => {
   let queryClient: QueryClient;
   const mockDomains = [
-    { id: "d1", domain: "example.com" },
-    { id: "d2", domain: "test.com", aliasOf: "d1" },
+    { id: 'd1', domain: 'example.com' },
+    { id: 'd2', domain: 'test.com', aliasOf: 'd1' },
   ];
 
   beforeEach(() => {
@@ -39,15 +40,15 @@ describe("useCmsDomainSelection Hook", () => {
     // Default mock implementations
     (useCmsDomains as any).mockReturnValue({ data: mockDomains, isLoading: false });
     (useSettingsMap as any).mockReturnValue({
-      data: new Map([["cms_domain_settings.v1", JSON.stringify({ zoningEnabled: true })]]),
+      data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: true })]]),
       isLoading: false,
     });
     
     server.use(
-      http.get("/api/user/preferences", () => {
-        return HttpResponse.json({ cmsActiveDomainId: "d1" });
+      http.get('/api/user/preferences', () => {
+        return HttpResponse.json({ cmsActiveDomainId: 'd1' });
       }),
-      http.patch("/api/user/preferences", async ({ request }) => {
+      http.patch('/api/user/preferences', async ({ request }) => {
         const body = await request.json();
         return HttpResponse.json(body);
       })
@@ -58,43 +59,43 @@ describe("useCmsDomainSelection Hook", () => {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  it("should return active domain from preferences", async () => {
+  it('should return active domain from preferences', async () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
-    expect(result.current.activeDomainId).toBe("d1");
-    expect(result.current.activeDomain!.domain).toBe("example.com");
+    expect(result.current.activeDomainId).toBe('d1');
+    expect(result.current.activeDomain!.domain).toBe('example.com');
     expect(result.current.zoningEnabled).toBe(true);
   });
 
-  it("should return shared domains for a canonical domain", async () => {
+  it('should return shared domains for a canonical domain', async () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.sharedWithDomains).toHaveLength(1);
-    expect(result.current.sharedWithDomains[0]!.id).toBe("d2");
+    expect(result.current.sharedWithDomains[0]!.id).toBe('d2');
   });
 
-  it("should return canonical domain for an alias", async () => {
+  it('should return canonical domain for an alias', async () => {
     server.use(
-      http.get("/api/user/preferences", () => {
-        return HttpResponse.json({ cmsActiveDomainId: "d2" });
+      http.get('/api/user/preferences', () => {
+        return HttpResponse.json({ cmsActiveDomainId: 'd2' });
       })
     );
 
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
-    await waitFor(() => expect(result.current.activeDomainId).toBe("d2"), { timeout: 2000 });
+    await waitFor(() => expect(result.current.activeDomainId).toBe('d2'), { timeout: 2000 });
     
-    expect(result.current.canonicalDomain!.id).toBe("d1");
+    expect(result.current.canonicalDomain!.id).toBe('d1');
   });
 
-  it("should handle setting active domain", async () => {
+  it('should handle setting active domain', async () => {
     let capturedBody: any = null;
     server.use(
-      http.patch("/api/user/preferences", async ({ request }) => {
+      http.patch('/api/user/preferences', async ({ request }) => {
         capturedBody = await request.json();
         return HttpResponse.json(capturedBody);
       })
@@ -104,14 +105,14 @@ describe("useCmsDomainSelection Hook", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
-    result.current.setActiveDomainId("d2");
+    result.current.setActiveDomainId('d2');
     
-    await waitFor(() => expect(capturedBody).toEqual({ cmsActiveDomainId: "d2" }));
+    await waitFor(() => expect(capturedBody).toEqual({ cmsActiveDomainId: 'd2' }));
   });
 
-  it("should disable zoning if setting is false", async () => {
+  it('should disable zoning if setting is false', async () => {
     (useSettingsMap as any).mockReturnValue({
-      data: new Map([["cms_domain_settings.v1", JSON.stringify({ zoningEnabled: false })]]),
+      data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: false })]]),
       isLoading: false,
     });
 
@@ -123,17 +124,17 @@ describe("useCmsDomainSelection Hook", () => {
     expect(result.current.activeDomainId).toBeNull();
   });
 
-  it("should detect host domain", async () => {
+  it('should detect host domain', async () => {
     // Mock window.location.hostname
     const originalLocation = window.location;
     delete (window as any).location;
-    Object.defineProperty(window, "location", {
-      value: { ...originalLocation, hostname: "test.com" } as Location,
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, hostname: 'test.com' } as Location,
       configurable: true,
     });
 
     server.use(
-      http.get("/api/user/preferences", () => {
+      http.get('/api/user/preferences', () => {
         return HttpResponse.json({ cmsActiveDomainId: null });
       })
     );
@@ -142,12 +143,12 @@ describe("useCmsDomainSelection Hook", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
-    expect(result.current.hostDomainId).toBe("d2");
-    expect(result.current.activeDomainId).toBe("d2");
+    expect(result.current.hostDomainId).toBe('d2');
+    expect(result.current.activeDomainId).toBe('d2');
 
     // Restore window.location
     delete (window as any).location;
-    Object.defineProperty(window, "location", {
+    Object.defineProperty(window, 'location', {
       value: originalLocation,
       configurable: true,
     });

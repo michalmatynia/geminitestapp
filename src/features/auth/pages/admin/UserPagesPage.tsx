@@ -1,21 +1,18 @@
-"use client";
+'use client';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useRef, useState } from "react";
-
+import { useEffect, useRef, useState } from 'react';
 
 
 
-
-
-
-import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
-} from "@/features/auth/utils/auth-user-pages";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+} from '@/features/auth/utils/auth-user-pages';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -29,8 +26,8 @@ export default function AuthUserPagesPage(): React.JSX.Element {
     }
     if (didNotifyErrorRef.current) return;
     didNotifyErrorRef.current = true;
-    console.error("Failed to load user page settings:", settingsQuery.error);
-    toast("Failed to load user page settings", { variant: "error" });
+    logClientError(settingsQuery.error, { context: { source: 'AuthUserPagesPage', action: 'loadSettings' } });
+    toast('Failed to load user page settings', { variant: 'error' });
   }, [settingsQuery.error, toast]);
 
   if (settingsQuery.isPending || !settingsQuery.data) {
@@ -71,10 +68,10 @@ function AuthUserPagesForm({
         value: serializeSetting(settings),
       });
       setDirty(false);
-      toast("User page settings saved", { variant: "success" });
+      toast('User page settings saved', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save user page settings:", error);
-      toast("Failed to save user page settings", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthUserPagesPage', action: 'saveSettings' } });
+      toast('Failed to save user page settings', { variant: 'error' });
     }
   };
 
@@ -97,10 +94,10 @@ function AuthUserPagesForm({
         <CardContent className="space-y-4">
           {(
             [
-              ["allowSignup", "Allow sign-up", "Enable self-service user registration."],
-              ["allowPasswordReset", "Allow password reset", "Enable forgot-password flow."],
-              ["allowSocialLogin", "Allow social login", "Show OAuth providers on login."],
-              ["requireEmailVerification", "Require email verification", "Block access until email is verified."],
+              ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
+              ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
+              ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
+              ['requireEmailVerification', 'Require email verification', 'Block access until email is verified.'],
             ] as const
           ).map(([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
             <div
@@ -125,7 +122,7 @@ function AuthUserPagesForm({
           onClick={() => void handleSave()}
           disabled={!dirty || updateSetting.isPending}
         >
-          {updateSetting.isPending ? "Saving..." : "Save settings"}
+          {updateSetting.isPending ? 'Saving...' : 'Save settings'}
         </Button>
       </div>
     </div>

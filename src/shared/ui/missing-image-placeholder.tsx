@@ -1,4 +1,4 @@
-import { cn } from "@/shared/utils";
+import { cn } from '@/shared/utils';
 
 interface MissingImagePlaceholderProps {
   className?: string;
@@ -7,12 +7,12 @@ interface MissingImagePlaceholderProps {
 
 export default function MissingImagePlaceholder({
   className,
-  label = "No image",
+  label = 'No image',
 }: MissingImagePlaceholderProps) {
   return (
     <div
       className={cn(
-    "flex items-center justify-center rounded-md border border-border bg-muted/60 text-[10px] font-medium uppercase tracking-wide text-gray-500",
+        'flex items-center justify-center rounded-md border border-border bg-muted/60 text-[10px] font-medium uppercase tracking-wide text-gray-500',
         className
       )}
     >

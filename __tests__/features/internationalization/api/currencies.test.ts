@@ -1,6 +1,7 @@
-import { GET, POST } from "@/app/api/currencies/route";
-import prisma from "@/shared/lib/db/prisma";
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
+
+import { GET, POST } from '@/app/api/currencies/route';
+import prisma from '@/shared/lib/db/prisma';
 
 type CurrencyResponse = {
   id: string;
@@ -9,7 +10,7 @@ type CurrencyResponse = {
   symbol: string | null;
 };
 
-describe("Currencies API", () => {
+describe('Currencies API', () => {
   beforeEach(async () => {
     await prisma.countryCurrency.deleteMany({});
     await prisma.currency.deleteMany({});
@@ -19,9 +20,9 @@ describe("Currencies API", () => {
     await prisma.$disconnect();
   });
 
-  describe("GET /api/currencies", () => {
-    it("should seed default currencies on first call", async () => {
-      const res = await GET(new NextRequest("http://localhost/api/currencies"));
+  describe('GET /api/currencies', () => {
+    it('should seed default currencies on first call', async () => {
+      const res = await GET(new NextRequest('http://localhost/api/currencies'));
       const currencies = (await res.json()) as CurrencyResponse[];
 
       expect(res.status).toEqual(200);
@@ -30,28 +31,28 @@ describe("Currencies API", () => {
       const dbCurrencies = await prisma.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
-      const usd = currencies.find((c: CurrencyResponse) => c.code === "USD");
+      const usd = currencies.find((c: CurrencyResponse) => c.code === 'USD');
       if (!usd) {
-        throw new Error("Expected seeded currency USD.");
+        throw new Error('Expected seeded currency USD.');
       }
-      expect(usd.name).toBe("US Dollar");
-      expect(usd.symbol).toBe("$");
+      expect(usd.name).toBe('US Dollar');
+      expect(usd.symbol).toBe('$');
     });
   });
 
-  describe("POST /api/currencies", () => {
-    it("should create a new currency", async () => {
+  describe('POST /api/currencies', () => {
+    it('should create a new currency', async () => {
       // The schema restricts code to specific ENUMs: USD, EUR, PLN, GBP, SEK.
       // So we can only create one of these if it doesn't exist.
       // Since beforeEach cleans up, we can create one.
       const newCurrency = {
-        code: "USD",
-        name: "US Dollar Custom",
-        symbol: "$",
+        code: 'USD',
+        name: 'US Dollar Custom',
+        symbol: '$',
       };
 
-      const req = new NextRequest("http://localhost/api/currencies", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/currencies', {
+        method: 'POST',
         body: JSON.stringify(newCurrency),
       });
 
@@ -59,18 +60,18 @@ describe("Currencies API", () => {
       const currency = (await res.json()) as CurrencyResponse;
 
       expect(res.status).toEqual(200);
-      expect(currency.code).toBe("USD");
-      expect(currency.name).toBe("US Dollar Custom");
+      expect(currency.code).toBe('USD');
+      expect(currency.name).toBe('US Dollar Custom');
     });
 
-    it("should reject invalid payload", async () => {
+    it('should reject invalid payload', async () => {
       const invalidCurrency = {
-        code: "XYZ", // Not in ENUM
-        name: "Invalid",
+        code: 'XYZ', // Not in ENUM
+        name: 'Invalid',
       };
 
-      const req = new NextRequest("http://localhost/api/currencies", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/currencies', {
+        method: 'POST',
         body: JSON.stringify(invalidCurrency),
       });
 

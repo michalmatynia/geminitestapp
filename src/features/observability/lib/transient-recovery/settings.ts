@@ -1,15 +1,17 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { ObjectId } from "mongodb";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import { ObjectId } from 'mongodb';
+
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
 import {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
   TRANSIENT_RECOVERY_KEYS,
   type TransientRecoverySettings,
-} from "./constants";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
+} from './constants';
 
 type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };
 
@@ -28,7 +30,7 @@ const CACHE_TTL_MS = 30000;
 let cached: CacheState | null = null;
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -47,21 +49,21 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>("settings")
+    .collection<SettingRecord>('settings')
     .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
-  return typeof doc?.value === "string" ? doc.value : null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     return readMongoSetting(key);
   }
   return readPrismaSetting(key);
 };
 
 const toPositiveNumber = (value: unknown, fallback: number, minValue: number = 0): number => {
-  const parsed = typeof value === "number" ? value : Number(value);
+  const parsed = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(parsed) || parsed < minValue) return fallback;
   return parsed;
 };
@@ -70,9 +72,9 @@ const normalizeSettings = (
   input: TransientRecoverySettings | null | undefined
 ): TransientRecoverySettings => {
   const base = DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
-  const enabled = typeof input?.enabled === "boolean" ? input.enabled : base.enabled;
+  const enabled = typeof input?.enabled === 'boolean' ? input.enabled : base.enabled;
   const retryEnabled =
-    typeof input?.retry?.enabled === "boolean"
+    typeof input?.retry?.enabled === 'boolean'
       ? input.retry.enabled
       : base.retry.enabled;
   const retry = {
@@ -92,7 +94,7 @@ const normalizeSettings = (
     })(),
   };
   const circuitEnabled =
-    typeof input?.circuit?.enabled === "boolean"
+    typeof input?.circuit?.enabled === 'boolean'
       ? input.circuit.enabled
       : base.circuit.enabled;
   const circuit = {
@@ -120,7 +122,7 @@ export const getTransientRecoverySettings = async (
     return cached.value;
   }
   const stored = await readSettingValue(TRANSIENT_RECOVERY_KEYS.settings);
-      const parsed: TransientRecoverySettings | null = parseJsonSetting<TransientRecoverySettings | null>(stored, null);  const value = normalizeSettings(parsed);
+  const parsed: TransientRecoverySettings | null = parseJsonSetting<TransientRecoverySettings | null>(stored, null);  const value = normalizeSettings(parsed);
   cached = {
     value,
     expiresAt: now + CACHE_TTL_MS,

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 
-import { MarketplaceSelector } from "@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector";
-import { BaseCategoryMapper } from "@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper";
-import { useIntegrationsWithConnections } from "@/features/integrations/hooks/useIntegrationQueries";
-import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
+import { BaseCategoryMapper } from '@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper';
+import { MarketplaceSelector } from '@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
+import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
+import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import { useToast, SectionHeader, SectionPanel } from '@/shared/ui';
 
 export default function CategoryMapperPage(): React.JSX.Element {
   const [selectedConnectionIdOverride, setSelectedConnectionIdOverride] = useState<string | null>(null);
@@ -18,14 +18,14 @@ export default function CategoryMapperPage(): React.JSX.Element {
     const message =
       integrationsQuery.error instanceof Error
         ? integrationsQuery.error.message
-        : "Failed to load integrations.";
-    toast(message, { variant: "error" });
+        : 'Failed to load integrations.';
+    toast(message, { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
     return data.filter(
-      (i: IntegrationWithConnections) => i.slug.toLowerCase() === "baselinker" || i.slug.toLowerCase() === "base"
+      (i: IntegrationWithConnections) => i.slug.toLowerCase() === 'baselinker' || i.slug.toLowerCase() === 'base'
     );
   }, [integrationsQuery.data]);
 
@@ -53,7 +53,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
   const isBaseConnection = ((): boolean => {
     if (!selectedConnection) return false;
     const slug = selectedConnection.integration.slug.toLowerCase();
-    return slug === "baselinker" || slug === "base";
+    return slug === 'baselinker' || slug === 'base';
   })();
 
   return (
@@ -85,7 +85,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
             ) : isBaseConnection ? (
               <BaseCategoryMapper
                 connectionId={selectedConnectionId}
-                connectionName={selectedConnection?.name ?? ""}
+                connectionName={selectedConnection?.name ?? ''}
               />
             ) : (
               <div className="flex h-64 items-center justify-center text-gray-500">

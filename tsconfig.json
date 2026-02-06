@@ -38,6 +38,9 @@
       "@/*": [
         "./src/*"
       ],
+      "@/__tests__/*": [
+        "./__tests__/*"
+      ],
       "gsap/ScrollTrigger": [
         "./node_modules/gsap/types/scroll-trigger.d.ts"
       ],
@@ -69,9 +72,11 @@
     "**/*.tsx",
     "types/**/*.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "src/global.d.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next"
   ]
 }

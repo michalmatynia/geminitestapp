@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import type { ColumnDef, Column, Row } from "@tanstack/react-table";
+import { Button } from '@/shared/ui';
 
-import type { DatabaseInfo } from "../types";
+import type { DatabaseInfo } from '../types';
+import type { ColumnDef, Column, Row } from '@tanstack/react-table';
+
 
 // ✅ Use TanStack's Column type, and accept that the handler may be undefined.
 const renderSortableHeader = <TData, TValue>(
@@ -23,7 +24,7 @@ const renderSortableHeader = <TData, TValue>(
     >
       {label}
       <span className="text-xs text-muted-foreground">
-        {direction === "asc" ? "▲" : direction === "desc" ? "▼" : "↕"}
+        {direction === 'asc' ? '▲' : direction === 'desc' ? '▼' : '↕'}
       </span>
     </Button>
   );
@@ -35,39 +36,39 @@ export const getDatabaseColumns = (options?: {
   onDeleteRequest?: (backupName: string) => void;
 }): ColumnDef<DatabaseInfo>[] => [
   {
-    accessorKey: "name",
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Name", column),
+    accessorKey: 'name',
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Name', column),
   },
   {
-    accessorKey: "size",
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Size", column),
+    accessorKey: 'size',
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Size', column),
     sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number => {
       const toNumber = (value: string): number =>
-        Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
+        Number.parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
       return (
         toNumber(rowA.getValue<string>(columnId)) - toNumber(rowB.getValue<string>(columnId))
       );
     },
   },
   {
-    id: "createdAt",
+    id: 'createdAt',
     accessorFn: (row: DatabaseInfo): number => new Date(row.createdAt).getTime(),
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Created", column),
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Created', column),
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.created,
   },
   {
-    id: "lastModifiedAt",
+    id: 'lastModifiedAt',
     accessorFn: (row: DatabaseInfo): number => new Date(row.lastModifiedAt).getTime(),
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Last Modified", column),
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Last Modified', column),
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastModified,
   },
   {
-    accessorKey: "lastRestored",
-    header: "Last Restored",
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastRestored || "Never",
+    accessorKey: 'lastRestored',
+    header: 'Last Restored',
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastRestored || 'Never',
   },
   {
-    id: "actions",
+    id: 'actions',
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => {
       const backup = row.original;
       return (

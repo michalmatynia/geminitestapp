@@ -1,5 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { render } from '@/__tests__/test-utils';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/useSettings';
 import { useToast } from '@/shared/ui';

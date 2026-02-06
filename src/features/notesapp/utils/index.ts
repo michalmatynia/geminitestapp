@@ -1,6 +1,6 @@
-import type { CategoryWithChildren } from "@/shared/types/notes";
-import { darkenColor } from "@/shared/utils/color-utils";
-import { autoformatMarkdown } from "@/shared/utils/markdown-utils";
+import type { CategoryWithChildren } from '@/shared/types/notes';
+import { darkenColor } from '@/shared/utils/color-utils';
+import { autoformatMarkdown } from '@/shared/utils/markdown-utils';
 
 export { darkenColor, autoformatMarkdown };
 
@@ -81,9 +81,9 @@ export const buildBreadcrumbPath = (
 
 const escapeHtml = (value: string): string =>
   value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
 const preserveSpans = (value: string): { withTokens: string; tokens: string[] } => {
   const tokens: string[] = [];
@@ -131,9 +131,9 @@ const renderInlineMarkdown = (value: string): string => {
     '<a href="$2" style="color: var(--note-link-color, #38bdf8); text-decoration: underline; cursor: pointer;" target="_blank" rel="noreferrer">$1</a>'
   );
 
-  const withStrong = withLinks.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  const withStrong = withLinks.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-  const withEm = withStrong.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  const withEm = withStrong.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
   return restoreSpans(withEm, tokens);
 };
@@ -158,7 +158,7 @@ export const renderMarkdownToHtml = (value: string): string => {
   const { withTokens, tokens } = preserveSpans(value);
   const lines = withTokens.split(/\r?\n/);
 
-  let html = "";
+  let html = '';
 
   let inList = false;
 
@@ -179,7 +179,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
       .map((cell: string) => `<th>${renderInlineMarkdown(cell.trim())}</th>`)
 
-      .join("");
+      .join('');
 
     const body = tableRows
 
@@ -188,10 +188,10 @@ export const renderMarkdownToHtml = (value: string): string => {
           `<tr>${row
             .map((cell: string) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
 
-            .join("")}</tr>`
+            .join('')}</tr>`
       )
 
-      .join("");
+      .join('');
 
     html += `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
 
@@ -205,21 +205,21 @@ export const renderMarkdownToHtml = (value: string): string => {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]!;
 
-    if (line.trim().startsWith("```")) {
+    if (line.trim().startsWith('```')) {
       flushTable();
 
       if (inList) {
-        html += "</ul>";
+        html += '</ul>';
 
         inList = false;
       }
 
       if (inCodeBlock) {
-        const rawCode = codeLines.join("\n");
+        const rawCode = codeLines.join('\n');
 
         const encoded = encodeURIComponent(rawCode);
 
-        const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join("\n");
+        const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join('\n');
 
         html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
 
@@ -249,7 +249,7 @@ export const renderMarkdownToHtml = (value: string): string => {
       flushTable();
 
       if (inList) {
-        html += "</ul>";
+        html += '</ul>';
 
         inList = false;
       }
@@ -265,26 +265,26 @@ export const renderMarkdownToHtml = (value: string): string => {
       flushTable();
 
       if (inList) {
-        html += "</ul>";
+        html += '</ul>';
 
         inList = false;
       }
 
-      html += "<hr />";
+      html += '<hr />';
 
       continue;
     }
 
-    if (trimmed.startsWith(">")) {
+    if (trimmed.startsWith('>')) {
       flushTable();
 
       if (inList) {
-        html += "</ul>";
+        html += '</ul>';
 
         inList = false;
       }
 
-      const quoteText = trimmed.replace(/^>\s?/, "");
+      const quoteText = trimmed.replace(/^>\s?/, '');
 
       html += `<blockquote>${renderInlineMarkdown(quoteText)}</blockquote>`;
 
@@ -292,7 +292,7 @@ export const renderMarkdownToHtml = (value: string): string => {
     }
 
     if (/\|/.test(trimmed)) {
-      const nextLine = lines[index + 1] ?? "";
+      const nextLine = lines[index + 1] ?? '';
 
       const isSeparatorLine = /^\s*\|?\s*-[-\s|]*\|?\s*$/.test(trimmed);
 
@@ -306,7 +306,7 @@ export const renderMarkdownToHtml = (value: string): string => {
         flushTable();
 
         if (inList) {
-          html += "</ul>";
+          html += '</ul>';
 
           inList = false;
         }
@@ -315,7 +315,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
         tableHeaderCells = trimmed
 
-          .split("|")
+          .split('|')
 
           .filter((cell: string) => cell.trim().length > 0);
 
@@ -325,7 +325,7 @@ export const renderMarkdownToHtml = (value: string): string => {
       if (inTable) {
         const cells = trimmed
 
-          .split("|")
+          .split('|')
 
           .filter((cell: string) => cell.trim().length > 0);
 
@@ -341,7 +341,7 @@ export const renderMarkdownToHtml = (value: string): string => {
       flushTable();
 
       if (!inList) {
-        html += "<ul>";
+        html += '<ul>';
 
         inList = true;
       }
@@ -349,9 +349,9 @@ export const renderMarkdownToHtml = (value: string): string => {
       const taskMatch = /^\((\s|x|X)\)\s+(.+)$/.exec(listMatch[1]!);
 
       if (taskMatch) {
-        const checked = taskMatch[1]!.toLowerCase() === "x";
+        const checked = taskMatch[1]!.toLowerCase() === 'x';
 
-        html += `<li><input type="checkbox" disabled ${checked ? "checked" : ""} /> ${renderInlineMarkdown(taskMatch[2]!)}</li>`;
+        html += `<li><input type="checkbox" disabled ${checked ? 'checked' : ''} /> ${renderInlineMarkdown(taskMatch[2]!)}</li>`;
       } else {
         html += `<li>${renderInlineMarkdown(listMatch[1]!)}</li>`;
       }
@@ -360,7 +360,7 @@ export const renderMarkdownToHtml = (value: string): string => {
     }
 
     if (inList) {
-      html += "</ul>";
+      html += '</ul>';
 
       inList = false;
     }
@@ -370,7 +370,7 @@ export const renderMarkdownToHtml = (value: string): string => {
     }
 
     if (!trimmed) {
-      html += "<br />";
+      html += '<br />';
 
       continue;
     }
@@ -379,7 +379,7 @@ export const renderMarkdownToHtml = (value: string): string => {
   }
 
   if (inList) {
-    html += "</ul>";
+    html += '</ul>';
   }
 
   if (inTable) {
@@ -387,11 +387,11 @@ export const renderMarkdownToHtml = (value: string): string => {
   }
 
   if (inCodeBlock) {
-    const rawCode = codeLines.join("\n");
+    const rawCode = codeLines.join('\n');
 
     const encoded = encodeURIComponent(rawCode);
 
-    const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join("\n");
+    const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join('\n');
 
     html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
   }

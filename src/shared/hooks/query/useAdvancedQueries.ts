@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-"use client";
+ 
+'use client';
 
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 // Hook for dependent queries - execute queries in sequence
 export function useDependentQueries<T1, T2, T3>(
@@ -10,28 +10,28 @@ export function useDependentQueries<T1, T2, T3>(
   secondQuery: { queryKey: unknown[]; queryFn: (data: T1) => Promise<T2> },
   thirdQuery?: { queryKey: unknown[]; queryFn: (data: T2) => Promise<T3> }
 ): {
-  first: any;
-  second: any;
-  third: any;
+  first: UseQueryResult<T1, Error>;
+  second: UseQueryResult<T2, Error>;
+  third: UseQueryResult<T3, Error> | null;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
 } {
-  const first = useQuery({
+  const first = useQuery<T1, Error>({
     queryKey: firstQuery.queryKey,
     queryFn: firstQuery.queryFn,
     enabled: firstQuery.enabled !== false,
   });
 
-  const second = useQuery({
+  const second = useQuery<T2, Error>({
     queryKey: [...secondQuery.queryKey, first.data],
     queryFn: () => secondQuery.queryFn(first.data!),
     enabled: !!first.data && first.isSuccess,
   });
 
-  const third = useQuery({
-    queryKey: thirdQuery ? [...thirdQuery.queryKey, second.data] : ["__empty_third__"],
-    queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as any),
+  const third = useQuery<T3, Error>({
+    queryKey: thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__'],
+    queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as unknown as T3),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
   });
 
@@ -47,7 +47,7 @@ export function useDependentQueries<T1, T2, T3>(
 }
 
 // Hook for parallel queries with combined loading state
-export function useParallelQueries<T extends Record<string, any>>(
+export function useParallelQueries<T extends Record<string, unknown>>(
   queries: {
     [K in keyof T]: {
       queryKey: unknown[];
@@ -63,32 +63,34 @@ export function useParallelQueries<T extends Record<string, any>>(
   isSuccess: boolean;
   refetch: () => Promise<unknown[]>;
 } {
+  const keys = Object.keys(queries) as Array<keyof T>;
   const queryResults = useQueries({
-    queries: Object.entries(queries).map(([, config]) => ({
-      queryKey: config.queryKey,
-      queryFn: config.queryFn,
-      enabled: config.enabled !== false,
+    queries: keys.map((key) => ({
+      queryKey: queries[key].queryKey,
+      queryFn: queries[key].queryFn,
+      enabled: queries[key].enabled !== false,
     })),
   });
 
   const results = useMemo(() => {
     const data = {} as T;
-    const keys = Object.keys(queries);
     
     queryResults.forEach((result, index) => {
-      const key = keys[index] as keyof T;
-      data[key] = result.data as T[keyof T];
+      const key = keys[index];
+      if (key) {
+        data[key] = result.data as T[keyof T];
+      }
     });
 
     return {
       data,
       isLoading: queryResults.some(q => q.isLoading),
       isError: queryResults.some(q => q.isError),
-      errors: queryResults.filter(q => q.isError).map(q => q.error),
+      errors: queryResults.filter(q => q.isError).map(q => q.error as Error),
       isSuccess: queryResults.every(q => q.isSuccess),
       refetch: async () => await Promise.all(queryResults.map(q => q.refetch())),
     };
-  }, [queryResults, queries]);
+  }, [queryResults, keys]);
 
   return results;
 }
@@ -115,8 +117,8 @@ export function useConditionalQuery<T>(
 
     // Check feature flag
     if (conditions.featureFlag) {
-      const flags = typeof window !== 'undefined' ? 
-        JSON.parse(localStorage.getItem('featureFlags') || '{}') : {};
+      const flagsStr = typeof window !== 'undefined' ? localStorage.getItem('featureFlags') : null;
+      const flags = flagsStr ? (JSON.parse(flagsStr) as Record<string, boolean>) : {};
       if (!flags[conditions.featureFlag]) {
         return false;
       }
@@ -124,9 +126,9 @@ export function useConditionalQuery<T>(
 
     // Check permission
     if (conditions.permission) {
-      const permissions = typeof window !== 'undefined' ? 
-        JSON.parse(localStorage.getItem('permissions') || '[]') : [];
-      if (!permissions.includes(conditions.permission)) {
+      const permissionsStr = typeof window !== 'undefined' ? localStorage.getItem('permissions') : null;
+      const permissions = permissionsStr ? (JSON.parse(permissionsStr) as string[]) : [];
+      if (!Array.isArray(permissions) || !permissions.includes(conditions.permission)) {
         return false;
       }
     }

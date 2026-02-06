@@ -1,25 +1,28 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Button, Checkbox, useToast } from "@/shared/ui";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+
+import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { logClientError } from '@/features/observability';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Button, Checkbox, PanelHeader, useToast, SectionPanel } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   
+  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const initialEnabled = useMemo<Set<AppEmbedId>>(() => {
-    if (!settingsQuery.data) return new Set<AppEmbedId>();
     const stored = parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledEmbedsRaw,
       []
     );
     return new Set(stored);
-  }, [settingsQuery.data]);
+  }, [enabledEmbedsRaw]);
 
   const [userEnabled, setUserEnabled] = useState<Set<AppEmbedId> | null>(null);
   const enabled: Set<AppEmbedId> = userEnabled ?? initialEnabled;
@@ -44,14 +47,14 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
         value: serializeSetting(Array.from(enabled)),
       });
       setUserEnabled(null); // Reset to follow server data after save
-      toast("App embeds saved.", { variant: "success" });
+      toast('App embeds saved.', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save app embeds:", error);
-      toast("Failed to save app embeds.", { variant: "error" });
+      logClientError(error, { context: { source: 'AppEmbedsPanel', action: 'saveSettings' } });
+      toast('Failed to save app embeds.', { variant: 'error' });
     }
   };
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  if (settingsStore.isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-xs text-gray-500">
         Loading app embeds...
@@ -62,21 +65,20 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {showHeader && (
-        <div className="border-b border-border px-4 py-3">
-          <h3 className="text-sm font-semibold text-white">App Embeds</h3>
-          <p className="mt-1 text-xs text-gray-500">
-            Enable apps you can embed into CMS layouts.
-          </p>
-        </div>
+        <PanelHeader
+          title="App embeds"
+          subtitle="Enable apps you can embed into CMS layouts."
+        />
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-3">
           {APP_EMBED_OPTIONS.map((option: { id: AppEmbedId; label: string; description: string; settingsRoute: string }) => {
             const isEnabled = enabled.has(option.id);
             return (
-              <div
+              <SectionPanel
                 key={option.id}
-                className="rounded-md border border-border/50 bg-gray-900/60 p-3"
+                variant="subtle"
+                className="p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -86,7 +88,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
                   <label className="flex items-center gap-2 text-xs text-gray-300">
                     <Checkbox
                       checked={isEnabled}
-                      onCheckedChange={(checked: boolean | "indeterminate") => toggleOption(option.id, checked === true)}
+                      onCheckedChange={(checked: boolean | 'indeterminate') => toggleOption(option.id, checked === true)}
                     />
                     Enabled
                   </label>
@@ -99,7 +101,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
                     Open settings
                   </Link>
                 </div>
-              </div>
+              </SectionPanel>
             );
           })}
         </div>
@@ -110,7 +112,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
           disabled={updateSetting.isPending}
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
-          {updateSetting.isPending ? "Saving..." : "Save"}
+          {updateSetting.isPending ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </div>

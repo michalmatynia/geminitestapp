@@ -1,3 +1,12 @@
+import type {
+  AiNode,
+  Edge,
+  RuntimeHistoryEntry,
+  RuntimeHistoryLink,
+  RuntimePortValues,
+  RuntimeState,
+} from '@/shared/types/ai-paths';
+
 import {
   appendInputValue,
   cloneValue,
@@ -6,17 +15,9 @@ import {
   sanitizeEdges,
   getPortDataTypes,
   isValueCompatibleWithTypes,
-} from "../utils";
-import { extractImageUrls } from "./utils";
-import { CACHEABLE_NODE_TYPE_SET } from "../constants";
-import type {
-  AiNode,
-  Edge,
-  RuntimeHistoryEntry,
-  RuntimeHistoryLink,
-  RuntimePortValues,
-  RuntimeState,
-} from "@/shared/types/ai-paths";
+} from '../utils';
+import { extractImageUrls } from './utils';
+import { CACHEABLE_NODE_TYPE_SET } from '../constants';
 import {
   NodeHandler,
   handleAiDescription,
@@ -47,9 +48,24 @@ import {
   handleTrigger,
   handleValidator,
   handleViewer,
-} from "./handlers";
+} from './handlers';
 
-type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
+
+export class GraphExecutionError extends Error {
+  state: RuntimeState;
+  nodeId?: string | null;
+
+  constructor(message: string, state: RuntimeState, nodeId?: string | null, cause?: unknown) {
+    super(message);
+    this.name = 'GraphExecutionError';
+    this.state = state;
+    this.nodeId = nodeId ?? null;
+    if (cause && typeof (this as { cause?: unknown }).cause === 'undefined') {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
 
 export type EvaluateGraphOptions = {
   nodes: AiNode[];
@@ -109,6 +125,45 @@ export type EvaluateGraphOptions = {
 };
 
 const CACHE_VERSION = 1;
+const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env.AI_PATHS_NODE_TIMEOUT_MS ?? '', 10) || 120_000);
+const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env.AI_PATHS_NODE_RETRY_BACKOFF_MS ?? '', 10) || 750);
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
+  let timer: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_resolve: (value: PromiseLike<never>) => void, reject: (reason?: unknown) => void) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+const withRetries = async <T>(
+  task: () => Promise<T>,
+  attempts: number,
+  backoffMs: number,
+  label: string
+): Promise<T> => {
+  let lastError: unknown = null;
+  const maxAttempts = Math.max(1, attempts);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= maxAttempts) break;
+      const delay = backoffMs * Math.pow(2, attempt - 1);
+      await sleep(delay);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed after ${maxAttempts} attempt(s)`);
+};
 
 const buildNodeInputHash = (
   node: AiNode,
@@ -184,8 +239,8 @@ export async function evaluateGraph({
   const sanitizedEdges = sanitizeEdges(nodes, edges);
   const outputs: Record<string, RuntimePortValues> = seedOutputs
     ? Object.fromEntries(
-        Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
-      )
+      Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
+    )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
   const inputHashes = new Map<string, string>(
@@ -195,9 +250,9 @@ export async function evaluateGraph({
   const history = new Map<string, RuntimeHistoryEntry[]>(
     seedHistory
       ? Object.entries(seedHistory).map(([key, value]: [string, RuntimeHistoryEntry[]]) => [
-          key,
-          Array.isArray(value) ? value.slice() : [],
-        ])
+        key,
+        Array.isArray(value) ? value.slice() : [],
+      ])
       : []
   );
   const now = new Date().toISOString();
@@ -216,18 +271,18 @@ export async function evaluateGraph({
     outgoingEdgesByNode.set(edge.from, outgoing);
   });
   const triggerSource =
-    triggerContext && typeof triggerContext === "object"
+    triggerContext && typeof triggerContext === 'object'
       ? (triggerContext).source
       : null;
   const resolvedPathId =
     activePathId ??
-    (triggerSource && typeof triggerSource === "object"
+    (triggerSource && typeof triggerSource === 'object'
       ? ((triggerSource as Record<string, unknown>).pathId as string | undefined)
       : undefined) ??
     null;
   const resolvedPathName =
     activePathName ??
-    (triggerSource && typeof triggerSource === "object"
+    (triggerSource && typeof triggerSource === 'object'
       ? ((triggerSource as Record<string, unknown>).pathName as string | undefined)
       : undefined);
 
@@ -312,7 +367,7 @@ export async function evaluateGraph({
       });
     }
   }
-  const alwaysActiveTypes = new Set(["parser", "prompt", "viewer", "database"]);
+  const alwaysActiveTypes = new Set(['parser', 'prompt', 'viewer', 'database']);
   const isActiveNode = (node: AiNode): boolean =>
     !triggerNodeId ||
     activeNodeIds.has(node.id) ||
@@ -333,34 +388,34 @@ export async function evaluateGraph({
   const normalizeEntityType = (value?: string | null): string | null => {
     const normalized = value?.trim().toLowerCase();
     if (!normalized) return null;
-    if (normalized === "product" || normalized === "products") return "product";
-    if (normalized === "note" || normalized === "notes") return "note";
+    if (normalized === 'product' || normalized === 'products') return 'product';
+    if (normalized === 'note' || normalized === 'notes') return 'note';
     return normalized;
   };
 
   let simulationEntityId: string | null = null;
   let simulationEntityType: string | null = null;
   const triggerEntityId =
-    typeof triggerContext?.entityId === "string"
+    typeof triggerContext?.entityId === 'string'
       ? triggerContext?.entityId
-      : typeof triggerContext?.productId === "string"
+      : typeof triggerContext?.productId === 'string'
         ? triggerContext?.productId
         : null;
   const triggerEntityType =
-    typeof triggerContext?.entityType === "string"
+    typeof triggerContext?.entityType === 'string'
       ? normalizeEntityType(triggerContext?.entityType)
       : null;
 
   if (triggerNodeId) {
     const simulationEdge = sanitizedEdges.find(
-      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === "context"
+      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === 'context'
     );
     if (simulationEdge) {
       const simNode = nodes.find(
-        (node: AiNode) => node.id === simulationEdge.from && node.type === "simulation"
+        (node: AiNode) => node.id === simulationEdge.from && node.type === 'simulation'
       );
       simulationEntityType =
-        normalizeEntityType(simNode?.config?.simulation?.entityType) ?? "product";
+        normalizeEntityType(simNode?.config?.simulation?.entityType) ?? 'product';
       simulationEntityId =
         simNode?.config?.simulation?.entityId?.trim() ||
         simNode?.config?.simulation?.productId?.trim() ||
@@ -381,17 +436,17 @@ export async function evaluateGraph({
   ): RuntimePortValues => {
     const next: RuntimePortValues = { ...rawInputs };
     const pickString = (value: unknown): string | undefined => {
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         const trimmed = value.trim();
         return trimmed ? trimmed : undefined;
       }
-      if (typeof value === "number") {
+      if (typeof value === 'number') {
         return String(value);
       }
       return undefined;
     };
     const applyRecord = (value: unknown): void => {
-      if (!value || typeof value !== "object") return;
+      if (!value || typeof value !== 'object') return;
       const record = value as Record<string, unknown>;
       if (!pickString(next.entityId)) {
         const resolvedEntityId =
@@ -448,9 +503,9 @@ export async function evaluateGraph({
 
     if (!pickString(next.entityId) || !pickString(next.productId) || !pickString(next.entityType)) {
       for (const [nodeId, output] of Object.entries(outputs)) {
-        if (!output || typeof output !== "object") continue;
+        if (!output || typeof output !== 'object') continue;
         const nodeType = nodeById.get(nodeId)?.type;
-        if (nodeType !== "trigger" && nodeType !== "simulation" && nodeType !== "context") {
+        if (nodeType !== 'trigger' && nodeType !== 'simulation' && nodeType !== 'context') {
           continue;
         }
         applyRecord(output as Record<string, unknown>);
@@ -463,7 +518,7 @@ export async function evaluateGraph({
     const resolvedEntityId = pickString(next.entityId);
     const resolvedEntityType = pickString(next.entityType);
 
-    if (!resolvedEntityId && resolvedEntity && typeof resolvedEntity === "object") {
+    if (!resolvedEntityId && resolvedEntity && typeof resolvedEntity === 'object') {
       const fallbackId =
         pickString(resolvedEntity.id) ??
         pickString(resolvedEntity._id);
@@ -482,12 +537,12 @@ export async function evaluateGraph({
 
   // Pre-calculate simulation nodes
   for (const node of nodes) {
-    if (!isActiveNode(node)) {
+    if (node.type !== 'simulation' && !isActiveNode(node)) {
       continue;
     }
-    if (node.type === "simulation") {
+    if (node.type === 'simulation') {
       const entityType =
-        normalizeEntityType(node.config?.simulation?.entityType) || "product";
+        normalizeEntityType(node.config?.simulation?.entityType) || 'product';
       const entityId =
         node.config?.simulation?.entityId?.trim() ||
         node.config?.simulation?.productId?.trim() ||
@@ -501,11 +556,11 @@ export async function evaluateGraph({
         timestamp: now,
       };
       if (entityId && !entity) {
-        const maybeUuid = entityId.includes("-");
+        const maybeUuid = entityId.includes('-');
         const hint =
           maybeUuid && entityId.length !== 36
             ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
-            : "";
+            : '';
         contextPayload.error = `Entity not found: ${entityType} ${entityId}${hint}`;
       }
       if (entity) {
@@ -516,7 +571,7 @@ export async function evaluateGraph({
         }
         contextPayload.entity = entity;
         contextPayload.entityJson = entity;
-        if (entityType === "product") {
+        if (entityType === 'product') {
           contextPayload.product = entity;
         }
       }
@@ -524,7 +579,7 @@ export async function evaluateGraph({
         context: contextPayload,
         entityId,
         entityType,
-        productId: entityType === "product" ? entityId : undefined,
+        productId: entityType === 'product' ? entityId : undefined,
       };
     }
   }
@@ -562,10 +617,10 @@ export async function evaluateGraph({
       if (!isActiveNode(node)) {
         continue;
       }
-      if (node.type === "simulation") continue; // Already handled
+      if (node.type === 'simulation') continue; // Already handled
 
       let nodeInputs = nextInputs[node.id] ?? {};
-      if (node.type === "database") {
+      if (node.type === 'database') {
         nodeInputs = deriveDatabaseInputs(nodeInputs);
         nextInputs[node.id] = nodeInputs;
       }
@@ -579,11 +634,11 @@ export async function evaluateGraph({
         continue;
       }
 
-      const cacheMode = node.config?.runtime?.cache?.mode ?? "auto";
+      const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
       const isCacheable =
-        cacheMode === "force"
+        cacheMode === 'force'
           ? true
-          : cacheMode === "disabled"
+          : cacheMode === 'disabled'
             ? false
             : CACHEABLE_NODE_TYPE_SET.has(node.type);
       if (!isCacheable && inputHashes.has(node.id)) {
@@ -605,13 +660,13 @@ export async function evaluateGraph({
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
-            status: "cached",
+            status: 'cached',
             iteration,
             inputs: cloneValue(nodeInputs),
             outputs: cloneValue(prevOutputs),
             inputsFrom: buildInputLinks(node.id, nodeInputs),
             outputsTo: buildOutputLinks(node.id, prevOutputs),
-            delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+            delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
           };
           pushHistoryEntry(node.id, entry);
         }
@@ -635,31 +690,46 @@ export async function evaluateGraph({
           await onNodeStart({ node, nodeInputs, prevOutputs, iteration });
         }
         try {
-          const result = await handler({
-            node,
-            nodeInputs,
-            prevOutputs,
-            edges: sanitizedEdges,
-            nodes,
-            nodeById,
-            activePathId,
-            triggerNodeId,
-            triggerEvent,
-            triggerContext,
-            deferPoll,
-            skipAiJobs,
-            now,
-            allOutputs: outputs,
-            allInputs: nextInputs,
-            fetchEntityCached,
-            reportAiPathsError,
-            toast,
-            simulationEntityType,
-            simulationEntityId,
-            resolvedEntity,
-            fallbackEntityId,
-            executed,
-          });
+          const timeoutMs = node.config?.runtime?.timeoutMs ?? DEFAULT_NODE_TIMEOUT_MS;
+          const retryAttempts = node.config?.runtime?.retry?.attempts ?? 1;
+          const retryBackoffMs = node.config?.runtime?.retry?.backoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
+          const result = await withRetries(
+            () =>
+              withTimeout(
+                Promise.resolve(
+                  handler({
+                    node,
+                    nodeInputs,
+                    prevOutputs,
+                    edges: sanitizedEdges,
+                    nodes,
+                    nodeById,
+                    activePathId,
+                    triggerNodeId,
+                    triggerEvent,
+                    triggerContext,
+                    deferPoll,
+                    skipAiJobs,
+                    now,
+                    allOutputs: outputs,
+                    allInputs: nextInputs,
+                    fetchEntityCached,
+                    reportAiPathsError,
+                    toast,
+                    simulationEntityType,
+                    simulationEntityId,
+                    resolvedEntity,
+                    fallbackEntityId,
+                    executed,
+                  })
+                ),
+                timeoutMs,
+                `${node.type}:${node.id}`
+              ),
+            retryAttempts,
+            retryBackoffMs,
+            `${node.type}:${node.id}`
+          );
           nextOutputs = result;
         } catch (error) {
           if (recordHistory) {
@@ -670,21 +740,32 @@ export async function evaluateGraph({
               nodeId: node.id,
               nodeType: node.type,
               nodeTitle: node.title ?? null,
-              status: "failed",
+              status: 'failed',
               iteration,
               inputs: cloneValue(nodeInputs),
               outputs: cloneValue(prevOutputs),
               error: error instanceof Error ? error.message : String(error),
               inputsFrom: buildInputLinks(node.id, nodeInputs),
               outputsTo: buildOutputLinks(node.id, prevOutputs),
-              delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+              delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
             };
             pushHistoryEntry(node.id, entry);
           }
           if (onNodeError) {
             await onNodeError({ node, nodeInputs, prevOutputs, error, iteration });
           }
-          throw error;
+          const historySnapshot =
+            recordHistory && history.size
+              ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
+              : undefined;
+          const errorState: RuntimeState = {
+            inputs: cloneValue(nextInputs) as Record<string, RuntimePortValues>,
+            outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
+            hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+            history: historySnapshot,
+          };
+          const message = error instanceof Error ? error.message : String(error);
+          throw new GraphExecutionError(message, errorState, node.id, error);
         }
       } else {
         // Default behavior for unknown nodes or if no outputs changed
@@ -701,13 +782,13 @@ export async function evaluateGraph({
           nodeId: node.id,
           nodeType: node.type,
           nodeTitle: node.title ?? null,
-          status: node.type === "delay" ? "delayed" : "completed",
+          status: node.type === 'delay' ? 'delayed' : 'completed',
           iteration,
           inputs: cloneValue(nodeInputs),
           outputs: cloneValue(nextOutputs),
           inputsFrom: buildInputLinks(node.id, nodeInputs),
           outputsTo: buildOutputLinks(node.id, nextOutputs),
-          delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+          delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
         };
         pushHistoryEntry(node.id, entry);
       }
@@ -755,18 +836,18 @@ export async function evaluateGraph({
 
 const getIteratorMaxSteps = (nodes: AiNode[]): number => {
   const candidates = nodes
-    .filter((node: AiNode): boolean => node.type === "iterator")
+    .filter((node: AiNode): boolean => node.type === 'iterator')
     .map((node: AiNode) => node.config?.iterator?.maxSteps)
-    .filter((value: number | undefined): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+    .filter((value: number | undefined): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
   return candidates.length > 0 ? Math.min(...candidates) : 50;
 };
 
 const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolean =>
   nodes.some((node: AiNode): boolean => {
-    if (node.type !== "iterator") return false;
+    if (node.type !== 'iterator') return false;
     if (node.config?.iterator?.autoContinue === false) return false;
     const status = state.outputs[node.id]?.status;
-    return status === "advance_pending";
+    return status === 'advance_pending';
   });
 
 /**
@@ -778,7 +859,7 @@ const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolea
  */
 export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGraphOptions): Promise<RuntimeState> {
   let current = await evaluateGraph(options);
-  if (!options.nodes.some((node: AiNode): boolean => node.type === "iterator")) {
+  if (!options.nodes.some((node: AiNode): boolean => node.type === 'iterator')) {
     return current;
   }
 

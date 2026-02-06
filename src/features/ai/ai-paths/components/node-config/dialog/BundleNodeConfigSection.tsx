@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
-import { Button, Label, Textarea } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { parsePathList } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { parsePathList } from '@/features/ai/ai-paths/lib';
+import { Button, Label, Textarea } from '@/shared/ui';
 
 type BundleNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,7 +16,7 @@ export function BundleNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: BundleNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "bundle") return null;
+  if (selectedNode.type !== 'bundle') return null;
 
   const bundleConfig = selectedNode.config?.bundle ?? {
     includePorts: [],
@@ -42,7 +42,7 @@ export function BundleNodeConfigSection({
       </div>
       <Textarea
         className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-        value={(bundleConfig.includePorts ?? []).join("\n")}
+        value={(bundleConfig.includePorts ?? []).join('\n')}
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
           updateSelectedNodeConfig({
             bundle: { includePorts: parsePathList(event.target.value) },

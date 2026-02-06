@@ -14,7 +14,7 @@ import {
   timeoutError,
   unprocessableEntityError,
   databaseError,
-} from "@/shared/errors/app-error";
+} from '@/shared/errors/app-error';
 
 export type MapStatusOptions = {
   retryAfterMs?: number;
@@ -28,7 +28,7 @@ export const mapStatusToAppError = (
   status: number,
   options?: MapStatusOptions
 ): AppError => {
-  const msg = safeMessage(message, "Request failed");
+  const msg = safeMessage(message, 'Request failed');
   if (status === 400) return badRequestError(msg);
   if (status === 401) return authError(msg);
   if (status === 403) return forbiddenError(msg);
@@ -56,12 +56,12 @@ export const mapStatusToAppError = (
 };
 
 const NETWORK_ERROR_CODES = new Set([
-  "ECONNREFUSED",
-  "ECONNRESET",
-  "EAI_AGAIN",
-  "ENOTFOUND",
-  "ETIMEDOUT",
-  "ECONNABORTED",
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'EAI_AGAIN',
+  'ENOTFOUND',
+  'ETIMEDOUT',
+  'ECONNABORTED',
 ]);
 
 export const mapErrorToAppError = (
@@ -70,7 +70,7 @@ export const mapErrorToAppError = (
 ): AppError | null => {
   if (isAppError(error)) return error;
 
-  if (error && typeof error === "object") {
+  if (error && typeof error === 'object') {
     const err = error as {
       name?: string;
       message?: string;
@@ -82,62 +82,62 @@ export const mapErrorToAppError = (
     };
 
     const status =
-      typeof err.status === "number"
+      typeof err.status === 'number'
         ? err.status
-        : typeof err.statusCode === "number"
+        : typeof err.statusCode === 'number'
           ? err.statusCode
           : null;
 
     if (status !== null) {
       const retryAfterMs =
-        typeof err.retryAfterMs === "number"
+        typeof err.retryAfterMs === 'number'
           ? err.retryAfterMs
-          : typeof err.retryAfter === "number"
+          : typeof err.retryAfter === 'number'
             ? err.retryAfter * 1000
             : undefined;
-      return mapStatusToAppError(err.message ?? fallbackMessage ?? "Request failed", status, {
-        ...(typeof retryAfterMs === "number" ? { retryAfterMs } : {}),
+      return mapStatusToAppError(err.message ?? fallbackMessage ?? 'Request failed', status, {
+        ...(typeof retryAfterMs === 'number' ? { retryAfterMs } : {}),
       });
     }
 
-    if (err.name === "AbortError") {
-      return timeoutError(fallbackMessage ?? "Operation timed out");
+    if (err.name === 'AbortError') {
+      return timeoutError(fallbackMessage ?? 'Operation timed out');
     }
 
-    if (err.name && err.name.toLowerCase().includes("mongo")) {
-      const codeNumber = typeof err.code === "number" ? err.code : Number(err.code);
-      const message = err.message ?? "";
-      if (codeNumber === 11000 || message.includes("E11000") || message.includes("duplicate key")) {
-        return conflictError("Duplicate entry", {
+    if (err.name && err.name.toLowerCase().includes('mongo')) {
+      const codeNumber = typeof err.code === 'number' ? err.code : Number(err.code);
+      const message = err.message ?? '';
+      if (codeNumber === 11000 || message.includes('E11000') || message.includes('duplicate key')) {
+        return conflictError('Duplicate entry', {
           mongoCode: err.code,
         });
       }
       if (codeNumber === 121) {
-        return unprocessableEntityError("Document validation failed", {
+        return unprocessableEntityError('Document validation failed', {
           mongoCode: err.code,
         });
       }
-      if (err.name.includes("Network") || err.name.includes("ServerSelection")) {
-        return databaseError("Database connection failed", error);
+      if (err.name.includes('Network') || err.name.includes('ServerSelection')) {
+        return databaseError('Database connection failed', error);
       }
-      if (err.name.includes("Timeout") || message.toLowerCase().includes("timed out")) {
-        return timeoutError("Database operation timed out", { mongoCode: err.code });
+      if (err.name.includes('Timeout') || message.toLowerCase().includes('timed out')) {
+        return timeoutError('Database operation timed out', { mongoCode: err.code });
       }
-      return databaseError(fallbackMessage ?? "Database operation failed", error, {
+      return databaseError(fallbackMessage ?? 'Database operation failed', error, {
         mongoCode: err.code,
       });
     }
 
-    if (typeof err.code === "string" && NETWORK_ERROR_CODES.has(err.code)) {
+    if (typeof err.code === 'string' && NETWORK_ERROR_CODES.has(err.code)) {
       return externalServiceError(
-        fallbackMessage ?? "Network error",
+        fallbackMessage ?? 'Network error',
         { code: err.code },
         { retryable: true }
       );
     }
 
-    if (err.name === "SyntaxError" && (err.message ?? "").includes("JSON")) {
-      return badRequestError("Invalid JSON payload");
+    if (err.name === 'SyntaxError' && (err.message ?? '').includes('JSON')) {
+      return badRequestError('Invalid JSON payload');
     }
   }
 

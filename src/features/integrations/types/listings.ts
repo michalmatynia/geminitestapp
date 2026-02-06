@@ -1,4 +1,10 @@
-export type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
+import type { 
+  IntegrationConnectionBasic, 
+  IntegrationWithConnections, 
+  IntegrationWithConnectionsBasic 
+} from '@/shared/types/domain/integrations';
+
+export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/listing-jobs';
 
 export type ProductListingRecord = {
   id: string;
@@ -37,17 +43,10 @@ export type ProductListingWithDetails = ProductListingRecord & {
   };
 };
 
-export type IntegrationConnectionBasic = {
-  id: string;
-  name: string;
-  integrationId: string;
-};
-
-export type IntegrationWithConnections = {
-  id: string;
-  name: string;
-  slug: string;
-  connections: IntegrationConnectionBasic[];
+export type {
+  IntegrationConnectionBasic,
+  IntegrationWithConnections,
+  IntegrationWithConnectionsBasic,
 };
 
 export type CreateProductListingInput = {
@@ -68,8 +67,5 @@ export type ProductListingRepository = {
   appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
-  listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId" | "status">>>;
+  listAllListings: () => Promise<Array<Pick<ProductListingRecord, 'productId' | 'status'>>>;
 };
-
-// Helper to get integrations with connections (supports both providers)
-export type IntegrationWithConnectionsBasic = IntegrationWithConnections;

@@ -1,7 +1,9 @@
-import { GET, POST } from "@/app/api/languages/route";
-import { DELETE, PUT } from "@/app/api/languages/[id]/route";
-import prisma from "@/shared/lib/db/prisma";
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
+
+import { DELETE, PUT } from '@/app/api/languages/[id]/route';
+import { GET, POST } from '@/app/api/languages/route';
+import prisma from '@/shared/lib/db/prisma';
+
 
 type LanguageResponse = {
   id: string;
@@ -11,7 +13,7 @@ type LanguageResponse = {
   countries?: Array<{ countryId: string }>;
 };
 
-describe("Languages API", () => {
+describe('Languages API', () => {
   beforeEach(async () => {
     await prisma.languageCountry.deleteMany({});
     await prisma.language.deleteMany({});
@@ -22,9 +24,9 @@ describe("Languages API", () => {
     await prisma.$disconnect();
   });
 
-  describe("GET /api/languages", () => {
-    it("should seed default languages on first call", async () => {
-      const res = await GET(new NextRequest("http://localhost/api/languages"));
+  describe('GET /api/languages', () => {
+    it('should seed default languages on first call', async () => {
+      const res = await GET(new NextRequest('http://localhost/api/languages'));
       const languages = (await res.json()) as LanguageResponse[];
 
       expect(res.status).toEqual(200);
@@ -33,25 +35,25 @@ describe("Languages API", () => {
       const dbLanguages = await prisma.language.findMany();
       expect(dbLanguages.length).toBeGreaterThan(0);
 
-      const en = languages.find((l: LanguageResponse) => l.code === "EN");
+      const en = languages.find((l: LanguageResponse) => l.code === 'EN');
       if (!en) {
-        throw new Error("Expected seeded language EN.");
+        throw new Error('Expected seeded language EN.');
       }
-      expect(en.name).toBe("English");
-      expect(en.nativeName).toBe("English");
+      expect(en.name).toBe('English');
+      expect(en.nativeName).toBe('English');
     });
   });
 
-  describe("POST /api/languages", () => {
-    it("should create a new language", async () => {
+  describe('POST /api/languages', () => {
+    it('should create a new language', async () => {
       const newLanguage = {
-        code: "fr", // Will be uppercased
-        name: "French",
-        nativeName: "Français",
+        code: 'fr', // Will be uppercased
+        name: 'French',
+        nativeName: 'Français',
       };
 
-      const req = new NextRequest("http://localhost/api/languages", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/languages', {
+        method: 'POST',
         body: JSON.stringify(newLanguage),
       });
 
@@ -59,42 +61,42 @@ describe("Languages API", () => {
       const language = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
-      expect(language.code).toBe("FR");
-      expect(language.name).toBe("French");
+      expect(language.code).toBe('FR');
+      expect(language.name).toBe('French');
     });
 
-    it("should create a language with country assignments", async () => {
-        // Need a country first
-        const country = await prisma.country.create({
-            data: { code: "PL", name: "Poland" }
-        });
+    it('should create a language with country assignments', async () => {
+      // Need a country first
+      const country = await prisma.country.create({
+        data: { code: 'PL', name: 'Poland' }
+      });
 
-        const newLanguage = {
-            code: "pl",
-            name: "Polish",
-            countryIds: [country.id]
-        };
-
-        const req = new NextRequest("http://localhost/api/languages", {
-            method: "POST",
-            body: JSON.stringify(newLanguage),
-        });
-
-        const res = await POST(req);
-        const language = (await res.json()) as LanguageResponse;
-
-        expect(res.status).toEqual(200);
-        expect(language.countries).toHaveLength(1);
-        expect(language.countries![0]!.countryId).toBe(country.id);
-    });
-
-    it("should reject invalid payload", async () => {
-      const invalidLanguage = {
-        name: "Missing Code",
+      const newLanguage = {
+        code: 'pl',
+        name: 'Polish',
+        countryIds: [country.id]
       };
 
-      const req = new NextRequest("http://localhost/api/languages", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/languages', {
+        method: 'POST',
+        body: JSON.stringify(newLanguage),
+      });
+
+      const res = await POST(req);
+      const language = (await res.json()) as LanguageResponse;
+
+      expect(res.status).toEqual(200);
+      expect(language.countries).toHaveLength(1);
+      expect(language.countries![0]!.countryId).toBe(country.id);
+    });
+
+    it('should reject invalid payload', async () => {
+      const invalidLanguage = {
+        name: 'Missing Code',
+      };
+
+      const req = new NextRequest('http://localhost/api/languages', {
+        method: 'POST',
         body: JSON.stringify(invalidLanguage),
       });
 
@@ -103,21 +105,21 @@ describe("Languages API", () => {
     });
   });
 
-  describe("PUT /api/languages/[id]", () => {
-    it("should update language fields and countries", async () => {
+  describe('PUT /api/languages/[id]', () => {
+    it('should update language fields and countries', async () => {
       const language = await prisma.language.create({
-        data: { code: "PL", name: "Polish", nativeName: "Polski" },
+        data: { code: 'PL', name: 'Polish', nativeName: 'Polski' },
       });
       const country = await prisma.country.create({
-        data: { code: "PL", name: "Poland" },
+        data: { code: 'PL', name: 'Poland' },
       });
 
       const req = new NextRequest(`http://localhost/api/languages/${language.id}`, {
-        method: "PUT",
+        method: 'PUT',
         body: JSON.stringify({
-          code: "PL",
-          name: "Polish Updated",
-          nativeName: "Polski",
+          code: 'PL',
+          name: 'Polish Updated',
+          nativeName: 'Polski',
           countryIds: [country.id],
         }),
       });
@@ -126,22 +128,22 @@ describe("Languages API", () => {
       const updated = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
-      expect(updated.name).toBe("Polish Updated");
+      expect(updated.name).toBe('Polish Updated');
       expect(updated.countries).toHaveLength(1);
       expect(updated.countries![0]!.countryId).toBe(country.id);
     });
   });
 
-  describe("DELETE /api/languages/[id]", () => {
-    it("should delete language and remove assignments", async () => {
+  describe('DELETE /api/languages/[id]', () => {
+    it('should delete language and remove assignments', async () => {
       const language = await prisma.language.create({
-        data: { code: "SV", name: "Swedish", nativeName: "Svenska" },
+        data: { code: 'SV', name: 'Swedish', nativeName: 'Svenska' },
       });
       const country = await prisma.country.create({
-        data: { code: "SE", name: "Sweden" },
+        data: { code: 'SE', name: 'Sweden' },
       });
       const catalog = await prisma.catalog.create({
-        data: { name: "Nordic", description: "Nordic catalog" },
+        data: { name: 'Nordic', description: 'Nordic catalog' },
       });
 
       await prisma.languageCountry.create({
@@ -151,7 +153,7 @@ describe("Languages API", () => {
         data: { catalogId: catalog.id, languageId: language.id },
       });
 
-      const res = await DELETE(new NextRequest("http://localhost/api/languages/" + language.id), {
+      const res = await DELETE(new NextRequest('http://localhost/api/languages/' + language.id), {
         params: Promise.resolve({ id: language.id }),
       });
 

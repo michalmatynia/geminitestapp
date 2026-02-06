@@ -1,15 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { dbApi } from "@/features/ai/ai-paths/lib/api";
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import React from 'react';
 
-
-
-
-
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type SchemaData = {
   provider: string;
@@ -32,25 +28,25 @@ export function DbSchemaNodeConfigSection({
   // Data Browser state
   const [browseCollection, setBrowseCollection] = React.useState<string | null>(null);
   const [browseSkip, setBrowseSkip] = React.useState(0);
-  const [browseSearch, setBrowseSearch] = React.useState("");
-  const [browseQuery, setBrowseQuery] = React.useState("");
+  const [browseSearch, setBrowseSearch] = React.useState('');
+  const [browseQuery, setBrowseQuery] = React.useState('');
   const [expandedDocId, setExpandedDocId] = React.useState<string | null>(null);
   const browseLimit = 10;
 
   const schemaQuery = useQuery({
-    queryKey: ["db-schema"],
+    queryKey: ['db-schema'],
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema();
       if (!result.ok) {
-        throw new Error(result.error || "Failed to fetch schema.");
+        throw new Error(result.error || 'Failed to fetch schema.');
       }
       return result.data as SchemaData;
     },
-    enabled: selectedNode.type === "db_schema",
+    enabled: selectedNode.type === 'db_schema',
   });
 
   const browseQueryResult = useQuery({
-    queryKey: ["db-browse", browseCollection, browseSkip, browseQuery],
+    queryKey: ['db-browse', browseCollection, browseSkip, browseQuery],
     queryFn: async (): Promise<{ documents: Record<string, unknown>[]; total: number }> => {
       if (!browseCollection) {
         return { documents: [], total: 0 };
@@ -61,7 +57,7 @@ export function DbSchemaNodeConfigSection({
         ...(browseQuery.trim() ? { query: browseQuery.trim() } : {}),
       });
       if (!result.ok) {
-        throw new Error(result.error || "Failed to browse collection.");
+        throw new Error(result.error || 'Failed to browse collection.');
       }
       return {
         documents: result.data.documents ?? [],
@@ -78,14 +74,14 @@ export function DbSchemaNodeConfigSection({
   const browseTotal = browseQueryResult.data?.total ?? 0;
   const browseLoading = browseQueryResult.isFetching;
 
-  if (selectedNode.type !== "db_schema") return null;
+  if (selectedNode.type !== 'db_schema') return null;
 
   const schemaConfig = {
-    mode: "all" as const,
+    mode: 'all' as const,
     collections: [] as string[],
     includeFields: true,
     includeRelations: true,
-    formatAs: "text" as const,
+    formatAs: 'text' as const,
     ...(selectedNode.config?.db_schema ?? {}),
   };
 
@@ -119,7 +115,7 @@ export function DbSchemaNodeConfigSection({
           <div className="space-y-4">
             <div className="text-xs text-gray-400">
               Provider: <span className="text-purple-300">{fetchedDbSchema.provider}</span>
-              {" · "}
+              {' · '}
               {fetchedDbSchema.collections.length} collections
             </div>
 
@@ -128,7 +124,7 @@ export function DbSchemaNodeConfigSection({
               <Select
                 value={schemaConfig.mode}
                 onValueChange={(value: string) =>
-                  updateSchemaConfig({ mode: value as "all" | "selected" })
+                  updateSchemaConfig({ mode: value as 'all' | 'selected' })
                 }
               >
                 <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
@@ -141,7 +137,7 @@ export function DbSchemaNodeConfigSection({
               </Select>
             </div>
 
-            {schemaConfig.mode === "selected" && (
+            {schemaConfig.mode === 'selected' && (
               <div>
                 <Label className="text-xs text-gray-400">
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
@@ -156,8 +152,8 @@ export function DbSchemaNodeConfigSection({
                         onClick={() => toggleCollection(coll.name)}
                         className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition ${
                           isSelected
-                            ? "bg-purple-500/20 text-purple-200"
-                            : "text-gray-300 hover:bg-muted/50"
+                            ? 'bg-purple-500/20 text-purple-200'
+                            : 'text-gray-300 hover:bg-muted/50'
                         }`}
                       >
                         <span className="font-medium">{coll.name}</span>
@@ -178,14 +174,14 @@ export function DbSchemaNodeConfigSection({
                   type="button"
                   className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeFields
-                      ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-500 hover:bg-muted/50"
+                      ? 'text-emerald-200 hover:bg-emerald-500/10'
+                      : 'text-gray-500 hover:bg-muted/50'
                   }`}
                   onClick={() =>
                     updateSchemaConfig({ includeFields: !schemaConfig.includeFields })
                   }
                 >
-                  {schemaConfig.includeFields ? "Yes" : "No"}
+                  {schemaConfig.includeFields ? 'Yes' : 'No'}
                 </Button>
               </div>
               <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
@@ -194,14 +190,14 @@ export function DbSchemaNodeConfigSection({
                   type="button"
                   className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeRelations
-                      ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-500 hover:bg-muted/50"
+                      ? 'text-emerald-200 hover:bg-emerald-500/10'
+                      : 'text-gray-500 hover:bg-muted/50'
                   }`}
                   onClick={() =>
                     updateSchemaConfig({ includeRelations: !schemaConfig.includeRelations })
                   }
                 >
-                  {schemaConfig.includeRelations ? "Yes" : "No"}
+                  {schemaConfig.includeRelations ? 'Yes' : 'No'}
                 </Button>
               </div>
             </div>
@@ -211,7 +207,7 @@ export function DbSchemaNodeConfigSection({
               <Select
                 value={schemaConfig.formatAs}
                 onValueChange={(value: string) =>
-                  updateSchemaConfig({ formatAs: value as "json" | "text" })
+                  updateSchemaConfig({ formatAs: value as 'json' | 'text' })
                 }
               >
                 <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
@@ -228,26 +224,26 @@ export function DbSchemaNodeConfigSection({
             <div className="rounded-md border border-border bg-card/40 p-3">
               <div className="mb-2 text-[10px] uppercase text-gray-500">Preview</div>
               <div className="max-h-[150px] overflow-y-auto text-[11px] text-gray-300">
-                {(schemaConfig.mode === "all"
+                {(schemaConfig.mode === 'all'
                   ? fetchedDbSchema.collections
                   : fetchedDbSchema.collections.filter((c: { name: string }) =>
-                      schemaConfig.collections?.includes(c.name)
-                    )
+                    schemaConfig.collections?.includes(c.name)
+                  )
                 ).map((coll: { name: string; fields?: Array<{ name: string; type: string }> }) => (
                   <div key={coll.name} className="mb-2">
                     <div className="font-medium text-purple-300">{coll.name}</div>
                     {schemaConfig.includeFields && coll.fields && (
                       <div className="ml-2 text-[10px] text-gray-500">
-                        {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(", ")}
+                        {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(', ')}
                         {coll.fields.length > 5 && ` +${coll.fields.length - 5} more`}
                       </div>
                     )}
                   </div>
                 ))}
-                {schemaConfig.mode === "selected" &&
+                {schemaConfig.mode === 'selected' &&
                   (!schemaConfig.collections || schemaConfig.collections.length === 0) && (
-                    <div className="italic text-gray-500">No collections selected</div>
-                  )}
+                  <div className="italic text-gray-500">No collections selected</div>
+                )}
               </div>
             </div>
 
@@ -260,12 +256,12 @@ export function DbSchemaNodeConfigSection({
                 <Label className="text-xs text-gray-400">Browse Collection</Label>
                 <div className="flex gap-2">
                   <Select
-                    value={browseCollection ?? ""}
+                    value={browseCollection ?? ''}
                     onValueChange={(value: string) => {
                       setBrowseCollection(value || null);
                       setBrowseSkip(0);
-                      setBrowseSearch("");
-                      setBrowseQuery("");
+                      setBrowseSearch('');
+                      setBrowseQuery('');
                       setExpandedDocId(null);
                     }}
                   >
@@ -287,8 +283,8 @@ export function DbSchemaNodeConfigSection({
                       onClick={() => {
                         setBrowseCollection(null);
                         setBrowseSkip(0);
-                        setBrowseSearch("");
-                        setBrowseQuery("");
+                        setBrowseSearch('');
+                        setBrowseQuery('');
                         setExpandedDocId(null);
                       }}
                     >
@@ -308,7 +304,7 @@ export function DbSchemaNodeConfigSection({
                       value={browseSearch}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrowseSearch(e.target.value)}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === "Enter") {
+                        if (e.key === 'Enter') {
                           setBrowseSkip(0);
                           setBrowseQuery(browseSearch.trim());
                         }
@@ -338,51 +334,51 @@ export function DbSchemaNodeConfigSection({
                     </div>
                   ) : browseDocuments.length > 0 ? (
                     <div className="max-h-[300px] space-y-2 overflow-y-auto">
-                                                          {browseDocuments.map((doc: Record<string, unknown>, idx: number) => {
-                                                            const rawId = doc._id ?? doc.id;
-                                                            let docId: string;
-                                                            if (typeof rawId === "string") {
-                                                              docId = rawId;
-                                                            } else if (typeof rawId === "number") {
-                                                              docId = String(rawId);
-                                                            } else if (
-                                                              rawId &&
-                                                              typeof rawId === "object" &&
-                                                              "toString" in rawId &&
-                                                              typeof (rawId as { toString: unknown }).toString === "function" &&
+                      {browseDocuments.map((doc: Record<string, unknown>, idx: number) => {
+                        const rawId = doc._id ?? doc.id;
+                        let docId: string;
+                        if (typeof rawId === 'string') {
+                          docId = rawId;
+                        } else if (typeof rawId === 'number') {
+                          docId = String(rawId);
+                        } else if (
+                          rawId &&
+                                                              typeof rawId === 'object' &&
+                                                              'toString' in rawId &&
+                                                              typeof (rawId as { toString: unknown }).toString === 'function' &&
                                                               (rawId as { toString: unknown }).toString !== Object.prototype.toString
-                                                            ) {
-                                                              docId = (rawId as { toString(): string }).toString();
-                                                            } else {
-                                                              docId = `doc-${idx}`;
-                                                            }
-                                                            const isExpanded = expandedDocId === docId;
-                                                            const displayNameValue = doc.name ?? doc.title ?? doc.name_en ?? doc.sku ?? docId;
-                                                            let displayName: string;
-                                                            if (typeof displayNameValue === "string") {
-                                                              displayName = displayNameValue;
-                                                            } else if (typeof displayNameValue === "number" || typeof displayNameValue === "boolean") {
-                                                              displayName = String(displayNameValue);
-                                                            } else if (typeof displayNameValue === "object" && displayNameValue !== null) {
-                                                              displayName = JSON.stringify(displayNameValue);
-                                                            } else {
-                                                              displayName = "";
-                                                            }
-                                                            return (
-                                                              <div
-                                                                key={docId}
-                                                                className="rounded-md border border-border bg-card/50"
-                                                              >
-                                                                <button
-                                                                  type="button"
-                                                                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50"
-                                                                  onClick={() => setExpandedDocId(isExpanded ? null : docId)}
-                                                                >
-                                                                  <div className="flex items-center gap-2">
-                                                                    <span className="text-cyan-300">{displayName}</span>
-                                                                    <span className="text-[9px] text-gray-500">({docId})</span>
-                                                                  </div>                                          <svg
-                                className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                        ) {
+                          docId = (rawId as { toString(): string }).toString();
+                        } else {
+                          docId = `doc-${idx}`;
+                        }
+                        const isExpanded = expandedDocId === docId;
+                        const displayNameValue = doc.name ?? doc.title ?? doc.name_en ?? doc.sku ?? docId;
+                        let displayName: string;
+                        if (typeof displayNameValue === 'string') {
+                          displayName = displayNameValue;
+                        } else if (typeof displayNameValue === 'number' || typeof displayNameValue === 'boolean') {
+                          displayName = String(displayNameValue);
+                        } else if (typeof displayNameValue === 'object' && displayNameValue !== null) {
+                          displayName = JSON.stringify(displayNameValue);
+                        } else {
+                          displayName = '';
+                        }
+                        return (
+                          <div
+                            key={docId}
+                            className="rounded-md border border-border bg-card/50"
+                          >
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50"
+                              onClick={() => setExpandedDocId(isExpanded ? null : docId)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-cyan-300">{displayName}</span>
+                                <span className="text-[9px] text-gray-500">({docId})</span>
+                              </div>                                          <svg
+                                className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -413,28 +409,28 @@ export function DbSchemaNodeConfigSection({
                       <Button
                         type="button"
                         disabled={browseSkip === 0}
-                      className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                      onClick={(): void => {
-                        const newSkip = Math.max(0, browseSkip - browseLimit);
-                        setBrowseSkip(newSkip);
-                      }}
-                    >
+                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                        onClick={(): void => {
+                          const newSkip = Math.max(0, browseSkip - browseLimit);
+                          setBrowseSkip(newSkip);
+                        }}
+                      >
                       Previous
-                    </Button>
+                      </Button>
                       <span className="text-[10px] text-gray-500">
                         Page {Math.floor(browseSkip / browseLimit) + 1} of {Math.ceil(browseTotal / browseLimit)}
                       </span>
                       <Button
                         type="button"
                         disabled={browseSkip + browseLimit >= browseTotal}
-                      className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                      onClick={(): void => {
-                        const newSkip = browseSkip + browseLimit;
-                        setBrowseSkip(newSkip);
-                      }}
-                    >
+                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                        onClick={(): void => {
+                          const newSkip = browseSkip + browseLimit;
+                          setBrowseSkip(newSkip);
+                        }}
+                      >
                       Next
-                    </Button>
+                      </Button>
                     </div>
                   )}
                 </div>

@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
+import React, { useState } from 'react';
+
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendAccordionSectionProps {
   settings: Record<string, unknown>;
@@ -21,9 +23,9 @@ export function FrontendAccordionSection({ settings, blocks, colorSchemes, layou
   while (i < blocks.length) {
     const current = blocks[i];
     if (!current) { i += 1; continue; }
-    if (current.type === "Heading") {
+    if (current.type === 'Heading') {
       const next = blocks[i + 1];
-      if (next && next.type === "Text") {
+      if (next && next.type === 'Text') {
         items.push({ heading: current, text: next });
         i += 2;
       } else {
@@ -47,7 +49,7 @@ export function FrontendAccordionSection({ settings, blocks, colorSchemes, layou
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-3xl' })}>
         <div className="divide-y divide-gray-700/50">
           {items.map((item: { heading: BlockInstance; text?: BlockInstance }, index: number) => (
             <AccordionItem key={item.heading.id} item={item} defaultOpen={index === 0} />
@@ -75,7 +77,7 @@ function AccordionItem({
         className="flex w-full items-center justify-between text-left"
       >
         <FrontendBlockRenderer block={item.heading} />
-        <span className="ml-4 shrink-0 text-gray-400 text-xl">{isOpen ? "−" : "+"}</span>
+        <span className="ml-4 shrink-0 text-gray-400 text-xl">{isOpen ? '−' : '+'}</span>
       </button>
       {isOpen && item.text && (
         <div className="mt-3">

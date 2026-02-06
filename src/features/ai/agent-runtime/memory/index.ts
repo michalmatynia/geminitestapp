@@ -1,19 +1,21 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { ErrorSystem } from '@/features/observability/server';
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Prisma } from '@prisma/client';
 
 const DEFAULT_MEMORY_VALIDATION_MODEL =
   process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL;
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
 
-export type MemoryScope = "session" | "longterm";
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+export type MemoryScope = 'session' | 'longterm';
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 const extractMessageContent = (payload: unknown): string => {
-  if (!payload || typeof payload !== "object") return "";
+  if (!payload || typeof payload !== 'object') return '';
   const message = (payload as { message?: { content?: unknown } }).message;
-  return typeof message?.content === "string" ? message.content : "";
+  return typeof message?.content === 'string' ? message.content : '';
 };
 
 const parseJsonObject = (raw: string): unknown => {
@@ -34,10 +36,10 @@ export async function addAgentMemory(params: {
   content: string;
   metadata?: Record<string, unknown>;
 }): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>> | null> {
-  if (!("agentMemoryItem" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Memory table not initialized.");
-    }
+  if (!('agentMemoryItem' in prisma)) {
+    void ErrorSystem.logWarning('[chatbot][agent][memory] Memory table not initialized.', {
+      service: 'agent-memory',
+    });
     return null;
   }
   try {
@@ -52,11 +54,20 @@ export async function addAgentMemory(params: {
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to add memory", {
-        runId: params.runId,
-        error,
+    try {
+      await ErrorSystem.captureException(error, { 
+        service: 'agent-memory', 
+        action: 'addAgentMemory',
+        runId: params.runId ?? undefined 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error('[chatbot][agent][memory] Failed to add memory (and logging failed)', {
+          runId: params.runId,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -66,10 +77,10 @@ export async function listAgentMemory(params: {
   runId?: string | null;
   scope?: MemoryScope;
 }): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>>[]> {
-  if (!("agentMemoryItem" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Memory table not initialized.");
-    }
+  if (!('agentMemoryItem' in prisma)) {
+    void ErrorSystem.logWarning('[chatbot][agent][memory] Memory table not initialized.', {
+      service: 'agent-memory',
+    });
     return [];
   }
   try {
@@ -78,15 +89,25 @@ export async function listAgentMemory(params: {
         ...(params.runId ? { runId: params.runId } : {}),
         ...(params.scope ? { scope: params.scope } : {}),
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to list memory", {
-        runId: params.runId,
-        scope: params.scope,
-        error,
+    try {
+      await ErrorSystem.captureException(error, { 
+        service: 'agent-memory', 
+        action: 'listAgentMemory',
+        runId: params.runId ?? undefined,
+        scope: params.scope
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error('[chatbot][agent][memory] Failed to list memory (and logging failed)', {
+          runId: params.runId,
+          scope: params.scope,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -101,10 +122,10 @@ export async function addAgentLongTermMemory(params: {
   metadata?: Record<string, unknown>;
   importance?: number | null;
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null> {
-  if (!("agentLongTermMemory" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
-    }
+  if (!('agentLongTermMemory' in prisma)) {
+    void ErrorSystem.logWarning('[chatbot][agent][memory] Long-term memory table not initialized.', {
+      service: 'agent-memory',
+    });
     return null;
   }
   try {
@@ -123,12 +144,22 @@ export async function addAgentLongTermMemory(params: {
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to add long-term memory", {
+    try {
+      await ErrorSystem.captureException(error, { 
+        service: 'agent-memory', 
+        action: 'addAgentLongTermMemory',
         memoryKey: params.memoryKey,
-        runId: params.runId,
-        error,
+        runId: params.runId ?? undefined 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error('[chatbot][agent][memory] Failed to add long-term memory (and logging failed)', {
+          memoryKey: params.memoryKey,
+          runId: params.runId,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -142,25 +173,25 @@ export async function validateAgentLongTermMemory(params: {
   metadata?: Record<string, unknown>;
 }): Promise<{ valid: boolean; issues: string[]; reason: string | null; model: string | null; }> {
   const model = params.model?.trim() || DEFAULT_MEMORY_VALIDATION_MODEL;
-  const prompt = params.prompt ?? "";
+  const prompt = params.prompt ?? '';
   if (!model) {
-    throw new Error("MEMORY_VALIDATION_MODEL/OLLAMA_MODEL is not configured.");
+    throw new Error('MEMORY_VALIDATION_MODEL/OLLAMA_MODEL is not configured.');
   }
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
         stream: false,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
-              "You validate long-term memory entries. Return only JSON with keys: valid (boolean), issues (array of strings), reason. Mark invalid if the prompt implies a target URL/domain that conflicts with metadata.url or metadata.run.url. Prefer strictness if evidence is missing.",
+              'You validate long-term memory entries. Return only JSON with keys: valid (boolean), issues (array of strings), reason. Mark invalid if the prompt implies a target URL/domain that conflicts with metadata.url or metadata.run.url. Prefer strictness if evidence is missing.',
           },
           {
-            role: "user",
+            role: 'user',
             content: JSON.stringify({
               prompt,
               content: params.content,
@@ -183,12 +214,12 @@ export async function validateAgentLongTermMemory(params: {
       reason?: unknown;
     } | null;
     const issues = Array.isArray(parsed?.issues)
-      ? parsed.issues.filter((item: unknown) => typeof item === "string")
+      ? parsed.issues.filter((item: unknown) => typeof item === 'string')
       : [];
     return {
-      valid: typeof parsed?.valid === "boolean" ? parsed.valid : true,
+      valid: typeof parsed?.valid === 'boolean' ? parsed.valid : true,
       issues,
-      reason: typeof parsed?.reason === "string" ? parsed.reason : null,
+      reason: typeof parsed?.reason === 'string' ? parsed.reason : null,
       model,
     };
   } catch (error) {
@@ -226,19 +257,19 @@ export async function validateAndAddAgentLongTermMemory(params: {
   if (summaryModel) {
     try {
       const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: summaryModel,
           stream: false,
           messages: [
             {
-              role: "system",
+              role: 'system',
               content:
-                "You write concise long-term memory summaries. Return only JSON with key summary (string). Keep it 1-2 sentences.",
+                'You write concise long-term memory summaries. Return only JSON with key summary (string). Keep it 1-2 sentences.',
             },
             {
-              role: "user",
+              role: 'user',
               content: JSON.stringify({
                 prompt: params.prompt ?? null,
                 content: params.content,
@@ -255,7 +286,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
         const parsed = parseJsonObject(content) as {
           summary?: unknown;
         } | null;
-        if (typeof parsed?.summary === "string" && parsed.summary.trim()) {
+        if (typeof parsed?.summary === 'string' && parsed.summary.trim()) {
           summary = parsed.summary.trim();
         }
       }
@@ -290,10 +321,10 @@ export async function listAgentLongTermMemory(params: {
   limit?: number;
   tags?: string[];
 }): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>[]> {
-  if (!("agentLongTermMemory" in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
-    }
+  if (!('agentLongTermMemory' in prisma)) {
+    void ErrorSystem.logWarning('[chatbot][agent][memory] Long-term memory table not initialized.', {
+      service: 'agent-memory',
+    });
     return [];
   }
   try {
@@ -306,7 +337,7 @@ export async function listAgentLongTermMemory(params: {
         memoryKey: params.memoryKey,
         ...(tagFilter ? { tags: tagFilter } : {}),
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       take: params.limit ?? 5,
     });
     const ids = items.map((item: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>) => item.id);
@@ -318,11 +349,20 @@ export async function listAgentLongTermMemory(params: {
     }
     return items;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to list long-term memory", {
-        memoryKey: params.memoryKey,
-        error,
+    try {
+      await ErrorSystem.captureException(error, { 
+        service: 'agent-memory', 
+        action: 'listAgentLongTermMemory',
+        memoryKey: params.memoryKey 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error('[chatbot][agent][memory] Failed to list long-term memory (and logging failed)', {
+          memoryKey: params.memoryKey,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }

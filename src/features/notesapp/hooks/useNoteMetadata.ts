@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 // Why: Note metadata (title, color, status flags) has synchronized state:
 // - Title syncs when note changes
@@ -18,8 +18,8 @@ export function useNoteMetadata(note: { id?: string; title?: string; color?: str
   setIsFavorite: (isFavorite: boolean) => void;
   getReadableTextColor: (hex: string) => string;
 } {
-  const [title, setTitle] = useState(note?.title || "");
-  const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");
+  const [title, setTitle] = useState(note?.title || '');
+  const [color, setColor] = useState(note?.color?.toLowerCase().trim() || '#ffffff');
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
   const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
@@ -29,22 +29,22 @@ export function useNoteMetadata(note: { id?: string; title?: string; color?: str
   // Sync when note changes - adjusting state during render
   if (note?.id !== prevNoteId) {
     setPrevNoteId(note?.id);
-    setTitle(note?.title || "");
-    setColor(note?.color?.toLowerCase().trim() || "#ffffff");
+    setTitle(note?.title || '');
+    setColor(note?.color?.toLowerCase().trim() || '#ffffff');
     setIsPinned(note?.isPinned || false);
     setIsArchived(note?.isArchived || false);
     setIsFavorite(note?.isFavorite || false);
   }
 
   const getReadableTextColor = (hex: string): string => {
-    const normalized = hex.replace("#", "");
-    if (normalized.length !== 6) return "#f8fafc";
+    const normalized = hex.replace('#', '');
+    if (normalized.length !== 6) return '#f8fafc';
     const num = parseInt(normalized, 16);
     const r = (num >> 16) & 0xff;
     const g = (num >> 8) & 0xff;
     const b = num & 0xff;
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.7 ? "#0f172a" : "#f8fafc";
+    return luminance > 0.7 ? '#0f172a' : '#f8fafc';
   };
 
   return {

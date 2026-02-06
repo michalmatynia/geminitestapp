@@ -1,17 +1,19 @@
  
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import { Prisma } from "@prisma/client";
-import { ObjectId, type Filter } from "mongodb";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
+import { randomUUID } from 'crypto';
+
+import { Prisma } from '@prisma/client';
+import { ObjectId, type Filter } from 'mongodb';
+
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import type {
   SystemLogLevel,
   SystemLogMetrics,
   SystemLogRecord,
-} from "@/shared/types/system-logs";
+} from '@/shared/types/system-logs';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -49,7 +51,7 @@ export type ListSystemLogsResult = {
   pageSize: number;
 };
 
-const SYSTEM_LOGS_COLLECTION = "system_logs";
+const SYSTEM_LOGS_COLLECTION = 'system_logs';
 
 type MongoSystemLogDoc = {
   _id?: string | ObjectId;
@@ -69,7 +71,7 @@ type MongoSystemLogDoc = {
 
 const isMissingPrismaTable = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
-  error.code === "P2021";
+  error.code === 'P2021';
 
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
@@ -80,9 +82,9 @@ const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
 });
 
 const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
-  id: String(doc.id ?? doc._id ?? ""),
-  level: (doc.level as SystemLogLevel) ?? "error",
-  message: doc.message ?? "",
+  id: String(doc.id ?? doc._id ?? ''),
+  level: (doc.level as SystemLogLevel) ?? 'error',
+  message: doc.message ?? '',
   source: doc.source ?? null,
   context: doc.context ?? null,
   stack: doc.stack ?? null,
@@ -102,12 +104,12 @@ const buildPrismaWhere = (
     where.level = input.level;
   }
   if (input.source) {
-    where.source = { contains: input.source, mode: "insensitive" };
+    where.source = { contains: input.source, mode: 'insensitive' };
   }
   if (input.query) {
     where.OR = [
-      { message: { contains: input.query, mode: "insensitive" } },
-      { source: { contains: input.query, mode: "insensitive" } },
+      { message: { contains: input.query, mode: 'insensitive' } },
+      { source: { contains: input.query, mode: 'insensitive' } },
     ];
   }
   if (input.from || input.to) {
@@ -137,12 +139,12 @@ const buildMongoFilter = (
     filter.level = input.level;
   }
   if (input.source) {
-    filter.source = { $regex: input.source, $options: "i" };
+    filter.source = { $regex: input.source, $options: 'i' };
   }
   if (input.query) {
     filter.$or = [
-      { message: { $regex: input.query, $options: "i" } },
-      { source: { $regex: input.query, $options: "i" } },
+      { message: { $regex: input.query, $options: 'i' } },
+      { source: { $regex: input.query, $options: 'i' } },
     ];
   }
   if (input.from || input.to) {
@@ -167,30 +169,30 @@ const getMongoSystemLogMetrics = async (
       { $match: filter },
       {
         $facet: {
-          totals: [{ $count: "count" }],
+          totals: [{ $count: 'count' }],
           levels: [
-            { $group: { _id: "$level", count: { $sum: 1 } } },
+            { $group: { _id: '$level', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
           ],
           sources: [
-            { $match: { source: { $nin: [null, ""] } } },
-            { $group: { _id: "$source", count: { $sum: 1 } } },
+            { $match: { source: { $nin: [null, ''] } } },
+            { $group: { _id: '$source', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 5 },
           ],
           paths: [
-            { $match: { path: { $nin: [null, ""] } } },
-            { $group: { _id: "$path", count: { $sum: 1 } } },
+            { $match: { path: { $nin: [null, ''] } } },
+            { $group: { _id: '$path', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 5 },
           ],
           last24Hours: [
             { $match: { createdAt: { $gte: last24 } } },
-            { $count: "count" },
+            { $count: 'count' },
           ],
           last7Days: [
             { $match: { createdAt: { $gte: last7 } } },
-            { $count: "count" },
+            { $count: 'count' },
           ],
         },
       },
@@ -232,12 +234,12 @@ const getMongoSystemLogMetrics = async (
   }
   const topSources = first.sources.map(
     (row: { _id: string; count: number }) => ({
-      source: String(row._id ?? ""),
+      source: String(row._id ?? ''),
       count: row.count,
     }),
   );
   const topPaths = first.paths.map((row: { _id: string; count: number }) => ({
-    path: String(row._id ?? ""),
+    path: String(row._id ?? ''),
     count: row.count,
   }));
   const last24Hours = first.last24Hours[0]?.count ?? 0;
@@ -260,7 +262,7 @@ export async function createSystemLog(
   const provider = await getAppDbProvider();
   const payload = {
     id: randomUUID(),
-    level: input.level ?? "error",
+    level: input.level ?? 'error',
     message: input.message,
     source: input.source ?? null,
     context: input.context ?? null,
@@ -273,7 +275,7 @@ export async function createSystemLog(
     createdAt: input.createdAt ?? new Date(),
   };
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     await mongo
       .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
@@ -360,7 +362,7 @@ export async function listSystemLogs(
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     const filter = buildMongoFilter(input);
     const total = await mongo
@@ -386,7 +388,7 @@ export async function listSystemLogs(
       prisma.systemLog.count({ where }),
       prisma.systemLog.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -425,13 +427,47 @@ export async function listSystemLogs(
   }
 }
 
+export async function getSystemLogById(id: string): Promise<SystemLogRecord | null> {
+  const provider = await getAppDbProvider();
+  if (provider === 'mongodb') {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+      .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
+    if (!doc) return null;
+    return normalizeLogRecord(toSystemLogRecord(doc));
+  }
+
+  try {
+    const row = await prisma.systemLog.findUnique({
+      where: { id },
+    });
+    if (!row) return null;
+    return normalizeLogRecord({
+      ...row,
+      level: row.level as SystemLogLevel,
+      context: (row.context as Record<string, unknown> | null) ?? null,
+    } as SystemLogRecord);
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const mongo = await getMongoDb();
+      const doc = await mongo
+        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
+        .findOne({ $or: [{ _id: toMongoId(id) }, { id }] });
+      if (!doc) return null;
+      return normalizeLogRecord(toSystemLogRecord(doc));
+    }
+    throw error;
+  }
+}
+
 export async function getSystemLogMetrics(
   input: ListSystemLogsInput,
 ): Promise<SystemLogMetrics> {
   const provider = await getAppDbProvider();
   const now = new Date();
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const filter = buildMongoFilter(input);
     return getMongoSystemLogMetrics(filter);
   }
@@ -457,26 +493,26 @@ export async function getSystemLogMetrics(
         where: mergeWhere(where, { createdAt: { gte: last7 } }),
       }),
       prisma.systemLog.groupBy({
-        by: ["level"],
+        by: ['level'],
         _count: { _all: true },
         where,
       }),
       prisma.systemLog.groupBy({
-        by: ["source"],
+        by: ['source'],
         _count: { _all: true },
         where: mergeWhere(where, {
-          AND: [{ source: { not: null } }, { source: { not: "" } }],
+          AND: [{ source: { not: null } }, { source: { not: '' } }],
         }),
-        orderBy: { _count: { id: "desc" } },
+        orderBy: { _count: { id: 'desc' } },
         take: 5,
       }),
       prisma.systemLog.groupBy({
-        by: ["path"],
+        by: ['path'],
         _count: { _all: true },
         where: mergeWhere(where, {
-          AND: [{ path: { not: null } }, { path: { not: "" } }],
+          AND: [{ path: { not: null } }, { path: { not: '' } }],
         }),
-        orderBy: { _count: { id: "desc" } },
+        orderBy: { _count: { id: 'desc' } },
         take: 5,
       }),
     ]);
@@ -538,7 +574,7 @@ export async function clearSystemLogs(
   before?: Date | null,
 ): Promise<{ deleted: number }> {
   const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     const filter = before ? { createdAt: { $lte: before } } : {};
     const result = await mongo

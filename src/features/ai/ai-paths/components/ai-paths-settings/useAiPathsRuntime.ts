@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import type {
   AiNode,
   DbQueryConfig,
@@ -11,36 +11,48 @@ import type {
   PathConfig,
   PathDebugEntry,
   PathDebugSnapshot,
+  PathExecutionMode,
+  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
   UpdaterSampleState,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
 import {
   PATH_DEBUG_PREFIX,
   STORAGE_VERSION,
   TRIGGER_EVENTS,
+  normalizeNodes,
+  sanitizeEdges,
+  appendLocalRun,
   aiJobsApi,
   coerceInput,
   entityApi,
   evaluateGraph,
   evaluateGraphWithIteratorAutoContinue,
+  GraphExecutionError,
   runsApi,
-} from "@/features/ai/ai-paths/lib";
-import { extractImageUrls } from "@/features/ai/ai-paths/lib/core/runtime/utils";
+} from '@/features/ai/ai-paths/lib';
+import { extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+
 import {
   DEFAULT_DB_QUERY,
   pollDatabaseQuery,
   pollGraphJob,
   safeJsonStringify,
-} from "../AiPathsSettingsUtils";
+} from '../AiPathsSettingsUtils';
 
-type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
+const AI_PATHS_SESSION_STALE_MS = 30_000;
+const AI_PATHS_ENTITY_STALE_MS = 10_000;
+
+type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
 type UseAiPathsRuntimeArgs = {
   activePathId: string | null;
-  activeTab: "canvas" | "paths" | "docs";
+  activeTab: 'canvas' | 'paths' | 'docs';
   isPathActive: boolean;
   activeTrigger: string;
+  executionMode: PathExecutionMode;
   edges: Edge[];
   nodes: AiNode[];
   pathDescription: string;
@@ -79,6 +91,7 @@ export function useAiPathsRuntime({
   activeTab,
   isPathActive,
   activeTrigger,
+  executionMode,
   edges,
   nodes,
   pathDescription,
@@ -104,6 +117,11 @@ export function useAiPathsRuntime({
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
+  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(nodes), [nodes]);
+  const sanitizedEdges = useMemo(
+    (): Edge[] => sanitizeEdges(normalizedNodes, edges),
+    [edges, normalizedNodes]
+  );
 
   const enqueueAiJobMutation = useMutation({
     mutationFn: async (payload: {
@@ -113,22 +131,22 @@ export function useAiPathsRuntime({
     }): Promise<unknown> => {
       const result = await aiJobsApi.enqueue(payload);
       if (!result.ok) {
-        throw new Error(result.error || "Failed to enqueue AI job.");
+        throw new Error(result.error || 'Failed to enqueue AI job.');
       }
       return result.data;
     },
   });
 
   const sessionQuery = useQuery({
-    queryKey: ["auth-session"],
+    queryKey: ['auth-session'],
     queryFn: async () => {
-      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      const res = await fetch('/api/auth/session');
       if (!res.ok) return null;
       return (await res.json()) as {
         user?: { id?: string; name?: string | null; email?: string | null };
       };
     },
-    staleTime: 0,
+    staleTime: AI_PATHS_SESSION_STALE_MS,
   });
 
   const sessionUser = useMemo(() => {
@@ -149,15 +167,15 @@ export function useAiPathsRuntime({
     async (productId: string): Promise<Record<string, unknown> | null> => {
       try {
         return await queryClient.fetchQuery({
-          queryKey: ["products", productId],
+          queryKey: ['products', productId],
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_ENTITY_STALE_MS,
         });
       } catch (error) {
-        reportAiPathsError(error, { action: "fetchProduct", productId }, "Failed to fetch product:");
+        reportAiPathsError(error, { action: 'fetchProduct', productId }, 'Failed to fetch product:');
         return null;
       }
     },
@@ -168,15 +186,15 @@ export function useAiPathsRuntime({
     async (noteId: string): Promise<Record<string, unknown> | null> => {
       try {
         return await queryClient.fetchQuery({
-          queryKey: ["notes", noteId],
+          queryKey: ['notes', noteId],
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getNote(noteId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_ENTITY_STALE_MS,
         });
       } catch (error) {
-        reportAiPathsError(error, { action: "fetchNote", noteId }, "Failed to fetch note:");
+        reportAiPathsError(error, { action: 'fetchNote', noteId }, 'Failed to fetch note:');
         return null;
       }
     },
@@ -186,8 +204,8 @@ export function useAiPathsRuntime({
   const normalizeEntityType = (value?: string | null): string | null => {
     const normalized = value?.trim().toLowerCase();
     if (!normalized) return null;
-    if (normalized === "product" || normalized === "products") return "product";
-    if (normalized === "note" || normalized === "notes") return "note";
+    if (normalized === 'product' || normalized === 'products') return 'product';
+    if (normalized === 'note' || normalized === 'notes') return 'note';
     return normalized;
   };
 
@@ -195,10 +213,10 @@ export function useAiPathsRuntime({
     async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
       if (!entityType || !entityId) return null;
       const normalized = normalizeEntityType(entityType);
-      if (normalized === "product") {
+      if (normalized === 'product') {
         return fetchProductById(entityId);
       }
-      if (normalized === "note") {
+      if (normalized === 'note') {
         return fetchNoteById(entityId);
       }
       return null;
@@ -208,13 +226,14 @@ export function useAiPathsRuntime({
 
   const buildActivePathConfig = useCallback(
     (updatedAt: string): PathConfig => ({
-      id: activePathId ?? "default",
+      id: activePathId ?? 'default',
       version: STORAGE_VERSION,
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
-      nodes,
-      edges,
+      executionMode,
+      nodes: normalizedNodes,
+      edges: sanitizedEdges,
       updatedAt,
       parserSamples,
       updaterSamples,
@@ -226,8 +245,9 @@ export function useAiPathsRuntime({
       pathName,
       pathDescription,
       activeTrigger,
-      nodes,
-      edges,
+      executionMode,
+      normalizedNodes,
+      sanitizedEdges,
       parserSamples,
       updaterSamples,
       runtimeState,
@@ -235,25 +255,25 @@ export function useAiPathsRuntime({
     ]
   );
 
-  const getDomSelector = (element: Element | null): string | null => {
+  const getDomSelector = useCallback((element: Element | null): string | null => {
     if (!element) return null;
     const selectorEscape = (val: string): string => {
-      if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
         return CSS.escape(val);
       }
-      return val.replace(/[^\w-]/g, "\\$&");
+      return val.replace(/[^\w-]/g, '\\$&');
     };
     const dataSelector =
-      element.getAttribute("data-component") ||
-      element.getAttribute("data-testid") ||
-      element.getAttribute("data-node");
+      element.getAttribute('data-component') ||
+      element.getAttribute('data-testid') ||
+      element.getAttribute('data-node');
     if (dataSelector) {
       const attr =
-        element.getAttribute("data-component") !== null
-          ? "data-component"
-          : element.getAttribute("data-testid") !== null
-            ? "data-testid"
-            : "data-node";
+        element.getAttribute('data-component') !== null
+          ? 'data-component'
+          : element.getAttribute('data-testid') !== null
+            ? 'data-testid'
+            : 'data-node';
       return `${element.tagName.toLowerCase()}[${attr}="${selectorEscape(dataSelector)}"]`;
     }
     if (element.id) {
@@ -261,7 +281,7 @@ export function useAiPathsRuntime({
     }
     const segments: string[] = [];
     let current: Element | null = element;
-    while (current && current.tagName.toLowerCase() !== "html" && segments.length < 5) {
+    while (current && current.tagName.toLowerCase() !== 'html' && segments.length < 5) {
       const tagName = current.tagName.toLowerCase();
       const parent: HTMLElement | null = current.parentElement;
       if (!parent) break;
@@ -276,29 +296,29 @@ export function useAiPathsRuntime({
       }
       current = parent as Element;
     }
-    return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
-  };
+    return segments.length ? segments.join(' > ') : element.tagName.toLowerCase();
+  }, []);
 
-  const getTargetInfo = (event?: React.MouseEvent): Record<string, unknown> | null => {
+  const getTargetInfo = useCallback((event?: React.MouseEvent): Record<string, unknown> | null => {
     const target = event?.target as Element | null;
     if (!target) return null;
     const element =
       target.closest(
-        "[data-component],[data-testid],[data-node],button,a,[role='button']"
+        '[data-component],[data-testid],[data-node],button,a,[role=\'button\']'
       ) ?? target;
     const rect = element.getBoundingClientRect();
     const dataset = element instanceof HTMLElement ? element.dataset : undefined;
     return {
       tagName: element.tagName.toLowerCase(),
       id: element.id || undefined,
-      className: element.getAttribute("class") || undefined,
-      name: element.getAttribute("name") || undefined,
-      type: element.getAttribute("type") || undefined,
-      role: element.getAttribute("role") || undefined,
-      ariaLabel: element.getAttribute("aria-label") || undefined,
-      dataComponent: element.getAttribute("data-component") || undefined,
-      dataTestId: element.getAttribute("data-testid") || undefined,
-      dataNode: element.getAttribute("data-node") || undefined,
+      className: element.getAttribute('class') || undefined,
+      name: element.getAttribute('name') || undefined,
+      type: element.getAttribute('type') || undefined,
+      role: element.getAttribute('role') || undefined,
+      ariaLabel: element.getAttribute('aria-label') || undefined,
+      dataComponent: element.getAttribute('data-component') || undefined,
+      dataTestId: element.getAttribute('data-testid') || undefined,
+      dataNode: element.getAttribute('data-node') || undefined,
       selector: getDomSelector(element),
       boundingClientRect: {
         x: rect.x,
@@ -312,13 +332,13 @@ export function useAiPathsRuntime({
       },
       dataset: dataset ? { ...dataset } : undefined,
     };
-  };
+  }, [getDomSelector]);
 
   const buildDebugSnapshot = useCallback(
     (pathId: string | null, runAt: string, state: RuntimeState): PathDebugSnapshot | null => {
       if (!pathId) return null;
-      const entries = nodes
-        .filter((node: AiNode): boolean => node.type === "database")
+      const entries = normalizedNodes
+        .filter((node: AiNode): boolean => node.type === 'database')
         .map((node: AiNode): PathDebugEntry | null => {
           const output = state.outputs[node.id] as
             | { debugPayload?: unknown }
@@ -335,7 +355,7 @@ export function useAiPathsRuntime({
       if (entries.length === 0) return null;
       return { pathId, runAt, entries };
     },
-    [nodes]
+    [normalizedNodes]
   );
 
   const persistDebugSnapshot = useCallback(
@@ -355,13 +375,13 @@ export function useAiPathsRuntime({
           [pathId]: snapshot,
         }));
       } catch (error) {
-        console.warn("[AI Paths] Failed to persist debug snapshot.", error);
+        console.warn('[AI Paths] Failed to persist debug snapshot.', error);
       }
     },
     [buildDebugSnapshot, updateSettingMutation, setPathDebugSnapshots]
   );
 
-  const buildTriggerContext = (
+  const buildTriggerContext = useCallback((
     triggerNode: AiNode,
     triggerEvent: string,
     event?: React.MouseEvent
@@ -370,60 +390,60 @@ export function useAiPathsRuntime({
     const nativeEvent = event?.nativeEvent;
     const pointer = nativeEvent
       ? {
-          clientX: nativeEvent.clientX,
-          clientY: nativeEvent.clientY,
-          pageX: nativeEvent.pageX,
-          pageY: nativeEvent.pageY,
-          screenX: nativeEvent.screenX,
-          screenY: nativeEvent.screenY,
-          offsetX: "offsetX" in nativeEvent ? nativeEvent.offsetX : undefined,
-          offsetY: "offsetY" in nativeEvent ? nativeEvent.offsetY : undefined,
-          button: nativeEvent.button,
-          buttons: nativeEvent.buttons,
-          altKey: nativeEvent.altKey,
-          ctrlKey: nativeEvent.ctrlKey,
-          shiftKey: nativeEvent.shiftKey,
-          metaKey: nativeEvent.metaKey,
-        }
+        clientX: nativeEvent.clientX,
+        clientY: nativeEvent.clientY,
+        pageX: nativeEvent.pageX,
+        pageY: nativeEvent.pageY,
+        screenX: nativeEvent.screenX,
+        screenY: nativeEvent.screenY,
+        offsetX: 'offsetX' in nativeEvent ? nativeEvent.offsetX : undefined,
+        offsetY: 'offsetY' in nativeEvent ? nativeEvent.offsetY : undefined,
+        button: nativeEvent.button,
+        buttons: nativeEvent.buttons,
+        altKey: nativeEvent.altKey,
+        ctrlKey: nativeEvent.ctrlKey,
+        shiftKey: nativeEvent.shiftKey,
+        metaKey: nativeEvent.metaKey,
+      }
       : undefined;
     const targetInfo = getTargetInfo(event);
     const location =
-      typeof window !== "undefined"
+      typeof window !== 'undefined'
         ? {
-            href: window.location.href,
-            origin: window.location.origin,
-            pathname: window.location.pathname,
-            search: window.location.search,
-            hash: window.location.hash,
-            referrer: document.referrer || undefined,
-          }
+          href: window.location.href,
+          origin: window.location.origin,
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+          referrer: document.referrer || undefined,
+        }
         : {};
     const ui =
-      typeof window !== "undefined"
+      typeof window !== 'undefined'
         ? {
-            viewport: {
-              width: window.innerWidth,
-              height: window.innerHeight,
-              devicePixelRatio: window.devicePixelRatio,
-            },
-            screen: {
-              width: window.screen?.width,
-              height: window.screen?.height,
-              availWidth: window.screen?.availWidth,
-              availHeight: window.screen?.availHeight,
-            },
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            languages: navigator.languages,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            documentTitle: document.title,
-            visibilityState: document.visibilityState,
-            scroll: {
-              x: window.scrollX,
-              y: window.scrollY,
-            },
-          }
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+          },
+          screen: {
+            width: window.screen?.width,
+            height: window.screen?.height,
+            availWidth: window.screen?.availWidth,
+            availHeight: window.screen?.availHeight,
+          },
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          documentTitle: document.title,
+          visibilityState: document.visibilityState,
+          scroll: {
+            x: window.scrollX,
+            y: window.scrollY,
+          },
+        }
         : {};
     return {
       timestamp,
@@ -447,21 +467,23 @@ export function useAiPathsRuntime({
         triggerLabel: activeTrigger,
       },
     };
-  };
+  }, [getTargetInfo, sessionUser, activePathId, pathName, activeTab, activeTrigger]);
 
   const runGraphForTrigger = useCallback(async (
     triggerNode: AiNode,
     event?: React.MouseEvent,
     contextOverride?: Record<string, unknown>
   ): Promise<void> => {
+    const startedAt = new Date().toISOString();
+    const startedAtMs = Date.now();
     if (!isPathActive) {
-      toast("This path is deactivated. Activate it to run.", { variant: "info" });
+      toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
     }
     const triggerEvent =
       triggerNode.config?.trigger?.event ??
       TRIGGER_EVENTS[0]?.id ??
-      "manual";
+      'manual';
     lastTriggerNodeIdRef.current = triggerNode.id;
     const triggerContext = {
       ...buildTriggerContext(triggerNode, triggerEvent, event),
@@ -470,39 +492,98 @@ export function useAiPathsRuntime({
     };
     triggerContextRef.current = triggerContext;
     pendingSimulationContextRef.current = null;
-    const result = await evaluateGraphWithIteratorAutoContinue({
-      nodes,
-      edges,
-      activePathId,
-      activePathName: pathName,
-      triggerNodeId: triggerNode.id,
-      triggerEvent,
-      triggerContext,
-      deferPoll: true,
-      recordHistory: true,
-      historyLimit: 50,
-      seedHistory: runtimeStateRef.current.history ?? undefined,
-      fetchEntityByType,
-      reportAiPathsError,
-      toast,
-    });
-    const runAt = new Date().toISOString();
-    setRuntimeState(result);
-    setLastRunAt(runAt);
-    void persistDebugSnapshot(activePathId ?? null, runAt, result);
-    if (activePathId) {
-      setPathConfigs((prev: Record<string, PathConfig>) => ({
-        ...prev,
-        [activePathId]: {
-          ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
-          runtimeState: result,
-          lastRunAt: runAt,
-        },
-      }));
+    try {
+      const result = await evaluateGraphWithIteratorAutoContinue({
+        nodes: normalizedNodes,
+        edges: sanitizedEdges,
+        activePathId,
+        activePathName: pathName,
+        triggerNodeId: triggerNode.id,
+        triggerEvent,
+        triggerContext,
+        deferPoll: true,
+        recordHistory: true,
+        historyLimit: 50,
+        seedHistory: runtimeStateRef.current.history ?? undefined,
+        fetchEntityByType,
+        reportAiPathsError,
+        toast,
+      });
+      const runAt = new Date().toISOString();
+      setRuntimeState(result);
+      setLastRunAt(runAt);
+      void persistDebugSnapshot(activePathId ?? null, runAt, result);
+      if (activePathId) {
+        setPathConfigs((prev: Record<string, PathConfig>) => ({
+          ...prev,
+          [activePathId]: {
+            ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
+            runtimeState: result,
+            lastRunAt: runAt,
+          },
+        }));
+      }
+      const entityId =
+        typeof (triggerContext as Record<string, unknown>)?.entityId === 'string'
+          ? ((triggerContext as Record<string, unknown>).entityId as string)
+          : null;
+      const entityType =
+        typeof (triggerContext as Record<string, unknown>)?.entityType === 'string'
+          ? ((triggerContext as Record<string, unknown>).entityType as string)
+          : null;
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: triggerEvent ?? null,
+        triggerLabel: activeTrigger ?? null,
+        entityId,
+        entityType,
+        status: 'success',
+        startedAt,
+        finishedAt: runAt,
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: normalizedNodes.length,
+        source: 'ai_paths_ui',
+      });
+    } catch (error) {
+      const finishedAt = new Date().toISOString();
+      const errorState =
+        error instanceof GraphExecutionError
+          ? error.state
+          : typeof error === 'object' && error && 'state' in error
+            ? (error as { state?: RuntimeState }).state
+            : undefined;
+      if (errorState) {
+        setRuntimeState(errorState);
+        setLastRunAt(finishedAt);
+        if (activePathId) {
+          setPathConfigs((prev: Record<string, PathConfig>) => ({
+            ...prev,
+            [activePathId]: {
+              ...(prev[activePathId] ?? buildActivePathConfig(finishedAt)),
+              runtimeState: errorState,
+              lastRunAt: finishedAt,
+            },
+          }));
+        }
+      }
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: triggerEvent ?? null,
+        triggerLabel: activeTrigger ?? null,
+        status: 'error',
+        startedAt,
+        finishedAt,
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: normalizedNodes.length,
+        error: error instanceof Error ? error.message : 'Local run failed',
+        source: 'ai_paths_ui',
+      });
+      return;
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, activePathId, pathName, fetchEntityByType, isPathActive, toast]);
+  }, [isPathActive, buildTriggerContext, normalizedNodes, sanitizedEdges, activePathId, pathName, activeTrigger, fetchEntityByType, reportAiPathsError, toast, setRuntimeState, setLastRunAt, persistDebugSnapshot, setPathConfigs, buildActivePathConfig]);
 
   const runPollUpdate = useCallback(
     async (
@@ -513,14 +594,14 @@ export function useAiPathsRuntime({
       }
     ): Promise<void> => {
       const fallbackJobId = options.jobId;
-      const pollKey = `${node.id}:${options.jobId ?? "db"}`;
+      const pollKey = `${node.id}:${options.jobId ?? 'db'}`;
       if (pollInFlightRef.current.has(pollKey)) return;
       pollInFlightRef.current.add(pollKey);
       try {
         const pollConfig = node.config?.poll;
-        const pollMode = pollConfig?.mode ?? "job";
+        const pollMode = pollConfig?.mode ?? 'job';
         let pollOutput: RuntimePortValues | null = null;
-        if (pollMode === "database") {
+        if (pollMode === 'database') {
           const queryConfig: DbQueryConfig = {
             ...DEFAULT_DB_QUERY,
             ...(pollConfig?.dbQuery ?? {}),
@@ -529,10 +610,10 @@ export function useAiPathsRuntime({
             intervalMs: pollConfig?.intervalMs ?? 2000,
             maxAttempts: pollConfig?.maxAttempts ?? 30,
             dbQuery: queryConfig,
-            successPath: pollConfig?.successPath ?? "status",
-            successOperator: pollConfig?.successOperator ?? "equals",
-            successValue: pollConfig?.successValue ?? "completed",
-            resultPath: pollConfig?.resultPath ?? "result",
+            successPath: pollConfig?.successPath ?? 'status',
+            successOperator: pollConfig?.successOperator ?? 'equals',
+            successValue: pollConfig?.successValue ?? 'completed',
+            resultPath: pollConfig?.resultPath ?? 'result',
           });
           pollOutput = {
             result: response.result,
@@ -540,7 +621,7 @@ export function useAiPathsRuntime({
             bundle: response.bundle,
           };
         } else {
-          const jobId = options.jobId ?? "";
+          const jobId = options.jobId ?? '';
           if (!jobId) {
             return;
           }
@@ -551,20 +632,20 @@ export function useAiPathsRuntime({
 
           pollOutput = {
             result,
-            status: "completed",
+            status: 'completed',
             jobId,
-            bundle: { jobId, status: "completed", result },
+            bundle: { jobId, status: 'completed', result },
           };
         }
         const resolvedJobId =
-          typeof pollOutput?.jobId === "string" ? pollOutput.jobId : fallbackJobId;
+          typeof pollOutput?.jobId === 'string' ? pollOutput.jobId : fallbackJobId;
         const updatedOutputs: Record<string, RuntimePortValues> = {
           ...runtimeStateRef.current.outputs,
           [node.id]: pollOutput ?? runtimeStateRef.current.outputs[node.id] ?? {},
         };
         if (resolvedJobId) {
-          nodes
-            .filter((item: AiNode): boolean => item.type === "model")
+          normalizedNodes
+            .filter((item: AiNode): boolean => item.type === 'model')
             .forEach((modelNode: AiNode) => {
               const modelOutput = updatedOutputs[modelNode.id] as
                 | { jobId?: string; status?: string; result?: unknown; debugPayload?: unknown }
@@ -572,7 +653,7 @@ export function useAiPathsRuntime({
               if (!modelOutput || modelOutput.jobId !== resolvedJobId) return;
               updatedOutputs[modelNode.id] = {
                 ...modelOutput,
-                status: pollOutput?.status ?? "completed",
+                status: pollOutput?.status ?? 'completed',
                 result:
                   pollOutput?.result !== undefined ? pollOutput.result : modelOutput.result,
               };
@@ -585,8 +666,8 @@ export function useAiPathsRuntime({
         const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
         const seededOutputs = updatedOutputs;
         const downstreamState = await evaluateGraph({
-          nodes,
-          edges,
+          nodes: normalizedNodes,
+          edges: sanitizedEdges,
           activePathId,
           activePathName: pathName,
           ...(triggerNodeId ? { triggerNodeId } : {}),
@@ -618,19 +699,19 @@ export function useAiPathsRuntime({
         }
 
         // If the poll completion caused an Iterator to advance, start the next iteration (launch AI jobs).
-        const shouldContinueIterators = nodes.some((n: AiNode): boolean => {
-          if (n.type !== "iterator") return false;
+        const shouldContinueIterators = normalizedNodes.some((n: AiNode): boolean => {
+          if (n.type !== 'iterator') return false;
           if (n.config?.iterator?.autoContinue === false) return false;
           const status = downstreamState.outputs[n.id]?.status;
-          return status === "advance_pending";
+          return status === 'advance_pending';
         });
         if (shouldContinueIterators && !iteratorContinueInFlightRef.current) {
           iteratorContinueInFlightRef.current = true;
           try {
             const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
             const continued = await evaluateGraphWithIteratorAutoContinue({
-              nodes,
-              edges,
+              nodes: normalizedNodes,
+              edges: sanitizedEdges,
               activePathId,
               activePathName: pathName,
               ...(triggerNodeId ? { triggerNodeId } : {}),
@@ -666,8 +747,8 @@ export function useAiPathsRuntime({
       } catch (error) {
         reportAiPathsError(
           error,
-          { action: "pollJob", nodeId: node.id, jobId: fallbackJobId },
-          "AI job polling failed:"
+          { action: 'pollJob', nodeId: node.id, jobId: fallbackJobId },
+          'AI job polling failed:'
         );
         setRuntimeState((prev: RuntimeState): RuntimeState => ({
           ...prev,
@@ -675,12 +756,12 @@ export function useAiPathsRuntime({
             ...prev.outputs,
             [node.id]: {
               result: null,
-              status: "failed",
+              status: 'failed',
               jobId: fallbackJobId,
               bundle: {
                 jobId: fallbackJobId,
-                status: "failed",
-                error: error instanceof Error ? error.message : "Polling failed",
+                status: 'failed',
+                error: error instanceof Error ? error.message : 'Polling failed',
               },
             },
           },
@@ -690,8 +771,8 @@ export function useAiPathsRuntime({
       }
     },
     [
-      nodes,
-      edges,
+      normalizedNodes,
+      sanitizedEdges,
       activePathId,
       pathName,
       fetchEntityByType,
@@ -707,8 +788,8 @@ export function useAiPathsRuntime({
 
   const startPendingPolls = useCallback(
     (state: RuntimeState): void => {
-      nodes
-        .filter((node: AiNode): boolean => node.type === "poll")
+      normalizedNodes
+        .filter((node: AiNode): boolean => node.type === 'poll')
         .forEach((node: AiNode) => {
           const pollConfig = node.config?.poll;
           const output = state.outputs[node.id] as
@@ -718,32 +799,32 @@ export function useAiPathsRuntime({
           const inputJobId = coerceInput(nodeInputs.jobId);
           const jobId =
             output?.jobId ??
-            (typeof inputJobId === "string" || typeof inputJobId === "number"
+            (typeof inputJobId === 'string' || typeof inputJobId === 'number'
               ? String(inputJobId).trim()
-              : "");
-          const status = output?.status ?? "polling";
-          if (status === "completed" || status === "failed") return;
-          if (pollConfig?.mode !== "database" && !jobId) return;
+              : '');
+          const status = output?.status ?? 'polling';
+          if (status === 'completed' || status === 'failed') return;
+          if (pollConfig?.mode !== 'database' && !jobId) return;
           void runPollUpdate(node, { jobId, nodeInputs });
         });
     },
-    [nodes, runPollUpdate]
+    [normalizedNodes, runPollUpdate]
   );
 
   useEffect((): void => {
-    if (!runtimeState || nodes.length === 0) return;
+    if (!runtimeState || normalizedNodes.length === 0) return;
     startPendingPolls(runtimeState);
-  }, [nodes, runtimeState, startPendingPolls]);
+  }, [normalizedNodes, runtimeState, startPendingPolls]);
 
   const dispatchTrigger = (eventName: string, entityId: string, entityType?: string): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     window.dispatchEvent(
-      new CustomEvent("ai-path-trigger", {
+      new CustomEvent('ai-path-trigger', {
         detail: {
           trigger: eventName,
           productId: entityId,
           entityId,
-          entityType: entityType ?? "product",
+          entityType: entityType ?? 'product',
         },
       })
     );
@@ -755,9 +836,9 @@ export function useAiPathsRuntime({
         simulationNode.config?.simulation?.entityId?.trim() ||
         simulationNode.config?.simulation?.productId?.trim();
       const entityType =
-        normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? "product";
+        normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? 'product';
       if (!entityId) {
-        toast("Enter an Entity ID in the simulation node.", { variant: "error" });
+        toast('Enter an Entity ID in the simulation node.', { variant: 'error' });
         return;
       }
       const entity = await fetchEntityByType(entityType, entityId);
@@ -765,82 +846,133 @@ export function useAiPathsRuntime({
       const simulationContext: Record<string, unknown> = {
         entityId,
         entityType,
-        ...(entityType === "product" ? { productId: entityId } : {}),
+        ...(entityType === 'product' ? { productId: entityId } : {}),
         ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
-        ...(entity ? { entity } : {}),
+        ...(entity
+          ? {
+            entity,
+            entityJson: entity,
+            ...(entityType === 'product' ? { product: entity } : {}),
+          }
+          : {}),
       };
       pendingSimulationContextRef.current = simulationContext;
-      let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "manual";
+      let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
       if (!triggerEvent) {
-        const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
-          if (
-            edge.from === simulationNode.id &&
-            (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-          ) {
-            return [edge.to];
-          }
-          if (
-            edge.to === simulationNode.id &&
-            (!edge.toPort || edge.toPort === "trigger")
-          ) {
-            return [edge.from];
-          }
-          return [];
+        const adjacency = new Map<string, Set<string>>();
+        sanitizedEdges.forEach((edge: Edge) => {
+          if (!edge.from || !edge.to) return;
+          const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+          fromSet.add(edge.to);
+          adjacency.set(edge.from, fromSet);
+          const toSet = adjacency.get(edge.to) ?? new Set<string>();
+          toSet.add(edge.from);
+          adjacency.set(edge.to, toSet);
         });
-        const triggerNode = nodes.find(
-          (node: AiNode): boolean =>
-            node.type === "trigger" && connectedTriggerIds.includes(node.id)
-        );
-        if (triggerNode) {
-          eventName = triggerNode.config?.trigger?.event ?? eventName;
-          await runGraphForTrigger(triggerNode, undefined, simulationContext);
+        const connected = new Set<string>();
+        const queue = [simulationNode.id];
+        connected.add(simulationNode.id);
+        while (queue.length) {
+          const current = queue.shift();
+          if (!current) continue;
+          const neighbors = adjacency.get(current);
+          if (!neighbors) continue;
+          neighbors.forEach((neighbor: string) => {
+            if (connected.has(neighbor)) return;
+            connected.add(neighbor);
+            queue.push(neighbor);
+          });
         }
+        const connectedTriggerIds = normalizedNodes
+          .filter((node: AiNode): boolean => node.type === 'trigger' && connected.has(node.id))
+          .map((node: AiNode) => node.id);
+        let triggerNode = normalizedNodes.find(
+          (node: AiNode): boolean =>
+            node.type === 'trigger' && connectedTriggerIds.includes(node.id)
+        );
+        if (!triggerNode) {
+          const triggerCandidates = normalizedNodes.filter((node: AiNode): boolean => node.type === 'trigger');
+          if (triggerCandidates.length === 1) {
+            triggerNode = triggerCandidates[0];
+            toast('No Trigger node connected; using the only Trigger in this path.', {
+              variant: 'info',
+            });
+          }
+        }
+        if (!triggerNode) {
+          toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
+          return;
+        }
+        eventName = triggerNode.config?.trigger?.event ?? eventName;
+        await runGraphForTrigger(triggerNode, undefined, simulationContext);
       }
       dispatchTrigger(eventName, entityId, entityType);
       if (!entity) {
         toast(`No entity found for ${entityType} ${entityId}. Using fallback context.`, {
-          variant: "info",
+          variant: 'info',
         });
       }
       toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {
-        variant: "success",
+        variant: 'success',
       });
     },
-    [edges, fetchEntityByType, nodes, runGraphForTrigger, toast]
+    [sanitizedEdges, fetchEntityByType, normalizedNodes, runGraphForTrigger, toast]
   );
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
     void (async (): Promise<void> => {
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
-      const isScheduled = triggerEvent === "scheduled_run";
-      const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
-        if (
-          edge.to === triggerNode.id &&
-          (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
-          (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-        ) {
-          return [edge.from];
-        }
-        if (
-          edge.from === triggerNode.id &&
-          (!edge.fromPort || edge.fromPort === "trigger") &&
-          (!edge.toPort || edge.toPort === "trigger")
-        ) {
-          return [edge.to];
-        }
-        return [];
+      const isScheduled = triggerEvent === 'scheduled_run';
+      const adjacency = new Map<string, Set<string>>();
+      sanitizedEdges.forEach((edge: Edge) => {
+        if (!edge.from || !edge.to) return;
+        const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+        fromSet.add(edge.to);
+        adjacency.set(edge.from, fromSet);
+        const toSet = adjacency.get(edge.to) ?? new Set<string>();
+        toSet.add(edge.from);
+        adjacency.set(edge.to, toSet);
       });
-      const simulationNodes = nodes.filter(
+      const connected = new Set<string>();
+      const queue = [triggerNode.id];
+      connected.add(triggerNode.id);
+      while (queue.length) {
+        const current = queue.shift();
+        if (!current) continue;
+        const neighbors = adjacency.get(current);
+        if (!neighbors) continue;
+        neighbors.forEach((neighbor: string) => {
+          if (connected.has(neighbor)) return;
+          connected.add(neighbor);
+          queue.push(neighbor);
+        });
+      }
+      const connectedSimulationIds = normalizedNodes
+        .filter((node: AiNode): boolean => node.type === 'simulation' && connected.has(node.id))
+        .map((node: AiNode) => node.id);
+      let simulationNodes = normalizedNodes.filter(
         (node: AiNode): boolean =>
-          node.type === "simulation" && connectedSimulationIds.includes(node.id)
+          node.type === 'simulation' && connectedSimulationIds.includes(node.id)
       );
       if (simulationNodes.length === 0) {
-        if (!isScheduled) {
-          toast("Connect a Simulation node to the Trigger context input.", {
-            variant: "error",
+        const fallbackSimulationNodes = normalizedNodes.filter(
+          (node: AiNode): boolean => node.type === 'simulation'
+        );
+        if (fallbackSimulationNodes.length === 1) {
+          if (!isScheduled) {
+            toast('Simulation node isn\'t wired to the trigger. Using it anyway.', {
+              variant: 'info',
+            });
+          }
+          simulationNodes = fallbackSimulationNodes;
+        } else if (!isScheduled) {
+          toast('Connect a Simulation node to the Trigger context input.', {
+            variant: 'error',
           });
           return;
         }
+      }
+      if (simulationNodes.length === 0) {
         await runGraphForTrigger(triggerNode, event);
         return;
       }
@@ -856,139 +988,164 @@ export function useAiPathsRuntime({
     event?: React.MouseEvent
   ): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
-    const isScheduled = triggerEvent === "scheduled_run";
-    const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
-      if (
-        edge.to === triggerNode.id &&
-        (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
-        (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-      ) {
-        return [edge.from];
-      }
-      if (
-        edge.from === triggerNode.id &&
-        (!edge.fromPort || edge.fromPort === "trigger") &&
-        (!edge.toPort || edge.toPort === "trigger")
-      ) {
-        return [edge.to];
-      }
-      return [];
+    const isScheduled = triggerEvent === 'scheduled_run';
+    const adjacency = new Map<string, Set<string>>();
+    sanitizedEdges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.to) return;
+      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+      fromSet.add(edge.to);
+      adjacency.set(edge.from, fromSet);
+      const toSet = adjacency.get(edge.to) ?? new Set<string>();
+      toSet.add(edge.from);
+      adjacency.set(edge.to, toSet);
     });
-    const simulationNodes = nodes.filter(
+    const connected = new Set<string>();
+    const queue = [triggerNode.id];
+    connected.add(triggerNode.id);
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current) continue;
+      const neighbors = adjacency.get(current);
+      if (!neighbors) continue;
+      neighbors.forEach((neighbor: string) => {
+        if (connected.has(neighbor)) return;
+        connected.add(neighbor);
+        queue.push(neighbor);
+      });
+    }
+    const connectedSimulationIds = normalizedNodes
+      .filter((node: AiNode): boolean => node.type === 'simulation' && connected.has(node.id))
+      .map((node: AiNode) => node.id);
+    let simulationNodes = normalizedNodes.filter(
       (node: AiNode): boolean =>
-        node.type === "simulation" && connectedSimulationIds.includes(node.id)
+        node.type === 'simulation' && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
-      if (!isScheduled) {
-        toast("Connect a Simulation node to the Trigger context input.", {
-          variant: "error",
+      const fallbackSimulationNodes = normalizedNodes.filter(
+        (node: AiNode): boolean => node.type === 'simulation'
+      );
+      if (fallbackSimulationNodes.length === 1) {
+        if (!isScheduled) {
+          toast('Simulation node isn\'t wired to the trigger. Using it anyway.', {
+            variant: 'info',
+          });
+        }
+        simulationNodes = fallbackSimulationNodes;
+      } else if (!isScheduled) {
+        toast('Connect a Simulation node to the Trigger context input.', {
+          variant: 'error',
         });
         return;
       }
-      const triggerContext = buildTriggerContext(triggerNode, triggerEvent ?? "", event);
+    }
+    if (simulationNodes.length === 0) {
+      const triggerContext = buildTriggerContext(triggerNode, triggerEvent ?? '', event);
       const enqueueResult = await runsApi.enqueue({
-        pathId: activePathId ?? "default",
+        pathId: activePathId ?? 'default',
         pathName,
-        nodes,
-        edges,
+        nodes: normalizedNodes,
+        edges: sanitizedEdges,
         ...(triggerEvent ? { triggerEvent } : {}),
         triggerNodeId: triggerNode.id,
         triggerContext,
         meta: {
-          source: "ai_paths_ui",
+          source: 'ai_paths_ui',
         },
       });
       if (!enqueueResult.ok) {
-        toast(enqueueResult.error || "Failed to enqueue persistent run.", {
-          variant: "error",
+        toast(enqueueResult.error || 'Failed to enqueue persistent run.', {
+          variant: 'error',
         });
         return;
       }
-      toast("Persistent run queued.", { variant: "success" });
+      toast('Persistent run queued.', { variant: 'success' });
       return;
     }
     const primarySimulation = simulationNodes[0]!;
     const entityId =
       primarySimulation.config?.simulation?.entityId?.trim() ||
       primarySimulation.config?.simulation?.productId?.trim() ||
-      "";
-    const entityType = primarySimulation.config?.simulation?.entityType?.trim() || "product";
+      '';
+    const entityType = primarySimulation.config?.simulation?.entityType?.trim() || 'product';
     if (!entityId) {
-      toast("Simulation node is missing an Entity ID.", { variant: "error" });
+      toast('Simulation node is missing an Entity ID.', { variant: 'error' });
       return;
     }
     const triggerContext = {
-      ...buildTriggerContext(triggerNode, triggerEvent ?? "", event),
+      ...buildTriggerContext(triggerNode, triggerEvent ?? '', event),
       entityId,
       entityType,
     };
     const enqueueResult = await runsApi.enqueue({
-      pathId: activePathId ?? "default",
+      pathId: activePathId ?? 'default',
       pathName,
-      nodes,
-      edges,
+      nodes: normalizedNodes,
+      edges: sanitizedEdges,
       ...(triggerEvent ? { triggerEvent } : {}),
       triggerNodeId: triggerNode.id,
       triggerContext,
       entityId,
       entityType,
       meta: {
-        source: "ai_paths_ui",
+        source: 'ai_paths_ui',
       },
     });
     if (!enqueueResult.ok) {
-      toast(enqueueResult.error || "Failed to enqueue persistent run.", {
-        variant: "error",
+      toast(enqueueResult.error || 'Failed to enqueue persistent run.', {
+        variant: 'error',
       });
       return;
     }
-    toast("Persistent run queued.", { variant: "success" });
+    toast('Persistent run queued.', { variant: 'success' });
   };
 
   const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
     // Find the source node to determine its type
-    const sourceNode = nodes.find((n: AiNode): boolean => n.id === sourceNodeId);
+    const sourceNode = normalizedNodes.find((n: AiNode): boolean => n.id === sourceNodeId);
     if (!sourceNode) {
-      toast("Source node not found.", { variant: "error" });
+      toast('Source node not found.', { variant: 'error' });
       return;
     }
 
     // Find the connected AI Model node
     // For database nodes, prefer aiPrompt port; for prompt nodes, prefer prompt port; but accept any connection to a model
     const preferredPort =
-      sourceNode.type === "database" || sourceNode.type === "regex"
-        ? "aiPrompt"
-        : "prompt";
+      sourceNode.type === 'database' || sourceNode.type === 'regex'
+        ? 'aiPrompt'
+        : 'prompt';
 
     // First try to find edge with preferred port
-    let aiEdge = edges.find(
+    let aiEdge = sanitizedEdges.find(
       (edge: Edge): boolean => edge.from === sourceNodeId && edge.fromPort === preferredPort
     );
 
     // If not found, find any edge that connects to a model node
     if (!aiEdge) {
-      aiEdge = edges.find((edge: Edge): boolean => {
+      aiEdge = sanitizedEdges.find((edge: Edge): boolean => {
         if (edge.from !== sourceNodeId) return false;
-        const targetNode = nodes.find((n: AiNode): boolean => n.id === edge.to);
-        return targetNode?.type === "model";
+        const targetNode = normalizedNodes.find((n: AiNode): boolean => n.id === edge.to);
+        return targetNode?.type === 'model';
       });
     }
 
     if (!aiEdge) {
-      toast("No AI Model connected.", { variant: "error" });
+      toast('No AI Model connected.', { variant: 'error' });
       return;
     }
-    const aiNode = nodes.find((n: AiNode): boolean => n.id === aiEdge.to && n.type === "model");
+    const aiNode = normalizedNodes.find((n: AiNode): boolean => n.id === aiEdge.to && n.type === 'model');
     if (!aiNode) {
-      toast("Connected node is not an AI Model.", { variant: "error" });
+      toast('Connected node is not an AI Model.', { variant: 'error' });
       return;
     }
     const modelConfig = aiNode.config?.model ?? {
-      modelId: "gpt-4o",
+      modelId: 'gpt-4o',
       temperature: 0.7,
       maxTokens: 800,
       vision: false,
     };
+    const startedAt = new Date().toISOString();
+    const startedAtMs = Date.now();
+    let directJobId: string | null = null;
     setSendingToAi(true);
     try {
       const payload = {
@@ -998,7 +1155,7 @@ export function useAiPathsRuntime({
         temperature: modelConfig.temperature,
         maxTokens: modelConfig.maxTokens,
         vision: modelConfig.vision,
-        source: "ai_paths_direct",
+        source: 'ai_paths_direct',
         graph: {
           pathId: activePathId ?? undefined,
           nodeId: aiNode.id,
@@ -1006,35 +1163,78 @@ export function useAiPathsRuntime({
         },
       };
       const enqueueData = (await enqueueAiJobMutation.mutateAsync({
-        productId: activePathId ?? "direct",
-        type: "graph_model",
+        productId: activePathId ?? 'direct',
+        type: 'graph_model',
         payload,
       })) as { jobId: string };
-      toast("AI job queued. Waiting for result...", { variant: "success" });
+      directJobId = enqueueData.jobId;
+      toast('AI job queued. Waiting for result...', { variant: 'success' });
       const result = await pollGraphJob(enqueueData.jobId);
       // Update runtime state with the result
       setRuntimeState((prev: RuntimeState): RuntimeState => {
         const sourceInputs = prev.inputs[sourceNodeId] ?? {};
         const sourceOutputs = prev.outputs[sourceNodeId] ?? {};
         const aiOutputs = prev.outputs[aiNode.id] ?? {};
+        const now = new Date().toISOString();
+        const historyLimit = 50;
 
         // For database nodes, store result in queryCallback (both input and output)
         // For prompt nodes, store result in the result input (so it shows in the Result Input field)
         const updatedSourceOutputs =
-          sourceNode.type === "database"
+          sourceNode.type === 'database'
             ? { ...sourceOutputs, queryCallback: result }
-            : sourceNode.type === "regex"
+            : sourceNode.type === 'regex'
               ? { ...sourceOutputs, regexCallback: result }
               : sourceOutputs;
 
         const updatedSourceInputs =
-          sourceNode.type === "database"
+          sourceNode.type === 'database'
             ? { ...sourceInputs, queryCallback: result }
-            : sourceNode.type === "prompt"
+            : sourceNode.type === 'prompt'
               ? { ...sourceInputs, result }
-              : sourceNode.type === "regex"
+              : sourceNode.type === 'regex'
                 ? { ...sourceInputs, regexCallback: result }
-              : sourceInputs;
+                : sourceInputs;
+
+        const nextHistory: Record<string, RuntimeHistoryEntry[]> = prev.history
+          ? { ...prev.history }
+          : {};
+        const pushHistory = (
+          node: AiNode,
+          inputs: RuntimePortValues,
+          outputs: RuntimePortValues
+        ): void => {
+          const entry: RuntimeHistoryEntry = {
+            timestamp: now,
+            pathId: activePathId ?? null,
+            pathName: pathName ?? null,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'completed',
+            inputs,
+            outputs,
+          };
+          const existing = nextHistory[node.id] ? [...nextHistory[node.id]!] : [];
+          existing.push(entry);
+          if (existing.length > historyLimit) {
+            existing.splice(0, existing.length - historyLimit);
+          }
+          nextHistory[node.id] = existing;
+        };
+        pushHistory(sourceNode, updatedSourceInputs, updatedSourceOutputs);
+        pushHistory(aiNode, {
+          prompt: payload.prompt,
+          modelId: modelConfig.modelId,
+          temperature: modelConfig.temperature,
+          maxTokens: modelConfig.maxTokens,
+          vision: modelConfig.vision,
+        }, {
+          ...aiOutputs,
+          result,
+          jobId: enqueueData.jobId,
+          status: 'completed',
+        });
 
         return {
           ...prev,
@@ -1049,20 +1249,51 @@ export function useAiPathsRuntime({
               ...aiOutputs,
               result,
               jobId: enqueueData.jobId,
-              status: "completed",
+              status: 'completed',
             },
           },
+          ...(Object.keys(nextHistory).length > 0 ? { history: nextHistory } : {}),
         };
       });
-      toast("AI response received.", { variant: "success" });
+      toast('AI response received.', { variant: 'success' });
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: 'node_ai_prompt',
+        triggerLabel: 'Node AI Prompt',
+        status: 'success',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: 2,
+        source: 'ai_paths_direct',
+      });
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "sendToAi", nodeId: sourceNodeId },
-        "Send to AI failed:"
+        { action: 'sendToAi', nodeId: sourceNodeId },
+        'Send to AI failed:'
       );
-      toast("Send to AI failed.", { variant: "error" });
+      toast('Send to AI failed.', { variant: 'error' });
+      void appendLocalRun({
+        pathId: activePathId ?? null,
+        pathName: pathName ?? null,
+        triggerEvent: 'node_ai_prompt',
+        triggerLabel: 'Node AI Prompt',
+        status: 'error',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAtMs,
+        nodeCount: 2,
+        error: error instanceof Error ? error.message : 'Send to AI failed',
+        source: 'ai_paths_direct',
+      });
     } finally {
+      if (directJobId) {
+        void fetch(`/api/products/ai-jobs/${encodeURIComponent(directJobId)}`, {
+          method: 'DELETE',
+        }).catch(() => undefined);
+      }
       setSendingToAi(false);
     }
   };

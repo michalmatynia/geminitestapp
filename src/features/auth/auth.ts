@@ -1,58 +1,61 @@
-import "server-only";
+import 'server-only';
 
-import { ErrorSystem } from "@/features/observability/server";
-import NextAuth, { type NextAuthConfig, type Session, type User } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import Facebook from "next-auth/providers/facebook";
-import type { Provider } from "next-auth/providers";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcryptjs";
-import { getMongoClient } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import { findAuthUserByEmail, findAuthUserById } from "@/features/auth/services/auth-user-repository";
-import { getAuthAccessForUser } from "@/features/auth/services/auth-access";
+import { MongoDBAdapter } from '@auth/mongodb-adapter';
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import bcrypt from 'bcryptjs';
+import NextAuth, { type NextAuthConfig, type Session, type User } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import Facebook from 'next-auth/providers/facebook';
+import Google from 'next-auth/providers/google';
+
+import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
+import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
   recordLoginSuccess,
-} from "@/features/auth/services/auth-security";
-import { getAuthUserPageSettings } from "@/features/auth/services/auth-settings";
-import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/services/auth-security-profile";
-import { consumeLoginChallenge } from "@/features/auth/services/auth-login-challenge";
-import { decryptAuthSecret } from "@/features/auth/utils/auth-encryption";
-import { hashRecoveryCode, verifyTotpToken } from "@/features/auth/services/totp";
-import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
-import { authConfig } from "./auth.config";
+} from '@/features/auth/services/auth-security';
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
+import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
+import { findAuthUserByEmail, findAuthUserById } from '@/features/auth/services/auth-user-repository';
+import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
+import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
+import { ErrorSystem } from '@/features/observability/server';
+import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+
+import { authConfig } from './auth.config';
+
+import type { JWT } from 'next-auth/jwt';
+import type { Provider } from 'next-auth/providers';
 
 const credentialsProvider = Credentials({
-  name: "Credentials",
+  name: 'Credentials',
   credentials: {
-    email: { label: "Email", type: "email" },
-    password: { label: "Password", type: "password" },
-    otp: { label: "One-time code", type: "text" },
-    recoveryCode: { label: "Recovery code", type: "text" },
-    challengeId: { label: "Challenge", type: "text" },
+    email: { label: 'Email', type: 'email' },
+    password: { label: 'Password', type: 'password' },
+    otp: { label: 'One-time code', type: 'text' },
+    recoveryCode: { label: 'Recovery code', type: 'text' },
+    challengeId: { label: 'Challenge', type: 'text' },
   },
   async authorize(credentials: Record<string, unknown> | null, request: Request) {
     try {
-      const email = credentials?.email?.toString() ?? "";
-      const password = credentials?.password?.toString() ?? "";
-      const otp = credentials?.otp?.toString() ?? "";
-      const recoveryCode = credentials?.recoveryCode?.toString() ?? "";
-      const challengeId = credentials?.challengeId?.toString() ?? "";
+      const email = credentials?.email?.toString() ?? '';
+      const password = credentials?.password?.toString() ?? '';
+      const otp = credentials?.otp?.toString() ?? '';
+      const recoveryCode = credentials?.recoveryCode?.toString() ?? '';
+      const challengeId = credentials?.challengeId?.toString() ?? '';
       if (!email || !password) {
-        console.log("[AUTH] Missing email or password");
+        console.log('[AUTH] Missing email or password');
         return null;
       }
       const ip = extractClientIp(request);
       const allowed = await checkLoginAllowed({ email, ip });
       if (!allowed.allowed) {
-        await ErrorSystem.logWarning("[AUTH] Login blocked due to rate limits", {
-          service: "auth",
+        await ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
+          service: 'auth',
           email,
           ip,
           lockedUntil: allowed.lockedUntil?.toISOString(),
@@ -135,13 +138,13 @@ const credentialsProvider = Credentials({
         }
       }
 
-      await ErrorSystem.logInfo("[AUTH] Attempting to find user", { service: "auth", email });
+      await ErrorSystem.logInfo('[AUTH] Attempting to find user', { service: 'auth', email });
       
       // findAuthUserByEmail reads from MongoDB-backed auth store
       const user = await findAuthUserByEmail(email);
 
       if (!user) {
-        await ErrorSystem.logInfo("[AUTH] User not found", { service: "auth", email });
+        await ErrorSystem.logInfo('[AUTH] User not found', { service: 'auth', email });
         await recordLoginFailure({ email, ip, request });
         return null;
       }
@@ -170,14 +173,14 @@ const credentialsProvider = Credentials({
       }
       
       if (!user.passwordHash) {
-        console.log("[AUTH] User has no password hash");
+        console.log('[AUTH] User has no password hash');
         await recordLoginFailure({ email, ip, request });
         return null;
       }
 
       console.log(`[AUTH] User found: ${user.id}. Hash len: ${user.passwordHash.length}. Input pass len: ${password.length}`);
       const isValid = await bcrypt.compare(password, user.passwordHash);
-      console.log("[AUTH] Password valid:", isValid);
+      console.log('[AUTH] Password valid:', isValid);
       
       if (!isValid) {
         await recordLoginFailure({ email, ip, request });
@@ -220,8 +223,8 @@ const credentialsProvider = Credentials({
       };
     } catch (error) {
       await ErrorSystem.captureException(error, {
-        service: "auth",
-        action: "authorize",
+        service: 'auth',
+        action: 'authorize',
       });
       return null;
     }
@@ -240,8 +243,10 @@ const buildProviders = (): Provider[] => {
     );
   } else {
     // Non-critical warning, log to system but don't spam if not configured
-    // We can use console.warn or ErrorSystem.logWarning
-    console.warn("[AUTH] Google Client ID/Secret not found. Google login will be unavailable.");
+    void ErrorSystem.logWarning('[AUTH] Google Client ID/Secret not found. Google login will be unavailable.', {
+      service: 'auth',
+      provider: 'google'
+    });
   }
 
   if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
@@ -252,7 +257,10 @@ const buildProviders = (): Provider[] => {
       })
     );
   } else {
-    console.warn("[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.");
+    void ErrorSystem.logWarning('[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.', {
+      service: 'auth',
+      provider: 'facebook'
+    });
   }
 
   return providers;
@@ -260,14 +268,49 @@ const buildProviders = (): Provider[] => {
 
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
-    await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
+    const authLoggingEnabled = process.env.AUTH_LOGGING === 'true';
+    if (authLoggingEnabled) {
+      await ErrorSystem.logInfo('[AUTH] Starting configuration...', { service: 'auth' });
+    }
     const configuredProvider = await getAuthDataProvider();
     const provider = requireAuthProvider(configuredProvider);
-    const adapter =
-      provider === "prisma"
-        ? PrismaAdapter(prisma)
-        : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
-    console.log(`[AUTH] Adapter configured for ${provider}.`);
+    let adapter: ReturnType<typeof PrismaAdapter> | ReturnType<typeof MongoDBAdapter> | undefined;
+    try {
+      adapter =
+        provider === 'prisma'
+          ? PrismaAdapter(prisma)
+          : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? 'app' });
+    } catch (error) {
+      await ErrorSystem.logWarning('[AUTH] Adapter initialization failed; attempting fallback.', {
+        service: 'auth',
+        provider,
+        error,
+      });
+      if (provider === 'mongodb' && process.env.DATABASE_URL) {
+        try {
+          adapter = PrismaAdapter(prisma);
+        } catch (fallbackError) {
+          await ErrorSystem.logWarning('[AUTH] Prisma adapter fallback failed.', {
+            service: 'auth',
+            provider: 'prisma',
+            error: fallbackError,
+          });
+        }
+      } else if (provider === 'prisma' && process.env.MONGODB_URI) {
+        try {
+          adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? 'app' });
+        } catch (fallbackError) {
+          await ErrorSystem.logWarning('[AUTH] Mongo adapter fallback failed.', {
+            service: 'auth',
+            provider: 'mongodb',
+            error: fallbackError,
+          });
+        }
+      }
+    }
+    if (authLoggingEnabled) {
+      console.log(`[AUTH] Adapter configured for ${provider}.`);
+    }
 
     return {
       ...authConfig,
@@ -278,6 +321,16 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {
           const userId = user?.id ?? token.sub;
           if (!userId) return token;
+
+          const tokenMeta = token as JWT & { authRefreshedAt?: number };
+          const now = Date.now();
+          const refreshTtlMs = Number.parseInt(process.env.AUTH_TOKEN_REFRESH_TTL_MS ?? '60000', 10);
+          const lastRefresh = typeof tokenMeta.authRefreshedAt === 'number' ? tokenMeta.authRefreshedAt : 0;
+          const hasRole = typeof tokenMeta.role === 'string' && tokenMeta.role.length > 0;
+          const shouldRefresh = Boolean(user) || !hasRole || now - lastRefresh > refreshTtlMs;
+
+          if (!shouldRefresh) return token;
+
           try {
             const access = await getAuthAccessForUser(userId);
             token.role = access.roleId;
@@ -287,10 +340,11 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             const security = await getAuthSecurityProfile(userId);
             token.accountDisabled = Boolean(security.disabledAt);
             token.accountBanned = Boolean(security.bannedAt);
+            tokenMeta.authRefreshedAt = now;
           } catch (error) {
             await ErrorSystem.captureException(error, {
-              service: "auth",
-              action: "jwt_callback",
+              service: 'auth',
+              action: 'jwt_callback',
               userId,
             });
           }
@@ -311,12 +365,12 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           return session;
         },
       },
-      debug: process.env.AUTH_DEBUG === "true",
+      debug: process.env.AUTH_DEBUG === 'true',
     };
   } catch (error: unknown) {
     await ErrorSystem.captureException(error, {
-      service: "auth",
-      action: "configuration",
+      service: 'auth',
+      action: 'configuration',
     });
     throw error;
   }

@@ -1,14 +1,15 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import * as api from "../api/settings";
-import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from "../types";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+
+import * as api from '../api/settings';
+import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from '../types';
 
 export const productSettingsKeys = {
-  all: ["product-settings"] as const,
-  priceGroups: () => [...productSettingsKeys.all, "price-groups"] as const,
-  catalogs: () => [...productSettingsKeys.all, "catalogs"] as const,
-  categories: (catalogId: string | null) => [...productSettingsKeys.all, "categories", catalogId] as const,
-  tags: (catalogId: string | null) => [...productSettingsKeys.all, "tags", catalogId] as const,
-  parameters: (catalogId: string | null) => [...productSettingsKeys.all, "parameters", catalogId] as const,
+  all: ['product-settings'] as const,
+  priceGroups: () => [...productSettingsKeys.all, 'price-groups'] as const,
+  catalogs: () => [...productSettingsKeys.all, 'catalogs'] as const,
+  categories: (catalogId: string | null) => [...productSettingsKeys.all, 'categories', catalogId] as const,
+  tags: (catalogId: string | null) => [...productSettingsKeys.all, 'tags', catalogId] as const,
+  parameters: (catalogId: string | null) => [...productSettingsKeys.all, 'parameters', catalogId] as const,
 };
 
 export function usePriceGroups(): UseQueryResult<PriceGroup[], Error> {

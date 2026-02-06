@@ -1,18 +1,21 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+
 import { 
   getProducts, 
   countProducts, 
   createProduct, 
   updateProduct, 
   deleteProduct 
-} from "@/features/products/api";
+} from '@/features/products/api';
+import { addQueuedProductId, removeQueuedProductId } from '@/features/products/state/queued-product-ops';
 import type { 
   ProductWithImages, 
-} from "@/features/products/types";
-import type { DeleteResponse } from "@/shared/types/api";
+} from '@/features/products/types';
+import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
+import type { DeleteResponse } from '@/shared/types/api';
 
 // --- Queries ---
 
@@ -29,6 +32,8 @@ export interface UseProductsFilters {
   searchLanguage?: string | undefined;
 }
 
+const PRODUCTS_STALE_MS = 10_000;
+
 export function useProducts(
   filters: UseProductsFilters,
   options: { enabled?: boolean } = {}
@@ -36,13 +41,13 @@ export function useProducts(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["products", filters],
+    queryKey: ['products', filters],
     queryFn: () => getProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
-    networkMode: "always",
+    networkMode: 'always',
   });
 }
 
@@ -53,81 +58,108 @@ export function useProductsCount(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["products-count", filters],
+    queryKey: ['products-count', filters],
     queryFn: () => countProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
-    networkMode: "always",
+    networkMode: 'always',
   });
 }
 
 // --- Mutations ---
 
 export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (formData: FormData) => createProduct(formData),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+  return useOfflineMutation(
+    (formData: FormData) => createProduct(formData),
+    {
+      queryKey: ['products'],
+      extraInvalidateKeys: [['products-count']],
+      queuedMessage: 'Product creation queued in runtime queue.',
+      processedMessage: 'Queued product creation completed.',
+      errorMessage: 'Failed to create product',
+    }
+  );
 }
 
-export function useUpdateProductMutation(): UseMutationResult<ProductWithImages, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
+export function useUpdateProductMutation(): UseMutationResult<ProductWithImages | null, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
+  return useOfflineMutation(
+    async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const response = await fetch(`/api/products/${id}`, {
-          method: "PUT",
+          method: 'PUT',
           body: data,
         });
-        if (!response.ok) throw new Error("Failed to update product");
+        if (!response.ok) {
+          const errorData = (await response.json().catch(() => ({}))) as {
+            error?: string;
+            details?: unknown;
+          };
+          let message = errorData.error || 'Failed to update product';
+          if (Array.isArray(errorData.details) && errorData.details.length > 0) {
+            const detailMessages = errorData.details
+              .slice(0, 3)
+              .map((d: { field?: unknown; message?: unknown }) => {
+                const field = typeof d.field === 'string' && d.field ? d.field : 'field';
+                const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
+                return `${field}: ${msg}`;
+              })
+              .join(', ');
+            if (detailMessages) message = `${message} (${detailMessages})`;
+          }
+          throw new Error(message);
+        }
         return response.json() as Promise<ProductWithImages>;
-      } else {
-        return updateProduct(id, data);
       }
+      return updateProduct(id, data);
     },
-    onSuccess: (data: ProductWithImages): void => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products", data.id] });
-    },
-  });
+    {
+      queryKey: ['products'],
+      extraInvalidateKeys: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => [['products', variables.id]],
+      queuedMessage: 'Product update queued in runtime queue.',
+      processedMessage: 'Queued product update completed.',
+      errorMessage: 'Failed to update product',
+      onQueued: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => addQueuedProductId(variables.id),
+      onProcessed: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => removeQueuedProductId(variables.id),
+    }
+  );
 }
 
-export function useDeleteProductMutation(): UseMutationResult<DeleteResponse, Error, string, unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | null, Error, string, unknown> {
+  return useOfflineMutation(
+    (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
+    {
+      queryKey: ['products'],
+      extraInvalidateKeys: [['products-count']],
+      queuedMessage: 'Product deletion queued in runtime queue.',
+      processedMessage: 'Queued product deletion completed.',
+      errorMessage: 'Failed to delete product',
+      onQueued: (id: string) => addQueuedProductId(id),
+      onProcessed: (id: string) => removeQueuedProductId(id),
+    }
+  );
 }
 
-export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean }, Error, string[], unknown> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (ids: string[]): Promise<{ success: boolean }> => {
+export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean } | null, Error, string[], unknown> {
+  return useOfflineMutation(
+    async (ids: string[]): Promise<{ success: boolean }> => {
       const responses = await Promise.all(
         ids.map((id: string) => deleteProduct(id))
       );
-      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error("Failed to delete some products");
+      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error('Failed to delete some products');
       return { success: true };
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-    },
-  });
+    {
+      queryKey: ['products'],
+      extraInvalidateKeys: [['products-count']],
+      queuedMessage: 'Product deletion queued in runtime queue.',
+      processedMessage: 'Queued product deletion completed.',
+      errorMessage: 'Failed to delete some products',
+      onQueued: (ids: string[]) => ids.forEach((id: string) => addQueuedProductId(id)),
+      onProcessed: (ids: string[]) => ids.forEach((id: string) => removeQueuedProductId(id)),
+    }
+  );
 }
 
 // --- Composite Hook ---
@@ -180,13 +212,13 @@ export function useProductData({
   
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize || 20);
-  const [search, setSearch] = useState("");
-  const [sku, setSku] = useState("");
+  const [search, setSearch] = useState('');
+  const [sku, setSku] = useState('');
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
-  const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || "all");
+  const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -212,7 +244,7 @@ export function useProductData({
     endDate: endDate || undefined,
     page,
     pageSize,
-    catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+    catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
     searchLanguage: searchLanguage || undefined,
   }), [search, sku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
 
@@ -250,8 +282,8 @@ export function useProductData({
   }
 
   const refresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["products"] });
-    void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+    void queryClient.invalidateQueries({ queryKey: ['products'] });
+    void queryClient.invalidateQueries({ queryKey: ['products-count'] });
   }, [queryClient]);
 
   // Invalidate when refreshTrigger changes

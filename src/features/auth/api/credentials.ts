@@ -19,9 +19,9 @@ export const verifyCredentials = async (input: {
   email: string;
   password: string;
 }): Promise<{ ok: boolean; payload: VerifyCredentialsResponse }> => {
-  const res = await fetch("/api/auth/verify-credentials", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/auth/verify-credentials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<VerifyCredentialsResponse>(res);

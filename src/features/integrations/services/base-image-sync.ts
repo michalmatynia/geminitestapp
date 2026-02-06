@@ -1,20 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import "server-only";
+ 
+ 
+ 
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider, getProductRepository } from "@/features/products/server";
-import { getProductListingRepository } from "@/features/integrations/server";
-import { getIntegrationRepository, decryptSecret } from "@/features/integrations/server";
-import { fetchBaseProductDetails } from "@/features/integrations/services/imports/base-client";
-import { extractBaseImageUrls } from "@/features/integrations/services/imports/base-mapper";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import type { ProductListingExportEvent } from "@/features/integrations/types/listings";
+import { getProductListingRepository } from '@/features/integrations/server';
+import { getIntegrationRepository, decryptSecret } from '@/features/integrations/server';
+import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
+import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
+import type { ProductListingExportEvent } from '@/features/integrations/types/listings';
+import { getProductDataProvider, getProductRepository } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 
-const BASE_INTEGRATION_SLUGS = ["baselinker", "base-com"];
-const LISTINGS_COLLECTION = "product_listings";
+const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com'];
+const LISTINGS_COLLECTION = 'product_listings';
 
 type BaseListingSyncInfo = {
   id: string;
@@ -40,11 +40,12 @@ const mergeImageLinks = (existing: string[], incoming: string[]): string[] => {
 };
 
 export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> => {
+  
   const provider = await getProductDataProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const db = await getMongoDb();
     const integrations = await db
-      .collection<{ _id: string; slug: string }>("integrations")
+      .collection<{ _id: string; slug: string }>('integrations')
       .find({ slug: { $in: BASE_INTEGRATION_SLUGS } }, { projection: { _id: 1 } })
       .toArray();
     const integrationIds = integrations.map((entry: { _id: string }) => entry._id);
@@ -53,8 +54,8 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
       .collection<BaseListingSyncInfo>(LISTINGS_COLLECTION)
       .find({ integrationId: { $in: integrationIds } })
       .toArray();
-    return listings.map((listing: any) => ({
-      id: listing.id ?? (listing as unknown as { _id: string })._id,
+    return listings.map((listing) => ({
+      id: listing.id ?? listing._id,
       productId: listing.productId,
       connectionId: listing.connectionId,
       externalListingId: listing.externalListingId ?? null,
@@ -75,13 +76,13 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
     },
   });
 
-  return listings.map((listing: any) => ({
+  return listings.map((listing) => ({
     id: listing.id,
     productId: listing.productId,
     connectionId: listing.connectionId,
     externalListingId: listing.externalListingId ?? null,
     inventoryId: listing.inventoryId ?? null,
-    exportHistory: (listing.exportHistory ?? null) as ProductListingExportEvent[] | null,
+    exportHistory: (listing.exportHistory ?? null) as unknown as ProductListingExportEvent[] | null,
   }));
 };
 
@@ -93,13 +94,13 @@ export const syncBaseImagesForListing = async (
   const productRepo = await getProductRepository();
   const product = await productRepo.getProductById(productId);
   if (!product) {
-    throw notFoundError("Product not found", { productId });
+    throw notFoundError('Product not found', { productId });
   }
 
   const listingRepo = await getProductListingRepository();
   const listing = await listingRepo.getListingById(listingId);
   if (!listing || listing.productId !== productId) {
-    throw notFoundError("Listing not found", { listingId, productId });
+    throw notFoundError('Listing not found', { listingId, productId });
   }
 
   let inventoryId =
@@ -123,19 +124,19 @@ export const syncBaseImagesForListing = async (
 
   if (!inventoryId) {
     throw badRequestError(
-      "Missing inventoryId for Base.com sync. Please set an inventory ID in the connection settings or provide one manually."
+      'Missing inventoryId for Base.com sync. Please set an inventory ID in the connection settings or provide one manually.'
     );
   }
 
   const baseProductId = listing.externalListingId || product.baseProductId;
   if (!baseProductId) {
-    throw badRequestError("Missing Base.com product id for image sync.");
+    throw badRequestError('Missing Base.com product id for image sync.');
   }
 
   const integrationRepo = await getIntegrationRepository();
   const connection = await integrationRepo.getConnectionById(listing.connectionId);
   if (!connection) {
-    throw notFoundError("Connection not found", {
+    throw notFoundError('Connection not found', {
       connectionId: listing.connectionId,
     });
   }
@@ -148,19 +149,19 @@ export const syncBaseImagesForListing = async (
   }
 
   if (!token) {
-    throw badRequestError("Base.com API token not found in connection.", {
+    throw badRequestError('Base.com API token not found in connection.', {
       connectionId: listing.connectionId,
     });
   }
 
   const records = await fetchBaseProductDetails(token, inventoryId, [baseProductId]);
   if (!records.length) {
-    throw notFoundError("Base.com product not found", { baseProductId, inventoryId });
+    throw notFoundError('Base.com product not found', { baseProductId, inventoryId });
   }
 
   const urls = extractBaseImageUrls(records[0] ?? {}).filter(Boolean);
   if (urls.length === 0) {
-    throw badRequestError("No image URLs found in Base.com product data.");
+    throw badRequestError('No image URLs found in Base.com product data.');
   }
 
   const existingLinks = Array.isArray(product.imageLinks) ? product.imageLinks : [];

@@ -1,11 +1,12 @@
-import { vi, beforeEach, afterAll } from "vitest";
-import { describe, it, expect } from "vitest";
-import { GET, POST } from "@/app/api/products/tags/route";
-import { NextRequest } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from 'next/server';
+import { vi, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
+
+import { GET, POST } from '@/app/api/products/tags/route';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock the api-handler module
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
     const params = ctx?.params instanceof Promise ? ctx.params : Promise.resolve(ctx?.params ?? {});
@@ -14,7 +15,7 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
 }));
 
 // Mock Prisma client
-vi.mock("@/shared/lib/db/prisma", () => ({
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     productTag: {
       findMany: vi.fn(),
@@ -29,8 +30,8 @@ vi.mock("@/shared/lib/db/prisma", () => ({
 }));
 
 // Mock data provider
-vi.mock("@/features/products/server", () => ({
-  getProductDataProvider: vi.fn().mockResolvedValue("prisma"),
+vi.mock('@/features/products/server', () => ({
+  getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
   parseJsonBody: async (req: any, schema: any) => {
     try {
       const body = await req.json();
@@ -40,15 +41,15 @@ vi.mock("@/features/products/server", () => ({
       }
       return { ok: true, data: result.data };
     } catch {
-      return { ok: false, response: new Response("Invalid JSON", { status: 400 }) };
+      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
     }
   },
 }));
 
-describe("Product Tags API", () => {
+describe('Product Tags API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://mock";
+    process.env.DATABASE_URL = 'postgresql://mock';
   });
 
   afterAll(() => {
@@ -56,13 +57,13 @@ describe("Product Tags API", () => {
     delete process.env.DATABASE_URL;
   });
 
-  describe("GET /api/products/tags", () => {
-    it("should return tags for a given catalogId", async () => {
-      const mockTags = [{ id: "1", name: "Tag 1", color: "#ff0000", catalogId: "cat1" }];
+  describe('GET /api/products/tags', () => {
+    it('should return tags for a given catalogId', async () => {
+      const mockTags = [{ id: '1', name: 'Tag 1', color: '#ff0000', catalogId: 'cat1' }];
       vi.mocked(prisma.productTag.findMany).mockResolvedValue(mockTags as any);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/tags?catalogId=cat1")
+        new NextRequest('http://localhost/api/products/tags?catalogId=cat1')
       );
       const data = await res.json();
       expect(res.status).toEqual(200);
@@ -70,15 +71,15 @@ describe("Product Tags API", () => {
     });
   });
 
-  describe("POST /api/products/tags", () => {
-    it("should create a new tag", async () => {
-      const newTag = { name: "New Tag", color: "#0000ff", catalogId: "cat1" };
+  describe('POST /api/products/tags', () => {
+    it('should create a new tag', async () => {
+      const newTag = { name: 'New Tag', color: '#0000ff', catalogId: 'cat1' };
       vi.mocked(prisma.productTag.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.productTag.create).mockResolvedValue({ id: "3", ...newTag } as any);
+      vi.mocked(prisma.productTag.create).mockResolvedValue({ id: '3', ...newTag } as any);
 
       const res = await POST(
-        new NextRequest("http://localhost/api/products/tags", {
-          method: "POST",
+        new NextRequest('http://localhost/api/products/tags', {
+          method: 'POST',
           body: JSON.stringify(newTag),
         })
       );

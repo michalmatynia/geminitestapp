@@ -1,17 +1,20 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import Link from "next/link";
-import { ChevronLeftIcon } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
-import { SessionProvider, useSession } from "next-auth/react";
-import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
-import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
-import { usePathname } from "next/navigation";
-import { UserNav } from "@/features/admin/components/UserNav";
-import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
+import { ChevronLeftIcon } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { SessionProvider, useSession } from 'next-auth/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import Menu from "@/features/admin/components/Menu";
+import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
+import Menu from '@/features/admin/components/Menu';
+import { UserNav } from '@/features/admin/components/UserNav';
+import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
+import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
+import { QueryProvider } from '@/shared/providers/QueryProvider';
+import { Button, ToastProvider } from '@/shared/ui';
+
+import type { Session } from 'next-auth';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const {
@@ -26,22 +29,23 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
   const hydratedUserRef = useRef<string | null>(null);
-  const menuCookieKey = "adminMenuCollapsed";
+  const menuCookieKey = 'adminMenuCollapsed';
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferencesMutation();
 
   const setMenuCookie = useCallback((collapsed: boolean): void => {
-    if (typeof document === "undefined") return;
+    if (typeof document === 'undefined') return;
     const maxAge = 60 * 60 * 24 * 365;
-    document.cookie = `${menuCookieKey}=${collapsed ? "true" : "false"}; path=/; max-age=${maxAge}; samesite=lax`;
+    document.cookie = `${menuCookieKey}=${collapsed ? 'true' : 'false'}; path=/; max-age=${maxAge}; samesite=lax`;
   }, []);
 
   const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
     try {
       await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
     } catch (error) {
-      console.warn("Failed to persist menu collapse preference.", error);
+      console.warn('Failed to persist menu collapse preference.', error);
     }
   }, [updatePreferencesMutation]);
 
@@ -51,9 +55,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
 
   useEffect(() => {
     const userId = session?.user?.id ?? null;
-    if (status !== "authenticated" || !userId || hydratedUserRef.current === userId) return;
+    if (status !== 'authenticated' || !userId || hydratedUserRef.current === userId) return;
 
-    if (preferences && typeof preferences.adminMenuCollapsed === "boolean") {
+    if (preferences && typeof preferences.adminMenuCollapsed === 'boolean') {
       if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
       preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
       setIsMenuCollapsed(preferences.adminMenuCollapsed);
@@ -63,7 +67,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   }, [session, status, preferences, setIsMenuCollapsed, setMenuCookie]);
 
   useEffect(() => {
-    if (isProgrammaticallyCollapsed && pathname !== "/admin/cms/pages/create") {
+    if (isProgrammaticallyCollapsed && pathname !== '/admin/cms/pages/create') {
       setIsMenuCollapsed(preferredMenuCollapsedRef.current);
       setIsProgrammaticallyCollapsed(false);
     }
@@ -88,22 +92,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     <div className="dark flex h-screen bg-gray-900 text-white">
       <aside
         className={`flex h-full flex-col transition-all duration-300 bg-gray-800 p-4 ${
-          isMenuCollapsed ? "w-20" : "w-64"
+          isMenuCollapsed ? 'w-20' : 'w-64'
         }`}
       >
-        <div className="flex items-center justify-between mb-4">
-          {!isMenuCollapsed && (
-            <h1 className="text-2xl font-bold">
-              <Link href="/admin">Admin</Link>
-            </h1>
-          )}
+        <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
           <Button
             onClick={handleToggleCollapse}
             className="p-2 rounded-full hover:bg-gray-700"
           >
             <ChevronLeftIcon
               className={`transition-transform duration-300 ${
-                isMenuCollapsed ? "rotate-180" : ""
+                isMenuCollapsed ? 'rotate-180' : ''
               }`}
             />
           </Button>
@@ -115,10 +114,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       <div className="relative flex-1 flex flex-col min-w-0">
         <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
           <div className="pointer-events-auto">
-            <UserNav />
+            <div className="flex items-center gap-2">
+              <UserNav onOpenAiWarnings={() => setAiDrawerOpen(true)} />
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+        <AiInsightsNotificationsDrawer open={aiDrawerOpen} onClose={() => setAiDrawerOpen(false)} />
       </div>
     </div>
   );
@@ -127,17 +129,23 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
 export function AdminLayout({
   children,
   initialMenuCollapsed = false,
+  session = null,
 }: {
   children: React.ReactNode;
   initialMenuCollapsed?: boolean;
+  session?: Session | null;
 }): React.ReactNode {
   return (
-    <SessionProvider>
-      <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-        <NoteSettingsProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
-        </NoteSettingsProvider>
-      </AdminLayoutProvider>
+    <SessionProvider session={session}>
+      <QueryProvider>
+        <ToastProvider>
+          <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+            <NoteSettingsProvider>
+              <AdminLayoutContent>{children}</AdminLayoutContent>
+            </NoteSettingsProvider>
+          </AdminLayoutProvider>
+        </ToastProvider>
+      </QueryProvider>
     </SessionProvider>
   );
 }

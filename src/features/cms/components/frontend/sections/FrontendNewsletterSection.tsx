@@ -1,7 +1,8 @@
 
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendNewsletterSectionProps {
   settings: Record<string, unknown>;
@@ -12,12 +13,12 @@ interface FrontendNewsletterSectionProps {
 
 export function FrontendNewsletterSection({ settings, blocks, colorSchemes, layout }: FrontendNewsletterSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
-  const buttonText = (settings["buttonText"] as string) || "Subscribe";
-  const placeholder = (settings["placeholder"] as string) || "Enter your email";
+  const buttonText = (settings['buttonText'] as string) || 'Subscribe';
+  const placeholder = (settings['placeholder'] as string) || 'Enter your email';
 
   return (
     <section style={sectionStyles}>
-      <div className={`${getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-2xl" })} text-center`}>
+      <div className={`${getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-2xl' })} text-center`}>
         {blocks.length > 0 && (
           <div className="mb-6 space-y-4">
             {blocks.map((block: BlockInstance) => (

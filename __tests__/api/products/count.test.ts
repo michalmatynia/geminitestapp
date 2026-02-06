@@ -1,16 +1,17 @@
-import { vi, beforeEach, afterAll } from "vitest";
-import { describe, it, expect } from "vitest";
-import { GET } from "@/app/api/products/count/route";
-import { NextRequest } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from 'next/server';
+import { vi, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
+
+import { GET } from '@/app/api/products/count/route';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock the api-handler module
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
 }));
 
 // Mock Prisma client
-vi.mock("@/shared/lib/db/prisma", () => ({
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     product: {
       count: vi.fn(),
@@ -19,7 +20,7 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-describe("Products Count API", () => {
+describe('Products Count API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(prisma.product.count).mockResolvedValue(0);
@@ -29,12 +30,12 @@ describe("Products Count API", () => {
     vi.restoreAllMocks();
   });
 
-  describe("GET /api/products/count", () => {
-    it("should return the total count of products", async () => {
+  describe('GET /api/products/count', () => {
+    it('should return the total count of products', async () => {
       vi.mocked(prisma.product.count).mockResolvedValue(10);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/count")
+        new NextRequest('http://localhost/api/products/count')
       );
       const data = (await res.json()) as { count: number };
       expect(res.status).toEqual(200);

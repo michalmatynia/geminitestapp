@@ -1,20 +1,23 @@
 import {
+  AGENT_PERSONA_SETTINGS_KEY,
+  DEFAULT_AGENT_PERSONA_SETTINGS,
+} from '@/features/ai/agentcreator/constants/personas';
+import type { AgentPersona } from '@/features/ai/agentcreator/types';
+import type { RuntimePortValues } from '@/shared/types/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+import type { ChatMessage } from '@/shared/types/chatbot';
+
+import { agentApi, learnerAgentsApi, settingsApi } from '../../../api';
+import {
   coerceInput,
   formatRuntimeValue,
   hashRuntimeValue,
   parseJsonSafe,
-} from "../../utils";
-import { buildPromptOutput, coercePayloadObject } from "../utils";
-import type { RuntimePortValues } from "@/shared/types/ai-paths";
-import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
-import type { AgentPersona } from "@/features/ai/agentcreator/types";
-import type { ChatMessage } from "@/shared/types/chatbot";
-import {
-  AGENT_PERSONA_SETTINGS_KEY,
-  DEFAULT_AGENT_PERSONA_SETTINGS,
-} from "@/features/ai/agentcreator/constants/personas";
-import type { AgentEnqueuePayload } from "../../../api";
-import { agentApi, learnerAgentsApi, settingsApi } from "../../../api";
+} from '../../utils';
+import { buildPromptOutput, coercePayloadObject } from '../utils';
+
+import type { AgentEnqueuePayload } from '../../../api';
+
 
 type AgentRunRecord = {
   id?: string;
@@ -29,7 +32,7 @@ const parseAgentPersonas = (value: unknown): AgentPersona[] => {
   if (Array.isArray(value)) {
     return value as AgentPersona[];
   }
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const parsed = parseJsonSafe(value);
     return Array.isArray(parsed) ? (parsed as AgentPersona[]) : [];
   }
@@ -37,7 +40,7 @@ const parseAgentPersonas = (value: unknown): AgentPersona[] => {
 };
 
 const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
-  const response = await settingsApi.list();
+  const response = await settingsApi.list({ scope: 'heavy' });
   if (!response.ok) return [];
   const record = response.data.find((item: { key: string }) => item.key === AGENT_PERSONA_SETTINGS_KEY);
   if (!record) return [];
@@ -53,24 +56,24 @@ const pollAgentRun = async (
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const response = await agentApi.poll(runId);
     if (!response.ok) {
-      throw new Error(response.error || "Failed to poll agent run.");
+      throw new Error(response.error || 'Failed to poll agent run.');
     }
     const run = response.data.run as AgentRunRecord | undefined;
-    const status = run?.status ?? "";
-    if (status === "completed") {
+    const status = run?.status ?? '';
+    if (status === 'completed') {
       return { run: run!, status };
     }
-    if (status === "failed" || status === "stopped") {
-      throw new Error(run?.errorMessage || "Agent run failed.");
+    if (status === 'failed' || status === 'stopped') {
+      throw new Error(run?.errorMessage || 'Agent run failed.');
     }
-    if (status === "waiting_human") {
+    if (status === 'waiting_human') {
       return { run: run!, status };
     }
     if (attempt < maxAttempts - 1) {
       await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, intervalMs));
     }
   }
-  throw new Error("Agent run timed out.");
+  throw new Error('Agent run timed out.');
 };
 
 export const handleAgent: NodeHandler = async ({
@@ -88,15 +91,15 @@ export const handleAgent: NodeHandler = async ({
   if (executed.ai.has(node.id)) return prevOutputs;
 
   const agentConfig = node.config?.agent ?? {
-    personaId: "",
-    promptTemplate: "",
+    personaId: '',
+    promptTemplate: '',
     waitForResult: true,
   };
 
   const template = agentConfig.promptTemplate?.trim();
   const promptFromTemplate = template
     ? buildPromptOutput({ template }, nodeInputs).promptOutput
-    : "";
+    : '';
   const rawPrompt =
     template?.length
       ? promptFromTemplate
@@ -110,11 +113,11 @@ export const handleAgent: NodeHandler = async ({
         coerceInput(nodeInputs.content_en);
 
   const prompt =
-    typeof rawPrompt === "string"
+    typeof rawPrompt === 'string'
       ? rawPrompt.trim()
       : formatRuntimeValue(rawPrompt);
 
-  if (!prompt || prompt === "—") {
+  if (!prompt || prompt === '—') {
     return prevOutputs;
   }
 
@@ -159,19 +162,19 @@ export const handleAgent: NodeHandler = async ({
   try {
     const enqueueResult = await agentApi.enqueue(payload);
     if (!enqueueResult.ok) {
-      throw new Error(enqueueResult.error || "Failed to enqueue agent run.");
+      throw new Error(enqueueResult.error || 'Failed to enqueue agent run.');
     }
     runId = enqueueResult.data.runId;
     executed.ai.add(node.id);
-    toast("Agent run queued.", { variant: "success" });
+    toast('Agent run queued.', { variant: 'success' });
 
     if (agentConfig.waitForResult === false) {
       return {
         jobId: runId,
-        status: enqueueResult.data.status ?? "queued",
+        status: enqueueResult.data.status ?? 'queued',
         bundle: {
           runId,
-          status: enqueueResult.data.status ?? "queued",
+          status: enqueueResult.data.status ?? 'queued',
           personaId: persona?.id ?? null,
           personaName: persona?.name ?? null,
           model: settings.executorModel ?? null,
@@ -181,25 +184,25 @@ export const handleAgent: NodeHandler = async ({
 
     const { run, status } = await pollAgentRun(runId);
     const planState =
-      run?.planState && typeof run.planState === "object"
+      run?.planState && typeof run.planState === 'object'
         ? (run.planState as Record<string, unknown>)
         : coercePayloadObject(run?.planState) ?? null;
     const checkpointBrief =
-      typeof planState?.checkpointBrief === "string"
+      typeof planState?.checkpointBrief === 'string'
         ? planState.checkpointBrief
-        : "";
+        : '';
     const logLines = Array.isArray(run?.logLines) ? run?.logLines : [];
     const lastLog =
-      logLines.length > 0 ? logLines[logLines.length - 1] ?? "" : "";
-    const result = checkpointBrief || lastLog || run?.errorMessage || "";
+      logLines.length > 0 ? logLines[logLines.length - 1] ?? '' : '';
+    const result = checkpointBrief || lastLog || run?.errorMessage || '';
 
     return {
       result,
       jobId: runId,
-      status: status ?? run?.status ?? "completed",
+      status: status ?? run?.status ?? 'completed',
       bundle: {
         runId,
-        status: status ?? run?.status ?? "completed",
+        status: status ?? run?.status ?? 'completed',
         personaId: persona?.id ?? null,
         personaName: persona?.name ?? null,
         model: settings.executorModel ?? null,
@@ -209,18 +212,18 @@ export const handleAgent: NodeHandler = async ({
   } catch (error) {
     reportAiPathsError(
       error,
-      { action: "agentRun", nodeId: node.id },
-      "Agent run failed:"
+      { action: 'agentRun', nodeId: node.id },
+      'Agent run failed:'
     );
-    toast("Agent run failed.", { variant: "error" });
+    toast('Agent run failed.', { variant: 'error' });
     executed.ai.add(node.id);
     return {
-      result: "",
+      result: '',
       jobId: runId,
-      status: "failed",
+      status: 'failed',
       bundle: {
         runId,
-        status: "failed",
+        status: 'failed',
         personaId: persona?.id ?? null,
         personaName: persona?.name ?? null,
         model: settings.executorModel ?? null,
@@ -238,14 +241,14 @@ export const handleLearnerAgent: NodeHandler = async ({
   toast,
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (node.type !== "learner_agent") return prevOutputs;
+  if (node.type !== 'learner_agent') return prevOutputs;
   if (skipAiJobs) {
     return prevOutputs;
   }
 
   const learnerConfig = node.config?.learnerAgent ?? {
-    agentId: "",
-    promptTemplate: "",
+    agentId: '',
+    promptTemplate: '',
     includeSources: true,
   };
 
@@ -255,7 +258,7 @@ export const handleLearnerAgent: NodeHandler = async ({
   const template = learnerConfig.promptTemplate?.trim();
   const promptFromTemplate = template
     ? buildPromptOutput({ template }, nodeInputs).promptOutput
-    : "";
+    : '';
   const rawPrompt =
     template?.length
       ? promptFromTemplate
@@ -269,21 +272,21 @@ export const handleLearnerAgent: NodeHandler = async ({
         coerceInput(nodeInputs.content_en);
 
   const prompt =
-    typeof rawPrompt === "string"
+    typeof rawPrompt === 'string'
       ? rawPrompt.trim()
       : formatRuntimeValue(rawPrompt);
 
-  if (!prompt || prompt === "—") {
+  if (!prompt || prompt === '—') {
     return prevOutputs;
   }
 
-  const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+  const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue(payload);
   const prevPayloadHash =
-    typeof (prevOutputs as Record<string, unknown>).payloadHash === "string"
+    typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
       ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
-      : "";
+      : '';
   if (prevPayloadHash && prevPayloadHash === payloadHash) {
     return prevOutputs;
   }
@@ -293,7 +296,7 @@ export const handleLearnerAgent: NodeHandler = async ({
   try {
     const response = await learnerAgentsApi.chat(payload);
     if (!response.ok) {
-      throw new Error(response.error || "Learner agent chat failed.");
+      throw new Error(response.error || 'Learner agent chat failed.');
     }
     executed.ai.add(node.id);
 
@@ -301,7 +304,7 @@ export const handleLearnerAgent: NodeHandler = async ({
     return {
       result: response.data.message,
       sources: includeSources ? response.data.sources : [],
-      status: "completed",
+      status: 'completed',
       bundle: {
         agentId,
         message: response.data.message,
@@ -312,19 +315,19 @@ export const handleLearnerAgent: NodeHandler = async ({
   } catch (error) {
     reportAiPathsError(
       error,
-      { action: "learnerAgent", nodeId: node.id, agentId },
-      "Learner agent node failed:"
+      { action: 'learnerAgent', nodeId: node.id, agentId },
+      'Learner agent node failed:'
     );
-    toast("Learner agent failed.", { variant: "error" });
+    toast('Learner agent failed.', { variant: 'error' });
     executed.ai.add(node.id);
     return {
-      result: "",
+      result: '',
       sources: [],
-      status: "failed",
+      status: 'failed',
       bundle: {
         agentId,
-        status: "failed",
-        error: error instanceof Error ? error.message : "Learner agent failed",
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Learner agent failed',
       },
       payloadHash,
     };

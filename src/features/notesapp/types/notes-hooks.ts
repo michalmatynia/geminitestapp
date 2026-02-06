@@ -1,28 +1,29 @@
-import type React from "react";
-import type { RefObject } from "react";
+import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import type {
   NoteWithRelations,
   CategoryWithChildren,
   ThemeRecord,
   NotebookRecord,
-} from "@/shared/types/notes";
-import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
+} from '@/shared/types/notes';
+
+import type React from 'react';
+import type { RefObject } from 'react';
 
 export type UndoAction =
   | {
-      type: "moveNote";
+      type: 'moveNote';
       noteId: string;
       fromFolderId: string | null;
       toFolderId: string | null;
     }
   | {
-      type: "moveFolder";
+      type: 'moveFolder';
       folderId: string;
       fromParentId: string | null;
       toParentId: string | null;
     }
-  | { type: "renameFolder"; folderId: string; fromName: string; toName: string }
-  | { type: "renameNote"; noteId: string; fromTitle: string; toTitle: string };
+  | { type: 'renameFolder'; folderId: string; fromName: string; toName: string }
+  | { type: 'renameNote'; noteId: string; fromTitle: string; toTitle: string };
 
 export interface UseNoteOperationsProps {
   selectedNotebookId: string | null;
@@ -33,7 +34,7 @@ export interface UseNoteOperationsProps {
   setUndoStack: React.Dispatch<React.SetStateAction<UndoAction[]>>;
   toast: (
     message: string,
-    options?: { variant?: "success" | "error" | "info"; duration?: number },
+    options?: { variant?: 'success' | 'error' | 'info'; duration?: number },
   ) => void;
   setSelectedFolderId: (id: string | null) => void;
   setSelectedNote: (note: NoteWithRelations | null) => void;
@@ -60,7 +61,7 @@ export interface UseNoteDataProps {
   selectedNotebookId: string | null;
   selectedFolderId: string | null;
   searchQuery: string;
-  searchScope: "both" | "title" | "content";
+  searchScope: 'both' | 'title' | 'content';
   filterPinned?: boolean | undefined;
   filterArchived?: boolean | undefined;
   filterFavorite?: boolean | undefined;

@@ -1,7 +1,8 @@
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/shared/ui';
 
 // Mock react-query

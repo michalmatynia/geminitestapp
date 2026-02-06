@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 
 
-import React from "react";
+import React from 'react';
 
 export default function TraderaSettingsPage(): React.JSX.Element {
   return (
@@ -20,4 +20,4 @@ export default function TraderaSettingsPage(): React.JSX.Element {
     </div>
   );
 }
-import { SectionHeader, SectionPanel } from "@/shared/ui";
+import { SectionHeader, SectionPanel } from '@/shared/ui';

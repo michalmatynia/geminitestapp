@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } from 'lucide-react';
 import {
   createContext,
   useCallback,
@@ -8,10 +8,11 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+} from 'react';
 
-type ToastVariant = "success" | "error" | "info";
+import { Button } from '@/shared/ui';
+
+type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
 type ToastItem = {
   id: string;
@@ -21,14 +22,14 @@ type ToastItem = {
 };
 
 type ToastSettings = {
-  position: "top-right" | "top-left" | "bottom-right" | "bottom-left";
-  accent: "emerald" | "blue" | "amber" | "rose" | "slate";
+  position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  accent: 'emerald' | 'blue' | 'amber' | 'rose' | 'slate';
 };
 
 type ToastContextValue = {
   toast: (
     message: string,
-    options?: Partial<Omit<ToastItem, "id" | "message">>
+    options?: Partial<Omit<ToastItem, 'id' | 'message'>> | undefined
   ) => void;
 };
 
@@ -41,65 +42,71 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 const ToastSettingsContext = createContext<ToastSettingsContextValue | null>(null);
 
 const defaultSettings: ToastSettings = {
-  position: "top-right",
-  accent: "emerald",
+  position: 'top-right',
+  accent: 'emerald',
 };
 
-const createToastId = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+const createToastId = (): string => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const positionStyles: Record<ToastSettings["position"], string> = {
-  "top-right": "right-6 top-6",
-  "top-left": "left-6 top-6",
-  "bottom-right": "right-6 bottom-6",
-  "bottom-left": "left-6 bottom-6",
+const positionStyles: Record<ToastSettings['position'], string> = {
+  'top-right': 'right-6 top-6',
+  'top-left': 'left-6 top-6',
+  'bottom-right': 'right-6 bottom-6',
+  'bottom-left': 'left-6 bottom-6',
 };
 
 const accentStyles: Record<
-  ToastSettings["accent"],
+  ToastSettings['accent'],
   { border: string; bg: string; text: string; icon: string }
 > = {
   emerald: {
-    border: "border-emerald-400/40",
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-100",
-    icon: "text-emerald-400",
+    border: 'border-emerald-400/40',
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-100',
+    icon: 'text-emerald-400',
   },
   blue: {
-    border: "border-blue-400/40",
-    bg: "bg-blue-500/10",
-    text: "text-blue-100",
-    icon: "text-blue-400",
+    border: 'border-blue-400/40',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-100',
+    icon: 'text-blue-400',
   },
   amber: {
-    border: "border-amber-400/40",
-    bg: "bg-amber-500/10",
-    text: "text-amber-100",
-    icon: "text-amber-400",
+    border: 'border-amber-400/40',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-100',
+    icon: 'text-amber-400',
   },
   rose: {
-    border: "border-rose-400/40",
-    bg: "bg-rose-500/10",
-    text: "text-rose-100",
-    icon: "text-rose-400",
+    border: 'border-rose-400/40',
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-100',
+    icon: 'text-rose-400',
   },
   slate: {
-    border: "border-slate-400/40",
-    bg: "bg-slate-500/10",
-    text: "text-slate-100",
-    icon: "text-slate-400",
+    border: 'border-slate-400/40',
+    bg: 'bg-slate-500/10',
+    text: 'text-slate-100',
+    icon: 'text-slate-400',
   },
 };
 
-const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"]) => {
-  if (variant === "error") {
+const getToastClasses = (variant: ToastVariant, accent: ToastSettings['accent']): { container: string; icon: string } => {
+  if (variant === 'error') {
     return {
-      container: "border-red-500/40 bg-red-500/10 text-red-100",
-      icon: "text-red-400",
+      container: 'border-red-500/40 bg-red-500/10 text-red-100',
+      icon: 'text-red-400',
+    };
+  }
+  if (variant === 'warning') {
+    return {
+      container: 'border-amber-500/40 bg-amber-500/10 text-amber-100',
+      icon: 'text-amber-400',
     };
   }
   const accentStyle = accentStyles[accent];
@@ -109,22 +116,24 @@ const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"])
   };
 };
 
-const getToastIcon = (variant: ToastVariant) => {
+const getToastIcon = (variant: ToastVariant): LucideIcon => {
   switch (variant) {
-    case "success":
+    case 'success':
       return CheckCircle;
-    case "error":
+    case 'error':
       return AlertCircle;
-    case "info":
+    case 'warning':
+      return AlertTriangle;
+    case 'info':
       return Info;
   }
 };
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [settings, setSettings] = useState<ToastSettings>(() => {
-    if (typeof window === "undefined") return defaultSettings;
-    const stored = window.localStorage.getItem("toastSettings");
+    if (typeof window === 'undefined') return defaultSettings;
+    const stored = window.localStorage.getItem('toastSettings');
     if (!stored) return defaultSettings;
     try {
       const parsed = JSON.parse(stored) as ToastSettings;
@@ -141,8 +150,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   });
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const removeToast = useCallback((id: string): void => {
+    setToasts((prev: ToastItem[]) => prev.filter((toast: ToastItem) => toast.id !== id));
     const timer = timers.current.get(id);
     if (timer) {
       clearTimeout(timer);
@@ -151,12 +160,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toast = useCallback(
-    (message: string, options?: Partial<Omit<ToastItem, "id" | "message">>) => {
+    (message: string, options?: Partial<Omit<ToastItem, 'id' | 'message'>>): void => {
       const id = createToastId();
-      const variant = options?.variant ?? "success";
+      const variant = options?.variant ?? 'success';
       const duration = options?.duration ?? 2000;
 
-      setToasts((prev) => [
+      setToasts((prev: ToastItem[]) => [
         ...prev,
         {
           id,
@@ -172,9 +181,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [removeToast]
   );
 
-  const updateSettings = useCallback((next: ToastSettings) => {
+  const updateSettings = useCallback((next: ToastSettings): void => {
     setSettings(next);
-    window.localStorage.setItem("toastSettings", JSON.stringify(next));
+    window.localStorage.setItem('toastSettings', JSON.stringify(next));
   }, []);
 
   const value = useMemo(() => ({ toast }), [toast]);
@@ -226,18 +235,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider.");
+    throw new Error('useToast must be used within a ToastProvider.');
   }
   return context;
 }
 
-export function useToastSettings() {
+export function useToastSettings(): ToastSettingsContextValue {
   const context = useContext(ToastSettingsContext);
   if (!context) {
-    throw new Error("useToastSettings must be used within a ToastProvider.");
+    throw new Error('useToastSettings must be used within a ToastProvider.');
   }
   return context;
 }

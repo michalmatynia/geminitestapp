@@ -1,34 +1,47 @@
-import { Button, useToast } from "@/shared/ui";
-import React, { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 
-import { NoteForm } from "./NoteForm";
-import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
-import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
-import type { NoteDetailViewProps } from "@/features/notesapp/types/notes-ui";
-import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
+import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import { logClientError } from '@/features/observability';
+import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/notes';
+import { Button, useToast, SectionPanel } from '@/shared/ui';
 
-export function NoteDetailView({
-  selectedNote,
-  folderTree,
-  selectedFolderId,
-  isFolderTreeCollapsed,
-  onExpandFolderTree,
-  setSelectedFolderId,
-  setSelectedNote,
-  isEditing,
-  setIsEditing,
-  onToggleFavorite,
-  onDeleteNote,
-  tags,
-  selectedNotebookId,
-  onUpdateSuccess,
-  fetchTags,
-  selectedNoteTheme,
-  onSelectRelatedNote,
-  onFilterByTag,
-  onUnlinkRelatedNote,
-}: NoteDetailViewProps): React.JSX.Element {
+
+import { NoteForm } from './NoteForm';
+import { buildBreadcrumbPath, renderMarkdownToHtml } from '../utils';
+
+
+export function NoteDetailView(): React.JSX.Element | null {
+  const {
+    selectedNote,
+    folderTree,
+    isFolderTreeCollapsed,
+    setIsFolderTreeCollapsed,
+    setSelectedFolderId,
+    setSelectedNote,
+    isEditing,
+    setIsEditing,
+    selectedNoteTheme,
+    handleToggleFavorite,
+    handleDeleteNote,
+    handleUpdateSuccess,
+    handleSelectNoteFromTree,
+    handleUnlinkRelatedNote,
+  } = useNotesAppContext();
+
+  if (!selectedNote) return null;
+
+  const onExpandFolderTree = (): void => setIsFolderTreeCollapsed(false);
+  const onToggleFavorite = (note: NoteWithRelations): void => {
+    void handleToggleFavorite(note);
+  };
+  const onDeleteNote = (): Promise<void> => handleDeleteNote();
+  const onUpdateSuccess = (): void => handleUpdateSuccess();
+  const onSelectRelatedNote = (id: string): void => {
+    void handleSelectNoteFromTree(id);
+  };
+  const onUnlinkRelatedNote = (id: string): Promise<void> => handleUnlinkRelatedNote(id);
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
@@ -42,7 +55,7 @@ export function NoteDetailView({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ): RelatedNote | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): RelatedNote | null => (id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null);
 
     const fromRelations = (selectedNote.relationsFrom ?? [])
       .map((relation: NoteRelationWithTarget) =>
@@ -85,7 +98,7 @@ export function NoteDetailView({
         const notes = await Promise.all(
           relationIds.map(async (id: string) => {
             try {
-              const res = await fetch(`/api/notes/${id}`, { cache: "no-store" });
+              const res = await fetch(`/api/notes/${id}`);
               if (!res.ok) return null;
               return (await res.json()) as NoteWithRelations;
             } catch {
@@ -100,7 +113,7 @@ export function NoteDetailView({
         });
         setRelatedPreviewNotes(nextMap);
       } catch (error: unknown) {
-        console.error("Failed to load related notes:", error);
+        logClientError(error, { context: { source: 'NoteDetailView', action: 'fetchRelated', noteId: selectedNote.id } });
       }
     };
 
@@ -111,29 +124,29 @@ export function NoteDetailView({
   }, [selectedNote, relationIds]);
 
   const getReadableTextColor = (hexColor: string): string => {
-    const normalized = hexColor.replace("#", "");
+    const normalized = hexColor.replace('#', '');
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-      return "#f8fafc";
+      return '#f8fafc';
     }
     const r = parseInt(normalized.slice(0, 2), 16);
     const g = parseInt(normalized.slice(2, 4), 16);
     const b = parseInt(normalized.slice(4, 6), 16);
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.7 ? "#0f172a" : "#f8fafc";
+    return luminance > 0.7 ? '#0f172a' : '#f8fafc';
   };
 
   const fallbackTheme = useMemo(
     () => ({
-      textColor: "#e5e7eb",
-      backgroundColor: "#111827",
-      markdownHeadingColor: "#f9fafb",
-      markdownLinkColor: "#93c5fd",
-      markdownCodeBackground: "#1f2937",
-      markdownCodeText: "#e5e7eb",
+      textColor: '#e5e7eb',
+      backgroundColor: '#111827',
+      markdownHeadingColor: '#f9fafb',
+      markdownLinkColor: '#93c5fd',
+      markdownCodeBackground: '#1f2937',
+      markdownCodeText: '#e5e7eb',
       relatedNoteBorderWidth: 1,
-      relatedNoteBorderColor: "#374151",
-      relatedNoteBackgroundColor: "#1f2937",
-      relatedNoteTextColor: "#e5e7eb",
+      relatedNoteBorderColor: '#374151',
+      relatedNoteBackgroundColor: '#1f2937',
+      relatedNoteTextColor: '#e5e7eb',
     }),
     []
   );
@@ -142,15 +155,15 @@ export function NoteDetailView({
 
   const previewStyle = (() : React.CSSProperties => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
-    const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
+    const isDefaultColor = !normalizedColor || normalizedColor === '#ffffff';
     const color =
       !isDefaultColor
         ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
         : effectivePreviewTheme.backgroundColor ||
           normalizedColor ||
           selectedNote?.color ||
-          "#1f2937";
-    const hex = color.replace("#", "");
+          '#1f2937';
+    const hex = color.replace('#', '');
     if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
       return { backgroundColor: color };
     }
@@ -158,24 +171,24 @@ export function NoteDetailView({
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    const borderColor = luminance > 0.78 ? "rgba(15, 23, 42, 0.35)" : "rgba(148, 163, 184, 0.2)";
+    const borderColor = luminance > 0.78 ? 'rgba(15, 23, 42, 0.35)' : 'rgba(148, 163, 184, 0.2)';
     return {
       backgroundColor: color,
       borderColor,
-      boxShadow: luminance > 0.78 ? "0 0 0 1px rgba(15, 23, 42, 0.12)" : undefined,
+      boxShadow: luminance > 0.78 ? '0 0 0 1px rgba(15, 23, 42, 0.12)' : undefined,
     };
   })();
 
   const previewTextColor = (() : string => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
-    const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
+    const isDefaultColor = !normalizedColor || normalizedColor === '#ffffff';
     const background =
       !isDefaultColor
         ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
         : effectivePreviewTheme.backgroundColor ||
           normalizedColor ||
           selectedNote?.color ||
-          "#1f2937";
+          '#1f2937';
     if (effectivePreviewTheme.textColor && !isDefaultColor) {
       return getReadableTextColor(background);
     }
@@ -185,24 +198,24 @@ export function NoteDetailView({
   const previewTypographyStyle = useMemo(
     () => ({
       color: previewTextColor,
-      ["--tw-prose-body" as never]: previewTextColor,
-      ["--tw-prose-headings" as never]:
+      ['--tw-prose-body' as never]: previewTextColor,
+      ['--tw-prose-headings' as never]:
         effectivePreviewTheme.markdownHeadingColor ?? previewTextColor,
-      ["--tw-prose-lead" as never]: previewTextColor,
-      ["--tw-prose-bold" as never]: previewTextColor,
-      ["--tw-prose-counters" as never]: previewTextColor,
-      ["--tw-prose-bullets" as never]: previewTextColor,
-      ["--tw-prose-quotes" as never]: previewTextColor,
-      ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
-      ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
-      ["--note-link-color" as never]:
-        effectivePreviewTheme.markdownLinkColor ?? "#38bdf8",
-      ["--note-code-bg" as never]:
-        effectivePreviewTheme.markdownCodeBackground ?? "#0f172a",
-      ["--note-code-text" as never]:
-        effectivePreviewTheme.markdownCodeText ?? "#e2e8f0",
-      ["--note-inline-code-bg" as never]:
-        effectivePreviewTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+      ['--tw-prose-lead' as never]: previewTextColor,
+      ['--tw-prose-bold' as never]: previewTextColor,
+      ['--tw-prose-counters' as never]: previewTextColor,
+      ['--tw-prose-bullets' as never]: previewTextColor,
+      ['--tw-prose-quotes' as never]: previewTextColor,
+      ['--tw-prose-quote-borders' as never]: 'rgba(148, 163, 184, 0.35)',
+      ['--tw-prose-hr' as never]: 'rgba(148, 163, 184, 0.35)',
+      ['--note-link-color' as never]:
+        effectivePreviewTheme.markdownLinkColor ?? '#38bdf8',
+      ['--note-code-bg' as never]:
+        effectivePreviewTheme.markdownCodeBackground ?? '#0f172a',
+      ['--note-code-text' as never]:
+        effectivePreviewTheme.markdownCodeText ?? '#e2e8f0',
+      ['--note-inline-code-bg' as never]:
+        effectivePreviewTheme.markdownCodeBackground ?? 'rgba(15, 23, 42, 0.12)',
     }),
     [
       previewTextColor,
@@ -214,11 +227,11 @@ export function NoteDetailView({
     () => ({
       borderWidth: `${effectivePreviewTheme.relatedNoteBorderWidth ?? 1}px`,
       borderColor:
-        effectivePreviewTheme.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
+        effectivePreviewTheme.relatedNoteBorderColor ?? 'rgba(15, 23, 42, 0.2)',
       backgroundColor:
         effectivePreviewTheme.relatedNoteBackgroundColor ??
-        "rgba(15, 23, 42, 0.05)",
-      color: effectivePreviewTheme.relatedNoteTextColor ?? "#f8fafc",
+        'rgba(15, 23, 42, 0.05)',
+      color: effectivePreviewTheme.relatedNoteTextColor ?? '#f8fafc',
     }),
     [
       effectivePreviewTheme,
@@ -287,10 +300,10 @@ export function NoteDetailView({
         >
           <Star
             size={16}
-            className={selectedNote.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
+            className={selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
           />
           <span className="text-sm">
-            {selectedNote.isFavorite ? "Favorited" : "Favorite"}
+            {selectedNote.isFavorite ? 'Favorited' : 'Favorite'}
           </span>
         </Button>
         {!isEditing ? (
@@ -306,7 +319,7 @@ export function NoteDetailView({
               type="button"
               form="note-edit-form"
               onClick={(): void => {
-                const form = document.getElementById("note-edit-form") as HTMLFormElement;
+                const form = document.getElementById('note-edit-form') as HTMLFormElement;
                 form?.requestSubmit();
               }}
               className="min-w-[80px] border border-white/20 hover:border-white/40"
@@ -343,20 +356,12 @@ export function NoteDetailView({
         <div className="flex-1 overflow-y-auto">
           <NoteForm
             note={selectedNote}
-            folderTree={folderTree}
-            defaultFolderId={selectedFolderId}
-            availableTags={tags}
-            notebookId={selectedNotebookId}
             onSuccess={onUpdateSuccess}
-            onTagCreated={fetchTags}
-            folderTheme={selectedNoteTheme}
-            onSelectRelatedNote={onSelectRelatedNote}
-            onTagClick={onFilterByTag}
           />
         </div>
       ) : (
-        <div
-          className="flex-1 overflow-y-auto rounded-lg border border-border bg-gray-900 p-6 cursor-text"
+        <SectionPanel
+          className="flex-1 overflow-y-auto p-6 cursor-text"
           onDoubleClick={() => setIsEditing(true)}
           style={previewStyle}
         >
@@ -371,42 +376,42 @@ export function NoteDetailView({
             style={previewTypographyStyle}
             dangerouslySetInnerHTML={{
               __html:
-                selectedNote.editorType === "wysiwyg"
+                selectedNote.editorType === 'wysiwyg'
                   ? selectedNote.content
                   : renderMarkdownToHtml(selectedNote.content),
             }}
             onMouseOver={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
-              const wrapper = target.closest("[data-code]");
-              const button = wrapper?.querySelector("[data-copy-code]");
-              if (button instanceof HTMLElement) button.style.opacity = "1";
+              const wrapper = target.closest('[data-code]');
+              const button = wrapper?.querySelector('[data-copy-code]');
+              if (button instanceof HTMLElement) button.style.opacity = '1';
             }}
             onMouseOut={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
-              const wrapper = target.closest("[data-code]");
-              const button = wrapper?.querySelector("[data-copy-code]");
-              if (button instanceof HTMLElement) button.style.opacity = "0";
+              const wrapper = target.closest('[data-code]');
+              const button = wrapper?.querySelector('[data-copy-code]');
+              if (button instanceof HTMLElement) button.style.opacity = '0';
             }}
             onClick={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
-              const copyButton = target.closest("[data-copy-code]");
+              const copyButton = target.closest('[data-copy-code]');
               if (!(copyButton instanceof HTMLButtonElement)) return;
-              const wrapper = copyButton.closest("[data-code]");
-              const encoded = wrapper?.getAttribute("data-code");
+              const wrapper = copyButton.closest('[data-code]');
+              const encoded = wrapper?.getAttribute('data-code');
               if (!encoded) return;
               const originalLabel = copyButton.textContent;
               void navigator.clipboard
                 .writeText(decodeURIComponent(encoded))
                 .then((): void => {
-                  copyButton.textContent = "Copied";
+                  copyButton.textContent = 'Copied';
                   window.setTimeout((): void => {
-                    copyButton.textContent = originalLabel ?? "Copy";
+                    copyButton.textContent = originalLabel ?? 'Copy';
                   }, 1500);
                 })
-                .catch((): void => { toast("Failed to copy code", { variant: "error" }); });
+                .catch((): void => { toast('Failed to copy code', { variant: 'error' }); });
             }}
           />
           {relatedNotes.length > 0 && (
@@ -424,15 +429,16 @@ export function NoteDetailView({
                     .map((related: RelatedNote) => {
                       const relatedNote = relatedPreviewNotes[related.id];
                       return (
-                        <div
+                        <SectionPanel
                           key={related.id}
-                          className="relative w-40 cursor-pointer rounded-md border px-3 py-2 text-left text-xs transition"
+                          variant="subtle-compact"
+                          className="relative w-40 cursor-pointer text-left text-xs transition"
                           style={relatedPreviewStyle}
                           role="button"
                           tabIndex={0}
                           onClick={(): void => onSelectRelatedNote(related.id)}
                           onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                            if (event.key === "Enter" || event.key === " ") {
+                            if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
                               onSelectRelatedNote(related.id);
                             }
@@ -442,7 +448,7 @@ export function NoteDetailView({
                             {relatedNote?.title ?? related.title}
                           </div>
                           <div className="line-clamp-2 text-[11px] opacity-80">
-                            {relatedNote?.content ?? "No content"}
+                            {relatedNote?.content ?? 'No content'}
                           </div>
                           <Button
                             type="button"
@@ -455,7 +461,7 @@ export function NoteDetailView({
                           >
                             <X size={12} />
                           </Button>
-                        </div>
+                        </SectionPanel>
                       );
                     })}
                 </div>
@@ -466,7 +472,7 @@ export function NoteDetailView({
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
             <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
           </div>
-        </div>
+        </SectionPanel>
       )}
     </div>
   );

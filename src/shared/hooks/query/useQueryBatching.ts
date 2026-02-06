@@ -1,8 +1,8 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface QueryBatchConfig {
   maxBatchSize?: number;
@@ -20,7 +20,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
     queryFn: () => Promise<unknown>;
     resolve: (data: unknown) => void;
     reject: (error: Error) => void;
-  }>>(new Map());
+      }>>(new Map());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const maxBatchSize = config.maxBatchSize || 10;
@@ -129,7 +129,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 // Hook for query deduplication
 export function useQueryDeduplication(): {
   deduplicatedQuery: (queryKey: unknown[], queryFn: () => Promise<unknown>) => Promise<unknown>;
-} {
+  } {
   const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
 
   const deduplicatedQuery = useCallback(async (

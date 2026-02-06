@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { server } from '../server';
 import { http, HttpResponse } from 'msw';
+import { describe, it, expect } from 'vitest';
+
+import { server } from '../server';
 
 describe('MSW Handlers', () => {
   describe('Products API', () => {

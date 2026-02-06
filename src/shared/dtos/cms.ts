@@ -1,43 +1,30 @@
+import { DtoBase, NamedDto } from '../types/base';
+
 // CMS DTOs
-export interface CmsPageDto {
-  id: string;
+export interface CmsPageDto extends DtoBase {
   title: string;
   slug: string;
   content: Record<string, unknown>;
   published: boolean;
   themeId: string | null;
-  createdAt: string;
-  updatedAt: string;
   domainIds: string[];
 }
 
-export interface CmsSlugDto {
-  id: string;
+export interface CmsSlugDto extends DtoBase {
   slug: string;
   pageId: string | null;
   domainIds: string[];
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CmsThemeDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface CmsThemeDto extends NamedDto {
   config: Record<string, unknown>;
   isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CmsDomainDto {
-  id: string;
+export interface CmsDomainDto extends NamedDto {
   domain: string;
-  name: string;
   isDefault: boolean;
   settings: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreatePageDto {

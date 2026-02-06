@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
 
-import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, HttpConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, HttpConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type HttpNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,15 +16,15 @@ export function HttpNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: HttpNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "http") return null;
+  if (selectedNode.type !== 'http') return null;
 
   const httpConfig: HttpConfig = selectedNode.config?.http ?? {
-    url: "",
-    method: "GET",
-    headers: "{\n  \"Content-Type\": \"application/json\"\n}",
-    bodyTemplate: "",
-    responseMode: "json",
-    responsePath: "",
+    url: '',
+    method: 'GET',
+    headers: '{\n  "Content-Type": "application/json"\n}',
+    bodyTemplate: '',
+    responseMode: 'json',
+    responsePath: '',
   };
 
   return (
@@ -48,7 +48,7 @@ export function HttpNodeConfigSection({
             value={httpConfig.method}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
-                http: { ...httpConfig, method: value as HttpConfig["method"] },
+                http: { ...httpConfig, method: value as HttpConfig['method'] },
               })
             }
           >
@@ -72,7 +72,7 @@ export function HttpNodeConfigSection({
               updateSelectedNodeConfig({
                 http: {
                   ...httpConfig,
-                  responseMode: value as HttpConfig["responseMode"],
+                  responseMode: value as HttpConfig['responseMode'],
                 },
               })
             }

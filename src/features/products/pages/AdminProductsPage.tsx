@@ -1,40 +1,41 @@
-"use client";
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from "react";
+'use client';
+import { useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
-import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { useToast, ConfirmDialog } from "@/shared/ui";
-import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
+import { useDrafts, draftKeys } from '@/features/drafter/hooks/useDrafts';
+import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
+import { getProducts } from '@/features/products/api';
+import DebugPanel from '@/features/products/components/DebugPanel';
+import { getProductColumns } from '@/features/products/components/list/ProductColumns';
+import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
+import { ProductListPanel } from '@/features/products/components/ProductListPanel';
+import { ProductModals } from '@/features/products/components/ProductModals';
+import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
   useProductData,
   useBulkDeleteProductsMutation,
-} from "@/features/products/hooks/useProductData";
-import { useProductOperations } from "@/features/products/hooks/useProductOperations";
-import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
-import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
-import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
-import { useProductListSync } from "@/shared/hooks/sync/useBackgroundSync";
+} from '@/features/products/hooks/useProductData';
 import { 
   useProductCacheWarmup, 
   useProductPrefetch, 
   useProductSync 
-} from "@/features/products/hooks/useProductEnhancements";
-import { ProductListPanel } from "@/features/products/components/ProductListPanel";
-import { ProductModals } from "@/features/products/components/ProductModals";
-import { getProductColumns } from "@/features/products/components/list/ProductColumns";
-import DebugPanel from "@/features/products/components/DebugPanel";
-import type { RowSelectionState } from "@tanstack/react-table";
-import type { ProductDraft } from "@/features/products/types/drafts";
-import type { ProductWithImages } from "@/features/products/types";
-import { logger } from "@/shared/utils/logger";
-import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
-import { getProducts } from "@/features/products/api";
+} from '@/features/products/hooks/useProductEnhancements';
+import { useProductOperations } from '@/features/products/hooks/useProductOperations';
+import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
+import type { ProductWithImages } from '@/features/products/types';
+import type { ProductDraft } from '@/features/products/types/drafts';
+import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
+import { useToast, ConfirmDialog } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-const SelectIntegrationModal = dynamic<import("@/features/integrations/components/listings/SelectIntegrationModal").SelectIntegrationModalProps>(
-  () => import("@/features/integrations/components/listings/SelectIntegrationModal"),
-  { ssr: false }
+type RowSelectionState = Record<string, boolean>;
+
+const SelectIntegrationModal = dynamic<import('@/features/integrations/components/listings/SelectIntegrationModal').SelectIntegrationModalProps>(
+  () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
+{ ssr: false }
 );
 
 export function AdminProductsPage(): React.JSX.Element {
@@ -75,7 +76,7 @@ export function AdminProductsPage(): React.JSX.Element {
     priceGroups,
     languageOptions,
     fallbackNameLocale,
-  } = useCatalogSync(preferences.catalogFilter || "all");
+  } = useCatalogSync(preferences.catalogFilter || 'all');
 
   const {
     data,
@@ -187,7 +188,7 @@ export function AdminProductsPage(): React.JSX.Element {
     updatePageSize(size);
   }, [setPageSize, updatePageSize]);
 
-  const handleSetNameLocale = useCallback((locale: "name_en" | "name_pl" | "name_de") => {
+  const handleSetNameLocale = useCallback((locale: 'name_en' | 'name_pl' | 'name_de') => {
     updateNameLocale(locale);
   }, [updateNameLocale]);
 
@@ -203,7 +204,7 @@ export function AdminProductsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!languageOptions.length) return;
-    const allowed = new Set(languageOptions.map((option: { label: string; value: "name_en" | "name_pl" | "name_de" }) => option.value));
+    const allowed = new Set(languageOptions.map((option: { label: string; value: 'name_en' | 'name_pl' | 'name_de' }) => option.value));
     if (allowed.has(preferences.nameLocale)) return;
     const nextLocale = (fallbackNameLocale && allowed.has(fallbackNameLocale))
       ? fallbackNameLocale
@@ -215,19 +216,19 @@ export function AdminProductsPage(): React.JSX.Element {
     const run = async (): Promise<void> => {
       try {
         const draft = await queryClient.fetchQuery({
-            queryKey: draftKeys.detail(draftId),
-            queryFn: async () => {
-                const res = await fetch(`/api/drafts/${draftId}`);
-                if (!res.ok) throw new Error("Failed to load draft");
-                return (await res.json()) as ProductDraft;
-            }
+          queryKey: draftKeys.detail(draftId),
+          queryFn: async () => {
+            const res = await fetch(`/api/drafts/${draftId}`);
+            if (!res.ok) throw new Error('Failed to load draft');
+            return (await res.json()) as ProductDraft;
+          }
         });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);
-        toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
+        toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
       } catch (error) {
-        console.error("Failed to load draft:", error);
-        toast("Failed to load draft template", { variant: "error" });
+        logClientError(error, { context: { source: 'AdminProductsPage', action: 'createFromDraft', draftId } });
+        toast('Failed to load draft template', { variant: 'error' });
       }
     };
     void run();
@@ -279,9 +280,9 @@ export function AdminProductsPage(): React.JSX.Element {
   const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string): void => {
     setShowIntegrationModal(false);
     if (isMassListing) {
-       const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
-       setMassListProductIds(ids);
-       setMassListIntegration({ integrationId, connectionId });
+      const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+      setMassListProductIds(ids);
+      setMassListIntegration({ integrationId, connectionId });
     }
   }, [isMassListing, rowSelection]);
 
@@ -296,7 +297,7 @@ export function AdminProductsPage(): React.JSX.Element {
     setMassListProductIds([]);
     setIsMassListing(false);
     setRefreshTrigger((prev: number) => prev + 1);
-    toast("Products listed successfully.", { variant: "success" });
+    toast('Products listed successfully.', { variant: 'success' });
     void refreshListingBadges();
   }, [toast, refreshListingBadges]);
 
@@ -319,12 +320,12 @@ export function AdminProductsPage(): React.JSX.Element {
         maxPrice,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+        catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
         searchLanguage: preferences.nameLocale,
       };
 
       const allProducts = await queryClient.fetchQuery({
-        queryKey: ["products-all", filters],
+        queryKey: ['products-all', filters],
         queryFn: () => getProducts(filters)
       });
 
@@ -333,10 +334,10 @@ export function AdminProductsPage(): React.JSX.Element {
         newSelection[p.id] = true;
       });
       setRowSelection(newSelection);
-      toast(`Selected ${allProducts.length} products.`, { variant: "success" });
+      toast(`Selected ${allProducts.length} products.`, { variant: 'success' });
     } catch (error) {
-      console.error(error);
-      toast("Failed to select all products", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminProductsPage', action: 'selectAllGlobal' } });
+      toast('Failed to select all products', { variant: 'error' });
     } finally {
       setLoadingGlobalSelection(false);
     }
@@ -350,39 +351,46 @@ export function AdminProductsPage(): React.JSX.Element {
     if (selectedProductIds.length === 0) return;
 
     try {
-      await bulkDeleteMutation.mutateAsync(selectedProductIds);
-      toast("Selected products deleted successfully.", { variant: "success" });
-      setRowSelection({});
-      setRefreshTrigger((prev: number) => prev + 1);
+      setIsMassDeleteConfirmOpen(false);
+      const result = await bulkDeleteMutation.mutateAsync(selectedProductIds);
+      const isQueued = result == null;
+      if (!isQueued) {
+        toast('Selected products deleted successfully.', { variant: 'success' });
+        setRowSelection({});
+        setRefreshTrigger((prev: number) => prev + 1);
+      }
     } catch (error) {
-      logger.error("Error during mass deletion:", error);
-      setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
+      logClientError(error, { context: { source: 'AdminProductsPage', action: 'massDelete', productIds: selectedProductIds } });
+      setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }
   }, [rowSelection, setActionError, toast, bulkDeleteMutation]);
 
   const handleConfirmSingleDelete = useCallback(async () => {
     if (!productToDelete) return;
+    const targetId = productToDelete.id;
+    setProductToDelete(null);
     try {
-      await bulkDeleteMutation.mutateAsync([productToDelete.id]);
-      toast("Product deleted successfully.", { variant: "success" });
-      setRefreshTrigger((prev: number) => prev + 1);
+      const result = await bulkDeleteMutation.mutateAsync([targetId]);
+      const isQueued = result == null;
+      if (!isQueued) {
+        toast('Product deleted successfully.', { variant: 'success' });
+        setRefreshTrigger((prev: number) => prev + 1);
+      }
     } catch (error) {
-      logger.error("Error deleting product:", error);
-      setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
-    } finally {
-      setProductToDelete(null);
+      logClientError(error, { context: { source: 'AdminProductsPage', action: 'singleDelete', productId: targetId } });
+      setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }
   }, [productToDelete, setActionError, toast, bulkDeleteMutation]);
 
   useEffect(() => {
-    setIsDebugOpen(searchParams.get("debug") === "true");
+    setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
 
   useEffect(() => {
     setIsMounted(true);
     // Force fresh product queries on mount to avoid showing stale persisted caches.
-    void queryClient.invalidateQueries({ queryKey: ["products"] });
-    void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+    void queryClient.invalidateQueries({ queryKey: ['products'] });
+    void queryClient.invalidateQueries({ queryKey: ['products-count'] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -391,7 +399,7 @@ export function AdminProductsPage(): React.JSX.Element {
     const target = document.querySelector(`[data-row-id="${lastEditedId}"]`);
     if (target instanceof HTMLElement) {
       requestAnimationFrame(() => {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
     }
   }, [data, lastEditedId]);
@@ -403,9 +411,9 @@ export function AdminProductsPage(): React.JSX.Element {
   );
 
   const handleProductsTableRender = useCallback<ProfilerOnRenderCallback>(
-    (_id: string, _phase: "mount" | "update" | "nested-update", actualDuration: number, _baseDuration: number, _startTime: number, commitTime: number) => {
-      if (!isDebugOpen || typeof performance === "undefined") return;
-      performance.measure("products:tableRender", {
+    (_id: string, _phase: 'mount' | 'update' | 'nested-update', actualDuration: number, _baseDuration: number, _startTime: number, commitTime: number) => {
+      if (!isDebugOpen || typeof performance === 'undefined') return;
+      performance.measure('products:tableRender', {
         start: commitTime - actualDuration,
         end: commitTime,
       });
@@ -414,7 +422,7 @@ export function AdminProductsPage(): React.JSX.Element {
   );
 
   const columns = useMemo(
-    () => getProductColumns(preferences.thumbnailSource ?? "file"),
+    () => getProductColumns(preferences.thumbnailSource ?? 'file'),
     [preferences.thumbnailSource]
   );
 
@@ -431,6 +439,7 @@ export function AdminProductsPage(): React.JSX.Element {
         description={`Are you sure you want to delete ${Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length} selected products? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
+        loading={bulkDeleteMutation.isPending}
       />
       <ConfirmDialog
         open={!!productToDelete}
@@ -441,9 +450,10 @@ export function AdminProductsPage(): React.JSX.Element {
           void handleConfirmSingleDelete();
         }}
         title="Delete Product"
-        description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || "this product"}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || 'this product'}"? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
+        loading={bulkDeleteMutation.isPending}
       />
       <ProductListPanel
         onCreateProduct={handleOpenCreate}
@@ -474,9 +484,9 @@ export function AdminProductsPage(): React.JSX.Element {
         setMinPrice={setMinPrice}
         maxPrice={maxPrice}
         setMaxPrice={setMaxPrice}
-        startDate={startDate || ""}
+        startDate={startDate || ''}
         setStartDate={setStartDate}
-        endDate={endDate || ""}
+        endDate={endDate || ''}
         setEndDate={setEndDate}
         data={isMounted ? data : []}
         rowSelection={rowSelection}
@@ -508,7 +518,7 @@ export function AdminProductsPage(): React.JSX.Element {
         initialSku={initialSku}
         createDraft={createDraft}
         initialCatalogId={
-          catalogFilter !== "all" && catalogFilter !== "unassigned"
+          catalogFilter !== 'all' && catalogFilter !== 'unassigned'
             ? catalogFilter
             : null
         }

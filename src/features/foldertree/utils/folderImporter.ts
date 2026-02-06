@@ -24,7 +24,7 @@ export async function parseFolderStructure(
   // Collect all file system entries
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item && item.kind === "file") {
+    if (item && item.kind === 'file') {
       const entry = item.webkitGetAsEntry?.();
       if (entry) {
         entries.push(entry);
@@ -43,7 +43,7 @@ export async function parseFolderStructure(
   if (rootEntry.isDirectory) {
     return await processDirectoryEntry(
       rootEntry as FileSystemDirectoryEntry,
-      ""
+      ''
     );
   }
 
@@ -63,7 +63,7 @@ export async function parseMultipleFolders(
   // Collect all file system entries
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item && item.kind === "file") {
+    if (item && item.kind === 'file') {
       const entry = item.webkitGetAsEntry?.();
       if (entry) {
         entries.push(entry);
@@ -81,7 +81,7 @@ export async function parseMultipleFolders(
     if (entry.isDirectory) {
       const folderNode = await processDirectoryEntry(
         entry as FileSystemDirectoryEntry,
-        ""
+        ''
       );
       folders.push(folderNode);
     }
@@ -118,12 +118,12 @@ async function processDirectoryEntry(
       const fileEntry = entry as FileSystemFileEntry;
       // Only process markdown files
       if (
-        fileEntry.name.endsWith(".md") ||
-        fileEntry.name.endsWith(".markdown")
+        fileEntry.name.endsWith('.md') ||
+        fileEntry.name.endsWith('.markdown')
       ) {
         const file = await getFile(fileEntry);
         const content = await file.text();
-        const title = fileEntry.name.replace(/\.(md|markdown)$/, "");
+        const title = fileEntry.name.replace(/\.(md|markdown)$/, '');
 
         node.notes.push({
           title,

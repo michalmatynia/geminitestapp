@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import { Input, useToast } from "@/shared/ui";
-import { useState, useEffect, useRef, KeyboardEvent, memo } from "react";
+import { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
+
+import { logClientError } from '@/features/observability';
+import { Input, useToast } from '@/shared/ui';
 
 
 type EditableCellProps = {
   value: number | null;
   productId: string;
-  field: "price" | "stock";
-  onUpdate: () => void;
+  field: 'price' | 'stock';
+  onUpdate: (nextValue: number) => void;
 };
 
 export const EditableCell = memo(function EditableCell({
@@ -18,7 +20,7 @@ export const EditableCell = memo(function EditableCell({
   onUpdate,
 }: EditableCellProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(value ?? ""));
+  const [editValue, setEditValue] = useState(String(value ?? ''));
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -32,7 +34,7 @@ export const EditableCell = memo(function EditableCell({
 
   const handleDoubleClick = (): void => {
     setIsEditing(true);
-    setEditValue(String(value ?? ""));
+    setEditValue(String(value ?? ''));
   };
 
   const handleSave = async (): Promise<void> => {
@@ -40,8 +42,8 @@ export const EditableCell = memo(function EditableCell({
 
     const numValue = parseFloat(editValue);
     if (isNaN(numValue) || numValue < 0) {
-      toast(`Invalid ${field} value`, { variant: "error" });
-      setEditValue(String(value ?? ""));
+      toast(`Invalid ${field} value`, { variant: 'error' });
+      setEditValue(String(value ?? ''));
       setIsEditing(false);
       return;
     }
@@ -56,8 +58,8 @@ export const EditableCell = memo(function EditableCell({
 
     try {
       const res = await fetch(`/api/products/${productId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: numValue }),
       });
 
@@ -66,13 +68,13 @@ export const EditableCell = memo(function EditableCell({
         throw new Error(error.error || `Failed to update ${field}`);
       }
 
-      toast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, { variant: "success" });
+      toast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, { variant: 'success' });
       setIsEditing(false);
-      onUpdate();
+      onUpdate(numValue);
     } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
-      toast(error instanceof Error ? error.message : `Failed to update ${field}`, { variant: "error" });
-      setEditValue(String(value ?? ""));
+      logClientError(error, { context: { source: 'EditableCell', action: 'save', field, productId } });
+      toast(error instanceof Error ? error.message : `Failed to update ${field}`, { variant: 'error' });
+      setEditValue(String(value ?? ''));
       setIsEditing(false);
     } finally {
       setIsSaving(false);
@@ -80,17 +82,17 @@ export const EditableCell = memo(function EditableCell({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       void handleSave();
-    } else if (e.key === "Escape") {
-      setEditValue(String(value ?? ""));
+    } else if (e.key === 'Escape') {
+      setEditValue(String(value ?? ''));
       setIsEditing(false);
     }
   };
 
   const handleBlur = (): void => {
     if (!isSaving) {
-      setEditValue(String(value ?? ""));
+      setEditValue(String(value ?? ''));
       setIsEditing(false);
     }
   };
@@ -100,7 +102,7 @@ export const EditableCell = memo(function EditableCell({
       <Input
         ref={inputRef}
         type="number"
-        step={field === "price" ? "0.01" : "1"}
+        step={field === 'price' ? '0.01' : '1'}
         min="0"
         value={editValue}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
@@ -118,7 +120,7 @@ export const EditableCell = memo(function EditableCell({
       className="cursor-pointer rounded px-2 py-1 hover:bg-muted/50/50 transition-colors"
       title={`Double-click to edit ${field}`}
     >
-      {value !== null ? (field === "price" ? value.toFixed(2) : value) : "-"}
+      {value !== null ? (field === 'price' ? value.toFixed(2) : value) : '-'}
     </div>
   );
 },

@@ -1,5 +1,5 @@
 export const TRANSIENT_RECOVERY_KEYS = {
-  settings: "transient_recovery_settings",
+  settings: 'transient_recovery_settings',
 } as const;
 
 export type TransientRecoverySettings = {

@@ -1,0 +1,79 @@
+(node:27193) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:27243) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2682.7318349999996ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=34s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=49s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=64s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=79s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=94s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=109s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=124s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 4s.. Retrying after 4093.603276ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=140s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=155s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=170s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=185s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=200s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=215s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1792.460926ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=239s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=254s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=269s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=284s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=299s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=314s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 67.78492999999999ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 3s.. Retrying after 3035.79303ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 3s.. Retrying after 3154.586191ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 2s.. Retrying after 2081.943182ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Retrying after 1531.5501949999998ms...
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 688.559606ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=360s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=375s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=390s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=405s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=420s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=435s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=450s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=465s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=480s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=495s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=510s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=525s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=540s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=555s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=570s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=585s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=600s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=615s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=630s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=645s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=660s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=675s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=690s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=705s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=720s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=735s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=750s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=765s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 79.312269ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=792s)
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 785.131738ms...
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=816s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=831s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=846s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=861s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=876s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=891s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=906s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=921s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=936s)
+[gemini] ...still working (model=gemini-3-flash-preview, elapsed=951s)

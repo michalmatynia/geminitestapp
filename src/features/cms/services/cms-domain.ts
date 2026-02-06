@@ -1,13 +1,17 @@
-import "server-only";
+import 'server-only';
 
-import type { NextRequest } from "next/server";
-import { randomUUID } from "crypto";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import type { CmsRepository } from "@/features/cms/types/services/cms-repository";
-import type { CmsDomain, Slug } from "@/features/cms/types";
-import { getCmsDataProvider } from "@/features/cms/services/cms-provider";
-import { getCmsDomainSettings } from "@/features/cms/services/cms-domain-settings";
+import { randomUUID } from 'crypto';
+
+import { Collection } from 'mongodb';
+
+import { getCmsDomainSettings } from '@/features/cms/services/cms-domain-settings';
+import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
+import type { CmsDomain, Slug } from '@/features/cms/types';
+import type { CmsRepository } from '@/features/cms/types/services/cms-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+
+import type { NextRequest } from 'next/server';
 
 type CmsDomainRecord = {
   id: string;
@@ -33,9 +37,9 @@ type CmsDomainSlugLink = {
   updatedAt?: Date;
 };
 
-const DOMAIN_COLLECTION = "cms_domains";
-const DOMAIN_SLUGS_COLLECTION = "cms_domain_slugs";
-const SLUGS_COLLECTION = "cms_slugs";
+const DOMAIN_COLLECTION = 'cms_domains';
+const DOMAIN_SLUGS_COLLECTION = 'cms_domain_slugs';
+const SLUGS_COLLECTION = 'cms_slugs';
 
 type SlugDocument = {
   id: string;
@@ -47,16 +51,16 @@ const getFallbackDomain = (): string => {
   const url =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
-    "http://localhost";
+    'http://localhost';
   try {
     return new URL(url).hostname.toLowerCase();
   } catch {
-    return "default";
+    return 'default';
   }
 };
 
 const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
-  id: "default-domain",
+  id: 'default-domain',
   domain: normalizeHost(hostHeader),
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -64,7 +68,7 @@ const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
 
 const normalizeHost = (hostHeader: string | null): string => {
   if (!hostHeader) return getFallbackDomain();
-  const raw = hostHeader.split(",")[0]?.trim() ?? "";
+  const raw = hostHeader.split(',')[0]?.trim() ?? '';
   if (!raw) return getFallbackDomain();
   try {
     return new URL(`http://${raw}`).hostname.toLowerCase();
@@ -74,13 +78,34 @@ const normalizeHost = (hostHeader: string | null): string => {
 };
 
 const getHostFromRequest = (req: NextRequest): string | null =>
-  req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  req.headers.get('x-forwarded-host') ?? req.headers.get('host');
 
-const getHostFromHeaders = (headers: Headers): string | null =>
-  headers.get("x-forwarded-host") ?? headers.get("host");
+const getHostFromHeaders = (
+  headers:
+    | Headers
+    | { get?: (key: string) => string | null }
+    | Record<string, unknown>
+    | null
+    | undefined
+): string | null => {
+  if (!headers) return null;
+  if (typeof (headers as Headers).get === 'function') {
+    return (headers as Headers).get('x-forwarded-host') ?? (headers as Headers).get('host');
+  }
+  if (typeof headers === 'object') {
+    const record = headers as Record<string, unknown>;
+    const forwarded =
+      record['x-forwarded-host'] ??
+      record['X-Forwarded-Host'] ??
+      record['host'] ??
+      record['Host'];
+    if (typeof forwarded === 'string') return forwarded;
+  }
+  return null;
+};
 
 const canUsePrismaSlugs = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && "slug" in prisma;
+  Boolean(process.env.DATABASE_URL) && 'slug' in prisma;
 
 export async function isDomainZoningEnabled(): Promise<boolean> {
   if (!process.env.MONGODB_URI) return false;
@@ -90,11 +115,11 @@ export async function isDomainZoningEnabled(): Promise<boolean> {
 
 export async function setGlobalDefaultSlug(slugId: string | null): Promise<void> {
   const provider = await getCmsDataProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     if (!process.env.MONGODB_URI) return;
     const db = await getMongoDb();
     const now = new Date();
-    await db.collection<SlugDocument>(SLUGS_COLLECTION).updateMany(
+    await (db.collection<SlugDocument>(SLUGS_COLLECTION) as Collection<SlugDocument>).updateMany(
       {},
       { $set: { isDefault: false, updatedAt: now } }
     );
@@ -120,8 +145,20 @@ export async function resolveCmsDomainFromRequest(req: NextRequest): Promise<Cms
   return resolveCmsDomainByHost(host);
 }
 
-export async function resolveCmsDomainFromHeaders(headers: Headers): Promise<CmsDomain> {
-  const host = getHostFromHeaders(headers);
+export async function resolveCmsDomainFromHeaders(
+  headers:
+    | Headers
+    | Promise<Headers>
+    | { get?: (key: string) => string | null }
+    | Record<string, unknown>
+    | null
+    | undefined
+): Promise<CmsDomain> {
+  const resolved = await Promise.resolve(headers);
+  if (typeof resolved === 'function') {
+    return resolveCmsDomainByHost(null);
+  }
+  const host = getHostFromHeaders(resolved);
   return resolveCmsDomainByHost(host);
 }
 
@@ -233,7 +270,7 @@ export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
 export async function createCmsDomain(domain: string): Promise<CmsDomainResponse> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
-    return { id: "default-domain", domain: normalizeHost(domain) };
+    return { id: 'default-domain', domain: normalizeHost(domain) };
   }
   const db = await getMongoDb();
   const normalized = normalizeHost(domain);

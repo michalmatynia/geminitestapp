@@ -1,6 +1,13 @@
+import type {
+  ContextConfig,
+  DbQueryConfig,
+  RuntimePortValues,
+} from '@/shared/types/ai-paths';
+
+import { aiJobsApi, dbApi } from '../../api';
 import {
   DEFAULT_CONTEXT_ROLE,
-} from "../constants";
+} from '../constants';
 import {
   applyContextScope,
   coerceInput,
@@ -10,22 +17,16 @@ import {
   renderJsonTemplate,
   renderTemplate,
   safeStringify,
-} from "../utils";
-import type {
-  ContextConfig,
-  DbQueryConfig,
-  RuntimePortValues,
-} from "@/shared/types/ai-paths";
-import { aiJobsApi, dbApi } from "../../api";
+} from '../utils';
 
 export const looksLikeObjectId = (value: unknown): boolean =>
-  typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
+  typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
 
 export function extractImageUrls(value: unknown, seen: Set<object> = new Set<object>()): string[] {
   if (!value) return [];
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed) as unknown;
         return extractImageUrls(parsed, seen);
@@ -40,24 +41,24 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
       new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen)))
     );
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     if (seen.has(value)) return [];
     seen.add(value);
     const record = value as Record<string, unknown>;
     const candidates = [
-      "url",
-      "src",
-      "thumbnail",
-      "thumb",
-      "imageUrl",
-      "image",
-      "imageFile",
-      "filepath",
-      "filePath",
-      "path",
-      "file",
-      "previewUrl",
-      "preview",
+      'url',
+      'src',
+      'thumbnail',
+      'thumb',
+      'imageUrl',
+      'image',
+      'imageFile',
+      'filepath',
+      'filePath',
+      'path',
+      'file',
+      'previewUrl',
+      'preview',
     ];
     const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
     if (urls.length) return Array.from(new Set(urls));
@@ -70,22 +71,22 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
 }
 
 export const buildFallbackEntity = (entityId?: string | null): Record<string, unknown> => ({
-  id: entityId ?? "demo-entity",
-  title: "Sample entity",
+  id: entityId ?? 'demo-entity',
+  title: 'Sample entity',
   images: [],
-  content_en: "Sample content",
+  content_en: 'Sample content',
 });
 
 export const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
   if (!value) return null;
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const parsed = parseJsonSafe(value);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>;
     }
     return null;
   }
-  if (typeof value === "object" && !Array.isArray(value)) {
+  if (typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
   return null;
@@ -95,14 +96,14 @@ export const buildPromptOutput = (
   promptConfig: { template?: string } | undefined,
   nodeInputs: RuntimePortValues
 ): { promptOutput: string; imagesValue: unknown } => {
-  const resolvedConfig = promptConfig ?? { template: "" };
+  const resolvedConfig = promptConfig ?? { template: '' };
   const bundleValue = coerceInput(nodeInputs.bundle);
   let bundleContext: Record<string, unknown> = {};
-  if (bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)) {
+  if (bundleValue && typeof bundleValue === 'object' && !Array.isArray(bundleValue)) {
     bundleContext = bundleValue as Record<string, unknown>;
-  } else if (typeof bundleValue === "string") {
+  } else if (typeof bundleValue === 'string') {
     const parsed = parseJsonSafe(bundleValue);
-    if (parsed && typeof parsed === "object" && !Array.isArray(bundleValue)) {
+    if (parsed && typeof parsed === 'object' && !Array.isArray(bundleValue)) {
       bundleContext = parsed as Record<string, unknown>;
     }
   }
@@ -136,23 +137,23 @@ export const buildPromptOutput = (
   };
   const data = { ...bundleContext, ...alias, ...nodeInputs, bundle: bundleContext };
   const currentValue = 
-    coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? "";
+    coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? '';
   const prompt = resolvedConfig.template
     ? renderTemplate(
-        resolvedConfig.template,
+      resolvedConfig.template,
         data as Record<string, unknown>,
         currentValue
-      )
+    )
     : Object.entries(data as Record<string, unknown>)
-        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-        .join("\n");
+      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+      .join('\n');
   const imagesValue = 
     nodeInputs.images !== undefined
       ? nodeInputs.images
       : bundleContext.images !== undefined
         ? bundleContext.images
         : undefined;
-  return { promptOutput: prompt || "Prompt: (no template)", imagesValue };
+  return { promptOutput: prompt || 'Prompt: (no template)', imagesValue };
 };
 
 export const resolveJobProductId = (
@@ -163,8 +164,8 @@ export const resolveJobProductId = (
 ): string => {
   const direct = 
     coerceInput(nodeInputs.productId) ?? coerceInput(nodeInputs.entityId);
-  if (typeof direct === "string" && direct.trim()) return direct.trim();
-  if (typeof direct === "number") return String(direct);
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  if (typeof direct === 'number') return String(direct);
   const contextValue = coerceInput(nodeInputs.context) as
     | { entityId?: string; productId?: string } 
     | undefined;
@@ -173,14 +174,14 @@ export const resolveJobProductId = (
   const entityJson = coerceInput(nodeInputs.entityJson) as
     | { id?: string | number } 
     | undefined;
-  if (typeof entityJson?.id === "string" && entityJson.id.trim()) {
+  if (typeof entityJson?.id === 'string' && entityJson.id.trim()) {
     return entityJson.id.trim();
   }
-  if (typeof entityJson?.id === "number") return String(entityJson.id);
-  if (simulationEntityType === "product" && simulationEntityId) {
+  if (typeof entityJson?.id === 'number') return String(entityJson.id);
+  if (simulationEntityType === 'product' && simulationEntityId) {
     return simulationEntityId;
   }
-  return activePathId ?? "ai_paths_graph";
+  return activePathId ?? 'ai_paths_graph';
 };
 
 export const resolveEntityIdFromInputs = (
@@ -193,8 +194,8 @@ export const resolveEntityIdFromInputs = (
     (idField ? coerceInput(nodeInputs[idField]) : undefined) ??
     coerceInput(nodeInputs.entityId) ??
     coerceInput(nodeInputs.productId);
-  if (typeof direct === "string" && direct.trim()) return direct.trim();
-  if (typeof direct === "number") return String(direct);
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  if (typeof direct === 'number') return String(direct);
   const contextValue = coerceInput(nodeInputs.context) as
     | { entityId?: string; productId?: string } 
     | undefined;
@@ -203,27 +204,27 @@ export const resolveEntityIdFromInputs = (
   const bundleValue = coerceInput(nodeInputs.bundle) as
     | { entityId?: string; productId?: string; id?: string | number } 
     | undefined;
-  if (typeof bundleValue?.productId === "string" && bundleValue.productId.trim()) {
+  if (typeof bundleValue?.productId === 'string' && bundleValue.productId.trim()) {
     return bundleValue.productId.trim();
   }
-  if (typeof bundleValue?.entityId === "string" && bundleValue.entityId.trim()) {
+  if (typeof bundleValue?.entityId === 'string' && bundleValue.entityId.trim()) {
     return bundleValue.entityId.trim();
   }
-  if (typeof bundleValue?.id === "string" && bundleValue.id.trim()) {
+  if (typeof bundleValue?.id === 'string' && bundleValue.id.trim()) {
     return bundleValue.id.trim();
   }
-  if (typeof bundleValue?.id === "number") return String(bundleValue.id);
+  if (typeof bundleValue?.id === 'number') return String(bundleValue.id);
   const entityJson = coerceInput(nodeInputs.entityJson) as
     | { id?: string | number } 
     | undefined;
-  if (typeof entityJson?.id === "string" && entityJson.id.trim()) {
+  if (typeof entityJson?.id === 'string' && entityJson.id.trim()) {
     return entityJson.id.trim();
   }
-  if (typeof entityJson?.id === "number") return String(entityJson.id);
-  if (simulationEntityType === "product" && simulationEntityId) {
+  if (typeof entityJson?.id === 'number') return String(entityJson.id);
+  if (simulationEntityType === 'product' && simulationEntityId) {
     return simulationEntityId;
   }
-  return "";
+  return '';
 };
 
 export const pollGraphJob = async (
@@ -240,22 +241,22 @@ export const pollGraphJob = async (
       }
       const { status, result: jobResult, error: jobError } = pollResult.data;
       if (!status) continue;
-      if (status === "completed") {
+      if (status === 'completed') {
         const result = jobResult as
           | { result?: string }
           | string
           | null
           | undefined;
-        if (result && typeof result === "object" && "result" in result) {
-          return (result as { result?: string }).result ?? "";
+        if (result && typeof result === 'object' && 'result' in result) {
+          return (result as { result?: string }).result ?? '';
         }
-        return typeof result === "string" ? result : JSON.stringify(result ?? "");
+        return typeof result === 'string' ? result : JSON.stringify(result ?? '');
       }
-      if (status === "failed") {
-        throw new Error(jobError || "AI job failed.");
+      if (status === 'failed') {
+        throw new Error(jobError || 'AI job failed.');
       }
-      if (status === "canceled") {
-        throw new Error("AI job was canceled.");
+      if (status === 'canceled') {
+        throw new Error('AI job was canceled.');
       }
       if (attempt < maxAttempts - 1) {
         await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
@@ -268,7 +269,7 @@ export const pollGraphJob = async (
       await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
     }
   }
-  throw new Error("AI job timed out.");
+  throw new Error('AI job timed out.');
 };
 
 export const buildDbQueryPayload = (
@@ -292,14 +293,14 @@ export const buildDbQueryPayload = (
   let query: Record<string, unknown> = {};
   const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
     if (!value) return null;
-    if (typeof value === "object" && !Array.isArray(value)) {
+    if (typeof value === 'object' && !Array.isArray(value)) {
       return value as Record<string, unknown>;
     }
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       const match = value.match(/```(?:json)?\s*([\s\S]*?)```/);
       const jsonStr = match ? match[1]!.trim() : value.trim();
       const parsed = parseJsonSafe(jsonStr);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         return parsed as Record<string, unknown>;
       }
     }
@@ -308,43 +309,43 @@ export const buildDbQueryPayload = (
   const inlineQuery = parseQueryInput(aiQueryInput ?? inputQuery);
   if (inlineQuery) {
     query = inlineQuery;
-  } else if (queryConfig.mode === "preset") {
+  } else if (queryConfig.mode === 'preset') {
     const presetValue =
-      queryConfig.preset === "by_productId"
+      queryConfig.preset === 'by_productId'
         ? productIdInput ?? inputValue
-        : queryConfig.preset === "by_entityId"
+        : queryConfig.preset === 'by_entityId'
           ? entityIdInput ?? inputValue
           : inputValue ?? entityIdInput ?? productIdInput;
     if (presetValue !== undefined) {
       let field =
-        queryConfig.preset === "by_productId"
-          ? "productId"
-          : queryConfig.preset === "by_entityId"
-            ? "entityId"
-            : queryConfig.preset === "by_field"
-              ? queryConfig.field || "id"
-              : "_id";
-      if (queryConfig.preset === "by_id" && field === "_id" && !looksLikeObjectId(presetValue)) {
-        field = "id";
+        queryConfig.preset === 'by_productId'
+          ? 'productId'
+          : queryConfig.preset === 'by_entityId'
+            ? 'entityId'
+            : queryConfig.preset === 'by_field'
+              ? queryConfig.field || 'id'
+              : '_id';
+      if (queryConfig.preset === 'by_id' && field === '_id' && !looksLikeObjectId(presetValue)) {
+        field = 'id';
       }
       query = { [field]: presetValue };
     }
   } else {
     const parsed = parseJsonSafe(
       renderJsonTemplate(
-        queryConfig.queryTemplate ?? "{}",
+        queryConfig.queryTemplate ?? '{}',
         nodeInputs as Record<string, unknown>,
-        inputValue ?? ""
+        inputValue ?? ''
       )
     );
-    if (parsed && typeof parsed === "object") {
+    if (parsed && typeof parsed === 'object') {
       query = parsed as Record<string, unknown>;
     }
   }
-  const projection = parseJsonSafe(queryConfig.projection ?? "") as
+  const projection = parseJsonSafe(queryConfig.projection ?? '') as
     | Record<string, unknown> 
     | undefined;
-  const sort = parseJsonSafe(queryConfig.sort ?? "") as
+  const sort = parseJsonSafe(queryConfig.sort ?? '') as
     | Record<string, unknown> 
     | undefined;
   return {
@@ -366,32 +367,32 @@ export const pollDatabaseQuery = async (
     maxAttempts: number;
     dbQuery: DbQueryConfig;
     successPath: string;
-    successOperator: "truthy" | "equals" | "contains" | "notEquals";
+    successOperator: 'truthy' | 'equals' | 'contains' | 'notEquals';
     successValue: string;
     resultPath: string;
   }
 ): Promise<{ result: unknown; status: string; bundle: Record<string, unknown> }> => {
   const evaluateMatch = (value: unknown): boolean => {
-    if (config.successOperator === "truthy") return Boolean(value);
-    const compareTarget = config.successValue ?? "";
+    if (config.successOperator === 'truthy') return Boolean(value);
+    const compareTarget = config.successValue ?? '';
     const valStr = safeStringify(value);
     const targetStr = String(compareTarget);
 
-    if (config.successOperator === "equals") {
+    if (config.successOperator === 'equals') {
       return valStr === targetStr;
     }
-    if (config.successOperator === "notEquals") {
+    if (config.successOperator === 'notEquals') {
       return valStr !== targetStr;
     }
-    if (config.successOperator === "contains") {
+    if (config.successOperator === 'contains') {
       if (Array.isArray(value)) {
         return value
           .map((entry: unknown) =>
             entry === undefined || entry === null
-              ? ""
-              : typeof entry === "string"
+              ? ''
+              : typeof entry === 'string'
                 ? entry
-                : typeof entry === "object"
+                : typeof entry === 'object'
                   ? JSON.stringify(entry)
                   : safeStringify(entry)
           )
@@ -412,7 +413,7 @@ export const pollDatabaseQuery = async (
       count?: number;
     }>(payload);
     if (!queryResult.ok) {
-      throw new Error("Database poll query failed.");
+      throw new Error('Database poll query failed.');
     }
     const data = queryResult.data;
     const result: unknown = config.dbQuery.single ? data.item ?? null : data.items ?? [];
@@ -424,11 +425,11 @@ export const pollDatabaseQuery = async (
     };
     lastResult = result;
     lastBundle = bundle;
-    const successPath = config.successPath?.trim() ?? "";
+    const successPath = config.successPath?.trim() ?? '';
     const matchedItem: unknown = Array.isArray(result)
       ? result.find((item: unknown) =>
-          evaluateMatch(getValueAtMappingPath(item, successPath))
-        )
+        evaluateMatch(getValueAtMappingPath(item, successPath))
+      )
       : null;
     const candidate: unknown = successPath
       ? Array.isArray(result)
@@ -455,8 +456,8 @@ export const pollDatabaseQuery = async (
       }
       return {
         result: resolvedResult ?? result,
-        status: "completed",
-        bundle: { ...bundle, status: "completed" },
+        status: 'completed',
+        bundle: { ...bundle, status: 'completed' },
       };
     }
     if (attempt < config.maxAttempts - 1) {
@@ -468,8 +469,8 @@ export const pollDatabaseQuery = async (
     : lastResult;
   return {
     result: fallbackResult ?? lastResult,
-    status: "timeout",
-    bundle: { ...lastBundle, status: "timeout" },
+    status: 'timeout',
+    bundle: { ...lastBundle, status: 'timeout' },
   };
 };
 
@@ -500,26 +501,26 @@ export const resolveContextPayload = async (
   const contextConfig = config;
   const fallbackRole = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
   const baseRole =
-    baseContext && typeof baseContext.role === "string" ? baseContext.role : null;
+    baseContext && typeof baseContext.role === 'string' ? baseContext.role : null;
   const role = baseRole ?? fallbackRole;
-  const rawEntityType = contextConfig.entityType?.trim() || "auto";
+  const rawEntityType = contextConfig.entityType?.trim() || 'auto';
   const baseEntityType =
-    baseContext && typeof baseContext.entityType === "string"
+    baseContext && typeof baseContext.entityType === 'string'
       ? baseContext.entityType
       : null;
   const entityType =
-    rawEntityType === "auto"
-      ? baseEntityType ?? simulationEntityType ?? "entity"
-      : rawEntityType || baseEntityType || simulationEntityType || "entity";
+    rawEntityType === 'auto'
+      ? baseEntityType ?? simulationEntityType ?? 'entity'
+      : rawEntityType || baseEntityType || simulationEntityType || 'entity';
   const manualId = contextConfig.entityId?.trim() || null;
   const baseEntityId =
-    baseContext && typeof baseContext.entityId === "string"
+    baseContext && typeof baseContext.entityId === 'string'
       ? baseContext.entityId
       : null;
   const entityId =
-    contextConfig.entityIdSource === "manual"
+    contextConfig.entityIdSource === 'manual'
       ? manualId
-      : contextConfig.entityIdSource === "context"
+      : contextConfig.entityIdSource === 'context'
         ? baseEntityId ?? manualId ?? null
         : baseEntityId ?? simulationEntityId ?? manualId ?? null;
   const baseEntity =
@@ -530,10 +531,10 @@ export const resolveContextPayload = async (
   const fetched =
     baseEntity ?? (entityId && entityType ? await fetchEntityCached(entityType, entityId) : null);
   const rawEntity = fetched ?? buildFallbackEntity(entityId);
-  const scopeTarget = contextConfig.scopeTarget ?? "entity";
+  const scopeTarget = contextConfig.scopeTarget ?? 'entity';
   const scopedEntity =
-    scopeTarget === "entity" ? applyContextScope(rawEntity, contextConfig) : rawEntity;
-  const entityForContext = scopeTarget === "context" ? rawEntity : scopedEntity;
+    scopeTarget === 'entity' ? applyContextScope(rawEntity, contextConfig) : rawEntity;
+  const entityForContext = scopeTarget === 'context' ? rawEntity : scopedEntity;
   const baseImages = Array.isArray(baseContext?.images)
     ? (baseContext?.images as unknown[])
     : null;
@@ -556,24 +557,24 @@ export const resolveContextPayload = async (
     role,
     entityType,
     entityId,
-    source: (baseContext?.source as string | undefined) ?? "context-filter",
+    source: (baseContext?.source as string | undefined) ?? 'context-filter',
     timestamp: (baseContext?.timestamp as string | undefined) ?? now,
     ...(resolvedImages.length ? { images: resolvedImages, imageUrls: resolvedImages } : {}),
     ...baseContextRest,
     entity: entityForContext,
     productId:
-      entityType === "product"
+      entityType === 'product'
         ? entityId
         : (baseContext?.productId as string | undefined),
     product:
-      entityType === "product"
+      entityType === 'product'
         ? entityForContext
         : (baseContext?.product as Record<string, unknown> | undefined),
   };
   const scopedContext =
-    scopeTarget === "context" ? applyContextScope(context, contextConfig) : context;
+    scopeTarget === 'context' ? applyContextScope(context, contextConfig) : context;
   const scopedContextEntity =
-    scopeTarget === "context"
+    scopeTarget === 'context'
       ? ((scopedContext?.entity as Record<string, unknown> | undefined) ??
           entityForContext)
       : scopedEntity;

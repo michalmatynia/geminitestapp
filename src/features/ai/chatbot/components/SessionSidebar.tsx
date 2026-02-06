@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import { Plus, Trash2, MessageSquare } from "lucide-react";
+import { Plus, Trash2, MessageSquare } from 'lucide-react';
 
-import type { ChatSession } from "@/shared/types/chatbot";
+import type { ChatSession } from '@/shared/types/chatbot';
+import { Button } from '@/shared/ui';
 
 interface SessionSidebarProps {
   sessions: ChatSession[];
@@ -44,8 +44,8 @@ export function SessionSidebar({
                 key={session.id}
                 className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
                   currentSessionId === session.id
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-400 hover:bg-muted/50/50 hover:text-white"
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-400 hover:bg-muted/50/50 hover:text-white'
                 }`}
                 onClick={(): void => onSelectSession(session.id)}
               >

@@ -1,11 +1,13 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import type { WithId } from "mongodb";
-import type { CatalogRecord } from "@/features/products/types";
-import type { ImageFileRecord } from "@/shared/types/files";
-import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from "@/features/products/types";
+import type { CatalogRecord } from '@/features/products/types';
+import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from '@/features/products/types';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ImageFileRecord } from '@/shared/types/files';
+
+import type { WithId } from 'mongodb';
+
 
 export type { MigrationDirection };
 
@@ -36,7 +38,7 @@ type CatalogInput = {
   languages?: { languageId: string }[];
 };
 
-type CatalogDocument = Omit<CatalogRecord, "languageIds"> & {
+type CatalogDocument = Omit<CatalogRecord, 'languageIds'> & {
   languageIds?: string[] | null;
 };
 
@@ -82,7 +84,7 @@ type ProductDocument = {
   }>;
 };
 
-const PRODUCT_COLLECTION = "products";
+const PRODUCT_COLLECTION = 'products';
 
 type ProductInput = {
   id: string;
@@ -183,13 +185,13 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
-  images: product.images.map((image: ProductInput["images"][number]) => ({
+  images: product.images.map((image: ProductInput['images'][number]) => ({
     productId: image.productId,
     imageFileId: image.imageFileId,
     assignedAt: image.assignedAt,
     imageFile: toImageFileRecord(image.imageFile),
   })),
-  catalogs: product.catalogs.map((entry: ProductInput["catalogs"][number]) => ({
+  catalogs: product.catalogs.map((entry: ProductInput['catalogs'][number]) => ({
     productId: entry.productId,
     catalogId: entry.catalogId,
     assignedAt: entry.assignedAt,
@@ -198,7 +200,7 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
 });
 
 export async function getProductMigrationTotal(direction: MigrationDirection): Promise<number> {
-  if (direction === "prisma-to-mongo") {
+  if (direction === 'prisma-to-mongo') {
     return prisma.product.count();
   }
   const mongo = await getMongoDb();
@@ -216,11 +218,11 @@ export async function migrateProductBatch({
   cursor?: string | null | undefined;
   batchSize?: number | undefined;
 }): Promise<MigrationBatchResult> {
-  if (direction === "prisma-to-mongo") {
+  if (direction === 'prisma-to-mongo') {
     const mongo = await getMongoDb();
     const products = await prisma.product.findMany({
       ...(cursor && { where: { id: { gt: cursor } } }),
-      orderBy: { id: "asc" },
+      orderBy: { id: 'asc' },
       take: batchSize,
       include: {
         images: { include: { imageFile: true } },
@@ -324,7 +326,7 @@ export async function migrateProductBatch({
       const rawLanguageIds = catalog.languageIds ?? [];
       if (Array.isArray(rawLanguageIds)) {
         for (const languageId of rawLanguageIds) {
-          if (typeof languageId === "string") {
+          if (typeof languageId === 'string') {
             languageIds.push(languageId);
           }
         }

@@ -1,11 +1,12 @@
-import { vi, beforeEach, afterAll } from "vitest";
-import { describe, it, expect } from "vitest";
-import { GET as GET_TREE } from "@/app/api/products/categories/tree/route";
-import { NextRequest } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from 'next/server';
+import { vi, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
+
+import { GET as GET_TREE } from '@/app/api/products/categories/tree/route';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock the api-handler module
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
     const params = ctx?.params instanceof Promise ? ctx.params : Promise.resolve(ctx?.params ?? {});
@@ -14,7 +15,7 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
 }));
 
 // Mock Prisma client
-vi.mock("@/shared/lib/db/prisma", () => ({
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     productCategory: {
       findMany: vi.fn(),
@@ -29,8 +30,8 @@ vi.mock("@/shared/lib/db/prisma", () => ({
 }));
 
 // Mock data provider
-vi.mock("@/features/products/server", () => ({
-  getProductDataProvider: vi.fn().mockResolvedValue("prisma"),
+vi.mock('@/features/products/server', () => ({
+  getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
   parseJsonBody: async (req: any, schema: any) => {
     try {
       const body = await req.json();
@@ -40,15 +41,15 @@ vi.mock("@/features/products/server", () => ({
       }
       return { ok: true, data: result.data };
     } catch {
-      return { ok: false, response: new Response("Invalid JSON", { status: 400 }) };
+      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
     }
   },
 }));
 
-describe("Product Categories API", () => {
+describe('Product Categories API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://mock";
+    process.env.DATABASE_URL = 'postgresql://mock';
   });
 
   afterAll(() => {
@@ -56,16 +57,16 @@ describe("Product Categories API", () => {
     delete process.env.DATABASE_URL;
   });
 
-  describe("GET /api/products/categories/tree", () => {
-    it("should return categories as a tree", async () => {
+  describe('GET /api/products/categories/tree', () => {
+    it('should return categories as a tree', async () => {
       const mockCategories = [
-        { id: "1", name: "Parent", catalogId: "cat1", parentId: null },
-        { id: "2", name: "Child", catalogId: "cat1", parentId: "1" },
+        { id: '1', name: 'Parent', catalogId: 'cat1', parentId: null },
+        { id: '2', name: 'Child', catalogId: 'cat1', parentId: '1' },
       ];
       vi.mocked(prisma.productCategory.findMany).mockResolvedValue(mockCategories as any);
 
       const res = await GET_TREE(
-        new NextRequest("http://localhost/api/products/categories/tree?catalogId=cat1")
+        new NextRequest('http://localhost/api/products/categories/tree?catalogId=cat1')
       );
       const data = await res.json();
       expect(res.status).toEqual(200);

@@ -1,27 +1,28 @@
-import fs from "fs/promises";
-import path from "path";
-import { getDiskPathFromPublicPath } from "@/features/files/utils/fileUploader";
+import fs from 'fs/promises';
+import path from 'path';
+
+import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
 
 const TOTAL_IMAGE_SLOTS = 15;
 
-const isDataUrl = (value: string): boolean => value.startsWith("data:");
+const isDataUrl = (value: string): boolean => value.startsWith('data:');
 
 const guessMimeType = (filepath: string): string => {
   const ext = path.extname(filepath).toLowerCase();
-  if (ext === ".png") return "image/png";
-  if (ext === ".webp") return "image/webp";
-  if (ext === ".gif") return "image/gif";
-  return "image/jpeg";
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  return 'image/jpeg';
 };
 
 const toDataUrl = (buffer: Buffer, mimetype: string): string =>
-  `data:${mimetype};base64,${buffer.toString("base64")}`;
+  `data:${mimetype};base64,${buffer.toString('base64')}`;
 
 const fetchAsDataUrl = async (url: string): Promise<string | null> => {
   const res = await fetch(url);
   if (!res.ok) return null;
   const buffer = Buffer.from(await res.arrayBuffer());
-  const contentType = res.headers.get("content-type") || "image/jpeg";
+  const contentType = res.headers.get('content-type') || 'image/jpeg';
   return toDataUrl(buffer, contentType);
 };
 
@@ -35,11 +36,11 @@ const readLocalAsDataUrl = async (
 };
 
 const normalizeImageLinks = (links?: string[] | null): string[] => {
-  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (!Array.isArray(links)) return next;
   links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link: string, index: number) => {
-    const value = typeof link === "string" ? link.trim() : "";
-    next[index] = value && !isDataUrl(value) ? value : "";
+    const value = typeof link === 'string' ? link.trim() : '';
+    next[index] = value && !isDataUrl(value) ? value : '';
   });
   return next;
 };
@@ -48,16 +49,16 @@ const normalizeImageBase64s = (
   base64s?: string[] | null,
   links?: string[] | null,
 ): string[] => {
-  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (Array.isArray(base64s)) {
     base64s.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
-      const trimmed = typeof value === "string" ? value.trim() : "";
-      next[index] = trimmed && isDataUrl(trimmed) ? trimmed : "";
+      const trimmed = typeof value === 'string' ? value.trim() : '';
+      next[index] = trimmed && isDataUrl(trimmed) ? trimmed : '';
     });
   }
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
-      const trimmed = typeof value === "string" ? value.trim() : "";
+      const trimmed = typeof value === 'string' ? value.trim() : '';
       if (trimmed && isDataUrl(trimmed) && !next[index]) {
         next[index] = trimmed;
       }
@@ -84,7 +85,7 @@ export const buildImageBase64Slots = async (
 
     const slotFilepath = slots[i]?.imageFile?.filepath ?? null;
     const slotMimetype = slots[i]?.imageFile?.mimetype ?? null;
-    const linkValue = imageLinks[i] ?? "";
+    const linkValue = imageLinks[i] ?? '';
 
     if (slotFilepath) {
       if (isDataUrl(slotFilepath)) {
@@ -104,13 +105,13 @@ export const buildImageBase64Slots = async (
     if (linkValue) {
       if (isDataUrl(linkValue)) {
         imageBase64s[i] = linkValue;
-        imageLinks[i] = "";
+        imageLinks[i] = '';
         continue;
       }
       if (/^https?:\/\//i.test(linkValue)) {
         const dataUrl = await fetchAsDataUrl(linkValue);
         if (dataUrl) imageBase64s[i] = dataUrl;
-      } else if (linkValue.startsWith("/")) {
+      } else if (linkValue.startsWith('/')) {
         const dataUrl = await readLocalAsDataUrl(linkValue, null);
         if (dataUrl) imageBase64s[i] = dataUrl;
       }

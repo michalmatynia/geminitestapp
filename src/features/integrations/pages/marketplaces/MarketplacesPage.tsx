@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { Button, SectionHeader, SectionPanel, useToast, ConfirmDialog } from "@/shared/ui";
-import Link from "next/link";
-import React, { useState } from "react";
-import { useSyncAllBaseImagesMutation } from "../../hooks/useIntegrationMutations";
+import Link from 'next/link';
+import React, { useState } from 'react';
 
-export const dynamic = "force-dynamic";
+import { Button, SectionHeader, SectionPanel, useToast, ConfirmDialog } from '@/shared/ui';
+
+import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutations';
 
 const marketplaces = [
   {
-    name: "Allegro",
+    name: 'Allegro',
     description:
-      "Manage Allegro listings, connections, mappings, and templates.",
-    href: "/admin/integrations/marketplaces/allegro",
+      'Manage Allegro listings, connections, mappings, and templates.',
+    href: '/admin/integrations/marketplaces/allegro',
   },
   {
-    name: "Category Mapper",
+    name: 'Category Mapper',
     description:
-      "Map external marketplace categories to your internal product categories for import/export.",
-    href: "/admin/integrations/marketplaces/category-mapper",
+      'Map external marketplace categories to your internal product categories for import/export.',
+    href: '/admin/integrations/marketplaces/category-mapper',
   },
 ];
 
@@ -31,11 +31,11 @@ export default function MarketplacesPage(): React.JSX.Element {
   const handleSyncBaseImages = async (): Promise<void> => {
     try {
       await syncMutation.mutateAsync();
-      toast("Base.com image sync queued.", { variant: "success" });
+      toast('Base.com image sync queued.', { variant: 'success' });
     } catch (error) {
       toast(
-        error instanceof Error ? error.message : "Failed to enqueue Base.com image sync",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to enqueue Base.com image sync',
+        { variant: 'error' }
       );
     } finally {
       setShowSyncConfirm(false);
@@ -81,7 +81,7 @@ export default function MarketplacesPage(): React.JSX.Element {
             onClick={() => setShowSyncConfirm(true)}
             disabled={syncMutation.isPending}
           >
-            {syncMutation.isPending ? "Queueing..." : "Sync all Base images"}
+            {syncMutation.isPending ? 'Queueing...' : 'Sync all Base images'}
           </Button>
         </div>
       </div>

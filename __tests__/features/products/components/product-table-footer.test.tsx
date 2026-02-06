@@ -1,10 +1,11 @@
-import { vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { ProductTableFooter } from "@/features/products/components/list/ProductTableFooter";
-import { Table } from "@tanstack/react-table";
-import { ToastProvider } from "@/shared/ui/toast";
+import { Table } from '@tanstack/react-table';
+import { render, screen } from '@testing-library/react';
+import { vi } from 'vitest';
 
-describe("ProductTableFooter Component", () => {
+import { ProductTableFooter } from '@/features/products/components/list/ProductTableFooter';
+import { ToastProvider } from '@/shared/ui/toast';
+
+describe('ProductTableFooter Component', () => {
   const mockTable = {
     getFilteredSelectedRowModel: () => ({ rows: [] }),
     getFilteredRowModel: () => ({ rows: { length: 100 } }),
@@ -18,28 +19,28 @@ describe("ProductTableFooter Component", () => {
     setActionError: vi.fn(),
   };
 
-  it("renders selection count", () => {
+  it('renders selection count', () => {
     render(
       <ToastProvider>
         <ProductTableFooter {...mockProps} />
       </ToastProvider>
     );
     expect(screen.getByText((_content, element) => {
-      return element?.textContent === "0 of 100 row(s) selected.";
+      return element?.textContent === '0 of 100 row(s) selected.';
     })).toBeInTheDocument();
   });
 
-  it("disables delete button when no selection", () => {
+  it('disables delete button when no selection', () => {
     render(
       <ToastProvider>
         <ProductTableFooter {...mockProps} />
       </ToastProvider>
     );
-    const deleteButton = screen.getByRole("button", { name: /Delete Selected/i });
+    const deleteButton = screen.getByRole('button', { name: /Delete Selected/i });
     expect(deleteButton).toBeDisabled();
   });
 
-  it("enables delete button when there is a selection", () => {
+  it('enables delete button when there is a selection', () => {
     const tableWithSelection = {
       ...mockTable,
       getFilteredSelectedRowModel: () => ({ rows: [{}, {}] }),
@@ -50,7 +51,7 @@ describe("ProductTableFooter Component", () => {
         <ProductTableFooter {...mockProps} table={tableWithSelection} />
       </ToastProvider>
     );
-    const deleteButton = screen.getByRole("button", { name: /Delete Selected/i });
+    const deleteButton = screen.getByRole('button', { name: /Delete Selected/i });
     expect(deleteButton).not.toBeDisabled();
   });
 });

@@ -1,15 +1,19 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Card, Checkbox, Label, Button, useToast } from "@/shared/ui";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
 
-export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = "page_builder_show_extract_placeholder";
-export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY = "page_builder_show_section_drop_placeholder";
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { Card, Checkbox, Label, Button, useToast } from '@/shared/ui';
+
+export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = 'page_builder_show_extract_placeholder';
+export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY = 'page_builder_show_section_drop_placeholder';
 
 export function PageBuilderSettingsPage(): React.JSX.Element {
-  const { data: settingsMap, isLoading } = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const settingsMap = settingsStore.map;
+  const isLoading = settingsStore.isLoading;
   const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
 
@@ -22,8 +26,8 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
   const [localSectionDropPlaceholder, setLocalSectionDropPlaceholder] = useState<boolean | null>(null);
 
   // Compute displayed values: use local if edited, otherwise derive from server
-  const showExtractPlaceholder = localExtractPlaceholder ?? (serverExtractValue === "true");
-  const showSectionDropPlaceholder = localSectionDropPlaceholder ?? (serverSectionDropValue !== "false");
+  const showExtractPlaceholder = localExtractPlaceholder ?? (serverExtractValue === 'true');
+  const showSectionDropPlaceholder = localSectionDropPlaceholder ?? (serverSectionDropValue !== 'false');
 
   const isDirty = localExtractPlaceholder !== null || localSectionDropPlaceholder !== null;
 
@@ -32,20 +36,20 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       await updateSettingsBulk.mutateAsync([
         {
           key: PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
-          value: showExtractPlaceholder ? "true" : "false",
+          value: showExtractPlaceholder ? 'true' : 'false',
         },
         {
           key: PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
-          value: showSectionDropPlaceholder ? "true" : "false",
+          value: showSectionDropPlaceholder ? 'true' : 'false',
         },
       ]);
       // Reset local state after successful save
       setLocalExtractPlaceholder(null);
       setLocalSectionDropPlaceholder(null);
-      toast("Settings saved successfully.", { variant: "success" });
+      toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save settings";
-      toast(message, { variant: "error" });
+      const message = error instanceof Error ? error.message : 'Failed to save settings';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -72,7 +76,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
           <label className="flex cursor-pointer items-center gap-3">
             <Checkbox
               checked={showSectionDropPlaceholder}
-              onCheckedChange={(checked: boolean | "indeterminate"): void => {
+              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                 setLocalSectionDropPlaceholder(checked === true);
               }}
             />
@@ -89,7 +93,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
           <label className="flex cursor-pointer items-center gap-3">
             <Checkbox
               checked={showExtractPlaceholder}
-              onCheckedChange={(checked: boolean | "indeterminate"): void => {
+              onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                 setLocalExtractPlaceholder(checked === true);
               }}
             />
@@ -116,7 +120,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
               Saving...
             </>
           ) : (
-            "Save Settings"
+            'Save Settings'
           )}
         </Button>
       </div>

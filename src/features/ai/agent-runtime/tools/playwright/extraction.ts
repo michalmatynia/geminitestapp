@@ -1,9 +1,9 @@
-import type { Page } from "playwright";
+import type { Page } from 'playwright';
 
 export const extractProductNames = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
-    const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
+    const normalize = (value: string): string => value.replace(/\s+/g, ' ').trim();
     const candidates: string[] = [];
     const seen = new Set<string>();
 
@@ -17,41 +17,41 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     };
 
     const productSelectors = [
-      "[data-product]",
-      "[data-product-name]",
-      "[data-testid*='product' i]",
-      "[itemtype*='Product']",
-      ".product",
-      ".product-item",
-      ".product-card",
-      ".product-tile",
-      ".product-grid > *",
-      ".collection-product",
-      ".collection-item",
-      ".grid-item",
-      "article",
-      "[class*='product' i]",
-      "[class*='card' i]",
-      "[class*='grid' i]",
-      "[class*='item' i]",
+      '[data-product]',
+      '[data-product-name]',
+      '[data-testid*=\'product\' i]',
+      '[itemtype*=\'Product\']',
+      '.product',
+      '.product-item',
+      '.product-card',
+      '.product-tile',
+      '.product-grid > *',
+      '.collection-product',
+      '.collection-item',
+      '.grid-item',
+      'article',
+      '[class*=\'product\' i]',
+      '[class*=\'card\' i]',
+      '[class*=\'grid\' i]',
+      '[class*=\'item\' i]',
     ];
     const nameSelectors = [
-      "[data-product-name]",
-      "[data-testid*='title' i]",
-      "[itemprop='name']",
-      ".product-title",
-      ".product-name",
-      ".product-card__title",
-      ".card__heading",
-      ".product-item__title",
-      ".card-title",
-      ".card__title",
-      ".item-title",
-      ".listing-title",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
+      '[data-product-name]',
+      '[data-testid*=\'title\' i]',
+      '[itemprop=\'name\']',
+      '.product-title',
+      '.product-name',
+      '.product-card__title',
+      '.card__heading',
+      '.product-item__title',
+      '.card-title',
+      '.card__title',
+      '.item-title',
+      '.listing-title',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
     ];
 
     const parseJson = (value: string | null): unknown => {
@@ -70,42 +70,42 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
         node.forEach(collectFromSchema);
         return;
       }
-      if (typeof node !== "object") return;
+      if (typeof node !== 'object') return;
       const record = node as Record<string, unknown>;
-      const typeValue = record["@type"];
+      const typeValue = record['@type'];
       const typeList = Array.isArray(typeValue)
-        ? typeValue.filter((value: unknown): value is string => typeof value === "string")
-        : typeof typeValue === "string"
+        ? typeValue.filter((value: unknown): value is string => typeof value === 'string')
+        : typeof typeValue === 'string'
           ? [typeValue]
           : [];
       const typeNames = typeList.map((value: string) => value.toLowerCase());
       if (
-        typeNames.includes("product") ||
-        typeNames.includes("productgroup") ||
-        typeNames.includes("productmodel")
+        typeNames.includes('product') ||
+        typeNames.includes('productgroup') ||
+        typeNames.includes('productmodel')
       ) {
-        if (typeof record.name === "string") {
+        if (typeof record.name === 'string') {
           pushName(record.name);
         }
       }
-      if (typeNames.includes("itemlist") && Array.isArray(record.itemListElement)) {
+      if (typeNames.includes('itemlist') && Array.isArray(record.itemListElement)) {
         record.itemListElement.forEach((entry: unknown) => {
-          if (!entry || typeof entry !== "object") return;
+          if (!entry || typeof entry !== 'object') return;
           const itemRecord = entry as Record<string, unknown>;
           const item = itemRecord.item;
-          if (typeof itemRecord.name === "string") {
+          if (typeof itemRecord.name === 'string') {
             pushName(itemRecord.name);
           }
-          if (item && typeof item === "object") {
+          if (item && typeof item === 'object') {
             const itemObj = item as Record<string, unknown>;
-            if (typeof itemObj.name === "string") {
+            if (typeof itemObj.name === 'string') {
               pushName(itemObj.name);
             }
           }
         });
       }
-      if (record["@graph"]) {
-        collectFromSchema(record["@graph"]);
+      if (record['@graph']) {
+        collectFromSchema(record['@graph']);
       }
     };
 
@@ -120,10 +120,10 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
             break;
           }
         }
-        if (element.getAttribute("data-product-name")) {
-          pushName(element.getAttribute("data-product-name"));
+        if (element.getAttribute('data-product-name')) {
+          pushName(element.getAttribute('data-product-name'));
         }
-        const img = element.querySelector<HTMLImageElement>("img[alt]");
+        const img = element.querySelector<HTMLImageElement>('img[alt]');
         if (img?.alt) {
           pushName(img.alt);
         }
@@ -131,20 +131,20 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     }
 
     document
-      .querySelectorAll("a[href*='/product' i], a[href*='product' i]")
+      .querySelectorAll('a[href*=\'/product\' i], a[href*=\'product\' i]')
       .forEach((link: Element) => {
         if (!(link instanceof HTMLElement)) return;
         const text = link.innerText;
         if (text) pushName(text);
       });
 
-    document.querySelectorAll("h2, h3, h4").forEach((heading: Element) => {
+    document.querySelectorAll('h2, h3, h4').forEach((heading: Element) => {
       if (!(heading instanceof HTMLElement)) return;
       pushName(heading.innerText);
     });
 
     document
-      .querySelectorAll("script[type='application/ld+json']")
+      .querySelectorAll('script[type=\'application/ld+json\']')
       .forEach((script: Element) => {
         const parsed = parseJson(script.textContent);
         if (parsed) {
@@ -162,7 +162,7 @@ export const extractProductNamesFromSelectors = async (
 ): Promise<string[]> => {
   if (!page || selectors.length === 0) return [];
   return page.evaluate((selectorsParam: string[]) => {
-    const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
+    const normalize = (value: string): string => value.replace(/\s+/g, ' ').trim();
     const candidates: string[] = [];
     const seen = new Set<string>();
 
@@ -181,10 +181,10 @@ export const extractProductNamesFromSelectors = async (
         const element = node;
         const text = element.innerText || element.textContent;
         if (text) pushName(text);
-        if (element.getAttribute("data-product-name")) {
-          pushName(element.getAttribute("data-product-name"));
+        if (element.getAttribute('data-product-name')) {
+          pushName(element.getAttribute('data-product-name'));
         }
-        const img = element.querySelector<HTMLImageElement>("img[alt]");
+        const img = element.querySelector<HTMLImageElement>('img[alt]');
         if (img?.alt) {
           pushName(img.alt);
         }
@@ -199,23 +199,23 @@ export const extractEmailsFromDom = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
     const emails = new Set<string>();
-    document.querySelectorAll("a[href^='mailto:']").forEach((link: Element) => {
+    document.querySelectorAll('a[href^=\'mailto:\']').forEach((link: Element) => {
       if (!(link instanceof HTMLAnchorElement)) return;
-      const href = link.getAttribute("href") || "";
-      const email = href.replace(/^mailto:/i, "").split("?")[0]?.trim();
+      const href = link.getAttribute('href') || '';
+      const email = href.replace(/^mailto:/i, '').split('?')[0]?.trim();
       if (email) emails.add(email);
     });
     document
-      .querySelectorAll("[data-email], [data-mail], [data-contact]")
+      .querySelectorAll('[data-email], [data-mail], [data-contact]')
       .forEach((node: Element) => {
         if (!(node instanceof HTMLElement)) return;
         const element = node;
         const value =
-          element.getAttribute("data-email") ||
-          element.getAttribute("data-mail") ||
-          element.getAttribute("data-contact") ||
-          "";
-        if (value.includes("@")) {
+          element.getAttribute('data-email') ||
+          element.getAttribute('data-mail') ||
+          element.getAttribute('data-contact') ||
+          '';
+        if (value.includes('@')) {
           value
             .split(/[,\s]+/)
             .map((item: string) => item.trim())
@@ -230,26 +230,26 @@ export const extractEmailsFromDom = async (page: Page): Promise<string[]> => {
 export const waitForProductContent = async (page: Page): Promise<void> => {
   if (!page) return;
   const productSelectors = [
-    "[data-product]",
-    "[data-product-name]",
-    "[data-testid*='product' i]",
-    "[itemtype*='Product']",
-    ".product",
-    ".product-item",
-    ".product-card",
-    ".product-tile",
-    ".product-grid > *",
-    ".collection-product",
-    ".collection-item",
-    ".grid-item",
-    "article",
-    "[class*='product' i]",
-    "[class*='card' i]",
-    "[class*='grid' i]",
-    "[class*='item' i]",
+    '[data-product]',
+    '[data-product-name]',
+    '[data-testid*=\'product\' i]',
+    '[itemtype*=\'Product\']',
+    '.product',
+    '.product-item',
+    '.product-card',
+    '.product-tile',
+    '.product-grid > *',
+    '.collection-product',
+    '.collection-item',
+    '.grid-item',
+    'article',
+    '[class*=\'product\' i]',
+    '[class*=\'card\' i]',
+    '[class*=\'grid\' i]',
+    '[class*=\'item\' i]',
   ];
   try {
-    await page.waitForLoadState("networkidle", { timeout: 15000 });
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
   } catch {
     // Ignore network idle timeouts.
   }
@@ -286,9 +286,9 @@ export const findProductListingUrls = async (page: Page): Promise<string[]> => {
       /(shop|store|product|collection|catalog|menu|shopall|shop-all|merch)/i;
     const origin = location.origin;
     const urls = new Set<string>();
-    document.querySelectorAll("a[href]").forEach((link: Element) => {
+    document.querySelectorAll('a[href]').forEach((link: Element) => {
       const href = (link as HTMLAnchorElement).href;
-      const text = (link as HTMLElement).innerText || "";
+      const text = (link as HTMLElement).innerText || '';
       if (!href || !href.startsWith(origin)) return;
       if (keywords.test(href) || keywords.test(text)) {
         urls.add(href);

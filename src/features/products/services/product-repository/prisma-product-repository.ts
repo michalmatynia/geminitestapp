@@ -1,17 +1,18 @@
-import "server-only";
+import 'server-only';
 
-import { Prisma } from "@prisma/client";
-import prisma from "@/shared/lib/db/prisma";
-import { conflictError } from "@/shared/errors/app-error";
-import type { CatalogRecord, ProductRecord } from "@/features/products/types";
-import type { ImageFileRecord } from "@/shared/types/files";
-import type { ProductParameterValue } from "@/features/products/types";
+import { Prisma } from '@prisma/client';
+
+import type { CatalogRecord, ProductRecord } from '@/features/products/types';
+import type { ProductParameterValue } from '@/features/products/types';
 import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from "@/features/products/types/services/product-repository";
+} from '@/features/products/types/services/product-repository';
+import { conflictError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
+import type { ImageFileRecord } from '@/shared/types/files';
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
@@ -80,7 +81,7 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   }
 
   if (filters.catalogId) {
-    if (filters.catalogId === "unassigned") {
+    if (filters.catalogId === 'unassigned') {
       where.catalogs = { none: {} };
     } else {
       where.catalogs = { some: { catalogId: filters.catalogId } };
@@ -211,7 +212,7 @@ export const prismaProductRepository: ProductRepository = {
       include: {
         images: {
           include: { imageFile: true },
-          orderBy: { assignedAt: "desc" },
+          orderBy: { assignedAt: 'desc' },
         },
         catalogs: {
           include: {
@@ -228,7 +229,7 @@ export const prismaProductRepository: ProductRepository = {
         tags: { select: { tagId: true } },
         producers: { select: { producerId: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
@@ -250,9 +251,7 @@ export const prismaProductRepository: ProductRepository = {
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categories: product.categories.map((c: { categoryId: string }) => ({
-        categoryId: c.categoryId,
-      })),
+      categoryId: product.categories[0]?.categoryId ?? null,
       tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: product.producers.map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -271,7 +270,7 @@ export const prismaProductRepository: ProductRepository = {
       include: {
         images: {
           include: { imageFile: true },
-          orderBy: { assignedAt: "desc" },
+          orderBy: { assignedAt: 'desc' },
         },
         catalogs: {
           include: {
@@ -307,9 +306,7 @@ export const prismaProductRepository: ProductRepository = {
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categories: product.categories.map((c: { categoryId: string }) => ({
-        categoryId: c.categoryId,
-      })),
+      categoryId: product.categories[0]?.categoryId ?? null,
       tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: product.producers.map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -344,7 +341,7 @@ export const prismaProductRepository: ProductRepository = {
         select: { id: true },
       });
       if (existing) {
-        throw conflictError("A product with this SKU already exists.", {
+        throw conflictError('A product with this SKU already exists.', {
           sku: data.sku,
           productId: existing.id,
         });
@@ -361,11 +358,11 @@ export const prismaProductRepository: ProductRepository = {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002" &&
+        error.code === 'P2002' &&
         Array.isArray(error.meta?.target) &&
-        error.meta?.target.includes("sku")
+        error.meta?.target.includes('sku')
       ) {
-        throw conflictError("A product with this SKU already exists.", {
+        throw conflictError('A product with this SKU already exists.', {
           sku: data.sku ?? null,
         });
       }
@@ -403,7 +400,7 @@ export const prismaProductRepository: ProductRepository = {
       select: { id: true },
     });
     if (existingSku) {
-      throw conflictError("A product with this SKU already exists.", {
+      throw conflictError('A product with this SKU already exists.', {
         sku,
         productId: existingSku.id,
       });
@@ -465,19 +462,17 @@ export const prismaProductRepository: ProductRepository = {
     });
   },
 
-  async replaceProductCategories(productId: string, categoryIds: string[]) {
+  async replaceProductCategory(productId: string, categoryId: string | null) {
     await prisma.productCategoryAssignment.deleteMany({ where: { productId } });
-    if (categoryIds.length === 0) return;
-    const uniqueIds = Array.from(new Set(categoryIds));
-    const existing = await prisma.productCategory.findMany({
-      where: { id: { in: uniqueIds } },
+    const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
+    if (!normalized) return;
+    const existing = await prisma.productCategory.findUnique({
+      where: { id: normalized },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await prisma.productCategoryAssignment.createMany({
-      data: validIds.map((categoryId: string) => ({ productId, categoryId })),
+    if (!existing) return;
+    await prisma.productCategoryAssignment.create({
+      data: { productId, categoryId: normalized },
     });
   },
 

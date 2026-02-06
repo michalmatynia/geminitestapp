@@ -1,4 +1,4 @@
-import "server-only";
+import 'server-only';
 
 import {
   isRetryableError,
@@ -6,7 +6,7 @@ import {
   externalServiceError,
   timeoutError,
   wrapError,
-} from "@/shared/errors/app-error";
+} from '@/shared/errors/app-error';
 
 // Local type definition to avoid importing from features layer
 type LogSystemEventParams = {
@@ -49,7 +49,7 @@ export type RetryOptions = {
   logRetries?: boolean;
 };
 
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, "timeoutMs" | "onRetry" | "isRetryable" | "source">> = {
+const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'timeoutMs' | 'onRetry' | 'isRetryable' | 'source'>> = {
   maxAttempts: 3,
   initialDelayMs: 1000,
   maxDelayMs: 30000,
@@ -63,7 +63,7 @@ const DEFAULT_OPTIONS: Required<Omit<RetryOptions, "timeoutMs" | "onRetry" | "is
  */
 function calculateDelay(
   attempt: number,
-  options: Required<Omit<RetryOptions, "timeoutMs" | "onRetry" | "isRetryable" | "source">>
+  options: Required<Omit<RetryOptions, 'timeoutMs' | 'onRetry' | 'isRetryable' | 'source'>>
 ): number {
   const exponentialDelay =
     options.initialDelayMs * Math.pow(options.backoffMultiplier, attempt - 1);
@@ -103,7 +103,7 @@ function withTimeout<T>(
   });
 }
 
-import { delay } from "./time-utils";
+import { delay } from './time-utils';
 
 /**
  * Executes an async operation with automatic retries on failure.
@@ -146,7 +146,7 @@ export async function withRetry<T>(
     try {
       // Execute with optional timeout
       const result = timeoutMs
-        ? await withTimeout(operation(), timeoutMs, source ?? "operation")
+        ? await withTimeout(operation(), timeoutMs, source ?? 'operation')
         : await operation();
 
       return result;
@@ -169,9 +169,9 @@ export async function withRetry<T>(
       // Log retry attempt
       if (logRetries) {
         void logSystemEvent({
-          level: "warn",
+          level: 'warn',
           message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
-          source: source ?? "retry",
+          source: source ?? 'retry',
           error,
           context: {
             attempt,
@@ -296,9 +296,9 @@ export async function withCircuitBreaker<T>(
     if (state.failures >= failureThreshold) {
       state.isOpen = true;
       void logSystemEvent({
-        level: "error",
+        level: 'error',
         message: `Circuit breaker opened for ${circuitId} after ${state.failures} failures`,
-        source: "circuit-breaker",
+        source: 'circuit-breaker',
         context: {
           circuitId,
           failures: state.failures,

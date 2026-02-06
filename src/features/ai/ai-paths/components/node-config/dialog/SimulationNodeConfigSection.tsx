@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
 
 
 
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { DB_COLLECTION_OPTIONS } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type SimulationNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -19,19 +19,19 @@ export function SimulationNodeConfigSection({
   updateSelectedNodeConfig,
   handleRunSimulation,
 }: SimulationNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "simulation") return null;
+  if (selectedNode.type !== 'simulation') return null;
 
   const simulationConfig = selectedNode.config?.simulation ?? {
-    productId: "",
-    entityType: "product",
-    entityId: "",
+    productId: '',
+    entityType: 'product',
+    entityId: '',
   };
   const simulationEntityValue =
     simulationConfig.entityId?.trim()
       ? simulationConfig.entityId
-      : simulationConfig.productId ?? "";
+      : simulationConfig.productId ?? '';
   const trimmedEntityId = simulationEntityValue.trim();
-  const looksLikeUuid = trimmedEntityId.includes("-");
+  const looksLikeUuid = trimmedEntityId.includes('-');
   const idLength = trimmedEntityId.length;
   const showIdHint =
     Boolean(trimmedEntityId) &&
@@ -42,7 +42,7 @@ export function SimulationNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Collection Type</Label>
         <Select
-          value={simulationConfig.entityType ?? "products"}
+          value={simulationConfig.entityType ?? 'products'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               simulation: {
@@ -56,7 +56,7 @@ export function SimulationNodeConfigSection({
             <SelectValue placeholder="Select collection" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-            {DB_COLLECTION_OPTIONS.filter((opt: { value: string }): boolean => opt.value !== "custom").map((option: { label: string; value: string }): React.JSX.Element => (
+            {DB_COLLECTION_OPTIONS.filter((opt: { value: string }): boolean => opt.value !== 'custom').map((option: { label: string; value: string }): React.JSX.Element => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -86,7 +86,7 @@ export function SimulationNodeConfigSection({
         ) : null}
       </div>
       <p className="text-[11px] text-gray-500">
-        Used to simulate {simulationConfig.entityType ?? "products"} collection context.
+        Used to simulate {simulationConfig.entityType ?? 'products'} collection context.
       </p>
       <Button
         className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"

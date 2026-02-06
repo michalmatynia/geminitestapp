@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 interface WebSocketSyncOptions {
   url: string;
@@ -29,12 +29,12 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
           });
         }
       } catch (error: unknown) {
-        console.warn("WebSocket message parsing failed:", error);
+        console.warn('WebSocket message parsing failed:', error);
       }
     };
 
     ws.onerror = (error: Event): void => {
-      console.warn("WebSocket error:", error);
+      console.warn('WebSocket error:', error);
     };
 
     return (): void => {
@@ -48,9 +48,9 @@ export function useAiJobWebSocketSync(enabled: boolean = true): void {
   return useWebSocketSync({
     url: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ai-jobs/ws`,
     queryKeys: [
-      ["ai-jobs"],
-      ["product-ai-jobs"],
-      ["chatbot-jobs"],
+      ['ai-jobs'],
+      ['product-ai-jobs'],
+      ['chatbot-jobs'],
     ],
     enabled,
   });

@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useMemo } from "react";
-import { ItemLibrary, useToast } from "@/shared/ui";
-import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
-import { DEFAULT_MODELS } from "@/features/ai/ai-paths/lib";
-import { AgentPersonaSettingsForm } from "@/features/ai/agentcreator/components/AgentPersonaSettingsForm";
-import { buildAgentPersonaSettings, createAgentPersonaId } from "@/features/ai/agentcreator/utils/personas";
-import { useAgentPersonas, useSaveAgentPersonasMutation } from "@/features/ai/agentcreator/hooks/useAgentPersonas";
-import type { AgentPersona } from "@/features/ai/agentcreator/types";
+import Link from 'next/link';
+import { useMemo } from 'react';
+
+import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
+import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
+import type { AgentPersona } from '@/features/ai/agentcreator/types';
+import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
+import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { ItemLibrary, useToast } from '@/shared/ui';
 
 const dedupeModels = (models: string[]): string[] => {
   const seen = new Set<string>();
@@ -34,7 +35,7 @@ export function AgentPersonasPage(): React.JSX.Element {
   const handleSavePersona = async (draft: Partial<AgentPersona>): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
-      toast("Persona name is required.", { variant: "error" });
+      toast('Persona name is required.', { variant: 'error' });
       return;
     }
 
@@ -51,17 +52,17 @@ export function AgentPersonasPage(): React.JSX.Element {
 
     const next = existing
       ? personas.map((persona: AgentPersona) =>
-          persona.id === existing.id ? nextPersona : persona
-        )
+        persona.id === existing.id ? nextPersona : persona
+      )
       : [...personas, nextPersona];
 
     try {
       await savePersonas({ personas: next });
-      toast(existing ? "Persona updated." : "Persona created.", { variant: "success" });
+      toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to save personas.";
-      toast(errorMessage, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save personas.';
+      toast(errorMessage, { variant: 'error' });
     }
   };
 
@@ -69,11 +70,11 @@ export function AgentPersonasPage(): React.JSX.Element {
     const next = personas.filter((item: AgentPersona) => item.id !== persona.id);
     try {
       await savePersonas({ personas: next });
-      toast("Persona deleted.", { variant: "success" });
+      toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to delete persona.";
-      toast(errorMessage, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to delete persona.';
+      toast(errorMessage, { variant: 'error' });
     }
   };
 
@@ -93,32 +94,32 @@ export function AgentPersonasPage(): React.JSX.Element {
         </Link>
       )}
       buildDefaultItem={() => ({
-        name: "",
-        description: "",
+        name: '',
+        description: '',
         settings: buildAgentPersonaSettings(),
       })}
       renderItemTags={(persona: AgentPersona) => {
         const settings = persona.settings;
         const labels: Array<[string, string | null | undefined]> = [
-          ["Executor", settings.executorModel],
-          ["Planner", settings.plannerModel],
-          ["Self-check", settings.selfCheckModel],
-          ["Extraction", settings.extractionValidationModel],
-          ["Tool router", settings.toolRouterModel],
-          ["Memory val.", settings.memoryValidationModel],
-          ["Memory sum.", settings.memorySummarizationModel],
-          ["Loop guard", settings.loopGuardModel],
-          ["Approval", settings.approvalGateModel],
-          ["Selector", settings.selectorInferenceModel],
-          ["Normalize", settings.outputNormalizationModel],
+          ['Executor', settings.executorModel],
+          ['Planner', settings.plannerModel],
+          ['Self-check', settings.selfCheckModel],
+          ['Extraction', settings.extractionValidationModel],
+          ['Tool router', settings.toolRouterModel],
+          ['Memory val.', settings.memoryValidationModel],
+          ['Memory sum.', settings.memorySummarizationModel],
+          ['Loop guard', settings.loopGuardModel],
+          ['Approval', settings.approvalGateModel],
+          ['Selector', settings.selectorInferenceModel],
+          ['Normalize', settings.outputNormalizationModel],
         ];
 
-        return labels.map(([label, value]: [string, string | null | undefined]) => `${label}: ${value?.trim() || "default"}`);
+        return labels.map(([label, value]: [string, string | null | undefined]) => `${label}: ${value?.trim() || 'default'}`);
       }}
       renderExtraFields={(draft: Partial<AgentPersona>, onChange: (updates: Partial<AgentPersona>) => void) => (
         <AgentPersonaSettingsForm
           settings={draft.settings || buildAgentPersonaSettings()}
-          onChange={(settings: AgentPersona["settings"]) => onChange({ settings })}
+          onChange={(settings: AgentPersona['settings']) => onChange({ settings })}
           modelOptions={mergedModels}
         />
       )}

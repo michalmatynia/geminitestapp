@@ -17,7 +17,7 @@ import { NoteUpdateInput } from "@/shared/types/notes";
 import {
   enforceAiPathsActionRateLimit,
   ensureAiPathsPermission,
-  requireAiPathsAccess,
+  requireAiPathsAccessOrInternal,
 } from "@/features/ai/ai-paths/server";
 
 const updateSchema = z.object({
@@ -67,8 +67,10 @@ const applyAppendMode = (
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const access = await requireAiPathsAccess();
-    enforceAiPathsActionRateLimit(access, "entity-update");
+    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+    if (!isInternal) {
+      enforceAiPathsActionRateLimit(access, "entity-update");
+    }
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.update",
     });

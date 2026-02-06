@@ -1,5 +1,6 @@
-import { JSX } from "react";
-import { ProductPublicPage } from "@/features/products/server";
+import { JSX } from 'react';
+
+import { ProductPublicPage } from '@/features/products/server';
 
 export default async function Page({
   params,

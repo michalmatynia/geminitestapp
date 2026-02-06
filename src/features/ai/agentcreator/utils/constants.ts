@@ -1,4 +1,4 @@
-import type { AgentSettingsPayload, ModelTaskRule } from "@/shared/types/chatbot";
+import type { AgentSettingsPayload, ModelTaskRule } from '@/shared/types/chatbot';
 
 export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   main: { preferLarge: true, minSize: 7, preferReasoning: true },
@@ -15,20 +15,20 @@ export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
 };
 
 export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
-  agentBrowser: "chromium",
+  agentBrowser: 'chromium',
   runHeadless: true,
   ignoreRobotsTxt: false,
   requireHumanApproval: false,
-  memoryValidationModel: "",
-  plannerModel: "",
-  selfCheckModel: "",
-  extractionValidationModel: "",
-  toolRouterModel: "",
-  loopGuardModel: "",
-  approvalGateModel: "",
-  memorySummarizationModel: "",
-  selectorInferenceModel: "",
-  outputNormalizationModel: "",
+  memoryValidationModel: '',
+  plannerModel: '',
+  selfCheckModel: '',
+  extractionValidationModel: '',
+  toolRouterModel: '',
+  loopGuardModel: '',
+  approvalGateModel: '',
+  memorySummarizationModel: '',
+  selectorInferenceModel: '',
+  outputNormalizationModel: '',
   maxSteps: 12,
   maxStepAttempts: 2,
   maxReplanCalls: 2,

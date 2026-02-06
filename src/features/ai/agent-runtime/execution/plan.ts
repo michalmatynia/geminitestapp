@@ -1,30 +1,30 @@
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
+import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
+import {
+  buildPlanWithLLM,
+  buildResumePlanReview,
+} from '@/features/ai/agent-runtime/planning/llm';
+import {
+  buildBranchStepsFromAlternatives,
+  decideNextAction,
+} from '@/features/ai/agent-runtime/planning/utils';
+import type { PlanHierarchy } from '@/features/ai/agent-runtime/planning/utils';
 import type {
   AgentDecision,
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
-import {
-  buildBranchStepsFromAlternatives,
-  decideNextAction,
-} from "@/features/ai/agent-runtime/planning/utils";
-import {
-  buildPlanWithLLM,
-  buildResumePlanReview,
-} from "@/features/ai/agent-runtime/planning/llm";
-import { getBrowserContextSummary } from "@/features/ai/agent-runtime/browsing/context";
-import { persistCheckpoint } from "@/features/ai/agent-runtime/memory/checkpoint";
-import type { PlanHierarchy } from "@/features/ai/agent-runtime/planning/utils";
+} from '@/features/ai/agent-runtime/types/agent';
 
 type CheckpointState = ReturnType<
-  typeof import("@/features/ai/agent-runtime/memory/checkpoint").parseCheckpoint
+  typeof import('@/features/ai/agent-runtime/memory/checkpoint').parseCheckpoint
 >;
 
 type PlanInitializationResult = {
   planSteps: PlanStep[];
   planHierarchy: PlanHierarchy | null;
-  taskType: PlannerMeta["taskType"] | null;
+  taskType: PlannerMeta['taskType'] | null;
   decision: AgentDecision;
   stepIndex: number;
   summaryCheckpoint: number;
@@ -60,7 +60,7 @@ export async function initializePlanState(
 
   let planSteps: PlanStep[] = [];
   let planHierarchy: PlanHierarchy | null = null;
-  let taskType: PlannerMeta["taskType"] | null = null;
+  let taskType: PlannerMeta['taskType'] | null = null;
   let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
   let stepIndex = 0;
   let summaryCheckpoint = checkpoint?.summaryCheckpoint ?? 0;
@@ -80,23 +80,23 @@ export async function initializePlanState(
         checkpointPreferences.requireHumanApproval
       );
     }
-    if (typeof checkpointPreferences?.plannerModel === "string") {
+    if (typeof checkpointPreferences?.plannerModel === 'string') {
       nextPreferences.plannerModel = checkpointPreferences.plannerModel;
     }
-    if (typeof checkpointPreferences?.selfCheckModel === "string") {
+    if (typeof checkpointPreferences?.selfCheckModel === 'string') {
       nextPreferences.selfCheckModel = checkpointPreferences.selfCheckModel;
     }
-    if (typeof checkpointPreferences?.loopGuardModel === "string") {
+    if (typeof checkpointPreferences?.loopGuardModel === 'string') {
       nextPreferences.loopGuardModel = checkpointPreferences.loopGuardModel;
     }
-    if (typeof checkpointPreferences?.approvalGateModel === "string") {
+    if (typeof checkpointPreferences?.approvalGateModel === 'string') {
       nextPreferences.approvalGateModel = checkpointPreferences.approvalGateModel;
     }
-    if (typeof checkpointPreferences?.memorySummarizationModel === "string") {
+    if (typeof checkpointPreferences?.memorySummarizationModel === 'string') {
       nextPreferences.memorySummarizationModel =
         checkpointPreferences.memorySummarizationModel;
     }
-    if (typeof checkpoint.summaryCheckpoint === "number") {
+    if (typeof checkpoint.summaryCheckpoint === 'number') {
       summaryCheckpoint = checkpoint.summaryCheckpoint;
     }
     let resumedWithNewPlan = false;
@@ -122,16 +122,16 @@ export async function initializePlanState(
         stepIndex = 0;
         resumedWithNewPlan = true;
         taskType = resumeReview.meta?.taskType ?? taskType;
-        await logAgentAudit(run.id, "warning", "Resume plan refreshed.", {
-          type: "resume-plan",
+        await logAgentAudit(run.id, 'warning', 'Resume plan refreshed.', {
+          type: 'resume-plan',
           steps: planSteps,
           reason: resumeReview.reason,
           plannerMeta: resumeReview.meta ?? null,
           hierarchy: resumeReview.hierarchy ?? null,
         });
       } else {
-        await logAgentAudit(run.id, "info", "Resume summary prepared.", {
-          type: "resume-summary",
+        await logAgentAudit(run.id, 'info', 'Resume summary prepared.', {
+          type: 'resume-summary',
           summary: resumeReview.summary ?? null,
           reason: resumeReview.reason,
           plannerMeta: resumeReview.meta ?? null,
@@ -159,17 +159,17 @@ export async function initializePlanState(
       stepIndex = activeIndex === -1 ? 0 : activeIndex;
     } else {
       const firstPending = planSteps.findIndex(
-        (step: PlanStep) => step.status !== "completed"
+        (step: PlanStep) => step.status !== 'completed'
       );
       stepIndex = firstPending === -1 ? 0 : firstPending;
     }
     decision = {
-      action: "tool",
-      reason: "Resuming from checkpoint.",
-      toolName: "playwright",
+      action: 'tool',
+      reason: 'Resuming from checkpoint.',
+      toolName: 'playwright',
     };
-    await logAgentAudit(run.id, "info", "Checkpoint loaded.", {
-      type: "checkpoint-load",
+    await logAgentAudit(run.id, 'info', 'Checkpoint loaded.', {
+      type: 'checkpoint-load',
       activeStepId: checkpoint.activeStepId ?? null,
       stepCount: planSteps.length,
     });
@@ -188,8 +188,8 @@ export async function initializePlanState(
     planHierarchy = planResult.hierarchy ?? null;
     taskType = planResult.meta?.taskType ?? null;
     if (planSteps.length > 0) {
-      await logAgentAudit(run.id, "info", "Plan created.", {
-        type: "plan",
+      await logAgentAudit(run.id, 'info', 'Plan created.', {
+        type: 'plan',
         steps: planSteps,
         source: planResult.source,
         hierarchy: planHierarchy,
@@ -201,10 +201,10 @@ export async function initializePlanState(
         Math.min(6, settings.maxSteps)
       );
       if (branchAlternatives.length > 0) {
-        await logAgentAudit(run.id, "info", "Plan branch created.", {
-          type: "plan-branch",
+        await logAgentAudit(run.id, 'info', 'Plan branch created.', {
+          type: 'plan-branch',
           branchSteps: branchAlternatives,
-          reason: "planner-alternatives",
+          reason: 'planner-alternatives',
           plannerMeta: planResult.meta ?? null,
         });
       }

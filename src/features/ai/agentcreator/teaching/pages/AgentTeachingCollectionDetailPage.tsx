@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import React from "react";
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from "@/shared/ui";
-import { Trash2 } from "lucide-react";
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from "@/shared/types/agent-teaching";
-import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useTeachingCollections } from "../hooks/useAgentTeaching";
+import { Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import React from 'react';
+
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
+
+import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useTeachingCollections } from '../hooks/useAgentTeaching';
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -23,12 +25,12 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
   const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
 
-  const [text, setText] = React.useState("");
-  const [title, setTitle] = React.useState("");
-  const [source, setSource] = React.useState("");
-  const [tags, setTags] = React.useState("");
+  const [text, setText] = React.useState('');
+  const [title, setTitle] = React.useState('');
+  const [source, setSource] = React.useState('');
+  const [tags, setTags] = React.useState('');
   const [docToDelete, setDocToDelete] = React.useState<AgentTeachingEmbeddingDocumentListItem | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [searchTopK, setSearchTopK] = React.useState(8);
   const [searchMinScore, setSearchMinScore] = React.useState(0.15);
   const [searching, setSearching] = React.useState(false);
@@ -41,7 +43,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
     if (!collectionId) return;
     const trimmed = text.trim();
     if (!trimmed) {
-      toast("Text is required.", { variant: "error" });
+      toast('Text is required.', { variant: 'error' });
       return;
     }
     try {
@@ -51,17 +53,17 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         title: title.trim() || null,
         source: source.trim() || null,
         tags: tags
-          .split(",")
+          .split(',')
           .map((t: string) => t.trim())
           .filter(Boolean),
       });
-      toast("Document embedded and saved.", { variant: "success" });
-      setText("");
-      setTitle("");
-      setSource("");
-      setTags("");
+      toast('Document embedded and saved.', { variant: 'success' });
+      setText('');
+      setTitle('');
+      setSource('');
+      setTags('');
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to add document.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to add document.', { variant: 'error' });
     }
   };
 
@@ -75,8 +77,8 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
       const res = await fetch(
         `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/search`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             queryText,
             topK: searchTopK,
@@ -86,12 +88,12 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Search failed.");
+        throw new Error(data?.error || 'Search failed.');
       }
       const data = (await res.json()) as { sources?: AgentTeachingChatSource[] };
       setSearchResults(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
-      setSearchError(error instanceof Error ? error.message : "Search failed.");
+      setSearchError(error instanceof Error ? error.message : 'Search failed.');
       setSearchResults([]);
     } finally {
       setSearching(false);
@@ -101,7 +103,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10 space-y-6">
       <SectionHeader
-        title={collection ? collection.name : "Collection"}
+        title={collection ? collection.name : 'Collection'}
         description="Manage documents (original text + embedding vectors)."
         eyebrow={(
           <Link href="/admin/agentcreator/teaching/collections" className="text-blue-300 hover:text-blue-200">
@@ -140,7 +142,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
           />
           <div className="flex justify-end">
             <Button type="button" onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
-              {adding ? "Embedding..." : "Add to collection"}
+              {adding ? 'Embedding...' : 'Add to collection'}
             </Button>
           </div>
           <div className="text-[11px] text-gray-500">
@@ -162,7 +164,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
             onClick={() => void handleSearch()}
             disabled={searching || !collectionId || !searchQuery.trim()}
           >
-            {searching ? "Searching..." : "Search"}
+            {searching ? 'Searching...' : 'Search'}
           </Button>
         </div>
 
@@ -214,7 +216,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
           <div className="text-sm font-semibold text-white">Top matches</div>
           {searchResults.length === 0 ? (
             <div className="mt-2 text-sm text-gray-400">
-              {searching ? "Searching…" : "No matches yet. Run a search."}
+              {searching ? 'Searching…' : 'No matches yet. Run a search.'}
             </div>
           ) : (
             <div className="mt-2 space-y-2">
@@ -265,14 +267,14 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
                   <div className="space-y-1">
                     {doc.metadata?.title ? <div>Title: {doc.metadata.title}</div> : null}
                     {doc.metadata?.source ? <div>Source: {doc.metadata.source}</div> : null}
-                    {doc.metadata?.tags?.length ? <div>Tags: {doc.metadata.tags.join(", ")}</div> : null}
+                    {doc.metadata?.tags?.length ? <div>Tags: {doc.metadata.tags.join(', ')}</div> : null}
                     <div className="text-[11px] text-gray-500">
                       {doc.embeddingModel} ({doc.embeddingDimensions})
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="text-xs text-gray-400">
-                  {doc.updatedAt ? new Date(doc.updatedAt).toLocaleString() : "—"}
+                  {doc.updatedAt ? new Date(doc.updatedAt).toLocaleString() : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -312,9 +314,9 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         onConfirm={(): void => {
           if (!collectionId || !docToDelete) return;
           void deleteDoc({ collectionId, documentId: docToDelete.id })
-            .then(() => toast("Document deleted.", { variant: "success" }))
+            .then(() => toast('Document deleted.', { variant: 'success' }))
             .catch((error: unknown) =>
-              toast(error instanceof Error ? error.message : "Failed to delete document.", { variant: "error" })
+              toast(error instanceof Error ? error.message : 'Failed to delete document.', { variant: 'error' })
             )
             .finally(() => setDocToDelete(null));
         }}

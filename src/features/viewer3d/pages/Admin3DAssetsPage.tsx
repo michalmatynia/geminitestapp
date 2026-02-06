@@ -1,12 +1,23 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Box,
+  Upload,
+  Loader2,
+  RefreshCw,
+  Grid,
+  List,
+  Filter,
+  X,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 import {
   Button,
   SectionHeader,
   SectionPanel,
-  Input,
+  Label,
   ListPanel,
   Table,
   TableBody,
@@ -14,23 +25,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/ui";
-import {
-  Box,
-  Upload,
-  Loader2,
-  RefreshCw,
-  Search,
-  Grid,
-  List,
-  Filter,
-  X,
-} from "lucide-react";
-import { cn } from "@/shared/utils";
-import { Asset3DUploader } from "../components/Asset3DUploader";
-import { Asset3DPreviewModal } from "../components/Asset3DPreviewModal";
-import { Asset3DCard } from "../components/Asset3DCard";
-import { Asset3DEditModal } from "../components/Asset3DEditModal";
+  UnifiedSelect,
+  SearchInput,
+  Alert,
+} from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { Asset3DCard } from '../components/Asset3DCard';
+import { Asset3DEditModal } from '../components/Asset3DEditModal';
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { Asset3DUploader } from '../components/Asset3DUploader';
 import { 
   useAssets3D, 
   useAsset3DCategories, 
@@ -38,20 +42,21 @@ import {
   useDeleteAsset3DMutation,
   useReindexAssets3DMutation,
   asset3dKeys
-} from "../hooks/useAsset3dQueries";
-import type { Asset3DRecord } from "../types";
+} from '../hooks/useAsset3dQueries';
 
-type ViewMode = "grid" | "list";
+import type { Asset3DRecord } from '../types';
+
+type ViewMode = 'grid' | 'list';
 
 export function Admin3DAssetsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -94,12 +99,12 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     try {
       await deleteMutation.mutateAsync(asset.id);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete asset");
+      alert(err instanceof Error ? err.message : 'Failed to delete asset');
     }
   };
 
   const clearFilters = (): void => {
-    setSearchQuery("");
+    setSearchQuery('');
     setSelectedCategory(null);
     setSelectedTags([]);
   };
@@ -113,18 +118,18 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   };
 
   const formatDate = (date: Date | string): string => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   const stats =
     !loading && assets.length > 0 ? (
       <div className="text-sm text-muted-foreground">
-        Showing {assets.length} asset{assets.length !== 1 ? "s" : ""}
-        {hasActiveFilters && " (filtered)"}
+        Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
+        {hasActiveFilters && ' (filtered)'}
       </div>
     ) : null;
 
@@ -143,7 +148,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 disabled={loading}
                 className="gap-2"
               >
-                <RefreshCw className={cn("h-4 w-4", assetsQuery.isFetching && "animate-spin")} />
+                <RefreshCw className={cn('h-4 w-4', assetsQuery.isFetching && 'animate-spin')} />
                 Refresh
               </Button>
               <Button size="sm" onClick={() => setShowUploader(true)}>
@@ -156,26 +161,25 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       }
       alerts={
         error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {error}
-          </div>
+          </Alert>
         ) : null
       }
       filters={
         <SectionPanel>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-                placeholder="Search assets..."
-                className="h-8 pl-9 text-sm"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              placeholder="Search assets..."
+              className="h-8"
+              containerClassName="flex-1 min-w-[200px] max-w-md"
+            />
 
             <Button
-              variant={showFilters ? "default" : "outline"}
+              variant={showFilters ? 'default' : 'outline'}
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
               className="gap-2"
@@ -198,18 +202,18 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
             <div className="ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20">
               <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="icon"
                 className="h-8 w-8 rounded-none"
-                onClick={() => setViewMode("grid")}
+                onClick={() => setViewMode('grid')}
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="icon"
                 className="h-8 w-8 rounded-none"
-                onClick={() => setViewMode("list")}
+                onClick={() => setViewMode('list')}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -223,19 +227,19 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         <SectionPanel>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm text-muted-foreground">Category</label>
-              <select
-                value={selectedCategory ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              >
-                <option value="">All categories</option>
-                {categories.map((cat: string) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <Label className="mb-2 block text-sm text-muted-foreground">Category</Label>
+              <UnifiedSelect
+                value={selectedCategory ?? '__all__'}
+                onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
+                options={[
+                  { value: '__all__', label: 'All categories' },
+                  ...categories.map((cat: string) => ({
+                    value: cat,
+                    label: cat,
+                  })),
+                ]}
+                placeholder="All categories"
+              />
             </div>
 
             <div>
@@ -244,7 +248,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 {allTags.map((tag: string) => (
                   <Button
                     key={tag}
-                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                    variant={selectedTags.includes(tag) ? 'default' : 'outline'}
                     size="sm"
                     onClick={() =>
                       setSelectedTags((prev: string[]) =>
@@ -294,12 +298,12 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/50 py-12 text-muted-foreground">
           <Box className="mb-4 h-12 w-12 opacity-60" />
           <p className="text-base font-medium text-foreground">
-            {hasActiveFilters ? "No matching assets" : "No 3D assets yet"}
+            {hasActiveFilters ? 'No matching assets' : 'No 3D assets yet'}
           </p>
           <p className="text-sm text-muted-foreground">
             {hasActiveFilters
-              ? "Try adjusting your filters"
-              : "Upload your first .glb or .gltf file"}
+              ? 'Try adjusting your filters'
+              : 'Upload your first .glb or .gltf file'}
           </p>
           {!hasActiveFilters && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -315,19 +319,19 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                     .mutateAsync()
                     .then((): void => { void assetsQuery.refetch(); })
                     .catch((err: unknown): void => {
-                      alert(err instanceof Error ? err.message : "Failed to reindex assets");
+                      alert(err instanceof Error ? err.message : 'Failed to reindex assets');
                     });
                 }}
               >
-                <RefreshCw className={cn("mr-2 h-4 w-4", reindexMutation.isPending && "animate-spin")} />
-                {reindexMutation.isPending ? "Reindexing..." : "Reindex local uploads"}
+                <RefreshCw className={cn('mr-2 h-4 w-4', reindexMutation.isPending && 'animate-spin')} />
+                {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
               </Button>
             </div>
           )}
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === "grid" && (
+      {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {assets.map((asset: Asset3DRecord) => (
             <Asset3DCard
@@ -342,7 +346,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === "list" && (
+      {!loading && assets.length > 0 && viewMode === 'list' && (
         <Table className="text-sm text-foreground">
           <TableHeader>
             <TableRow>
@@ -423,7 +427,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                       {deleteMutation.isPending && deleteMutation.variables === asset.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Delete"
+                        'Delete'
                       )}
                     </Button>
                   </div>

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
 
-import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, ConstantConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, ConstantConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type ConstantNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,13 +16,13 @@ export function ConstantNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: ConstantNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "constant") return null;
+  if (selectedNode.type !== 'constant') return null;
 
   const constantConfig = selectedNode.config?.constant ?? {
-    valueType: "string",
-    value: "",
+    valueType: 'string',
+    value: '',
   };
-  const isJson = constantConfig.valueType === "json";
+  const isJson = constantConfig.valueType === 'json';
 
   return (
     <div className="space-y-4">
@@ -34,7 +34,7 @@ export function ConstantNodeConfigSection({
             updateSelectedNodeConfig({
               constant: {
                 ...constantConfig,
-                valueType: value as ConstantConfig["valueType"],
+                valueType: value as ConstantConfig['valueType'],
               },
             })
           }

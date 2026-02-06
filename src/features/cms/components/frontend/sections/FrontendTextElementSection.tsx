@@ -1,12 +1,12 @@
 
-import { getBlockTypographyStyles } from "../theme-styles";
+import { getBlockTypographyStyles } from '../theme-styles';
 
 interface FrontendTextElementSectionProps {
   settings: Record<string, unknown>;
 }
 
 export function FrontendTextElementSection({ settings }: FrontendTextElementSectionProps): React.ReactNode {
-  const text = (settings["textContent"] as string) || "";
+  const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return (

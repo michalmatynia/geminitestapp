@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { Button, ConfirmDialog, EmptyState, Input, Label, SharedModal, useToast } from "@/shared/ui";
-import type { Producer } from "@/features/products/types";
-import { useProducers, productMetadataKeys } from "@/features/products/hooks/useProductMetadata";
+import { useProducers, productMetadataKeys } from '@/features/products/hooks/useProductMetadata';
+import type { Producer } from '@/features/products/types';
+import { Button, ConfirmDialog, EmptyState, Input, Label, SharedModal, useToast } from '@/shared/ui';
 
 type ProducerFormState = {
   name: string;
@@ -20,11 +20,11 @@ export function AdminProductProducersPage(): React.JSX.Element {
 
   const loading = producersQuery.isLoading;
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Producer | null>(null);
   const [toDelete, setToDelete] = useState<Producer | null>(null);
-  const [form, setForm] = useState<ProducerFormState>({ name: "", website: "" });
+  const [form, setForm] = useState<ProducerFormState>({ name: '', website: '' });
 
   const filtered = useMemo((): Producer[] => {
     const producersData: Producer[] = producersQuery.data ?? [];
@@ -39,16 +39,16 @@ export function AdminProductProducersPage(): React.JSX.Element {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { id?: string; data: { name: string; website: string | null } }) => {
-      const url = payload.id ? `/api/products/producers/${payload.id}` : "/api/products/producers";
-      const method = payload.id ? "PUT" : "POST";
+      const url = payload.id ? `/api/products/producers/${payload.id}` : '/api/products/producers';
+      const method = payload.id ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload.data),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body?.error || "Failed to save producer");
+        throw new Error(body?.error || 'Failed to save producer');
       }
       return (await res.json()) as Producer;
     },
@@ -59,10 +59,10 @@ export function AdminProductProducersPage(): React.JSX.Element {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/products/producers/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/producers/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body?.error || "Failed to delete producer");
+        throw new Error(body?.error || 'Failed to delete producer');
       }
     },
     onSuccess: async () => {
@@ -72,20 +72,20 @@ export function AdminProductProducersPage(): React.JSX.Element {
 
   const openCreate = (): void => {
     setEditing(null);
-    setForm({ name: "", website: "" });
+    setForm({ name: '', website: '' });
     setOpen(true);
   };
 
   const openEdit = (producer: Producer): void => {
     setEditing(producer);
-    setForm({ name: producer.name ?? "", website: producer.website ?? "" });
+    setForm({ name: producer.name ?? '', website: producer.website ?? '' });
     setOpen(true);
   };
 
   const handleSave = async (): Promise<void> => {
     const name = form.name.trim();
     if (!name) {
-      toast("Producer name is required.", { variant: "error" });
+      toast('Producer name is required.', { variant: 'error' });
       return;
     }
     const website = form.website.trim();
@@ -97,10 +97,10 @@ export function AdminProductProducersPage(): React.JSX.Element {
         payload.id = editing.id;
       }
       await saveMutation.mutateAsync(payload);
-      toast(editing ? "Producer updated." : "Producer created.", { variant: "success" });
+      toast(editing ? 'Producer updated.' : 'Producer created.', { variant: 'success' });
       setOpen(false);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save producer.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to save producer.', { variant: 'error' });
     }
   };
 
@@ -108,9 +108,9 @@ export function AdminProductProducersPage(): React.JSX.Element {
     if (!toDelete) return;
     try {
       await deleteMutation.mutateAsync(toDelete.id);
-      toast("Producer deleted.", { variant: "success" });
+      toast('Producer deleted.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to delete producer.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to delete producer.', { variant: 'error' });
     } finally {
       setToDelete(null);
     }
@@ -199,7 +199,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
       <SharedModal
         open={open}
         onClose={() => setOpen(false)}
-        title={editing ? "Edit Producer" : "Create Producer"}
+        title={editing ? 'Edit Producer' : 'Create Producer'}
         size="sm"
       >
         <div className="space-y-4">
@@ -237,7 +237,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
               aria-disabled={saveMutation.isPending}
               className="bg-white text-gray-900 hover:bg-gray-200"
             >
-              {saveMutation.isPending ? "Saving..." : "Save"}
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>
@@ -249,7 +249,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
           if (!next) setToDelete(null);
         }}
         title="Delete producer?"
-        description={`This will delete "${toDelete?.name ?? ""}".`}
+        description={`This will delete "${toDelete?.name ?? ''}".`}
         confirmText="Delete"
         cancelText="Cancel"
         variant="destructive"

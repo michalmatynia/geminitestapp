@@ -1,3 +1,3 @@
-import "server-only";
+import 'server-only';
 
-export * from "./services/draft-repository";
+export * from './services/draft-repository';

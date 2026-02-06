@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import { logKeys } from "./useLogQueries";
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+
+import { logKeys } from './useLogQueries';
 
 export function useClearLogsMutation(): UseMutationResult<boolean, Error, void> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/system/logs", { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to clear logs.");
+      const res = await fetch('/api/system/logs', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to clear logs.');
       return true;
     },
     onSuccess: () => {
@@ -21,10 +22,10 @@ export function useRebuildIndexesMutation(): UseMutationResult<unknown, Error, v
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (): Promise<unknown> => {
-      const res = await fetch("/api/system/diagnostics/mongo-indexes", {
-        method: "POST",
+      const res = await fetch('/api/system/diagnostics/mongo-indexes', {
+        method: 'POST',
       });
-      if (!res.ok) throw new Error("Failed to rebuild Mongo indexes.");
+      if (!res.ok) throw new Error('Failed to rebuild Mongo indexes.');
       return res.json() as Promise<unknown>;
     },
     onSuccess: () => {

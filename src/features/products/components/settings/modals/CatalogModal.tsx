@@ -1,20 +1,28 @@
-"use client";
+'use client';
 
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-import React from "react";
 
+import React from 'react';
+
+import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import type { Catalog, PriceGroup } from '@/features/products/types';
+import type { Language } from '@/shared/types/internationalization';
 import {
-  SharedModal,
-  Button,
   Input,
   Label,
   Textarea,
   Checkbox,
   useToast,
-} from "@/shared/ui";
-import type { Catalog, PriceGroup } from "@/features/products/types";
-import type { Language } from "@/shared/types/internationalization";
-import { useSaveCatalogMutation } from "@/features/products/hooks/useProductSettingsQueries";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Badge,
+  Alert,
+  FormModal,
+  Button,
+} from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface CatalogModalProps {
   isOpen: boolean;
@@ -40,37 +48,37 @@ export function CatalogModal({
   priceGroups,
   loadingGroups,
   defaultGroupId,
-}: CatalogModalProps) {
+}: CatalogModalProps): React.JSX.Element {
   const { toast } = useToast();
   const saveMutation = useSaveCatalogMutation();
   const [error, setError] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     isDefault: false,
   });
   const [selectedLanguageIds, setSelectedLanguageIds] = React.useState<
     string[]
   >([]);
-  const [defaultLanguageId, setDefaultLanguageId] = React.useState("");
+  const [defaultLanguageId, setDefaultLanguageId] = React.useState('');
   const [catalogPriceGroupIds, setCatalogPriceGroupIds] = React.useState<
     string[]
   >([]);
   const [catalogDefaultPriceGroupId, setCatalogDefaultPriceGroupId] =
-    React.useState("");
-  const [languageQuery, setLanguageQuery] = React.useState("");
+    React.useState('');
+  const [languageQuery, setLanguageQuery] = React.useState('');
 
   React.useEffect(() => {
     if (catalog) {
       setForm({
         name: catalog.name,
-        description: catalog.description ?? "",
+        description: catalog.description ?? '',
         isDefault: catalog.isDefault,
       });
       const nextLanguageIds = catalog.languageIds ?? [];
       setSelectedLanguageIds(nextLanguageIds);
       setDefaultLanguageId(
-        catalog.defaultLanguageId ?? nextLanguageIds[0] ?? "",
+        catalog.defaultLanguageId ?? nextLanguageIds[0] ?? '',
       );
       const nextPriceGroupIds = catalog.priceGroupIds?.length
         ? catalog.priceGroupIds
@@ -82,50 +90,50 @@ export function CatalogModal({
         catalog.defaultPriceGroupId ??
           nextPriceGroupIds[0] ??
           defaultGroupId ??
-          "",
+          '',
       );
     } else {
       setForm({
-        name: "",
-        description: "",
+        name: '',
+        description: '',
         isDefault: false,
       });
       setSelectedLanguageIds([]);
-      setDefaultLanguageId("");
+      setDefaultLanguageId('');
       setCatalogPriceGroupIds(defaultGroupId ? [defaultGroupId] : []);
-      setCatalogDefaultPriceGroupId(defaultGroupId ?? "");
+      setCatalogDefaultPriceGroupId(defaultGroupId ?? '');
     }
     setError(null);
-    setLanguageQuery("");
+    setLanguageQuery('');
   }, [catalog, defaultGroupId]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (saveMutation.isPending) return;
     const name = form.name.trim();
     if (!name) {
-      toast("Catalog name is required.", { variant: "error" });
+      toast('Catalog name is required.', { variant: 'error' });
       return;
     }
     if (selectedLanguageIds.length === 0) {
-      toast("Select at least one language.", { variant: "error" });
+      toast('Select at least one language.', { variant: 'error' });
       return;
     }
     if (
       !defaultLanguageId ||
       !selectedLanguageIds.includes(defaultLanguageId)
     ) {
-      toast("Select a default language.", { variant: "error" });
+      toast('Select a default language.', { variant: 'error' });
       return;
     }
     if (catalogPriceGroupIds.length === 0) {
-      toast("Select at least one price group.", { variant: "error" });
+      toast('Select at least one price group.', { variant: 'error' });
       return;
     }
     if (
       !catalogDefaultPriceGroupId ||
       !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)
     ) {
-      toast("Select a default price group.", { variant: "error" });
+      toast('Select a default price group.', { variant: 'error' });
       return;
     }
 
@@ -143,15 +151,15 @@ export function CatalogModal({
         },
       });
 
-      toast("Catalog saved.", { variant: "success" });
+      toast('Catalog saved.', { variant: 'success' });
       onSuccess();
     } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : "Failed to save catalog.");
+      logClientError(err, { context: { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id } });
+      setError(err instanceof Error ? err.message : 'Failed to save catalog.');
     }
   };
 
-  const availableLanguages = React.useMemo(() => {
+  const availableLanguages = React.useMemo((): Language[] => {
     const query = languageQuery.trim().toLowerCase();
     return languages.filter(
       (l) =>
@@ -162,22 +170,22 @@ export function CatalogModal({
     );
   }, [languages, selectedLanguageIds, languageQuery]);
 
-  const toggleLanguage = (id: string) => {
+  const toggleLanguage = (id: string): void => {
     setSelectedLanguageIds((prev) => {
       const next = prev.includes(id)
         ? prev.filter((i) => i !== id)
         : [...prev, id];
       if (!next.includes(defaultLanguageId))
-        setDefaultLanguageId(next[0] ?? "");
+        setDefaultLanguageId(next[0] ?? '');
       return next;
     });
   };
 
-  const moveLanguage = (id: string, direction: "up" | "down") => {
+  const moveLanguage = (id: string, direction: 'up' | 'down'): void => {
     setSelectedLanguageIds((prev) => {
       const idx = prev.indexOf(id);
       if (idx === -1) return prev;
-      const nextIdx = direction === "up" ? idx - 1 : idx + 1;
+      const nextIdx = direction === 'up' ? idx - 1 : idx + 1;
       if (nextIdx < 0 || nextIdx >= prev.length) return prev;
       const next = [...prev];
       [next[idx], next[nextIdx]] = [next[nextIdx]!, next[idx]!];
@@ -185,56 +193,35 @@ export function CatalogModal({
     });
   };
 
-  const togglePriceGroup = (id: string) => {
+  const togglePriceGroup = (id: string): void => {
     setCatalogPriceGroupIds((prev) => {
       const next = prev.includes(id)
         ? prev.filter((i) => i !== id)
         : [...prev, id];
       if (!next.includes(catalogDefaultPriceGroupId))
-        setCatalogDefaultPriceGroupId(next[0] ?? "");
+        setCatalogDefaultPriceGroupId(next[0] ?? '');
       return next;
     });
   };
 
-  const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : catalog ? "Update" : "Create"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {catalog ? "Edit Catalog" : "Create Catalog"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
-      title={catalog ? "Edit Catalog" : "Create Catalog"}
-      header={header}
+      title={catalog ? 'Edit Catalog' : 'Create Catalog'}
+      onSave={() => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={catalog ? 'Update' : 'Create'}
+      cancelText="Close"
       size="lg"
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {error}
-          </div>
+          </Alert>
         )}
 
         <div className="grid gap-4">
@@ -310,9 +297,9 @@ export function CatalogModal({
                             {lang.name} ({lang.code})
                           </span>
                           {id === defaultLanguageId && (
-                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
+                            <Badge variant="success">
                               Default
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <div className="flex gap-1">
@@ -320,7 +307,7 @@ export function CatalogModal({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => moveLanguage(id, "up")}
+                            onClick={() => moveLanguage(id, 'up')}
                             disabled={index === 0}
                           >
                             ↑
@@ -329,7 +316,7 @@ export function CatalogModal({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => moveLanguage(id, "down")}
+                            onClick={() => moveLanguage(id, 'down')}
                             disabled={
                               index === selectedLanguageIds.length - 1
                             }
@@ -371,22 +358,25 @@ export function CatalogModal({
                 <Label className="text-xs text-gray-400">
                   Default language
                 </Label>
-                <select
-                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                <Select
                   value={defaultLanguageId}
-                  onChange={(e) => setDefaultLanguageId(e.target.value)}
+                  onValueChange={(v) => setDefaultLanguageId(v)}
                   disabled={selectedLanguageIds.length === 0}
                 >
-                  <option value="">Select default...</option>
-                  {selectedLanguageIds.map((id) => {
-                    const lang = languages.find((l) => l.id === id);
-                    return (
-                      <option key={id} value={id}>
-                        {lang?.name} ({lang?.code})
-                      </option>
-                    );
-                  })}
-                </select>
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
+                    <SelectValue placeholder="Select default language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedLanguageIds.map((id) => {
+                      const lang = languages.find((l) => l.id === id);
+                      return (
+                        <SelectItem key={id} value={id}>
+                          {lang?.name} ({lang?.code})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -410,7 +400,7 @@ export function CatalogModal({
                       className="h-7 rounded-full px-3 text-xs"
                       onClick={() => togglePriceGroup(id)}
                     >
-                      {group?.name ?? id}{" "}
+                      {group?.name ?? id}{' '}
                       <span className="ml-1 text-gray-500">×</span>
                     </Button>
                   );
@@ -430,8 +420,8 @@ export function CatalogModal({
                     </span>
                     <span>
                       {catalogPriceGroupIds.includes(group.id)
-                        ? "Remove"
-                        : "Add"}
+                        ? 'Remove'
+                        : 'Add'}
                     </span>
                   </Button>
                 ))}
@@ -441,29 +431,32 @@ export function CatalogModal({
                 <Label className="text-xs text-gray-400">
                   Default price group
                 </Label>
-                <select
-                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                <Select
                   value={catalogDefaultPriceGroupId}
-                  onChange={(e) =>
-                    setCatalogDefaultPriceGroupId(e.target.value)
+                  onValueChange={(v) =>
+                    setCatalogDefaultPriceGroupId(v)
                   }
                   disabled={catalogPriceGroupIds.length === 0}
                 >
-                  <option value="">Select default...</option>
-                  {catalogPriceGroupIds.map((id) => {
-                    const group = priceGroups.find((g) => g.id === id);
-                    return (
-                      <option key={id} value={id}>
-                        {group?.name}
-                      </option>
-                    );
-                  })}
-                </select>
+                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
+                    <SelectValue placeholder="Select default price group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogPriceGroupIds.map((id) => {
+                      const group = priceGroups.find((g) => g.id === id);
+                      return (
+                        <SelectItem key={id} value={id}>
+                          {group?.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
         </div>
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

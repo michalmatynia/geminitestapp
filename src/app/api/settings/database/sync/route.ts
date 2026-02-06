@@ -46,8 +46,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       process.env.NODE_ENV !== "production";
 
     if (inlineJobs) {
-      processSingleJob(job.id).catch((error: unknown) => {
-        console.error("[settings.database.sync] Failed to run db sync job", error);
+      processSingleJob(job.id).catch(async (error: unknown) => {
+        try {
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[settings.database.sync] Failed to run db sync job",
+            error,
+            source: "api/settings/database/sync",
+            context: { jobId: job.id }
+          });
+        } catch (logError) {
+          console.error("[settings.database.sync] Failed to run db sync job (and logging failed)", error, logError);
+        }
       });
     } else {
       startProductAiJobQueue();

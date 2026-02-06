@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { Button, Input, Label } from "@/shared/ui";
-import { Dispatch, SetStateAction } from "react";
-import { Integration, IntegrationConnection, TestLogEntry } from "@/features/integrations/types/integrations-ui";
+import { Dispatch, SetStateAction } from 'react';
+
+import { Integration, IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
+import { Button, Input, Label, SectionPanel } from '@/shared/ui';
 
 
 
@@ -37,40 +38,40 @@ export function ConnectionManager({
   onShowLog,
 }: ConnectionManagerProps): React.JSX.Element {
   const integrationSlug = activeIntegration.slug;
-  const isTradera = integrationSlug === "tradera";
-  const isAllegro = integrationSlug === "allegro";
-  const isBaselinker = integrationSlug === "baselinker";
+  const isTradera = integrationSlug === 'tradera';
+  const isAllegro = integrationSlug === 'allegro';
+  const isBaselinker = integrationSlug === 'baselinker';
   const showPlaywright = isTradera;
 
   const connectionNamePlaceholder = isAllegro
-    ? "Integration name (e.g. Allegro Main)"
+    ? 'Integration name (e.g. Allegro Main)'
     : isBaselinker
-    ? "Integration name (e.g. Main Baselinker)"
-    : "Integration name (e.g. John's Tradera)";
+      ? 'Integration name (e.g. Main Baselinker)'
+      : 'Integration name (e.g. John\'s Tradera)';
   
   const usernameLabel = isAllegro
-    ? "Allegro client ID"
+    ? 'Allegro client ID'
     : isBaselinker
-    ? "Account name (optional)"
-    : "Tradera username";
+      ? 'Account name (optional)'
+      : 'Tradera username';
   
   const usernamePlaceholder = isAllegro
-    ? "Allegro client ID"
+    ? 'Allegro client ID'
     : isBaselinker
-    ? "Account name (for reference)"
-    : "Tradera username";
+      ? 'Account name (for reference)'
+      : 'Tradera username';
   
   const passwordLabel = isAllegro
-    ? "Allegro client secret"
+    ? 'Allegro client secret'
     : isBaselinker
-    ? "Baselinker API token"
-    : "Tradera password";
+      ? 'Baselinker API token'
+      : 'Tradera password';
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <h3 className="text-sm font-semibold text-white">
-          {editingConnectionId ? "Connection details" : "Add connection"}
+          {editingConnectionId ? 'Connection details' : 'Add connection'}
         </h3>
         <div className="mt-3 space-y-3">
           <div>
@@ -109,11 +110,11 @@ export function ConnectionManager({
               placeholder={
                 editingConnectionId
                   ? isAllegro
-                    ? "New client secret (leave blank to keep)"
-                    : "New password (leave blank to keep)"
+                    ? 'New client secret (leave blank to keep)'
+                    : 'New password (leave blank to keep)'
                   : isAllegro
-                  ? "Allegro client secret"
-                  : "Tradera password"
+                    ? 'Allegro client secret'
+                    : 'Tradera password'
               }
               value={connectionForm.password}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -129,21 +130,22 @@ export function ConnectionManager({
             type="button"
             onClick={onSave}
           >
-            {editingConnectionId ? "Update connection" : "Save connection"}
+            {editingConnectionId ? 'Update connection' : 'Save connection'}
           </Button>
         </div>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <h3 className="text-sm font-semibold text-white">Existing connection</h3>
         {connections.length === 0 ? (
           <p className="mt-3 text-sm text-gray-400">No connections yet.</p>
         ) : (
           <div className="mt-3 space-y-3">
             {connections.slice(0, 1).map((connection: IntegrationConnection) => (
-              <div
+              <SectionPanel
                 key={connection.id}
-                className="flex items-center justify-between rounded-md border border-border bg-card/70 px-3 py-2"
+                variant="subtle-compact"
+                className="flex items-center justify-between p-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -155,16 +157,16 @@ export function ConnectionManager({
                   <Button
                     className={`text-xs ${
                       isBaselinker
-                        ? "text-purple-300 hover:text-purple-200"
+                        ? 'text-purple-300 hover:text-purple-200'
                         : isAllegro
-                        ? "text-amber-300 hover:text-amber-200"
-                        : "text-sky-300 hover:text-sky-200"
+                          ? 'text-amber-300 hover:text-amber-200'
+                          : 'text-sky-300 hover:text-sky-200'
                     }`}
                     type="button"
                     onClick={(): void => onTest(connection)}
                     disabled={isTesting}
                   >
-                    {isTesting ? "Testing..." : "Test"}
+                    {isTesting ? 'Testing...' : 'Test'}
                   </Button>
                   <Button
                     className="text-xs text-red-400 hover:text-red-300"
@@ -174,18 +176,18 @@ export function ConnectionManager({
                     Remove
                   </Button>
                 </div>
-              </div>
+              </SectionPanel>
             ))}
           </div>
         )}
         {showPlaywright && (
-          <div className="mt-4 rounded-md border border-border bg-card/60 p-3">
+          <SectionPanel variant="subtle-compact" className="mt-4 p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-300">
                 Playwright live update
               </p>
               <span className="text-xs text-gray-500">
-                {isTesting ? "Running..." : "Idle"}
+                {isTesting ? 'Running...' : 'Idle'}
               </span>
             </div>
 
@@ -201,26 +203,26 @@ export function ConnectionManager({
                     className="flex items-center justify-between gap-3"
                   >
                     <p>{entry.step}</p>
-                    {entry.status !== "pending" && (
+                    {entry.status !== 'pending' && (
                       <Button
                         type="button"
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          entry.status === "ok"
-                            ? "bg-emerald-500/20 text-emerald-200"
-                            : "bg-red-500/20 text-red-200"
+                          entry.status === 'ok'
+                            ? 'bg-emerald-500/20 text-emerald-200'
+                            : 'bg-red-500/20 text-red-200'
                         }`}
                         onClick={(): void => onShowLog(entry)}
                       >
-                        {entry.status === "ok" ? "OK" : "FAILED"}
+                        {entry.status === 'ok' ? 'OK' : 'FAILED'}
                       </Button>
                     )}
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

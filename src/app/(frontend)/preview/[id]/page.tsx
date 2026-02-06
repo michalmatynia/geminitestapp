@@ -1,29 +1,31 @@
-import { JSX } from "react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/features/auth/auth";
-import type { Session } from "next-auth";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
-import { resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
-import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
-import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
-import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
-import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
-import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
-import type { CmsTheme } from "@/features/cms/types";
-import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
-import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
+import { headers } from 'next/headers';
+import { notFound } from 'next/navigation';
+import { JSX } from 'react';
+
+import { auth } from '@/features/auth/auth';
+import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
+import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
+import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
+import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
+import { resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
+import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
+import type { CmsTheme } from '@/features/cms/types';
+import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+
+import type { Metadata } from 'next';
+import type { Session } from 'next-auth';
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session["user"] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
   if (user.isElevated) return true;
-  const role = user.role ?? "";
-  return ["admin", "super_admin", "superuser"].includes(role);
+  const role = user.role ?? '';
+  return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 interface PreviewPageProps {
   params: Promise<{ id: string }>;
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
   const { id } = await params;
   return {
     title: `Preview ${id}`,
-    robots: "noindex,nofollow",
+    robots: 'noindex,nofollow',
   };
 }
 

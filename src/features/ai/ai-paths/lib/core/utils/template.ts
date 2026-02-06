@@ -1,28 +1,29 @@
-import { getValueAtMappingPath } from "./json";
-import { safeStringify } from "./runtime";
+import { getValueAtMappingPath } from './json';
+import { safeStringify } from './runtime';
 
 export const renderTemplate = (
   template: string,
   context: Record<string, unknown>,
   currentValue: unknown
 ): string =>
-  template
-    .replace(/{{\s*([^}]+)\s*}}/g, (_match: string, token: string) => {
-      const key = String(token).trim();
-      if (key === "value" || key === "current") {
+  // Single-pass replacement prevents an inserted value (e.g. JSON arrays like `[{...}]`) from being
+  // re-interpreted as another placeholder by a second `.replace()` call.
+  //
+  // Square-bracket placeholders are intentionally conservative so we don't accidentally treat
+  // JSON arrays (or other bracketed text) as placeholders.
+  template.replace(
+    /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g,
+    (_match: string, curlyToken: string | undefined, bracketToken: string | undefined) => {
+      const raw = curlyToken ?? bracketToken ?? '';
+      const key = String(raw).trim();
+      if (!key) return '';
+      if (key === 'value' || key === 'current') {
         return safeStringify(currentValue);
       }
       const resolved = getValueAtMappingPath(context, key);
       return safeStringify(resolved);
-    })
-    .replace(/\[\s*([^\]]+)\s*\]/g, (_match: string, token: string) => {
-      const key = String(token).trim();
-      if (key === "value" || key === "current") {
-        return safeStringify(currentValue);
-      }
-      const resolved = getValueAtMappingPath(context, key);
-      return safeStringify(resolved);
-    });
+    }
+  );
 
 export const renderJsonTemplate = (
   template: string,
@@ -31,7 +32,7 @@ export const renderJsonTemplate = (
 ): string => {
   const resolveToken = (token: string): unknown => {
     const key = String(token).trim();
-    if (key === "value" || key === "current") {
+    if (key === 'value' || key === 'current') {
       return currentValue;
     }
     return getValueAtMappingPath(context, key);
@@ -42,8 +43,8 @@ export const renderJsonTemplate = (
         const value: unknown = resolveToken(token);
         const asString: string =
           value === undefined || value === null
-            ? ""
-            : typeof value === "string"
+            ? ''
+            : typeof value === 'string'
               ? value
               : JSON.stringify(value);
         return JSON.stringify(asString);

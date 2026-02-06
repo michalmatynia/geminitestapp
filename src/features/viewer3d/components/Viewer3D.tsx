@@ -1,6 +1,6 @@
-"use client";
 
-import { Canvas, useThree } from "@react-three/fiber";
+'use client';
+
 import {
   OrbitControls,
   Center,
@@ -11,14 +11,19 @@ import {
   useProgress,
   Bounds,
   PresentationControls,
-} from "@react-three/drei";
-import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
-import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from "react";
-import * as THREE from "three";
-import { DitheringPass } from "./shaders/DitheringEffect";
-import { PixelationPass } from "./shaders/PixelationEffect";
-import { OrderedDitheringPass } from "./shaders/OrderedDitheringEffect";
-import { ToneMappingMode, BlendFunction } from "postprocessing";
+} from '@react-three/drei';
+import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
+import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
+import { ToneMappingMode, BlendFunction } from 'postprocessing';
+import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
+import * as THREE from 'three';
+
+import { DitheringPass } from './shaders/DitheringEffect';
+import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
+import { PixelationPass } from './shaders/PixelationEffect';
+
+const FALLBACK_TEXTURE_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
 
 // Error Boundary for 3D components
 class Model3DErrorBoundary extends Component<
@@ -35,7 +40,7 @@ class Model3DErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("3D Model Error:", error, errorInfo);
+    console.error('3D Model Error:', error, errorInfo);
     this.props.onError?.(error);
   }
 
@@ -46,7 +51,7 @@ class Model3DErrorBoundary extends Component<
           <div className="text-red-400 text-center p-4 bg-black/50 rounded">
             <p>Failed to load 3D model</p>
             <p className="text-sm text-gray-400 mt-2">
-              {this.state.error?.message || "Unknown error occurred"}
+              {this.state.error?.message || 'Unknown error occurred'}
             </p>
           </div>
         </Html>
@@ -107,6 +112,23 @@ interface Model3DProps {
   scale?: number | [number, number, number];
 }
 
+function AutoRotateGroup({
+  enabled,
+  speed,
+  children,
+}: {
+  enabled: boolean;
+  speed: number;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_state: RootState, delta: number) => {
+    if (!enabled || !ref.current) return;
+    ref.current.rotation.y += delta * speed * 0.6;
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
 function Model3D({
   url,
   onLoad,
@@ -116,12 +138,31 @@ function Model3D({
   position,
   rotation,
   scale,
-}: Model3DProps): React.JSX.Element {
-  const { scene } = useGLTF(url, true); // Enable error handling
+}: Model3DProps): React.JSX.Element | null {
+  const replacedTextureRef = useRef(false);
+  const { scene } = useGLTF(
+    url,
+    true,
+    true,
+    (loader: { manager: THREE.LoadingManager }) => {
+      loader.manager.setURLModifier((resourceUrl: string) => {
+        if (resourceUrl.startsWith('blob:')) {
+          replacedTextureRef.current = true;
+          return FALLBACK_TEXTURE_DATA_URL;
+        }
+        return resourceUrl;
+      });
+    }
+  );
   const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     if (scene) {
+      if (replacedTextureRef.current) {
+        console.warn(
+          '[Viewer3D] Model references blob: textures. Re-export as .glb or embed textures to restore materials.'
+        );
+      }
       // Optimize materials for PBR rendering
       scene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {
@@ -141,7 +182,7 @@ function Model3D({
 
   useEffect(() => {
     if (!scene && onError) {
-      onError(new Error("Failed to load model"));
+      onError(new Error('Failed to load model'));
     }
   }, [scene, onError]);
 
@@ -158,7 +199,7 @@ function Model3D({
     );
   }
 
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <primitive
       ref={modelRef}
@@ -169,14 +210,14 @@ function Model3D({
       scale={scale}
     />
   );
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Ground plane with realistic shadows
 function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | null {
   if (!visible) return null;
 
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
@@ -190,7 +231,7 @@ function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | 
       />
     </mesh>
   );
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Scene lighting setup
@@ -229,7 +270,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
 
   const config = lightConfigs[preset] || lightConfigs.studio;
 
-  /* eslint-disable react/no-unknown-property */
+  
   return (
     <>
       <ambientLight intensity={config.ambient * intensity} />
@@ -255,35 +296,12 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
       />
     </>
   );
-  /* eslint-enable react/no-unknown-property */
+  
 }
 
 // Camera auto-framing
-function CameraController({ autoFit }: { autoFit?: boolean }): null {
-  const { camera, scene } = useThree();
-
-  useEffect(() => {
-    if (autoFit) {
-      const box = new THREE.Box3().setFromObject(scene);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-      let distance = maxDim / (2 * Math.tan(fov / 2));
-      distance *= 1.5; // Add some padding
-
-      camera.position.set(center.x + distance * 0.5, center.y + distance * 0.3, center.z + distance);
-      camera.lookAt(center);
-      camera.updateProjectionMatrix();
-    }
-  }, [autoFit, camera, scene]);
-
-  return null;
-}
-
-export type LightingPreset = "studio" | "outdoor" | "dramatic" | "soft";
-export type EnvironmentPreset = "studio" | "sunset" | "dawn" | "night" | "warehouse" | "forest" | "apartment" | "city" | "park" | "lobby";
+export type LightingPreset = 'studio' | 'outdoor' | 'dramatic' | 'soft';
+export type EnvironmentPreset = 'studio' | 'sunset' | 'dawn' | 'night' | 'warehouse' | 'forest' | 'apartment' | 'city' | 'park' | 'lobby';
 
 export interface Viewer3DProps {
   /** URL to the 3D model file (.glb or .gltf) */
@@ -348,17 +366,42 @@ export interface Viewer3DProps {
   enableAntiAliasing?: boolean;
   /** Use presentation controls (drag to rotate) */
   presentationMode?: boolean;
+  /** Allow user interaction (orbit/pan/zoom) */
+  allowUserControls?: boolean;
   /** Model position [x, y, z] */
   modelPosition?: [number, number, number];
   /** Model rotation [x, y, z] in radians */
   modelRotation?: [number, number, number];
   /** Model scale (number or [x, y, z]) */
   modelScale?: number | [number, number, number];
+  /** Provide capture ref to grab screenshots from the WebGL canvas */
+  captureRef?: React.MutableRefObject<(() => string | null) | null>;
+}
+
+function ScreenshotCapture({
+  captureRef,
+}: {
+  captureRef: React.MutableRefObject<(() => string | null) | null>;
+}): React.JSX.Element | null {
+  const { gl } = useThree();
+  useEffect(() => {
+    captureRef.current = (): string | null => {
+      try {
+        return gl.domElement.toDataURL('image/png');
+      } catch {
+        return null;
+      }
+    };
+    return (): void => {
+      if (captureRef.current) captureRef.current = null;
+    };
+  }, [captureRef, gl]);
+  return null;
 }
 
 export function Viewer3D({
   modelUrl,
-  backgroundColor = "#1a1a2e",
+  backgroundColor = '#1a1a2e',
   enableDithering = false,
   ditheringIntensity = 1.0,
   enableOrderedDithering = false,
@@ -374,8 +417,8 @@ export function Viewer3D({
   onError,
   autoRotate = true,
   autoRotateSpeed = 2,
-  environment = "studio",
-  lighting = "studio",
+  environment = 'studio',
+  lighting = 'studio',
   lightIntensity = 1,
   enableShadows = true,
   enableBloom = false,
@@ -388,9 +431,11 @@ export function Viewer3D({
   autoFit = true,
   enableAntiAliasing = true,
   presentationMode = false,
+  allowUserControls = true,
   modelPosition,
   modelRotation,
   modelScale,
+  captureRef,
 }: Viewer3DProps): React.JSX.Element {
   const hasPostProcessing =
     enableDithering ||
@@ -440,6 +485,31 @@ export function Viewer3D({
     ditheringIntensity,
   ]);
 
+  const modelNode = (
+    <Model3DErrorBoundary {...(onError && { onError })}>
+      <AutoRotateGroup enabled={!allowUserControls && autoRotate} speed={autoRotateSpeed}>
+        <Model3D
+          url={modelUrl}
+          {...(onLoad && { onLoad })}
+          {...(onError && { onError })}
+          castShadow={enableShadows}
+          receiveShadow={enableShadows}
+          {...(modelPosition && { position: modelPosition })}
+          {...(modelRotation && { rotation: modelRotation })}
+          {...(modelScale && { scale: modelScale })}
+        />
+      </AutoRotateGroup>
+    </Model3DErrorBoundary>
+  );
+
+  const framedModel = autoFit
+    ? (
+      <Bounds fit clip observe margin={1.2}>
+        {modelNode}
+      </Bounds>
+    )
+    : modelNode;
+
   return (
     <div className={className}>
       <Canvas
@@ -454,9 +524,10 @@ export function Viewer3D({
         }}
         dpr={[1, 2]} // Responsive pixel ratio
       >
-        {/* eslint-disable react/no-unknown-property */}
+        {captureRef ? <ScreenshotCapture captureRef={captureRef} /> : null}
+        {}
         <color attach="background" args={[backgroundColor]} />
-        {/* eslint-enable react/no-unknown-property */}
+        {}
 
         {/* Lighting */}
         <SceneLighting preset={lighting} intensity={lightIntensity} />
@@ -465,7 +536,7 @@ export function Viewer3D({
         <Environment preset={environment} background={false} />
 
         <Suspense fallback={<Loader />}>
-          {presentationMode ? (
+          {presentationMode && allowUserControls ? (
             <PresentationControls
               global
               rotation={[0, 0, 0]}
@@ -473,38 +544,12 @@ export function Viewer3D({
               azimuth={[-Math.PI / 4, Math.PI / 4]}
             >
               <Center>
-                <Bounds fit clip observe margin={1.2}>
-                  <Model3DErrorBoundary {...(onError && { onError })}>
-                    <Model3D
-                      url={modelUrl}
-                      {...(onLoad && { onLoad })}
-                      {...(onError && { onError })}
-                      castShadow={enableShadows}
-                      receiveShadow={enableShadows}
-                      {...(modelPosition && { position: modelPosition })}
-                      {...(modelRotation && { rotation: modelRotation })}
-                      {...(modelScale && { scale: modelScale })}
-                    />
-                  </Model3DErrorBoundary>
-                </Bounds>
+                {framedModel}
               </Center>
             </PresentationControls>
           ) : (
             <Center>
-              <Bounds fit clip observe margin={1.2}>
-                <Model3DErrorBoundary {...(onError && { onError })}>
-                  <Model3D
-                    url={modelUrl}
-                    {...(onLoad && { onLoad })}
-                    {...(onError && { onError })}
-                    castShadow={enableShadows}
-                    receiveShadow={enableShadows}
-                    {...(modelPosition && { position: modelPosition })}
-                    {...(modelRotation && { rotation: modelRotation })}
-                    {...(modelScale && { scale: modelScale })}
-                  />
-                </Model3DErrorBoundary>
-              </Bounds>
+              {framedModel}
             </Center>
           )}
 
@@ -524,12 +569,13 @@ export function Viewer3D({
         </Suspense>
 
         {/* Camera Controls */}
-        {!presentationMode && (
+        {!presentationMode && allowUserControls && (
           <OrbitControls
             autoRotate={autoRotate}
             autoRotateSpeed={autoRotateSpeed}
-            enablePan={true}
-            enableZoom={true}
+            enablePan={allowUserControls}
+            enableZoom={allowUserControls}
+            enableRotate={allowUserControls}
             enableDamping={true}
             dampingFactor={0.05}
             minDistance={0.5}
@@ -538,8 +584,6 @@ export function Viewer3D({
             maxPolarAngle={Math.PI}
           />
         )}
-
-        <CameraController autoFit={autoFit} />
 
         {/* Post-processing */}
         {hasPostProcessing && effects.length > 0 && (

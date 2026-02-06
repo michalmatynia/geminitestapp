@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { Button, Input, Label } from "@/shared/ui";
-import { Undo, Redo } from "lucide-react";
-import type { NoteFileRecord } from "@/shared/types/notes";
+import { Undo, Redo } from 'lucide-react';
+
+import type { NoteFileRecord } from '@/shared/types/notes';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 
 
@@ -25,8 +26,8 @@ interface MarkdownToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
-  editorMode: "markdown" | "wysiwyg" | "code";
-  onEditorModeChange: (mode: "markdown" | "wysiwyg" | "code") => void;
+  editorMode: 'markdown' | 'wysiwyg' | 'code';
+  onEditorModeChange: (mode: 'markdown' | 'wysiwyg' | 'code') => void;
   isEditorModeLocked?: boolean;
   isMigrating?: boolean;
   onMigrateToWysiwyg?: () => void;
@@ -67,10 +68,10 @@ export function MarkdownToolbar({
           <>
             {/* Display current mode (locked) */}
             <span className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-border/60">
-              {editorMode === "markdown" ? "Markdown" : editorMode === "wysiwyg" ? "WYSIWYG" : "Code"}
+              {editorMode === 'markdown' ? 'Markdown' : editorMode === 'wysiwyg' ? 'WYSIWYG' : 'Code'}
             </span>
             {/* Migration buttons */}
-            {editorMode === "markdown" && (
+            {editorMode === 'markdown' && (
               <div className="flex gap-1">
                 {onMigrateToWysiwyg && (
                   <Button
@@ -80,12 +81,12 @@ export function MarkdownToolbar({
                     className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
                     title="Convert this note to WYSIWYG format"
                   >
-                    {isMigrating ? "Migrating..." : "To WYSIWYG"}
+                    {isMigrating ? 'Migrating...' : 'To WYSIWYG'}
                   </Button>
                 )}
               </div>
             )}
-            {editorMode === "wysiwyg" && onMigrateToMarkdown && (
+            {editorMode === 'wysiwyg' && onMigrateToMarkdown && (
               <Button
                 type="button"
                 onClick={onMigrateToMarkdown}
@@ -93,10 +94,10 @@ export function MarkdownToolbar({
                 className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
                 title="Convert this note to Markdown format"
               >
-                {isMigrating ? "Migrating..." : "To Markdown"}
+                {isMigrating ? 'Migrating...' : 'To Markdown'}
               </Button>
             )}
-            {editorMode === "code" && onMigrateToMarkdown && (
+            {editorMode === 'code' && onMigrateToMarkdown && (
               <Button
                 type="button"
                 onClick={onMigrateToMarkdown}
@@ -104,7 +105,7 @@ export function MarkdownToolbar({
                 className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
                 title="Convert this note to Markdown format"
               >
-                {isMigrating ? "Migrating..." : "To Markdown"}
+                {isMigrating ? 'Migrating...' : 'To Markdown'}
               </Button>
             )}
           </>
@@ -113,11 +114,11 @@ export function MarkdownToolbar({
           <div className="flex rounded-md border border-border/60 overflow-hidden">
             <Button
               type="button"
-              onClick={(): void => onEditorModeChange("markdown")}
+              onClick={(): void => onEditorModeChange('markdown')}
               className={`px-2 py-1 text-xs transition-colors ${
-                editorMode === "markdown"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                editorMode === 'markdown'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
               title="Markdown editor"
             >
@@ -125,11 +126,11 @@ export function MarkdownToolbar({
             </Button>
             <Button
               type="button"
-              onClick={(): void => onEditorModeChange("wysiwyg")}
+              onClick={(): void => onEditorModeChange('wysiwyg')}
               className={`px-2 py-1 text-xs transition-colors ${
-                editorMode === "wysiwyg"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                editorMode === 'wysiwyg'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
               title="WYSIWYG editor"
             >
@@ -137,11 +138,11 @@ export function MarkdownToolbar({
             </Button>
             <Button
               type="button"
-              onClick={(): void => onEditorModeChange("code")}
+              onClick={(): void => onEditorModeChange('code')}
               className={`px-2 py-1 text-xs transition-colors ${
-                editorMode === "code"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                editorMode === 'code'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
               title="Code snippets editor"
             >
@@ -151,7 +152,7 @@ export function MarkdownToolbar({
         )}
       </div>
       <div className="h-6 w-px bg-gray-700 mx-1" />
-      {(editorMode === "markdown" || editorMode === "code") && (
+      {(editorMode === 'markdown' || editorMode === 'code') && (
         <>
           <Button
             type="button"
@@ -159,196 +160,202 @@ export function MarkdownToolbar({
             className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
             title="Toggle preview"
           >
-            {showPreview ? "Hide Preview" : "Show Preview"}
+            {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>
           <div className="h-6 w-px bg-gray-700 mx-1" />
-      {onUndo && (
-        <Button
-          type="button"
-          onClick={onUndo}
-          disabled={!canUndo}
-          className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Undo"
-        >
-          <Undo className="size-3.5" />
-        </Button>
-      )}
-      {onRedo && (
-        <Button
-          type="button"
-          onClick={onRedo}
-          disabled={!canRedo}
-          className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Redo"
-        >
-          <Redo className="size-3.5" />
-        </Button>
-      )}
-      <div className="h-6 w-px bg-gray-700 mx-1" />
-      <Button
-        type="button"
-        onClick={(): void => onApplyWrap("**", "**", "bold text")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Bold"
-      >
-        Bold
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyWrap("*", "*", "italic text")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Italic"
-      >
-        Italic
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyWrap("`", "`", "code")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Inline code"
-      >
-        Code
-      </Button>
-      <Button
-        type="button"
-        onClick={onApplyBulletList}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Bullet list"
-      >
-        Bullet
-      </Button>
-      <Button
-        type="button"
-        onClick={onApplyChecklist}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Checklist"
-      >
-        Checklist
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyLinePrefix("# ")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Heading"
-      >
-        H1
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyLinePrefix("## ")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Heading 2"
-      >
-        H2
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyLinePrefix("### ")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Heading 3"
-      >
-        H3
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyLinePrefix("> ")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Blockquote"
-      >
-        Quote
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onInsertAtCursor("\n---\n")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Horizontal rule"
-      >
-        HR
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onInsertAtCursor("\n```text\ncode\n```\n")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Code block"
-      >
-        Code Block
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void => onApplyWrap("[", "](https://example.com)", "link text")}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Link"
-      >
-        Link
-      </Button>
-      <Button
-        type="button"
-        onClick={(): void =>
-          onInsertAtCursor(
-            "\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n")
-        }
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Table"
-      >
-        Table
-      </Button>
-      {noteFiles.length > 0 && (
-        <div className="relative">
-          <select
-            value=""
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-              const slotIndex = parseInt(e.target.value, 10);
-              const file = noteFiles.find((f: NoteFileRecord) => f.slotIndex === slotIndex);
-              if (file) {
-                onInsertFileReference(file);
-              }
-              e.target.value = "";
-            }}
-            className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Insert file reference"
+          {onUndo && (
+            <Button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Undo"
+            >
+              <Undo className="size-3.5" />
+            </Button>
+          )}
+          {onRedo && (
+            <Button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Redo"
+            >
+              <Redo className="size-3.5" />
+            </Button>
+          )}
+          <div className="h-6 w-px bg-gray-700 mx-1" />
+          <Button
+            type="button"
+            onClick={(): void => onApplyWrap('**', '**', 'bold text')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Bold"
           >
-            <option value="">Insert File</option>
-            {noteFiles.map((file: NoteFileRecord) => (
-              <option key={file.slotIndex} value={file.slotIndex}>
-                Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, "").slice(0, 15)}
-                {file.filename.replace(/^slot-\d+-\d+-/, "").length > 15 ? "..." : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      <div className="ml-2 flex items-center gap-2 border-l border pl-2">
-        <Label className="text-xs text-gray-400">Font</Label>
-        <select
-          value={fontFamily}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setFontFamily(event.target.value)}
-          className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200"
-        >
-          <option value="inherit">Default</option>
-          <option value="Georgia, serif">Serif</option>
-          <option value="Trebuchet MS, sans-serif">Sans</option>
-          <option value="Courier New, monospace">Mono</option>
-        </select>
-      </div>
-      <div className="flex items-center gap-2">
-        <Label className="text-xs text-gray-400">Color</Label>
-        <Input
-          type="color"
-          value={textColor}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTextColor(event.target.value)}
-          className="h-7 w-10 rounded border bg-gray-800"
-        />
-      </div>
-      <Button
-        type="button"
-        onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Apply font and color"
-      >
+        Bold
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyWrap('*', '*', 'italic text')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Italic"
+          >
+        Italic
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyWrap('`', '`', 'code')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Inline code"
+          >
+        Code
+          </Button>
+          <Button
+            type="button"
+            onClick={onApplyBulletList}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Bullet list"
+          >
+        Bullet
+          </Button>
+          <Button
+            type="button"
+            onClick={onApplyChecklist}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Checklist"
+          >
+        Checklist
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyLinePrefix('# ')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading"
+          >
+        H1
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyLinePrefix('## ')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading 2"
+          >
+        H2
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyLinePrefix('### ')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading 3"
+          >
+        H3
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyLinePrefix('> ')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Blockquote"
+          >
+        Quote
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onInsertAtCursor('\n---\n')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Horizontal rule"
+          >
+        HR
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onInsertAtCursor('\n```text\ncode\n```\n')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Code block"
+          >
+        Code Block
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void => onApplyWrap('[', '](https://example.com)', 'link text')}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Link"
+          >
+        Link
+          </Button>
+          <Button
+            type="button"
+            onClick={(): void =>
+              onInsertAtCursor(
+                '\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n')
+            }
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Table"
+          >
+        Table
+          </Button>
+          {noteFiles.length > 0 && (
+            <div className="relative">
+              <Select
+                value=""
+                onValueChange={(value: string): void => {
+                  const slotIndex = parseInt(value, 10);
+                  const file = noteFiles.find((f: NoteFileRecord) => f.slotIndex === slotIndex);
+                  if (file) {
+                    onInsertFileReference(file);
+                  }
+                }}
+              >
+                <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 h-auto" title="Insert file reference">
+                  <SelectValue placeholder="Insert File" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-border text-white">
+                  {noteFiles.map((file: NoteFileRecord) => (
+                    <SelectItem key={file.slotIndex} value={String(file.slotIndex)}>
+                  Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, '').slice(0, 15)}
+                      {file.filename.replace(/^slot-\d+-\d+-/, '').length > 15 ? '...' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="ml-2 flex items-center gap-2 border-l border pl-2">
+            <Label className="text-xs text-gray-400">Font</Label>
+            <Select
+              value={fontFamily}
+              onValueChange={setFontFamily}
+            >
+              <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 h-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-border text-white">
+                <SelectItem value="inherit">Default</SelectItem>
+                <SelectItem value="Georgia, serif">Serif</SelectItem>
+                <SelectItem value="Trebuchet MS, sans-serif">Sans</SelectItem>
+                <SelectItem value="Courier New, monospace">Mono</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-gray-400">Color</Label>
+            <Input
+              type="color"
+              value={textColor}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTextColor(event.target.value)}
+              className="h-7 w-10 rounded border bg-gray-800 p-0 border-none"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 border border-border/40"
+            title="Apply font and color"
+          >
         Apply
-      </Button>
+          </Button>
         </>
       )}
     </div>
   );
 }
+

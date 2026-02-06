@@ -1,17 +1,20 @@
-import "server-only";
+import 'server-only';
 
-export * from "./services/productAiService";
-export { startAgentQueue } from "./workers/agentQueue";
+export * from './services/productAiService';
+export { startAgentQueue, stopAgentQueue, enqueueAgentRun } from './workers/agentQueue';
+export { startAiInsightsQueue } from './workers/aiInsightsQueue';
 export {
   startAiPathRunQueue,
   getAiPathRunQueueStatus,
   processSingleRun,
-} from "./workers/aiPathRunQueue";
-export { startChatbotJobQueue, stopChatbotJobQueue } from "./workers/chatbotJobQueue";
+  enqueuePathRunJob,
+} from './workers/aiPathRunQueue';
+export { startChatbotJobQueue, stopChatbotJobQueue, enqueueChatbotJob } from './workers/chatbotJobQueue';
 export {
   startProductAiJobQueue,
   getQueueStatus,
   processSingleJob,
   resetProductAiJobQueue,
   stopProductAiJobQueue,
-} from "./workers/productAiQueue";
+  enqueueProductAiJobToQueue,
+} from './workers/productAiQueue';

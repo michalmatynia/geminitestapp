@@ -3,12 +3,13 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { getImageFileRepository } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/server";
-import type { ProductWithImages } from "@/features/products/server";
+
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import type { ImageFileRecord } from "@/shared/types/files";
+import type { ProductWithImages } from "@/shared/types/domain/products";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
@@ -21,15 +22,26 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const tags = tagsParam ? tagsParam.split(",").map((tag) => tag.trim()).filter(Boolean) : [];
 
     const imageFileRepository = await getImageFileRepository();
-    const productRepository = await getProductRepository();
     const files = await imageFileRepository.listImageFiles({ filename, tags });
 
     const getProductDisplayName = (product: ProductWithImages): string =>
       product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
 
-    const products = await productRepository.getProducts(
-      productName ? { search: productName } : {}
-    );
+    let products: ProductWithImages[] = [];
+    let productRepoAvailable = true;
+    try {
+      const productRepository = await getProductRepository();
+      products = await productRepository.getProducts(
+        productName ? { search: productName } : {}
+      );
+    } catch (error) {
+      productRepoAvailable = false;
+      await ErrorSystem.captureException(error, {
+        service: "api/files",
+        method: "GET",
+        action: "loadProducts",
+      });
+    }
     const filteredProducts = productId
       ? products.filter((product: ProductWithImages) => product.id === productId)
       : products;
@@ -51,7 +63,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     }
 
     const allowedImageFileIds =
-      productId || productName
+      productRepoAvailable && (productId || productName)
         ? new Set(imageFileToProducts.keys())
         : null;
 
@@ -66,10 +78,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
     return NextResponse.json(result);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/files",
-      method: "GET",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "files.GET",

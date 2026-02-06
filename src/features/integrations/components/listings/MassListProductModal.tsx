@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Button, SharedModal } from "@/shared/ui";
-import { useState } from "react";
+import { useState } from 'react';
 
-import { logger } from "@/shared/utils/logger";
-import { ExportLogViewer } from "./ExportLogViewer";
-import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
+import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import { logClientError } from '@/features/observability';
+import { FormModal } from '@/shared/ui';
 
-import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
-import { useBaseComSettings } from "./hooks/useBaseComSettings";
-import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from "../../hooks/useProductListingMutations";
-import { BaseListingSettings } from "./BaseListingSettings";
-import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
+import { BaseListingSettings } from './BaseListingSettings';
+import { ExportLogViewer } from './ExportLogViewer';
+import { useBaseComSettings } from './hooks/useBaseComSettings';
+import { useIntegrationSelection } from './hooks/useIntegrationSelection';
+import { IntegrationAccountSummary } from './IntegrationAccountSummary';
+import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from '../../hooks/useProductListingMutations';
 
 
 type MassListProductModalProps = {
@@ -62,11 +62,11 @@ export function MassListProductModal({
 
   const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
     (c: { id: string; name: string }) => c.id === selectedConnectionId
-  )?.name || "";
+  )?.name || '';
 
   const handleSubmit = async (): Promise<void> => {
     if (isBaseComIntegration && !selectedInventoryId) {
-      setError("Please select a Base.com inventory");
+      setError('Please select a Base.com inventory');
       return;
     }
 
@@ -79,46 +79,46 @@ export function MassListProductModal({
     const allLogs: CapturedLog[] = [];
     
     for (let i = 0; i < productIds.length; i++) {
-        const productId = productIds[i];
-        if (!productId) continue;
-        setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, current: i + 1 } : null);
+      const productId = productIds[i];
+      if (!productId) continue;
+      setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, current: i + 1 } : null);
         
-        try {
-            if (isBaseComIntegration) {
-                const exportData: ExportToBaseVariables & { productId: string } = {
-                  productId,
-                  connectionId: selectedConnectionId || "",
-                  inventoryId: selectedInventoryId || "",
-                  allowDuplicateSku,
-                };
-                if (selectedTemplateId && selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
+      try {
+        if (isBaseComIntegration) {
+          const exportData: ExportToBaseVariables & { productId: string } = {
+            productId,
+            connectionId: selectedConnectionId || '',
+            inventoryId: selectedInventoryId || '',
+            allowDuplicateSku,
+          };
+          if (selectedTemplateId && selectedTemplateId !== 'none') exportData.templateId = selectedTemplateId;
                 
-                const result = await exportMutation.mutateAsync(exportData);
+          const result = await exportMutation.mutateAsync(exportData);
         
-                if (result.logs) {
-                  allLogs.push(...result.logs);
-                  setExportLogs([...allLogs]);
-                }
-              } else {
-                await createListingMutation.mutateAsync({
-                  productId,
-                  integrationId: initialIntegrationId,
-                  connectionId: selectedConnectionId,
-                });
-              }
-        } catch (e: unknown) {
-            logger.error("Failed to list product", e);
-            errors++;
+          if (result.logs) {
+            allLogs.push(...result.logs);
+            setExportLogs([...allLogs]);
+          }
+        } else {
+          await createListingMutation.mutateAsync({
+            productId,
+            integrationId: initialIntegrationId,
+            connectionId: initialConnectionId,
+          });
         }
+      } catch (e: unknown) {
+        logClientError(e, { context: { source: 'MassListProductModal', action: 'listProduct', productId, integrationId: initialIntegrationId } });
+        errors++;
+      }
         
-        setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, errors } : null);
+      setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, errors } : null);
     }
 
     if (errors === 0) {
-        onSuccess();
+      onSuccess();
     } else {
-        setError(`Completed with ${errors} errors.`);
-        setTimeout(() => onSuccess(), 2000); 
+      setError(`Completed with ${errors} errors.`);
+      setTimeout(() => onSuccess(), 2000); 
     }
   };
 
@@ -126,36 +126,15 @@ export function MassListProductModal({
   const submitting = exportMutation.isPending || createListingMutation.isPending;
 
   return (
-    <SharedModal
-      open={true}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
-      title={`List ${productIds.length} Products to ${selectedIntegration?.name || "Marketplace"}`}
+      title={`List ${productIds.length} Products to ${selectedIntegration?.name || 'Marketplace'}`}
+      onSave={(): void => { void handleSubmit(); }}
+      isSaving={submitting}
+      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Products'}
+      cancelText="Cancel"
       size="md"
-      showClose={!submitting}
-      footer={
-        !submitting && (
-            <>
-            <Button
-                variant="outline"
-                onClick={onClose}
-                className="bg-gray-800 text-white hover:bg-gray-700"
-            >
-                Cancel
-            </Button>
-            <Button
-                onClick={(): void => { void handleSubmit(); }}
-                disabled={
-                submitting ||
-                (isBaseComIntegration && !selectedInventoryId)
-                }
-            >
-                {isBaseComIntegration
-                ? "Export to Base.com"
-                : "List Products"}
-            </Button>
-            </>
-        )
-      }
     >
       <div className="space-y-6">
         {error && (
@@ -165,45 +144,45 @@ export function MassListProductModal({
         )}
 
         {submitting && progress && (
-             <div className="space-y-2">
-                 <p className="text-sm text-gray-300">Processing {progress.current} of {progress.total}...</p>
-                 <div className="h-2 w-full rounded-full bg-gray-800">
-                     <div 
-                        className="h-full rounded-full bg-primary transition-all duration-300" 
-                        style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                     />
-                 </div>
-                 {progress.errors > 0 && <p className="text-xs text-red-400">{progress.errors} failures so far</p>}
-             </div>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-300">Processing {progress.current} of {progress.total}...</p>
+            <div className="h-2 w-full rounded-full bg-gray-800">
+              <div 
+                className="h-full rounded-full bg-primary transition-all duration-300" 
+                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+              />
+            </div>
+            {progress.errors > 0 && <p className="text-xs text-red-400">{progress.errors} failures so far</p>}
+          </div>
         )}
 
         {!submitting && (
-            <>
-                <IntegrationAccountSummary 
-                    integrationName={selectedIntegration?.name}
-                    connectionName={connectionName}
-                />
+          <>
+            <IntegrationAccountSummary 
+              integrationName={selectedIntegration?.name}
+              connectionName={connectionName}
+            />
 
-                {loading ? (
-                <p className="text-sm text-gray-400">Loading details...</p>
-                ) : (
-                <>
-                    {isBaseComIntegration && (
-                        <BaseListingSettings
-                            inventories={inventories}
-                            selectedInventoryId={selectedInventoryId}
-                            onInventoryIdChange={setSelectedInventoryId}
-                            loadingInventories={loadingInventories}
-                            templates={templates}
-                            selectedTemplateId={selectedTemplateId}
-                            onTemplateIdChange={setSelectedTemplateId}
-                            allowDuplicateSku={allowDuplicateSku}
-                            onAllowDuplicateSkuChange={setAllowDuplicateSku}
-                        />
-                    )}
-                </>
+            {loading ? (
+              <p className="text-sm text-gray-400">Loading details...</p>
+            ) : (
+              <>
+                {isBaseComIntegration && (
+                  <BaseListingSettings
+                    inventories={inventories}
+                    selectedInventoryId={selectedInventoryId}
+                    onInventoryIdChange={setSelectedInventoryId}
+                    loadingInventories={loadingInventories}
+                    templates={templates}
+                    selectedTemplateId={selectedTemplateId}
+                    onTemplateIdChange={setSelectedTemplateId}
+                    allowDuplicateSku={allowDuplicateSku}
+                    onAllowDuplicateSkuChange={setAllowDuplicateSku}
+                  />
                 )}
-            </>
+              </>
+            )}
+          </>
         )}
         {exportLogs.length > 0 && (
           <div className="mt-4 border-t border pt-4">
@@ -215,7 +194,7 @@ export function MassListProductModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }
 

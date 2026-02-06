@@ -1,15 +1,22 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState, useCallback } from "react";
-import { Plus } from "lucide-react";
-import { AppModal, Button, ModalShell } from "@/shared/ui";
-import type { BlockInstance, PageZone, SectionDefinition } from "../../types/page-builder";
-import { getSectionTypesForZone } from "./section-registry";
-import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from "./grid-templates";
+import { Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState, useCallback } from 'react';
+
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { AppModal, Button } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from './grid-templates';
+import { getSectionTypesForZone } from './section-registry';
+import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, cloneSectionTemplateSection, type SectionTemplateRecord } from './section-template-store';
+import { getTemplatesByCategory, type SectionTemplate } from './section-templates';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+
+import type { BlockInstance, PageZone, SectionDefinition } from '../../types/page-builder';
+
 
 interface SectionPickerProps {
   disabled?: boolean;
@@ -21,6 +28,7 @@ type TemplatePreview = {
   template: SectionTemplate;
   blockTypes: string[];
   sectionType: string;
+  templateRecordId?: string | undefined;
 };
 
 type TemplatePreviewGroup = {
@@ -32,35 +40,73 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const [isOpen, setIsOpen] = useState(false);
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
   const { dispatch } = usePageBuilder();
-  const settingsQuery = useSettingsMap();
-  const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
-  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement"]), []);
+  const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
+  const primitiveTypes = useMemo(() => new Set(['Grid', 'Block']), []);
+  const elementTypes = useMemo(() => new Set(['TextElement', 'TextAtom', 'ImageElement', 'Model3DElement', 'ButtonElement']), []);
   const gridAllowed = useMemo(
-    () => sectionTypes.some((def: SectionDefinition) => def.type === "Grid"),
+    () => sectionTypes.some((def: SectionDefinition) => def.type === 'Grid'),
     [sectionTypes]
   );
+  const gridTemplatesRaw = settingsStore.get(GRID_TEMPLATE_SETTINGS_KEY);
   const savedGridTemplates = useMemo<GridTemplateRecord[]>(() => {
-    if (!settingsQuery.data) return [];
     const stored = parseJsonSetting<unknown>(
-      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      gridTemplatesRaw,
       []
     );
     return normalizeGridTemplates(stored);
-  }, [settingsQuery.data]);
+  }, [gridTemplatesRaw]);
+  const sectionTemplatesRaw = settingsStore.get(SECTION_TEMPLATE_SETTINGS_KEY);
+  const savedSectionTemplates = useMemo<SectionTemplateRecord[]>(() => {
+    const stored = parseJsonSetting<unknown>(
+      sectionTemplatesRaw,
+      []
+    );
+    return normalizeSectionTemplates(stored);
+  }, [sectionTemplatesRaw]);
+  const handleDeleteSectionTemplate = useCallback(
+    (templateId: string): void => {
+      const filtered = savedSectionTemplates.filter((record: SectionTemplateRecord) => record.id !== templateId);
+      void updateSetting.mutateAsync({
+        key: SECTION_TEMPLATE_SETTINGS_KEY,
+        value: serializeSetting(filtered),
+      });
+    },
+    [savedSectionTemplates, updateSetting]
+  );
   const groupedTemplates = useMemo(() => {
     const base = getTemplatesByCategory(zone);
-    if (!gridAllowed || savedGridTemplates.length === 0) return base;
-    const savedTemplates: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
-      name: record.name,
-      description: record.description && record.description.length > 0 ? record.description : "Saved grid template",
-      category: "Saved grids",
-      create: () => cloneGridTemplateSection(record.section),
-    }));
+    const result: Record<string, SectionTemplate[]> = {};
+    // Add saved grid templates
+    if (gridAllowed && savedGridTemplates.length > 0) {
+      const savedGrids: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
+        name: record.name,
+        description: record.description && record.description.length > 0 ? record.description : 'Saved grid template',
+        category: 'Saved grids',
+        create: () => cloneGridTemplateSection(record.section),
+      }));
+      result['Saved grids'] = savedGrids;
+    }
+    // Add saved section templates grouped by category
+    if (savedSectionTemplates.length > 0) {
+      for (const record of savedSectionTemplates) {
+        const category = record.category || 'Saved sections';
+        if (!result[category]) {
+          result[category] = [];
+        }
+        result[category]!.push({
+          name: record.name,
+          description: record.description && record.description.length > 0 ? record.description : `Saved ${record.sectionType} template`,
+          category,
+          create: () => cloneSectionTemplateSection(record.section),
+        });
+      }
+    }
     return {
-      "Saved grids": savedTemplates,
+      ...result,
       ...base,
     };
-  }, [zone, gridAllowed, savedGridTemplates]);
+  }, [zone, gridAllowed, savedGridTemplates, savedSectionTemplates]);
   const primitives = useMemo(
     () => sectionTypes.filter((def: SectionDefinition) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]
@@ -86,12 +132,19 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     (template: SectionTemplate) => {
       const section = template.create();
       section.zone = zone;
-      dispatch({ type: "INSERT_TEMPLATE_SECTION", section });
+      dispatch({ type: 'INSERT_TEMPLATE_SECTION', section });
       setIsOpen(false);
     },
     [dispatch, zone]
   );
 
+  const sectionTemplateIdByName = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    for (const record of savedSectionTemplates) {
+      map.set(`${record.category}::${record.name}`, record.id);
+    }
+    return map;
+  }, [savedSectionTemplates]);
   const templatePreviewGroups = useMemo((): TemplatePreviewGroup[] => {
     if (!isOpen) return [];
     return Object.entries(groupedTemplates).map(([category, templates]: [string, SectionTemplate[]]) => ({
@@ -99,10 +152,11 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
       templates: templates.map((template: SectionTemplate) => {
         const section = template.create();
         const blockTypes = section.blocks?.map((block: BlockInstance) => block.type) ?? [];
-        return { template, blockTypes, sectionType: section.type };
+        const templateRecordId = sectionTemplateIdByName.get(`${category}::${template.name}`);
+        return { template, blockTypes, sectionType: section.type, templateRecordId };
       }),
     }));
-  }, [groupedTemplates, isOpen]);
+  }, [groupedTemplates, isOpen, sectionTemplateIdByName]);
 
   const renderPreview = (blockTypes: string[]): React.ReactNode => {
     const items = blockTypes.slice(0, 4);
@@ -129,7 +183,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   };
 
   const renderAllowedBlocks = (types: string[]): string =>
-    types.length > 0 ? `Blocks: ${types.join(", ")}` : "No blocks";
+    types.length > 0 ? `Blocks: ${types.join(', ')}` : 'No blocks';
 
   return (
     <>
@@ -143,26 +197,26 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
         <Plus className="size-3.5" />
         Add section
       </Button>
-      <AppModal open={isOpen} onOpenChange={setIsOpen} title="Add a section">
-        <ModalShell
-          title="Add a section"
-          onClose={() => setIsOpen(false)}
-          size="lg"
-          bodyClassName="h-[70vh]"
-          header={
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Add a section</h2>
-              <Button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="min-w-[100px] border border-white/20 hover:border-white/40"
-              >
-                Close
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-6">
+      <AppModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Add a section"
+        size="lg"
+        bodyClassName="h-[70vh]"
+        header={
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Add a section</h2>
+            <Button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="min-w-[100px] border border-white/20 hover:border-white/40"
+            >
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
           {primitives.length > 0 && (
             <div>
               <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -252,41 +306,55 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
 
           {templatePreviewGroups.length > 0 && (
             <div>
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
               Templates
-            </div>
-            <div className="space-y-4">
-              {templatePreviewGroups.map((group: TemplatePreviewGroup) => (
-                <div key={group.category}>
-                  <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                    {group.category}
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {group.templates.map(({ template, blockTypes, sectionType }: TemplatePreview) => (
-                      <button
-                        key={template.name}
-                        type="button"
-                        onClick={() => handleInsertTemplate(template)}
-                        className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-200">{template.name}</span>
-                          <span className="text-[10px] uppercase tracking-wide text-gray-500">
-                            {sectionType}
-                          </span>
+              </div>
+              <div className="space-y-4">
+                {templatePreviewGroups.map((group: TemplatePreviewGroup) => (
+                  <div key={group.category}>
+                    <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                      {group.category}
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {group.templates.map(({ template, blockTypes, sectionType, templateRecordId }: TemplatePreview) => (
+                        <div key={template.name} className="relative">
+                          <button
+                            type="button"
+                            onClick={() => handleInsertTemplate(template)}
+                            className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-200">{template.name}</span>
+                              <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                                {sectionType}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">{template.description}</span>
+                            {renderPreview(blockTypes)}
+                          </button>
+                          {templateRecordId && (
+                            <button
+                              type="button"
+                              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
+                                e.stopPropagation();
+                                handleDeleteSectionTemplate(templateRecordId);
+                              }}
+                              className="absolute right-1.5 top-1.5 rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400 transition"
+                              title="Delete saved template"
+                              aria-label="Delete saved template"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          )}
                         </div>
-                        <span className="text-xs text-gray-500">{template.description}</span>
-                        {renderPreview(blockTypes)}
-                      </button>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
           )}
-          </div>
-        </ModalShell>
+        </div>
       </AppModal>
     </>
   );

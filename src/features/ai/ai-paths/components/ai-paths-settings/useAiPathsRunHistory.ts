@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type Query, type UseQueryResult } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+
 import {
   runsApi,
   type AiPathRunEventRecord,
   type AiPathRunNodeRecord,
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
-} from "@/features/ai/ai-paths/lib";
-import { buildHistoryNodeOptions, type HistoryNodeOption } from "../run-history-utils";
-import type { RunHistoryFilter } from "../run-history-panel";
+} from '@/features/ai/ai-paths/lib';
 
-type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
+import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
+
+import type { RunHistoryFilter } from '../run-history-panel';
+
+type ToastFn = (
+  message: string,
+  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
+) => void;
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
@@ -20,7 +26,7 @@ type UseAiPathsRunHistoryArgs = {
 };
 
 type UseAiPathsRunHistoryResult = {
-  runsQuery: ReturnType<typeof useQuery>;
+  runsQuery: UseQueryResult<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>;
   runList: AiPathRunRecord[];
   runFilter: RunHistoryFilter;
   setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
@@ -43,7 +49,7 @@ type UseAiPathsRunHistoryResult = {
       events: AiPathRunEventRecord[];
     } | null>
   >;
-  runStreamStatus: "connecting" | "live" | "stopped" | "paused";
+  runStreamStatus: 'connecting' | 'live' | 'stopped' | 'paused';
   runStreamPaused: boolean;
   setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
   runNodeSummary: { counts: Record<string, number>; total: number; completed: number; progress: number } | null;
@@ -54,7 +60,7 @@ type UseAiPathsRunHistoryResult = {
   runDetailSelectedHistoryEntries: RuntimeHistoryEntry[];
   setRunHistoryNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   handleOpenRunDetail: (runId: string) => Promise<void>;
-  handleResumeRun: (runId: string, mode: "resume" | "replay") => Promise<void>;
+  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleRequeueDeadLetter: (runId: string) => Promise<void>;
 };
@@ -65,7 +71,7 @@ export function useAiPathsRunHistory({
 }: UseAiPathsRunHistoryArgs): UseAiPathsRunHistoryResult {
   const [runDetailOpen, setRunDetailOpen] = useState(false);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
-  const [runFilter, setRunFilter] = useState<RunHistoryFilter>("all");
+  const [runFilter, setRunFilter] = useState<RunHistoryFilter>('all');
   const [runDetail, setRunDetail] = useState<{
     run: AiPathRunRecord;
     nodes: AiPathRunNodeRecord[];
@@ -74,18 +80,18 @@ export function useAiPathsRunHistory({
   const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
   const [expandedRunHistory, setExpandedRunHistory] = useState<Record<string, boolean>>({});
   const [runHistorySelection, setRunHistorySelection] = useState<Record<string, string>>({});
-  const [runStreamStatus, setRunStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
+  const [runStreamStatus, setRunStreamStatus] = useState<'connecting' | 'live' | 'stopped' | 'paused'>('stopped');
   const [runStreamPaused, setRunStreamPaused] = useState(false);
   const [runEventsOverflow, setRunEventsOverflow] = useState(false);
   const [runEventsBatchLimit, setRunEventsBatchLimit] = useState<number | null>(null);
 
   useEffect(() => {
     if (!runDetailOpen || !runDetail?.run?.id) {
-      setRunStreamStatus("stopped");
+      setRunStreamStatus('stopped');
       return;
     }
     if (runStreamPaused) {
-      setRunStreamStatus("paused");
+      setRunStreamStatus('paused');
       return;
     }
 
@@ -93,23 +99,23 @@ export function useAiPathsRunHistory({
     const params = new URLSearchParams();
     const latestEventTimestamp = runDetail.events?.length
       ? runDetail.events.reduce<string | null>(
-          (max: string | null, event: AiPathRunEventRecord) => {
-            const time = new Date(event.createdAt).getTime();
-            if (!Number.isFinite(time)) return max;
-            if (!max) return new Date(time).toISOString();
-            return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
-          },
-          null
-        )
+        (max: string | null, event: AiPathRunEventRecord) => {
+          const time = new Date(event.createdAt).getTime();
+          if (!Number.isFinite(time)) return max;
+          if (!max) return new Date(time).toISOString();
+          return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
+        },
+        null
+      )
       : null;
     if (latestEventTimestamp) {
-      params.set("since", latestEventTimestamp);
+      params.set('since', latestEventTimestamp);
     }
     const url = params.toString()
       ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
       : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
     const source = new EventSource(url);
-    setRunStreamStatus("connecting");
+    setRunStreamStatus('connecting');
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
       setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => {
@@ -130,10 +136,10 @@ export function useAiPathsRunHistory({
       });
     };
 
-    source.addEventListener("ready", () => {
-      setRunStreamStatus("live");
+    source.addEventListener('ready', () => {
+      setRunStreamStatus('live');
     });
-    source.addEventListener("run", (event: MessageEvent) => {
+    source.addEventListener('run', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
         setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, run: payload } : prev));
@@ -141,7 +147,7 @@ export function useAiPathsRunHistory({
         // ignore parse errors
       }
     });
-    source.addEventListener("nodes", (event: MessageEvent) => {
+    source.addEventListener('nodes', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
         setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, nodes: payload } : prev));
@@ -149,7 +155,7 @@ export function useAiPathsRunHistory({
         // ignore parse errors
       }
     });
-    source.addEventListener("events", (event: MessageEvent) => {
+    source.addEventListener('events', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
@@ -162,7 +168,7 @@ export function useAiPathsRunHistory({
         }
         const events = Array.isArray(payload.events) ? payload.events : [];
         mergeEvents(events);
-        if (typeof payload.limit === "number") {
+        if (typeof payload.limit === 'number') {
           setRunEventsBatchLimit(payload.limit);
         }
         if (payload.overflow) {
@@ -174,20 +180,19 @@ export function useAiPathsRunHistory({
         // ignore parse errors
       }
     });
-    source.addEventListener("done", () => {
-      setRunStreamStatus("stopped");
+    source.addEventListener('done', () => {
+      setRunStreamStatus('stopped');
       source.close();
     });
-    source.addEventListener("error", () => {
-      setRunStreamStatus("stopped");
+    source.addEventListener('error', () => {
+      setRunStreamStatus('stopped');
     });
 
     return (): void => {
       source.close();
-      setRunStreamStatus("stopped");
+      setRunStreamStatus('stopped');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused]);
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events]);
 
   useEffect(() => {
     setRunEventsOverflow(false);
@@ -198,7 +203,7 @@ export function useAiPathsRunHistory({
     if (!runDetail) return null;
     const counts: Record<string, number> = {};
     runDetail.nodes.forEach((node: AiPathRunNodeRecord) => {
-      const status = node.status ?? "unknown";
+      const status = node.status ?? 'unknown';
       counts[status] = (counts[status] ?? 0) + 1;
     });
     const total = runDetail.nodes.length;
@@ -244,21 +249,23 @@ export function useAiPathsRunHistory({
       ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
       : [];
 
-  const runsQuery = useQuery({
-    queryKey: ["ai-paths-runs", activePathId],
+  const runsQuery = useQuery<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>({
+    queryKey: ['ai-paths-runs', activePathId],
     queryFn: async () => {
       const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });
       return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };
     },
     enabled: Boolean(activePathId),
-    refetchInterval: (data: unknown): number | false => {
-      const d: { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined = data as
+    refetchInterval: (
+      query: Query<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }, readonly unknown[]>
+    ): number | false => {
+      const d = query.state.data as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }
         | undefined;
       if (!d || !d.ok) return false;
       const runs: AiPathRunRecord[] = d.data?.runs ?? [];
       const hasActive: boolean = runs.some(
-        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
+        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
       return hasActive ? 5000 : false;
     },
@@ -275,7 +282,7 @@ export function useAiPathsRunHistory({
     try {
       const response = await runsApi.get(runId);
       if (!response.ok) {
-        throw new Error(response.error || "Failed to load run details.");
+        throw new Error(response.error || 'Failed to load run details.');
       }
       const data = response.data as {
         run: AiPathRunRecord;
@@ -284,8 +291,8 @@ export function useAiPathsRunHistory({
       };
       setRunDetail(data);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to load run details.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to load run details.', {
+        variant: 'error',
       });
       setRunDetail(null);
     } finally {
@@ -293,14 +300,14 @@ export function useAiPathsRunHistory({
     }
   };
 
-  const handleResumeRun = async (runId: string, mode: "resume" | "replay"): Promise<void> => {
+  const handleResumeRun = async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
     const response = await runsApi.resume(runId, mode);
     if (!response.ok) {
-      toast(response.error || "Failed to resume run.", { variant: "error" });
+      toast(response.error || 'Failed to resume run.', { variant: 'error' });
       return;
     }
-    toast(mode === "resume" ? "Run resumed." : "Run replay queued.", {
-      variant: "success",
+    toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
+      variant: 'success',
     });
     void runsQuery.refetch();
   };
@@ -308,20 +315,20 @@ export function useAiPathsRunHistory({
   const handleCancelRun = async (runId: string): Promise<void> => {
     const response = await runsApi.cancel(runId);
     if (!response.ok) {
-      toast(response.error || "Failed to cancel run.", { variant: "error" });
+      toast(response.error || 'Failed to cancel run.', { variant: 'error' });
       return;
     }
-    toast("Run canceled.", { variant: "success" });
+    toast('Run canceled.', { variant: 'success' });
     void runsQuery.refetch();
   };
 
   const handleRequeueDeadLetter = async (runId: string): Promise<void> => {
-    const response = await runsApi.resume(runId, "replay");
+    const response = await runsApi.resume(runId, 'replay');
     if (!response.ok) {
-      toast(response.error || "Failed to requeue run.", { variant: "error" });
+      toast(response.error || 'Failed to requeue run.', { variant: 'error' });
       return;
     }
-    toast("Dead-letter run requeued.", { variant: "success" });
+    toast('Dead-letter run requeued.', { variant: 'success' });
     void runsQuery.refetch();
   };
 

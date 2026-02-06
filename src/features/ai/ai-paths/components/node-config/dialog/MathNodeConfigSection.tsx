@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, MathConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { toNumber } from "@/features/ai/ai-paths/lib";
+import type { AiNode, MathConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { toNumber } from '@/features/ai/ai-paths/lib';
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type MathNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,10 +16,10 @@ export function MathNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: MathNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "math") return null;
+  if (selectedNode.type !== 'math') return null;
 
   const mathConfig = selectedNode.config?.math ?? {
-    operation: "add",
+    operation: 'add',
     operand: 0,
   };
 
@@ -33,7 +33,7 @@ export function MathNodeConfigSection({
             updateSelectedNodeConfig({
               math: {
                 ...mathConfig,
-                operation: value as MathConfig["operation"],
+                operation: value as MathConfig['operation'],
               },
             })
           }

@@ -1,16 +1,18 @@
-import { vi, MockInstance } from "vitest";
-import { NextRequest } from "next/server";
-import { GET, POST } from "@/app/api/chatbot/route";
-import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from 'msw';
+import { NextRequest } from 'next/server';
+import { vi, MockInstance } from 'vitest';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+import { GET, POST } from '@/app/api/chatbot/route';
+import { server } from '@/mocks/server';
 
-describe("Chatbot API", () => {
+
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+
+describe('Chatbot API', () => {
   let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -18,40 +20,40 @@ describe("Chatbot API", () => {
     vi.resetAllMocks();
   });
 
-  it("should list available Ollama models", async () => {
+  it('should list available Ollama models', async () => {
     server.use(
       http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
         return HttpResponse.json({
-          models: [{ name: "test-model" }, { name: "llava" }],
+          models: [{ name: 'test-model' }, { name: 'llava' }],
         });
       })
     );
 
-    const res = await GET(new NextRequest("http://localhost/api/chatbot"));
+    const res = await GET(new NextRequest('http://localhost/api/chatbot'));
     const data = (await res.json()) as { models: string[] };
 
     expect(res.status).toBe(200);
-    expect(data.models).toEqual(["test-model", "llava"]);
+    expect(data.models).toEqual(['test-model', 'llava']);
   });
 
-  it("should return an error when model listing fails", async () => {
+  it('should return an error when model listing fails', async () => {
     server.use(
       http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
-        return new HttpResponse("Provider down", { status: 502 });
+        return new HttpResponse('Provider down', { status: 502 });
       })
     );
 
-    const res = await GET(new NextRequest("http://localhost/api/chatbot"));
+    const res = await GET(new NextRequest('http://localhost/api/chatbot'));
     const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);
-    expect(data.error).toContain("Failed to load models");
+    expect(data.error).toContain('Failed to load models');
     expect(data.errorId).toBeDefined();
   });
 
-  it("should reject invalid chat payloads", async () => {
-    const req = new NextRequest("http://localhost/api/chatbot", {
-      method: "POST",
+  it('should reject invalid chat payloads', async () => {
+    const req = new NextRequest('http://localhost/api/chatbot', {
+      method: 'POST',
       body: JSON.stringify({ messages: [] }),
     });
 
@@ -59,21 +61,21 @@ describe("Chatbot API", () => {
     const data = (await res.json()) as { error: string };
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("No messages provided.");
+    expect(data.error).toBe('No messages provided.');
   });
 
-  it("should proxy chat requests to Ollama", async () => {
+  it('should proxy chat requests to Ollama', async () => {
     server.use(
       http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
-        return HttpResponse.json({ message: { content: "Hello from model." } });
+        return HttpResponse.json({ message: { content: 'Hello from model.' } });
       })
     );
 
-    const req = new NextRequest("http://localhost/api/chatbot", {
-      method: "POST",
+    const req = new NextRequest('http://localhost/api/chatbot', {
+      method: 'POST',
       body: JSON.stringify({
-        model: "test-model",
-        messages: [{ role: "user", content: "Hello" }],
+        model: 'test-model',
+        messages: [{ role: 'user', content: 'Hello' }],
       }),
     });
 
@@ -81,21 +83,21 @@ describe("Chatbot API", () => {
     const data = (await res.json()) as { message: string };
 
     expect(res.status).toBe(200);
-    expect(data.message).toBe("Hello from model.");
+    expect(data.message).toBe('Hello from model.');
   });
 
-  it("should return a debug errorId when chat proxy fails", async () => {
+  it('should return a debug errorId when chat proxy fails', async () => {
     server.use(
       http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
-        return new HttpResponse("Model unavailable", { status: 502 });
+        return new HttpResponse('Model unavailable', { status: 502 });
       })
     );
 
-    const req = new NextRequest("http://localhost/api/chatbot", {
-      method: "POST",
+    const req = new NextRequest('http://localhost/api/chatbot', {
+      method: 'POST',
       body: JSON.stringify({
-        model: "test-model",
-        messages: [{ role: "user", content: "Hello" }],
+        model: 'test-model',
+        messages: [{ role: 'user', content: 'Hello' }],
       }),
     });
 
@@ -103,22 +105,22 @@ describe("Chatbot API", () => {
     const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);
-    expect(data.error).toContain("Ollama error");
+    expect(data.error).toContain('Ollama error');
     expect(data.errorId).toBeDefined();
   });
 
-  it("should return a debug errorId on unexpected chat errors", async () => {
+  it('should return a debug errorId on unexpected chat errors', async () => {
     server.use(
       http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
         return HttpResponse.error();
       })
     );
 
-    const req = new NextRequest("http://localhost/api/chatbot", {
-      method: "POST",
+    const req = new NextRequest('http://localhost/api/chatbot', {
+      method: 'POST',
       body: JSON.stringify({
-        model: "test-model",
-        messages: [{ role: "user", content: "Hello" }],
+        model: 'test-model',
+        messages: [{ role: 'user', content: 'Hello' }],
       }),
     });
 

@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
 import {
   useQuery,
   useQueries,
   useQueryClient,
   type UseQueryResult,
-} from "@tanstack/react-query";
-import { getProducts, countProducts } from "@/features/products/api";
-import { useCallback } from "react";
-import type { ProductWithImages } from "@/features/products/types";
+} from '@tanstack/react-query';
+import { useCallback } from 'react';
+
+import { getProducts, countProducts } from '@/features/products/api';
+import type { ProductWithImages } from '@/features/products/types';
 
 interface UseProductsFilters {
   search?: string | undefined;
@@ -27,6 +28,8 @@ interface UseProductsOptions {
   enabled?: boolean;
 }
 
+const PRODUCTS_STALE_MS = 10_000;
+
 export function useProducts(
   filters: UseProductsFilters,
   options: UseProductsOptions = {},
@@ -34,13 +37,13 @@ export function useProducts(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["products", filters],
+    queryKey: ['products', filters],
     queryFn: () => getProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
-    networkMode: "always",
+    networkMode: 'always',
   });
 }
 
@@ -51,13 +54,13 @@ export function useProductsCount(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["products-count", filters],
+    queryKey: ['products-count', filters],
     queryFn: () => countProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
-    networkMode: "always",
+    networkMode: 'always',
   });
 }
 
@@ -78,14 +81,16 @@ export function useProductsWithCount(
   const results = useQueries({
     queries: [
       {
-        queryKey: ["products", filters],
+        queryKey: ['products', filters],
         queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
         enabled,
+        staleTime: PRODUCTS_STALE_MS,
       },
       {
-        queryKey: ["products-count", filters],
+        queryKey: ['products-count', filters],
         queryFn: (): Promise<number> => countProducts(filters),
         enabled,
+        staleTime: PRODUCTS_STALE_MS,
       },
     ],
   });
@@ -94,8 +99,8 @@ export function useProductsWithCount(
 
   const refetch = useCallback(async (): Promise<void> => {
     await Promise.all([
-      queryClient.refetchQueries({ queryKey: ["products"] }),
-      queryClient.refetchQueries({ queryKey: ["products-count"] }),
+      queryClient.refetchQueries({ queryKey: ['products'] }),
+      queryClient.refetchQueries({ queryKey: ['products-count'] }),
     ]);
   }, [queryClient]);
 

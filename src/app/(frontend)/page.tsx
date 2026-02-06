@@ -1,32 +1,37 @@
-import { JSX } from "react";
-import Link from "next/link";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { productService } from "@/features/products/server";
-import { ProductCard } from "@/features/products";
-import type { ProductWithImages } from "@/features/products";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
-import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
-import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
-import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
-import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
-import type { Slug } from "@/features/cms/types";
-import { getSlugsForDomain, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
-import { buildColorSchemeMap, type ThemeSettings } from "@/features/cms/types/theme-settings";
-import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
-import { auth } from "@/features/auth/auth";
-import type { Session } from "next-auth";
-import { getUserPreferences } from "@/features/auth/server";
-import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { headers } from 'next/headers';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { JSX } from 'react';
+
+import { auth } from '@/features/auth/auth';
+import { getUserPreferences } from '@/features/auth/server';
+import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
+import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
+import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
+import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
+import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
+import type { Slug } from '@/features/cms/types';
+import { buildColorSchemeMap, type ThemeSettings } from '@/features/cms/types/theme-settings';
+import { ProductCard } from '@/features/products';
+import type { ProductWithImages } from '@/features/products';
+import { productService } from '@/features/products/server';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Session } from 'next-auth';
+
+
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session["user"] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
   if (user.isElevated) return true;
-  const role = user.role ?? "";
-  return ["admin", "super_admin", "superuser"].includes(role);
+  const role = user.role ?? '';
+  return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
 const canPreviewDrafts = async (
@@ -43,11 +48,11 @@ const canPreviewDrafts = async (
   }
 };
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const notNull = <T,>(value: T | null | undefined): value is T => value != null;
-const FRONT_PAGE_SETTING_KEY = "front_page_app";
-const FRONT_PAGE_ALLOWED = new Set(["products", "chatbot", "notes"]);
+const FRONT_PAGE_SETTING_KEY = 'front_page_app';
+const FRONT_PAGE_ALLOWED = new Set(['products', 'chatbot', 'notes']);
 
 type SettingDocument = {
   _id: string;
@@ -56,56 +61,91 @@ type SettingDocument = {
 };
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
 
-const getFrontPageSetting = async (): Promise<string | null> => {
-  if (process.env.MONGODB_URI) {
+const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === 'true';
+
+const readMongoFrontPageSetting = async (): Promise<string | null> => {
+  if (!process.env.MONGODB_URI) return null;
+  try {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingDocument>("settings")
+      .collection<SettingDocument>('settings')
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
+  } catch {
+    // Mongo unavailable — ignore.
   }
-
-  if (canUsePrismaSettings()) {
-    try {
-      const setting = await prisma.setting.findUnique({
-        where: { key: FRONT_PAGE_SETTING_KEY },
-        select: { value: true },
-      });
-      if (setting?.value) return setting.value;
-    } catch {
-      // Prisma unavailable — ignore.
-    }
-  }
-
   return null;
 };
 
+const readPrismaFrontPageSetting = async (): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key: FRONT_PAGE_SETTING_KEY },
+      select: { value: true },
+    });
+    if (setting?.value) return setting.value;
+  } catch {
+    // Prisma unavailable — ignore.
+  }
+  return null;
+};
+
+const getFrontPageSetting = async (): Promise<string | null> => {
+  const provider = await getAppDbProvider();
+  if (provider === 'mongodb') {
+    const mongoValue = await readMongoFrontPageSetting();
+    if (mongoValue) return mongoValue;
+    return readPrismaFrontPageSetting();
+  }
+
+  const prismaValue = await readPrismaFrontPageSetting();
+  if (prismaValue) return prismaValue;
+  return readMongoFrontPageSetting();
+};
+
 export default async function Home(): Promise<JSX.Element> {
-  const frontPageApp = await getFrontPageSetting();
+  const timings: Record<string, number> = {};
+   
+  const totalStart = performance.now();
+  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+     
+    const start = performance.now();
+    const result = await fn();
+     
+    timings[label] = performance.now() - start;
+    return result;
+  };
+
+  const [frontPageApp, cmsRepository] = await Promise.all([
+    withTiming('frontPageSetting', getFrontPageSetting),
+    withTiming('cmsRepository', getCmsRepository),
+  ]);
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
-    if (frontPageApp === "chatbot") {
-      redirect("/admin/chatbot");
+    if (frontPageApp === 'chatbot') {
+      redirect('/admin/chatbot');
     }
-    if (frontPageApp === "notes") {
-      redirect("/admin/notes");
+    if (frontPageApp === 'notes') {
+      redirect('/admin/notes');
     }
   }
 
-  const cmsRepository = await getCmsRepository();
-  const hdrs = await headers();
-  const domain = await resolveCmsDomainFromHeaders(hdrs);
-  const slugs = await getSlugsForDomain(domain.id, cmsRepository);
+  const hdrs = await withTiming('headers', () => headers());
+  const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
+  const [slugs, themeSettings, menuSettings] = await Promise.all([
+    withTiming('cmsSlugs', () => getSlugsForDomain(domain.id, cmsRepository)),
+    withTiming('cmsTheme', () => getCmsThemeSettings()),
+    withTiming('cmsMenu', () => getCmsMenuSettings(domain.id)),
+  ]);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
-  const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
   type MaybeImages = {
-    images?: (ProductWithImages["images"][number] | null)[] | null;
-    catalogs?: (ProductWithImages["catalogs"][number] | null)[] | null;
+    images?: (ProductWithImages['images'][number] | null)[] | null;
+    catalogs?: (ProductWithImages['catalogs'][number] | null)[] | null;
   };
 
   const normalizeProduct = (
@@ -120,12 +160,20 @@ export default async function Home(): Promise<JSX.Element> {
 
   if (defaultSlug) {
     // Try to load the published CMS page linked to this slug
-    const cmsPage = await cmsRepository.getPageBySlug(defaultSlug.slug);
-    const session = await auth();
-    const allowDrafts = await canPreviewDrafts(session);
-    const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
+    const cmsPage = await withTiming('cmsPageBySlug', () => cmsRepository.getPageBySlug(defaultSlug.slug));
+    let allowDrafts = false;
+    if (cmsPage && cmsPage.status !== 'published') {
+      const session = await withTiming('auth', () => auth());
+      allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
+    }
+    const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0;
 
     const showMenu = cmsPage?.showMenu !== false;
+    if (shouldLogTiming()) {
+       
+      timings.total = performance.now() - totalStart;
+      console.log('[timing] home', timings);
+    }
     return (
       <CmsPageShell
         menu={menuSettings}
@@ -156,12 +204,17 @@ export default async function Home(): Promise<JSX.Element> {
     );
   }
 
-  const productsRaw = await productService.getProducts({});
+  const productsRaw = await withTiming('products', () => productService.getProducts({}));
   const products = (
     productsRaw as (ProductWithImages | (ProductWithImages & MaybeImages))[]
   ).map(normalizeProduct);
 
   const showFallbackHeader = !menuSettings.showMenu;
+  if (shouldLogTiming()) {
+     
+    timings.total = performance.now() - totalStart;
+    console.log('[timing] home', timings);
+  }
   return (
     <CmsPageShell
       menu={menuSettings}
@@ -273,74 +326,74 @@ const normalizeSocialUrl = (value?: string | null): string | null => {
 const buildSocialLinks = (theme: ThemeSettings | null | undefined): SocialLink[] => {
   if (!theme) return [];
   const links: SocialLink[] = [];
-  const addLink = (link: Omit<SocialLink, "href"> & { href: string | null }) => {
+  const addLink = (link: Omit<SocialLink, 'href'> & { href: string | null }) => {
     if (link.href) links.push({ ...link, href: link.href });
   };
 
   addLink({
-    id: "facebook",
-    label: "Facebook",
+    id: 'facebook',
+    label: 'Facebook',
     href: normalizeSocialUrl(theme.socialFacebook),
     Icon: Facebook,
-    fallback: "Fb",
+    fallback: 'Fb',
   });
   addLink({
-    id: "instagram",
-    label: "Instagram",
+    id: 'instagram',
+    label: 'Instagram',
     href: normalizeSocialUrl(theme.socialInstagram),
     Icon: Instagram,
-    fallback: "Ig",
+    fallback: 'Ig',
   });
   addLink({
-    id: "youtube",
-    label: "YouTube",
+    id: 'youtube',
+    label: 'YouTube',
     href: normalizeSocialUrl(theme.socialYoutube),
     Icon: Youtube,
-    fallback: "Yt",
+    fallback: 'Yt',
   });
   addLink({
-    id: "tiktok",
-    label: "TikTok",
+    id: 'tiktok',
+    label: 'TikTok',
     href: normalizeSocialUrl(theme.socialTiktok),
-    fallback: "TT",
+    fallback: 'TT',
   });
   addLink({
-    id: "twitter",
-    label: "X / Twitter",
+    id: 'twitter',
+    label: 'X / Twitter',
     href: normalizeSocialUrl(theme.socialTwitter),
     Icon: Twitter,
-    fallback: "X",
+    fallback: 'X',
   });
   addLink({
-    id: "snapchat",
-    label: "Snapchat",
+    id: 'snapchat',
+    label: 'Snapchat',
     href: normalizeSocialUrl(theme.socialSnapchat),
-    fallback: "SC",
+    fallback: 'SC',
   });
   addLink({
-    id: "pinterest",
-    label: "Pinterest",
+    id: 'pinterest',
+    label: 'Pinterest',
     href: normalizeSocialUrl(theme.socialPinterest),
-    fallback: "P",
+    fallback: 'P',
   });
   addLink({
-    id: "tumblr",
-    label: "Tumblr",
+    id: 'tumblr',
+    label: 'Tumblr',
     href: normalizeSocialUrl(theme.socialTumblr),
-    fallback: "T",
+    fallback: 'T',
   });
   addLink({
-    id: "vimeo",
-    label: "Vimeo",
+    id: 'vimeo',
+    label: 'Vimeo',
     href: normalizeSocialUrl(theme.socialVimeo),
-    fallback: "V",
+    fallback: 'V',
   });
   addLink({
-    id: "linkedin",
-    label: "LinkedIn",
+    id: 'linkedin',
+    label: 'LinkedIn',
     href: normalizeSocialUrl(theme.socialLinkedin),
     Icon: Linkedin,
-    fallback: "In",
+    fallback: 'In',
   });
 
   return links;

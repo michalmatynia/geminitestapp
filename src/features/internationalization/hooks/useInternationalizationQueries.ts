@@ -1,26 +1,28 @@
-"use client";
+'use client';
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getCurrencies, getCountries, getLanguages } from "../api";
-import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+
+import { getCurrencies, getCountries, getLanguages } from '../api';
 
 export function useCurrencies(): UseQueryResult<CurrencyOption[], Error> {
   return useQuery({
-    queryKey: ["currencies"],
+    queryKey: ['currencies'],
     queryFn: getCurrencies,
   });
 }
 
 export function useCountries(): UseQueryResult<CountryOption[], Error> {
   return useQuery({
-    queryKey: ["countries"],
+    queryKey: ['countries'],
     queryFn: getCountries,
   });
 }
 
 export function useLanguages(): UseQueryResult<Language[], Error> {
   return useQuery({
-    queryKey: ["languages"],
+    queryKey: ['languages'],
     queryFn: getLanguages,
   });
 }

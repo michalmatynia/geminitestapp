@@ -1,14 +1,15 @@
-import "server-only";
+import 'server-only';
 
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
+
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ChatbotJob,
   ChatbotJobDocument,
   ChatbotJobStatus,
-} from "@/shared/types/chatbot";
+} from '@/shared/types/chatbot';
 
-const COLLECTION_NAME = "chatbot_jobs";
+const COLLECTION_NAME = 'chatbot_jobs';
 
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
@@ -29,8 +30,8 @@ export interface ChatbotJobRepository {
   findAll(limit?: number): Promise<ChatbotJob[]>;
   findById(id: string): Promise<ChatbotJob | null>;
   findNextPending(): Promise<ChatbotJob | null>;
-  create(input: Omit<ChatbotJob, "id" | "createdAt" | "status">): Promise<ChatbotJob>;
-  update(id: string, update: Partial<Omit<ChatbotJob, "id" | "sessionId" | "createdAt">>): Promise<ChatbotJob | null>;
+  create(input: Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>): Promise<ChatbotJob>;
+  update(id: string, update: Partial<Omit<ChatbotJob, 'id' | 'sessionId' | 'createdAt'>>): Promise<ChatbotJob | null>;
   deleteMany(statusIn: ChatbotJobStatus[]): Promise<number>;
   delete(id: string): Promise<boolean>;
 }
@@ -60,16 +61,16 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<ChatbotJobDocument>(COLLECTION_NAME)
-      .findOne({ status: "pending" }, { sort: { createdAt: 1 } });
+      .findOne({ status: 'pending' }, { sort: { createdAt: 1 } });
     return doc ? documentToJob(doc) : null;
   },
 
-  async create(input: Omit<ChatbotJob, "id" | "createdAt" | "status">): Promise<ChatbotJob> {
+  async create(input: Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>): Promise<ChatbotJob> {
     const db = await getMongoDb();
     const now = new Date();
-    const doc: Omit<ChatbotJobDocument, "_id"> = {
+    const doc: Omit<ChatbotJobDocument, '_id'> = {
       sessionId: input.sessionId,
-      status: "pending",
+      status: 'pending',
       model: input.model,
       payload: input.payload,
       resultText: input.resultText,
@@ -99,7 +100,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
 
   async update(
     id: string,
-    update: Partial<Omit<ChatbotJob, "id" | "sessionId" | "createdAt">>
+    update: Partial<Omit<ChatbotJob, 'id' | 'sessionId' | 'createdAt'>>
   ): Promise<ChatbotJob | null> {
     if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
@@ -109,7 +110,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
         { $set: update },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
 
     return result ? documentToJob(result) : null;

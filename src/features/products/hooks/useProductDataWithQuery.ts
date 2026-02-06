@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
-import type { ProductWithImages } from "@/features/products/types";
+import { useState, useMemo, useCallback, useEffect } from 'react';
+
+import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
+import type { ProductWithImages } from '@/features/products/types';
 
 interface UseProductDataWithQueryProps {
   initialCatalogFilter?: string;
@@ -40,19 +41,19 @@ interface UseProductDataWithQueryReturn {
 }
 
 export function useProductDataWithQuery({
-  initialCatalogFilter = "all",
+  initialCatalogFilter = 'all',
   initialPageSize = 24,
   preferencesLoaded = true,
 }: UseProductDataWithQueryProps = {}): UseProductDataWithQueryReturn {
   // Filter state
-  const [search, setSearch] = useState<string>("");
-  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const [sku, setSku] = useState<string>("");
-  const [debouncedSku, setDebouncedSku] = useState<string>("");
+  const [search, setSearch] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  const [sku, setSku] = useState<string>('');
+  const [debouncedSku, setDebouncedSku] = useState<string>('');
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter);
 
   // Pagination state
@@ -87,7 +88,7 @@ export function useProductDataWithQuery({
       endDate,
       page,
       pageSize,
-      catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+      catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
     }),
     [
       debouncedSearch,
@@ -112,14 +113,14 @@ export function useProductDataWithQuery({
   }, [total, pageSize]);
 
   const resetFilters = useCallback((): void => {
-    setSearch("");
-    setDebouncedSearch("");
-    setSku("");
-    setDebouncedSku("");
+    setSearch('');
+    setDebouncedSearch('');
+    setSku('');
+    setDebouncedSku('');
     setMinPrice(undefined);
     setMaxPrice(undefined);
-    setStartDate("");
-    setEndDate("");
+    setStartDate('');
+    setEndDate('');
     setPage(1);
   }, []);
 
@@ -150,7 +151,7 @@ export function useProductDataWithQuery({
     error: error
       ? error instanceof Error
         ? error.message
-        : "Failed to load products"
+        : 'Failed to load products'
       : null,
     refetch,
     resetFilters,

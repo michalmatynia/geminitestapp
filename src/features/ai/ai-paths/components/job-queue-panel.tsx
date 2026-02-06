@@ -1,6 +1,15 @@
-"use client";
+'use client';
 
-import React from "react";
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+
+import { runsApi } from '@/features/ai/ai-paths/lib';
+import type {
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
+  AiPathRunRecord,
+} from '@/features/ai/ai-paths/lib';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   Button,
   Input,
@@ -11,21 +20,23 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from "@/shared/ui";
-import { useQuery } from "@tanstack/react-query";
+} from '@/shared/ui';
 
-import { runsApi } from "@/features/ai/ai-paths/lib";
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from "@/features/ai/ai-paths/lib";
-import { RunHistoryEntries } from "./RunHistoryEntries";
-import { buildHistoryNodeOptions } from "./run-history-utils";
-import { safeJsonStringify } from "./AiPathsSettingsUtils";
+import { safeJsonStringify } from './AiPathsSettingsUtils';
+import { buildHistoryNodeOptions } from './run-history-utils';
+import { RunHistoryEntries } from './RunHistoryEntries';
+
+type QueueHistoryEntry = {
+  ts: number;
+  queued: number;
+  lagMs: number | null;
+  throughput: number | null;
+};
 
 type JobQueuePanelProps = {
   activePathId?: string | null;
+  sourceFilter?: string | null;
+  sourceMode?: 'include' | 'exclude';
 };
 
 type RunDetail = {
@@ -42,34 +53,43 @@ type QueueStatus = {
   concurrency: number;
   lastPollTime: number;
   timeSinceLastPoll: number;
+  queuedCount: number;
+  oldestQueuedAt: number | null;
+  queueLagMs: number | null;
+  completedLastMinute: number;
+  throughputPerMinute: number;
+  avgRuntimeMs: number | null;
+  p50RuntimeMs: number | null;
+  p95RuntimeMs: number | null;
 };
 
 type StreamMessageEvent = Event & { data: string };
 
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
-const AUTO_REFRESH_ENABLED_KEY = "ai-paths-job-queue-auto-refresh-enabled";
-const AUTO_REFRESH_INTERVAL_KEY = "ai-paths-job-queue-auto-refresh-interval";
+const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
+const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
+const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const STATUS_FILTERS = [
-  { id: "all", label: "All" },
-  { id: "queued", label: "Queued" },
-  { id: "running", label: "Running" },
-  { id: "paused", label: "Paused" },
-  { id: "completed", label: "Completed" },
-  { id: "failed", label: "Failed" },
-  { id: "canceled", label: "Canceled" },
-  { id: "dead_lettered", label: "Dead-lettered" },
+  { id: 'all', label: 'All' },
+  { id: 'queued', label: 'Queued' },
+  { id: 'running', label: 'Running' },
+  { id: 'paused', label: 'Paused' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'failed', label: 'Failed' },
+  { id: 'canceled', label: 'Canceled' },
+  { id: 'dead_lettered', label: 'Dead-lettered' },
 ] as const;
 
 const formatDate = (value?: Date | string | null): string => {
-  if (!value) return "-";
+  if (!value) return '-';
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleString();
 };
 
 const formatDurationMs = (value?: number | null): string => {
-  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+  if (value === null || value === undefined || Number.isNaN(value)) return '-';
   if (value < 1000) return `${Math.max(0, value)}ms`;
   const seconds = Math.round(value / 1000);
   if (seconds < 60) return `${seconds}s`;
@@ -80,7 +100,7 @@ const formatDurationMs = (value?: number | null): string => {
 
 const safePrettyJson = (value: unknown): string => {
   const raw = safeJsonStringify(value);
-  if (!raw) return "";
+  if (!raw) return '';
   try {
     return JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
@@ -99,11 +119,15 @@ const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null 
   return max > 0 ? new Date(max).toISOString() : null;
 };
 
-export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.Element {
-  const [pathFilter, setPathFilter] = React.useState(activePathId ?? "");
-  const [searchQuery, setSearchQuery] = React.useState("");
+export function JobQueuePanel({
+  activePathId,
+  sourceFilter,
+  sourceMode,
+}: JobQueuePanelProps): React.JSX.Element {
+  const [pathFilter, setPathFilter] = React.useState(activePathId ?? '');
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
-  const [statusFilter, setStatusFilter] = React.useState<(typeof STATUS_FILTERS)[number]["id"]>("all");
+  const [statusFilter, setStatusFilter] = React.useState<(typeof STATUS_FILTERS)[number]['id']>('all');
   const [pageSize, setPageSize] = React.useState(25);
   const [page, setPage] = React.useState(1);
   const [expandedRunIds, setExpandedRunIds] = React.useState<Set<string>>(new Set());
@@ -112,16 +136,19 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const [runDetailErrors, setRunDetailErrors] = React.useState<Record<string, string>>({});
   const [historySelection, setHistorySelection] = React.useState<Record<string, string>>({});
   const [streamStatuses, setStreamStatuses] = React.useState<
-    Record<string, "connecting" | "live" | "stopped" | "paused">
+    Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>
   >({});
   const streamSourcesRef = React.useRef<Map<string, EventSource>>(new Map());
   const [pausedStreams, setPausedStreams] = React.useState<Set<string>>(new Set());
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
+  const heavySettings = useSettingsMap({ scope: 'heavy' });
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
+  const normalizedSourceFilter = sourceFilter?.trim() || '';
   const offset = (page - 1) * pageSize;
 
   React.useEffect(() => {
@@ -133,7 +160,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
 
   React.useEffect(() => {
     const savedEnabled = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
-    const nextEnabled = savedEnabled === "false" ? false : true;
+    const nextEnabled = savedEnabled === 'false' ? false : true;
     setAutoRefreshEnabled(nextEnabled);
 
     const savedInterval = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
@@ -143,15 +170,15 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   }, []);
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       AUTO_REFRESH_ENABLED_KEY,
-      autoRefreshEnabled ? "true" : "false"
+      autoRefreshEnabled ? 'true' : 'false'
     );
   }, [autoRefreshEnabled]);
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(AUTO_REFRESH_INTERVAL_KEY, String(autoRefreshInterval));
   }, [autoRefreshInterval]);
 
@@ -161,8 +188,10 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
 
   const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
     queryKey: [
-      "ai-paths-job-queue",
+      'ai-paths-job-queue',
       normalizedPathFilter,
+      normalizedSourceFilter,
+      sourceMode ?? 'include',
       normalizedQuery,
       statusFilter,
       page,
@@ -171,13 +200,15 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     queryFn: async () => {
       const response = await runsApi.list({
         ...(normalizedPathFilter ? { pathId: normalizedPathFilter } : {}),
+        ...(normalizedSourceFilter ? { source: normalizedSourceFilter } : {}),
+        ...(normalizedSourceFilter ? { sourceMode: sourceMode ?? 'include' } : {}),
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
-        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
         limit: pageSize,
         offset,
       });
       if (!response.ok) {
-        throw new Error(response.error || "Failed to load job queue.");
+        throw new Error(response.error || 'Failed to load job queue.');
       }
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
@@ -185,11 +216,11 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   });
 
   const queueStatusQuery = useQuery<{ status: QueueStatus }>({
-    queryKey: ["ai-paths-queue-status"],
+    queryKey: ['ai-paths-queue-status'],
     queryFn: async () => {
       const response = await runsApi.queueStatus();
       if (!response.ok) {
-        throw new Error(response.error || "Failed to load queue status.");
+        throw new Error(response.error || 'Failed to load queue status.');
       }
       return response.data as { status: QueueStatus };
     },
@@ -200,6 +231,30 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = runsQuery.data?.runs ?? [];
   const queueStatus = queueStatusQuery.data?.status;
+  const [queueHistory, setQueueHistory] = React.useState<QueueHistoryEntry[]>([]);
+  const [showMetricsPanel, setShowMetricsPanel] = React.useState(false);
+  const lagThresholdRaw = heavyMap.get(QUEUE_LAG_THRESHOLD_KEY);
+  const lagThresholdMs = React.useMemo(() => {
+    const raw = lagThresholdRaw;
+    const parsed = raw ? Number(raw) : Number.NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60_000;
+  }, [lagThresholdRaw]);
+
+  React.useEffect(() => {
+    if (!queueStatus) return;
+    setQueueHistory((prev: QueueHistoryEntry[]) => {
+      const next = [
+        ...prev,
+        {
+          ts: Date.now(),
+          queued: queueStatus.queuedCount ?? 0,
+          lagMs: queueStatus.queueLagMs ?? null,
+          throughput: queueStatus.throughputPerMinute ?? null,
+        },
+      ];
+      return next.slice(-120);
+    });
+  }, [queueStatus]);
 
   React.useEffect(() => {
     const sources = streamSourcesRef.current;
@@ -214,7 +269,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
       if (!expandedRunIds.has(runId)) {
         source.close();
         streamSourcesRef.current.delete(runId);
-        setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
+        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
       }
     });
 
@@ -224,13 +279,13 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
       const existing = runDetails[runId];
       const since = existing ? getLatestEventTimestamp(existing.events) : null;
       const params = new URLSearchParams();
-      if (since) params.set("since", since);
+      if (since) params.set('since', since);
       const url = params.toString()
         ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
         : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
       const source = new EventSource(url);
       streamSourcesRef.current.set(runId, source);
-      setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "connecting" }));
+      setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'connecting' }));
 
       const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
         setRunDetails((prev: Record<string, RunDetail | null>) => {
@@ -238,116 +293,116 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
           if (!current) {
             return prev;
           }
-                      const existingIds = new Set(current.events.map((event: AiPathRunEventRecord) => event.id));
-                      const merged = [...current.events];
-                      incoming.forEach((event: AiPathRunEventRecord) => {
-                        if (!existingIds.has(event.id)) {
-                          merged.push(event);
-                        }
-                      });
-                      merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-                        const aTime = new Date(a.createdAt).getTime();
-                        const bTime = new Date(b.createdAt).getTime();
-                        return aTime - bTime;
-                      });
-                      return { ...prev, [runId]: { ...current, events: merged } };
-                    });
-                  };
+          const existingIds = new Set(current.events.map((event: AiPathRunEventRecord) => event.id));
+          const merged = [...current.events];
+          incoming.forEach((event: AiPathRunEventRecord) => {
+            if (!existingIds.has(event.id)) {
+              merged.push(event);
+            }
+          });
+          merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
+            const aTime = new Date(a.createdAt).getTime();
+            const bTime = new Date(b.createdAt).getTime();
+            return aTime - bTime;
+          });
+          return { ...prev, [runId]: { ...current, events: merged } };
+        });
+      };
           
-                  source.addEventListener("ready", () => {
-                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "live" }));
-                  });
-                          source.addEventListener("run", (event: Event) => {
-                            try {
-                              const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunRecord;
-                              setRunDetails((prev: Record<string, RunDetail | null>) => {
-                                const current = prev[runId];
-                                if (current) {
-                                  return { ...prev, [runId]: { ...current, run: payload } };
-                                }
-                                return { ...prev, [runId]: { run: payload, nodes: [], events: [] } };
-                              });
-                            } catch {
-                              // ignore parse errors
-                            }
-                          });
-                          source.addEventListener("nodes", (event: Event) => {
-                            try {
-                              const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunNodeRecord[];
-                              setRunDetails((prev: Record<string, RunDetail | null>) => {
-                                const current = prev[runId];
-                                if (!current) return prev;
-                                return { ...prev, [runId]: { ...current, nodes: payload } };
-                              });
-                            } catch {
-                              // ignore parse errors
-                            }
-                          });
-                          source.addEventListener("events", (event: Event) => {
-                            try {
-                              const payload = JSON.parse((event as StreamMessageEvent).data) as
+      source.addEventListener('ready', () => {
+        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'live' }));
+      });
+      source.addEventListener('run', (event: Event) => {
+        try {
+          const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunRecord;
+          setRunDetails((prev: Record<string, RunDetail | null>) => {
+            const current = prev[runId];
+            if (current) {
+              return { ...prev, [runId]: { ...current, run: payload } };
+            }
+            return { ...prev, [runId]: { run: payload, nodes: [], events: [] } };
+          });
+        } catch {
+          // ignore parse errors
+        }
+      });
+      source.addEventListener('nodes', (event: Event) => {
+        try {
+          const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunNodeRecord[];
+          setRunDetails((prev: Record<string, RunDetail | null>) => {
+            const current = prev[runId];
+            if (!current) return prev;
+            return { ...prev, [runId]: { ...current, nodes: payload } };
+          });
+        } catch {
+          // ignore parse errors
+        }
+      });
+      source.addEventListener('events', (event: Event) => {
+        try {
+          const payload = JSON.parse((event as StreamMessageEvent).data) as
                                 | AiPathRunEventRecord[]
                                 | { events?: AiPathRunEventRecord[] };                      if (Array.isArray(payload)) {
-                        mergeEvents(payload);
-                        return;
-                      }
-                      const events = Array.isArray(payload.events) ? payload.events : [];
-                      mergeEvents(events);
-                    } catch {
-                      // ignore parse errors
-                    }
-                  });
-                  source.addEventListener("done", () => {
-                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
-                    source.close();
-                    streamSourcesRef.current.delete(runId);
-                  });
-                  source.addEventListener("error", () => {
-                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
-                    source.close();
-                    streamSourcesRef.current.delete(runId);
-                  });
-                });
-              }, [expandedRunIds, pausedStreams, runDetails]);
+            mergeEvents(payload);
+            return;
+          }
+          const events = Array.isArray(payload.events) ? payload.events : [];
+          mergeEvents(events);
+        } catch {
+          // ignore parse errors
+        }
+      });
+      source.addEventListener('done', () => {
+        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
+        source.close();
+        streamSourcesRef.current.delete(runId);
+      });
+      source.addEventListener('error', () => {
+        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
+        source.close();
+        streamSourcesRef.current.delete(runId);
+      });
+    });
+  }, [expandedRunIds, pausedStreams, runDetails]);
           
-              const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
-                setRunDetailErrors((prev: Record<string, string>) => {
-                  const next = { ...prev };
-                  delete next[runId];
-                  return next;
-                });
-                setRunDetailLoading((prev: Set<string>) => new Set(prev).add(runId));
-                try {
-                  const response = await runsApi.get(runId);
-                  if (!response.ok) {
-                    throw new Error(response.error || "Failed to load run details.");
-                  }
-                  const data = response.data as RunDetail;
-                  setRunDetails((prev: Record<string, RunDetail | null>) => ({ ...prev, [runId]: data }));
-                } catch (error) {
-                  setRunDetailErrors((prev: Record<string, string>) => ({
-                    ...prev,
-                    [runId]: error instanceof Error ? error.message : "Failed to load run details.",
-                  }));
-                } finally {
-                  setRunDetailLoading((prev: Set<string>) => {
-                    const next = new Set(prev);
-                    next.delete(runId);
-                    return next;
-                  });
-                }
-              }, []);
+  const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
+    setRunDetailErrors((prev: Record<string, string>) => {
+      const next = { ...prev };
+      delete next[runId];
+      return next;
+    });
+    setRunDetailLoading((prev: Set<string>) => new Set(prev).add(runId));
+    try {
+      const response = await runsApi.get(runId);
+      if (!response.ok) {
+        throw new Error(response.error || 'Failed to load run details.');
+      }
+      const data = response.data as RunDetail;
+      setRunDetails((prev: Record<string, RunDetail | null>) => ({ ...prev, [runId]: data }));
+    } catch (error) {
+      setRunDetailErrors((prev: Record<string, string>) => ({
+        ...prev,
+        [runId]: error instanceof Error ? error.message : 'Failed to load run details.',
+      }));
+    } finally {
+      setRunDetailLoading((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.delete(runId);
+        return next;
+      });
+    }
+  }, []);
           
-              const toggleRun = (runId: string): void => {
-                setExpandedRunIds((prev: Set<string>) => {
-                  const next = new Set(prev);
-                  if (next.has(runId)) {
-                    next.delete(runId);
-                  } else {
-                    next.add(runId);
-                  }
-                  return next;
-                });    if (!runDetails[runId]) {
+  const toggleRun = (runId: string): void => {
+    setExpandedRunIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      if (next.has(runId)) {
+        next.delete(runId);
+      } else {
+        next.add(runId);
+      }
+      return next;
+    });    if (!runDetails[runId]) {
       void loadRunDetail(runId);
     }
   };
@@ -358,10 +413,10 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
       const next = new Set(prev);
       if (next.has(runId)) {
         next.delete(runId);
-        setStreamStatuses((statusPrev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...statusPrev, [runId]: "connecting" }));
+        setStreamStatuses((statusPrev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...statusPrev, [runId]: 'connecting' }));
       } else {
         next.add(runId);
-        setStreamStatuses((statusPrev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...statusPrev, [runId]: "paused" }));
+        setStreamStatuses((statusPrev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...statusPrev, [runId]: 'paused' }));
       }
       return next;
     });
@@ -377,10 +432,10 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     setPausedStreams(() => new Set(expandedIds));
     streamSourcesRef.current.forEach((source: EventSource) => source.close());
     streamSourcesRef.current.clear();
-    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => {
+    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
       const next = { ...prev };
       expandedIds.forEach((id: string) => {
-        next[id] = "paused";
+        next[id] = 'paused';
       });
       return next;
     });
@@ -389,22 +444,22 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const resumeAllStreams = (): void => {
     if (expandedRunIds.size === 0) return;
     setPausedStreams(new Set());
-    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => {
+    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
       const next = { ...prev };
       expandedRunIds.forEach((id: string) => {
-        next[id] = "connecting";
+        next[id] = 'connecting';
       });
       return next;
     });
   };
 
   const ensureHistorySelection = React.useCallback(
-          (runId: string, options: { id: string }[]): string | null => {
-            if (!options.length) return null;
-            const existing = historySelection[runId];
-            if (existing && options.some((option: { id: string }) => option.id === existing)) return existing;
-            return options[0]?.id ?? null;
-          },    [historySelection]
+    (runId: string, options: { id: string }[]): string | null => {
+      if (!options.length) return null;
+      const existing = historySelection[runId];
+      if (existing && options.some((option: { id: string }) => option.id === existing)) return existing;
+      return options[0]?.id ?? null;
+    },    [historySelection]
   );
 
   return (
@@ -420,7 +475,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
           onClick={() => { void runsQuery.refetch(); }}
           disabled={runsQuery.isFetching}
         >
-          {runsQuery.isFetching ? "Refreshing..." : "Refresh"}
+          {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
 
@@ -429,32 +484,32 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
           type="button"
           className={`rounded-md border px-2 py-1 text-[10px] ${
             autoRefreshEnabled
-              ? "border-emerald-500/50 text-emerald-200"
-              : "text-gray-300 hover:bg-muted/60"
+              ? 'border-emerald-500/50 text-emerald-200'
+              : 'text-gray-300 hover:bg-muted/60'
           }`}
-                      onClick={() => setAutoRefreshEnabled((prev: boolean) => !prev)}
-                    >
-                      {autoRefreshEnabled ? "Auto-refresh on" : "Auto-refresh off"}
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[10px] uppercase text-gray-500">Interval</Label>
-                      <Select
-                        value={String(autoRefreshInterval)}
-                        onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
-                        disabled={!autoRefreshEnabled}
-                      >
-                        <SelectTrigger className="h-7 w-[110px] border-border bg-card/70 text-[11px] text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-gray-900 text-white">
-                          {[2000, 5000, 10000, 30000].map((value: number) => (
-                            <SelectItem key={value} value={String(value)}>
-                              {value / 1000}s
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>        <Button
+          onClick={() => setAutoRefreshEnabled((prev: boolean) => !prev)}
+        >
+          {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
+        </Button>
+        <div className="flex items-center gap-2">
+          <Label className="text-[10px] uppercase text-gray-500">Interval</Label>
+          <Select
+            value={String(autoRefreshInterval)}
+            onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
+            disabled={!autoRefreshEnabled}
+          >
+            <SelectTrigger className="h-7 w-[110px] border-border bg-card/70 text-[11px] text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-border bg-gray-900 text-white">
+              {[2000, 5000, 10000, 30000].map((value: number) => (
+                <SelectItem key={value} value={String(value)}>
+                  {value / 1000}s
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>        <Button
           type="button"
           className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={pauseAllStreams}
@@ -472,20 +527,20 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Worker</div>
           <div className="mt-1 text-sm text-white">
-            {queueStatus ? (queueStatus.running ? "Running" : "Stopped") : "-"}
+            {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
           </div>
           <div className="mt-1 text-[11px] text-gray-400">
-            Healthy: {queueStatus ? (queueStatus.healthy ? "Yes" : "No") : "-"}
+            Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
           </div>
         </div>
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Concurrency</div>
           <div className="mt-1 text-sm text-white">
-            {queueStatus?.concurrency ?? "-"}
+            {queueStatus?.concurrency ?? '-'}
           </div>
           <div className="mt-1 text-[11px] text-gray-400">
             Active runs: {queueStatus?.activeRuns ?? 0}
@@ -496,23 +551,23 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
           <div className="mt-1 text-sm text-white">
             {queueStatus?.lastPollTime
               ? new Date(queueStatus.lastPollTime).toLocaleTimeString()
-              : "-"}
+              : '-'}
           </div>
           <div className="mt-1 text-[11px] text-gray-400">
-            Age:{" "}
+            Age:{' '}
             {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
           </div>
         </div>
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Status</div>
           <div className="mt-1 text-sm text-white">
-            {queueStatusQuery.isFetching ? "Refreshing..." : "Live"}
+            {queueStatusQuery.isFetching ? 'Refreshing...' : 'Live'}
           </div>
           {queueStatusQuery.error ? (
             <div className="mt-1 text-[11px] text-rose-200">
               {queueStatusQuery.error instanceof Error
                 ? queueStatusQuery.error.message
-                : "Failed to load queue status."}
+                : 'Failed to load queue status.'}
             </div>
           ) : (
             <div className="mt-1 text-[11px] text-gray-400">
@@ -520,6 +575,125 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             </div>
           )}
         </div>
+        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
+          <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
+          <div className="mt-1 text-sm text-white">
+            {queueStatus?.queuedCount ?? 0} queued
+          </div>
+          <div className="mt-1 text-[11px] text-gray-400">
+            Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+          </div>
+          <div className="mt-2 h-10 w-full rounded bg-slate-900/50 px-1 py-1">
+            <div className="flex h-full items-end gap-[2px]">
+              {queueHistory.length === 0 ? (
+                <div className="text-[10px] text-gray-500">No samples</div>
+              ) : (
+                queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
+                  const max = Math.max(1, ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued));
+                  const height = Math.max(8, Math.round((entry.queued / max) * 100));
+                  return (
+                    <div
+                      key={`${entry.ts}-${index}`}
+                      className="w-[6px] rounded bg-sky-400/60"
+                      style={{ height: `${height}%` }}
+                      title={`${entry.queued} queued`}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400">
+            <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
+            <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
+            <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+          </div>
+        </div>
+      </div>
+
+      {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
+        <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
+        </div>
+      ) : null}
+
+      <div className="mt-4 rounded-md border border-border/60 bg-card/40 p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-gray-200">Queue Metrics (History)</div>
+            <div className="text-[11px] text-gray-500">
+              Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
+              {queueHistory.length > 0
+                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
+                : ''}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={() => setShowMetricsPanel((prev: boolean) => !prev)}
+            >
+              {showMetricsPanel ? 'Hide' : 'Show'}
+            </Button>
+            <Button
+              type="button"
+              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={() => setQueueHistory([])}
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+        {showMetricsPanel ? (
+          <div className="mt-3 space-y-3">
+            <div className="h-24 w-full rounded bg-slate-900/60 px-2 py-2">
+              <div className="flex h-full items-end gap-[2px]">
+                {queueHistory.length === 0 ? (
+                  <div className="text-[10px] text-gray-500">No samples</div>
+                ) : (
+                  queueHistory.map((entry: QueueHistoryEntry, index: number) => {
+                    const max = Math.max(1, ...queueHistory.map((item: QueueHistoryEntry) => item.queued));
+                    const height = Math.max(6, Math.round((entry.queued / max) * 100));
+                    return (
+                      <div
+                        key={`${entry.ts}-${index}`}
+                        className="w-[5px] rounded bg-emerald-400/60"
+                        style={{ height: `${height}%` }}
+                        title={`${entry.queued} queued @ ${new Date(entry.ts).toLocaleTimeString()}`}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
+            <div className="grid gap-2 md:grid-cols-3">
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
+                <div className="mt-1 text-sm text-white">{queueStatus?.queuedCount ?? 0}</div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+                </div>
+              </div>
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Throughput</div>
+                <div className="mt-1 text-sm text-white">{queueStatus?.throughputPerMinute ?? 0}/min</div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
+                </div>
+              </div>
+              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                <div className="text-[10px] uppercase text-gray-500">Runtime</div>
+                <div className="mt-1 text-sm text-white">
+                  avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
+                </div>
+                <div className="mt-1 text-[10px] text-gray-400">
+                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95 {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
@@ -529,7 +703,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             className="h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white"
             value={pathFilter}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPathFilter(event.target.value)}
-            placeholder={activePathId ? `Active path: ${activePathId}` : "All paths"}
+            placeholder={activePathId ? `Active path: ${activePathId}` : 'All paths'}
           />
         </div>
         <div className="space-y-1">
@@ -541,84 +715,84 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             placeholder="Run ID, path name, entity, error..."
           />
         </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-gray-500">Page size</Label>
-                    <Select
-                      value={String(pageSize)}
-                      onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
-                    >
-                      <SelectTrigger className="h-9 w-[110px] border-border bg-card/70 text-[11px] text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="border-border bg-gray-900 text-white">
-                        {PAGE_SIZES.map((size: number) => (
-                          <SelectItem key={size} value={String(size)}>
-                            {size}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>                    </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase text-gray-500">Page size</Label>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
+          >
+            <SelectTrigger className="h-9 w-[110px] border-border bg-card/70 text-[11px] text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-border bg-gray-900 text-white">
+              {PAGE_SIZES.map((size: number) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>                    </div>
             
-                            <div className="flex flex-wrap gap-2">
-                              {STATUS_FILTERS.map((filter: (typeof STATUS_FILTERS)[number]) => {
-                                const active = statusFilter === filter.id;
-                                return (
-                                  <Button
-                                    key={filter.id}
-                                    type="button"
-                                    className={`rounded-md border px-2 py-1 text-[10px] ${
-                                      active ? "border-emerald-500/50 text-emerald-200" : "text-gray-300 hover:bg-muted/60"
-                                    }`}
-                                    onClick={() => setStatusFilter(filter.id)}
-                                  >
-                                    {filter.label}
-                                  </Button>
-                                );
-                              })}
-                            </div>            
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
-                      <span>
+      <div className="flex flex-wrap gap-2">
+        {STATUS_FILTERS.map((filter: (typeof STATUS_FILTERS)[number]) => {
+          const active = statusFilter === filter.id;
+          return (
+            <Button
+              key={filter.id}
+              type="button"
+              className={`rounded-md border px-2 py-1 text-[10px] ${
+                active ? 'border-emerald-500/50 text-emerald-200' : 'text-gray-300 hover:bg-muted/60'
+              }`}
+              onClick={() => setStatusFilter(filter.id)}
+            >
+              {filter.label}
+            </Button>
+          );
+        })}
+      </div>            
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+        <span>
                         Showing {runs.length} of {total} runs
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                          onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
-                          disabled={page <= 1}
-                        >
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
+            disabled={page <= 1}
+          >
                           Prev
-                        </Button>
-                        <span>
+          </Button>
+          <span>
                           Page {page} / {totalPages}
-                        </span>
-                        <Button
-                          type="button"
-                          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                          onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
-                          disabled={page >= totalPages}
-                        >
+          </span>
+          <Button
+            type="button"
+            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
+            disabled={page >= totalPages}
+          >
                           Next
-                        </Button>
-                      </div>
-                    </div>
+          </Button>
+        </div>
+      </div>
             
-                    {runs.length === 0 ? (
-                      <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
+      {runs.length === 0 ? (
+        <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
                         No runs found for the current filters.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
             const detail = runDetails[run.id];
             const detailLoading = runDetailLoading.has(run.id);
             const detailError = runDetailErrors[run.id];
             const detailRun = detail?.run ?? run;
-            const isScheduledRun = detailRun.triggerEvent === "scheduled_run";
+            const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
             const streamStatus = pausedStreams.has(run.id)
-              ? "paused"
-              : streamStatuses[run.id] ?? "stopped";
+              ? 'paused'
+              : streamStatuses[run.id] ?? 'stopped';
             const nodes = detail?.nodes ?? [];
             const events = detail?.events ?? [];
             const history = (detailRun.runtimeState?.history ?? undefined);
@@ -646,7 +820,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                         Scheduled
                       </div>
                     ) : null}
-                    <div className="text-sm text-white">{detailRun.pathName ?? "AI Path"}</div>
+                    <div className="text-sm text-white">{detailRun.pathName ?? 'AI Path'}</div>
                     <div className="text-[11px] text-gray-400">
                       Run ID: <span className="font-mono">{detailRun.id}</span>
                     </div>
@@ -658,7 +832,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                     </div>
                     {(detailRun.entityType || detailRun.entityId) && (
                       <div className="text-[11px] text-gray-500">
-                        Entity: {detailRun.entityType ?? "?"} {detailRun.entityId ?? ""}
+                        Entity: {detailRun.entityType ?? '?'} {detailRun.entityId ?? ''}
                       </div>
                     )}
                     {detailRun.errorMessage && (
@@ -666,30 +840,30 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                         Error: {detailRun.errorMessage}
                       </div>
                     )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                    onClick={() => toggleRun(run.id)}
-                  >
-                    {isExpanded ? "Hide details" : "Details"}
-                  </Button>
-                  <Button
-                    type="button"
-                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                    onClick={() => toggleStream(run.id)}
-                    disabled={!isExpanded}
-                  >
-                    {pausedStreams.has(run.id) ? "Resume stream" : "Pause stream"}
-                  </Button>
-                  <Button
-                    type="button"
-                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                    onClick={() => void loadRunDetail(run.id)}
-                    disabled={detailLoading}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      onClick={() => toggleRun(run.id)}
                     >
-                      {detailLoading ? "Loading..." : "Refresh detail"}
+                      {isExpanded ? 'Hide details' : 'Details'}
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      onClick={() => toggleStream(run.id)}
+                      disabled={!isExpanded}
+                    >
+                      {pausedStreams.has(run.id) ? 'Resume stream' : 'Pause stream'}
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      onClick={() => void loadRunDetail(run.id)}
+                      disabled={detailLoading}
+                    >
+                      {detailLoading ? 'Loading...' : 'Refresh detail'}
                     </Button>
                   </div>
                 </div>
@@ -713,7 +887,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-[11px] text-gray-400">
                           <div>
                             <span className="uppercase text-gray-500">Path ID</span>
-                            <div className="text-white">{detailRun.pathId ?? "-"}</div>
+                            <div className="text-white">{detailRun.pathId ?? '-'}</div>
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Status</span>
@@ -721,7 +895,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Trigger</span>
-                            <div className="text-white">{detailRun.triggerEvent ?? "-"}</div>
+                            <div className="text-white">{detailRun.triggerEvent ?? '-'}</div>
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Started</span>
@@ -738,7 +912,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                           <div>
                             <span className="uppercase text-gray-500">Retry</span>
                             <div className="text-white">
-                              {detailRun.retryCount ?? 0}/{detailRun.maxAttempts ?? "-"}
+                              {detailRun.retryCount ?? 0}/{detailRun.maxAttempts ?? '-'}
                             </div>
                           </div>
                           <div>
@@ -747,7 +921,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Trigger node</span>
-                            <div className="text-white">{detailRun.triggerNodeId ?? "-"}</div>
+                            <div className="text-white">{detailRun.triggerNodeId ?? '-'}</div>
                           </div>
                         </div>
 
@@ -760,26 +934,26 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                               <Label className="text-[10px] uppercase text-gray-500">
                                 Node
                               </Label>
-                                                              <Select
-                                                                {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
-                                                                onValueChange={(value: string) =>
-                                                                  setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
-                                                                }
-                                                              >
-                                                                <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
-                                                                  <SelectValue placeholder="Select node" />
-                                                                </SelectTrigger>
-                                                                <SelectContent className="border-border bg-gray-900 text-white">
-                                                                  {historyOptions.map((option: { id: string; label: string }) => (
-                                                                    <SelectItem key={option.id} value={option.id}>
-                                                                      {option.label}
-                                                                    </SelectItem>
-                                                                  ))}
-                                                                </SelectContent>
-                                                              </Select>                            </div>
+                              <Select
+                                {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
+                                onValueChange={(value: string) =>
+                                  setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
+                                }
+                              >
+                                <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
+                                  <SelectValue placeholder="Select node" />
+                                </SelectTrigger>
+                                <SelectContent className="border-border bg-gray-900 text-white">
+                                  {historyOptions.map((option: { id: string; label: string }) => (
+                                    <SelectItem key={option.id} value={option.id}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>                            </div>
                           ) : (
                             <div className="mt-2 text-[11px] text-gray-500">
-                              {historyOptions[0]?.label ?? "No history nodes"}
+                              {historyOptions[0]?.label ?? 'No history nodes'}
                             </div>
                           )}
                           <div className="mt-3">
@@ -799,15 +973,15 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                             <div className="mt-2 text-[11px] text-gray-500">
                               No nodes recorded for this run.
                             </div>
-                                                      ) : (
-                                                        <div className="mt-3 space-y-2">
-                                                          {nodes.map((node: AiPathRunNodeRecord) => (
-                                                            <details
-                                                              key={node.id}
-                                                              className="rounded-md border border-border/60 bg-black/30 p-3"
-                                                            >                                  <summary className="cursor-pointer text-[11px] text-gray-300">
-                                    {node.nodeTitle ?? node.nodeId}{" "}
-                                    {node.nodeType ? `(${node.nodeType})` : ""}
+                          ) : (
+                            <div className="mt-3 space-y-2">
+                              {nodes.map((node: AiPathRunNodeRecord) => (
+                                <details
+                                  key={node.id}
+                                  className="rounded-md border border-border/60 bg-black/30 p-3"
+                                >                                  <summary className="cursor-pointer text-[11px] text-gray-300">
+                                    {node.nodeTitle ?? node.nodeId}{' '}
+                                    {node.nodeType ? `(${node.nodeType})` : ''}
                                     <span className="ml-2 text-gray-500">
                                       {node.status}
                                     </span>
@@ -865,21 +1039,21 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                           </summary>
                           {events.length === 0 ? (
                             <div className="mt-2 text-[11px] text-gray-500">No events.</div>
-                                                      ) : (
-                                                        <div className="mt-3 divide-y divide-border/70">
-                                                          {events.map((event: AiPathRunEventRecord) => (
-                                                            <div key={event.id} className="py-2">                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
-                                    <span>{formatDate(event.createdAt)}</span>
-                                    <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-300">
-                                      {event.level}
-                                    </span>
-                                  </div>
-                                  <div className="mt-1 text-sm text-white">{event.message}</div>
-                                  {event.metadata ? (
-                                    <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200">
-                                      {safePrettyJson(event.metadata)}
-                                    </pre>
-                                  ) : null}
+                          ) : (
+                            <div className="mt-3 divide-y divide-border/70">
+                              {events.map((event: AiPathRunEventRecord) => (
+                                <div key={event.id} className="py-2">                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
+                                  <span>{formatDate(event.createdAt)}</span>
+                                  <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-300">
+                                    {event.level}
+                                  </span>
+                                </div>
+                                <div className="mt-1 text-sm text-white">{event.message}</div>
+                                {event.metadata ? (
+                                  <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200">
+                                    {safePrettyJson(event.metadata)}
+                                  </pre>
+                                ) : null}
                                 </div>
                               ))}
                             </div>

@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock("crypto", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("crypto")>();
+vi.mock('crypto', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('crypto')>();
   return {
     ...actual,
-    randomUUID: () => "mock-uuid",
+    randomUUID: () => 'mock-uuid',
   };
 });
 
-import { processAgentQueue, stopAgentQueue } from "@/features/jobs/workers/agentQueue";
-import prisma from "@/shared/lib/db/prisma";
-import { runAgentControlLoop, logAgentAudit } from "@/features/ai/agent-runtime/server";
+import { runAgentControlLoop, logAgentAudit } from '@/features/ai/agent-runtime/server';
+import { processAgentQueue, stopAgentQueue } from '@/features/jobs/workers/agentQueue';
+import prisma from '@/shared/lib/db/prisma';
 
-vi.mock("@/shared/lib/db/prisma", () => {
+vi.mock('@/shared/lib/db/prisma', () => {
   const mockChatbotAgentRun = {
     findFirst: vi.fn(),
     findMany: vi.fn(),
@@ -21,20 +21,20 @@ vi.mock("@/shared/lib/db/prisma", () => {
   return {
     default: new Proxy({}, {
       get: (_target, prop) => {
-        if (prop === "chatbotAgentRun") return mockChatbotAgentRun;
+        if (prop === 'chatbotAgentRun') return mockChatbotAgentRun;
         return undefined;
       },
-      has: (_target, prop) => prop === "chatbotAgentRun",
+      has: (_target, prop) => prop === 'chatbotAgentRun',
     }),
   };
 });
 
-vi.mock("@/features/ai/agent-runtime/server", () => ({
+vi.mock('@/features/ai/agent-runtime/server', () => ({
   runAgentControlLoop: vi.fn(),
   logAgentAudit: vi.fn(),
 }));
 
-describe("Agent Queue Worker", () => {
+describe('Agent Queue Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     stopAgentQueue();
@@ -47,8 +47,8 @@ describe("Agent Queue Worker", () => {
     stopAgentQueue();
   });
 
-  it("processes a queued agent run", async () => {
-    const mockRun = { id: "run-1", status: "queued", createdAt: new Date() };
+  it('processes a queued agent run', async () => {
+    const mockRun = { id: 'run-1', status: 'queued', createdAt: new Date() };
     vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
     vi.mocked(runAgentControlLoop).mockResolvedValue(undefined);
 
@@ -56,36 +56,36 @@ describe("Agent Queue Worker", () => {
 
     expect(prisma.chatbotAgentRun.findFirst).toHaveBeenCalled();
     expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "run-1" },
-      data: expect.objectContaining({ status: "running" }),
+      where: { id: 'run-1' },
+      data: expect.objectContaining({ status: 'running' }),
     }));
-    expect(runAgentControlLoop).toHaveBeenCalledWith("run-1");
+    expect(runAgentControlLoop).toHaveBeenCalledWith('run-1');
   });
 
-  it("recovers stuck runs", async () => {
-    const stuckRun = { id: "run-stuck", status: "running", updatedAt: new Date(Date.now() - 20 * 60 * 1000) };
+  it('recovers stuck runs', async () => {
+    const stuckRun = { id: 'run-stuck', status: 'running', updatedAt: new Date(Date.now() - 20 * 60 * 1000) };
     vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([stuckRun] as any);
 
     await processAgentQueue();
 
     expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "run-stuck" },
-      data: expect.objectContaining({ status: "queued" }),
+      where: { id: 'run-stuck' },
+      data: expect.objectContaining({ status: 'queued' }),
     }));
-    expect(logAgentAudit).toHaveBeenCalledWith("run-stuck", "warning", expect.any(String), expect.any(Object));
+    expect(logAgentAudit).toHaveBeenCalledWith('run-stuck', 'warning', expect.any(String), expect.any(Object));
   });
 
-  it("handles run failure", async () => {
-    const mockRun = { id: "run-fail", status: "queued" };
+  it('handles run failure', async () => {
+    const mockRun = { id: 'run-fail', status: 'queued' };
     vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(mockRun as any);
-    vi.mocked(runAgentControlLoop).mockRejectedValue(new Error("Agent Crash"));
+    vi.mocked(runAgentControlLoop).mockRejectedValue(new Error('Agent Crash'));
 
     await processAgentQueue();
 
-    expect(logAgentAudit).toHaveBeenCalledWith("run-fail", "error", expect.any(String), expect.any(Object));
+    expect(logAgentAudit).toHaveBeenCalledWith('run-fail', 'error', expect.any(String), expect.any(Object));
     expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "run-fail" },
-      data: expect.objectContaining({ status: "failed", errorMessage: "Agent Crash" }),
+      where: { id: 'run-fail' },
+      data: expect.objectContaining({ status: 'failed', errorMessage: 'Agent Crash' }),
     }));
   });
 });

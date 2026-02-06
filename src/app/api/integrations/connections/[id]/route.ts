@@ -32,7 +32,7 @@ const connectionSchema = z.object({
   playwrightProxyPassword: z.string().optional(),
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().optional(),
-  allegroUseSandbox: z.boolean().optional(),
+  allegroUseSandbox: z.boolean().optional()
 });
 
 /**
@@ -50,7 +50,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     }
 
     const parsed = await parseJsonBody(req, connectionSchema, {
-      logPrefix: "integrations.connection.PUT",
+      logPrefix: "integrations.connection.PUT"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -113,7 +113,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         ? {
             playwrightProxyPassword: encryptSecret(
               data.playwrightProxyPassword.trim()
-            ),
+            )
           }
         : {}),
       ...(typeof data.playwrightEmulateDevice === "boolean"
@@ -124,7 +124,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         : {}),
       ...(typeof data.allegroUseSandbox === "boolean"
         ? { allegroUseSandbox: data.allegroUseSandbox }
-        : {}),
+        : {})
     });
 
     return NextResponse.json({
@@ -156,14 +156,14 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       playwrightProxyUsername: connection.playwrightProxyUsername,
       playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
       playwrightEmulateDevice: connection.playwrightEmulateDevice,
-      playwrightDeviceName: connection.playwrightDeviceName,
+      playwrightDeviceName: connection.playwrightDeviceName
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.connections.[id].PUT",
       fallbackMessage: "Failed to update connection",
-      ...(connectionId ? { extra: { connectionId } } : {}),
+      ...(connectionId ? { extra: { connectionId } } : {})
     });
   }
 }
@@ -190,10 +190,16 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
       request: req,
       source: "integrations.connections.[id].DELETE",
       fallbackMessage: "Failed to delete connection",
-      ...(connectionId ? { extra: { connectionId } } : {}),
+      ...(connectionId ? { extra: { connectionId } } : {})
     });
   }
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "integrations.connections.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "integrations.connections.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(
+  PUT_handler,
+  { source: "integrations.connections.[id].PUT", requireCsrf: false }
+);
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  DELETE_handler,
+  { source: "integrations.connections.[id].DELETE", requireCsrf: false }
+);

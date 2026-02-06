@@ -1,9 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
-import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '../../types';
+import type { CmsRepository, PageUpdateData } from '../../types/services/cms-repository';
+import type { Prisma } from '@prisma/client';
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
@@ -27,7 +28,7 @@ export const prismaCmsRepository: CmsRepository = {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return pages as unknown as Page[];
   },
@@ -119,7 +120,7 @@ export const prismaCmsRepository: CmsRepository = {
   // Slugs
   async getSlugs(): Promise<Slug[]> {
     const slugs = await prisma.slug.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return slugs as unknown as Slug[];
   },
@@ -180,7 +181,7 @@ export const prismaCmsRepository: CmsRepository = {
   // Themes
   async getThemes(): Promise<CmsTheme[]> {
     const themes = await prisma.cmsTheme.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return themes as unknown as CmsTheme[];
   },

@@ -1,20 +1,21 @@
-"use client";
+'use client';
 
-import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  RefreshCw,
   Clock,
   CheckCircle,
   XCircle,
   Loader2,
-} from "lucide-react";
+} from 'lucide-react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
-import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
-import { useIntegrationJobs } from "@/features/jobs/hooks/useJobQueries";
-import { useCancelListingMutation } from "@/features/jobs/hooks/useJobMutations";
-import { JobTable, type JobRowData } from "./JobTable";
+import { useCancelListingMutation } from '@/features/jobs/hooks/useJobMutations';
+import { useIntegrationJobs } from '@/features/jobs/hooks/useJobQueries';
+import { logClientError } from '@/features/observability';
+import type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/listing-jobs';
+import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
+
+import { JobTable, type JobRowData } from './JobTable';
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -29,20 +30,20 @@ type ListingRow = {
 
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
-    case "pending":
+    case 'pending':
       return <Clock className="size-3" />;
-    case "completed":
-    case "success":
-    case "listed":
+    case 'completed':
+    case 'success':
+    case 'listed':
       return <CheckCircle className="size-3" />;
-    case "deleted":
-    case "removed":
+    case 'deleted':
+    case 'removed':
       return <XCircle className="size-3" />;
-    case "failed":
-    case "error":
+    case 'failed':
+    case 'error':
       return <XCircle className="size-3" />;
-    case "processing":
-    case "in_progress":
+    case 'processing':
+    case 'in_progress':
       return <Loader2 className="size-3 animate-spin" />;
     default:
       return <Clock className="size-3" />;
@@ -59,7 +60,7 @@ export default function ProductListingJobsPanel({
   // Mutations
   const cancelMutation = useCancelListingMutation();
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selectedListing, setSelectedListing] = useState<{
@@ -69,33 +70,33 @@ export default function ProductListingJobsPanel({
     attemptIndex: number | null;
   } | null>(null);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [historySort, setHistorySort] = useState<"desc" | "asc">("desc");
+  const [historySort, setHistorySort] = useState<'desc' | 'asc'>('desc');
 
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
-    if (!window.confirm("Cancel this listing job? This will remove it from the queue.")) {
+    if (!window.confirm('Cancel this listing job? This will remove it from the queue.')) {
       return;
     }
 
     try {
       await cancelMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
-      console.error("Failed to cancel listing:", err);
+      logClientError(err, { context: { source: 'ProductListingJobsPanel', action: 'cancelListing', productId, listingId } });
     }
   };
 
   const formatDateTime = (value: Date | string | null): string => {
-    if (!value) return "—";
+    if (!value) return '—';
     const date: Date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) return '—';
     return date.toLocaleString();
   };
 
-  const getSortedHistory = (history: ListingJob["exportHistory"]): ListingAttempt[] => {
+  const getSortedHistory = (history: ListingJob['exportHistory']): ListingAttempt[] => {
     if (!history?.length) return [];
     const sorted = [...history].sort((a: ListingAttempt, b: ListingAttempt) => {
       const aTime: number = new Date(a.exportedAt).getTime();
       const bTime: number = new Date(b.exportedAt).getTime();
-      return historySort === "asc" ? aTime - bTime : bTime - aTime;
+      return historySort === 'asc' ? aTime - bTime : bTime - aTime;
     });
     return sorted;
   };
@@ -121,20 +122,20 @@ export default function ProductListingJobsPanel({
     if (!query.trim()) return true;
     const target = [
       job.productName,
-      job.productSku ?? "",
+      job.productSku ?? '',
       job.productId,
       listing.integrationName,
       listing.connectionName,
       attempt?.status ?? listing.status,
       listing.id,
-      listing.externalListingId ?? "",
-      attempt?.inventoryId ?? "",
-      attempt?.templateId ?? "",
-      attempt?.warehouseId ?? "",
-      attempt?.externalListingId ?? "",
+      listing.externalListingId ?? '',
+      attempt?.inventoryId ?? '',
+      attempt?.templateId ?? '',
+      attempt?.warehouseId ?? '',
+      attempt?.externalListingId ?? '',
       ...(attempt?.fields ?? []),
     ]
-      .join(" ")
+      .join(' ')
       .toLowerCase();
     return target.includes(query.trim().toLowerCase());
   }), [listingRows, query]);
@@ -153,7 +154,7 @@ export default function ProductListingJobsPanel({
   const pagedRows = sortedRows.slice(startIndex, endIndex);
 
   const selectedAttempt = selectedListing?.attempt ?? null;
-  const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? "";
+  const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? '';
 
   const header = (
     <SectionHeader
@@ -162,17 +163,10 @@ export default function ProductListingJobsPanel({
       size="md"
       actions={
         <>
-          <Button
-            onClick={() => void jobsQuery.refetch()}
-            disabled={jobsQuery.isFetching}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw
-              className={`mr-2 size-4 ${jobsQuery.isFetching ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+          <RefreshButton
+            onRefresh={() => void jobsQuery.refetch()}
+            isRefreshing={jobsQuery.isFetching}
+          />
           {showBackToProducts && (
             <Button asChild variant="outline" size="sm">
               <Link href="/admin/products">Back to Products</Link>
@@ -183,63 +177,34 @@ export default function ProductListingJobsPanel({
     />
   );
 
+  const filterFields: FilterField[] = [
+    { key: 'query', label: 'Search', type: 'search', placeholder: 'Search by product, SKU, integration, or ID...' },
+  ];
+
   const filters = !jobsQuery.isLoading && !jobsQuery.error ? (
-    <SectionPanel>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-          <Input
-            placeholder="Search by product, SKU, integration, or ID..."
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-            className="h-8 text-sm sm:max-w-md"
-          />
-      </div>
-    </SectionPanel>
+    <DynamicFilters
+      fields={filterFields}
+      values={{ query }}
+      onChange={(_, value) => setQuery(value)}
+      onReset={() => setQuery('')}
+      hasActiveFilters={Boolean(query)}
+    />
   ) : null;
 
   const footer = !jobsQuery.isLoading && !jobsQuery.error ? (
-    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-      <div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+      <div className="text-xs text-gray-400">
         Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
       </div>
-      <div className="flex items-center gap-2">
-        <Label htmlFor="exportJobsPageSize">Rows</Label>
-        <select
-          id="exportJobsPageSize"
-          className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
-          value={pageSize}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-            setPageSize(Number(event.target.value));
-            setPage(1);
-          }}
-        >
-          {[10, 25, 50, 100].map((size: number) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(): void => setPage((current: number) => Math.max(1, current - 1))}
-          disabled={clampedPage <= 1}
-          className="border bg-gray-800 hover:bg-gray-700"
-        >
-          Prev
-        </Button>
-        <span className="min-w-[72px] text-center">
-          {clampedPage} / {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(): void => setPage((current: number) => Math.min(totalPages, current + 1))}
-          disabled={clampedPage >= totalPages}
-          className="border bg-gray-800 hover:bg-gray-700"
-        >
-          Next
-        </Button>
-      </div>
+      <Pagination
+        page={clampedPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        showPageSize
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        variant="compact"
+      />
     </div>
   ) : null;
 
@@ -265,18 +230,18 @@ export default function ProductListingJobsPanel({
           <JobTable
             data={pagedRows.map((row: ListingRow): JobRowData => {
               const { job, listing, attempt, attemptIndex } = row;
-              const status = attempt?.status ?? listing.status ?? "unknown";
+              const status = attempt?.status ?? listing.status ?? 'unknown';
               const typeLabel =
-                status === "deleted" || status === "removed" ? "Removal" : "Export";
+                status === 'deleted' || status === 'removed' ? 'Removal' : 'Export';
               const attemptLabel =
-                attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : "Listing";
+                attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : 'Listing';
               
               return {
                 id: listing.id,
                 type: `${typeLabel}: ${listing.integrationName}`,
-                status: status as JobRowData["status"],
+                status: status as JobRowData['status'],
                 entityName: job.productName,
-                entitySubText: `SKU: ${job.productSku || "N/A"} · ${attemptLabel}`,
+                entitySubText: `SKU: ${job.productSku || 'N/A'} · ${attemptLabel}`,
                 productId: job.productId,
                 createdAt: attempt?.exportedAt ?? listing.createdAt,
                 finishedAt: listing.updatedAt,
@@ -296,279 +261,274 @@ export default function ProductListingJobsPanel({
         ) : null}
       </ListPanel>
       {selectedListing && (
-        <AppModal
+        <SharedModal
           open={true}
-          onOpenChange={(open: boolean): void => { if (!open) setSelectedListing(null); }}
+          onClose={(): void => setSelectedListing(null)}
           title="Export Job Details"
+          size="lg"
         >
-          <ModalShell
-            title="Export Job Details"
-            onClose={(): void => setSelectedListing(null)}
-            size="lg"
-          >
-            <div className="space-y-6 text-sm">
-              <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
-                  <div className="mt-1">
-                    <StatusBadge 
-                      status={selectedStatus || selectedListing.listing.status} 
-                      icon={getStatusIcon(selectedStatus || selectedListing.listing.status)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Integration</div>
-                  <div className="text-white font-medium">
-                    {selectedListing.listing.integrationName}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Connection</div>
-                  <div className="text-white font-medium">
-                    {selectedListing.listing.connectionName}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Product</div>
-                  <div className="text-white font-medium">
-                    {selectedListing.job.productName}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    SKU: {selectedListing.job.productSku ?? "—"}
-                  </div>
+          <div className="space-y-6 text-sm">
+            <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
+                <div className="mt-1">
+                  <StatusBadge 
+                    status={selectedStatus || selectedListing.listing.status} 
+                    icon={getStatusIcon(selectedStatus || selectedListing.listing.status)}
+                  />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card/60 p-4">
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.id}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">External ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.externalListingId ?? "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Inventory ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.inventoryId ?? "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Created</div>
-                  <div className="text-white">
-                    {formatDateTime(selectedListing.listing.createdAt)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Updated</div>
-                  <div className="text-white">
-                    {formatDateTime(selectedListing.listing.updatedAt)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Listed At</div>
-                  <div className="text-white">
-                    {formatDateTime(selectedListing.listing.listedAt)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Integration ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.integrationId}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Integration Slug</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.integrationSlug}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Connection ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.listing.connectionId}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Product ID</div>
-                  <div className="text-white font-mono text-xs">
-                    {selectedListing.job.productId}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Product Link</div>
-                  <Link
-                    href={`/admin/products?id=${selectedListing.job.productId}`}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    Open product
-                  </Link>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration</div>
+                <div className="text-white font-medium">
+                  {selectedListing.listing.integrationName}
                 </div>
               </div>
-
-              <div className="rounded-md border border-border bg-card/60 p-4">
-                <div className="text-gray-400 font-bold text-xs uppercase mb-3">
-                  Export Attempt
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Connection</div>
+                <div className="text-white font-medium">
+                  {selectedListing.listing.connectionName}
                 </div>
-                {selectedAttempt ? (
-                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Attempt</div>
-                      <div>{selectedListing.attemptIndex !== null ? selectedListing.attemptIndex + 1 : "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Status</div>
-                      <div>{selectedAttempt.status ?? "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Exported At</div>
-                      <div>{formatDateTime(selectedAttempt.exportedAt)}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
-                      <div>{selectedAttempt.inventoryId ?? "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Template ID</div>
-                      <div>{selectedAttempt.templateId ?? "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
-                      <div>{selectedAttempt.warehouseId ?? "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase text-gray-500">External ID</div>
-                      <div>{selectedAttempt.externalListingId ?? "—"}</div>
-                    </div>
-                    <div className="col-span-2">
-                      <div className="text-[10px] uppercase text-gray-500">Fields</div>
-                      <div className="text-gray-400">
-                        {selectedAttempt.fields?.length ? selectedAttempt.fields.join(", ") : "—"}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-xs text-gray-500">No export attempt selected.</div>
-                )}
               </div>
-
-              <div className="rounded-md border border-border bg-card/60 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-gray-400 font-bold text-xs uppercase">
-                    Export History
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                      onClick={(): void =>
-                        setHistorySort((prev: "desc" | "asc") => (prev === "desc" ? "asc" : "desc"))
-                      }
-                      aria-label="Toggle export history sort"
-                    >
-                      {historySort === "desc" ? "Newest first" : "Oldest first"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                      onClick={(): void => setHistoryExpanded((prev: boolean) => !prev)}
-                      aria-expanded={historyExpanded}
-                    >
-                      {historyExpanded ? "Collapse" : "Expand"}
-                    </Button>
-                  </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Product</div>
+                <div className="text-white font-medium">
+                  {selectedListing.job.productName}
                 </div>
-                {historyExpanded && (
-                  <>
-                    {selectedListing.listing.exportHistory?.length ? (
-                      <div className="mt-3 space-y-3">
-                        {getSortedHistory(selectedListing.listing.exportHistory).map(
-                          (event: ListingAttempt, index: number) => (
-                            <div
-                              key={`${selectedListing.listing.id}-history-${index}`}
-                              className="rounded border border-border bg-card/60 p-3 text-xs text-gray-300"
-                            >
-                              <div className="flex flex-wrap gap-4">
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">Exported At</div>
-                                  <div>{formatDateTime(event.exportedAt)}</div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">Status</div>
-                                  <div className="mt-1">
-                                    <StatusBadge 
-                                      status={event.status ?? "success"} 
-                                      icon={getStatusIcon(event.status ?? "success")}
-                                    />
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
-                                  <div>{event.inventoryId ?? "—"}</div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">Template ID</div>
-                                  <div>{event.templateId ?? "—"}</div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
-                                  <div>{event.warehouseId ?? "—"}</div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase text-gray-500">External ID</div>
-                                  <div>{event.externalListingId ?? "—"}</div>
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <div className="text-[10px] uppercase text-gray-500">Fields</div>
-                                <div className="text-gray-400">
-                                  {event.fields?.length ? event.fields.join(", ") : "—"}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-3 text-xs text-gray-500">
-                        No export history recorded.
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">
-                    Listing Payload
-                  </div>
-                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
-                    {JSON.stringify(selectedListing.listing, null, 2)}
-                  </pre>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">
-                    Job Payload
-                  </div>
-                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
-                    {JSON.stringify(selectedListing.job, null, 2)}
-                  </pre>
+                <div className="text-xs text-gray-500">
+                    SKU: {selectedListing.job.productSku ?? '—'}
                 </div>
               </div>
             </div>
-          </ModalShell>
-        </AppModal>
+
+            <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card/60 p-4">
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.id}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">External ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.externalListingId ?? '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Inventory ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.inventoryId ?? '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Created</div>
+                <div className="text-white">
+                  {formatDateTime(selectedListing.listing.createdAt)}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Updated</div>
+                <div className="text-white">
+                  {formatDateTime(selectedListing.listing.updatedAt)}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Listed At</div>
+                <div className="text-white">
+                  {formatDateTime(selectedListing.listing.listedAt)}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.integrationId}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration Slug</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.integrationSlug}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Connection ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.listing.connectionId}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Product ID</div>
+                <div className="text-white font-mono text-xs">
+                  {selectedListing.job.productId}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Product Link</div>
+                <Link
+                  href={`/admin/products?id=${selectedListing.job.productId}`}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                    Open product
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border bg-card/60 p-4">
+              <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                  Export Attempt
+              </div>
+              {selectedAttempt ? (
+                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Attempt</div>
+                    <div>{selectedListing.attemptIndex !== null ? selectedListing.attemptIndex + 1 : '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Status</div>
+                    <div>{selectedAttempt.status ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Exported At</div>
+                    <div>{formatDateTime(selectedAttempt.exportedAt)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
+                    <div>{selectedAttempt.inventoryId ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Template ID</div>
+                    <div>{selectedAttempt.templateId ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
+                    <div>{selectedAttempt.warehouseId ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">External ID</div>
+                    <div>{selectedAttempt.externalListingId ?? '—'}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-[10px] uppercase text-gray-500">Fields</div>
+                    <div className="text-gray-400">
+                      {selectedAttempt.fields?.length ? selectedAttempt.fields.join(', ') : '—'}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500">No export attempt selected.</div>
+              )}
+            </div>
+
+            <div className="rounded-md border border-border bg-card/60 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-gray-400 font-bold text-xs uppercase">
+                    Export History
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-gray-300 hover:text-white"
+                    onClick={(): void =>
+                      setHistorySort((prev: 'desc' | 'asc') => (prev === 'desc' ? 'asc' : 'desc'))
+                    }
+                    aria-label="Toggle export history sort"
+                  >
+                    {historySort === 'desc' ? 'Newest first' : 'Oldest first'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-gray-300 hover:text-white"
+                    onClick={(): void => setHistoryExpanded((prev: boolean) => !prev)}
+                    aria-expanded={historyExpanded}
+                  >
+                    {historyExpanded ? 'Collapse' : 'Expand'}
+                  </Button>
+                </div>
+              </div>
+              {historyExpanded && (
+                <>
+                  {selectedListing.listing.exportHistory?.length ? (
+                    <div className="mt-3 space-y-3">
+                      {getSortedHistory(selectedListing.listing.exportHistory).map(
+                        (event: ListingAttempt, index: number) => (
+                          <div
+                            key={`${selectedListing.listing.id}-history-${index}`}
+                            className="rounded border border-border bg-card/60 p-3 text-xs text-gray-300"
+                          >
+                            <div className="flex flex-wrap gap-4">
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">Exported At</div>
+                                <div>{formatDateTime(event.exportedAt)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">Status</div>
+                                <div className="mt-1">
+                                  <StatusBadge 
+                                    status={event.status ?? 'success'} 
+                                    icon={getStatusIcon(event.status ?? 'success')}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>
+                                <div>{event.inventoryId ?? '—'}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">Template ID</div>
+                                <div>{event.templateId ?? '—'}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">Warehouse ID</div>
+                                <div>{event.warehouseId ?? '—'}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase text-gray-500">External ID</div>
+                                <div>{event.externalListingId ?? '—'}</div>
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <div className="text-[10px] uppercase text-gray-500">Fields</div>
+                              <div className="text-gray-400">
+                                {event.fields?.length ? event.fields.join(', ') : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-xs text-gray-500">
+                        No export history recorded.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-2">
+                <div className="text-gray-500 uppercase text-[10px] font-bold">
+                    Listing Payload
+                </div>
+                <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
+                  {JSON.stringify(selectedListing.listing, null, 2)}
+                </pre>
+              </div>
+              <div className="space-y-2">
+                <div className="text-gray-500 uppercase text-[10px] font-bold">
+                    Job Payload
+                </div>
+                <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
+                  {JSON.stringify(selectedListing.job, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </SharedModal>
       )}
     </>
   );

@@ -4,17 +4,17 @@ export const toNumber = (value: string, fallback: number): number => {
 };
 
 export function safeStringify(value: unknown): string {
-  if (value === undefined || value === null) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (typeof value === "object") {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
     } catch {
-      return "[Complex Object]";
+      return '[Complex Object]';
     }
   }
-  if (typeof value === "symbol" || typeof value === "function") {
+  if (typeof value === 'symbol' || typeof value === 'function') {
     return value.toString();
   }
   return String(value as string);
@@ -23,12 +23,12 @@ export function safeStringify(value: unknown): string {
 const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
   if (value === undefined) return undefined;
   if (value === null) return null;
-  if (typeof value === "string" || typeof value === "boolean") return value;
-  if (typeof value === "number") {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
     return Number.isFinite(value) ? value : String(value);
   }
-  if (typeof value === "bigint") return value.toString();
-  if (typeof value === "symbol" || typeof value === "function") {
+  if (typeof value === 'bigint') return value.toString();
+  if (typeof value === 'symbol' || typeof value === 'function') {
     return `[${typeof value}]`;
   }
   if (value instanceof Date) return value.toISOString();
@@ -42,7 +42,7 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
     const entries = Array.from(value.entries()).map(([key, val]: [unknown, unknown]) => {
       const normalizedKey = normalizeForHash(key, new WeakSet<object>());
       const keyString =
-        typeof key === "string"
+        typeof key === 'string'
           ? key
           : JSON.stringify(normalizedKey) ?? String(key);
       return [keyString, normalizeForHash(val, seen)] as [string, unknown];
@@ -59,8 +59,8 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
     keyed.sort((a: { key: string }, b: { key: string }) => a.key.localeCompare(b.key));
     return keyed.map((item: { value: unknown }) => item.value);
   }
-  if (typeof value === "object") {
-    if (seen.has(value)) return "[Circular]";
+  if (typeof value === 'object') {
+    if (seen.has(value)) return '[Circular]';
     seen.add(value);
     const record = value as Record<string, unknown>;
     const keys = Object.keys(record).sort();
@@ -77,10 +77,10 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
 export const stableStringify = (value: unknown): string => {
   try {
     const normalized = normalizeForHash(value, new WeakSet<object>());
-    if (normalized === undefined) return "";
-    return JSON.stringify(normalized) ?? "";
+    if (normalized === undefined) return '';
+    return JSON.stringify(normalized) ?? '';
   } catch {
-    return "";
+    return '';
   }
 };
 
@@ -90,41 +90,41 @@ export const hashString = (value: string): string => {
     hash ^= value.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
-  return (hash >>> 0).toString(16).padStart(8, "0");
+  return (hash >>> 0).toString(16).padStart(8, '0');
 };
 
 export const hashRuntimeValue = (value: unknown): string => hashString(stableStringify(value));
 
 export const formatRuntimeValue = (value: unknown): string => {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "string") return value.trim() || "—";
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'string') return value.trim() || '—';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   try {
     const json = JSON.stringify(value, null, 2);
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
   } catch {
-    return "[Complex Object]";
+    return '[Complex Object]';
   }
 };
 
 export const parsePathList = (value: string): string[] =>
   value
-    .split("\n")
+    .split('\n')
     .map((line: string) => line.trim())
     .filter(Boolean);
 
 export const safeParseJson = (value: string): { value: unknown; error: string } => {
-  if (!value.trim()) return { value: null as unknown, error: "" };
+  if (!value.trim()) return { value: null as unknown, error: '' };
   try {
-    return { value: JSON.parse(value) as unknown, error: "" };
+    return { value: JSON.parse(value) as unknown, error: '' };
   } catch {
-    return { value: null as unknown, error: "Invalid JSON" };
+    return { value: null as unknown, error: 'Invalid JSON' };
   }
 };
 
 export const cloneValue = <T>(value: T): T => {
-  if (typeof structuredClone === "function") {
+  if (typeof structuredClone === 'function') {
     return structuredClone(value);
   }
   try {

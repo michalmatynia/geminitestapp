@@ -1,7 +1,8 @@
-import { useToast } from "@/shared/ui";
-import { useState, useMemo } from "react";
+import { useState, useMemo } from 'react';
 
-import type { TagRecord } from "@/shared/types/notes";
+import { logClientError } from '@/features/observability';
+import type { TagRecord } from '@/shared/types/notes';
+import { useToast } from '@/shared/ui';
 
 // Why: Tag selection has complex state:
 // - Input filtering against available tags
@@ -29,7 +30,7 @@ export function useNoteTags(
 } {
   const { toast } = useToast();
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
   const filteredTags = useMemo((): TagRecord[] => 
@@ -38,12 +39,12 @@ export function useNoteTags(
         tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
         !selectedTagIds.includes(tag.id)
     ), 
-    [availableTags, tagInput, selectedTagIds]
+  [availableTags, tagInput, selectedTagIds]
   );
 
   const handleAddTag = (tag: TagRecord): void => {
     setSelectedTagIds([...selectedTagIds, tag.id]);
-    setTagInput("");
+    setTagInput('');
     setIsTagDropdownOpen(false);
   };
 
@@ -58,16 +59,16 @@ export function useNoteTags(
       if (!selectedTagIds.includes(existingTag.id)) {
         handleAddTag(existingTag);
       } else {
-        setTagInput("");
+        setTagInput('');
         setIsTagDropdownOpen(false);
       }
       return;
     }
 
     try {
-      const response = await fetch("/api/notes/tags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/notes/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: tagInput.trim(),
           notebookId: notebookId ?? noteNotebookId ?? null,
@@ -78,12 +79,12 @@ export function useNoteTags(
         const newTag = (await response.json()) as TagRecord;
         onTagCreated?.();
         setSelectedTagIds((prev: string[]) => [...prev, newTag.id]);
-        setTagInput("");
+        setTagInput('');
         setIsTagDropdownOpen(false);
       }
     } catch (error: unknown) {
-      console.error("Failed to create tag:", error);
-      toast("Failed to create tag", { variant: "error" });
+      logClientError(error, { context: { source: 'useNoteTags', action: 'createTag', name: tagInput.trim(), notebookId: notebookId ?? noteNotebookId } });
+      toast('Failed to create tag', { variant: 'error' });
     }
   };
 

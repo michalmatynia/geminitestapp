@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 
-import * as React from "react";
 
+import * as React from 'react';
+
+import { logClientError } from '@/features/observability';
+import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import type { PriceGroup, PriceGroupType } from '@/features/products/types';
+import type { CurrencyOption } from '@/shared/types/internationalization';
 import {
-  Button,
   Input,
   Label,
-  SharedModal,
   Checkbox,
   Textarea,
   RadioGroup,
   RadioGroupItem,
   useToast,
-} from "@/shared/ui";
-import type { PriceGroup, PriceGroupType } from "@/features/products/types";
-import type { CurrencyOption } from "@/shared/types/internationalization";
-import { useSavePriceGroupMutation } from "@/features/products/hooks/useProductSettingsQueries";
+  UnifiedSelect,
+} from '@/shared/ui';
+import { FormModal } from '@/shared/ui';
 
 interface PriceGroupModalProps {
   isOpen: boolean;
@@ -37,18 +38,18 @@ export function PriceGroupModal({
   currencyOptions,
   loadingCurrencies,
   priceGroups,
-}: PriceGroupModalProps) {
+}: PriceGroupModalProps): React.JSX.Element {
   const { toast } = useToast();
   const saveMutation = useSavePriceGroupMutation();
   const [form, setForm] = React.useState({
     isDefault: false,
-    groupId: "",
-    name: "",
-    description: "",
-    currencyId: "",
-    groupType: "standard" as PriceGroupType,
-    basePriceField: "price",
-    sourceGroupId: "",
+    groupId: '',
+    name: '',
+    description: '',
+    currencyId: '',
+    groupType: 'standard' as PriceGroupType,
+    basePriceField: 'price',
+    sourceGroupId: '',
     priceMultiplier: 1,
     addToPrice: 0,
   });
@@ -59,39 +60,39 @@ export function PriceGroupModal({
         isDefault: priceGroup.isDefault,
         groupId: priceGroup.groupId,
         name: priceGroup.name,
-        description: priceGroup.description ?? "",
+        description: priceGroup.description ?? '',
         currencyId: priceGroup.currencyId,
         groupType: priceGroup.groupType,
         basePriceField: priceGroup.basePriceField,
-        sourceGroupId: priceGroup.sourceGroupId ?? "",
+        sourceGroupId: priceGroup.sourceGroupId ?? '',
         priceMultiplier: priceGroup.priceMultiplier,
         addToPrice: priceGroup.addToPrice,
       });
     } else {
-      const pln = currencyOptions.find((c) => c.code === "PLN")?.id || "";
+      const pln = currencyOptions.find((c) => c.code === 'PLN')?.id || '';
       setForm({
         isDefault: false,
         groupId: `PG-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-        name: "",
-        description: "",
+        name: '',
+        description: '',
         currencyId: pln,
-        groupType: "standard",
-        basePriceField: "price",
-        sourceGroupId: "",
+        groupType: 'standard',
+        basePriceField: 'price',
+        sourceGroupId: '',
         priceMultiplier: 1,
         addToPrice: 0,
       });
     }
   }, [priceGroup, currencyOptions]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!form.groupId.trim() || !form.name.trim() || !form.currencyId) {
-      toast("Required fields missing.", { variant: "error" });
+      toast('Required fields missing.', { variant: 'error' });
       return;
     }
-    if (form.groupType === "dependent" && !form.sourceGroupId) {
-      toast("Source price group is required for dependent groups.", {
-        variant: "error",
+    if (form.groupType === 'dependent' && !form.sourceGroupId) {
+      toast('Source price group is required for dependent groups.', {
+        variant: 'error',
       });
       return;
     }
@@ -109,46 +110,25 @@ export function PriceGroupModal({
         },
       });
 
-      toast("Price group saved.", { variant: "success" });
+      toast('Price group saved.', { variant: 'success' });
       onSuccess();
     } catch (err) {
-      console.error(err);
-      toast("Failed to save price group.", { variant: "error" });
+      logClientError(err, { context: { source: 'PriceGroupModal', action: 'savePriceGroup', priceGroupId: priceGroup?.id } });
+      toast('Failed to save price group.', { variant: 'error' });
     }
   };
 
-  const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={saveMutation.isPending}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {saveMutation.isPending ? "Saving..." : priceGroup ? "Update" : "Create"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">
-          {priceGroup ? "Edit Price Group" : "Create Price Group"}
-        </h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
   return (
-    <SharedModal
-      open={isOpen}
+    <FormModal
+      isOpen={isOpen}
       onClose={onClose}
-      title={priceGroup ? "Edit Price Group" : "Create Price Group"}
-      header={header}
+      title={priceGroup ? 'Edit Price Group' : 'Create Price Group'}
+      onSave={() => {
+        void handleSubmit();
+      }}
+      isSaving={saveMutation.isPending}
+      saveText={priceGroup ? 'Update' : 'Create'}
+      cancelText="Close"
       size="lg"
     >
       <div className="space-y-4">
@@ -176,21 +156,18 @@ export function PriceGroupModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="pg-currency">Currency</Label>
-            <select
-              id="pg-currency"
-              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+            <UnifiedSelect
               value={form.currencyId}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, currencyId: e.target.value }))
+              onValueChange={(v) =>
+                setForm((p) => ({ ...p, currencyId: v }))
               }
+              options={currencyOptions.map((opt) => ({
+                value: opt.id,
+                label: `${opt.code} · ${opt.name}`,
+              }))}
+              placeholder="Select currency"
               disabled={loadingCurrencies}
-            >
-              {currencyOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.code} · {opt.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
@@ -227,27 +204,24 @@ export function PriceGroupModal({
           </RadioGroup>
         </div>
 
-        {form.groupType === "dependent" && (
+        {form.groupType === 'dependent' && (
           <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pg-source">Source Price Group</Label>
-              <select
-                id="pg-source"
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+              <UnifiedSelect
                 value={form.sourceGroupId}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, sourceGroupId: e.target.value }))
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, sourceGroupId: v }))
                 }
-              >
-                <option value="">Select source...</option>
-                {priceGroups
+                options={priceGroups
                   .filter((g) => g.id !== priceGroup?.id)
-                  .map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.groupId})
-                    </option>
-                  ))}
-              </select>
+                  .map((g) => ({
+                    value: g.id,
+                    label: g.name,
+                    description: g.groupId,
+                  }))}
+                placeholder="Select source..."
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
@@ -283,6 +257,6 @@ export function PriceGroupModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }

@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
-
-import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
-import { useNotebooks } from "@/features/notesapp/api/useNoteQueries";
 import {
   useCreateNotebook,
   useUpdateNotebook,
   useDeleteNotebook,
-} from "@/features/notesapp/api/useNoteMutations";
-import type { NotebookRecord } from "@/shared/types/notes";
-import { useRouter } from "next/navigation";
+} from '@/features/notesapp/api/useNoteMutations';
+import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
+import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
+import { logClientError } from '@/features/observability';
+import type { NotebookRecord } from '@/shared/types/notes';
+import { Button, useToast, Input, Label, SectionPanel, SectionHeader, AdminPageLayout } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [editingName, setEditingName] = useState('');
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
@@ -41,16 +41,16 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
 
   const handleCreate = async (): Promise<void> => {
     if (!name.trim()) {
-      toast("Notebook name is required", { variant: "error" });
+      toast('Notebook name is required', { variant: 'error' });
       return;
     }
     try {
       await createNotebook.mutateAsync({ name: name.trim() });
-      setName("");
-      toast("Notebook created", { variant: "success" });
+      setName('');
+      toast('Notebook created', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to create notebook:", error);
-      toast("Failed to create notebook", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'createNotebook', name } });
+      toast('Failed to create notebook', { variant: 'error' });
     }
   };
 
@@ -62,35 +62,35 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
 
   const handleEditCancel = useCallback((): void => {
     setEditingId(null);
-    setEditingName("");
+    setEditingName('');
   }, []);
 
   const handleUpdate = async (id: string): Promise<void> => {
     if (!editingName.trim()) {
-      toast("Notebook name is required", { variant: "error" });
+      toast('Notebook name is required', { variant: 'error' });
       return;
     }
     try {
       await updateNotebook.mutateAsync({ id, name: editingName.trim() });
-      toast("Notebook updated", { variant: "success" });
+      toast('Notebook updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      console.error("Failed to update notebook:", error);
-      toast("Failed to update notebook", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'updateNotebook', id } });
+      toast('Failed to update notebook', { variant: 'error' });
     }
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm("Delete this notebook and all its notes/tags/folders?")) return;
+    if (!confirm('Delete this notebook and all its notes/tags/folders?')) return;
     try {
       await deleteNotebook.mutateAsync(id);
       if (selectedNotebookId === id) {
         updateSettings({ selectedNotebookId: null });
       }
-      toast("Notebook deleted", { variant: "success" });
+      toast('Notebook deleted', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to delete notebook:", error);
-      toast("Failed to delete notebook", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'deleteNotebook', id } });
+      toast('Failed to delete notebook', { variant: 'error' });
     }
   };
 
@@ -106,23 +106,23 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     const newName = `${baseName} (${nextNumber})`;
     try {
       await createNotebook.mutateAsync({ name: newName });
-      toast("Notebook duplicated", { variant: "success" });
+      toast('Notebook duplicated', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to duplicate notebook:", error);
-      toast("Failed to duplicate notebook", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'duplicateNotebook', originalId: notebook.id } });
+      toast('Failed to duplicate notebook', { variant: 'error' });
     } finally {
       setMenuNotebookId(null);
     }
   };
 
-  return (
-    <div className="container mx-auto py-10">
-      <SectionHeader
-        title="Notebooks"
-        description="Create and manage notebooks. Notes, folders, and tags are scoped per notebook."
-        className="mb-6"
-      />
+  if (loading) return <div className="text-sm text-gray-400">Loading notebooks...</div>;
 
+
+  return (
+    <AdminPageLayout
+      title="Notebooks"
+      description="Create and manage notebooks. Notes, folders, and tags are scoped per notebook."
+    >
       <div className="max-w-3xl space-y-6">
         <SectionPanel className="p-6">
           <SectionHeader title="Create Notebook" size="sm" className="mb-4" />
@@ -140,7 +140,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
               />
             </div>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createNotebook.isPending}>
-              {createNotebook.isPending ? "Saving..." : "Create"}
+              {createNotebook.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
         </SectionPanel>
@@ -166,12 +166,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 const isEditing = editingId === notebook.id;
                 const isActive = selectedNotebookId === notebook.id;
                 return (
-                  <div
+                  <SectionPanel
                     key={notebook.id}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-border/60"
+                    variant="subtle"
+                    className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition hover:border-border/60"
                     onClick={(): void => {
                       updateSettings({ selectedNotebookId: notebook.id });
-                      router.push("/admin/notes");
+                      router.push('/admin/notes');
                     }}
                   >
                     <div className="flex flex-1 items-center gap-3">
@@ -292,13 +293,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </SectionPanel>
                 );
               })}
             </div>
           )}
         </SectionPanel>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

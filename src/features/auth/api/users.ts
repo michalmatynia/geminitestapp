@@ -1,7 +1,7 @@
-import type { AuthUserSummary } from "../types";
+import type { AuthUserSummary } from '../types';
 
 export type AuthUsersResponse = {
-  provider: "mongodb";
+  provider: 'mongodb';
   users: AuthUserSummary[];
 };
 
@@ -22,9 +22,9 @@ const safeJson = async <T>(res: Response): Promise<T> => {
 };
 
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
-  const res = await fetch("/api/auth/users");
+  const res = await fetch('/api/auth/users');
   if (!res.ok) {
-    throw new Error("Failed to load users");
+    throw new Error('Failed to load users');
   }
   return res.json() as Promise<AuthUsersResponse>;
 };
@@ -38,8 +38,8 @@ export const updateAuthUser = async (
   }
 ): Promise<{ ok: boolean; payload: AuthUserSummary }> => {
   const res = await fetch(`/api/auth/users/${userId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<AuthUserSummary>(res);
@@ -51,7 +51,7 @@ export const fetchAuthUserSecurity = async (
 ): Promise<AuthUserSecurityProfile> => {
   const res = await fetch(`/api/auth/users/${userId}/security`);
   if (!res.ok) {
-    throw new Error("Failed to load security profile");
+    throw new Error('Failed to load security profile');
   }
   return res.json() as Promise<AuthUserSecurityProfile>;
 };
@@ -66,8 +66,8 @@ export const updateAuthUserSecurity = async (
   }
 ): Promise<{ ok: boolean; payload: AuthUserSecurityProfile }> => {
   const res = await fetch(`/api/auth/users/${userId}/security`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<AuthUserSecurityProfile>(res);
@@ -75,9 +75,9 @@ export const updateAuthUserSecurity = async (
 };
 
 export const mockSignIn = async (input: { email: string; password: string }): Promise<{ ok: boolean; payload: { ok?: boolean; message?: string } }> => {
-  const res = await fetch("/api/auth/mock-signin", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/auth/mock-signin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<{ ok?: boolean; message?: string }>(res);

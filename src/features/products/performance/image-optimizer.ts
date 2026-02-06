@@ -1,10 +1,20 @@
 import sharp from 'sharp';
 
-import {
-  DEFAULT_IMAGE_SIZES,
-  type ImageFormat,
-  type ImageSize,
-} from "./image-url-generator";
+import { ErrorSystem } from '@/features/observability/server';
+
+export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
+export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+
+const DEFAULT_IMAGE_SIZES: Record<
+  ImageSize,
+  { width: number; height?: number; quality?: number }
+> = {
+  thumbnail: { width: 150, height: 150, quality: 80 },
+  small: { width: 300, quality: 85 },
+  medium: { width: 600, quality: 90 },
+  large: { width: 1200, quality: 95 },
+  original: { width: 2000, quality: 100 },
+};
 
 export type OptimizationOptions = {
   formats?: ImageFormat[];
@@ -98,7 +108,12 @@ export class ImageOptimizer {
           });
 
         } catch (error) {
-          console.warn(`Failed to optimize image for ${format}/${sizeName}:`, error);
+          void ErrorSystem.logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
+            service: 'image-optimizer',
+            format,
+            sizeName,
+            error
+          });
         }
       }
     }

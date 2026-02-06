@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import { useEffect } from "react";
-import Link from "next/link";
+import Link from 'next/link';
+import { useEffect } from 'react';
+
+import { logClientError } from '@/features/observability';
+import { Button } from '@/shared/ui';
 
 export default function FrontendError({
   error,
@@ -13,13 +15,17 @@ export default function FrontendError({
 }) {
   useEffect(() => {
     console.error(error);
+    logClientError(error, {
+      ...(error.digest ? { digest: error.digest } : {}),
+      context: { source: 'frontend-error-boundary' },
+    });
   }, [error]);
 
   return (
     <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-gray-800 bg-gray-900 p-8 text-center text-gray-200">
       <h2 className="text-xl font-semibold text-red-400">Something went wrong</h2>
       <p className="max-w-md text-sm text-gray-400">
-        {error.message || "We hit a snag while loading this page."}
+        {error.message || 'We hit a snag while loading this page.'}
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button onClick={() => reset()} className="bg-blue-600 text-white hover:bg-blue-700">

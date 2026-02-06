@@ -1,5 +1,6 @@
-import type { Page } from "playwright";
-import prisma from "@/shared/lib/db/prisma";
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Page } from 'playwright';
 
 export type UiElement = {
   tag: string;
@@ -57,11 +58,11 @@ export const collectUiInventory = async (
         let node: Element | null = el;
         while (node && node.nodeType === 1 && node !== document.documentElement) {
           let part = node.tagName.toLowerCase();
-          const name = node.getAttribute("name");
+          const name = node.getAttribute('name');
           const dataTest =
-            node.getAttribute("data-testid") ||
-            node.getAttribute("data-test") ||
-            node.getAttribute("data-qa");
+            node.getAttribute('data-testid') ||
+            node.getAttribute('data-test') ||
+            node.getAttribute('data-qa');
           if (name) {
             part += `[name="${name.replace(/"/g, '\\"')}"]`;
           } else if (dataTest) {
@@ -79,7 +80,7 @@ export const collectUiInventory = async (
           parts.unshift(part);
           node = node.parentElement;
         }
-        return parts.join(" > ");
+        return parts.join(' > ');
       };
 
       const visible = (el: Element): boolean =>
@@ -91,32 +92,32 @@ export const collectUiInventory = async (
         type: (el as HTMLInputElement).type || null,
         text: (el as HTMLElement).innerText?.trim().slice(0, 160) || null,
         placeholder: (el as HTMLInputElement).placeholder || null,
-        ariaLabel: el.getAttribute("aria-label"),
-        role: el.getAttribute("role"),
+        ariaLabel: el.getAttribute('aria-label'),
+        role: el.getAttribute('role'),
         selector: cssPath(el),
       });
 
       const cap = 200;
-      const inputs = Array.from(document.querySelectorAll("input, textarea, select"))
+      const inputs = Array.from(document.querySelectorAll('input, textarea, select'))
         .filter(visible)
         .map(describe);
       const buttons = Array.from(
-        document.querySelectorAll("button, input[type='submit'], input[type='button']")
+        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
       )
         .filter(visible)
         .map(describe);
-      const links = Array.from(document.querySelectorAll("a[href]"))
+      const links = Array.from(document.querySelectorAll('a[href]'))
         .filter(visible)
         .map((el: Element) => ({
           ...describe(el),
           href: (el as HTMLAnchorElement).href,
         }));
       const headings = Array.from(
-        document.querySelectorAll("h1, h2, h3, h4, h5, h6")
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6')
       )
         .filter(visible)
         .map(describe);
-      const forms = Array.from(document.querySelectorAll("form"))
+      const forms = Array.from(document.querySelectorAll('form'))
         .filter(visible)
         .map((el: Element) => ({
           ...describe(el),
@@ -152,7 +153,7 @@ export const collectUiInventory = async (
     });
 
     if (log) {
-      await log("info", "Captured UI inventory.", {
+      await log('info', 'Captured UI inventory.', {
         label,
         stepId: activeStepId ?? null,
         uiInventory,
@@ -161,8 +162,8 @@ export const collectUiInventory = async (
     await prisma.agentAuditLog.create({
       data: {
         runId,
-        level: "info",
-        message: "Captured UI inventory.",
+        level: 'info',
+        message: 'Captured UI inventory.',
         metadata: {
           label,
           stepId: activeStepId ?? null,
@@ -173,7 +174,7 @@ export const collectUiInventory = async (
     return uiInventory;
   } catch (error) {
     if (log) {
-      await log("warning", "Failed to capture UI inventory.", {
+      await log('warning', 'Failed to capture UI inventory.', {
         label,
         stepId: activeStepId ?? null,
         error: error instanceof Error ? error.message : String(error),

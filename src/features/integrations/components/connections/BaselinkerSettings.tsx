@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { Button, Input } from "@/shared/ui";
-import { useEffect, useState, useRef } from "react";
-import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { useSettings, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useEffect, useState, useRef } from 'react';
+
+import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
+import { Button, Input, SectionPanel, StatusBadge } from '@/shared/ui';
 
 type BaselinkerSettingsProps = {
   activeConnection: IntegrationConnection | null;
@@ -19,19 +20,19 @@ export function BaselinkerSettings({
   const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
-    : "—";
+    : '—';
   
   const settingsQuery = useSettings();
   const updateSettingMutation = useUpdateSetting();
   
-  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState("10");
+  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState('10');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (settingsQuery.data && !hasInitialized.current) {
-      const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
+      const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === 'base_sync_poll_interval_minutes');
       if (found?.value) {
         timer = setTimeout(() => {
           setSyncIntervalMinutes(found.value);
@@ -47,23 +48,23 @@ export function BaselinkerSettings({
   const handleSaveSyncInterval = async (): Promise<void> => {
     const parsed = Number(syncIntervalMinutes);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      setSyncMessage("Enter a valid number of minutes.");
+      setSyncMessage('Enter a valid number of minutes.');
       return;
     }
     setSyncMessage(null);
     try {
       await updateSettingMutation.mutateAsync({
-        key: "base_sync_poll_interval_minutes",
+        key: 'base_sync_poll_interval_minutes',
         value: String(parsed),
       });
-      setSyncMessage("Sync interval saved.");
+      setSyncMessage('Sync interval saved.');
     } catch {
-      setSyncMessage("Failed to save sync interval.");
+      setSyncMessage('Failed to save sync interval.');
     }
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-card/60 p-4 text-sm text-gray-200">
+    <SectionPanel variant="subtle" className="space-y-4 text-sm text-gray-200">
       <div>
         <h3 className="text-sm font-semibold text-white">Baselinker API</h3>
         <p className="mt-1 text-xs text-gray-400">
@@ -77,31 +78,23 @@ export function BaselinkerSettings({
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
+          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Connection status</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                  baselinkerConnected
-                    ? "bg-emerald-500/20 text-emerald-200"
-                    : "bg-amber-500/20 text-amber-200"
-                }`}
-              >
-                {baselinkerConnected ? "Connected" : "Not tested"}
-              </span>
+              <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
             </div>
             <p className="mt-2">
-              <span className="text-gray-400">Last verified:</span>{" "}
+              <span className="text-gray-400">Last verified:</span>{' '}
               {baseTokenUpdatedAt}
             </p>
             {activeConnection.baseLastInventoryId && (
               <p className="mt-1">
-                <span className="text-gray-400">Last inventory:</span>{" "}
+                <span className="text-gray-400">Last inventory:</span>{' '}
                 {activeConnection.baseLastInventoryId}
               </p>
             )}
-          </div>
-          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
+          </SectionPanel>
+          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Listing sync interval</span>
               {settingsQuery.isLoading ? (
@@ -124,7 +117,7 @@ export function BaselinkerSettings({
                 disabled={updateSettingMutation.isPending}
                 className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
               >
-                {updateSettingMutation.isPending ? "Saving..." : "Save"}
+                {updateSettingMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>
             <p className="mt-2 text-[10px] text-gray-400">
@@ -133,7 +126,7 @@ export function BaselinkerSettings({
             {syncMessage && (
               <p className="mt-2 text-[10px] text-gray-400">{syncMessage}</p>
             )}
-          </div>
+          </SectionPanel>
           <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
@@ -142,15 +135,15 @@ export function BaselinkerSettings({
               className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
             >
               {isTesting
-                ? "Testing..."
+                ? 'Testing...'
                 : baselinkerConnected
-                ? "Re-test Connection"
-                : "Test Connection"}
+                  ? 'Re-test Connection'
+                  : 'Test Connection'}
             </Button>
           </div>
-          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
+          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
             <p>
-              To get your API token, log in to{" "}
+              To get your API token, log in to{' '}
               <a
                 href="https://baselinker.com"
                 target="_blank"
@@ -158,12 +151,12 @@ export function BaselinkerSettings({
                 className="text-purple-300 hover:text-purple-200"
               >
                 Baselinker
-              </a>{" "}
+              </a>{' '}
               → My Account → API.
             </p>
-          </div>
+          </SectionPanel>
         </div>
       )}
-    </div>
+    </SectionPanel>
   );
 }

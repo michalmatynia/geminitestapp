@@ -3,7 +3,7 @@
  */
 
 export const normalizeSearchText = (value: string): string =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 /**
  * Checks if a marketplace export error message is related to images.
@@ -13,8 +13,8 @@ export const isImageExportError = (message: string | null): boolean => {
   if (!message) return false;
   const normalized = normalizeSearchText(message.toLowerCase());
   return (
-    normalized.includes("zdjec") ||
-    normalized.includes("image") ||
-    normalized.includes("photo")
+    normalized.includes('zdjec') ||
+    normalized.includes('image') ||
+    normalized.includes('photo')
   );
 };

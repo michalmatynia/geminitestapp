@@ -1,12 +1,13 @@
-import { Button, Input, Label, Textarea } from "@/shared/ui";
 
 
 
 
 
-import type { AiNode, Edge, NodeDefinition } from "@/features/ai/ai-paths/lib";
-import { createParserMappings } from "@/features/ai/ai-paths/lib";
-import { formatPlaceholderLabel, formatPortLabel } from "../utils/ui-utils";
+import type { AiNode, Edge, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import { createParserMappings } from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
+
+import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
 type CanvasSidebarProps = {
   palette: NodeDefinition[];
@@ -23,7 +24,7 @@ type CanvasSidebarProps = {
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onFireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onOpenSimulation: (nodeId: string) => void;
-  onUpdateSelectedNode: (patch: Partial<AiNode>) => void;
+  onUpdateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   onOpenNodeConfig: () => void;
   onDeleteSelectedNode: () => void;
   onRemoveEdge: (edgeId: string) => void;
@@ -52,12 +53,13 @@ export function CanvasSidebar({
   onClearWires,
 }: CanvasSidebarProps): React.JSX.Element {
   const selectedIsScheduledTrigger =
-    selectedNode?.type === "trigger" && selectedNode.config?.trigger?.event === "scheduled_run";
+    selectedNode?.type === 'trigger' && selectedNode.config?.trigger?.event === 'scheduled_run';
 
   return (
     <div className="space-y-4">
-      <div
-        className="rounded-lg border bg-card/60 backdrop-blur p-4"
+      <SectionPanel
+        variant="subtle"
+        className="p-4"
         data-edge-panel
       >
         <div className="mb-3 flex items-center justify-between">
@@ -67,7 +69,7 @@ export function CanvasSidebar({
             className="rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
             onClick={onTogglePaletteCollapsed}
           >
-            {paletteCollapsed ? "Expand" : "Collapse"}
+            {paletteCollapsed ? 'Expand' : 'Collapse'}
           </button>
         </div>
         {paletteCollapsed ? (
@@ -77,28 +79,28 @@ export function CanvasSidebar({
         ) : (
           <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
 	            {[
-	              { title: "Triggers", types: ["trigger"], icon: "⚡" },
-	              { title: "Simulation", types: ["simulation"], icon: "🧪" },
-	              { title: "Context + Parsing", types: ["context", "parser"], icon: "📦" },
+	              { title: 'Triggers', types: ['trigger'], icon: '⚡' },
+	              { title: 'Simulation', types: ['simulation'], icon: '🧪' },
+	              { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
 	              {
-	                title: "Transforms",
-	                types: ["mapper", "mutator", "validator", "regex", "iterator"],
-	                icon: "🧭",
+	                title: 'Transforms',
+	                types: ['mapper', 'mutator', 'validator', 'regex', 'iterator'],
+	                icon: '🧭',
 	              },
 	              {
-	                title: "Signals + Logic",
-	                types: ["constant", "math", "compare", "gate", "router", "delay", "poll"],
-	                icon: "🧪",
+	                title: 'Signals + Logic',
+	                types: ['constant', 'math', 'compare', 'gate', 'router', 'delay', 'poll'],
+	                icon: '🧪',
 	              },
-              { title: "Bundles + Templates", types: ["bundle", "template"], icon: "🧩" },
-              { title: "IO + Fetch", types: ["http", "database", "db_schema"], icon: "🌐" },
+              { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
+              { title: 'IO + Fetch', types: ['http', 'database', 'db_schema'], icon: '🌐' },
               {
-                title: "Prompts + Models",
-                types: ["prompt", "model"],
-                icon: "🤖",
+                title: 'Prompts + Models',
+                types: ['prompt', 'model'],
+                icon: '🤖',
               },
-              { title: "Agents", types: ["agent"], icon: "🧠" },
-              { title: "Viewers", types: ["viewer", "notification"], icon: "👁" },
+              { title: 'Agents', types: ['agent'], icon: '🧠' },
+              { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
             ].map((group: { title: string; types: string[]; icon: string }): React.JSX.Element | null => {
               const items = palette.filter((node: NodeDefinition) => group.types.includes(node.type));
               if (items.length === 0) return null;
@@ -120,7 +122,7 @@ export function CanvasSidebar({
                       </span>
                     </div>
                     <svg
-                      className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -131,15 +133,16 @@ export function CanvasSidebar({
                   {isExpanded && (
                     <div className="space-y-2 px-3 pb-3">
                       {items.map((node: NodeDefinition) => (
-                        <div
+                        <SectionPanel
                           key={node.title}
+                          variant="subtle-compact"
                           draggable
                           onDragStart={(event: React.DragEvent<HTMLDivElement>) => onDragStart(event, node)}
-                          className="cursor-grab rounded-lg border bg-card/60 backdrop-blur p-3 text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
+                          className="cursor-grab text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
                           {((): React.JSX.Element => {
                             const isScheduledTrigger =
-                              node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
+                              node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
                             return (
                               <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-semibold text-white">
@@ -161,7 +164,7 @@ export function CanvasSidebar({
                           <p className="mt-1 text-[11px] text-gray-400">
                             {node.description}
                           </p>
-                        </div>
+                        </SectionPanel>
                       ))}
                     </div>
                   )}
@@ -170,14 +173,14 @@ export function CanvasSidebar({
             })}
           </div>
         )}
-      </div>
+      </SectionPanel>
 
       {!selectedEdgeId && (
-        <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
           {selectedNode ? (
             <div className="space-y-3 text-xs text-gray-300">
-              <div className="rounded-md border bg-card/50 px-3 py-2 text-[11px] text-gray-400">
+              <SectionPanel variant="subtle-compact" className="bg-card/50 px-3 py-2 text-[11px] text-gray-400">
                 <div className="flex items-center justify-between">
                   <span className="uppercase text-gray-500">Type</span>
                   <div className="flex items-center gap-1">
@@ -191,8 +194,8 @@ export function CanvasSidebar({
                     </span>
                   </div>
                 </div>
-              </div>
-              {selectedNode.type === "trigger" && (
+              </SectionPanel>
+              {selectedNode.type === 'trigger' && (
                 <div className="space-y-2">
                   <Button
                     className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
@@ -212,7 +215,7 @@ export function CanvasSidebar({
                   )}
                 </div>
               )}
-              {selectedNode.type === "simulation" && (
+              {selectedNode.type === 'simulation' && (
                 <Button
                   className="w-full rounded-md border border-cyan-500/40 text-xs text-cyan-200 hover:bg-cyan-500/10"
                   type="button"
@@ -239,26 +242,26 @@ export function CanvasSidebar({
                   }
                 />
               </div>
-              <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
-                Inputs:{" "}
-                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(", ") ||
-                  "None"}{" "}
+              <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
+                Inputs:{' '}
+                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                  'None'}{' '}
                 <br />
-                Outputs:{" "}
-                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(", ") ||
-                  "None"}
-              </div>
-              {selectedNode.type === "prompt" && ((): React.JSX.Element | null => {
+                Outputs:{' '}
+                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                  'None'}
+              </SectionPanel>
+              {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
                 const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
                   .map((edge: Edge) => edge.toPort)
                   .filter((port: string | undefined): port is string => Boolean(port));
                 const bundleKeys = new Set<string>();
                 incomingEdges.forEach((edge: Edge) => {
-                  if (edge.toPort !== "bundle") return;
+                  if (edge.toPort !== 'bundle') return;
                   const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
                   if (!fromNode) return;
-                  if (fromNode.type === "parser") {
+                  if (fromNode.type === 'parser') {
                     const mappings =
                       fromNode.config?.parser?.mappings ??
                       createParserMappings(fromNode.outputs);
@@ -268,13 +271,13 @@ export function CanvasSidebar({
                     });
                     return;
                   }
-                  if (fromNode.type === "bundle") {
+                  if (fromNode.type === 'bundle') {
                     fromNode.inputs.forEach((port: string) => {
                       const trimmed = port.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                   }
-                  if (fromNode.type === "mapper") {
+                  if (fromNode.type === 'mapper') {
                     const mapperOutputs =
                       fromNode.config?.mapper?.outputs ?? fromNode.outputs;
                     mapperOutputs.forEach((output: string) => {
@@ -283,10 +286,10 @@ export function CanvasSidebar({
                     });
                   }
                 });
-                const directPlaceholders = inputPorts.filter((port: string) => port !== "bundle");
+                const directPlaceholders = inputPorts.filter((port: string) => port !== 'bundle');
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
-                  <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
+                  <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -302,13 +305,13 @@ export function CanvasSidebar({
                     )}
                     {directPlaceholders.length > 0 && (
                       <div className="mt-2 text-[11px] text-gray-500">
-                        Direct inputs:{" "}
+                        Direct inputs:{' '}
                         {directPlaceholders
                           .map((port: string) => formatPlaceholderLabel(port))
-                          .join(", ")}
+                          .join(', ')}
                       </div>
                     )}
-                  </div>
+                  </SectionPanel>
                 );
               })()}
               <Button
@@ -330,10 +333,10 @@ export function CanvasSidebar({
               Select a node to inspect inputs, outputs, and configuration.
             </div>
           )}
-        </div>
+        </SectionPanel>
       )}
 
-      <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="mb-3 text-sm font-semibold text-white">Connections</div>
         <div className="space-y-2 text-xs text-gray-400">
           <div>Active wires: {edges.length}</div>
@@ -342,7 +345,7 @@ export function CanvasSidebar({
             const fromNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.from) : null;
             const toNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.to) : null;
             return selectedEdge ? (
-              <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+              <SectionPanel variant="subtle-compact" className="space-y-3 border-blue-500/30 bg-blue-500/5 p-3">
                 <div className="text-xs font-medium text-blue-300">Selected Wire</div>
                 <div className="space-y-2">
                   <div className="rounded border bg-card/50 p-2">
@@ -351,15 +354,15 @@ export function CanvasSidebar({
                       {fromNode?.title ?? selectedEdge.from}
                     </div>
                     <div className="text-[11px] text-gray-400">
-                      Type:{" "}
+                      Type:{' '}
                       <span className="text-amber-300">
-                        {fromNode?.type ?? "unknown"}
+                        {fromNode?.type ?? 'unknown'}
                       </span>
                     </div>
                     <div className="text-[11px] text-gray-400">
-                      Port:{" "}
+                      Port:{' '}
                       <span className="text-amber-300">
-                        {selectedEdge.fromPort ?? "default"}
+                        {selectedEdge.fromPort ?? 'default'}
                       </span>
                     </div>
                   </div>
@@ -370,15 +373,15 @@ export function CanvasSidebar({
                       {toNode?.title ?? selectedEdge.to}
                     </div>
                     <div className="text-[11px] text-gray-400">
-                      Type:{" "}
+                      Type:{' '}
                       <span className="text-sky-300">
-                        {toNode?.type ?? "unknown"}
+                        {toNode?.type ?? 'unknown'}
                       </span>
                     </div>
                     <div className="text-[11px] text-gray-400">
-                      Port:{" "}
+                      Port:{' '}
                       <span className="text-sky-300">
-                        {selectedEdge.toPort ?? "default"}
+                        {selectedEdge.toPort ?? 'default'}
                       </span>
                     </div>
                   </div>
@@ -399,7 +402,7 @@ export function CanvasSidebar({
                     Remove
                   </Button>
                 </div>
-              </div>
+              </SectionPanel>
             ) : null;
           })() : (
             <div className="text-[11px] text-gray-500">Click a wire to select it.</div>
@@ -417,15 +420,16 @@ export function CanvasSidebar({
             {edges.map((edge: Edge): React.JSX.Element => {
               const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
               const toNode = nodes.find((node: AiNode) => node.id === edge.to);
-              const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? "?"} → ${toNode?.title ?? edge.to}.${edge.toPort ?? "?"}`;
+              const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? '?'} → ${toNode?.title ?? edge.to}.${edge.toPort ?? '?'}`;
               const isSelected = edge.id === selectedEdgeId;
               return (
-                <div
+                <SectionPanel
                   key={edge.id}
-                  className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
+                  variant="subtle-compact"
+                  className={`flex items-center justify-between gap-2 border px-2 py-1 ${
                     isSelected
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : "border bg-card/40"
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                      : 'bg-card/40'
                   }`}
                 >
                   <span className="truncate">{label}</span>
@@ -436,12 +440,12 @@ export function CanvasSidebar({
                   >
                     Select
                   </button>
-                </div>
+                </SectionPanel>
               );
             })}
           </div>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

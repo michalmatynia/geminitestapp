@@ -1,16 +1,17 @@
-"use client";
-import { useQuery } from "@tanstack/react-query";
-import type { ImageRetryPreset } from "@/features/data-import-export";
+'use client';
+import { useQuery } from '@tanstack/react-query';
+
+import type { ImageRetryPreset } from '@/features/data-import-export';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from "@/features/data-import-export";
+} from '@/features/data-import-export';
 
 export const useImageRetryPresets = (): ImageRetryPreset[] => {
   const { data: presets = getDefaultImageRetryPresets() } = useQuery({
-    queryKey: ["image-retry-presets"],
+    queryKey: ['image-retry-presets'],
     queryFn: async (): Promise<ImageRetryPreset[]> => {
-      const res = await fetch("/api/integrations/exports/base/image-retry-presets");
+      const res = await fetch('/api/integrations/exports/base/image-retry-presets');
       if (!res.ok) return getDefaultImageRetryPresets();
       const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
       return payload.presets ? normalizeImageRetryPresets(payload.presets) : getDefaultImageRetryPresets();

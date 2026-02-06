@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import type { UseNoteFiltersProps } from "@/features/notesapp/types/notes-hooks";
-import type { NoteWithRelations } from "@/shared/types/notes";
+import { useState, useEffect, useCallback } from 'react';
 
-export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): {
+import type { UseNoteFiltersProps } from '@/features/notesapp/types/notes-hooks';
+import type { NoteWithRelations } from '@/shared/types/notes';
+
+export type UseNoteFiltersResult = {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   debouncedSearchQuery: string;
@@ -22,8 +23,10 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   setPageSize: (s: number) => void;
   handleFilterByTag: (tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
   handleToggleFavoritesFilter: (setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
-} {
-  const [searchQuery, setSearchQuery] = useState("");
+};
+
+export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): UseNoteFiltersResult {
+  const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
@@ -38,25 +41,22 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   // Debounce search
   useEffect((): void | (() => void) => {
     const timer = setTimeout((): void => {
-      setDebouncedSearchQuery(searchQuery);
+      if (searchQuery !== debouncedSearchQuery) {
+        setDebouncedSearchQuery(searchQuery);
+        setPage(1);
+      }
     }, 250);
     return (): void => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearchQuery]);
 
-  // Reset page when filters change
-  useEffect((): void => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Reset page when settings change
+  const [prevSettingsKey, setPrevSettingsKey] = useState('');
+  const currentSettingsKey = `${settings.selectedFolderId ?? ''}-${settings.sortBy ?? ''}-${settings.sortOrder ?? ''}-${settings.selectedNotebookId ?? ''}`;
+  
+  if (currentSettingsKey !== prevSettingsKey) {
+    setPrevSettingsKey(currentSettingsKey);
     setPage(1);
-  }, [
-    debouncedSearchQuery,
-    filterPinned,
-    filterArchived,
-    filterTagIds,
-    settings.selectedFolderId,
-    settings.sortBy,
-    settings.sortOrder,
-    settings.selectedNotebookId,
-  ]);
+  }
 
   // Clear highlight tag
   useEffect((): void | (() => void) => {
@@ -70,10 +70,11 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
     setSelectedFolderId(null);
     setFilterTagIds([tagId]);
-    setSearchQuery("");
+    setSearchQuery('');
     setSelectedNote(null);
     setIsEditing(false);
     setHighlightTagId(tagId);
+    setPage(1);
   }, []);
 
   const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
@@ -81,20 +82,41 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     setSelectedFolderId(null);
     setSelectedNote(null);
     setIsEditing(false);
+    setPage(1);
   }, []);
+
+  const setFilterPinnedWithPage = (v: boolean | undefined): void => {
+    setFilterPinned(v);
+    setPage(1);
+  };
+
+  const setFilterArchivedWithPage = (v: boolean | undefined): void => {
+    setFilterArchived(v);
+    setPage(1);
+  };
+
+  const setFilterFavoriteWithPage = (v: boolean | undefined): void => {
+    setFilterFavorite(v);
+    setPage(1);
+  };
+
+  const setFilterTagIdsWithPage = (ids: string[]): void => {
+    setFilterTagIds(ids);
+    setPage(1);
+  };
 
   return {
     searchQuery,
     setSearchQuery,
     debouncedSearchQuery,
     filterPinned,
-    setFilterPinned,
+    setFilterPinned: setFilterPinnedWithPage,
     filterArchived,
-    setFilterArchived,
+    setFilterArchived: setFilterArchivedWithPage,
     filterFavorite,
-    setFilterFavorite,
+    setFilterFavorite: setFilterFavoriteWithPage,
     filterTagIds,
-    setFilterTagIds,
+    setFilterTagIds: setFilterTagIdsWithPage,
     highlightTagId,
     setHighlightTagId,
     page,

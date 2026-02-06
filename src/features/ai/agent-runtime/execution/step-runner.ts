@@ -1,33 +1,20 @@
-import prisma from "@/shared/lib/db/prisma";
-import unknownToErrorMessage from "@/shared/utils/error-formatting";
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
-import { addAgentMemory } from "@/features/ai/agent-runtime/memory";
-import { runAgentBrowserControl, runAgentTool } from "@/features/ai/agent-runtime/tools";
-import type { Browser, BrowserContext } from "playwright";
-import type {
-  AgentPlanPreferences,
-  AgentPlanSettings,
-  PlanStep,
-  PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
-import {
-  appendTaskTypeToPrompt,
-  buildBranchStepsFromAlternatives,
-  isExtractionStep,
-  shouldEvaluateReplan,
-} from "@/features/ai/agent-runtime/planning/utils";
-import {
-  buildCheckpointState,
-  persistCheckpoint,
-} from "@/features/ai/agent-runtime/memory/checkpoint";
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import {
   evaluateApprovalGateWithLLM,
   requiresHumanApproval,
-} from "@/features/ai/agent-runtime/audit/gate";
+} from '@/features/ai/agent-runtime/audit/gate';
+import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
+import { sleep } from '@/features/ai/agent-runtime/core/utils';
 import {
   buildLoopGuardReview,
   detectLoopPattern,
-} from "@/features/ai/agent-runtime/execution/loop-guard";
+} from '@/features/ai/agent-runtime/execution/loop-guard';
+import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
+import {
+  buildCheckpointState,
+  persistCheckpoint,
+} from '@/features/ai/agent-runtime/memory/checkpoint';
+import { addProblemSolutionMemory } from '@/features/ai/agent-runtime/memory/context';
 import {
   buildAdaptivePlanReview,
   buildCheckpointBriefWithLLM,
@@ -36,10 +23,24 @@ import {
   buildSelfCheckReview,
   guardRepetitionWithLLM,
   summarizePlannerMemoryWithLLM,
-} from "@/features/ai/agent-runtime/planning/llm";
-import { getBrowserContextSummary } from "@/features/ai/agent-runtime/browsing/context";
-import { addProblemSolutionMemory } from "@/features/ai/agent-runtime/memory/context";
-import { sleep } from "@/features/ai/agent-runtime/core/utils";
+} from '@/features/ai/agent-runtime/planning/llm';
+import {
+  appendTaskTypeToPrompt,
+  buildBranchStepsFromAlternatives,
+  isExtractionStep,
+  shouldEvaluateReplan,
+} from '@/features/ai/agent-runtime/planning/utils';
+import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
+import type {
+  AgentPlanPreferences,
+  AgentPlanSettings,
+  PlanStep,
+  PlannerMeta,
+} from '@/features/ai/agent-runtime/types/agent';
+import prisma from '@/shared/lib/db/prisma';
+import unknownToErrorMessage from '@/shared/utils/error-formatting';
+
+import type { Browser, BrowserContext } from 'playwright';
 
 type StepLoopInput = {
   run: {
@@ -52,7 +53,7 @@ type StepLoopInput = {
   sharedContext: BrowserContext | null;
   planSteps: PlanStep[];
   stepIndex: number;
-  taskType: PlannerMeta["taskType"] | null;
+  taskType: PlannerMeta['taskType'] | null;
   settings: AgentPlanSettings;
   preferences: AgentPlanPreferences;
   memoryContext: string[];
@@ -77,7 +78,7 @@ type StepLoopInput = {
 type StepLoopResult = {
   planSteps: PlanStep[];
   stepIndex: number;
-  taskType: PlannerMeta["taskType"] | null;
+  taskType: PlannerMeta['taskType'] | null;
   memoryContext: string[];
   summaryCheckpoint: number;
   overallOk: boolean;
@@ -116,7 +117,7 @@ export async function runPlanStepLoop(
   let selfCheckCount = 0;
   let lastContextUrl = input.browserContext?.url ?? null;
   let hasBrowserContext = Boolean(
-    lastContextUrl && lastContextUrl !== "about:blank"
+    lastContextUrl && lastContextUrl !== 'about:blank'
   );
   let consecutiveFailures = 0;
   let approvalRequestedStepId: string | null =
@@ -135,7 +136,7 @@ export async function runPlanStepLoop(
   let loopBackoffMs = 0;
   const recentStepTrace: Array<{
     title: string;
-    status: PlanStep["status"];
+    status: PlanStep['status'];
     tool?: string | null;
     url: string | null;
   }> = [];
@@ -181,8 +182,8 @@ export async function runPlanStepLoop(
       settings,
       preferences,
     });
-    await logAgentAudit(run.id, "info", "Checkpoint brief saved.", {
-      type: "checkpoint-brief",
+    await logAgentAudit(run.id, 'info', 'Checkpoint brief saved.', {
+      type: 'checkpoint-brief',
       stepId: activeStepIdForBrief,
       summary: brief.summary,
     });
@@ -198,8 +199,8 @@ export async function runPlanStepLoop(
       Math.min(6, settings.maxSteps)
     );
     if (branchAlternatives.length === 0) return;
-    await logAgentAudit(run.id, "info", "Plan branch created.", {
-      type: "plan-branch",
+    await logAgentAudit(run.id, 'info', 'Plan branch created.', {
+      type: 'plan-branch',
       branchSteps: branchAlternatives,
       reason,
       plannerMeta: meta ?? null,
@@ -212,14 +213,14 @@ export async function runPlanStepLoop(
       stepIndex += 1;
       continue;
     }
-    if (step.status === "completed") {
+    if (step.status === 'completed') {
       stepIndex += 1;
       continue;
     }
     let requiresApproval = false;
     let approvalReason: string | null = null;
     let approvalRisk: string | null = null;
-    let approvalSource = "heuristic";
+    let approvalSource = 'heuristic';
     if (preferences.requireHumanApproval && approvalGrantedStepId !== step.id) {
       requiresApproval = requiresHumanApproval(step, run.prompt);
       if (!requiresApproval && approvalGateModel) {
@@ -235,9 +236,9 @@ export async function runPlanStepLoop(
           requiresApproval = gateDecision.requiresApproval;
           approvalReason = gateDecision.reason ?? null;
           approvalRisk = gateDecision.riskLevel ?? null;
-          approvalSource = "policy-model";
-          await logAgentAudit(run.id, "info", "Approval gate evaluated.", {
-            type: "approval-gate-review",
+          approvalSource = 'policy-model';
+          await logAgentAudit(run.id, 'info', 'Approval gate evaluated.', {
+            type: 'approval-gate-review',
             stepId: step.id,
             stepTitle: step.title,
             requiresApproval,
@@ -257,7 +258,7 @@ export async function runPlanStepLoop(
       await prisma.chatbotAgentRun.update({
         where: { id: run.id },
         data: {
-          status: "waiting_human",
+          status: 'waiting_human',
           requiresHumanIntervention: true,
           activeStepId: step.id,
           planState: buildCheckpointState({
@@ -277,8 +278,8 @@ export async function runPlanStepLoop(
           },
         },
       });
-      await logAgentAudit(run.id, "warning", "Approval required.", {
-        type: "approval-gate",
+      await logAgentAudit(run.id, 'warning', 'Approval required.', {
+        type: 'approval-gate',
         stepId: step.id,
         stepTitle: step.title,
         source: approvalSource,
@@ -298,10 +299,10 @@ export async function runPlanStepLoop(
     }
     const attempts = (step.attempts ?? 0) + 1;
     planSteps = planSteps.map((item: PlanStep) =>
-      item.id === step.id ? { ...item, status: "running", attempts } : item
+      item.id === step.id ? { ...item, status: 'running', attempts } : item
     );
-    await logAgentAudit(run.id, "info", "Plan updated.", {
-      type: "plan-update",
+    await logAgentAudit(run.id, 'info', 'Plan updated.', {
+      type: 'plan-update',
       steps: planSteps,
       activeStepId: step.id,
     });
@@ -318,18 +319,18 @@ export async function runPlanStepLoop(
       preferences,
     });
 
-    if (step.tool === "none") {
+    if (step.tool === 'none') {
       planSteps = planSteps.map((item: PlanStep) =>
-        item.id === step.id ? { ...item, status: "completed" } : item
+        item.id === step.id ? { ...item, status: 'completed' } : item
       );
-      await logAgentAudit(run.id, "info", "Plan updated.", {
-        type: "plan-update",
+      await logAgentAudit(run.id, 'info', 'Plan updated.', {
+        type: 'plan-update',
         steps: planSteps,
-        result: "completed",
+        result: 'completed',
       });
       await maybeUpdateCheckpointBrief(step.id);
       const completedCount = planSteps.filter(
-        (item: PlanStep) => item.status === "completed"
+        (item: PlanStep) => item.status === 'completed'
       ).length;
       if (
         completedCount >= summaryInterval &&
@@ -348,14 +349,14 @@ export async function runPlanStepLoop(
         if (summary) {
           await addAgentMemory({
             runId: run.id,
-            scope: "session",
+            scope: 'session',
             content: summary,
-            metadata: { type: "planner-summary", completedCount },
+            metadata: { type: 'planner-summary', completedCount },
           });
           memoryContext = [...memoryContext, summary].slice(-10);
           summaryCheckpoint = completedCount;
-          await logAgentAudit(run.id, "info", "Planner summary saved.", {
-            type: "planner-summary",
+          await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+            type: 'planner-summary',
             completedCount,
             summary,
           });
@@ -381,25 +382,25 @@ export async function runPlanStepLoop(
     const shouldRunExtraction = isExtractionStep(step, run.prompt, taskType);
     const toolPrompt = appendTaskTypeToPrompt(
       run.prompt,
-      shouldRunExtraction ? "extract_info" : taskType
+      shouldRunExtraction ? 'extract_info' : taskType
     );
     const toolName =
-      shouldInitializeBrowser || shouldRunExtraction ? "playwright" : "snapshot";
+      shouldInitializeBrowser || shouldRunExtraction ? 'playwright' : 'snapshot';
     const toolStart = Date.now();
     const toolContext = {
-      type: "tool-execution",
+      type: 'tool-execution',
       toolName,
       stepId: step.id,
       stepTitle: step.title,
       shouldRunExtraction,
       shouldInitializeBrowser,
     };
-    await logAgentAudit(run.id, "info", "Tool execution started.", toolContext);
+    await logAgentAudit(run.id, 'info', 'Tool execution started.', toolContext);
     const toolTimeoutId = setTimeout(() => {
       void logAgentAudit(
         run.id,
-        "warning",
-        "Tool execution taking longer than expected.",
+        'warning',
+        'Tool execution taking longer than expected.',
         {
           ...toolContext,
           elapsedMs: Date.now() - toolStart,
@@ -412,28 +413,28 @@ export async function runPlanStepLoop(
       toolResult =
         shouldInitializeBrowser || shouldRunExtraction
           ? await runAgentTool(
-              {
-                name: "playwright",
-                input: {
-                  prompt: toolPrompt,
-                  browser: run.agentBrowser || "chromium",
-                  runId: run.id,
-                  ...(typeof run.runHeadless === "boolean" && {
-                    runHeadless: run.runHeadless,
-                  }),
-                  stepId: step.id,
-                  stepLabel: step.title,
-                },
+            {
+              name: 'playwright',
+              input: {
+                prompt: toolPrompt,
+                browser: run.agentBrowser || 'chromium',
+                runId: run.id,
+                ...(typeof run.runHeadless === 'boolean' && {
+                  runHeadless: run.runHeadless,
+                }),
+                stepId: step.id,
+                stepLabel: step.title,
               },
-              sharedBrowser ?? undefined,
-              sharedContext ?? undefined
-            )
+            },
+            sharedBrowser ?? undefined,
+            sharedContext ?? undefined
+          )
           : await runAgentBrowserControl({
-              runId: run.id,
-              action: "snapshot",
-              stepId: step.id,
-              stepLabel: step.title,
-            });
+            runId: run.id,
+            action: 'snapshot',
+            stepId: step.id,
+            stepLabel: step.title,
+          });
     } catch (error) {
       toolError = error;
     } finally {
@@ -441,8 +442,8 @@ export async function runPlanStepLoop(
       const errorMessage = toolResult?.error ?? unknownToErrorMessage(toolError);
       await logAgentAudit(
         run.id,
-        toolError ? "error" : "info",
-        "Tool execution finished.",
+        toolError ? 'error' : 'info',
+        'Tool execution finished.',
         {
           ...toolContext,
           ok: toolResult?.ok ?? false,
@@ -454,14 +455,14 @@ export async function runPlanStepLoop(
     if (toolError || !toolResult) {
       throw toolError instanceof Error
         ? toolError
-        : new Error("Tool execution failed.");
+        : new Error('Tool execution failed.');
     }
 
     if (!toolResult.ok) {
       overallOk = false;
-      lastError = toolResult.error || "Tool failed.";
+      lastError = toolResult.error || 'Tool failed.';
       requiresHuman =
-        typeof lastError === "string" &&
+        typeof lastError === 'string' &&
         /requires human|cloudflare challenge/i.test(lastError);
       consecutiveFailures += 1;
     } else {
@@ -471,17 +472,17 @@ export async function runPlanStepLoop(
     planSteps = planSteps.map((item: PlanStep) =>
       item.id === step.id
         ? {
-            ...item,
-            status: toolResult.ok ? "completed" : "failed",
-            snapshotId: toolResult.output?.snapshotId ?? null,
-            logCount: toolResult.output?.logCount ?? null,
-          }
+          ...item,
+          status: toolResult.ok ? 'completed' : 'failed',
+          snapshotId: toolResult.output?.snapshotId ?? null,
+          logCount: toolResult.output?.logCount ?? null,
+        }
         : item
     );
     if (toolResult.output?.snapshotId) {
       const outputUrl =
-        typeof toolResult.output?.url === "string" ? toolResult.output.url : null;
-      hasBrowserContext = Boolean(outputUrl && outputUrl !== "about:blank");
+        typeof toolResult.output?.url === 'string' ? toolResult.output.url : null;
+      hasBrowserContext = Boolean(outputUrl && outputUrl !== 'about:blank');
       if (hasBrowserContext && outputUrl) {
         lastContextUrl = outputUrl;
         noContextCount = 0;
@@ -495,10 +496,10 @@ export async function runPlanStepLoop(
         noContextCount += 1;
       }
     }
-    await logAgentAudit(run.id, "info", "Plan updated.", {
-      type: "plan-update",
+    await logAgentAudit(run.id, 'info', 'Plan updated.', {
+      type: 'plan-update',
       steps: planSteps,
-      result: toolResult.ok ? "completed" : "failed",
+      result: toolResult.ok ? 'completed' : 'failed',
     });
     await persistCheckpoint({
       runId: run.id,
@@ -521,7 +522,7 @@ export async function runPlanStepLoop(
     loopGuardCooldown = Math.max(0, loopGuardCooldown - 1);
     recentStepTrace.push({
       title: step.title,
-      status: toolResult.ok ? "completed" : "failed",
+      status: toolResult.ok ? 'completed' : 'failed',
       tool: step.tool ?? null,
       url: lastContextUrl,
     });
@@ -564,20 +565,20 @@ export async function runPlanStepLoop(
         maxStepAttempts: settings.maxStepAttempts,
       });
       loopGuardCooldown = 2;
-      await logAgentAudit(run.id, "warning", "Loop guard evaluated.", {
-        type: "loop-guard",
+      await logAgentAudit(run.id, 'warning', 'Loop guard evaluated.', {
+        type: 'loop-guard',
         action: loopReview.action,
         reason: loopReview.reason,
         loop: loopSignal,
         backoffMs: loopBackoffMs,
         streak: loopSignalStreak,
       });
-      if (loopReview.action === "wait_human") {
+      if (loopReview.action === 'wait_human') {
         requiresHuman = true;
-        lastError = loopReview.reason ?? "Loop guard requested human input.";
+        lastError = loopReview.reason ?? 'Loop guard requested human input.';
         break;
       }
-      if (loopReview.action === "replan" && loopReview.steps.length > 0) {
+      if (loopReview.action === 'replan' && loopReview.steps.length > 0) {
         const nextIndex = stepIndex + 1;
         const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
         const guardedSteps = await guardRepetitionWithLLM({
@@ -593,8 +594,8 @@ export async function runPlanStepLoop(
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = loopReview.meta?.taskType ?? taskType;
         replanCount += 1;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
           reason: loopReview.reason,
           plannerMeta: loopReview.meta ?? null,
@@ -602,7 +603,7 @@ export async function runPlanStepLoop(
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(loopReview.meta, "loop-guard");
+        await logBranchAlternatives(loopReview.meta, 'loop-guard');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -634,11 +635,11 @@ export async function runPlanStepLoop(
         runId: run.id,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
-        trigger: "step-complete",
+        trigger: 'step-complete',
         signals: {
           stepId: step.id,
           stepTitle: step.title,
-          stepStatus: "completed",
+          stepStatus: 'completed',
           url: lastContextUrl,
         },
       });
@@ -658,16 +659,16 @@ export async function runPlanStepLoop(
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = stepReview.meta?.taskType ?? taskType;
         replanCount += 1;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
-          reason: stepReview.reason ?? "step-complete",
+          reason: stepReview.reason ?? 'step-complete',
           plannerMeta: stepReview.meta ?? null,
           hierarchy: stepReview.hierarchy ?? null,
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(stepReview.meta, "step-complete");
+        await logBranchAlternatives(stepReview.meta, 'step-complete');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -693,9 +694,9 @@ export async function runPlanStepLoop(
           break;
         }
         const replanBrowserContext = await getBrowserContextSummary(run.id);
-        await logAgentAudit(run.id, "warning", "Planner context prepared.", {
-          type: "planner-context",
-          reason: "replan-after-failure",
+        await logAgentAudit(run.id, 'warning', 'Planner context prepared.', {
+          type: 'planner-context',
+          reason: 'replan-after-failure',
           prompt: run.prompt,
           model: plannerModel,
           memory: memoryContext,
@@ -716,7 +717,7 @@ export async function runPlanStepLoop(
           lastError,
           runId: run.id,
           browserContext: replanBrowserContext,
-          mode: "branch",
+          mode: 'branch',
           failedStep: {
             id: step.id,
             title: step.title,
@@ -735,11 +736,11 @@ export async function runPlanStepLoop(
             ...branchResult.branchSteps,
             ...planSteps.slice(insertAt),
           ];
-          await logAgentAudit(run.id, "warning", "Plan branch created.", {
-            type: "plan-branch",
+          await logAgentAudit(run.id, 'warning', 'Plan branch created.', {
+            type: 'plan-branch',
             failedStepId: step.id,
             branchSteps: branchResult.branchSteps,
-            reason: "step-failed",
+            reason: 'step-failed',
             lastError,
             plannerMeta: branchResult.meta ?? null,
             stepId: step.id,
@@ -750,21 +751,21 @@ export async function runPlanStepLoop(
               memoryKey,
               runId: run.id,
               problem: lastError,
-              countermeasure: "Created branch steps for failed step.",
+              countermeasure: 'Created branch steps for failed step.',
               context: {
                 stepId: step.id,
                 stepTitle: step.title,
-                reason: "step-failed",
+                reason: 'step-failed',
               },
-              tags: ["branch"],
+              tags: ['branch'],
               model: memoryValidationModel ?? resolvedModel,
               summaryModel: memorySummarizationModel ?? resolvedModel,
               prompt: run.prompt,
             });
           }
           branchedStepIds.add(step.id);
-          await logAgentAudit(run.id, "info", "Plan updated.", {
-            type: "plan-update",
+          await logAgentAudit(run.id, 'info', 'Plan updated.', {
+            type: 'plan-update',
             steps: planSteps,
             activeStepId: planSteps[insertAt]?.id ?? null,
           });
@@ -800,11 +801,11 @@ export async function runPlanStepLoop(
         if (replanResult.steps.length > 0) {
           planSteps = replanResult.steps;
           taskType = replanResult.meta?.taskType ?? taskType;
-          await logAgentAudit(run.id, "warning", "Plan created.", {
-            type: "plan",
+          await logAgentAudit(run.id, 'warning', 'Plan created.', {
+            type: 'plan',
             steps: planSteps,
             source: replanResult.source,
-            reason: "replan-after-failure",
+            reason: 'replan-after-failure',
             hierarchy: replanResult.hierarchy ?? null,
             plannerMeta: replanResult.meta ?? null,
             stepId: step.id,
@@ -816,10 +817,10 @@ export async function runPlanStepLoop(
             Math.min(6, settings.maxSteps)
           );
           if (branchAlternatives.length > 0) {
-            await logAgentAudit(run.id, "info", "Plan branch created.", {
-              type: "plan-branch",
+            await logAgentAudit(run.id, 'info', 'Plan branch created.', {
+              type: 'plan-branch',
               branchSteps: branchAlternatives,
-              reason: "replan-alternatives",
+              reason: 'replan-alternatives',
               plannerMeta: replanResult.meta ?? null,
             });
           }
@@ -828,13 +829,13 @@ export async function runPlanStepLoop(
               memoryKey,
               runId: run.id,
               problem: lastError,
-              countermeasure: "Replanned after failure.",
+              countermeasure: 'Replanned after failure.',
               context: {
                 stepId: step.id,
                 stepTitle: step.title,
-                reason: "replan-after-failure",
+                reason: 'replan-after-failure',
               },
-              tags: ["replan"],
+              tags: ['replan'],
               model: memoryValidationModel ?? resolvedModel,
               summaryModel: memorySummarizationModel ?? resolvedModel,
               prompt: run.prompt,
@@ -870,7 +871,7 @@ export async function runPlanStepLoop(
           runId: run.id,
           maxSteps: settings.maxSteps,
           maxStepAttempts: settings.maxStepAttempts,
-          trigger: "dead-end",
+          trigger: 'dead-end',
           signals: {
             consecutiveFailures,
             lastError,
@@ -884,28 +885,28 @@ export async function runPlanStepLoop(
           planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
           taskType = deadEndReview.meta?.taskType ?? taskType;
           replanCount += 1;
-          await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-            type: "plan-replan",
+          await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+            type: 'plan-replan',
             steps: planSteps,
-            reason: "dead-end",
+            reason: 'dead-end',
             plannerMeta: deadEndReview.meta ?? null,
             hierarchy: deadEndReview.hierarchy ?? null,
             stepId: step.id,
             activeStepId: step.id,
           });
-          await logBranchAlternatives(deadEndReview.meta, "dead-end");
+          await logBranchAlternatives(deadEndReview.meta, 'dead-end');
           if (memoryKey) {
             await addProblemSolutionMemory({
               memoryKey,
               runId: run.id,
-              problem: lastError ?? "Repeated tool failures (dead-end).",
-              countermeasure: "Replanned due to dead-end.",
+              problem: lastError ?? 'Repeated tool failures (dead-end).',
+              countermeasure: 'Replanned due to dead-end.',
               context: {
                 stepId: step.id,
                 stepTitle: step.title,
-                reason: "dead-end",
+                reason: 'dead-end',
               },
-              tags: ["dead-end"],
+              tags: ['dead-end'],
               model: memoryValidationModel ?? resolvedModel,
               summaryModel: memorySummarizationModel ?? resolvedModel,
               prompt: run.prompt,
@@ -932,7 +933,7 @@ export async function runPlanStepLoop(
       break;
     }
     const completedCount = planSteps.filter(
-      (item: PlanStep) => item.status === "completed"
+      (item: PlanStep) => item.status === 'completed'
     ).length;
     if (
       stagnationCount >= 2 &&
@@ -950,7 +951,7 @@ export async function runPlanStepLoop(
         runId: run.id,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
-        trigger: "stagnation",
+        trigger: 'stagnation',
         signals: {
           stagnationCount,
           lastContextUrl,
@@ -964,16 +965,16 @@ export async function runPlanStepLoop(
         taskType = stagnationReview.meta?.taskType ?? taskType;
         replanCount += 1;
         stagnationCount = 0;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
-          reason: "stagnation",
+          reason: 'stagnation',
           plannerMeta: stagnationReview.meta ?? null,
           hierarchy: stagnationReview.hierarchy ?? null,
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(stagnationReview.meta, "stagnation");
+        await logBranchAlternatives(stagnationReview.meta, 'stagnation');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -989,18 +990,18 @@ export async function runPlanStepLoop(
       }
     }
     if (
-      taskType === "extract_info" &&
+      taskType === 'extract_info' &&
       completedCount >= 2 &&
       completedCount !== lastExtractionCheckAt &&
       replanCount < settings.maxReplanCalls &&
-      "agentAuditLog" in prisma
+      'agentAuditLog' in prisma
     ) {
       lastExtractionCheckAt = completedCount;
       const extractionAudit = await prisma.agentAuditLog.findFirst({
         where: {
           runId: run.id,
           message: {
-            in: ["Extracted product names.", "Extracted emails."],
+            in: ['Extracted product names.', 'Extracted emails.'],
           },
         },
         select: { id: true },
@@ -1017,7 +1018,7 @@ export async function runPlanStepLoop(
           runId: run.id,
           maxSteps: settings.maxSteps,
           maxStepAttempts: settings.maxStepAttempts,
-          trigger: "missing-extraction",
+          trigger: 'missing-extraction',
           signals: {
             completedCount,
             lastContextUrl,
@@ -1030,10 +1031,10 @@ export async function runPlanStepLoop(
           planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
           taskType = extractionReview.meta?.taskType ?? taskType;
           replanCount += 1;
-          await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-            type: "plan-replan",
+          await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+            type: 'plan-replan',
             steps: planSteps,
-            reason: "missing-extraction",
+            reason: 'missing-extraction',
             plannerMeta: extractionReview.meta ?? null,
             hierarchy: extractionReview.hierarchy ?? null,
             stepId: step.id,
@@ -1041,7 +1042,7 @@ export async function runPlanStepLoop(
           });
           await logBranchAlternatives(
             extractionReview.meta,
-            "missing-extraction"
+            'missing-extraction'
           );
           await persistCheckpoint({
             runId: run.id,
@@ -1075,14 +1076,14 @@ export async function runPlanStepLoop(
       if (summary) {
         await addAgentMemory({
           runId: run.id,
-          scope: "session",
+          scope: 'session',
           content: summary,
-          metadata: { type: "planner-summary", completedCount },
+          metadata: { type: 'planner-summary', completedCount },
         });
         memoryContext = [...memoryContext, summary].slice(-10);
         summaryCheckpoint = completedCount;
-        await logAgentAudit(run.id, "info", "Planner summary saved.", {
-          type: "planner-summary",
+        await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+          type: 'planner-summary',
           completedCount,
           summary,
         });
@@ -1115,7 +1116,7 @@ export async function runPlanStepLoop(
         runId: run.id,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
-        trigger: "no-browser-context",
+        trigger: 'no-browser-context',
         signals: {
           noContextCount,
           lastContextUrl,
@@ -1129,16 +1130,16 @@ export async function runPlanStepLoop(
         taskType = noContextReview.meta?.taskType ?? taskType;
         replanCount += 1;
         noContextCount = 0;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
-          reason: "no-browser-context",
+          reason: 'no-browser-context',
           plannerMeta: noContextReview.meta ?? null,
           hierarchy: noContextReview.hierarchy ?? null,
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(noContextReview.meta, "no-browser-context");
+        await logBranchAlternatives(noContextReview.meta, 'no-browser-context');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -1185,8 +1186,8 @@ export async function runPlanStepLoop(
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = adaptResult.meta?.taskType ?? taskType;
         replanCount += 1;
-        await logAgentAudit(run.id, "warning", "Plan adapted mid-run.", {
-          type: "plan-adapt",
+        await logAgentAudit(run.id, 'warning', 'Plan adapted mid-run.', {
+          type: 'plan-adapt',
           steps: planSteps,
           reason: adaptResult.reason,
           plannerMeta: adaptResult.meta ?? null,
@@ -1194,7 +1195,7 @@ export async function runPlanStepLoop(
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(adaptResult.meta, "mid-run-adapt");
+        await logBranchAlternatives(adaptResult.meta, 'mid-run-adapt');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -1231,8 +1232,8 @@ export async function runPlanStepLoop(
         maxStepAttempts: settings.maxStepAttempts,
       });
       selfCheckCount += 1;
-      await logAgentAudit(run.id, "info", "Self-check completed.", {
-        type: "self-check",
+      await logAgentAudit(run.id, 'info', 'Self-check completed.', {
+        type: 'self-check',
         stepId: step.id,
         stepTitle: step.title,
         action: selfCheck.action,
@@ -1249,12 +1250,12 @@ export async function runPlanStepLoop(
         abortSignals: selfCheck.abortSignals,
         finishSignals: selfCheck.finishSignals,
       });
-      if (selfCheck.action === "wait_human") {
+      if (selfCheck.action === 'wait_human') {
         requiresHuman = true;
-        lastError = selfCheck.reason ?? "Self-check requested human input.";
+        lastError = selfCheck.reason ?? 'Self-check requested human input.';
         break;
       }
-      if (selfCheck.action === "replan" && selfCheck.steps.length > 0) {
+      if (selfCheck.action === 'replan' && selfCheck.steps.length > 0) {
         const nextIndex = stepIndex + 1;
         const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
         const guardedSteps = await guardRepetitionWithLLM({
@@ -1269,8 +1270,8 @@ export async function runPlanStepLoop(
         const nextSteps = guardedSteps.slice(0, remainingSlots);
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = selfCheck.meta?.taskType ?? taskType;
-        await logAgentAudit(run.id, "warning", "Plan replaced by self-check.", {
-          type: "self-check-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan replaced by self-check.', {
+          type: 'self-check-replan',
           steps: planSteps,
           reason: selfCheck.reason,
           plannerMeta: selfCheck.meta ?? null,
@@ -1278,7 +1279,7 @@ export async function runPlanStepLoop(
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(selfCheck.meta, "self-check");
+        await logBranchAlternatives(selfCheck.meta, 'self-check');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -1310,7 +1311,7 @@ export async function runPlanStepLoop(
         runId: run.id,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
-        trigger: "context-shift",
+        trigger: 'context-shift',
         signals: {
           previousUrl,
           lastContextUrl,
@@ -1323,28 +1324,28 @@ export async function runPlanStepLoop(
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = shiftReview.meta?.taskType ?? taskType;
         replanCount += 1;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
-          reason: "context-shift",
+          reason: 'context-shift',
           plannerMeta: shiftReview.meta ?? null,
           hierarchy: shiftReview.hierarchy ?? null,
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(shiftReview.meta, "context-shift");
+        await logBranchAlternatives(shiftReview.meta, 'context-shift');
         if (memoryKey) {
           await addProblemSolutionMemory({
             memoryKey,
             runId: run.id,
-            problem: "Context shifted (URL changed).",
-            countermeasure: "Replanned after context shift.",
+            problem: 'Context shifted (URL changed).',
+            countermeasure: 'Replanned after context shift.',
             context: {
               stepId: step.id,
               stepTitle: step.title,
-              reason: "context-shift",
+              reason: 'context-shift',
             },
-            tags: ["context-shift"],
+            tags: ['context-shift'],
             model: memoryValidationModel ?? resolvedModel,
             summaryModel: memorySummarizationModel ?? resolvedModel,
             prompt: run.prompt,
@@ -1379,7 +1380,7 @@ export async function runPlanStepLoop(
         runId: run.id,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
-        trigger: "scheduled-replan",
+        trigger: 'scheduled-replan',
         signals: {
           completedCount,
           replanEverySteps: settings.replanEverySteps,
@@ -1401,8 +1402,8 @@ export async function runPlanStepLoop(
         planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
         taskType = reviewResult.meta?.taskType ?? taskType;
         replanCount += 1;
-        await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-          type: "plan-replan",
+        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
+          type: 'plan-replan',
           steps: planSteps,
           reason: reviewResult.reason,
           plannerMeta: reviewResult.meta ?? null,
@@ -1410,7 +1411,7 @@ export async function runPlanStepLoop(
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(reviewResult.meta, "scheduled-replan");
+        await logBranchAlternatives(reviewResult.meta, 'scheduled-replan');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,

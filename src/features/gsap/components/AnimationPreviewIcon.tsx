@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { cn } from "@/shared/utils";
-import type { AnimationPreset } from "../types/animation";
+import { gsap } from 'gsap';
+import React, { useEffect, useRef } from 'react';
+
+import { cn } from '@/shared/utils';
+
+import type { AnimationPreset } from '../types/animation';
 
 interface AnimationPreviewIconProps {
   preset: AnimationPreset;
@@ -12,81 +14,81 @@ interface AnimationPreviewIconProps {
 }
 
 function getPreviewVars(preset: AnimationPreset): { from: gsap.TweenVars; to: gsap.TweenVars } {
-  const baseTo: gsap.TweenVars = { duration: 0.8, ease: "power2.out" };
+  const baseTo: gsap.TweenVars = { duration: 0.8, ease: 'power2.out' };
 
   switch (preset) {
-    case "fadeIn":
+    case 'fadeIn':
       return { from: { opacity: 0 }, to: { opacity: 1, ...baseTo } };
-    case "fadeInUp":
+    case 'fadeInUp':
       return { from: { y: 6, opacity: 0 }, to: { y: 0, opacity: 1, ...baseTo } };
-    case "fadeInDown":
+    case 'fadeInDown':
       return { from: { y: -6, opacity: 0 }, to: { y: 0, opacity: 1, ...baseTo } };
-    case "fadeOut":
+    case 'fadeOut':
       return { from: { opacity: 1 }, to: { opacity: 0, ...baseTo } };
-    case "slideInLeft":
+    case 'slideInLeft':
       return { from: { x: -8, opacity: 0 }, to: { x: 0, opacity: 1, ...baseTo } };
-    case "slideInRight":
+    case 'slideInRight':
       return { from: { x: 8, opacity: 0 }, to: { x: 0, opacity: 1, ...baseTo } };
-    case "slideInTop":
+    case 'slideInTop':
       return { from: { y: -6, opacity: 0 }, to: { y: 0, opacity: 1, ...baseTo } };
-    case "slideInBottom":
+    case 'slideInBottom':
       return { from: { y: 6, opacity: 0 }, to: { y: 0, opacity: 1, ...baseTo } };
-    case "scaleUp":
+    case 'scaleUp':
       return { from: { scale: 0.7, opacity: 0 }, to: { scale: 1, opacity: 1, ...baseTo } };
-    case "scaleDown":
+    case 'scaleDown':
       return { from: { scale: 1.3, opacity: 0 }, to: { scale: 1, opacity: 1, ...baseTo } };
-    case "zoomIn":
+    case 'zoomIn':
       return { from: { scale: 0.55, opacity: 0 }, to: { scale: 1, opacity: 1, ...baseTo } };
-    case "flipY":
+    case 'flipY':
       return {
         from: { rotationY: -60, opacity: 0, transformPerspective: 400 },
         to: { rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "skew":
+    case 'skew':
       return { from: { skewX: 12, opacity: 0 }, to: { skewX: 0, opacity: 1, ...baseTo } };
-    case "blurIn":
-      return { from: { filter: "blur(4px)", opacity: 0 }, to: { filter: "blur(0px)", opacity: 1, ...baseTo } };
-    case "rotate":
+    case 'blurIn':
+      return { from: { filter: 'blur(4px)', opacity: 0 }, to: { filter: 'blur(0px)', opacity: 1, ...baseTo } };
+    case 'rotate':
       return { from: { rotation: -20, opacity: 0 }, to: { rotation: 0, opacity: 1, ...baseTo } };
-    case "rotateX":
+    case 'rotateX':
       return {
         from: { rotationX: -60, opacity: 0, transformPerspective: 400 },
         to: { rotationX: 0, opacity: 1, ...baseTo },
       };
-    case "rotateY":
+    case 'rotateY':
       return {
         from: { rotationY: -60, opacity: 0, transformPerspective: 400 },
         to: { rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "popZ":
+    case 'popZ':
       return { from: { scale: 0.6, opacity: 0 }, to: { scale: 1, opacity: 1, ...baseTo } };
-    case "cardTilt":
+    case 'cardTilt':
       return {
         from: { rotationX: 10, rotationY: -10, opacity: 0, transformPerspective: 500 },
         to: { rotationX: 0, rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "flip3D":
+    case 'flip3D':
       return {
         from: { rotationY: 90, opacity: 0, transformPerspective: 500 },
         to: { rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "cube":
+    case 'cube':
       return {
         from: { rotationX: -80, rotationY: 80, opacity: 0, transformPerspective: 500 },
         to: { rotationX: 0, rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "carousel":
+    case 'carousel':
       return {
         from: { rotationY: -80, opacity: 0, transformPerspective: 500 },
         to: { rotationY: 0, opacity: 1, ...baseTo },
       };
-    case "orbit":
+    case 'orbit':
       return {
-        from: { rotation: -140, x: 6, opacity: 0, transformOrigin: "50% 160%" },
+        from: { rotation: -140, x: 6, opacity: 0, transformOrigin: '50% 160%' },
         to: { rotation: 0, x: 0, opacity: 1, ...baseTo },
       };
-    case "bounce":
-      return { from: { y: -8, opacity: 0 }, to: { y: 0, opacity: 1, duration: 0.7, ease: "bounce.out" } };
+    case 'bounce':
+      return { from: { y: -8, opacity: 0 }, to: { y: 0, opacity: 1, duration: 0.7, ease: 'bounce.out' } };
     default:
       return { from: {}, to: baseTo };
   }
@@ -94,7 +96,7 @@ function getPreviewVars(preset: AnimationPreset): { from: gsap.TweenVars; to: gs
 
 function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
   switch (preset) {
-    case "shake":
+    case 'shake':
       return {
         keyframes: [
           { x: -4 },
@@ -105,9 +107,9 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
           { x: 2 },
           { x: 0 },
         ],
-        ease: "none",
+        ease: 'none',
       };
-    case "wobble":
+    case 'wobble':
       return {
         keyframes: [
           { rotation: -6, x: -4 },
@@ -116,9 +118,9 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
           { rotation: 3, x: 2 },
           { rotation: 0, x: 0 },
         ],
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       };
-    case "wiggle":
+    case 'wiggle':
       return {
         keyframes: [
           { rotation: 2 },
@@ -127,7 +129,7 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
           { rotation: -1.5 },
           { rotation: 0 },
         ],
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       };
     default:
       return null;
@@ -142,7 +144,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
     if (!root) return;
 
     const ctx = gsap.context((): void => {
-      const dots = root.querySelectorAll<HTMLElement>("[data-dot]");
+      const dots = root.querySelectorAll<HTMLElement>('[data-dot]');
       if (!dots.length) return;
 
       gsap.set(dots, {
@@ -155,14 +157,14 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
         rotationX: 0,
         z: 0,
         skewX: 0,
-        filter: "blur(0px)",
+        filter: 'blur(0px)',
         transformPerspective: 0,
-        transformOrigin: "50% 50%",
+        transformOrigin: '50% 50%',
       });
 
-      if (!active || preset === "none") return;
+      if (!active || preset === 'none') return;
 
-      if (preset === "stagger") {
+      if (preset === 'stagger') {
         gsap.fromTo(
           dots,
           { y: 6, opacity: 0 },
@@ -170,7 +172,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
             y: 0,
             opacity: 1,
             duration: 0.6,
-            ease: "power2.out",
+            ease: 'power2.out',
             stagger: 0.12,
             repeat: -1,
             yoyo: true,
@@ -203,13 +205,13 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
     return (): void => ctx.revert();
   }, [active, preset]);
 
-  const isStagger = preset === "stagger";
+  const isStagger = preset === 'stagger';
 
   return (
     <div
       ref={ref}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-gray-900/50",
+        'flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-gray-900/50',
         className
       )}
     >

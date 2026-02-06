@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { Button, Input } from "@/shared/ui";
-import React, { useRef, useEffect } from "react";
-import { ChatMessage } from "@/shared/types/chatbot";
+import React, { useRef, useEffect } from 'react';
+
+import { ChatMessage } from '@/shared/types/chatbot';
+import { Button, Input } from '@/shared/ui';
 
 
 interface ChatInterfaceProps {
@@ -25,7 +26,7 @@ export function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect((): void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   return (
@@ -41,14 +42,14 @@ export function ChatInterface({
               <div
                 key={index}
                 className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
+                  msg.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800 text-gray-200"
+                    msg.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-800 text-gray-200'
                   }`}
                 >
                   {renderFormattedMessage(msg.content)}
@@ -73,7 +74,7 @@ export function ChatInterface({
             className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             disabled={isSending || !input.trim()}
           >
-            {isSending ? "Sending..." : "Send"}
+            {isSending ? 'Sending...' : 'Send'}
           </Button>
         </form>
       </div>

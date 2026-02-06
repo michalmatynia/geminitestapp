@@ -1,8 +1,8 @@
-import "server-only";
+import 'server-only';
 
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
-type CmsDbProvider = "prisma" | "mongodb";
+type CmsDbProvider = 'prisma' | 'mongodb';
 
 export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
   // For now, follow the app-wide setting, but the user wants MongoDB specifically for CMS.

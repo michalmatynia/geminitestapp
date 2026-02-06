@@ -1,14 +1,15 @@
-import { z } from "zod";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError, validationError } from "@/shared/errors/app-error";
-import type { JsonParseResult, ParseJsonOptions } from "@/shared/types/api";
+import { z } from 'zod';
+
+import { badRequestError, validationError } from '@/shared/errors/app-error';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import type { JsonParseResult, ParseJsonOptions } from '@/shared/types/api';
 
 export async function parseJsonBody<T>(
   req: Request,
   schema: z.ZodSchema<T>,
   options?: ParseJsonOptions
 ): Promise<JsonParseResult<T>> {
-  const logPrefix = options?.logPrefix ?? "request";
+  const logPrefix = options?.logPrefix ?? 'request';
   let body: unknown;
 
   try {
@@ -19,7 +20,7 @@ export async function parseJsonBody<T>(
     } else {
       return {
         ok: false,
-        response: createErrorResponse(badRequestError("Invalid JSON payload"), {
+        response: await createErrorResponse(badRequestError('Invalid JSON payload'), {
           request: req,
           source: logPrefix,
         }),
@@ -29,12 +30,12 @@ export async function parseJsonBody<T>(
 
   const result = schema.safeParse(body);
   if (!result.success) {
-    const error = validationError("Invalid payload", {
+    const error = validationError('Invalid payload', {
       issues: result.error.flatten(),
     });
     return {
       ok: false,
-      response: createErrorResponse(error, { request: req, source: logPrefix }),
+      response: await createErrorResponse(error, { request: req, source: logPrefix }),
     };
   }
 

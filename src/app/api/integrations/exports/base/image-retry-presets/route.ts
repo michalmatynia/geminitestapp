@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   getExportImageRetryPresets,
-  setExportImageRetryPresets,
+  setExportImageRetryPresets
 } from "@/features/integrations/server";
 import { normalizeImageRetryPresets } from "@/features/data-import-export";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -15,7 +15,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 const transformSchema = z.object({
   forceJpeg: z.boolean().optional(),
   maxDimension: z.number().int().positive().optional(),
-  jpegQuality: z.number().int().min(10).max(100).optional(),
+  jpegQuality: z.number().int().min(10).max(100).optional()
 });
 
 const presetSchema = z.object({
@@ -23,11 +23,11 @@ const presetSchema = z.object({
   label: z.string().min(1),
   description: z.string().min(1),
   imageBase64Mode: z.enum(["base-only", "full-data-uri"]).optional(),
-  transform: transformSchema,
+  transform: transformSchema
 });
 
 const requestSchema = z.object({
-  presets: z.array(presetSchema).min(1),
+  presets: z.array(presetSchema).min(1)
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -38,7 +38,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.image-retry-presets.GET",
-      fallbackMessage: "Failed to fetch image retry presets.",
+      fallbackMessage: "Failed to fetch image retry presets."
     });
   }
 }
@@ -46,7 +46,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "exports.base.image-retry-presets.POST",
+      logPrefix: "exports.base.image-retry-presets.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -59,14 +59,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.exports.base.image-retry-presets.POST",
-      fallbackMessage: "Failed to save presets",
+      fallbackMessage: "Failed to save presets"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.exports.base.image-retry-presets.GET" });
+ { source: "products.exports.base.image-retry-presets.GET", requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.exports.base.image-retry-presets.POST" });
+ { source: "products.exports.base.image-retry-presets.POST", requireCsrf: false });

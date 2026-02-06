@@ -29,14 +29,14 @@ export const DEFAULT_AUTH_SECURITY_POLICY: AuthSecurityPolicy = {
 };
 
 const clampNumber = (value: unknown, fallback: number, min: number, max: number): number => {
-  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
   return Math.min(Math.max(value, min), max);
 };
 
 export const normalizeAuthSecurityPolicy = (
   raw: unknown
 ): AuthSecurityPolicy => {
-  const data = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   return {
     minPasswordLength: clampNumber(
       data.minPasswordLength,
@@ -45,23 +45,23 @@ export const normalizeAuthSecurityPolicy = (
       64
     ),
     requireStrongPassword:
-      typeof data.requireStrongPassword === "boolean"
+      typeof data.requireStrongPassword === 'boolean'
         ? data.requireStrongPassword
         : DEFAULT_AUTH_SECURITY_POLICY.requireStrongPassword,
     requireUppercase:
-      typeof data.requireUppercase === "boolean"
+      typeof data.requireUppercase === 'boolean'
         ? data.requireUppercase
         : DEFAULT_AUTH_SECURITY_POLICY.requireUppercase,
     requireLowercase:
-      typeof data.requireLowercase === "boolean"
+      typeof data.requireLowercase === 'boolean'
         ? data.requireLowercase
         : DEFAULT_AUTH_SECURITY_POLICY.requireLowercase,
     requireNumber:
-      typeof data.requireNumber === "boolean"
+      typeof data.requireNumber === 'boolean'
         ? data.requireNumber
         : DEFAULT_AUTH_SECURITY_POLICY.requireNumber,
     requireSymbol:
-      typeof data.requireSymbol === "boolean"
+      typeof data.requireSymbol === 'boolean'
         ? data.requireSymbol
         : DEFAULT_AUTH_SECURITY_POLICY.requireSymbol,
     lockoutMaxAttempts: clampNumber(

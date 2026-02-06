@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
-import { cn } from "@/shared/utils";
-import { Lock } from "lucide-react";
-import type { PathMeta } from "@/features/ai/ai-paths/lib";
-import { AI_PATHS_NODE_DOCS } from "@/features/ai/ai-paths/lib/core/docs/node-docs";
+import { Lock } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import type { PathMeta } from '@/features/ai/ai-paths/lib';
+import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionPanel } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 type PathsTabPanelProps = {
   paths: PathMeta[];
@@ -48,7 +49,7 @@ export function PathsTabPanel({
         </div>
       </div>
 
-      <div className="rounded-md border bg-card/60 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-0 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-border/60">
@@ -63,45 +64,45 @@ export function PathsTabPanel({
               const isLocked = Boolean(flags.isLocked);
               const isActive = flags.isActive !== false;
               return (
-              <TableRow
-                key={path.id}
-                className={cn("border-border/50", !isActive ? "opacity-50" : null)}
-              >
-                <TableCell className={cn("text-sm text-white", !isActive ? "text-gray-400" : null)}>
-                  <button
-                    type="button"
-                    className={cn(
-                      "inline-flex items-center gap-2 cursor-pointer text-left text-sm transition",
-                      isActive ? "text-white hover:text-gray-200" : "text-gray-400 hover:text-gray-300"
-                    )}
-                    onClick={(): void => onEditPath(path.id)}
-                  >
-                    {isLocked ? <Lock className="size-3 text-amber-300/90" /> : null}
-                    {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
-                  </button>
-                </TableCell>
-                <TableCell className="text-xs text-gray-400">
-                  {path.updatedAt ? new Date(path.updatedAt).toLocaleString() : "—"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      className="rounded-md border text-xs text-white hover:bg-muted/60"
+                <TableRow
+                  key={path.id}
+                  className={cn('border-border/50', !isActive ? 'opacity-50' : null)}
+                >
+                  <TableCell className={cn('text-sm text-white', !isActive ? 'text-gray-400' : null)}>
+                    <button
                       type="button"
+                      className={cn(
+                        'inline-flex items-center gap-2 cursor-pointer text-left text-sm transition',
+                        isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
+                      )}
                       onClick={(): void => onEditPath(path.id)}
                     >
+                      {isLocked ? <Lock className="size-3 text-amber-300/90" /> : null}
+                      {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-400">
+                    {path.updatedAt ? new Date(path.updatedAt).toLocaleString() : '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        className="rounded-md border text-xs text-white hover:bg-muted/60"
+                        type="button"
+                        onClick={(): void => onEditPath(path.id)}
+                      >
                       Edit
-                    </Button>
-                    <Button
-                      className="rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10"
-                      type="button"
-                      onClick={(): void => onDeletePath(path.id)}
-                    >
+                      </Button>
+                      <Button
+                        className="rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10"
+                        type="button"
+                        onClick={(): void => onDeletePath(path.id)}
+                      >
                       Delete
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               );
             })}
             {paths.length === 0 && (
@@ -116,7 +117,7 @@ export function PathsTabPanel({
             )}
           </TableBody>
         </Table>
-      </div>
+      </SectionPanel>
     </div>
   );
 }
@@ -141,11 +142,11 @@ export function DocsTabPanel({
   onCopyDocsJobs,
 }: DocsTabPanelProps): React.JSX.Element {
   const overviewLines = docsOverviewSnippet
-    .split("\n")
+    .split('\n')
     .map((line: string) => line.trim())
     .filter((line: string) => line.length > 0);
 
-  const [nodeQuery, setNodeQuery] = useState("");
+  const [nodeQuery, setNodeQuery] = useState('');
   const filteredNodeDocs = useMemo(() => {
     const q = nodeQuery.trim().toLowerCase();
     if (!q) return AI_PATHS_NODE_DOCS;
@@ -154,11 +155,11 @@ export function DocsTabPanel({
         doc.title,
         doc.type,
         doc.purpose,
-        doc.inputs.join(" "),
-        doc.outputs.join(" "),
-        doc.config.map((c: { path: string; description: string }) => `${c.path} ${c.description}`).join(" "),
+        doc.inputs.join(' '),
+        doc.outputs.join(' '),
+        doc.config.map((c: { path: string; description: string }) => `${c.path} ${c.description}`).join(' '),
       ]
-        .join(" ")
+        .join(' ')
         .toLowerCase();
       return haystack.includes(q);
     });
@@ -166,15 +167,15 @@ export function DocsTabPanel({
 
   return (
     <div className="space-y-6 text-sm text-gray-300">
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h2 className="text-lg font-semibold text-white">AI Paths Docs</h2>
         <p className="mt-2 text-gray-400">
           Modular workflows are built by connecting node outputs (right) to matching
           node inputs (left). Connections are strict: port names must match.
         </p>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">How AI Paths Works</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           {overviewLines.map((line: string, index: number) => (
@@ -183,9 +184,9 @@ export function DocsTabPanel({
             </li>
           ))}
         </ul>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">System Overview</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -193,8 +194,8 @@ export function DocsTabPanel({
             propagate data through connected ports.
           </li>
           <li>
-            Ports are strict and type-safe by name:{" "}
-            <span className="text-white">result → result</span>,{" "}
+            Ports are strict and type-safe by name:{' '}
+            <span className="text-white">result → result</span>,{' '}
             <span className="text-white">images → images</span>.
           </li>
           <li>
@@ -206,16 +207,16 @@ export function DocsTabPanel({
             files), and the Model node converts URLs to base64 when calling the model.
           </li>
         </ul>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">Execution & State</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
-            Trigger fires the graph evaluation. Nodes like{" "}
-            <span className="text-white">Model</span>,{" "}
-            <span className="text-white">Database</span>,{" "}
-            <span className="text-white">HTTP</span>,{" "}
+            Trigger fires the graph evaluation. Nodes like{' '}
+            <span className="text-white">Model</span>,{' '}
+            <span className="text-white">Database</span>,{' '}
+            <span className="text-white">HTTP</span>,{' '}
             <span className="text-white">Delay</span> run at most once per graph run.
           </li>
           <li>
@@ -227,10 +228,10 @@ export function DocsTabPanel({
             in settings so you can resume where you left off.
           </li>
         </ul>
-      </div>
+      </SectionPanel>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+        <SectionPanel variant="subtle" className="p-5">
           <h3 className="text-base font-semibold text-white">Core Flow</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>
@@ -256,9 +257,9 @@ export function DocsTabPanel({
               <span className="text-amber-200"> triggerName</span> into Result Viewer.
             </li>
           </ul>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+        <SectionPanel variant="subtle" className="p-5">
           <h3 className="text-base font-semibold text-white">Port Rules</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>Ports must match exactly (e.g. result → result).</li>
@@ -269,18 +270,18 @@ export function DocsTabPanel({
             <li>Multiple wires into the same input are collected as arrays.</li>
             <li>Gate expects valid from a Validator node.</li>
           </ul>
-        </div>
+        </SectionPanel>
       </div>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">Context Presets</h3>
         <p className="mt-2 text-gray-400">
           Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity
           payload. Target Fields lets you toggle exact fields to include.
         </p>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">AI Description Flow</h3>
         <ol className="mt-3 space-y-2 text-gray-400">
           <li>Context Filter.entityJson → Parser.entityJson</li>
@@ -289,9 +290,9 @@ export function DocsTabPanel({
           <li>Parser.productId → Database.entityId</li>
           <li>(Optional) Database.result → Result Viewer.result</li>
         </ol>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">AI Job Queue (AI Paths)</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -307,9 +308,9 @@ export function DocsTabPanel({
             or Database Update to save outputs.
           </li>
         </ul>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">Cluster Presets</h3>
         <p className="mt-2 text-gray-400">
           Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
@@ -321,9 +322,9 @@ export function DocsTabPanel({
           <li>Apply the preset to drop a Bundle + Template pair onto the canvas.</li>
           <li>Select a Template or Bundle node connected together and click “From Selection”.</li>
         </ul>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">Quick Wiring</h3>
           <Button
@@ -337,9 +338,9 @@ export function DocsTabPanel({
         <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsWiringSnippet}
         </pre>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">
             AI Description Wiring
@@ -355,9 +356,9 @@ export function DocsTabPanel({
         <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsDescriptionSnippet}
         </pre>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">AI Job Wiring</h3>
           <Button
@@ -371,16 +372,16 @@ export function DocsTabPanel({
         <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsJobsSnippet}
         </pre>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">Node Documentation</h3>
           <div className="flex items-center gap-2">
             <SearchInput
               value={nodeQuery}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNodeQuery(event.target.value)}
-              onClear={() => setNodeQuery("")}
+              onClear={() => setNodeQuery('')}
               placeholder="Search nodes (type, ports, config...)"
               className="h-9 w-[320px] border-border bg-card/60 text-sm text-white"
             />
@@ -406,7 +407,7 @@ export function DocsTabPanel({
                 <p className="text-gray-400">{doc.purpose}</p>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-md border border-border/60 bg-card/60 p-3">
+                  <SectionPanel variant="subtle-compact" className="p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
                       Inputs
                     </div>
@@ -424,9 +425,9 @@ export function DocsTabPanel({
                     ) : (
                       <div className="mt-2 text-xs text-gray-500">No inputs.</div>
                     )}
-                  </div>
+                  </SectionPanel>
 
-                  <div className="rounded-md border border-border/60 bg-card/60 p-3">
+                  <SectionPanel variant="subtle-compact" className="p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
                       Outputs
                     </div>
@@ -444,7 +445,7 @@ export function DocsTabPanel({
                     ) : (
                       <div className="mt-2 text-xs text-gray-500">No outputs.</div>
                     )}
-                  </div>
+                  </SectionPanel>
                 </div>
 
                 <div className="mt-4 rounded-md border border-border/60 bg-card/60">
@@ -471,7 +472,7 @@ export function DocsTabPanel({
                             {field.description}
                           </TableCell>
                           <TableCell className="text-[11px] text-gray-400">
-                            {field.defaultValue ?? "—"}
+                            {field.defaultValue ?? '—'}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -480,7 +481,7 @@ export function DocsTabPanel({
                 </div>
 
                 {doc.notes?.length ? (
-                  <div className="mt-4 rounded-md border border-border/60 bg-card/60 p-3">
+                  <SectionPanel variant="subtle-compact" className="mt-4 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
                       Notes
                     </div>
@@ -489,7 +490,7 @@ export function DocsTabPanel({
                         <li key={note}>{note}</li>
                       ))}
                     </ul>
-                  </div>
+                  </SectionPanel>
                 ) : null}
               </div>
             </details>
@@ -500,18 +501,18 @@ export function DocsTabPanel({
             </div>
           ) : null}
         </div>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">Saving & Debugging</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>Use “Save Path” to persist the canvas.</li>
           <li>Errors are logged to System Logs with an AI Paths badge.</li>
           <li>The “Last error” badge links directly to filtered logs.</li>
         </ul>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-5">
         <h3 className="text-base font-semibold text-white">Troubleshooting</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -539,7 +540,7 @@ export function DocsTabPanel({
             exactly and node types must be compatible.
           </li>
         </ul>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

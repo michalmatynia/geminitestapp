@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
@@ -324,7 +323,7 @@ async function PUT_handler(
  * Deletes a product category and all its children (cascade).
  */
 async function DELETE_handler(
-  _req: NextRequest,
+  request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
@@ -335,10 +334,7 @@ async function DELETE_handler(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const idsToDelete = await collectCategoryIds(db, params.id);
@@ -349,10 +345,7 @@ async function DELETE_handler(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     // The schema has onDelete: Cascade, so children will be deleted automatically
@@ -362,16 +355,12 @@ async function DELETE_handler(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][DELETE] Failed to delete category", {
-      errorId,
-      categoryId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request,
+      source: "products.categories.[id].DELETE",
+      fallbackMessage: "Failed to delete category",
+      extra: { categoryId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to delete category", errorId },
-      { status: 500 }
-    );
   }
 }
 

@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import React, { useMemo } from 'react';
+
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendImageElementSectionProps {
   settings: Record<string, unknown>;
@@ -18,8 +20,8 @@ export function FrontendImageElementSection({
 
   const block = useMemo<BlockInstance>(
     () => ({
-      id: "image-element-section",
-      type: "ImageElement",
+      id: 'image-element-section',
+      type: 'ImageElement',
       settings: blockSettings,
     }),
     [blockSettings]

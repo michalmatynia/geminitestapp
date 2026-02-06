@@ -168,7 +168,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "analytics.events.POST" }
+  { source: "analytics.events.POST", requireCsrf: false }
 );
 
 export const GET = apiHandler(

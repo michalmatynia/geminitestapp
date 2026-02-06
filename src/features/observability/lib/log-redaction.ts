@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/typedef */
+
 
 const SENSITIVE_KEY_PATTERNS = [
   /pass(word)?/i,
@@ -14,12 +14,12 @@ const SENSITIVE_KEY_PATTERNS = [
   /credential/i,
 ];
 
-export const REDACTED_VALUE = "[REDACTED]";
+export const REDACTED_VALUE = '[REDACTED]';
 
-export const isSensitiveKey = (key: string) =>
+export const isSensitiveKey = (key: string): boolean =>
   SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
 
-export const truncateString = (value: string, maxLength: number) => {
+export const truncateString = (value: string, maxLength: number): string => {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength)}…[truncated]`;
 };

@@ -1,11 +1,12 @@
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
+
 import type {
   CategoryMapping,
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
-} from "@/features/integrations/types/category-mapping";
+} from '@/features/integrations/types/category-mapping';
+import prisma from '@/shared/lib/db/prisma';
 
 export type CategoryMappingRepository = {
   create: (input: CategoryMappingCreateInput) => Promise<CategoryMapping>;
@@ -109,8 +110,8 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           internalCategory: true,
         },
         orderBy: [
-          { externalCategory: { depth: "asc" } },
-          { externalCategory: { name: "asc" } },
+          { externalCategory: { depth: 'asc' } },
+          { externalCategory: { name: 'asc' } },
         ],
       });
 

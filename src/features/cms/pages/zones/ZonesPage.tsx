@@ -1,6 +1,14 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
+
+import {
+  useCmsDomains,
+  useCreateCmsDomain,
+  useDeleteCmsDomain,
+  useUpdateCmsDomain,
+} from '@/features/cms/hooks/useCmsQueries';
+import type { CmsDomain } from '@/features/cms/types';
 import {
   Button,
   Input,
@@ -12,14 +20,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui";
-import {
-  useCmsDomains,
-  useCreateCmsDomain,
-  useDeleteCmsDomain,
-  useUpdateCmsDomain,
-} from "@/features/cms/hooks/useCmsQueries";
-import type { CmsDomain } from "@/features/cms/types";
+} from '@/shared/ui';
 
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
@@ -27,32 +28,32 @@ export default function ZonesPage(): React.JSX.Element {
   const deleteDomain = useDeleteCmsDomain();
   const updateDomain = useUpdateCmsDomain();
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
-  const [domain, setDomain] = useState("");
-  const [error, setError] = useState("");
+  const [domain, setDomain] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     const value = domain.trim();
     if (!value) {
-      setError("Enter a domain or hostname.");
+      setError('Enter a domain or hostname.');
       return;
     }
-    setError("");
+    setError('');
     try {
       await createDomain.mutateAsync({ domain: value });
-      setDomain("");
+      setDomain('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create domain.");
+      setError(err instanceof Error ? err.message : 'Failed to create domain.');
     }
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm("Remove this domain and its slug assignments?")) return;
+    if (!confirm('Remove this domain and its slug assignments?')) return;
     await deleteDomain.mutateAsync(id);
   };
 
   const handleAliasChange = async (id: string, aliasOfValue: string): Promise<void> => {
-    const aliasOf = aliasOfValue === "none" ? null : aliasOfValue;
+    const aliasOf = aliasOfValue === 'none' ? null : aliasOfValue;
     await updateDomain.mutateAsync({ id, input: { aliasOf } });
   };
 
@@ -98,7 +99,7 @@ export default function ZonesPage(): React.JSX.Element {
                   <span className="text-sm font-medium">{item.domain}</span>
                   {item.aliasOf ? (
                     <span className="text-xs text-muted-foreground">
-                      Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? "another zone"}
+                      Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? 'another zone'}
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">Independent zone</span>
@@ -106,7 +107,7 @@ export default function ZonesPage(): React.JSX.Element {
                 </div>
                 <div className="flex items-center gap-2">
                   <Select
-                    value={item.aliasOf ?? "none"}
+                    value={item.aliasOf ?? 'none'}
                     onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
                   >
                     <SelectTrigger className="h-8 w-[220px]">

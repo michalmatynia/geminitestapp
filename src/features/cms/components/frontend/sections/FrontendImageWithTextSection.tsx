@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
 
-import Image from "next/image";
-import { Image as ImageIcon } from "lucide-react";
-import type { BlockInstance } from "../../../types/page-builder";
-import { getSectionContainerClass, getSectionStyles, getVerticalAlign, type ColorSchemeColors } from "../theme-styles";
-import { useMediaStyles } from "../media-styles-context";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+
+
+import { useMediaStyles } from '../media-styles-context';
+import { getSectionContainerClass, getSectionStyles, getVerticalAlign, type ColorSchemeColors } from '../theme-styles';
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendImageWithTextSectionProps {
   settings: Record<string, unknown>;
@@ -17,23 +20,23 @@ interface FrontendImageWithTextSectionProps {
 
 export function FrontendImageWithTextSection({ settings, blocks, colorSchemes, layout }: FrontendImageWithTextSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
-  const image = settings["image"] as string | undefined;
-  const placement = (settings["desktopImagePlacement"] as string) || "image-first";
-  const imageFirst = placement !== "image-second";
-  const contentPosition = settings["desktopContentPosition"] as string | undefined;
+  const image = settings['image'] as string | undefined;
+  const placement = (settings['desktopImagePlacement'] as string) || 'image-first';
+  const imageFirst = placement !== 'image-second';
+  const contentPosition = settings['desktopContentPosition'] as string | undefined;
   const verticalClass = getVerticalAlign(contentPosition);
-  const imageHeight = (settings["imageHeight"] as string) || "medium";
+  const imageHeight = (settings['imageHeight'] as string) || 'medium';
   const mediaStyles = useMediaStyles();
 
   const imgHeightClass =
-    imageHeight === "small" ? "min-h-[200px]"
-    : imageHeight === "large" ? "min-h-[500px]"
-    : "min-h-[350px]"; // medium
+    imageHeight === 'small' ? 'min-h-[200px]'
+      : imageHeight === 'large' ? 'min-h-[500px]'
+        : 'min-h-[350px]'; // medium
 
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"} ${verticalClass}`}>
+        <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}>
           {/* Image */}
           <div className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`} style={mediaStyles ?? undefined}>
             {image ? (

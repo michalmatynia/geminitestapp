@@ -1,5 +1,6 @@
-import React from "react";
-import { ProductAiJobsPanelSuspense } from "@/features/jobs/components/ProductAiJobsPanel";
+import React from 'react';
+
+import { ProductAiJobsPanelSuspense } from '@/features/jobs/components/ProductAiJobsPanel';
 
 export function ProductAiJobsPage(): React.JSX.Element {
   return (

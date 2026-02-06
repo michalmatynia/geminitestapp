@@ -1,4 +1,4 @@
-import type { ImageFileRecord } from "@/shared/types/files";
+import type { ImageFileRecord } from '@/shared/types/files';
 
 export type { ImageFileRecord };
 

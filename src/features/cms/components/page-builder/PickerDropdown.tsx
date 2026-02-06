@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback } from "react";
-import { Plus } from "lucide-react";
-import { cn } from "@/shared/utils";
+import { Plus } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+
+import { cn } from '@/shared/utils';
 
 export interface PickerOption {
   type: string;
@@ -26,7 +27,7 @@ interface PickerDropdownProps {
 export function PickerDropdown({
   groups,
   onSelect,
-  ariaLabel = "Add item",
+  ariaLabel = 'Add item',
   triggerClassName,
   dropdownClassName,
 }: PickerDropdownProps): React.ReactNode {
@@ -53,13 +54,13 @@ export function PickerDropdown({
           setIsOpen(!isOpen);
         }}
         onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.stopPropagation();
             setIsOpen(!isOpen);
           }
         }}
         className={cn(
-          "flex h-5 w-5 items-center justify-center rounded text-gray-500 transition hover:bg-muted/50 hover:text-gray-300",
+          'flex h-5 w-5 items-center justify-center rounded text-gray-500 transition hover:bg-muted/50 hover:text-gray-300',
           triggerClassName
         )}
         aria-label={ariaLabel}
@@ -73,14 +74,14 @@ export function PickerDropdown({
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
             onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === "Escape") setIsOpen(false);
+              if (e.key === 'Escape') setIsOpen(false);
             }}
             role="button"
             tabIndex={-1}
             aria-label="Close picker"
           />
           <div className={cn(
-            "absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md",
+            'absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md',
             dropdownClassName
           )}>
             {groups.map((group: PickerGroup, groupIdx: number) => (

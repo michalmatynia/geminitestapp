@@ -1,12 +1,11 @@
-"use client";
+import { ChevronDown, Copy, Check } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { Button } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import { ChevronDown, Copy, Check } from "lucide-react";
+import { Button, SectionPanel } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
-  level: "info" | "warn" | "error";
+  level: 'info' | 'warn' | 'error';
   message: string;
   context?: Record<string, unknown> | undefined;
 }
@@ -29,30 +28,30 @@ export function ExportLogViewer({
       .filter((context: Record<string, unknown> | undefined): context is Record<string, unknown> => !!context)
       .filter(
         (context: Record<string, unknown>) =>
-          typeof context.outputBytes === "number" ||
-          typeof context.originalBytes === "number" ||
-          typeof context.base64Length === "number"
+          typeof context.outputBytes === 'number' ||
+          typeof context.originalBytes === 'number' ||
+          typeof context.base64Length === 'number'
       );
     if (entries.length === 0) return null;
-    const sum = (key: "outputBytes" | "originalBytes" | "base64Length"): number =>
+    const sum = (key: 'outputBytes' | 'originalBytes' | 'base64Length'): number =>
       entries.reduce(
         (total: number, entry: Record<string, unknown>): number => {
           const val = entry[key];
-          return total + (typeof val === "number" ? val : 0);
+          return total + (typeof val === 'number' ? val : 0);
         },
         0
       );
     const outputModes = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry.outputMode === "string" ? entry.outputMode : null
+          typeof entry.outputMode === 'string' ? entry.outputMode : null
         )
         .filter((mode: string | null): mode is string => !!mode)
     );
     const outputFormats = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry.outputFormat === "string" ? entry.outputFormat : null
+          typeof entry.outputFormat === 'string' ? entry.outputFormat : null
         )
         .filter((format: string | null): format is string => !!format)
     );
@@ -60,17 +59,17 @@ export function ExportLogViewer({
     const resizedCount = entries.filter((entry: Record<string, unknown>): boolean => entry.resized === true).length;
     return {
       count: entries.length,
-      totalOriginalBytes: sum("originalBytes"),
-      totalOutputBytes: sum("outputBytes"),
-      totalBase64Length: sum("base64Length"),
+      totalOriginalBytes: sum('originalBytes'),
+      totalOutputBytes: sum('outputBytes'),
+      totalBase64Length: sum('base64Length'),
       mode:
-        outputModes.size === 1 ? Array.from(outputModes)[0] ?? null : "mixed",
+        outputModes.size === 1 ? Array.from(outputModes)[0] ?? null : 'mixed',
       format:
         outputFormats.size === 1
           ? Array.from(outputFormats)[0] ?? null
           : outputFormats.size > 1
-          ? "mixed"
-          : null,
+            ? 'mixed'
+            : null,
       convertedCount,
       resizedCount,
     };
@@ -81,10 +80,10 @@ export function ExportLogViewer({
       .map((log: ExportLog) => {
         const contextStr = log.context
           ? `\n    ${JSON.stringify(log.context, null, 2)}`
-          : "";
+          : '';
         return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
       })
-      .join("\n");
+      .join('\n');
     void navigator.clipboard.writeText(logText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -95,8 +94,8 @@ export function ExportLogViewer({
   }
 
   const formatBytes = (bytes: number): string => {
-    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-    const units = ["B", "KB", "MB", "GB"];
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
     let value = bytes;
     let index = 0;
     while (value >= 1024 && index < units.length - 1) {
@@ -108,14 +107,14 @@ export function ExportLogViewer({
   };
 
   return (
-    <div className="rounded-lg border bg-card/50">
+    <SectionPanel variant="subtle" className="p-0 overflow-hidden">
       <div
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}
         onClick={(): void => onToggle?.(!isOpen)}
         onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             onToggle?.(!isOpen);
           }
@@ -125,7 +124,7 @@ export function ExportLogViewer({
         <div className="flex items-center gap-2">
           <ChevronDown
             size={16}
-            className={`transition-transform ${isOpen ? "rotate-0" : "-rotate-90"}`}
+            className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}
           />
           <span className="font-semibold text-sm text-gray-200">
             Export Logs ({logs.length})
@@ -142,14 +141,14 @@ export function ExportLogViewer({
           className="text-xs"
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? "Copied" : "Copy"}
+          {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
 
       {isOpen && (
         <div className="border-t border px-4 py-3 bg-card/50 max-h-96 overflow-y-auto">
           {imagePayloadSummary && (
-            <div className="mb-3 rounded-md border border-border bg-card/70 p-2 text-[11px] text-gray-300">
+            <SectionPanel variant="subtle-compact" className="mb-3 p-2 text-[11px] text-gray-300">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">
                 Image payload summary
               </div>
@@ -177,16 +176,16 @@ export function ExportLogViewer({
                   <span>Resized: {imagePayloadSummary.resizedCount}</span>
                 ) : null}
               </div>
-            </div>
+            </SectionPanel>
           )}
           <div className="space-y-2 font-mono text-xs">
             {logs.map((log: ExportLog, index: number) => {
               const bgColor =
-                log.level === "error"
-                  ? "bg-red-900/10 text-red-300"
-                  : log.level === "warn"
-                    ? "bg-yellow-900/10 text-yellow-300"
-                    : "bg-gray-800/30 text-gray-300";
+                log.level === 'error'
+                  ? 'bg-red-900/10 text-red-300'
+                  : log.level === 'warn'
+                    ? 'bg-yellow-900/10 text-yellow-300'
+                    : 'bg-gray-800/30 text-gray-300';
 
               return (
                 <div key={index} className={`p-2 rounded ${bgColor}`}>
@@ -216,6 +215,6 @@ export function ExportLogViewer({
           </div>
         </div>
       )}
-    </div>
+    </SectionPanel>
   );
 }

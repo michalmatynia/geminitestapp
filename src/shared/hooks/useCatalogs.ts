@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
 interface CatalogOption {
   id: string;
@@ -10,10 +10,10 @@ interface CatalogOption {
 
 export function useCatalogs(): ReturnType<typeof useQuery<CatalogOption[]>> {
   return useQuery({
-    queryKey: ["catalogs"],
+    queryKey: ['catalogs'],
     queryFn: async () => {
-      const res = await fetch("/api/catalogs");
-      if (!res.ok) throw new Error("Failed to load catalogs");
+      const res = await fetch('/api/catalogs');
+      if (!res.ok) throw new Error('Failed to load catalogs');
       return (await res.json()) as CatalogOption[];
     },
   });

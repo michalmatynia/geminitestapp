@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import Papa from "papaparse";
+import { NextRequest, NextResponse } from 'next/server';
+import Papa from 'papaparse';
 
-import { getProductRepository, productCreateSchema } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { getProductRepository, productCreateSchema } from '@/features/products/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 interface CsvRow {
   [key: string]: string;
@@ -14,10 +14,10 @@ interface CsvRow {
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get('file') as File;
 
     if (!file) {
-      throw badRequestError("No file uploaded");
+      throw badRequestError('No file uploaded');
     }
 
     const text = await file.text();
@@ -27,17 +27,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     for (const row of parsed.data) {
       const productData = {
-        sku: row["SKU"],
+        sku: row['SKU'],
 
-        name_pl: (row["Name PL"] ?? "").toString().trim(),
-        name_en: (row["Name EN"] ?? "").toString().trim(),
-        name_de: (row["Name DE"] ?? "").toString().trim(),
-        price: row["Cena sprzedaży Retail Online (in EUR)"]
-          ? parseInt(row["Cena sprzedaży Retail Online (in EUR)"])
+        name_pl: (row['Name PL'] ?? '').toString().trim(),
+        name_en: (row['Name EN'] ?? '').toString().trim(),
+        name_de: (row['Name DE'] ?? '').toString().trim(),
+        price: row['Cena sprzedaży Retail Online (in EUR)']
+          ? parseInt(row['Cena sprzedaży Retail Online (in EUR)'])
           : 0,
-        description_en: `${row["EN"]}`,
-        description_de: `${row["DE"]}`,
-        description_pl: `${row["PL"]}`,
+        description_en: `${row['EN']}`,
+        description_de: `${row['DE']}`,
+        description_pl: `${row['PL']}`,
       };
 
       // Filter out entries with null or empty sku
@@ -47,14 +47,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
 
-    return NextResponse.json({ message: "CSV imported successfully" });
+    return NextResponse.json({ message: 'CSV imported successfully' });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "import.POST",
-      fallbackMessage: "Error importing CSV",
+      source: 'import.POST',
+      fallbackMessage: 'Error importing CSV',
     });
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "import.POST" });
+export const POST = apiHandler(POST_handler, { source: 'import.POST' });

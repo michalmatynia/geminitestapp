@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { uploadAsset3D, deleteAsset3D } from "@/features/viewer3d/utils/asset3dUploader";
-import fs from "fs/promises";
-import { prismaAsset3DRepository } from "@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository";
+import fs from 'fs/promises';
 
-vi.mock("fs/promises", () => ({
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { prismaAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
+import { uploadAsset3D, deleteAsset3D } from '@/features/viewer3d/utils/asset3dUploader';
+
+vi.mock('fs/promises', () => ({
   default: {
     mkdir: vi.fn().mockResolvedValue(undefined),
     writeFile: vi.fn().mockResolvedValue(undefined),
@@ -11,7 +13,7 @@ vi.mock("fs/promises", () => ({
   },
 }));
 
-vi.mock("@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository", () => ({
+vi.mock('@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository', () => ({
   prismaAsset3DRepository: {
     createAsset3D: vi.fn(),
     getAsset3DById: vi.fn(),
@@ -19,58 +21,58 @@ vi.mock("@/features/viewer3d/services/asset3d-repository/prisma-asset3d-reposito
   },
 }));
 
-describe("asset3dUploader", () => {
+describe('asset3dUploader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("uploadAsset3D", () => {
-    it("should upload a valid file and save to repository", async () => {
-      const file = new File(["content"], "test.glb", { type: "model/gltf-binary" });
+  describe('uploadAsset3D', () => {
+    it('should upload a valid file and save to repository', async () => {
+      const file = new File(['content'], 'test.glb', { type: 'model/gltf-binary' });
       // jsdom might not have arrayBuffer on File
       if (!file.arrayBuffer) {
         file.arrayBuffer = () => Promise.resolve(new ArrayBuffer(8));
       }
-      const mockResult = { id: "1", filename: "test.glb" };
+      const mockResult = { id: '1', filename: 'test.glb' };
       vi.mocked(prismaAsset3DRepository.createAsset3D).mockResolvedValue(mockResult as any);
 
-      const result = await uploadAsset3D(file, { name: "Test Asset" });
+      const result = await uploadAsset3D(file, { name: 'Test Asset' });
 
       expect(vi.mocked(fs.mkdir)).toHaveBeenCalled();
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalled();
       expect(prismaAsset3DRepository.createAsset3D).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: "Test Asset",
-          filename: expect.stringContaining("test.glb"),
+          name: 'Test Asset',
+          filename: expect.stringContaining('test.glb'),
           size: file.size,
         })
       );
       expect(result).toEqual(mockResult);
     });
 
-    it("should throw error for invalid file type", async () => {
-      const file = new File(["content"], "test.txt", { type: "text/plain" });
-      await expect(uploadAsset3D(file)).rejects.toThrow("Invalid 3D asset file type");
+    it('should throw error for invalid file type', async () => {
+      const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+      await expect(uploadAsset3D(file)).rejects.toThrow('Invalid 3D asset file type');
     });
   });
 
-  describe("deleteAsset3D", () => {
-    it("should delete file from disk and database", async () => {
-      const mockAsset = { id: "1", filepath: "/uploads/assets3d/test.glb" };
+  describe('deleteAsset3D', () => {
+    it('should delete file from disk and database', async () => {
+      const mockAsset = { id: '1', filepath: '/uploads/assets3d/test.glb' };
       vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(mockAsset as any);
       vi.mocked(prismaAsset3DRepository.deleteAsset3D).mockResolvedValue(mockAsset as any);
 
-      const result = await deleteAsset3D("1");
+      const result = await deleteAsset3D('1');
 
       expect(result).toBe(true);
       expect(vi.mocked(fs.unlink)).toHaveBeenCalled();
-      expect(prismaAsset3DRepository.deleteAsset3D).toHaveBeenCalledWith("1");
+      expect(prismaAsset3DRepository.deleteAsset3D).toHaveBeenCalledWith('1');
     });
 
-    it("should return false if asset not found", async () => {
+    it('should return false if asset not found', async () => {
       vi.mocked(prismaAsset3DRepository.getAsset3DById).mockResolvedValue(null);
 
-      const result = await deleteAsset3D("non-existent");
+      const result = await deleteAsset3D('non-existent');
 
       expect(result).toBe(false);
       expect(vi.mocked(fs.unlink)).not.toHaveBeenCalled();

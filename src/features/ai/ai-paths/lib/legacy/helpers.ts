@@ -10,7 +10,7 @@ import type {
   NodeType,
   PathConfig,
   PathMeta,
-} from "@/shared/types/ai-paths";
+} from '@/shared/types/ai-paths';
 
 type LegacyUpdaterConfig = {
   targetField?: string;
@@ -21,138 +21,139 @@ type LegacyUpdaterConfig = {
   }>;
   entityType?: string;
   idField?: string;
-  mode?: "replace" | "append";
+  mode?: 'replace' | 'append';
 };
 
-const NODE_WIDTH = 280;
-const NODE_MIN_HEIGHT = 160;
-const CANVAS_WIDTH = 2200;
-const CANVAS_HEIGHT = 1400;
+const NODE_WIDTH = 404;
+const NODE_MIN_HEIGHT = 230;
+const CANVAS_WIDTH = 8800;
+const CANVAS_HEIGHT = 5600;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 1.6;
 const VIEW_MARGIN = 40;
-const PORT_GAP = 18;
-const PORT_SIZE = 10;
-const DEFAULT_CONTEXT_ROLE = "entity";
-const TRIGGER_INPUT_PORTS = ["context"];
-const TRIGGER_OUTPUT_PORTS = ["trigger", "triggerName", "context", "meta", "entityId", "entityType"];
-const CONTEXT_INPUT_PORTS = ["context"];
-const CONTEXT_OUTPUT_PORTS = ["context", "entityId", "entityType", "entityJson"];
-const SIMULATION_INPUT_PORTS = ["trigger"];
-const SIMULATION_OUTPUT_PORTS = ["context", "entityId", "entityType", "productId"];
-const DESCRIPTION_OUTPUT_PORTS = ["description_en"];
+const PORT_GAP = 26;
+const PORT_SIZE = 14;
+const PORT_STACK_TOP = Math.round(NODE_MIN_HEIGHT * 0.3);
+const DEFAULT_CONTEXT_ROLE = 'entity';
+const TRIGGER_INPUT_PORTS = ['context'];
+const TRIGGER_OUTPUT_PORTS = ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'];
+const CONTEXT_INPUT_PORTS = ['context'];
+const CONTEXT_OUTPUT_PORTS = ['context', 'entityId', 'entityType', 'entityJson'];
+const SIMULATION_INPUT_PORTS = ['trigger'];
+const SIMULATION_OUTPUT_PORTS = ['context', 'entityId', 'entityType', 'productId'];
+const DESCRIPTION_OUTPUT_PORTS = ['description_en'];
 const BUNDLE_INPUT_PORTS = [
-  "context",
-  "meta",
-  "trigger",
-  "triggerName",
-  "result",
-  "entityJson",
-  "entityId",
-  "entityType",
-  "value",
-  "errors",
-  "valid",
-  "description_en",
-  "prompt",
+  'context',
+  'meta',
+  'trigger',
+  'triggerName',
+  'result',
+  'entityJson',
+  'entityId',
+  'entityType',
+  'value',
+  'errors',
+  'valid',
+  'description_en',
+  'prompt',
 ];
 const TEMPLATE_INPUT_PORTS = [
-  "context",
-  "meta",
-  "trigger",
-  "triggerName",
-  "result",
-  "entityJson",
-  "entityId",
-  "entityType",
-  "value",
-  "bundle",
-  "description_en",
-  "prompt",
+  'context',
+  'meta',
+  'trigger',
+  'triggerName',
+  'result',
+  'entityJson',
+  'entityId',
+  'entityType',
+  'value',
+  'bundle',
+  'description_en',
+  'prompt',
 ];
 const ROUTER_INPUT_PORTS = [
-  "context",
-  "bundle",
-  "prompt",
-  "result",
-  "value",
-  "valid",
-  "errors",
+  'context',
+  'bundle',
+  'prompt',
+  'result',
+  'value',
+  'valid',
+  'errors',
 ];
 const ROUTER_OUTPUT_PORTS = [
-  "context",
-  "bundle",
-  "prompt",
-  "result",
-  "value",
-  "valid",
-  "errors",
+  'context',
+  'bundle',
+  'prompt',
+  'result',
+  'value',
+  'valid',
+  'errors',
 ];
-const DELAY_INPUT_PORTS = ["context", "bundle", "prompt", "result", "value"];
-const DELAY_OUTPUT_PORTS = ["context", "bundle", "prompt", "result", "value"];
+const DELAY_INPUT_PORTS = ['context', 'bundle', 'prompt', 'result', 'value'];
+const DELAY_OUTPUT_PORTS = ['context', 'bundle', 'prompt', 'result', 'value'];
 const HTTP_INPUT_PORTS = [
-  "context",
-  "bundle",
-  "prompt",
-  "result",
-  "value",
-  "entityId",
-  "entityType",
+  'context',
+  'bundle',
+  'prompt',
+  'result',
+  'value',
+  'entityId',
+  'entityType',
 ];
 const DATABASE_INPUT_PORTS = [
-  "entityId",
-  "entityType",
-  "productId",
-  "context",
-  "query",
-  "value",
-  "bundle",
-  "result",
-  "content_en",
+  'entityId',
+  'entityType',
+  'productId',
+  'context',
+  'query',
+  'value',
+  'bundle',
+  'result',
+  'content_en',
 ];
 const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: "mongodb",
-  collection: "products",
-  mode: "preset",
-  preset: "by_id",
-  field: "_id",
-  idType: "string",
-  queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+  provider: 'mongodb',
+  collection: 'products',
+  mode: 'preset',
+  preset: 'by_id',
+  field: '_id',
+  idType: 'string',
+  queryTemplate: '{\n  "_id": "{{value}}"\n}',
   limit: 20,
-  sort: "",
-  sortPresetId: "custom",
-  projection: "",
-  projectionPresetId: "custom",
+  sort: '',
+  sortPresetId: 'custom',
+  projection: '',
+  projectionPresetId: 'custom',
   single: false,
 };
 
 const DB_COLLECTION_OPTIONS = [
-  { value: "products", label: "Products" },
-  { value: "product_drafts", label: "Product Drafts" },
-  { value: "product_categories", label: "Product Categories" },
-  { value: "product_tags", label: "Product Tags" },
-  { value: "catalogs", label: "Catalogs" },
-  { value: "image_files", label: "Image Files" },
-  { value: "product_listings", label: "Product Listings" },
-  { value: "product_ai_jobs", label: "Product AI Jobs" },
-  { value: "integrations", label: "Integrations" },
-  { value: "integration_connections", label: "Integration Connections" },
-  { value: "settings", label: "Settings" },
-  { value: "users", label: "Users" },
-  { value: "user_preferences", label: "User Preferences" },
-  { value: "languages", label: "Languages" },
-  { value: "system_logs", label: "System Logs" },
-  { value: "notes", label: "Notes" },
-  { value: "tags", label: "Note Tags" },
-  { value: "categories", label: "Note Categories" },
-  { value: "notebooks", label: "Note Notebooks" },
-  { value: "noteFiles", label: "Note Files" },
-  { value: "themes", label: "Note Themes" },
-  { value: "chatbot_sessions", label: "Chatbot Sessions" },
-  { value: "auth_security_attempts", label: "Auth Security Attempts" },
-  { value: "auth_security_profiles", label: "Auth Security Profiles" },
-  { value: "auth_login_challenges", label: "Auth Login Challenges" },
-  { value: "custom", label: "Custom (allowlisted only)" },
+  { value: 'products', label: 'Products' },
+  { value: 'product_drafts', label: 'Product Drafts' },
+  { value: 'product_categories', label: 'Product Categories' },
+  { value: 'product_tags', label: 'Product Tags' },
+  { value: 'catalogs', label: 'Catalogs' },
+  { value: 'image_files', label: 'Image Files' },
+  { value: 'product_listings', label: 'Product Listings' },
+  { value: 'product_ai_jobs', label: 'Product AI Jobs' },
+  { value: 'integrations', label: 'Integrations' },
+  { value: 'integration_connections', label: 'Integration Connections' },
+  { value: 'settings', label: 'Settings' },
+  { value: 'users', label: 'Users' },
+  { value: 'user_preferences', label: 'User Preferences' },
+  { value: 'languages', label: 'Languages' },
+  { value: 'system_logs', label: 'System Logs' },
+  { value: 'notes', label: 'Notes' },
+  { value: 'tags', label: 'Note Tags' },
+  { value: 'categories', label: 'Note Categories' },
+  { value: 'notebooks', label: 'Note Notebooks' },
+  { value: 'noteFiles', label: 'Note Files' },
+  { value: 'themes', label: 'Note Themes' },
+  { value: 'chatbot_sessions', label: 'Chatbot Sessions' },
+  { value: 'auth_security_attempts', label: 'Auth Security Attempts' },
+  { value: 'auth_security_profiles', label: 'Auth Security Profiles' },
+  { value: 'auth_login_challenges', label: 'Auth Login Challenges' },
+  { value: 'custom', label: 'Custom (allowlisted only)' },
 ];
 
 const CONTEXT_PRESET_FIELDS: Record<
@@ -160,431 +161,431 @@ const CONTEXT_PRESET_FIELDS: Record<
   { light: string[]; medium: string[]; full: string[]; suggested: string[] }
 > = {
   product: {
-    light: ["id", "sku", "name_en", "name_pl", "name_de", "price", "stock", "imageLinks"],
+    light: ['id', 'sku', 'name_en', 'name_pl', 'name_de', 'price', 'stock', 'imageLinks'],
     medium: [
-      "id",
-      "sku",
-      "name_en",
-      "name_pl",
-      "name_de",
-      "price",
-      "stock",
-      "imageLinks",
-      "description_en",
-      "description_pl",
-      "description_de",
-      "catalogs",
-      "parameters",
-      "supplierName",
-      "supplierLink",
-      "createdAt",
-      "updatedAt",
+      'id',
+      'sku',
+      'name_en',
+      'name_pl',
+      'name_de',
+      'price',
+      'stock',
+      'imageLinks',
+      'description_en',
+      'description_pl',
+      'description_de',
+      'catalogs',
+      'parameters',
+      'supplierName',
+      'supplierLink',
+      'createdAt',
+      'updatedAt',
     ],
     full: [],
     suggested: [
-      "id",
-      "sku",
-      "name_en",
-      "name_pl",
-      "name_de",
-      "description_en",
-      "price",
-      "stock",
-      "imageLinks",
-      "catalogs",
-      "parameters",
-      "supplierName",
-      "supplierLink",
-      "createdAt",
-      "updatedAt",
+      'id',
+      'sku',
+      'name_en',
+      'name_pl',
+      'name_de',
+      'description_en',
+      'price',
+      'stock',
+      'imageLinks',
+      'catalogs',
+      'parameters',
+      'supplierName',
+      'supplierLink',
+      'createdAt',
+      'updatedAt',
     ],
   },
   note: {
-    light: ["id", "title", "content", "notebookId", "isPinned", "isFavorite", "updatedAt"],
+    light: ['id', 'title', 'content', 'notebookId', 'isPinned', 'isFavorite', 'updatedAt'],
     medium: [
-      "id",
-      "title",
-      "content",
-      "notebookId",
-      "isPinned",
-      "isFavorite",
-      "isArchived",
-      "editorType",
-      "color",
-      "tags",
-      "categories",
-      "createdAt",
-      "updatedAt",
+      'id',
+      'title',
+      'content',
+      'notebookId',
+      'isPinned',
+      'isFavorite',
+      'isArchived',
+      'editorType',
+      'color',
+      'tags',
+      'categories',
+      'createdAt',
+      'updatedAt',
     ],
     full: [],
     suggested: [
-      "id",
-      "title",
-      "content",
-      "notebookId",
-      "tags",
-      "categories",
-      "relationsFrom",
-      "relationsTo",
-      "isPinned",
-      "isFavorite",
-      "isArchived",
-      "editorType",
-      "color",
-      "createdAt",
-      "updatedAt",
+      'id',
+      'title',
+      'content',
+      'notebookId',
+      'tags',
+      'categories',
+      'relationsFrom',
+      'relationsTo',
+      'isPinned',
+      'isFavorite',
+      'isArchived',
+      'editorType',
+      'color',
+      'createdAt',
+      'updatedAt',
     ],
   },
   default: {
-    light: ["id", "name", "title", "status", "updatedAt"],
-    medium: ["id", "name", "title", "status", "createdAt", "updatedAt", "meta"],
+    light: ['id', 'name', 'title', 'status', 'updatedAt'],
+    medium: ['id', 'name', 'title', 'status', 'createdAt', 'updatedAt', 'meta'],
     full: [],
-    suggested: ["id", "name", "title", "status", "createdAt", "updatedAt", "meta"],
+    suggested: ['id', 'name', 'title', 'status', 'createdAt', 'updatedAt', 'meta'],
   },
 };
 
 const PARSER_PRESETS = [
   {
-    id: "product_core",
-    label: "Product: Core",
-    description: "id, title, images, content_en, sku, price, stock",
+    id: 'product_core',
+    label: 'Product: Core',
+    description: 'id, title, images, content_en, sku, price, stock',
     mappings: {
-      productId: "$.id",
-      title: "$.title",
-      images: "$.images",
-      content_en: "$.content_en",
-      sku: "$.sku",
-      price: "$.price",
-      stock: "$.stock",
+      productId: '$.id',
+      title: '$.title',
+      images: '$.images',
+      content_en: '$.content_en',
+      sku: '$.sku',
+      price: '$.price',
+      stock: '$.stock',
     },
   },
   {
-    id: "product_media",
-    label: "Product: Media",
-    description: "imageLinks, gallery, videos",
+    id: 'product_media',
+    label: 'Product: Media',
+    description: 'imageLinks, gallery, videos',
     mappings: {
-      images: "$.imageLinks",
-      gallery: "$.gallery",
-      videos: "$.videos",
+      images: '$.imageLinks',
+      gallery: '$.gallery',
+      videos: '$.videos',
     },
   },
   {
-    id: "note_core",
-    label: "Note: Core",
-    description: "id, title, content, tags, updatedAt",
+    id: 'note_core',
+    label: 'Note: Core',
+    description: 'id, title, content, tags, updatedAt',
     mappings: {
-      noteId: "$.id",
-      title: "$.title",
-      content: "$.content",
-      tags: "$.tags",
-      updatedAt: "$.updatedAt",
+      noteId: '$.id',
+      title: '$.title',
+      content: '$.content',
+      tags: '$.tags',
+      updatedAt: '$.updatedAt',
     },
   },
   {
-    id: "chat_message",
-    label: "Chat: Message",
-    description: "id, role, content, createdAt",
+    id: 'chat_message',
+    label: 'Chat: Message',
+    description: 'id, role, content, createdAt',
     mappings: {
-      messageId: "$.id",
-      role: "$.role",
-      content: "$.content",
-      createdAt: "$.createdAt",
+      messageId: '$.id',
+      role: '$.role',
+      content: '$.content',
+      createdAt: '$.createdAt',
     },
   },
   {
-    id: "generic_audit",
-    label: "Generic: Audit",
-    description: "id, name, title, status, createdAt, updatedAt",
+    id: 'generic_audit',
+    label: 'Generic: Audit',
+    description: 'id, name, title, status, createdAt, updatedAt',
     mappings: {
-      id: "$.id",
-      name: "$.name",
-      title: "$.title",
-      status: "$.status",
-      createdAt: "$.createdAt",
-      updatedAt: "$.updatedAt",
+      id: '$.id',
+      name: '$.name',
+      title: '$.title',
+      status: '$.status',
+      createdAt: '$.createdAt',
+      updatedAt: '$.updatedAt',
     },
   },
 ];
 
 const PARSER_PATH_OPTIONS = [
-  { label: "Common: id", value: "$.id" },
-  { label: "Common: title", value: "$.title" },
-  { label: "Common: name", value: "$.name" },
-  { label: "Common: status", value: "$.status" },
-  { label: "Common: createdAt", value: "$.createdAt" },
-  { label: "Common: updatedAt", value: "$.updatedAt" },
-  { label: "Product: sku", value: "$.sku" },
-  { label: "Product: price", value: "$.price" },
-  { label: "Product: stock", value: "$.stock" },
-  { label: "Product: content_en", value: "$.content_en" },
-  { label: "Product: name_en", value: "$.name_en" },
-  { label: "Product: name_pl", value: "$.name_pl" },
-  { label: "Product: imageLinks", value: "$.imageLinks" },
-  { label: "Product: images", value: "$.images" },
-  { label: "Product: media", value: "$.media" },
-  { label: "Product: gallery", value: "$.gallery" },
-  { label: "Product: supplierName", value: "$.supplierName" },
-  { label: "Product: catalogs", value: "$.catalogs" },
-  { label: "Note: content", value: "$.content" },
-  { label: "Note: tags", value: "$.tags" },
-  { label: "Note: notebookId", value: "$.notebookId" },
-  { label: "Chat: role", value: "$.role" },
-  { label: "Chat: messages[0].content", value: "$.messages[0].content" },
+  { label: 'Common: id', value: '$.id' },
+  { label: 'Common: title', value: '$.title' },
+  { label: 'Common: name', value: '$.name' },
+  { label: 'Common: status', value: '$.status' },
+  { label: 'Common: createdAt', value: '$.createdAt' },
+  { label: 'Common: updatedAt', value: '$.updatedAt' },
+  { label: 'Product: sku', value: '$.sku' },
+  { label: 'Product: price', value: '$.price' },
+  { label: 'Product: stock', value: '$.stock' },
+  { label: 'Product: content_en', value: '$.content_en' },
+  { label: 'Product: name_en', value: '$.name_en' },
+  { label: 'Product: name_pl', value: '$.name_pl' },
+  { label: 'Product: imageLinks', value: '$.imageLinks' },
+  { label: 'Product: images', value: '$.images' },
+  { label: 'Product: media', value: '$.media' },
+  { label: 'Product: gallery', value: '$.gallery' },
+  { label: 'Product: supplierName', value: '$.supplierName' },
+  { label: 'Product: catalogs', value: '$.catalogs' },
+  { label: 'Note: content', value: '$.content' },
+  { label: 'Note: tags', value: '$.tags' },
+  { label: 'Note: notebookId', value: '$.notebookId' },
+  { label: 'Chat: role', value: '$.role' },
+  { label: 'Chat: messages[0].content', value: '$.messages[0].content' },
 ];
 
 const VIEWER_INPUT_PORTS = [
-  "result",
-  "analysis",
-  "description",
-  "description_en",
-  "prompt",
-  "images",
-  "title",
-  "productId",
-  "content_en",
-  "context",
-  "meta",
-  "trigger",
-  "triggerName",
-  "jobId",
-  "status",
-  "entityId",
-  "entityType",
-  "entityJson",
-  "bundle",
-  "valid",
-  "errors",
-  "value",
+  'result',
+  'analysis',
+  'description',
+  'description_en',
+  'prompt',
+  'images',
+  'title',
+  'productId',
+  'content_en',
+  'context',
+  'meta',
+  'trigger',
+  'triggerName',
+  'jobId',
+  'status',
+  'entityId',
+  'entityType',
+  'entityJson',
+  'bundle',
+  'valid',
+  'errors',
+  'value',
 ];
-const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result"];
-const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
-const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
-const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];
-const MODEL_OUTPUT_PORTS = ["result", "jobId"];
+const PROMPT_INPUT_PORTS = ['bundle', 'title', 'images', 'result', 'entityId'];
+const PROMPT_OUTPUT_PORTS = ['prompt', 'images'];
+const POLL_INPUT_PORTS = ['jobId', 'query', 'value', 'entityId', 'productId', 'bundle'];
+const POLL_OUTPUT_PORTS = ['result', 'status', 'jobId', 'bundle'];
+const MODEL_OUTPUT_PORTS = ['result', 'jobId'];
 const NOTIFICATION_INPUT_PORTS = [
-  "result",
-  "prompt",
-  "value",
-  "bundle",
-  "context",
-  "meta",
-  "trigger",
-  "entityId",
+  'result',
+  'prompt',
+  'value',
+  'bundle',
+  'context',
+  'meta',
+  'trigger',
+  'entityId',
 ];
 
 const palette: NodeDefinition[] = [
   {
-    type: "trigger",
-    title: "Trigger: Product Modal",
-    description: "Runs when Context Filter is clicked inside Product modal.",
+    type: 'trigger',
+    title: 'Trigger: Product Modal',
+    description: 'Runs when Context Filter is clicked inside Product modal.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
   },
   {
-    type: "trigger",
-    title: "Trigger: Bulk Generate",
-    description: "Runs from bulk action in Product list.",
+    type: 'trigger',
+    title: 'Trigger: Bulk Generate',
+    description: 'Runs from bulk action in Product list.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
   },
   {
-    type: "trigger",
-    title: "Trigger: On Product Save",
-    description: "Runs automatically after a product is saved.",
+    type: 'trigger',
+    title: 'Trigger: On Product Save',
+    description: 'Runs automatically after a product is saved.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
   },
   {
-    type: "simulation",
-    title: "Simulation: Entity Modal",
-    description: "Simulate a modal action by Entity ID.",
+    type: 'simulation',
+    title: 'Simulation: Entity Modal',
+    description: 'Simulate a modal action by Entity ID.',
     inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
   },
   {
-    type: "viewer",
-    title: "Result Viewer",
-    description: "Preview outputs connected from other nodes.",
+    type: 'viewer',
+    title: 'Result Viewer',
+    description: 'Preview outputs connected from other nodes.',
     inputs: VIEWER_INPUT_PORTS,
     outputs: [],
   },
   {
-    type: "notification",
-    title: "Toast Notification",
-    description: "Display an instant toast from incoming results.",
+    type: 'notification',
+    title: 'Toast Notification',
+    description: 'Display an instant toast from incoming results.',
     inputs: NOTIFICATION_INPUT_PORTS,
     outputs: [],
   },
   {
-    type: "ai_description",
-    title: "AI Description Generator",
-    description: "Runs the AI Description pipeline to produce description_en.",
-    inputs: ["entityJson", "images", "title"],
+    type: 'ai_description',
+    title: 'AI Description Generator',
+    description: 'Runs the AI Description pipeline to produce description_en.',
+    inputs: ['entityJson', 'images', 'title'],
     outputs: DESCRIPTION_OUTPUT_PORTS,
   },
   {
-    type: "description_updater",
-    title: "Description Updater",
-    description: "Writes description_en back to the product.",
-    inputs: ["productId", "description_en"],
-    outputs: ["description_en"],
+    type: 'description_updater',
+    title: 'Description Updater',
+    description: 'Writes description_en back to the product.',
+    inputs: ['productId', 'description_en'],
+    outputs: ['description_en'],
   },
   {
-    type: "context",
-    title: "Context Filter",
-    description: "Filter incoming context payloads into scoped entity data.",
+    type: 'context',
+    title: 'Context Filter',
+    description: 'Filter incoming context payloads into scoped entity data.',
     inputs: CONTEXT_INPUT_PORTS,
-    outputs: ["context", "entityId", "entityType", "entityJson"],
+    outputs: ['context', 'entityId', 'entityType', 'entityJson'],
   },
   {
-    type: "parser",
-    title: "JSON Parser",
-    description: "Extract fields into outputs or a single bundle.",
-    inputs: ["entityJson", "context"],
-    outputs: ["productId", "title", "images", "content_en"],
+    type: 'parser',
+    title: 'JSON Parser',
+    description: 'Extract fields into outputs or a single bundle.',
+    inputs: ['entityJson', 'context'],
+    outputs: ['productId', 'title', 'images', 'content_en'],
   },
   {
-    type: "mapper",
-    title: "JSON Mapper",
-    description: "Map context to custom outputs.",
-    inputs: ["context"],
-    outputs: ["value"],
+    type: 'mapper',
+    title: 'JSON Mapper',
+    description: 'Map context to custom outputs.',
+    inputs: ['context', 'result'],
+    outputs: ['value', 'result'],
   },
   {
-    type: "mutator",
-    title: "Mutator",
-    description: "Mutate context values with templates.",
-    inputs: ["context"],
-    outputs: ["context"],
+    type: 'mutator',
+    title: 'Mutator',
+    description: 'Mutate context values with templates.',
+    inputs: ['context'],
+    outputs: ['context'],
   },
   {
-    type: "validator",
-    title: "Validator",
-    description: "Validate required fields.",
-    inputs: ["context"],
-    outputs: ["context", "valid", "errors"],
+    type: 'validator',
+    title: 'Validator',
+    description: 'Validate required fields.',
+    inputs: ['context'],
+    outputs: ['context', 'valid', 'errors'],
   },
   {
-    type: "compare",
-    title: "Compare",
-    description: "Compare a value and emit valid/errors.",
-    inputs: ["value"],
-    outputs: ["value", "valid", "errors"],
+    type: 'compare',
+    title: 'Compare',
+    description: 'Compare a value and emit valid/errors.',
+    inputs: ['value'],
+    outputs: ['value', 'valid', 'errors'],
   },
   {
-    type: "router",
-    title: "Router",
-    description: "Route payloads based on a condition.",
+    type: 'router',
+    title: 'Router',
+    description: 'Route payloads based on a condition.',
     inputs: ROUTER_INPUT_PORTS,
     outputs: ROUTER_OUTPUT_PORTS,
   },
   {
-    type: "delay",
-    title: "Delay",
-    description: "Delay signals to sequence flows.",
+    type: 'delay',
+    title: 'Delay',
+    description: 'Delay signals to sequence flows.',
     inputs: DELAY_INPUT_PORTS,
     outputs: DELAY_OUTPUT_PORTS,
   },
   {
-    type: "poll",
-    title: "Poll Job",
-    description: "Poll an AI job or database query until it completes.",
+    type: 'poll',
+    title: 'Poll Job',
+    description: 'Poll an AI job or database query until it completes.',
     inputs: POLL_INPUT_PORTS,
     outputs: POLL_OUTPUT_PORTS,
   },
   {
-    type: "http",
-    title: "HTTP Fetch",
-    description: "Call external APIs with templated inputs.",
+    type: 'http',
+    title: 'HTTP Fetch',
+    description: 'Call external APIs with templated inputs.',
     inputs: HTTP_INPUT_PORTS,
-    outputs: ["value", "bundle"],
+    outputs: ['value', 'bundle'],
   },
   {
-    type: "database",
-    title: "Database",
-    description: "Query, update, insert, or delete records.",
+    type: 'database',
+    title: 'Database',
+    description: 'Query, update, insert, or delete records.',
     inputs: DATABASE_INPUT_PORTS,
-    outputs: ["result", "bundle", "content_en"],
+    outputs: ['result', 'bundle', 'content_en'],
   },
   {
-    type: "constant",
-    title: "Constant",
-    description: "Emit a constant value as a signal.",
+    type: 'constant',
+    title: 'Constant',
+    description: 'Emit a constant value as a signal.',
     inputs: [],
-    outputs: ["value"],
+    outputs: ['value'],
   },
   {
-    type: "math",
-    title: "Math",
-    description: "Apply numeric transformation to a value.",
-    inputs: ["value"],
-    outputs: ["value"],
+    type: 'math',
+    title: 'Math',
+    description: 'Apply numeric transformation to a value.',
+    inputs: ['value'],
+    outputs: ['value'],
   },
   {
-    type: "gate",
-    title: "Gate",
-    description: "Allow context through when valid is true.",
-    inputs: ["context", "valid", "errors"],
-    outputs: ["context", "valid", "errors"],
+    type: 'gate',
+    title: 'Gate',
+    description: 'Allow context through when valid is true.',
+    inputs: ['context', 'valid', 'errors'],
+    outputs: ['context', 'valid', 'errors'],
   },
   {
-    type: "bundle",
-    title: "Bundle",
-    description: "Cluster inputs into a single bundle output.",
+    type: 'bundle',
+    title: 'Bundle',
+    description: 'Cluster inputs into a single bundle output.',
     inputs: BUNDLE_INPUT_PORTS,
-    outputs: ["bundle"],
+    outputs: ['bundle'],
   },
   {
-    type: "template",
-    title: "Template",
-    description: "Create prompts from template strings.",
+    type: 'template',
+    title: 'Template',
+    description: 'Create prompts from template strings.',
     inputs: TEMPLATE_INPUT_PORTS,
-    outputs: ["prompt"],
+    outputs: ['prompt'],
   },
   {
-    type: "prompt",
-    title: "Prompt",
-    description: "Formats text with placeholders.",
+    type: 'prompt',
+    title: 'Prompt',
+    description: 'Formats text with placeholders.',
     inputs: PROMPT_INPUT_PORTS,
     outputs: PROMPT_OUTPUT_PORTS,
   },
   {
-    type: "model",
-    title: "Model",
-    description: "Runs a selected model.",
-    inputs: ["prompt", "images"],
+    type: 'model',
+    title: 'Model',
+    description: 'Runs a selected model.',
+    inputs: ['prompt', 'images'],
     outputs: MODEL_OUTPUT_PORTS,
   },
 ];
 
-const PATH_INDEX_KEY = "ai_paths_index";
-const AI_PATHS_LAST_ERROR_KEY = "ai_paths_last_error";
-const PATH_CONFIG_PREFIX = "ai_paths_config_";
-const PATH_DEBUG_PREFIX = "ai_paths_debug_";
-const CLUSTER_PRESETS_KEY = "ai_paths_cluster_presets";
-const DB_QUERY_PRESETS_KEY = "ai_paths_db_query_presets";
-const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
+const PATH_INDEX_KEY = 'ai_paths_index';
+const AI_PATHS_LAST_ERROR_KEY = 'ai_paths_last_error';
+const PATH_CONFIG_PREFIX = 'ai_paths_config_';
+const PATH_DEBUG_PREFIX = 'ai_paths_debug_';
+const CLUSTER_PRESETS_KEY = 'ai_paths_cluster_presets';
+const DB_QUERY_PRESETS_KEY = 'ai_paths_db_query_presets';
+const DB_NODE_PRESETS_KEY = 'ai_paths_db_node_presets';
 const STORAGE_VERSION = 1;
-const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
+const DEFAULT_MODELS = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 const TRIGGER_EVENTS = [
-  { id: "manual", label: "Manual / UI Trigger" },
+  { id: 'manual', label: 'Manual / UI Trigger' },
 ];
 
 const createParserMappings = (outputs: string[]): Record<string, string> =>
   outputs.reduce<Record<string, string>>((acc: Record<string, string>, output: string): Record<string, string> => {
-    acc[output] = "";
+    acc[output] = '';
     return acc;
   }, {});
 
 const createViewerOutputs = (inputs: string[]): Record<string, string> =>
   inputs.reduce<Record<string, string>>((acc: Record<string, string>, input: string): Record<string, string> => {
-    acc[input] = "";
+    acc[input] = '';
     return acc;
   }, {});
 
 const normalizePortName = (port: string): string => {
-  if (port === "productJson") return "entityJson";
-  if (port === "simulation") return "context";
+  if (port === 'productJson') return 'entityJson';
+  if (port === 'simulation') return 'context';
   return port;
 };
 
@@ -597,32 +598,32 @@ const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
 const normalizeNodes = (items: AiNode[]): AiNode[] =>
   items.map((node: AiNode): AiNode => {
     const nodeType: string = node.type as string;
-    if (node.type === "context") {
+    if (node.type === 'context') {
       const contextConfig = node.config?.context;
       const cleanedOutputs = (node.outputs ?? []).filter(
-        (port: string): boolean => normalizePortName(port) !== "role"
+        (port: string): boolean => normalizePortName(port) !== 'role'
       );
       return {
         ...node,
-        title: node.title === "Context Grabber" ? "Context Filter" : node.title,
+        title: node.title === 'Context Grabber' ? 'Context Filter' : node.title,
         inputs: ensureUniquePorts(node.inputs ?? [], CONTEXT_INPUT_PORTS),
         outputs: ensureUniquePorts(cleanedOutputs, CONTEXT_OUTPUT_PORTS),
         config: {
           ...node.config,
           context: {
             role: contextConfig?.role ?? DEFAULT_CONTEXT_ROLE,
-            entityType: contextConfig?.entityType ?? "auto",
-            entityIdSource: contextConfig?.entityIdSource ?? "simulation",
-            entityId: contextConfig?.entityId ?? "",
-            scopeMode: contextConfig?.scopeMode ?? "full",
-            scopeTarget: contextConfig?.scopeTarget ?? "entity",
+            entityType: contextConfig?.entityType ?? 'auto',
+            entityIdSource: contextConfig?.entityIdSource ?? 'simulation',
+            entityId: contextConfig?.entityId ?? '',
+            scopeMode: contextConfig?.scopeMode ?? 'full',
+            scopeTarget: contextConfig?.scopeTarget ?? 'entity',
             includePaths: contextConfig?.includePaths ?? [],
             excludePaths: contextConfig?.excludePaths ?? [],
           },
         },
       } as AiNode;
     }
-    if (node.type === "trigger") {
+    if (node.type === 'trigger') {
       return {
         ...node,
         inputs: TRIGGER_INPUT_PORTS,
@@ -630,16 +631,16 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         config: {
           ...node.config,
           trigger: {
-            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "manual",
+            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual',
           },
         },
       };
     }
-    if (node.type === "simulation") {
+    if (node.type === 'simulation') {
       const simulationConfig = node.config?.simulation;
-      const rawEntityId = simulationConfig?.entityId ?? "";
-      const rawProductId = simulationConfig?.productId ?? "";
-      const resolvedId = rawEntityId.trim() || rawProductId.trim() || "";
+      const rawEntityId = simulationConfig?.entityId ?? '';
+      const rawProductId = simulationConfig?.productId ?? '';
+      const resolvedId = rawEntityId.trim() || rawProductId.trim() || '';
       return {
         ...node,
         inputs: SIMULATION_INPUT_PORTS,
@@ -648,20 +649,20 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
           ...node.config,
           simulation: {
             productId: rawProductId || resolvedId,
-            entityType: simulationConfig?.entityType ?? "product",
+            entityType: simulationConfig?.entityType ?? 'product',
             entityId: rawEntityId || resolvedId,
           },
         },
       };
     }
-    if (node.type === "mapper") {
+    if (node.type === 'mapper') {
       const mapperConfig = node.config?.mapper;
       const outputs =
         mapperConfig?.outputs && mapperConfig.outputs.length > 0
           ? mapperConfig.outputs
           : node.outputs.length > 0
             ? node.outputs
-            : ["value"];
+            : ['value'];
       return {
         ...node,
         outputs,
@@ -674,7 +675,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         },
       };
     }
-    if (node.type === "parser") {
+    if (node.type === 'parser') {
       const parserConfig = node.config?.parser;
       const baseMappings =
         parserConfig?.mappings ??
@@ -683,13 +684,13 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         .map((key: string): string => key.trim())
         .filter(Boolean);
       const outputsFromMappings: string[] = mappingKeys.length > 0 ? mappingKeys : node.outputs;
-      const outputMode: "bundle" | "individual" = parserConfig?.outputMode ?? "individual";
+      const outputMode: 'bundle' | 'individual' = parserConfig?.outputMode ?? 'individual';
       const hasImagesOutput: boolean = outputsFromMappings.some(
-        (key: string): boolean => key.toLowerCase() === "images"
+        (key: string): boolean => key.toLowerCase() === 'images'
       );
       const outputs =
-        outputMode === "bundle"
-          ? ["bundle", ...(hasImagesOutput ? ["images"] : [])]
+        outputMode === 'bundle'
+          ? ['bundle', ...(hasImagesOutput ? ['images'] : [])]
           : outputsFromMappings;
       return {
         ...node,
@@ -699,60 +700,60 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
           parser: {
             mappings: baseMappings,
             outputMode,
-            presetId: parserConfig?.presetId ?? PARSER_PRESETS[0]?.id ?? "custom",
+            presetId: parserConfig?.presetId ?? PARSER_PRESETS[0]?.id ?? 'custom',
           },
         },
       };
     }
-    if (node.type === "mutator") {
+    if (node.type === 'mutator') {
       return {
         ...node,
         config: {
           ...node.config,
           mutator: {
-            path: node.config?.mutator?.path ?? "entity.title",
-            valueTemplate: node.config?.mutator?.valueTemplate ?? "{{value}}",
+            path: node.config?.mutator?.path ?? 'entity.title',
+            valueTemplate: node.config?.mutator?.valueTemplate ?? '{{value}}',
           },
         },
       };
     }
-    if (node.type === "validator") {
+    if (node.type === 'validator') {
       return {
         ...node,
         config: {
           ...node.config,
           validator: {
-            requiredPaths: node.config?.validator?.requiredPaths ?? ["entity.id"],
-            mode: node.config?.validator?.mode ?? "all",
+            requiredPaths: node.config?.validator?.requiredPaths ?? ['entity.id'],
+            mode: node.config?.validator?.mode ?? 'all',
           },
         },
       };
     }
-    if (node.type === "constant") {
+    if (node.type === 'constant') {
       return {
         ...node,
         config: {
           ...node.config,
           constant: {
-            valueType: node.config?.constant?.valueType ?? "string",
-            value: node.config?.constant?.value ?? "",
+            valueType: node.config?.constant?.valueType ?? 'string',
+            value: node.config?.constant?.value ?? '',
           },
         },
       };
     }
-    if (node.type === "math") {
+    if (node.type === 'math') {
       return {
         ...node,
         config: {
           ...node.config,
           math: {
-            operation: node.config?.math?.operation ?? "add",
+            operation: node.config?.math?.operation ?? 'add',
             operand: node.config?.math?.operand ?? 0,
           },
         },
       };
     }
-    if (node.type === "template") {
+    if (node.type === 'template') {
       return {
         ...node,
         config: {
@@ -760,12 +761,12 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
           template: {
             template:
               node.config?.template?.template ??
-              "Write a summary for {{context.entity.title}}",
+              'Write a summary for {{context.entity.title}}',
           },
         },
       };
     }
-    if (node.type === "bundle") {
+    if (node.type === 'bundle') {
       return {
         ...node,
         config: {
@@ -776,33 +777,33 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         },
       };
     }
-    if (node.type === "gate") {
+    if (node.type === 'gate') {
       return {
         ...node,
         config: {
           ...node.config,
           gate: {
-            mode: node.config?.gate?.mode ?? "block",
-            failMessage: node.config?.gate?.failMessage ?? "Gate blocked",
+            mode: node.config?.gate?.mode ?? 'block',
+            failMessage: node.config?.gate?.failMessage ?? 'Gate blocked',
           },
         },
       };
     }
-    if (node.type === "compare") {
+    if (node.type === 'compare') {
       return {
         ...node,
         config: {
           ...node.config,
           compare: {
-            operator: node.config?.compare?.operator ?? "eq",
-            compareTo: node.config?.compare?.compareTo ?? "",
+            operator: node.config?.compare?.operator ?? 'eq',
+            compareTo: node.config?.compare?.compareTo ?? '',
             caseSensitive: node.config?.compare?.caseSensitive ?? false,
-            message: node.config?.compare?.message ?? "Comparison failed",
+            message: node.config?.compare?.message ?? 'Comparison failed',
           },
         },
       };
     }
-    if (node.type === "router") {
+    if (node.type === 'router') {
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, ROUTER_INPUT_PORTS),
@@ -810,14 +811,14 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         config: {
           ...node.config,
           router: {
-            mode: node.config?.router?.mode ?? "valid",
-            matchMode: node.config?.router?.matchMode ?? "truthy",
-            compareTo: node.config?.router?.compareTo ?? "",
+            mode: node.config?.router?.mode ?? 'valid',
+            matchMode: node.config?.router?.matchMode ?? 'truthy',
+            compareTo: node.config?.router?.compareTo ?? '',
           },
         },
       };
     }
-    if (node.type === "delay") {
+    if (node.type === 'delay') {
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, DELAY_INPUT_PORTS),
@@ -830,7 +831,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         },
       };
     }
-    if (node.type === "poll") {
+    if (node.type === 'poll') {
       const pollConfig = node.config?.poll;
       const pollQuery = {
         ...DEFAULT_DB_QUERY,
@@ -845,47 +846,47 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
           poll: {
             intervalMs: pollConfig?.intervalMs ?? 2000,
             maxAttempts: pollConfig?.maxAttempts ?? 30,
-            mode: pollConfig?.mode ?? "job",
+            mode: pollConfig?.mode ?? 'job',
             dbQuery: pollQuery,
-            successPath: pollConfig?.successPath ?? "status",
-            successOperator: pollConfig?.successOperator ?? "equals",
-            successValue: pollConfig?.successValue ?? "completed",
-            resultPath: pollConfig?.resultPath ?? "result",
+            successPath: pollConfig?.successPath ?? 'status',
+            successOperator: pollConfig?.successOperator ?? 'equals',
+            successValue: pollConfig?.successValue ?? 'completed',
+            resultPath: pollConfig?.resultPath ?? 'result',
           },
         },
       };
     }
-    if (node.type === "http") {
+    if (node.type === 'http') {
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, HTTP_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, ["value", "bundle"]),
+        outputs: ensureUniquePorts(node.outputs, ['value', 'bundle']),
         config: {
           ...node.config,
           http: {
-            url: node.config?.http?.url ?? "https://api.example.com",
-            method: node.config?.http?.method ?? "GET",
+            url: node.config?.http?.url ?? 'https://api.example.com',
+            method: node.config?.http?.method ?? 'GET',
             headers:
-              node.config?.http?.headers ?? "{\n  \"Content-Type\": \"application/json\"\n}",
-            bodyTemplate: node.config?.http?.bodyTemplate ?? "",
-            responseMode: node.config?.http?.responseMode ?? "json",
-            responsePath: node.config?.http?.responsePath ?? "",
+              node.config?.http?.headers ?? '{\n  "Content-Type": "application/json"\n}',
+            bodyTemplate: node.config?.http?.bodyTemplate ?? '',
+            responseMode: node.config?.http?.responseMode ?? 'json',
+            responsePath: node.config?.http?.responsePath ?? '',
           },
         },
       };
     }
-    if (node.type === "database") {
+    if (node.type === 'database') {
       const defaultQuery = {
-        provider: "auto" as const,
-        collection: "products",
-        mode: "preset" as const,
-        preset: "by_id" as const,
-        field: "_id",
-        idType: "string" as const,
-        queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+        provider: 'auto' as const,
+        collection: 'products',
+        mode: 'preset' as const,
+        preset: 'by_id' as const,
+        field: '_id',
+        idType: 'string' as const,
+        queryTemplate: '{\n  "_id": "{{value}}"\n}',
         limit: 20,
-        sort: "",
-        projection: "",
+        sort: '',
+        projection: '',
         single: false,
       };
       const queryConfig = {
@@ -896,75 +897,77 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         node.config?.database?.mappings && node.config.database.mappings.length > 0
           ? node.config.database.mappings
           : [
-              {
-                targetPath: "content_en",
-                sourcePort: node.inputs.includes("result") ? "result" : "content_en",
-              },
-            ];
+            {
+              targetPath: 'content_en',
+              sourcePort: node.inputs.includes('result') ? 'result' : 'content_en',
+            },
+          ];
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, DATABASE_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, ["result", "bundle", "content_en"]),
+        outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en']),
         config: {
           ...node.config,
           database: {
-            operation: node.config?.database?.operation ?? "query",
-            entityType: node.config?.database?.entityType ?? "product",
-            idField: node.config?.database?.idField ?? "entityId",
-            mode: node.config?.database?.mode ?? "replace",
+            operation: node.config?.database?.operation ?? 'query',
+            entityType: node.config?.database?.entityType ?? 'product',
+            idField: node.config?.database?.idField ?? 'entityId',
+            mode: node.config?.database?.mode ?? 'replace',
             mappings,
             query: queryConfig,
-            writeSource: node.config?.database?.writeSource ?? "bundle",
-            writeSourcePath: node.config?.database?.writeSourcePath ?? "",
+            writeSource: node.config?.database?.writeSource ?? 'bundle',
+            writeSourcePath: node.config?.database?.writeSourcePath ?? '',
             dryRun: node.config?.database?.dryRun ?? false,
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
+            validationRuleIds: node.config?.database?.validationRuleIds ?? [],
           },
         },
       };
     }
-    if (nodeType === "db_query") {
+    if (nodeType === 'db_query') {
       const dbQuery = {
-        provider: node.config?.dbQuery?.provider ?? "auto",
-        collection: node.config?.dbQuery?.collection ?? "products",
-        mode: node.config?.dbQuery?.mode ?? "preset",
-        preset: node.config?.dbQuery?.preset ?? "by_id",
-        field: node.config?.dbQuery?.field ?? "_id",
-        idType: node.config?.dbQuery?.idType ?? "string",
+        provider: node.config?.dbQuery?.provider ?? 'auto',
+        collection: node.config?.dbQuery?.collection ?? 'products',
+        mode: node.config?.dbQuery?.mode ?? 'preset',
+        preset: node.config?.dbQuery?.preset ?? 'by_id',
+        field: node.config?.dbQuery?.field ?? '_id',
+        idType: node.config?.dbQuery?.idType ?? 'string',
         queryTemplate:
-          node.config?.dbQuery?.queryTemplate ?? "{\n  \"_id\": \"{{value}}\"\n}",
+          node.config?.dbQuery?.queryTemplate ?? '{\n  "_id": "{{value}}"\n}',
         limit: node.config?.dbQuery?.limit ?? 20,
-        sort: node.config?.dbQuery?.sort ?? "",
-        projection: node.config?.dbQuery?.projection ?? "",
+        sort: node.config?.dbQuery?.sort ?? '',
+        projection: node.config?.dbQuery?.projection ?? '',
         single: node.config?.dbQuery?.single ?? false,
       };
       return {
         ...node,
-        type: "database",
+        type: 'database',
         inputs: ensureUniquePorts(node.inputs, DATABASE_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, ["result", "bundle", "content_en"]),
+        outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en']),
         config: {
           ...node.config,
           database: {
-            operation: "query",
-            entityType: node.config?.database?.entityType ?? "product",
-            idField: node.config?.database?.idField ?? "entityId",
-            mode: node.config?.database?.mode ?? "replace",
+            operation: 'query',
+            entityType: node.config?.database?.entityType ?? 'product',
+            idField: node.config?.database?.idField ?? 'entityId',
+            mode: node.config?.database?.mode ?? 'replace',
             mappings: node.config?.database?.mappings ?? [],
             query: dbQuery,
-            writeSource: node.config?.database?.writeSource ?? "bundle",
-            writeSourcePath: node.config?.database?.writeSourcePath ?? "",
+            writeSource: node.config?.database?.writeSource ?? 'bundle',
+            writeSourcePath: node.config?.database?.writeSourcePath ?? '',
             dryRun: node.config?.database?.dryRun ?? false,
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
+            validationRuleIds: node.config?.database?.validationRuleIds ?? [],
           },
         },
       };
     }
-    if (node.type === "ai_description") {
+    if (node.type === 'ai_description') {
       return {
         ...node,
-        inputs: ensureUniquePorts(node.inputs, ["entityJson", "images", "title"]),
+        inputs: ensureUniquePorts(node.inputs, ['entityJson', 'images', 'title']),
         outputs: ensureUniquePorts(node.outputs, DESCRIPTION_OUTPUT_PORTS),
         config: {
           ...node.config,
@@ -975,93 +978,93 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         },
       };
     }
-    if (node.type === "description_updater") {
+    if (node.type === 'description_updater') {
       return {
         ...node,
-        outputs: ensureUniquePorts(node.outputs, ["description_en"]),
+        outputs: ensureUniquePorts(node.outputs, ['description_en']),
       };
     }
-    if (node.type === "prompt") {
+    if (node.type === 'prompt') {
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, PROMPT_INPUT_PORTS),
         outputs: ensureUniquePorts(node.outputs, PROMPT_OUTPUT_PORTS),
       };
     }
-    if (node.type === "model") {
+    if (node.type === 'model') {
       return {
         ...node,
         outputs: ensureUniquePorts(node.outputs, MODEL_OUTPUT_PORTS),
         config: {
           ...node.config,
           model: {
-            modelId: node.config?.model?.modelId ?? DEFAULT_MODELS[0] ?? "gpt-4o",
+            modelId: node.config?.model?.modelId ?? DEFAULT_MODELS[0] ?? 'gpt-4o',
             temperature: node.config?.model?.temperature ?? 0.7,
             maxTokens: node.config?.model?.maxTokens ?? 800,
             vision:
               node.config?.model?.vision ??
-              node.inputs.includes("images"),
+              node.inputs.includes('images'),
             waitForResult: node.config?.model?.waitForResult ?? false,
           },
         },
       };
     }
-    if (nodeType === "updater") {
+    if (nodeType === 'updater') {
       const updaterConfig =
         (node.config as { updater?: LegacyUpdaterConfig } | undefined)?.updater ?? {};
-      const legacyTarget = updaterConfig.targetField ?? node.outputs[0] ?? "content_en";
+      const legacyTarget = updaterConfig.targetField ?? node.outputs[0] ?? 'content_en';
       const legacyMappings =
         updaterConfig.mappings && updaterConfig.mappings.length > 0
           ? updaterConfig.mappings
           : [
-              {
-                targetPath: legacyTarget,
-                sourcePort: node.inputs.includes("result") ? "result" : legacyTarget,
-              },
-            ];
+            {
+              targetPath: legacyTarget,
+              sourcePort: node.inputs.includes('result') ? 'result' : legacyTarget,
+            },
+          ];
       const defaultQuery = {
-        provider: "auto" as const,
-        collection: "products",
-        mode: "preset" as const,
-        preset: "by_id" as const,
-        field: "_id",
-        idType: "string" as const,
-        queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+        provider: 'auto' as const,
+        collection: 'products',
+        mode: 'preset' as const,
+        preset: 'by_id' as const,
+        field: '_id',
+        idType: 'string' as const,
+        queryTemplate: '{\n  "_id": "{{value}}"\n}',
         limit: 20,
-        sort: "",
-        projection: "",
+        sort: '',
+        projection: '',
         single: false,
       };
       return {
         ...node,
-        type: "database",
+        type: 'database',
         inputs: ensureUniquePorts(node.inputs, DATABASE_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, ["result", "bundle", "content_en"]),
+        outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en']),
         config: {
           ...node.config,
           database: {
-            operation: "update",
-            entityType: updaterConfig.entityType ?? "product",
-            idField: updaterConfig.idField ?? "productId",
-            mode: updaterConfig.mode ?? "replace",
+            operation: 'update',
+            entityType: updaterConfig.entityType ?? 'product',
+            idField: updaterConfig.idField ?? 'productId',
+            mode: updaterConfig.mode ?? 'replace',
             mappings: legacyMappings,
             query: {
               ...defaultQuery,
               ...(node.config?.database?.query ?? {}),
             },
-            writeSource: node.config?.database?.writeSource ?? "bundle",
-            writeSourcePath: node.config?.database?.writeSourcePath ?? "",
+            writeSource: node.config?.database?.writeSource ?? 'bundle',
+            writeSourcePath: node.config?.database?.writeSourcePath ?? '',
             dryRun: node.config?.database?.dryRun ?? false,
           },
         },
       };
     }
-    if (node.type === "viewer") {
+    if (node.type === 'viewer') {
       const normalizedInputs = ensureUniquePorts(node.inputs, VIEWER_INPUT_PORTS);
       const existingOutputs = node.config?.viewer?.outputs;
       const legacyOutput =
         (node.config as { viewer?: { sampleOutput?: string } } | undefined)?.viewer
-          ?.sampleOutput ?? "";
+          ?.sampleOutput ?? '';
       const outputs = existingOutputs ?? {
         ...createViewerOutputs(normalizedInputs),
         ...(legacyOutput ? { result: legacyOutput } : {}),
@@ -1089,144 +1092,144 @@ const getDefaultConfigForType = (
   outputs: string[],
   inputs: string[]
 ): NodeConfig | undefined => {
-  if (type === "trigger") {
-    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? "manual" } };
+  if (type === 'trigger') {
+    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? 'manual' } };
   }
-  if (type === "simulation") {
-    return { simulation: { productId: "", entityType: "product", entityId: "" } };
+  if (type === 'simulation') {
+    return { simulation: { productId: '', entityType: 'product', entityId: '' } };
   }
-  if (type === "viewer") {
+  if (type === 'viewer') {
     return { viewer: { outputs: createViewerOutputs(inputs), showImagesAsJson: false } };
   }
-  if (type === "context") {
+  if (type === 'context') {
     return {
       context: {
         role: DEFAULT_CONTEXT_ROLE,
-        entityType: "auto",
-        entityIdSource: "simulation",
-        entityId: "",
-        scopeMode: "full",
-        scopeTarget: "entity",
+        entityType: 'auto',
+        entityIdSource: 'simulation',
+        entityId: '',
+        scopeMode: 'full',
+        scopeTarget: 'entity',
         includePaths: [],
         excludePaths: [],
       },
     };
   }
-  if (type === "mapper") {
+  if (type === 'mapper') {
     return {
       mapper: {
-        outputs: outputs.length ? outputs : ["value"],
-        mappings: createParserMappings(outputs.length ? outputs : ["value"]),
+        outputs: outputs.length ? outputs : ['value'],
+        mappings: createParserMappings(outputs.length ? outputs : ['value']),
       },
     };
   }
-  if (type === "mutator") {
+  if (type === 'mutator') {
     return {
       mutator: {
-        path: "entity.title",
-        valueTemplate: "{{value}}",
+        path: 'entity.title',
+        valueTemplate: '{{value}}',
       },
     };
   }
-  if (type === "validator") {
+  if (type === 'validator') {
     return {
       validator: {
-        requiredPaths: ["entity.id"],
-        mode: "all",
+        requiredPaths: ['entity.id'],
+        mode: 'all',
       },
     };
   }
-  if (type === "constant") {
+  if (type === 'constant') {
     return {
       constant: {
-        valueType: "string",
-        value: "",
+        valueType: 'string',
+        value: '',
       },
     };
   }
-  if (type === "math") {
+  if (type === 'math') {
     return {
       math: {
-        operation: "add",
+        operation: 'add',
         operand: 0,
       },
     };
   }
-  if (type === "template") {
+  if (type === 'template') {
     return {
       template: {
-        template: "Write a summary for {{context.entity.title}}",
+        template: 'Write a summary for {{context.entity.title}}',
       },
     };
   }
-  if (type === "bundle") {
+  if (type === 'bundle') {
     return {
       bundle: {
         includePorts: [],
       },
     };
   }
-  if (type === "gate") {
+  if (type === 'gate') {
     return {
       gate: {
-        mode: "block",
-        failMessage: "Gate blocked",
+        mode: 'block',
+        failMessage: 'Gate blocked',
       },
     };
   }
-  if (type === "compare") {
+  if (type === 'compare') {
     return {
       compare: {
-        operator: "eq",
-        compareTo: "",
+        operator: 'eq',
+        compareTo: '',
         caseSensitive: false,
-        message: "Comparison failed",
+        message: 'Comparison failed',
       },
     };
   }
-  if (type === "router") {
+  if (type === 'router') {
     return {
       router: {
-        mode: "valid",
-        matchMode: "truthy",
-        compareTo: "",
+        mode: 'valid',
+        matchMode: 'truthy',
+        compareTo: '',
       },
     };
   }
-  if (type === "delay") {
+  if (type === 'delay') {
     return {
       delay: {
         ms: 300,
       },
     };
   }
-  if (type === "poll") {
+  if (type === 'poll') {
     return {
       poll: {
         intervalMs: 2000,
         maxAttempts: 30,
-        mode: "job",
+        mode: 'job',
         dbQuery: { ...DEFAULT_DB_QUERY },
-        successPath: "status",
-        successOperator: "equals",
-        successValue: "completed",
-        resultPath: "result",
+        successPath: 'status',
+        successOperator: 'equals',
+        successValue: 'completed',
+        resultPath: 'result',
       },
     };
   }
-  if (type === "http") {
+  if (type === 'http') {
     return {
       http: {
-        url: "https://api.example.com",
-        method: "GET",
-        headers: "{\n  \"Content-Type\": \"application/json\"\n}",
-        bodyTemplate: "",
-        responseMode: "json",
-        responsePath: "",
+        url: 'https://api.example.com',
+        method: 'GET',
+        headers: '{\n  "Content-Type": "application/json"\n}',
+        bodyTemplate: '',
+        responseMode: 'json',
+        responsePath: '',
       },
     };
   }
-  if (type === "ai_description") {
+  if (type === 'ai_description') {
     return {
       description: {
         visionOutputEnabled: true,
@@ -1234,57 +1237,57 @@ const getDefaultConfigForType = (
       },
     };
   }
-  if (type === "parser") {
+  if (type === 'parser') {
     return {
       parser: {
         mappings: createParserMappings(outputs),
-        outputMode: "individual",
-        presetId: PARSER_PRESETS[0]?.id ?? "custom",
+        outputMode: 'individual',
+        presetId: PARSER_PRESETS[0]?.id ?? 'custom',
       },
     };
   }
-  if (type === "prompt") {
-    return { prompt: { template: "" } };
+  if (type === 'prompt') {
+    return { prompt: { template: '' } };
   }
-  if (type === "model") {
+  if (type === 'model') {
     return {
       model: {
-        modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
+        modelId: DEFAULT_MODELS[0] ?? 'gpt-4o',
         temperature: 0.7,
         maxTokens: 800,
-        vision: inputs.includes("images"),
+        vision: inputs.includes('images'),
         waitForResult: true,
       },
     };
   }
-  if (type === "database") {
+  if (type === 'database') {
     return {
       database: {
-        operation: "query",
-        entityType: "product",
-        idField: "entityId",
-        mode: "replace",
+        operation: 'query',
+        entityType: 'product',
+        idField: 'entityId',
+        mode: 'replace',
         mappings: [
           {
-            targetPath: "content_en",
-            sourcePort: inputs.includes("result") ? "result" : "content_en",
+            targetPath: 'content_en',
+            sourcePort: inputs.includes('result') ? 'result' : 'content_en',
           },
         ],
         query: {
-          provider: "mongodb",
-          collection: "products",
-          mode: "preset",
-          preset: "by_id",
-          field: "_id",
-          idType: "string",
-          queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+          provider: 'mongodb',
+          collection: 'products',
+          mode: 'preset',
+          preset: 'by_id',
+          field: '_id',
+          idType: 'string',
+          queryTemplate: '{\n  "_id": "{{value}}"\n}',
           limit: 20,
-          sort: "",
-          projection: "",
+          sort: '',
+          projection: '',
           single: false,
         },
-        writeSource: "bundle",
-        writeSourcePath: "",
+        writeSource: 'bundle',
+        writeSourcePath: '',
         dryRun: false,
       },
     };
@@ -1297,54 +1300,52 @@ const toNumber = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const getPortOffsetY = (index: number, totalPorts: number): number => {
-  const totalHeight = (totalPorts - 1) * PORT_GAP;
-  const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
-  return startY + index * PORT_GAP;
+const getPortOffsetY = (index: number, _totalPorts: number): number => {
+  return PORT_STACK_TOP + index * PORT_GAP;
 };
 
 function safeStringify(value: unknown): string {
-  if (value === undefined || value === null) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (typeof value === "object") {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
     } catch {
-      return "[Complex Object]";
+      return '[Complex Object]';
     }
   }
-  if (typeof value === "symbol" || typeof value === "function") {
+  if (typeof value === 'symbol' || typeof value === 'function') {
     return value.toString();
   }
   return String(value as string | number | boolean | bigint | symbol);
 }
 
 const formatRuntimeValue = (value: unknown): string => {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "string") return value.trim() || "—";
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'string') return value.trim() || '—';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   try {
     const json: string = JSON.stringify(value, null, 2);
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
   } catch {
-    return "[Complex Object]";
+    return '[Complex Object]';
   }
 };
 
 const parsePathList = (value: string): string[] =>
   value
-    .split("\n")
+    .split('\n')
     .map((line: string): string => line.trim())
     .filter(Boolean);
 
 const safeParseJson = (value: string): { value: unknown; error: string } => {
-  if (!value.trim()) return { value: null as unknown, error: "" };
+  if (!value.trim()) return { value: null as unknown, error: '' };
   try {
-    return { value: JSON.parse(value) as unknown, error: "" };
+    return { value: JSON.parse(value) as unknown, error: '' };
   } catch {
-    return { value: null as unknown, error: "Invalid JSON" };
+    return { value: null as unknown, error: 'Invalid JSON' };
   }
 };
 
@@ -1353,16 +1354,16 @@ const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathE
   const walk = (node: unknown, prefix: string, depth: number): void => {
     if (node === null || node === undefined || depth < 0) return;
     const isArray: boolean = Array.isArray(node);
-    const isObject: boolean = !isArray && typeof node === "object";
+    const isObject: boolean = !isArray && typeof node === 'object';
     if (prefix) {
       entries.push({
         path: prefix,
-        type: isArray ? "array" : isObject ? "object" : "value",
+        type: isArray ? 'array' : isObject ? 'object' : 'value',
       });
     }
     if (isArray) {
       if ((node as unknown[]).length === 0) return;
-      const arrayPrefix: string = prefix ? `${prefix}[0]` : "[0]";
+      const arrayPrefix: string = prefix ? `${prefix}[0]` : '[0]';
       walk((node as unknown[])[0], arrayPrefix, depth - 1);
       return;
     }
@@ -1372,7 +1373,7 @@ const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathE
       walk(child, nextPrefix, depth - 1);
     });
   };
-  walk(value, "", maxDepth);
+  walk(value, '', maxDepth);
   return entries;
 };
 
@@ -1383,12 +1384,12 @@ const extractJsonPaths = (value: unknown, maxDepth: number = 2): string[] => {
 const buildTopLevelMappings = (value: unknown): Record<string, string> => {
   if (!value) return {} as Record<string, string>;
   let root: unknown = value;
-  let prefix = "$.";
+  let prefix = '$.';
   if (Array.isArray(value)) {
     root = value[0];
-    prefix = "$[0].";
+    prefix = '$[0].';
   }
-  if (!root || typeof root !== "object") return {} as Record<string, string>;
+  if (!root || typeof root !== 'object') return {} as Record<string, string>;
   return Object.keys(root as Record<string, unknown>).reduce<Record<string, string>>(
     (acc: Record<string, string>, key: string): Record<string, string> => {
       acc[key] = `${prefix}${key}`;
@@ -1401,38 +1402,38 @@ const buildTopLevelMappings = (value: unknown): Record<string, string> => {
 const buildFlattenedMappings = (
   value: unknown,
   depth: number,
-  keyStyle: "path" | "leaf",
+  keyStyle: 'path' | 'leaf',
   includeContainers: boolean
 ): Record<string, string> => {
   const entries: JsonPathEntry[] = extractJsonPathEntries(value, depth).filter((entry: JsonPathEntry): boolean => {
     if (includeContainers) return true;
-    return entry.type === "value" || entry.type === "array";
+    return entry.type === 'value' || entry.type === 'array';
   });
   const mappings: Record<string, string> = {};
   const used: Set<string> = new Set<string>();
   entries.forEach((entry: JsonPathEntry): void => {
     const path: string = entry.path;
-    const jsonPath: string = path.startsWith("[") ? `$${path}` : `$.${path}`;
+    const jsonPath: string = path.startsWith('[') ? `$${path}` : `$.${path}`;
     const tokens: Array<string | number> = parsePathTokens(path);
     if (tokens.length === 0) return;
     const pathKey: string = tokens
-      .map((token: string | number): string => (typeof token === "number" ? String(token) : token))
-      .join("_");
-    let leafKey = "";
+      .map((token: string | number): string => (typeof token === 'number' ? String(token) : token))
+      .join('_');
+    let leafKey = '';
     for (let index = tokens.length - 1; index >= 0; index -= 1) {
       const token = tokens[index];
-      if (typeof token === "string") {
+      if (typeof token === 'string') {
         leafKey = token;
         break;
       }
     }
-    const lastToken: string | number = tokens[tokens.length - 1] ?? "";
-    if (leafKey && typeof lastToken === "number") {
+    const lastToken: string | number = tokens[tokens.length - 1] ?? '';
+    if (leafKey && typeof lastToken === 'number') {
       leafKey = `${leafKey}_${lastToken}`;
     }
-    let keyBase: string = keyStyle === "leaf" ? leafKey || pathKey : pathKey;
-    keyBase = keyBase.replace(/[^a-zA-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!keyBase) keyBase = "field";
+    let keyBase: string = keyStyle === 'leaf' ? leafKey || pathKey : pathKey;
+    keyBase = keyBase.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!keyBase) keyBase = 'field';
     if (/^\d/.test(keyBase)) {
       keyBase = `field_${keyBase}`;
     }
@@ -1453,46 +1454,46 @@ const looksLikeImageUrl = (value: string): boolean =>
 
 const isImageLikeValue = (value: unknown): boolean => {
   if (!value) return false;
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return looksLikeImageUrl(value);
   }
   if (Array.isArray(value)) {
     return value.some((item: unknown): boolean => isImageLikeValue(item));
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     const record: Record<string, unknown> = value as Record<string, unknown>;
     const candidates: string[] = [
-      "url",
-      "src",
-      "thumbnail",
-      "thumb",
-      "imageUrl",
-      "image",
-      "filepath",
-      "filePath",
-      "path",
-      "file",
-      "previewUrl",
-      "preview",
-      "imageFile",
-      "image_file",
-      "media",
-      "gallery",
+      'url',
+      'src',
+      'thumbnail',
+      'thumb',
+      'imageUrl',
+      'image',
+      'filepath',
+      'filePath',
+      'path',
+      'file',
+      'previewUrl',
+      'preview',
+      'imageFile',
+      'image_file',
+      'media',
+      'gallery',
     ];
     if (
       candidates.some((key: string): boolean => {
         const val: unknown = record[key];
-        return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
+        return typeof val === 'string' ? looksLikeImageUrl(val) : isImageLikeValue(val);
       })
     ) {
       return true;
     }
     return Object.entries(record).some(([key, val]: [string, unknown]): boolean => {
-      if (typeof val === "string") {
+      if (typeof val === 'string') {
         if (!looksLikeImageUrl(val)) return false;
         return /(url|path|file|image|media|photo|thumb|preview)/i.test(key);
       }
-      if (val && typeof val === "object" && /(image|file|media|photo)/i.test(key)) {
+      if (val && typeof val === 'object' && /(image|file|media|photo)/i.test(key)) {
         return isImageLikeValue(val);
       }
       return false;
@@ -1510,11 +1511,11 @@ const inferImageMappingPath = (value: unknown, depth: number): string | null => 
     const candidates: JsonPathEntry[] = entries.filter((entry: JsonPathEntry): boolean => keyword.test(entry.path));
     const resolveFullPath = (match: string): string => {
       if (!prefix) return match;
-      const prefixPath: string = prefix.startsWith("$") ? prefix : `$.${prefix}`;
+      const prefixPath: string = prefix.startsWith('$') ? prefix : `$.${prefix}`;
       return `${prefixPath}${match.slice(1)}`;
     };
     const checkEntry = (entry: JsonPathEntry): string | null => {
-      const jsonPath: string = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
+      const jsonPath: string = entry.path.startsWith('[') ? `$${entry.path}` : `$.${entry.path}`;
       const resolved: unknown = getValueAtMappingPath(root, jsonPath);
       if (isImageLikeValue(resolved)) return resolveFullPath(jsonPath);
       return null;
@@ -1529,20 +1530,20 @@ const inferImageMappingPath = (value: unknown, depth: number): string | null => 
     }
     return null;
   };
-  const direct: string | null = searchIn(value, "");
+  const direct: string | null = searchIn(value, '');
   if (direct) return direct;
   const wrapperPaths: string[] = [
-    "context.entity",
-    "context.product",
-    "simulation.entity",
-    "simulation.product",
-    "entity",
-    "product",
-    "item",
-    "data",
+    'context.entity',
+    'context.product',
+    'simulation.entity',
+    'simulation.product',
+    'entity',
+    'product',
+    'item',
+    'data',
   ];
   for (const path of wrapperPaths) {
-    const wrapped: unknown = getValueAtMappingPath(value, path.startsWith("$") ? path : `$.${path}`);
+    const wrapped: unknown = getValueAtMappingPath(value, path.startsWith('$') ? path : `$.${path}`);
     const match: string | null = searchIn(wrapped, path);
     if (match) return match;
   }
@@ -1550,20 +1551,20 @@ const inferImageMappingPath = (value: unknown, depth: number): string | null => 
 };
 
 const getContextPresetSet = (entityType?: string): { light: string[]; medium: string[]; full: string[]; suggested: string[] } => {
-  const key: string = entityType === "auto" ? "" : entityType ?? "";
+  const key: string = entityType === 'auto' ? '' : entityType ?? '';
   return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default ?? { light: [], medium: [], full: [], suggested: [] };
 };
 
 const applyContextPreset = (
   current: ContextConfig,
-  preset: "light" | "medium" | "full" | "suggested"
+  preset: 'light' | 'medium' | 'full' | 'suggested'
 ): ContextConfig => {
   const set = getContextPresetSet(current.entityType);
   const paths: string[] = set ? set[preset] ?? [] : [];
-  if (paths.length === 0) return { ...current, scopeMode: "full" };
+  if (paths.length === 0) return { ...current, scopeMode: 'full' };
   return {
     ...current,
-    scopeMode: "include",
+    scopeMode: 'include',
     includePaths: paths,
     excludePaths: [],
   };
@@ -1571,7 +1572,7 @@ const applyContextPreset = (
 
 const toggleContextTarget = (current: ContextConfig, field: string): ContextConfig => {
   const isIncluded: boolean = (current.includePaths ?? []).includes(field);
-  if (current.scopeMode === "include") {
+  if (current.scopeMode === 'include') {
     const includePaths: string[] = current.includePaths ?? [];
     return {
       ...current,
@@ -1591,7 +1592,7 @@ const toggleContextTarget = (current: ContextConfig, field: string): ContextConf
 };
 
 const cloneValue = <T,>(value: T): T => {
-  if (typeof structuredClone === "function") {
+  if (typeof structuredClone === 'function') {
     return structuredClone(value);
   }
   try {
@@ -1602,25 +1603,25 @@ const cloneValue = <T,>(value: T): T => {
 };
 
 const getValueAtPath = (obj: unknown, path: string): unknown => {
-  return path.split(".").reduce<unknown>((acc: unknown, key: string): unknown => {
-    if (!acc || typeof acc !== "object") return undefined;
+  return path.split('.').reduce<unknown>((acc: unknown, key: string): unknown => {
+    if (!acc || typeof acc !== 'object') return undefined;
     return (acc as Record<string, unknown>)[key];
   }, obj);
 };
 
 const normalizeMappingPath = (path: string, root?: unknown): string => {
-  if (!path) return "";
+  if (!path) return '';
   let next: string = path.trim();
-  if (next.startsWith("$.") ) {
+  if (next.startsWith('$.') ) {
     next = next.slice(2);
-  } else if (next.startsWith("$")) {
+  } else if (next.startsWith('$')) {
     next = next.slice(1);
   }
-  if (next.startsWith("context.")) {
+  if (next.startsWith('context.')) {
     const hasContext: boolean =
-      !!root && typeof root === "object" && "context" in (root as Record<string, unknown>);
+      !!root && typeof root === 'object' && 'context' in (root as Record<string, unknown>);
     if (!hasContext) {
-      next = next.slice("context.".length);
+      next = next.slice('context.'.length);
     }
   }
   return next;
@@ -1647,12 +1648,12 @@ const getValueAtMappingPath = (obj: unknown, path: string): unknown => {
   let current: unknown = obj;
   for (const token of tokens) {
     if (current === null || current === undefined) return undefined;
-    if (typeof token === "number") {
+    if (typeof token === 'number') {
       if (!Array.isArray(current)) return undefined;
       current = current[token];
       continue;
     }
-    if (typeof current !== "object") return undefined;
+    if (typeof current !== 'object') return undefined;
     current = (current as Record<string, unknown>)[token];
   }
   return current;
@@ -1687,7 +1688,7 @@ const renderTemplate = (
   template
     .replace(/{{\s*([^}]+)\s*}}/g, (_match: string, token: string): string => {
       const key = String(token).trim();
-      if (key === "value" || key === "current") {
+      if (key === 'value' || key === 'current') {
         return safeStringify(currentValue);
       }
       const resolved = getValueAtMappingPath(context, key);
@@ -1695,7 +1696,7 @@ const renderTemplate = (
     })
     .replace(/\[\s*([^\]]+)\s*\]/g, (_match: string, token: string): string => {
       const key = String(token).trim();
-      if (key === "value" || key === "current") {
+      if (key === 'value' || key === 'current') {
         return safeStringify(currentValue);
       }
       const resolved = getValueAtMappingPath(context, key);
@@ -1703,14 +1704,14 @@ const renderTemplate = (
     });
 
 const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown): void => {
-  const keys = path.split(".");
+  const keys = path.split('.');
   let current: Record<string, unknown> = obj;
   keys.forEach((key: string, index: number): void => {
     if (index === keys.length - 1) {
       current[key] = value;
       return;
     }
-    if (!current[key] || typeof current[key] !== "object") {
+    if (!current[key] || typeof current[key] !== 'object') {
       current[key] = {};
     }
     current = current[key] as Record<string, unknown>;
@@ -1731,7 +1732,7 @@ const setValueAtMappingPath = (
   tokens.forEach((token: string | number, index: number): void => {
     const isLast = index === tokens.length - 1;
     if (isLast) {
-      if (typeof token === "number") {
+      if (typeof token === 'number') {
         if (!Array.isArray(current)) {
           const nextArray: unknown[] = [];
           if (parent && parentKey !== null) {
@@ -1750,7 +1751,7 @@ const setValueAtMappingPath = (
       return;
     }
     const nextToken = tokens[index + 1];
-    if (typeof token === "number") {
+    if (typeof token === 'number') {
       if (!Array.isArray(current)) {
         const nextArray: unknown[] = [];
         if (parent && parentKey !== null) {
@@ -1763,8 +1764,8 @@ const setValueAtMappingPath = (
         current = nextArray;
       }
       const curArr = current;
-      if (curArr[token] == null || typeof curArr[token] !== "object") {
-        curArr[token] = typeof nextToken === "number" ? [] : {};
+      if (curArr[token] == null || typeof curArr[token] !== 'object') {
+        curArr[token] = typeof nextToken === 'number' ? [] : {};
       }
       parent = current;
       parentKey = token;
@@ -1772,8 +1773,8 @@ const setValueAtMappingPath = (
       return;
     }
     const curObj = current as Record<string, unknown>;
-    if (curObj[token] == null || typeof curObj[token] !== "object") {
-      curObj[token] = typeof nextToken === "number" ? [] : {};
+    if (curObj[token] == null || typeof curObj[token] !== 'object') {
+      curObj[token] = typeof nextToken === 'number' ? [] : {};
     }
     parent = current;
     parentKey = token;
@@ -1793,10 +1794,10 @@ const pickByPaths = (obj: Record<string, unknown>, paths: string[]): Record<stri
 };
 
 const deletePath = (obj: Record<string, unknown>, path: string): void => {
-  const keys = path.split(".");
+  const keys = path.split('.');
   let current: Record<string, unknown> = obj;
   keys.forEach((key: string, index: number): void => {
-    if (!current || typeof current !== "object") return;
+    if (!current || typeof current !== 'object') return;
     if (index === keys.length - 1) {
       delete current[key];
       return;
@@ -1878,146 +1879,146 @@ const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
 
 // Strict port compatibility: output port must match input port
 const PORT_COMPATIBILITY: Record<string, string[]> = {
-  entityJson: ["entityJson"],
-  productId: ["productId"],
-  entityId: ["entityId"],
-  entityType: ["entityType"],
-  trigger: ["trigger"],
-  triggerName: ["triggerName"],
-  prompt: ["prompt"],
-  result: ["result"],
-  images: ["images"],
-  title: ["title"],
-  content_en: ["content_en"],
-  context: ["context"],
-  simulation: ["context", "simulation"],
-  meta: ["meta"],
-  bundle: ["bundle"],
-  value: ["value"],
-  query: ["query"],
-  jobId: ["jobId"],
-  status: ["status"],
-  description_en: ["description_en"],
-  valid: ["valid"],
-  errors: ["errors"],
+  entityJson: ['entityJson'],
+  productId: ['productId'],
+  entityId: ['entityId'],
+  entityType: ['entityType'],
+  trigger: ['trigger'],
+  triggerName: ['triggerName'],
+  prompt: ['prompt'],
+  result: ['result'],
+  images: ['images'],
+  title: ['title'],
+  content_en: ['content_en'],
+  context: ['context'],
+  simulation: ['context', 'simulation'],
+  meta: ['meta'],
+  bundle: ['bundle'],
+  value: ['value'],
+  query: ['query'],
+  jobId: ['jobId'],
+  status: ['status'],
+  description_en: ['description_en'],
+  valid: ['valid'],
+  errors: ['errors'],
 };
 
 // Define which node types can connect to which node types
 const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   context: [
-    "trigger",
-    "parser",
-    "viewer",
-    "notification",
-    "ai_description",
-    "mapper",
-    "mutator",
-    "validator",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "http",
-    "database",
+    'trigger',
+    'parser',
+    'viewer',
+    'notification',
+    'ai_description',
+    'mapper',
+    'mutator',
+    'validator',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'http',
+    'database',
   ],
   trigger: [
-    "context",
-    "parser",
-    "viewer",
-    "notification",
-    "mapper",
-    "mutator",
-    "validator",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "database",
-    "simulation",
+    'context',
+    'parser',
+    'viewer',
+    'notification',
+    'mapper',
+    'mutator',
+    'validator',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
+    'simulation',
   ],
-  simulation: ["trigger", "notification"],
+  simulation: ['trigger', 'notification'],
   parser: [
-    "prompt",
-    "database",
-    "viewer",
-    "notification",
-    "ai_description",
-    "description_updater",
-    "mapper",
-    "mutator",
-    "validator",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "database",
+    'prompt',
+    'database',
+    'viewer',
+    'notification',
+    'ai_description',
+    'description_updater',
+    'mapper',
+    'mutator',
+    'validator',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
   ],
   mapper: [
-    "prompt",
-    "mutator",
-    "validator",
-    "viewer",
-    "ai_description",
-    "description_updater",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "database",
-    "trigger",
+    'prompt',
+    'mutator',
+    'validator',
+    'viewer',
+    'ai_description',
+    'description_updater',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
+    'trigger',
   ],
   mutator: [
-    "validator",
-    "viewer",
-    "prompt",
-    "ai_description",
-    "description_updater",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "database",
+    'validator',
+    'viewer',
+    'prompt',
+    'ai_description',
+    'description_updater',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
   ],
   validator: [
-    "viewer",
-    "prompt",
-    "ai_description",
-    "description_updater",
-    "gate",
-    "bundle",
-    "template",
-    "router",
-    "delay",
-    "poll",
-    "database",
+    'viewer',
+    'prompt',
+    'ai_description',
+    'description_updater',
+    'gate',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
   ],
-  constant: ["math", "template", "viewer", "bundle", "compare", "router", "delay", "poll", "http", "database"],
-  math: ["template", "viewer", "bundle", "compare", "router", "delay", "poll", "http", "database"],
-  compare: ["gate", "router", "viewer", "bundle", "template", "poll", "database"],
-  gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay", "poll"],
-  router: ["viewer", "bundle", "template", "prompt", "model", "agent", "learner_agent", "delay", "poll", "database"],
-  regex: ["viewer", "bundle", "template", "prompt", "model", "agent", "learner_agent", "delay", "poll", "database"],
-  iterator: ["viewer", "bundle", "template", "prompt", "model", "agent", "learner_agent", "delay", "poll", "database", "notification"],
-  delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "poll", "database"],
-  poll: ["viewer", "notification", "bundle", "template", "prompt", "model", "delay", "database"],
-  http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
-  database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll", "notification", "learner_agent"],
-  db_schema: ["prompt", "template", "model", "learner_agent", "bundle", "viewer", "database"],
-  bundle: ["viewer", "template", "prompt", "poll", "database"],
-  template: ["model", "agent", "learner_agent", "viewer", "bundle", "prompt", "poll", "database"],
-  prompt: ["model", "agent", "learner_agent", "viewer", "bundle", "template", "poll", "notification"],
-  model: ["prompt", "database", "viewer", "description_updater", "bundle", "poll", "notification", "agent", "learner_agent"],
-  agent: ["viewer", "bundle", "template", "prompt", "database", "description_updater", "notification", "delay", "learner_agent"],
-  learner_agent: ["viewer", "bundle", "template", "prompt", "database", "notification", "delay"],
+  constant: ['math', 'template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database'],
+  math: ['template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database'],
+  compare: ['gate', 'router', 'viewer', 'bundle', 'template', 'poll', 'database'],
+  gate: ['validator', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll'],
+  router: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
+  regex: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
+  iterator: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'notification'],
+  delay: ['viewer', 'bundle', 'template', 'prompt', 'model', 'validator', 'gate', 'poll', 'database'],
+  poll: ['viewer', 'notification', 'bundle', 'template', 'prompt', 'model', 'delay', 'database'],
+  http: ['viewer', 'bundle', 'template', 'prompt', 'math', 'compare', 'poll', 'database'],
+  database: ['viewer', 'bundle', 'template', 'prompt', 'mapper', 'validator', 'poll', 'notification', 'learner_agent'],
+  db_schema: ['prompt', 'template', 'model', 'learner_agent', 'bundle', 'viewer', 'database'],
+  bundle: ['viewer', 'template', 'prompt', 'poll', 'database'],
+  template: ['model', 'agent', 'learner_agent', 'viewer', 'bundle', 'prompt', 'poll', 'database'],
+  prompt: ['model', 'agent', 'learner_agent', 'viewer', 'bundle', 'template', 'poll', 'notification'],
+  model: ['prompt', 'database', 'viewer', 'description_updater', 'bundle', 'poll', 'notification', 'agent', 'learner_agent'],
+  agent: ['viewer', 'bundle', 'template', 'prompt', 'database', 'description_updater', 'notification', 'delay', 'learner_agent'],
+  learner_agent: ['viewer', 'bundle', 'template', 'prompt', 'database', 'notification', 'delay'],
   viewer: [],
-  ai_description: ["viewer", "description_updater", "bundle", "delay", "poll"],
-  description_updater: ["viewer", "bundle", "delay", "poll"],
-  notification: ["viewer", "bundle", "delay", "poll"],
+  ai_description: ['viewer', 'description_updater', 'bundle', 'delay', 'poll'],
+  description_updater: ['viewer', 'bundle', 'delay', 'poll'],
+  notification: ['viewer', 'bundle', 'delay', 'poll'],
 };
 
 const validateConnection = (
@@ -2028,10 +2029,10 @@ const validateConnection = (
 ): ConnectionValidation => {
   // Basic compatibility checks
   if (!fromNode.outputs.includes(fromPort)) {
-    return { valid: false, message: "Invalid output port." };
+    return { valid: false, message: 'Invalid output port.' };
   }
   if (!toNode.inputs.includes(toPort)) {
-    return { valid: false, message: "Invalid input port." };
+    return { valid: false, message: 'Invalid input port.' };
   }
 
   // Check port compatibility
@@ -2053,94 +2054,94 @@ const validateConnection = (
   }
 
   // Rule 9: Trigger context input must come from Simulation context
-  if (toNode.type === "trigger" && toPort === "context") {
+  if (toNode.type === 'trigger' && toPort === 'context') {
     if (
-      fromNode.type !== "simulation" ||
-      (fromPort !== "context" && fromPort !== "simulation")
+      fromNode.type !== 'simulation' ||
+      (fromPort !== 'context' && fromPort !== 'simulation')
     ) {
       return {
         valid: false,
-        message: "Trigger 'context' input must connect from Simulation 'context'.",
+        message: 'Trigger \'context\' input must connect from Simulation \'context\'.',
       };
     }
   }
-  if (toNode.type === "simulation" && toPort === "trigger") {
-    if (fromNode.type !== "trigger" || fromPort !== "trigger") {
+  if (toNode.type === 'simulation' && toPort === 'trigger') {
+    if (fromNode.type !== 'trigger' || fromPort !== 'trigger') {
       return {
         valid: false,
-        message: "Simulation 'trigger' input must connect from Trigger 'trigger'.",
+        message: 'Simulation \'trigger\' input must connect from Trigger \'trigger\'.',
       };
     }
   }
 
-  if (toNode.type === "parser" && toPort === "entityJson") {
-    if (fromNode.type !== "context" || fromPort !== "entityJson") {
+  if (toNode.type === 'parser' && toPort === 'entityJson') {
+    if (fromNode.type !== 'context' || fromPort !== 'entityJson') {
       return {
         valid: false,
-        message: "Parser 'entityJson' must connect from Context 'entityJson'.",
+        message: 'Parser \'entityJson\' must connect from Context \'entityJson\'.',
       };
     }
   }
 
   // Rule 12: Model prompt must come from Prompt
-  if (toNode.type === "model" && toPort === "prompt") {
-    if (fromNode.type !== "prompt" || fromPort !== "prompt") {
+  if (toNode.type === 'model' && toPort === 'prompt') {
+    if (fromNode.type !== 'prompt' || fromPort !== 'prompt') {
       return {
         valid: false,
-        message: "Model 'prompt' must connect from Prompt 'prompt'.",
+        message: 'Model \'prompt\' must connect from Prompt \'prompt\'.',
       };
     }
   }
 
   // Rule 13: AI Description inputs must come from Context/Parser
-  if (toNode.type === "ai_description" && toPort === "entityJson") {
-    if (fromNode.type !== "context" || fromPort !== "entityJson") {
+  if (toNode.type === 'ai_description' && toPort === 'entityJson') {
+    if (fromNode.type !== 'context' || fromPort !== 'entityJson') {
       return {
         valid: false,
-        message: "AI Description 'entityJson' must connect from Context 'entityJson'.",
+        message: 'AI Description \'entityJson\' must connect from Context \'entityJson\'.',
       };
     }
   }
-  if (toNode.type === "ai_description" && (toPort === "title" || toPort === "images")) {
-    if (fromNode.type !== "parser") {
+  if (toNode.type === 'ai_description' && (toPort === 'title' || toPort === 'images')) {
+    if (fromNode.type !== 'parser') {
       return {
         valid: false,
-        message: "AI Description title/images must connect from Parser.",
+        message: 'AI Description title/images must connect from Parser.',
       };
     }
   }
 
   // Rule 14: Description updater must receive description_en from AI Description or Model
-  if (toNode.type === "description_updater" && toPort === "description_en") {
+  if (toNode.type === 'description_updater' && toPort === 'description_en') {
     if (
       !(
-        (fromNode.type === "ai_description" && fromPort === "description_en") ||
-        (fromNode.type === "model" && fromPort === "result")
+        (fromNode.type === 'ai_description' && fromPort === 'description_en') ||
+        (fromNode.type === 'model' && fromPort === 'result')
       )
     ) {
       return {
         valid: false,
         message:
-          "Description updater must connect description_en from AI Description or Model result.",
+          'Description updater must connect description_en from AI Description or Model result.',
       };
     }
   }
 
-  if (toNode.type === "description_updater" && toPort === "productId") {
-    if (fromNode.type !== "parser" || fromPort !== "productId") {
+  if (toNode.type === 'description_updater' && toPort === 'productId') {
+    if (fromNode.type !== 'parser' || fromPort !== 'productId') {
       return {
         valid: false,
-        message: "Description updater productId must connect from Parser productId.",
+        message: 'Description updater productId must connect from Parser productId.',
       };
     }
   }
 
   // Rule 15: Gate valid input must come from Validator.valid
-  if (toNode.type === "gate" && toPort === "valid") {
-    if (fromNode.type !== "validator" || fromPort !== "valid") {
+  if (toNode.type === 'gate' && toPort === 'valid') {
+    if (fromNode.type !== 'validator' || fromPort !== 'valid') {
       return {
         valid: false,
-        message: "Gate 'valid' must connect from Validator 'valid'.",
+        message: 'Gate \'valid\' must connect from Validator \'valid\'.',
       };
     }
   }
@@ -2173,10 +2174,10 @@ const clampTranslate = (
 
 const initialNodes: AiNode[] = [
   {
-    id: "node-context",
-    type: "context",
-    title: "Context Filter",
-    description: "Filter Product modal context into scoped fields.",
+    id: 'node-context',
+    type: 'context',
+    title: 'Context Filter',
+    description: 'Filter Product modal context into scoped fields.',
     inputs: CONTEXT_INPUT_PORTS,
     outputs: CONTEXT_OUTPUT_PORTS,
     position: { x: 520, y: 590 },
@@ -2187,44 +2188,44 @@ const initialNodes: AiNode[] = [
     },
   },
   {
-    id: "node-parser",
-    type: "parser",
-    title: "JSON Parser",
-    description: "Extract [images], [title], [productId], [content_en].",
-    inputs: ["entityJson"],
-    outputs: ["images", "title", "productId", "content_en"],
+    id: 'node-parser',
+    type: 'parser',
+    title: 'JSON Parser',
+    description: 'Extract [images], [title], [productId], [content_en].',
+    inputs: ['entityJson'],
+    outputs: ['images', 'title', 'productId', 'content_en'],
     position: { x: 820, y: 590 },
     config: {
       parser: {
         mappings: {
-          images: "$.images",
-          title: "$.title",
-          productId: "$.id",
-          content_en: "$.content_en",
+          images: '$.images',
+          title: '$.title',
+          productId: '$.id',
+          content_en: '$.content_en',
         },
       },
     },
   },
   {
-    id: "node-vision-prompt",
-    type: "prompt",
-    title: "Vision Prompt",
-    description: "Prompt: Analyze [images] and [title].",
-    inputs: ["images", "title"],
+    id: 'node-vision-prompt',
+    type: 'prompt',
+    title: 'Vision Prompt',
+    description: 'Prompt: Analyze [images] and [title].',
+    inputs: ['images', 'title'],
     outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 510 },
   },
   {
-    id: "node-vision-model",
-    type: "model",
-    title: "Gemma Vision",
-    description: "Image analysis.",
-    inputs: ["prompt", "images"],
+    id: 'node-vision-model',
+    type: 'model',
+    title: 'Gemma Vision',
+    description: 'Image analysis.',
+    inputs: ['prompt', 'images'],
     outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 510 },
     config: {
       model: {
-        modelId: "gemma",
+        modelId: 'gemma',
         temperature: 0.4,
         maxTokens: 512,
         vision: true,
@@ -2232,25 +2233,25 @@ const initialNodes: AiNode[] = [
     },
   },
   {
-    id: "node-desc-prompt",
-    type: "prompt",
-    title: "Description Prompt",
-    description: "Prompt: Use [result] and [title].",
-    inputs: ["result", "title"],
+    id: 'node-desc-prompt',
+    type: 'prompt',
+    title: 'Description Prompt',
+    description: 'Prompt: Use [result] and [title].',
+    inputs: ['result', 'title'],
     outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 690 },
   },
   {
-    id: "node-desc-model",
-    type: "model",
-    title: "GPT-4o",
-    description: "Generate description.",
-    inputs: ["prompt"],
+    id: 'node-desc-model',
+    type: 'model',
+    title: 'GPT-4o',
+    description: 'Generate description.',
+    inputs: ['prompt'],
     outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 690 },
     config: {
       model: {
-        modelId: "gpt-4o",
+        modelId: 'gpt-4o',
         temperature: 0.6,
         maxTokens: 900,
         vision: false,
@@ -2258,54 +2259,54 @@ const initialNodes: AiNode[] = [
     },
   },
   {
-    id: "node-updater",
-    type: "database",
-    title: "Database Update",
-    description: "Update product fields from AI results.",
+    id: 'node-updater',
+    type: 'database',
+    title: 'Database Update',
+    description: 'Update product fields from AI results.',
     inputs: DATABASE_INPUT_PORTS,
-    outputs: ["result", "bundle", "content_en"],
+    outputs: ['result', 'bundle', 'content_en'],
     position: { x: 1680, y: 600 },
     config: {
       database: {
-        operation: "update",
-        entityType: "product",
-        idField: "productId",
-        mode: "replace",
+        operation: 'update',
+        entityType: 'product',
+        idField: 'productId',
+        mode: 'replace',
         mappings: [
           {
-            targetPath: "content_en",
-            sourcePort: "result",
+            targetPath: 'content_en',
+            sourcePort: 'result',
           },
         ],
         query: {
-          provider: "mongodb",
-          collection: "products",
-          mode: "preset",
-          preset: "by_id",
-          field: "_id",
-          idType: "string",
-          queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+          provider: 'mongodb',
+          collection: 'products',
+          mode: 'preset',
+          preset: 'by_id',
+          field: '_id',
+          idType: 'string',
+          queryTemplate: '{\n  "_id": "{{value}}"\n}',
           limit: 20,
-          sort: "",
-          projection: "",
+          sort: '',
+          projection: '',
           single: false,
         },
-        writeSource: "bundle",
+        writeSource: 'bundle',
       },
     },
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: "edge-1", from: "node-context", to: "node-parser", fromPort: "entityJson", toPort: "entityJson" },
-  { id: "edge-2", from: "node-parser", to: "node-vision-prompt", fromPort: "images", toPort: "images" },
-  { id: "edge-3", from: "node-parser", to: "node-vision-prompt", fromPort: "title", toPort: "title" },
-  { id: "edge-4", from: "node-vision-prompt", to: "node-vision-model", fromPort: "prompt", toPort: "prompt" },
-  { id: "edge-5", from: "node-vision-model", to: "node-desc-prompt", fromPort: "result", toPort: "result" },
-  { id: "edge-6", from: "node-desc-prompt", to: "node-desc-model", fromPort: "prompt", toPort: "prompt" },
-  { id: "edge-7", from: "node-desc-model", to: "node-updater", fromPort: "result", toPort: "result" },
-  { id: "edge-8", from: "node-parser", to: "node-updater", fromPort: "productId", toPort: "productId" },
-  { id: "edge-9", from: "node-parser", to: "node-updater", fromPort: "content_en", toPort: "content_en" },
+  { id: 'edge-1', from: 'node-context', to: 'node-parser', fromPort: 'entityJson', toPort: 'entityJson' },
+  { id: 'edge-2', from: 'node-parser', to: 'node-vision-prompt', fromPort: 'images', toPort: 'images' },
+  { id: 'edge-3', from: 'node-parser', to: 'node-vision-prompt', fromPort: 'title', toPort: 'title' },
+  { id: 'edge-4', from: 'node-vision-prompt', to: 'node-vision-model', fromPort: 'prompt', toPort: 'prompt' },
+  { id: 'edge-5', from: 'node-vision-model', to: 'node-desc-prompt', fromPort: 'result', toPort: 'result' },
+  { id: 'edge-6', from: 'node-desc-prompt', to: 'node-desc-model', fromPort: 'prompt', toPort: 'prompt' },
+  { id: 'edge-7', from: 'node-desc-model', to: 'node-updater', fromPort: 'result', toPort: 'result' },
+  { id: 'edge-8', from: 'node-parser', to: 'node-updater', fromPort: 'productId', toPort: 'productId' },
+  { id: 'edge-9', from: 'node-parser', to: 'node-updater', fromPort: 'content_en', toPort: 'content_en' },
 ];
 
 const createDefaultPathConfig = (id: string): PathConfig => {
@@ -2313,9 +2314,11 @@ const createDefaultPathConfig = (id: string): PathConfig => {
   return {
     id,
     version: STORAGE_VERSION,
-    name: "AI Description Path",
-    description: "Visual analysis + description generation with structured updates.",
-    trigger: triggers[0] ?? "Product Modal - Context Filter",
+    name: 'AI Description Path',
+    description: 'Visual analysis + description generation with structured updates.',
+    trigger: triggers[0] ?? 'Product Modal - Context Filter',
+    executionMode: 'server',
+    flowIntensity: 'medium',
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
@@ -2324,6 +2327,10 @@ const createDefaultPathConfig = (id: string): PathConfig => {
     updaterSamples: {},
     runtimeState: { inputs: {}, outputs: {} },
     lastRunAt: null,
+    uiState: {
+      selectedNodeId: initialNodes[0]?.id ?? null,
+      configOpen: false,
+    },
   };
 };
 
@@ -2344,49 +2351,49 @@ const createAiDescriptionPath = (id: string): PathConfig => {
   const now: string = new Date().toISOString();
   const nodes: AiNode[] = [
     {
-      id: "node-context",
-      type: "context",
-      title: "Context Filter",
-      description: "Filter product context.",
+      id: 'node-context',
+      type: 'context',
+      title: 'Context Filter',
+      description: 'Filter product context.',
       inputs: CONTEXT_INPUT_PORTS,
       outputs: CONTEXT_OUTPUT_PORTS,
       position: { x: 470, y: 600 },
       config: {
         context: {
           role: DEFAULT_CONTEXT_ROLE,
-          scopeMode: "full",
-          scopeTarget: "entity",
+          scopeMode: 'full',
+          scopeTarget: 'entity',
           includePaths: [],
           excludePaths: [],
         },
       },
     },
     {
-      id: "node-parser",
-      type: "parser",
-      title: "JSON Parser",
-      description: "Extract [images], [title], [productId], [content_en].",
-      inputs: ["entityJson"],
-      outputs: ["images", "title", "productId", "content_en"],
+      id: 'node-parser',
+      type: 'parser',
+      title: 'JSON Parser',
+      description: 'Extract [images], [title], [productId], [content_en].',
+      inputs: ['entityJson'],
+      outputs: ['images', 'title', 'productId', 'content_en'],
       position: { x: 770, y: 600 },
       config: {
         parser: {
           mappings: {
-            images: "$.images",
-            title: "$.title",
-            productId: "$.id",
-            content_en: "$.content_en",
+            images: '$.images',
+            title: '$.title',
+            productId: '$.id',
+            content_en: '$.content_en',
           },
         },
       },
     },
     {
-      id: "node-ai-desc",
-      type: "ai_description",
-      title: "AI Description Generator",
-      description: "Generate description_en from product context.",
-      inputs: ["entityJson", "images", "title"],
-      outputs: ["description_en"],
+      id: 'node-ai-desc',
+      type: 'ai_description',
+      title: 'AI Description Generator',
+      description: 'Generate description_en from product context.',
+      inputs: ['entityJson', 'images', 'title'],
+      outputs: ['description_en'],
       position: { x: 1090, y: 600 },
       config: {
         description: {
@@ -2396,30 +2403,30 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       },
     },
     {
-      id: "node-desc-updater",
-      type: "description_updater",
-      title: "Description Updater",
-      description: "Write description_en to the product.",
-      inputs: ["productId", "description_en"],
-      outputs: ["description_en"],
+      id: 'node-desc-updater',
+      type: 'description_updater',
+      title: 'Description Updater',
+      description: 'Write description_en to the product.',
+      inputs: ['productId', 'description_en'],
+      outputs: ['description_en'],
       position: { x: 1410, y: 600 },
     },
     {
-      id: "node-viewer",
-      type: "viewer",
-      title: "Result Viewer",
-      description: "Preview description + runtime outputs.",
-      inputs: ["description", "description_en", "context", "meta", "trigger"],
+      id: 'node-viewer',
+      type: 'viewer',
+      title: 'Result Viewer',
+      description: 'Preview description + runtime outputs.',
+      inputs: ['description', 'description_en', 'context', 'meta', 'trigger'],
       outputs: [],
       position: { x: 1730, y: 600 },
       config: {
         viewer: {
           outputs: {
-            description_en: "",
-            context: "",
-            meta: "",
-            trigger: "",
-            description: "",
+            description_en: '',
+            context: '',
+            meta: '',
+            trigger: '',
+            description: '',
           },
         },
       },
@@ -2428,62 +2435,64 @@ const createAiDescriptionPath = (id: string): PathConfig => {
 
   const edges: Edge[] = [
     {
-      id: "edge-1",
-      from: "node-context",
-      to: "node-parser",
-      fromPort: "entityJson",
-      toPort: "entityJson",
+      id: 'edge-1',
+      from: 'node-context',
+      to: 'node-parser',
+      fromPort: 'entityJson',
+      toPort: 'entityJson',
     },
     {
-      id: "edge-2",
-      from: "node-parser",
-      to: "node-ai-desc",
-      fromPort: "title",
-      toPort: "title",
+      id: 'edge-2',
+      from: 'node-parser',
+      to: 'node-ai-desc',
+      fromPort: 'title',
+      toPort: 'title',
     },
     {
-      id: "edge-3",
-      from: "node-parser",
-      to: "node-ai-desc",
-      fromPort: "images",
-      toPort: "images",
+      id: 'edge-3',
+      from: 'node-parser',
+      to: 'node-ai-desc',
+      fromPort: 'images',
+      toPort: 'images',
     },
     {
-      id: "edge-4",
-      from: "node-context",
-      to: "node-ai-desc",
-      fromPort: "entityJson",
-      toPort: "entityJson",
+      id: 'edge-4',
+      from: 'node-context',
+      to: 'node-ai-desc',
+      fromPort: 'entityJson',
+      toPort: 'entityJson',
     },
     {
-      id: "edge-5",
-      from: "node-ai-desc",
-      to: "node-desc-updater",
-      fromPort: "description_en",
-      toPort: "description_en",
+      id: 'edge-5',
+      from: 'node-ai-desc',
+      to: 'node-desc-updater',
+      fromPort: 'description_en',
+      toPort: 'description_en',
     },
     {
-      id: "edge-6",
-      from: "node-parser",
-      to: "node-desc-updater",
-      fromPort: "productId",
-      toPort: "productId",
+      id: 'edge-6',
+      from: 'node-parser',
+      to: 'node-desc-updater',
+      fromPort: 'productId',
+      toPort: 'productId',
     },
     {
-      id: "edge-7",
-      from: "node-desc-updater",
-      to: "node-viewer",
-      fromPort: "description_en",
-      toPort: "description_en",
+      id: 'edge-7',
+      from: 'node-desc-updater',
+      to: 'node-viewer',
+      fromPort: 'description_en',
+      toPort: 'description_en',
     },
   ];
 
   return {
     id,
     version: STORAGE_VERSION,
-    name: "AI Description Path",
-    description: "Generates product descriptions via AI and updates the product.",
-    trigger: (triggers[0] as string) ?? "Product Modal - Context Filter",
+    name: 'AI Description Path',
+    description: 'Generates product descriptions via AI and updates the product.',
+    trigger: (triggers[0] as string) ?? 'Product Modal - Context Filter',
+    executionMode: 'server',
+    flowIntensity: 'medium',
     nodes,
     edges,
     updatedAt: now,
@@ -2496,41 +2505,41 @@ const createAiDescriptionPath = (id: string): PathConfig => {
 };
 
 const typeStyles: Record<NodeType, { border: string; glow: string }> = {
-  trigger: { border: "border-lime-500/40", glow: "shadow-lime-500/20" },
-  simulation: { border: "border-cyan-500/40", glow: "shadow-cyan-500/20" },
-  context: { border: "border-emerald-500/40", glow: "shadow-emerald-500/20" },
-  parser: { border: "border-sky-500/40", glow: "shadow-sky-500/20" },
-  regex: { border: "border-cyan-500/40", glow: "shadow-cyan-500/20" },
-  iterator: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },
-  mapper: { border: "border-blue-500/40", glow: "shadow-blue-500/20" },
-  mutator: { border: "border-teal-500/40", glow: "shadow-teal-500/20" },
-  validator: { border: "border-orange-500/40", glow: "shadow-orange-500/20" },
-  constant: { border: "border-slate-400/40", glow: "shadow-slate-500/20" },
-  math: { border: "border-yellow-500/40", glow: "shadow-yellow-500/20" },
-  gate: { border: "border-red-500/40", glow: "shadow-red-500/20" },
-  bundle: { border: "border-cyan-400/40", glow: "shadow-cyan-500/20" },
-  template: { border: "border-lime-500/40", glow: "shadow-lime-500/20" },
-  compare: { border: "border-amber-300/40", glow: "shadow-amber-300/20" },
-  router: { border: "border-pink-500/40", glow: "shadow-pink-500/20" },
-  delay: { border: "border-indigo-400/40", glow: "shadow-indigo-400/20" },
-  poll: { border: "border-cyan-300/40", glow: "shadow-cyan-300/20" },
-  http: { border: "border-sky-400/40", glow: "shadow-sky-400/20" },
-  database: { border: "border-emerald-500/40", glow: "shadow-emerald-500/20" },
-  db_schema: { border: "border-purple-500/40", glow: "shadow-purple-500/20" },
-  prompt: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },
-  model: { border: "border-fuchsia-500/40", glow: "shadow-fuchsia-500/20" },
-  agent: { border: "border-emerald-400/40", glow: "shadow-emerald-400/20" },
-  learner_agent: { border: "border-emerald-300/40", glow: "shadow-emerald-300/20" },
-  viewer: { border: "border-violet-500/40", glow: "shadow-violet-500/20" },
-  notification: { border: "border-amber-400/40", glow: "shadow-amber-500/20" },
-  ai_description: { border: "border-indigo-500/40", glow: "shadow-indigo-500/20" },
-  description_updater: { border: "border-rose-400/40", glow: "shadow-rose-400/20" },
+  trigger: { border: 'border-lime-500/40', glow: 'shadow-lime-500/20' },
+  simulation: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
+  context: { border: 'border-emerald-500/40', glow: 'shadow-emerald-500/20' },
+  parser: { border: 'border-sky-500/40', glow: 'shadow-sky-500/20' },
+  regex: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
+  iterator: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },
+  mapper: { border: 'border-blue-500/40', glow: 'shadow-blue-500/20' },
+  mutator: { border: 'border-teal-500/40', glow: 'shadow-teal-500/20' },
+  validator: { border: 'border-orange-500/40', glow: 'shadow-orange-500/20' },
+  constant: { border: 'border-slate-400/40', glow: 'shadow-slate-500/20' },
+  math: { border: 'border-yellow-500/40', glow: 'shadow-yellow-500/20' },
+  gate: { border: 'border-red-500/40', glow: 'shadow-red-500/20' },
+  bundle: { border: 'border-cyan-400/40', glow: 'shadow-cyan-500/20' },
+  template: { border: 'border-lime-500/40', glow: 'shadow-lime-500/20' },
+  compare: { border: 'border-amber-300/40', glow: 'shadow-amber-300/20' },
+  router: { border: 'border-pink-500/40', glow: 'shadow-pink-500/20' },
+  delay: { border: 'border-indigo-400/40', glow: 'shadow-indigo-400/20' },
+  poll: { border: 'border-cyan-300/40', glow: 'shadow-cyan-300/20' },
+  http: { border: 'border-sky-400/40', glow: 'shadow-sky-400/20' },
+  database: { border: 'border-emerald-500/40', glow: 'shadow-emerald-500/20' },
+  db_schema: { border: 'border-purple-500/40', glow: 'shadow-purple-500/20' },
+  prompt: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },
+  model: { border: 'border-fuchsia-500/40', glow: 'shadow-fuchsia-500/20' },
+  agent: { border: 'border-emerald-400/40', glow: 'shadow-emerald-400/20' },
+  learner_agent: { border: 'border-emerald-300/40', glow: 'shadow-emerald-300/20' },
+  viewer: { border: 'border-violet-500/40', glow: 'shadow-violet-500/20' },
+  notification: { border: 'border-amber-400/40', glow: 'shadow-amber-500/20' },
+  ai_description: { border: 'border-indigo-500/40', glow: 'shadow-indigo-500/20' },
+  description_updater: { border: 'border-rose-400/40', glow: 'shadow-rose-400/20' },
 };
 
 const triggers = [
-  "Product Modal - Context Filter",
-  "Bulk Action - Generate Descriptions",
-  "On Product Save",
+  'Product Modal - Context Filter',
+  'Bulk Action - Generate Descriptions',
+  'On Product Save',
 ];
 
 export {

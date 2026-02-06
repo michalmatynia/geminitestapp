@@ -1,8 +1,8 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useCallback, useRef } from 'react';
 
 interface QuerySchedulerConfig {
   priority: 'high' | 'medium' | 'low';
@@ -15,14 +15,14 @@ export function useQueryScheduler(): {
   scheduleQuery: (id: string, queryKey: unknown[], queryFn: () => Promise<unknown>, config: QuerySchedulerConfig) => void;
   cancelScheduledQuery: (id: string) => void;
   clearAllScheduled: () => void;
-} {
+  } {
   const queryClient = useQueryClient();
   const scheduledQueries = useRef<Map<string, {
     queryKey: unknown[];
     queryFn: () => Promise<unknown>;
     config: QuerySchedulerConfig;
     timeout?: NodeJS.Timeout;
-  }>>(new Map());
+      }>>(new Map());
 
   const scheduleQuery = useCallback((
     id: string,
@@ -38,7 +38,7 @@ export function useQueryScheduler(): {
 
     const delay = config.delay || (
       config.priority === 'high' ? 0 :
-      config.priority === 'medium' ? 1000 : 3000
+        config.priority === 'medium' ? 1000 : 3000
     );
 
     const timeout = setTimeout((): void => {

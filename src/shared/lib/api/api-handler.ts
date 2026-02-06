@@ -1,16 +1,28 @@
-import "server-only";
+import 'server-only';
 
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { resolveError } from "@/shared/errors/resolve-error";
-import { badRequestError } from "@/shared/errors/app-error";
-import type { SystemLogLevel } from "@/shared/types/system-logs";
+import { randomUUID } from 'crypto';
+
+import { NextRequest, NextResponse } from 'next/server';
+
+import { badRequestError, forbiddenError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
+import { resolveError } from '@/shared/errors/resolve-error';
+import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
+import {
+  CSRF_SAFE_METHODS,
+  getCsrfTokenFromHeaders,
+  getCsrfTokenFromRequest,
+  isSameOriginRequest,
+} from '@/shared/lib/security/csrf';
 import type {
   ApiHandlerOptions,
   ApiHandlerContext,
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
-} from "@/shared/types/api";
+} from '@/shared/types/api';
+import type { SystemLogLevel } from '@/shared/types/system-logs';
+
+import type { ZodSchema } from 'zod';
+
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
@@ -32,15 +44,27 @@ type ErrorFingerprintParams = {
   error: unknown;
 };
 
-// Stub implementations to avoid features layer dependency
-const logSystemEvent = (params: LogSystemEventParams): void => {
-  // Implementation would be injected or moved to shared layer
-  console.log('System event:', params);
+// Real implementations from features layer via dynamic imports to avoid circular dependencies
+const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+  try {
+    // eslint-disable-next-line import/no-restricted-paths
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    await realLogSystemEvent(params as LogSystemEventParams);
+  } catch (error) {
+    console.error('Failed to log system event via observability feature:', error);
+    console.log('System event (fallback):', params);
+  }
 };
 
-const getErrorFingerprint = (params: ErrorFingerprintParams): string => {
-  // Simple fingerprint generation
-  return `${params.source}-${params.statusCode}-${Date.now()}`;
+const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
+  try {
+    // eslint-disable-next-line import/no-restricted-paths
+    const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
+    return realGetFingerprint(params as ErrorFingerprintParams);
+  } catch (error) {
+    console.error('Failed to get error fingerprint via observability feature:', error);
+    return `${params.source}-${params.statusCode}-${Date.now()}`;
+  }
 };
 
 export type {
@@ -48,6 +72,80 @@ export type {
   ApiHandlerContext,
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
+};
+
+type ParsedBodyResult = {
+  body: unknown;
+};
+
+const DEFAULT_JSON_BODY_BYTES = 1_000_000;
+
+const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
+  const method = request.method.toUpperCase();
+  if (CSRF_SAFE_METHODS.has(method)) return;
+  const shouldRequire = options.requireCsrf !== false;
+  if (!shouldRequire) return;
+  if (!isSameOriginRequest(request)) {
+    throw forbiddenError('Invalid request origin.');
+  }
+  const cookieToken = getCsrfTokenFromRequest(request);
+  const headerToken = getCsrfTokenFromHeaders(request);
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    throw forbiddenError('Invalid CSRF token.');
+  }
+};
+
+const isJsonRequest = (request: NextRequest): boolean => {
+  const contentType = request.headers.get('content-type') ?? '';
+  return contentType.includes('application/json');
+};
+
+const parseJsonBody = async (
+  request: NextRequest,
+  options: { maxBodyBytes: number; schema?: ZodSchema | undefined }
+): Promise<ParsedBodyResult> => {
+  if (!isJsonRequest(request)) {
+    return { body: undefined };
+  }
+
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && Number(contentLength) > options.maxBodyBytes) {
+    throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
+  }
+
+  const clone = request.clone();
+  const text = await clone.text();
+  if (text.length > options.maxBodyBytes) {
+    throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
+  }
+
+  if (!text.trim()) {
+    return { body: undefined };
+  }
+
+  let parsed: unknown = undefined;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw badRequestError('Invalid JSON payload');
+  }
+
+  if (options.schema) {
+    const validation = options.schema.safeParse(parsed);
+    if (!validation.success) {
+      throw validationError('Validation failed', { issues: validation.error.flatten() });
+    }
+    return { body: validation.data };
+  }
+
+  return { body: parsed };
+};
+
+const applySecurityHeaders = (response: Response): void => {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 };
 
 /**
@@ -76,7 +174,13 @@ export function apiHandler(
   options: ApiHandlerOptions
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
-    const requestId = request.headers.get("x-request-id") ?? randomUUID();
+    if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
+      const response = NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+      applySecurityHeaders(response);
+      return response;
+    }
+
+    const requestId = request.headers.get('x-request-id') ?? randomUUID();
     const startTime = performance.now();
 
     const context: ApiHandlerContext = {
@@ -86,12 +190,30 @@ export function apiHandler(
     };
 
     try {
+      enforceCsrf(request, options);
+
+      let rateLimitHeaders: Record<string, string> | undefined;
+      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+      if (rateKey) {
+        const rateResult = enforceRateLimit(request, rateKey);
+        rateLimitHeaders = rateResult.headers;
+        context.rateLimitHeaders = rateLimitHeaders;
+      }
+
+      if (options.parseJsonBody) {
+        const parsed = await parseJsonBody(request, {
+          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+          schema: options.bodySchema,
+        });
+        context.body = parsed.body;
+      }
+
       const response = await handler(request, context);
 
       // Log successful requests if configured
       if (options.logSuccess) {
         void logSystemEvent({
-          level: options.successLogLevel ?? "info",
+          level: options.successLogLevel ?? 'info',
           message: `${options.source} completed successfully`,
           source: options.source,
           request,
@@ -104,12 +226,31 @@ export function apiHandler(
       }
 
       // Add request ID to response headers for client-side tracking
-      if (!response.headers.has("x-request-id")) {
-        response.headers.set("x-request-id", requestId);
+      if (!response.headers.has('x-request-id')) {
+        response.headers.set('x-request-id', requestId);
       }
+      if (context.rateLimitHeaders) {
+        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
-      return createErrorResponseWithTiming(error, request, context, options);
+      const response = await createErrorResponseWithTiming(
+        error,
+        request,
+        context,
+        options
+      );
+      if (context.rateLimitHeaders) {
+        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      return response;
     }
   };
 }
@@ -128,7 +269,7 @@ export function apiHandler(
  * );
  * ```
  */
-export function apiHandlerWithParams<P extends Record<string, string>>(
+export function apiHandlerWithParams<P extends Record<string, string | string[]>>(
   handler: ApiRouteHandlerWithParams<P>,
   options: ApiHandlerOptions
 ): (
@@ -136,7 +277,13 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
   context: { params: Promise<P> }
 ) => Promise<Response> {
   return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
-    const requestId = request.headers.get("x-request-id") ?? randomUUID();
+    if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
+      const response = NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+      applySecurityHeaders(response);
+      return response;
+    }
+
+    const requestId = request.headers.get('x-request-id') ?? randomUUID();
     const startTime = performance.now();
 
     const handlerContext: ApiHandlerContext = {
@@ -146,12 +293,30 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
     };
 
     try {
+      enforceCsrf(request, options);
+
+      let rateLimitHeaders: Record<string, string> | undefined;
+      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+      if (rateKey) {
+        const rateResult = enforceRateLimit(request, rateKey);
+        rateLimitHeaders = rateResult.headers;
+        handlerContext.rateLimitHeaders = rateLimitHeaders;
+      }
+
+      if (options.parseJsonBody) {
+        const parsed = await parseJsonBody(request, {
+          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+          schema: options.bodySchema,
+        });
+        handlerContext.body = parsed.body;
+      }
+
       const params = await routeContext.params;
       const response = await handler(request, handlerContext, params);
 
       if (options.logSuccess) {
         void logSystemEvent({
-          level: options.successLogLevel ?? "info",
+          level: options.successLogLevel ?? 'info',
           message: `${options.source} completed successfully`,
           source: options.source,
           request,
@@ -164,35 +329,69 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
         });
       }
 
-      if (!response.headers.has("x-request-id")) {
-        response.headers.set("x-request-id", requestId);
+      if (!response.headers.has('x-request-id')) {
+        response.headers.set('x-request-id', requestId);
       }
+      if (handlerContext.rateLimitHeaders) {
+        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
-      return createErrorResponseWithTiming(
+      const response = await createErrorResponseWithTiming(
         error,
         request,
         handlerContext,
         options
       );
+      if (handlerContext.rateLimitHeaders) {
+        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+          response.headers.set(key, value);
+        });
+      }
+      applySecurityHeaders(response);
+      return response;
     }
   };
+}
+
+const DEFAULT_GET_CACHE_CONTROL = 'private, max-age=60, stale-while-revalidate=300';
+
+function applyDefaultCacheHeaders(
+  response: Response,
+  method: string,
+  override?: string
+): void {
+  if (response.headers.has('Cache-Control')) return;
+  if (override && override.trim()) {
+    response.headers.set('Cache-Control', override.trim());
+    return;
+  }
+  const isGetLike = method === 'GET' || method === 'HEAD';
+  if (isGetLike) {
+    response.headers.set('Cache-Control', DEFAULT_GET_CACHE_CONTROL);
+    return;
+  }
+  response.headers.set('Cache-Control', 'no-store');
 }
 
 /**
  * Creates an error response with timing information and logging.
  */
-function createErrorResponseWithTiming(
+async function createErrorResponseWithTiming(
   error: unknown,
   request: NextRequest,
   context: ApiHandlerContext,
   options: ApiHandlerOptions
-): Response {
+): Promise<Response> {
   const resolved = resolveError(error, {
     ...(options.fallbackMessage !== undefined && { fallbackMessage: options.fallbackMessage }),
   });
 
-  const level: SystemLogLevel = resolved.expected ? "warn" : "error";
+  const level: SystemLogLevel = resolved.expected ? 'warn' : 'error';
   const durationMs = context.getElapsedMs();
 
   // Log the error with full context
@@ -219,7 +418,7 @@ function createErrorResponseWithTiming(
     errorId: resolved.errorId,
   };
 
-  const fingerprint = getErrorFingerprint({
+  const fingerprint = await getErrorFingerprint({
     message: resolved.message,
     source: options.source,
     request,
@@ -243,13 +442,13 @@ function createErrorResponseWithTiming(
   }
 
   const response = NextResponse.json(payload, { status: resolved.httpStatus });
-  response.headers.set("x-request-id", context.requestId);
-  response.headers.set("x-error-id", resolved.errorId);
-  response.headers.set("x-error-fingerprint", fingerprint);
+  response.headers.set('x-request-id', context.requestId);
+  response.headers.set('x-error-id', resolved.errorId);
+  response.headers.set('x-error-fingerprint', fingerprint);
 
   if (resolved.retryable && resolved.retryAfterMs) {
     const retryAfterSeconds = Math.ceil(resolved.retryAfterMs / 1000);
-    response.headers.set("Retry-After", String(retryAfterSeconds));
+    response.headers.set('Retry-After', String(retryAfterSeconds));
   }
 
   return response;
@@ -284,10 +483,10 @@ export function getPaginationParams(searchParams: URLSearchParams): {
   pageSize: number;
   skip: number;
 } {
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const pageSize = Math.min(
     100,
-    Math.max(1, parseInt(searchParams.get("pageSize") ?? "20", 10))
+    Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10))
   );
   const skip = (page - 1) * pageSize;
   return { page, pageSize, skip };

@@ -10,7 +10,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { syncBaseImagesForListing } from "@/features/integrations/services/base-image-sync";
 
 const syncSchema = z.object({
-  inventoryId: z.string().min(1).optional(),
+  inventoryId: z.string().min(1).optional()
 });
 
 async function POST_handler(
@@ -26,7 +26,7 @@ async function POST_handler(
 
     const parsed = await parseJsonBody(req, syncSchema, {
       logPrefix: "integrations.products.listings.SYNC_BASE_IMAGES",
-      allowEmpty: true,
+      allowEmpty: true
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -37,18 +37,18 @@ async function POST_handler(
     return NextResponse.json({
       status: "synced",
       count: result.count,
-      added: result.added,
+      added: result.added
     });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.listings.SYNC_BASE_IMAGES",
-      fallbackMessage: "Failed to sync image URLs from Base.com",
+      fallbackMessage: "Failed to sync image URLs from Base.com"
     });
   }
 }
 
 export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(
   POST_handler,
-  { source: "integrations.products.[id].listings.[listingId].sync-base-images.POST" }
+  { source: "integrations.products.[id].listings.[listingId].sync-base-images.POST", requireCsrf: false }
 );

@@ -1,5 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 interface BackgroundSyncOptions {
   queryKey: unknown[];
@@ -31,7 +31,7 @@ export function useBackgroundSync({
           previousDataRef.current = currentData;
         }
       } catch (error: unknown) {
-        console.warn("Background sync failed:", error);
+        console.warn('Background sync failed:', error);
       }
     };
 
@@ -56,7 +56,7 @@ export function useBackgroundSync({
 // Hook for real-time job status updates
 export function useJobStatusSync(jobId: string, enabled: boolean = true): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
-    queryKey: ["job", jobId],
+    queryKey: ['job', jobId],
     interval: 5000, // 5 seconds for jobs
     enabled: enabled && !!jobId,
   });
@@ -65,7 +65,7 @@ export function useJobStatusSync(jobId: string, enabled: boolean = true): { forc
 // Hook for product list updates
 export function useProductListSync(filters: Record<string, unknown>, enabled: boolean = true): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
-    queryKey: ["products", filters],
+    queryKey: ['products', filters],
     interval: 60000, // 1 minute for products
     enabled,
   });

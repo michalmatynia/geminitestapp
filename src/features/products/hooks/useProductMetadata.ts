@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
+
 import type { 
   CatalogRecord, 
   ProductCategory, 
@@ -10,27 +11,28 @@ import type {
   PriceGroupWithDetails,
   ProductWithImages,
   Producer
-} from "@/features/products/types";
-import type { Language } from "@/shared/types/internationalization";
-import type { UseFormSetValue, UseFormGetValues } from "react-hook-form";
-import type { ProductFormData } from "@/features/products/types";
+} from '@/features/products/types';
+import type { ProductFormData } from '@/features/products/types';
+import type { Language } from '@/shared/types/internationalization';
+
+import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 
 export const productMetadataKeys = {
-  catalogs: ["catalogs"] as const,
-  categories: (catalogId: string) => ["categories", catalogId] as const,
-  tags: (catalogId: string) => ["tags", catalogId] as const,
-  producers: ["producers"] as const,
-  parameters: (catalogId: string) => ["parameters", catalogId] as const,
-  languages: ["languages"] as const,
-  priceGroups: ["price-groups"] as const,
+  catalogs: ['catalogs'] as const,
+  categories: (catalogId: string) => ['categories', catalogId] as const,
+  tags: (catalogId: string) => ['tags', catalogId] as const,
+  producers: ['producers'] as const,
+  parameters: (catalogId: string) => ['parameters', catalogId] as const,
+  languages: ['languages'] as const,
+  priceGroups: ['price-groups'] as const,
 };
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({
     queryKey: productMetadataKeys.catalogs,
     queryFn: async (): Promise<CatalogRecord[]> => {
-      const res = await fetch("/api/catalogs");
-      if (!res.ok) throw new Error("Failed to load catalogs");
+      const res = await fetch('/api/catalogs');
+      if (!res.ok) throw new Error('Failed to load catalogs');
       return (await res.json()) as CatalogRecord[];
     },
   });
@@ -41,7 +43,7 @@ export function useCategories(catalogId: string): UseQueryResult<ProductCategory
     queryKey: productMetadataKeys.categories(catalogId),
     queryFn: async (): Promise<ProductCategory[]> => {
       const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error("Failed to load categories");
+      if (!res.ok) throw new Error('Failed to load categories');
       return (await res.json()) as ProductCategory[];
     },
     enabled: !!catalogId,
@@ -53,7 +55,7 @@ export function useTags(catalogId: string): UseQueryResult<ProductTag[]> {
     queryKey: productMetadataKeys.tags(catalogId),
     queryFn: async (): Promise<ProductTag[]> => {
       const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error("Failed to load tags");
+      if (!res.ok) throw new Error('Failed to load tags');
       return (await res.json()) as ProductTag[];
     },
     enabled: !!catalogId,
@@ -64,8 +66,8 @@ export function useProducers(): UseQueryResult<Producer[]> {
   return useQuery({
     queryKey: productMetadataKeys.producers,
     queryFn: async (): Promise<Producer[]> => {
-      const res = await fetch("/api/products/producers");
-      if (!res.ok) throw new Error("Failed to load producers");
+      const res = await fetch('/api/products/producers');
+      if (!res.ok) throw new Error('Failed to load producers');
       return (await res.json()) as Producer[];
     },
   });
@@ -76,7 +78,7 @@ export function useParameters(catalogId: string): UseQueryResult<ProductParamete
     queryKey: productMetadataKeys.parameters(catalogId),
     queryFn: async (): Promise<ProductParameter[]> => {
       const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error("Failed to load parameters");
+      if (!res.ok) throw new Error('Failed to load parameters');
       return (await res.json()) as ProductParameter[];
     },
     enabled: !!catalogId,
@@ -87,8 +89,8 @@ export function useLanguages(): UseQueryResult<Language[]> {
   return useQuery({
     queryKey: productMetadataKeys.languages,
     queryFn: async (): Promise<Language[]> => {
-      const res = await fetch("/api/languages");
-      if (!res.ok) throw new Error("Failed to load languages");
+      const res = await fetch('/api/languages');
+      if (!res.ok) throw new Error('Failed to load languages');
       return (await res.json()) as Language[];
     },
   });
@@ -98,8 +100,8 @@ export function usePriceGroups(): UseQueryResult<PriceGroupWithDetails[]> {
   return useQuery({
     queryKey: productMetadataKeys.priceGroups,
     queryFn: async (): Promise<PriceGroupWithDetails[]> => {
-      const res = await fetch("/api/price-groups");
-      if (!res.ok) throw new Error("Failed to load price groups");
+      const res = await fetch('/api/price-groups');
+      if (!res.ok) throw new Error('Failed to load price groups');
       return (await res.json()) as PriceGroupWithDetails[];
     },
   });
@@ -113,8 +115,8 @@ export interface ProductMetadataHookResult {
   toggleCatalog: (catalogId: string) => void;
   categories: ProductCategory[];
   categoriesLoading: boolean;
-  selectedCategoryIds: string[];
-  toggleCategory: (categoryId: string) => void;
+  selectedCategoryId: string | null;
+  setCategoryId: (categoryId: string | null) => void;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -133,7 +135,7 @@ export interface UseProductMetadataProps {
   product?: ProductWithImages | undefined;
   initialCatalogId?: string | undefined;
   initialCatalogIds?: string[] | undefined;
-  initialCategoryIds?: string[] | undefined;
+  initialCategoryId?: string | null | undefined;
   initialTagIds?: string[] | undefined;
   setValue?: UseFormSetValue<ProductFormData> | undefined;
   getValues?: UseFormGetValues<ProductFormData> | undefined;
@@ -144,7 +146,7 @@ export function useProductMetadata({
   product,
   initialCatalogId,
   initialCatalogIds,
-  initialCategoryIds,
+  initialCategoryId,
   initialTagIds,
 }: UseProductMetadataProps): ProductMetadataHookResult {
   const catalogsQuery = useCatalogs();
@@ -166,11 +168,14 @@ export function useProductMetadata({
   }, [product, initialCatalogIds, initialCatalogId]);
 
   const initialCategorySelection = React.useMemo(() => {
-    if (product?.categories) {
-      return product.categories.map((c: { categoryId: string }) => c.categoryId);
+    if (product?.categoryId) {
+      return product.categoryId;
     }
-    return initialCategoryIds || [];
-  }, [product, initialCategoryIds]);
+    if (initialCategoryId) {
+      return initialCategoryId;
+    }
+    return null;
+  }, [product, initialCategoryId]);
 
   const initialTagSelection = React.useMemo(() => {
     if (product?.tags) {
@@ -187,7 +192,7 @@ export function useProductMetadata({
   }, [product]);
   
   const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(initialCatalogSelection);
-  const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>(initialCategorySelection);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(initialCategorySelection);
   const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
   const [selectedProducerIds, setSelectedProducerIds] = React.useState<string[]>(initialProducerSelection);
 
@@ -199,7 +204,7 @@ export function useProductMetadata({
   }, [initialCatalogSelection]);
 
   React.useEffect(() => {
-    setSelectedCategoryIds((prev: string[]) => (arraysEqual(prev, initialCategorySelection) ? prev : initialCategorySelection));
+    setSelectedCategoryId((prev: string | null) => (prev === initialCategorySelection ? prev : initialCategorySelection));
   }, [initialCategorySelection]);
 
   React.useEffect(() => {
@@ -212,7 +217,7 @@ export function useProductMetadata({
     );
   }, [initialProducerSelection]);
   
-  const primaryCatalogId = selectedCatalogIds[0] || "";
+  const primaryCatalogId = selectedCatalogIds[0] || '';
   const categoriesQuery = useCategories(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
@@ -225,12 +230,9 @@ export function useProductMetadata({
     );
   };
 
-  const toggleCategory = (categoryId: string): void => {
-    setSelectedCategoryIds((prev: string[]) => 
-      prev.includes(categoryId) 
-        ? prev.filter((id: string) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+  const setCategoryId = (categoryId: string | null): void => {
+    const trimmed = typeof categoryId === 'string' ? categoryId.trim() : '';
+    setSelectedCategoryId(trimmed ? trimmed : null);
   };
 
   const toggleTag = (tagId: string): void => {
@@ -274,10 +276,10 @@ export function useProductMetadata({
 
     const filteredLanguages = languageIdSet.size
       ? languages.filter((language: Language) => {
-          const idKey = String(language.id).trim().toUpperCase();
-          const codeKey = String(language.code).trim().toUpperCase();
-          return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
-        })
+        const idKey = String(language.id).trim().toUpperCase();
+        const codeKey = String(language.code).trim().toUpperCase();
+        return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
+      })
       : languages;
 
     const priceGroupIdSet = new Set(
@@ -303,8 +305,8 @@ export function useProductMetadata({
     toggleCatalog,
     categories: categoriesQuery.data || [],
     categoriesLoading: categoriesQuery.isLoading,
-    selectedCategoryIds,
-    toggleCategory,
+    selectedCategoryId,
+    setCategoryId,
     tags: tagsQuery.data || [],
     tagsLoading: tagsQuery.isLoading,
     selectedTagIds,

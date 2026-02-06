@@ -31,6 +31,8 @@ Architecture segmentation and restructuring
 TESTS
 -use msw API mocking - DONE
 
+use Context refactor for each feature, to avoid prop drilling
+
 PRISMA
 npx prisma generate
 npx prisma migrate dev

@@ -1,18 +1,19 @@
-import "server-only";
+import 'server-only';
 
-import { productService } from "@/features/products/services/productService";
-import type { ProductFilters } from "@/features/products/types/services/product-repository";
-import type { ProductWithImages } from "@/features/products/types";
+import { productService } from '@/features/products/services/productService';
+import type { ProductWithImages } from '@/features/products/types';
+import type { ProductFilters } from '@/features/products/types/services/product-repository';
+
 import { withQueryCache, ProductCacheHelpers, queryCache } from './query-cache';
 
 type ProductFilterInput = Record<string, unknown>;
 
 function toOptionalString(value: unknown): string | undefined {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
     return String(value);
   }
   return undefined;
@@ -82,7 +83,7 @@ export class CachedProductService {
     {
       keyGenerator: (sku: string) => `product:sku:${sku}`,
       ttl: 300000, // 5 minutes
-      tags: (_sku: string) => ["products:list"]
+      tags: (_sku: string) => ['products:list']
     }
   );
 
@@ -114,16 +115,15 @@ export class CachedProductService {
   static getProductsByCategory: (categoryId: string, limit?: number) => Promise<ProductWithImages[]> = withQueryCache(
     async (categoryId: string, limit?: number) => {
       const categoryFilters: ProductFilters = {};
-      if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) {
+      if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
         categoryFilters.pageSize = String(limit);
       }
       const products = await productService.getProducts(categoryFilters);
       const filtered = products.filter(
         (product: ProductWithImages) =>
-          Array.isArray(product.categories) &&
-          product.categories.some((entry: { categoryId: string }) => entry.categoryId === categoryId)
+          typeof product.categoryId === 'string' && product.categoryId === categoryId
       );
-      return typeof limit === "number" && limit > 0
+      return typeof limit === 'number' && limit > 0
         ? filtered.slice(0, limit)
         : filtered;
     },

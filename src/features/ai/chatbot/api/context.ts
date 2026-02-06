@@ -1,16 +1,21 @@
-import type { ChatbotContextSegment } from "../types";
-import { readErrorMessage } from "./client";
+import { readErrorMessage } from './client';
 
-export const uploadChatbotContextPdf = async (file: File): Promise<{ segments: ChatbotContextSegment[] }> => {
+import type { ChatbotContextSegment } from '../types';
+
+export const uploadChatbotContextPdf = async (
+  file: File,
+  onProgress?: (loaded: number, total?: number) => void
+): Promise<{ segments: ChatbotContextSegment[] }> => {
   const formData = new FormData();
-  formData.append("file", file, file.name);
-  const res = await fetch("/api/chatbot/context", {
-    method: "POST",
-    body: formData,
+  formData.append('file', file, file.name);
+  const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+  const result = await uploadWithProgress<{ segments: ChatbotContextSegment[] }>('/api/chatbot/context', {
+    formData,
+    onProgress,
   });
-  if (!res.ok) {
-    const message = await readErrorMessage(res, "Failed to parse PDF.");
+  if (!result.ok) {
+    const message = await readErrorMessage(new Response(result.raw, { status: result.status }), 'Failed to parse PDF.');
     throw new Error(message);
   }
-  return (await res.json()) as { segments: ChatbotContextSegment[] };
+  return result.data as { segments: ChatbotContextSegment[] };
 };

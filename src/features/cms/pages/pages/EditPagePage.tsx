@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { Button, Checkbox, Input, Label, SectionHeader, Switch } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
-import CmsEditorLayout from "@/features/cms/components/CmsEditorLayout";
-import { CmsDomainSelector } from "@/features/cms";
-import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from "@/features/cms/hooks/useCmsQueries";
-import type { Page, Slug, PageSlugLink } from "@/features/cms/types";
+import { CmsDomainSelector } from '@/features/cms';
+import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
+import type { Page, Slug, PageSlugLink } from '@/features/cms/types';
+import { Button, Checkbox, Input, Label, SectionHeader, Switch } from '@/shared/ui';
 
 export default function EditPagePageLoader(): React.JSX.Element {
   const { id } = useParams();
@@ -26,7 +26,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [includeAllZones, setIncludeAllZones] = useState(false);
   const [manualSelectedSlugIds, setManualSelectedSlugIds] = useState<string[] | null>(null);
   const router = useRouter();
@@ -78,7 +78,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
       id,
       input: { ...page, showMenu: page.showMenu ?? true, slugIds: selectedSlugIds },
     });
-    router.push("/admin/cms/pages");
+    router.push('/admin/cms/pages');
   };
 
   return (
@@ -87,7 +87,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
         <div className="flex items-center justify-between gap-4">
           <SectionHeader title={page.name} description="Manage page slugs per zone." />
           <Button onClick={(): void => { void handleSave(); }}>
-            {updatePage.isPending ? "Saving..." : "Save"}
+            {updatePage.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
 

@@ -1,27 +1,30 @@
-import { JSX } from "react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
-import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
-import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
-import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
-import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
-import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
-import type { Page, CmsTheme } from "@/features/cms/types";
-import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
-import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
-import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
-import { auth } from "@/features/auth/auth";
-import type { Session } from "next-auth";
-import { getUserPreferences } from "@/features/auth/server";
+import { headers } from 'next/headers';
+import { notFound } from 'next/navigation';
+import { JSX } from 'react';
+
+import { auth } from '@/features/auth/auth';
+import { getUserPreferences } from '@/features/auth/server';
+import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
+import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
+import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
+import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
+import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
+import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
+import type { Page, CmsTheme } from '@/features/cms/types';
+import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+
+import type { Metadata } from 'next';
+import type { Session } from 'next-auth';
+
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session["user"] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
   if (user.isElevated) return true;
-  const role = user.role ?? "";
-  return ["admin", "super_admin", "superuser"].includes(role);
+  const role = user.role ?? '';
+  return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
 const canPreviewDrafts = async (
@@ -38,7 +41,7 @@ const canPreviewDrafts = async (
   }
 };
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // ---------------------------------------------------------------------------
 // Resolve slug → published page
@@ -46,9 +49,7 @@ export const dynamic = "force-dynamic";
 
 async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
   try {
-    const slugValue = slugSegments.join("/");
-    const session = await auth();
-    const allowDrafts = await canPreviewDrafts(session);
+    const slugValue = slugSegments.join('/');
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
@@ -56,8 +57,10 @@ async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
     if (!domainSlug) return null;
     const page = await cmsRepository.getPageBySlug(slugValue);
     if (!page) return null;
-    // Only render published pages on the frontend
-    if (!allowDrafts && page.status !== "published") return null;
+    if (page.status === 'published') return page;
+    const session = await auth();
+    const allowDrafts = await canPreviewDrafts(session);
+    if (!allowDrafts) return null;
     return page;
   } catch {
     return null;
@@ -77,12 +80,12 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   const page = await resolveSlugToPage(slug);
 
   if (!page) {
-    return { title: "Page Not Found" };
+    return { title: 'Page Not Found' };
   }
 
   const metadata: Metadata = {
     title: page.seoTitle || page.name,
-    robots: page.robotsMeta || "index,follow",
+    robots: page.robotsMeta || 'index,follow',
   };
 
   if (page.seoDescription) {

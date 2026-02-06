@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Effect, BlendFunction } from "postprocessing";
-import { Uniform } from "three";
-import { forwardRef, useMemo } from "react";
+import { Effect, BlendFunction } from 'postprocessing';
+import { forwardRef, useMemo } from 'react';
+import { Uniform } from 'three';
 
 const pixelationFragmentShader = `
   uniform float pixelSize;
@@ -25,20 +25,20 @@ export class PixelationEffectImpl extends Effect {
     pixelSize?: number;
     blendFunction?: BlendFunction;
   } = {}) {
-    super("PixelationEffect", pixelationFragmentShader, {
+    super('PixelationEffect', pixelationFragmentShader, {
       blendFunction,
       uniforms: new Map<string, Uniform>([
-        ["pixelSize", new Uniform(pixelSize)],
+        ['pixelSize', new Uniform(pixelSize)],
       ]),
     });
   }
 
   get pixelSize(): number {
-    return this.uniforms.get("pixelSize")!.value as number;
+    return this.uniforms.get('pixelSize')!.value as number;
   }
 
   set pixelSize(value: number) {
-    this.uniforms.get("pixelSize")!.value = value;
+    this.uniforms.get('pixelSize')!.value = value;
   }
 }
 
@@ -54,7 +54,8 @@ export const PixelationPass = forwardRef<PixelationEffectImpl, PixelationPassPro
       [pixelSize, blendFunction]
     );
 
-    // eslint-disable-next-line react/no-unknown-property
+     
+     
     return <primitive ref={ref} object={effect} />;
   }
 );

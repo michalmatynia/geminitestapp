@@ -1,64 +1,66 @@
 
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { DraftCreator } from "@/features/drafter/components/DraftCreator";
-import { vi } from "vitest";
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { vi } from 'vitest';
+
+import { render } from '@/__tests__/test-utils';
+import { DraftCreator } from '@/features/drafter/components/DraftCreator';
 
 // Mock next/navigation
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useParams: () => ({ id: "1" }),
+  useParams: () => ({ id: '1' }),
 }));
 
 // Mock useToast
-vi.mock("@/shared/ui", async () => {
-  const actual = await vi.importActual("@/shared/ui");
+vi.mock('@/shared/ui', async () => {
+  const actual = await vi.importActual('@/shared/ui');
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
   };
 });
 
-describe("DraftCreator Component", () => {
+describe('DraftCreator Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock global fetch for metadata
     global.fetch = vi.fn().mockImplementation((url) => {
-      if (url === "/api/catalogs") {
+      if (url === '/api/catalogs') {
         return Promise.resolve({
           ok: true,
-          json: async () => await Promise.resolve([{ id: "cat-1", name: "Default Catalog" }]),
+          json: async () => await Promise.resolve([{ id: 'cat-1', name: 'Default Catalog' }]),
         });
       }
       return Promise.resolve({ ok: true, json: async () => await Promise.resolve([]) });
     });
   });
 
-  it("should render the form with initial state", async () => {
+  it('should render the form with initial state', async () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
     
-    expect(screen.getByText("Draft Information")).toBeInTheDocument();
+    expect(screen.getByText('Draft Information')).toBeInTheDocument();
     expect(screen.getByLabelText(/Draft Name/i)).toBeInTheDocument();
     
     // Check if it fetched catalogs
     await waitFor(() => {
-      expect(screen.getByText("Default Catalog")).toBeInTheDocument();
+      expect(screen.getByText('Default Catalog')).toBeInTheDocument();
     });
   });
 
-  it("should update name input correctly", () => {
+  it('should update name input correctly', () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
     
     const nameInput = screen.getByLabelText(/Draft Name/i);
-    fireEvent.change(nameInput, { target: { value: "My New Draft" } });
+    fireEvent.change(nameInput, { target: { value: 'My New Draft' } });
     
-    expect(nameInput).toHaveValue("My New Draft");
+    expect(nameInput).toHaveValue('My New Draft');
   });
 
-  it("should show validation error if saving without a name", () => {
+  it('should show validation error if saving without a name', () => {
     const onSaveSuccess = vi.fn();
     const { container } = render(<DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />);
     
-    const form = container.querySelector("form");
+    const form = container.querySelector('form');
     expect(form).not.toBeNull();
     
     act(() => {
@@ -68,22 +70,22 @@ describe("DraftCreator Component", () => {
     expect(onSaveSuccess).not.toHaveBeenCalled();
   });
 
-  it("should toggle active switch", () => {
+  it('should toggle active switch', () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
     
-    const activeSwitch = screen.getByRole("switch", { name: /Active Draft/i });
+    const activeSwitch = screen.getByRole('switch', { name: /Active Draft/i });
     act(() => {
       fireEvent.click(activeSwitch);
     });
   });
 
-  it("should render icon buttons", async () => {
+  it('should render icon buttons', async () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
     
     // availableIcons includes 'package', 'shopping-cart', etc.
     await waitFor(() => {
-      expect(screen.getByTitle("Package")).toBeInTheDocument();
-      expect(screen.getByTitle("Shopping Cart")).toBeInTheDocument();
+      expect(screen.getByTitle('Package')).toBeInTheDocument();
+      expect(screen.getByTitle('Shopping Cart')).toBeInTheDocument();
     });
   });
 });

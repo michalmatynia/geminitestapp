@@ -1,4 +1,4 @@
-import type { Slug } from "../types";
+import type { Slug } from '../types';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -15,17 +15,17 @@ const withDomainQuery = (url: string, domainId?: string | null): string => {
 };
 
 export const fetchSlugs = async (domainId?: string | null): Promise<Slug[]> => {
-  const res = await fetch(withDomainQuery("/api/cms/slugs", domainId ?? undefined));
+  const res = await fetch(withDomainQuery('/api/cms/slugs', domainId ?? undefined));
   if (!res.ok) {
-    throw new Error("Failed to fetch slugs");
+    throw new Error('Failed to fetch slugs');
   }
   return res.json() as Promise<Slug[]>;
 };
 
 export const fetchAllSlugs = async (): Promise<Slug[]> => {
-  const res = await fetch("/api/cms/slugs?scope=all");
+  const res = await fetch('/api/cms/slugs?scope=all');
   if (!res.ok) {
-    throw new Error("Failed to fetch all slugs");
+    throw new Error('Failed to fetch all slugs');
   }
   return res.json() as Promise<Slug[]>;
 };
@@ -33,7 +33,7 @@ export const fetchAllSlugs = async (): Promise<Slug[]> => {
 export const fetchSlug = async (id: string, domainId?: string | null): Promise<Slug> => {
   const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined));
   if (!res.ok) {
-    throw new Error("Failed to fetch slug");
+    throw new Error('Failed to fetch slug');
   }
   return res.json() as Promise<Slug>;
 };
@@ -41,27 +41,27 @@ export const fetchSlug = async (id: string, domainId?: string | null): Promise<S
 export const fetchSlugDomains = async (id: string): Promise<{ domainIds: string[] }> => {
   const res = await fetch(`/api/cms/slugs/${id}/domains`);
   if (!res.ok) {
-    throw new Error("Failed to fetch slug domains");
+    throw new Error('Failed to fetch slug domains');
   }
   return res.json() as Promise<{ domainIds: string[] }>;
 };
 
 export const updateSlugDomains = async (id: string, domainIds: string[]): Promise<{ domainIds: string[] }> => {
   const res = await fetch(`/api/cms/slugs/${id}/domains`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ domainIds }),
   });
   if (!res.ok) {
-    throw new Error("Failed to update slug domains");
+    throw new Error('Failed to update slug domains');
   }
   return res.json() as Promise<{ domainIds: string[] }>;
 };
 
 export const createSlug = async (input: { slug: string; domainId?: string | null }): Promise<{ ok: boolean; payload: Slug }> => {
-  const res = await fetch(withDomainQuery("/api/cms/slugs", input.domainId ?? undefined), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch(withDomainQuery('/api/cms/slugs', input.domainId ?? undefined), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slug: input.slug }),
   });
   const payload = await safeJson<Slug>(res);
@@ -70,8 +70,8 @@ export const createSlug = async (input: { slug: string; domainId?: string | null
 
 export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: string | null): Promise<{ ok: boolean; payload: Slug }> => {
   const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<Slug>(res);
@@ -80,7 +80,7 @@ export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: st
 
 export const deleteSlug = async (id: string, domainId?: string | null): Promise<{ ok: boolean }> => {
   const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
-    method: "DELETE",
+    method: 'DELETE',
   });
   return { ok: res.ok };
 };

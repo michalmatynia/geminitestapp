@@ -1,0 +1,39 @@
+(node:12463) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:12516) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+[ERROR] [ImportProcessor] Failed to import auth/core: ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core'
+YOLO mode is enabled. All tool calls will be automatically approved.
+Hook registry initialized with 0 hook entries
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 1.399004ms...
+Attempt 2 failed: You have exhausted your capacity on this model.. Retrying after 10000ms...
+Attempt 3 failed: You have exhausted your capacity on this model. Your quota will reset after 1s.. Max attempts reached
+Error when talking to Gemini API Full report available at: /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/gemini-client-error-Turn.run-sendMessageStream-2026-02-04T23-57-30-397Z.json RetryableQuotaError: You have exhausted your capacity on this model. Your quota will reset after 1s.
+    at classifyGoogleError (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/googleQuotaErrors.js:211:28)
+    at retryWithBackoff (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/utils/retry.js:131:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiChat.makeApiCallAndProcessStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:421:32)
+    at async GeminiChat.streamWithRetries (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/geminiChat.js:253:40)
+    at async Turn.run (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/turn.js:66:30)
+    at async GeminiClient.processTurn (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:459:26)
+    at async GeminiClient.sendMessageStream (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/node_modules/@google/gemini-cli-core/dist/src/core/client.js:558:20)
+    at async file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/dist/src/nonInteractiveCli.js:189:34
+    at async main (file:///Users/michalmatynia/.nvm/versions/node/v24.3.0/lib/node_modules/@google/gemini-cli/dist/src/gemini.js:488:9) {
+  cause: {
+    code: 429,
+    message: 'You have exhausted your capacity on this model. Your quota will reset after 1s.',
+    details: [ [Object], [Object] ]
+  },
+  retryDelayMs: 1610.163836
+}
+{
+  "session_id": "4fc86b0b-baae-4b7c-a355-5bec1d741eb5",
+  "error": {
+    "type": "Error",
+    "message": "[object Object]",
+    "code": 1
+  }
+}

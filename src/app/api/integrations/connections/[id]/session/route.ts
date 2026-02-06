@@ -42,16 +42,19 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return NextResponse.json({
       cookies: storageState.cookies ?? [],
       origins: storageState.origins ?? [],
-      updatedAt: connection.playwrightStorageStateUpdatedAt,
+      updatedAt: connection.playwrightStorageStateUpdatedAt
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.connections.[id].session.GET",
       fallbackMessage: "Failed to load session",
-      ...(connectionId ? { extra: { connectionId } } : {}),
+      ...(connectionId ? { extra: { connectionId } } : {})
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "integrations.connections.[id].session.GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  GET_handler,
+  { source: "integrations.connections.[id].session.GET", requireCsrf: false }
+);

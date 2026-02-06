@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { chatbotJobRepository } from "@/features/ai/chatbot/services/chatbot-job-repository";
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 
 // Hoist mocks
 const { mockCollection, mockDb } = vi.hoisted(() => {
@@ -21,11 +22,11 @@ const { mockCollection, mockDb } = vi.hoisted(() => {
   return { mockCollection, mockDb };
 });
 
-vi.mock("@/shared/lib/db/mongo-client", () => ({
+vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn().mockResolvedValue(mockDb),
 }));
 
-vi.mock("mongodb", async (importOriginal) => {
+vi.mock('mongodb', async (importOriginal) => {
   const actual = await importOriginal() as any;
   const mockObjectId = vi.fn().mockImplementation((id: string) => ({
     toString: () => id,
@@ -38,7 +39,7 @@ vi.mock("mongodb", async (importOriginal) => {
   };
 });
 
-describe("Chatbot Job Repository", () => {
+describe('Chatbot Job Repository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCollection.find.mockReturnThis();
@@ -46,20 +47,20 @@ describe("Chatbot Job Repository", () => {
     mockCollection.limit.mockReturnThis();
   });
 
-  describe("findAll", () => {
-    it("returns jobs with limit", async () => {
+  describe('findAll', () => {
+    it('returns jobs with limit', async () => {
       mockCollection.toArray.mockResolvedValue([]);
       await chatbotJobRepository.findAll(10);
       expect(mockCollection.limit).toHaveBeenCalledWith(10);
     });
   });
 
-  describe("findNextPending", () => {
-    it("returns the next pending job", async () => {
+  describe('findNextPending', () => {
+    it('returns the next pending job', async () => {
       const mockJob = {
-        _id: new ObjectId("507f1f77bcf86cd799439011"),
-        sessionId: "s1",
-        status: "pending",
+        _id: new ObjectId('507f1f77bcf86cd799439011'),
+        sessionId: 's1',
+        status: 'pending',
         createdAt: new Date(),
       };
       mockCollection.findOne.mockResolvedValue(mockJob);
@@ -67,53 +68,53 @@ describe("Chatbot Job Repository", () => {
       const result = await chatbotJobRepository.findNextPending();
 
       expect(mockCollection.findOne).toHaveBeenCalledWith(
-        { status: "pending" },
+        { status: 'pending' },
         { sort: { createdAt: 1 } }
       );
-      expect(result?.id).toBe("507f1f77bcf86cd799439011");
+      expect(result?.id).toBe('507f1f77bcf86cd799439011');
     });
   });
 
-  describe("create", () => {
-    it("creates a new job", async () => {
+  describe('create', () => {
+    it('creates a new job', async () => {
       const input = {
-        sessionId: "s1",
-        model: "gpt-4",
-        payload: { messages: [], model: "gpt-4" },
+        sessionId: 's1',
+        model: 'gpt-4',
+        payload: { messages: [], model: 'gpt-4' },
       };
-      const newId = new ObjectId("507f1f77bcf86cd799439012");
+      const newId = new ObjectId('507f1f77bcf86cd799439012');
       mockCollection.insertOne.mockResolvedValue({ insertedId: newId });
 
       const result = await chatbotJobRepository.create(input);
 
       expect(mockCollection.insertOne).toHaveBeenCalled();
       expect(result.id).toBe(newId.toString());
-      expect(result.status).toBe("pending");
+      expect(result.status).toBe('pending');
     });
   });
 
-  describe("update", () => {
-    it("updates an existing job", async () => {
-      const validId = "507f1f77bcf86cd799439011";
+  describe('update', () => {
+    it('updates an existing job', async () => {
+      const validId = '507f1f77bcf86cd799439011';
       const mockJob = {
         _id: new ObjectId(validId),
-        status: "completed",
-        resultText: "done",
+        status: 'completed',
+        resultText: 'done',
       };
       mockCollection.findOneAndUpdate.mockResolvedValue(mockJob);
 
-      const result = await chatbotJobRepository.update(validId, { status: "completed", resultText: "done" });
+      const result = await chatbotJobRepository.update(validId, { status: 'completed', resultText: 'done' });
 
       expect(mockCollection.findOneAndUpdate).toHaveBeenCalled();
-      expect(result?.status).toBe("completed");
+      expect(result?.status).toBe('completed');
     });
   });
 
-  describe("deleteMany", () => {
-    it("deletes multiple jobs by status", async () => {
+  describe('deleteMany', () => {
+    it('deletes multiple jobs by status', async () => {
       mockCollection.deleteMany.mockResolvedValue({ deletedCount: 5 });
-      const result = await chatbotJobRepository.deleteMany(["completed", "failed"]);
-      expect(mockCollection.deleteMany).toHaveBeenCalledWith({ status: { $in: ["completed", "failed"] } });
+      const result = await chatbotJobRepository.deleteMany(['completed', 'failed']);
+      expect(mockCollection.deleteMany).toHaveBeenCalledWith({ status: { $in: ['completed', 'failed'] } });
       expect(result).toBe(5);
     });
   });

@@ -1,10 +1,11 @@
-import React from "react";
-import { Button, Tooltip } from "@/shared/ui";
+import React from 'react';
 
-import type { AiNode, Edge, RuntimeState } from "@/features/ai/ai-paths/lib";
+
+import type { AiNode, Edge, RuntimeState, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
+  NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
   getPortOffsetY,
@@ -18,10 +19,13 @@ import {
   getValueTypeLabel,
   isValueCompatibleWithTypes,
   type PortDataType,
-} from "@/features/ai/ai-paths/lib";
-import { formatPortLabel } from "../utils/ui-utils";
+} from '@/features/ai/ai-paths/lib';
+import { Button, Tooltip, SectionPanel } from '@/shared/ui';
 
-type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
+import { formatPortLabel } from '../utils/ui-utils';
+
+export type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
+const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
 type ConnectionTypeMismatch = {
   fromNode?: AiNode | null;
   toNode?: AiNode | null;
@@ -31,7 +35,7 @@ type ConnectionTypeMismatch = {
   toTypes: PortDataType[];
 };
 type ConnectorInfo = {
-  direction: "input" | "output";
+  direction: 'input' | 'output';
   port: string;
   expectedTypes: PortDataType[];
   expectedLabel: string;
@@ -55,6 +59,7 @@ type CanvasBoardProps = {
   nodes: AiNode[];
   edges: Edge[];
   runtimeState: RuntimeState;
+  flowIntensity?: PathFlowIntensity | undefined;
   edgePaths: EdgePath[];
   view: { x: number; y: number; scale: number };
   panState: { startX: number; startY: number; originX: number; originY: number } | null;
@@ -67,7 +72,7 @@ type CanvasBoardProps = {
   selectedEdgeId: string | null;
   onSelectEdgeId: (edgeId: string | null) => void;
   onRemoveEdge: (edgeId: string) => void;
-  onDisconnectPort: (direction: "input" | "output", nodeId: string, port: string) => void;
+  onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   onReconnectInput: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
   onSelectNode: (nodeId: string) => void;
   onOpenNodeConfig: (nodeId: string) => void;
@@ -101,6 +106,7 @@ export function CanvasBoard({
   nodes,
   edges,
   runtimeState,
+  flowIntensity = 'medium',
   edgePaths,
   view,
   panState,
@@ -142,9 +148,44 @@ export function CanvasBoard({
   const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const FLOW_ANIMATION_MS = 1600;
   const NODE_PULSE_MS = 1400;
+  const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
+  const flowEnabled = resolvedFlowIntensity !== 'off';
+  const flowStyle = React.useMemo<React.CSSProperties>(() => {
+    switch (resolvedFlowIntensity) {
+      case 'off':
+        return {
+          '--ai-paths-flow-duration': '0s',
+          '--ai-paths-flow-opacity': '0',
+          '--ai-paths-flow-dash': '0 0',
+          '--ai-paths-flow-glow': '0px',
+        };
+      case 'low':
+        return {
+          '--ai-paths-flow-duration': '1.6s',
+          '--ai-paths-flow-opacity': '0.45',
+          '--ai-paths-flow-dash': '8 10',
+          '--ai-paths-flow-glow': '2px',
+        };
+      case 'high':
+        return {
+          '--ai-paths-flow-duration': '0.55s',
+          '--ai-paths-flow-opacity': '1',
+          '--ai-paths-flow-dash': '4 4',
+          '--ai-paths-flow-glow': '10px',
+        };
+      case 'medium':
+      default:
+        return {
+          '--ai-paths-flow-duration': '0.9s',
+          '--ai-paths-flow-opacity': '0.9',
+          '--ai-paths-flow-dash': '6 6',
+          '--ai-paths-flow-glow': '6px',
+        };
+    }
+  }, [resolvedFlowIntensity]);
 
   const buildConnectorKey = (
-    direction: "input" | "output",
+    direction: 'input' | 'output',
     nodeId: string,
     port: string
   ): string => `${direction}:${nodeId}:${port}`;
@@ -154,44 +195,44 @@ export function CanvasBoard({
   );
 
   const formatConnectorValue = (value: unknown): string => {
-    if (value === undefined) return "No data yet.";
-    if (value === null) return "null";
-    const formatted = typeof value === "string" ? value : formatRuntimeValue(value);
+    if (value === undefined) return 'No data yet.';
+    if (value === null) return 'null';
+    const formatted = typeof value === 'string' ? value : formatRuntimeValue(value);
     if (formatted.length > 1200) return `${formatted.slice(0, 1200)}…`;
     return formatted;
   };
 
   const stringifyForDiff = (value: unknown): string => {
-    if (value === undefined) return "";
-    if (value === null) return "null";
-    if (typeof value === "string") return value;
-    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (value === undefined) return '';
+    if (value === null) return 'null';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
     try {
       return JSON.stringify(value, null, 2);
     } catch {
-      return "[Complex Object]";
+      return '[Complex Object]';
     }
   };
 
-  const buildDiffLines = (prev: string, next: string, limit: number = 120): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
-    const prevLines = prev.split("\n");
-    const nextLines = next.split("\n");
+  const buildDiffLines = (prev: string, next: string, limit: number = 120): { lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }>; truncated: boolean } => {
+    const prevLines = prev.split('\n');
+    const nextLines = next.split('\n');
     const max = Math.max(prevLines.length, nextLines.length);
-    const lines: Array<{ type: "add" | "remove" | "same"; text: string }> = [];
+    const lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }> = [];
     let truncated = false;
     for (let index = 0; index < max; index += 1) {
       const prevLine = prevLines[index];
       const nextLine = nextLines[index];
       if (prevLine === nextLine) {
         if (prevLine !== undefined) {
-          lines.push({ type: "same", text: prevLine });
+          lines.push({ type: 'same', text: prevLine });
         }
       } else {
         if (prevLine !== undefined) {
-          lines.push({ type: "remove", text: prevLine });
+          lines.push({ type: 'remove', text: prevLine });
         }
         if (nextLine !== undefined) {
-          lines.push({ type: "add", text: nextLine });
+          lines.push({ type: 'add', text: nextLine });
         }
       }
       if (lines.length >= limit) {
@@ -203,10 +244,17 @@ export function CanvasBoard({
   };
 
   const getPortValue = React.useCallback(
-    (direction: "input" | "output", nodeId: string, port: string): unknown => {
-      const source = direction === "input" ? runtimeState.inputs : runtimeState.outputs;
+    (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
+      const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
       const nodeValues = source?.[nodeId] ?? {};
-      return (nodeValues as Record<string, unknown>)[port];
+      const directValue = (nodeValues as Record<string, unknown>)[port];
+      if (directValue !== undefined) return directValue;
+      const history = runtimeState.history?.[nodeId];
+      if (!Array.isArray(history) || history.length === 0) return directValue;
+      const lastEntry = history[history.length - 1];
+      const fallbackSource =
+        direction === 'input' ? lastEntry?.inputs : lastEntry?.outputs;
+      return (fallbackSource as Record<string, unknown> | undefined)?.[port];
     },
     [runtimeState]
   );
@@ -217,12 +265,12 @@ export function CanvasBoard({
   );
 
   const getConnectionMismatches = (
-    direction: "input" | "output",
+    direction: 'input' | 'output',
     nodeId: string,
     port: string
   ): ConnectionTypeMismatch[] => {
     const relevantEdges =
-      direction === "input"
+      direction === 'input'
         ? edges.filter((edge: Edge) => edge.to === nodeId && edge.toPort === port)
         : edges.filter((edge: Edge) => edge.from === nodeId && edge.fromPort === port);
     return relevantEdges.flatMap((edge: Edge) => {
@@ -244,7 +292,7 @@ export function CanvasBoard({
   };
 
   const buildConnectorInfo = (
-    direction: "input" | "output",
+    direction: 'input' | 'output',
     nodeId: string,
     port: string
   ): ConnectorInfo => {
@@ -252,8 +300,10 @@ export function CanvasBoard({
     const rawValue = getPortValue(direction, nodeId, port);
     const treatArrayAsHistory =
       Array.isArray(rawValue) &&
-      !expectedTypes.includes("array") &&
-      !expectedTypes.includes("image");
+      !expectedTypes.includes('array') &&
+      !expectedTypes.includes('image') &&
+      !expectedTypes.includes('any') &&
+      !expectedTypes.includes('json');
     const history = treatArrayAsHistory ? (rawValue as unknown[]) : null;
     const value = history ? history[history.length - 1] : rawValue;
     const actualType = value !== undefined ? getValueTypeLabel(value) : null;
@@ -280,13 +330,13 @@ export function CanvasBoard({
   };
 
   const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element => {
-    const label = info.direction === "input" ? "Input" : "Output";
+    const label = info.direction === 'input' ? 'Input' : 'Output';
     const diff =
       info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
         ? buildDiffLines(
-            stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
-            stringifyForDiff(info.rawValue[info.rawValue.length - 1])
-          )
+          stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
+          stringifyForDiff(info.rawValue[info.rawValue.length - 1])
+        )
         : null;
     return (
       <div className="space-y-1">
@@ -299,7 +349,7 @@ export function CanvasBoard({
         {info.actualType ? (
           <div
             className={`text-[10px] ${
-              info.runtimeMismatch ? "text-rose-300" : "text-gray-400"
+              info.runtimeMismatch ? 'text-rose-300' : 'text-gray-400'
             }`}
           >
             Actual: {info.actualType}
@@ -307,7 +357,7 @@ export function CanvasBoard({
         ) : null}
         {info.isHistory ? (
           <div className="text-[10px] text-amber-200">
-            {info.historyLength > 1 ? `History (${info.historyLength})` : "Single value"}
+            {info.historyLength > 1 ? `History (${info.historyLength})` : 'Single value'}
           </div>
         ) : null}
         {info.runtimeMismatch ? (
@@ -318,12 +368,12 @@ export function CanvasBoard({
         {info.connectionMismatches.length > 0 ? (
           <div className="space-y-1 text-[10px] text-rose-300">
             {info.connectionMismatches.map((mismatch: ConnectionTypeMismatch, index: number) => {
-              const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? "unknown";
-              const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? "unknown";
+              const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
+              const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? 'unknown';
               return (
                 <div key={`${mismatch.fromPort}-${mismatch.toPort}-${index}`}>
                   Connection mismatch: {fromLabel}.{formatPortLabel(mismatch.fromPort)} (
-                  {formatPortDataTypes(mismatch.fromTypes)}) {"->"} {toLabel}.
+                  {formatPortDataTypes(mismatch.fromTypes)}) {'->'} {toLabel}.
                   {formatPortLabel(mismatch.toPort)} ({formatPortDataTypes(mismatch.toTypes)})
                 </div>
               );
@@ -340,14 +390,14 @@ export function CanvasBoard({
           <div className="mt-2">
             <div className="text-[10px] text-gray-400">Diff (last two passes)</div>
             <div className="mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-              {diff.lines.map((line: { type: "add" | "remove" | "same"; text: string }, index: number) => {
-                const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
+              {diff.lines.map((line: { type: 'add' | 'remove' | 'same'; text: string }, index: number) => {
+                const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
                 const colorClass =
-                  line.type === "add"
-                    ? "text-emerald-300"
-                    : line.type === "remove"
-                      ? "text-rose-300"
-                      : "text-gray-300";
+                  line.type === 'add'
+                    ? 'text-emerald-300'
+                    : line.type === 'remove'
+                      ? 'text-rose-300'
+                      : 'text-gray-300';
                 return (
                   <div
                     key={`${line.type}-${index}`}
@@ -369,7 +419,7 @@ export function CanvasBoard({
   };
 
   const triggerConnected = React.useMemo((): Set<string> => {
-    const triggerIds = nodes.filter((node: AiNode) => node.type === "trigger").map((node: AiNode) => node.id);
+    const triggerIds = nodes.filter((node: AiNode) => node.type === 'trigger').map((node: AiNode) => node.id);
     if (triggerIds.length === 0) return new Set<string>();
     const adjacency = new Map<string, Set<string>>();
     edges.forEach((edge: Edge) => {
@@ -397,6 +447,10 @@ export function CanvasBoard({
     }
     return visited;
   }, [nodes, edges]);
+  const hasTriggers = React.useMemo(
+    (): boolean => nodes.some((node: AiNode) => node.type === 'trigger'),
+    [nodes]
+  );
   const edgeMetaMap = React.useMemo(
     (): Map<string, Edge> => new Map(edges.map((edge: Edge) => [edge.id, edge])),
     [edges]
@@ -429,32 +483,53 @@ export function CanvasBoard({
   // blocker emits its downstream outputs.
   const blockingFlowEdgeIds = React.useMemo((): Set<string> => {
     const result = new Set<string>();
-    const blockerTypes = new Set<string>(["poll", "model", "agent", "delay"]);
+    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
+    const blockerTypes = new Set<string>(['poll', 'model', 'agent', 'delay']);
     const outputs = runtimeState.outputs ?? {};
     nodes.forEach((node: AiNode) => {
       if (!blockerTypes.has(node.type)) return;
       const nodeOutputs = outputs[node.id] as Record<string, unknown> | undefined;
       const rawStatus = nodeOutputs?.status;
-      if (typeof rawStatus !== "string") return;
+      if (typeof rawStatus !== 'string') return;
       const status = rawStatus.trim().toLowerCase();
       if (!status) return;
-      if (status === "completed" || status === "failed") return;
+      if (status === 'completed' || status === 'failed') return;
 
       edges.forEach((edge: Edge) => {
         if (edge.to !== node.id) return;
         if (!edge.from || !edge.to) return;
         if (!edge.fromPort || !edge.toPort) return;
-        if (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to)) return;
+        if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
+          return;
+        }
 
         // Mark the edge as "flowing" if it is currently feeding meaningful inputs into the blocker.
-        const inputVal = getPortValue("input", edge.to, edge.toPort);
-        const outputVal = getPortValue("output", edge.from, edge.fromPort);
+        const inputVal = getPortValue('input', edge.to, edge.toPort);
+        const outputVal = getPortValue('output', edge.from, edge.fromPort);
         if (inputVal === undefined && outputVal === undefined) return;
         result.add(edge.id);
       });
     });
     return result;
-  }, [edges, getPortValue, nodes, runtimeState.outputs, triggerConnected]);
+  }, [edges, getPortValue, hasTriggers, nodes, runtimeState.outputs, triggerConnected]);
+
+  const signalEdgeIds = React.useMemo((): Set<string> => {
+    const result = new Set<string>();
+    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
+    edges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.to) return;
+      if (!edge.fromPort || !edge.toPort) return;
+      if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
+        return;
+      }
+      const outputVal = getPortValue('output', edge.from, edge.fromPort);
+      const inputVal = getPortValue('input', edge.to, edge.toPort);
+      if (outputVal !== undefined || inputVal !== undefined) {
+        result.add(edge.id);
+      }
+    });
+    return result;
+  }, [edges, getPortValue, hasTriggers, triggerConnected]);
 
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
@@ -511,8 +586,8 @@ export function CanvasBoard({
   );
 
   const scheduleNodePulse = React.useCallback(
-    (nodeId: string, direction: "input" | "output"): void => {
-      const setState = direction === "input" ? setInputPulseNodes : setOutputPulseNodes;
+    (nodeId: string, direction: 'input' | 'output'): void => {
+      const setState = direction === 'input' ? setInputPulseNodes : setOutputPulseNodes;
       const key = `${direction}:${nodeId}`;
       setState((prev: Set<string>) => {
         if (prev.has(nodeId)) return prev;
@@ -566,7 +641,7 @@ export function CanvasBoard({
     const inputNodes = new Set<string>();
     const outputNodes = new Set<string>();
     outputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
-      const value = getPortValue("output", nodeId, port);
+      const value = getPortValue('output', nodeId, port);
       if (value === undefined) return;
       outputNodes.add(nodeId);
       const outgoing = edgesByFromPort.get(buildEdgePortKey(nodeId, port));
@@ -576,7 +651,7 @@ export function CanvasBoard({
       });
     });
     inputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
-      const value = getPortValue("input", nodeId, port);
+      const value = getPortValue('input', nodeId, port);
       if (value === undefined) return;
       inputNodes.add(nodeId);
       const incoming = edgesByToPort.get(buildEdgePortKey(nodeId, port));
@@ -590,7 +665,7 @@ export function CanvasBoard({
     // any of their outputs change (meta/context usually changes every run).
     outputNodes.forEach((nodeId: string) => {
       const node = nodeById.get(nodeId);
-      if (node?.type !== "trigger") return;
+      if (node?.type !== 'trigger') return;
       edges.forEach((edge: Edge) => {
         if (edge.from !== nodeId) return;
         edgeIds.add(edge.id);
@@ -598,8 +673,8 @@ export function CanvasBoard({
       });
     });
     edgeIds.forEach((edgeId: string) => scheduleEdgePulse(edgeId));
-    outputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "output"));
-    inputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "input"));
+    outputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, 'output'));
+    inputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, 'input'));
   }, [
     buildRuntimeHashes,
     buildEdgePortKey,
@@ -627,8 +702,9 @@ export function CanvasBoard({
     <div
       ref={viewportRef}
       className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden ${
-        panState ? "cursor-grabbing" : "cursor-grab"
+        panState ? 'cursor-grabbing' : 'cursor-grab'
       }`}
+      style={flowStyle}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onPointerDown={onPanStart}
@@ -636,12 +712,12 @@ export function CanvasBoard({
       onPointerUp={onPanEnd}
       onPointerLeave={onPanEnd}
     >
-      <div className="absolute bottom-3 left-3 z-10 rounded-md border bg-card/70 backdrop-blur px-3 py-2 text-[11px] text-gray-400">
+      <SectionPanel variant="subtle-compact" className="absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400">
         Nodes: {nodes.length}
-        {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ""}
+        {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ''}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
-      </div>
-      <div className="absolute bottom-4 right-4 z-10 rounded-md border bg-card/70 backdrop-blur p-2 text-xs text-gray-300">
+      </SectionPanel>
+      <SectionPanel variant="subtle-compact" className="absolute bottom-4 right-4 z-10 p-2 text-xs text-gray-300">
         <div className="mb-2 text-[11px] uppercase text-gray-500">View Controls</div>
         <div className="flex items-center gap-2">
           <Button
@@ -676,7 +752,7 @@ export function CanvasBoard({
             Reset
           </Button>
         </div>
-      </div>
+      </SectionPanel>
       <div
         ref={canvasRef}
         className="absolute left-0 top-0"
@@ -686,10 +762,10 @@ export function CanvasBoard({
           width: CANVAS_WIDTH,
           height: CANVAS_HEIGHT,
           transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-          transformOrigin: "0 0",
+          transformOrigin: '0 0',
           backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)",
-          backgroundSize: "24px 24px",
+            'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
+          backgroundSize: '24px 24px',
         }}
       >
         {lastDrop ? (
@@ -709,19 +785,22 @@ export function CanvasBoard({
           className="absolute inset-0"
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
-          style={{ pointerEvents: "auto" }}
+          style={{ pointerEvents: 'auto' }}
         >
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
-            const isFlowing = activeEdgeIds.has(edge.id) || blockingFlowEdgeIds.has(edge.id);
+            const isFlowing =
+              activeEdgeIds.has(edge.id) ||
+              blockingFlowEdgeIds.has(edge.id) ||
+              signalEdgeIds.has(edge.id);
             const isManualConnector =
-              edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
+              edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
             // Check if this is a schema connection (db_schema -> database)
             const fromNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.from) : null;
             const toNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.to) : null;
             const isSchemaConnection =
-              fromNode?.type === "db_schema" && toNode?.type === "database";
+              fromNode?.type === 'db_schema' && toNode?.type === 'database';
             const isActivePath =
               !isManualConnector &&
               !isSchemaConnection &&
@@ -730,10 +809,10 @@ export function CanvasBoard({
               triggerConnected.has(edgeMeta.to);
             const edgeClass = `transition-all duration-150 ${
               isSelected
-                ? "text-sky-300"
+                ? 'text-sky-300'
                 : isActivePath || isFlowing
-                  ? "text-sky-400/80 group-hover:text-sky-300/90"
-                  : "text-sky-400/55 group-hover:text-sky-300/80"
+                  ? 'text-sky-400/80 group-hover:text-sky-300/90'
+                  : 'text-sky-400/55 group-hover:text-sky-300/80'
             }`;
             const arrowSize = isSelected ? 9 : 8;
             const arrowWidth = isSelected ? 6 : 5;
@@ -745,7 +824,7 @@ export function CanvasBoard({
                   stroke="transparent"
                   strokeWidth="14"
                   fill="none"
-                  style={{ pointerEvents: "stroke" }}
+                  style={{ pointerEvents: 'stroke' }}
                   onContextMenu={(event: React.MouseEvent<SVGPathElement>) => {
                     event.preventDefault();
                     onRemoveEdge(edge.id);
@@ -762,16 +841,16 @@ export function CanvasBoard({
                   strokeWidth={isSelected ? 2.5 : 1.6}
                   stroke="currentColor"
                   fill="none"
-                  style={{ pointerEvents: "none" }}
+                  style={{ pointerEvents: 'none' }}
                 />
-                {isFlowing ? (
+                {isFlowing && flowEnabled ? (
                   <path
                     d={edge.path}
                     className={`${edgeClass} ai-paths-wire-flow`}
                     strokeWidth={isSelected ? 3.4 : 2.2}
                     stroke="currentColor"
                     fill="none"
-                    style={{ pointerEvents: "none" }}
+                    style={{ pointerEvents: 'none' }}
                   />
                 ) : null}
                 {edge.arrow ? (
@@ -781,7 +860,7 @@ export function CanvasBoard({
                     className={edgeClass}
                     fill="currentColor"
                     stroke="none"
-                    style={{ pointerEvents: "none" }}
+                    style={{ pointerEvents: 'none' }}
                   />
                 ) : null}
               </g>
@@ -809,82 +888,89 @@ export function CanvasBoard({
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
           const modelStatus =
-            node.type === "model"
+            node.type === 'model'
               ? (runtimeState.outputs[node.id]?.status as string | undefined)
               : undefined;
           const modelStatusLabel =
-            modelStatus === "completed"
-              ? "Completed"
-              : modelStatus === "failed"
-                ? "Failed"
-                : modelStatus === "queued"
-                  ? "Queued"
+            modelStatus === 'completed'
+              ? 'Completed'
+              : modelStatus === 'failed'
+                ? 'Failed'
+                : modelStatus === 'queued'
+                  ? 'Queued'
                   : modelStatus
-                    ? "Pending"
+                    ? 'Pending'
                     : null;
           const modelStatusClasses =
-            modelStatus === "completed"
-              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
-              : modelStatus === "failed"
-                ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
-                : "border-sky-500/60 bg-sky-500/15 text-sky-200";
+            modelStatus === 'completed'
+              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
+              : modelStatus === 'failed'
+                ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
+                : 'border-sky-500/60 bg-sky-500/15 text-sky-200';
           const pollStatus =
-            node.type === "poll"
+            node.type === 'poll'
               ? (runtimeState.outputs[node.id]?.status as string | undefined)
               : undefined;
           const pollStatusLabel =
-            pollStatus === "completed"
-              ? "Completed"
-              : pollStatus === "failed"
-                ? "Failed"
-                : pollStatus === "timeout"
-                  ? "Timed Out"
-                  : pollStatus === "polling"
-                    ? "Polling"
+            pollStatus === 'completed'
+              ? 'Completed'
+              : pollStatus === 'failed'
+                ? 'Failed'
+                : pollStatus === 'timeout'
+                  ? 'Timed Out'
+                  : pollStatus === 'polling'
+                    ? 'Polling'
                     : pollStatus
-                      ? "Pending"
+                      ? 'Pending'
                       : null;
           const pollStatusClasses =
-            pollStatus === "completed"
-              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
-              : pollStatus === "failed" || pollStatus === "timeout"
-                ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
-                : "border-sky-500/60 bg-sky-500/15 text-sky-200";
+            pollStatus === 'completed'
+              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
+              : pollStatus === 'failed' || pollStatus === 'timeout'
+                ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
+                : 'border-sky-500/60 bg-sky-500/15 text-sky-200';
           const iteratorOutput =
-            node.type === "iterator"
+            node.type === 'iterator'
               ? (runtimeState.outputs[node.id] as
                   | { status?: string; index?: number; total?: number; done?: boolean }
                   | undefined)
               : undefined;
           const iteratorStatus = iteratorOutput?.status ?? null;
           const iteratorIndex =
-            typeof iteratorOutput?.index === "number" ? iteratorOutput.index : null;
+            typeof iteratorOutput?.index === 'number' ? iteratorOutput.index : null;
           const iteratorTotal =
-            typeof iteratorOutput?.total === "number" ? iteratorOutput.total : null;
+            typeof iteratorOutput?.total === 'number' ? iteratorOutput.total : null;
           const iteratorDone =
-            typeof iteratorOutput?.done === "boolean" ? iteratorOutput.done : null;
+            typeof iteratorOutput?.done === 'boolean' ? iteratorOutput.done : null;
           const iteratorProgressLabel =
             iteratorIndex !== null && iteratorTotal !== null && iteratorTotal > 0
               ? `${Math.min(iteratorIndex + 1, iteratorTotal)}/${iteratorTotal}`
               : iteratorTotal !== null && iteratorTotal === 0
-                ? "0/0"
+                ? '0/0'
                 : null;
           const iteratorStatusClasses =
-            iteratorStatus === "completed" || iteratorDone
-              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
-              : iteratorStatus === "advance_pending"
-                ? "border-amber-400/60 bg-amber-500/15 text-amber-200"
-                : iteratorStatus === "waiting_callback"
-                  ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
-                  : "border-border bg-card/60 text-gray-200";
+            iteratorStatus === 'completed' || iteratorDone
+              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
+              : iteratorStatus === 'advance_pending'
+                ? 'border-amber-400/60 bg-amber-500/15 text-amber-200'
+                : iteratorStatus === 'waiting_callback'
+                  ? 'border-sky-500/60 bg-sky-500/15 text-sky-200'
+                  : 'border-border bg-card/60 text-gray-200';
+          const noteConfig = node.config?.notes;
+          const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
+          const noteColor =
+            typeof noteConfig?.color === 'string' && noteConfig.color.trim()
+              ? noteConfig.color.trim()
+              : DEFAULT_NODE_NOTE_COLOR;
+          const showNote = Boolean(noteConfig?.showOnCanvas && noteText);
           const isScheduledTrigger =
-            node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
+            node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
           const isInputPulse = inputPulseNodes.has(node.id);
           const isOutputPulse = outputPulseNodes.has(node.id);
           return (
             <div
               key={node.id}
-              className={`absolute ${draggingNodeId === node.id ? "cursor-grabbing" : "cursor-grab"}`}
+              className={`absolute ${draggingNodeId === node.id ? 'cursor-grabbing' : 'cursor-grab'}`}
               style={{
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
@@ -900,9 +986,10 @@ export function CanvasBoard({
               }}
             >
               <div
-                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 text-xs text-gray-200 shadow-lg backdrop-blur ${
+                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 pb-5 text-xs text-gray-200 shadow-lg backdrop-blur ${
                   style.border
-                } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
+                } ${style.glow} ${isSelected ? 'ring-2 ring-white/20' : ''}`}
+                style={{ minHeight: NODE_MIN_HEIGHT }}
               >
                 {isInputPulse || isOutputPulse ? (
                   <div className="absolute -top-2 right-2 flex items-center gap-1">
@@ -926,6 +1013,11 @@ export function CanvasBoard({
                     ) : null}
                   </div>
                 ) : null}
+                <div
+                  className="pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[9px] font-mono text-gray-400/80"
+                >
+                  {node.id}
+                </div>
                 {node.inputs.map((input: string, index: number) => (
                   <div
                     key={`input-${node.id}-${input}`}
@@ -934,10 +1026,10 @@ export function CanvasBoard({
                       left: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
                     }}
-                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("input", node.id, input))}
+                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('input', node.id, input))}
                     onMouseLeave={() =>
                       setHoveredConnectorKey((prev: string | null) =>
-                        prev === buildConnectorKey("input", node.id, input) ? null : prev
+                        prev === buildConnectorKey('input', node.id, input) ? null : prev
                       )
                     }
                   >
@@ -947,16 +1039,16 @@ export function CanvasBoard({
                         ? validateConnection(
                             connectingFromNode as AiNode,
                             node,
-                            connecting?.fromPort ?? "",
+                            connecting?.fromPort ?? '',
                             input
-                          ).valid
+                        ).valid
                         : false;
-                      const connectorInfo = buildConnectorInfo("input", node.id, input);
+                      const connectorInfo = buildConnectorInfo('input', node.id, input);
                       const hasIncomingEdge = edges.some(
                         (edge: Edge): boolean =>
                           edge.to === node.id && edge.toPort === input
                       );
-                      const connectorKey = buildConnectorKey("input", node.id, input);
+                      const connectorKey = buildConnectorKey('input', node.id, input);
                       const isPinned = pinnedConnectorKey === connectorKey;
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
@@ -977,11 +1069,11 @@ export function CanvasBoard({
                                 className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
                                   isConnecting
                                     ? isConnectable
-                                      ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
-                                      : "border-border/60 bg-card/20 opacity-40 shadow-none"
+                                      ? 'border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60'
+                                      : 'border-border/60 bg-card/20 opacity-40 shadow-none'
                                     : isPinned
-                                      ? "border-amber-300/80 ring-2 ring-amber-300/70"
-                                      : "border-sky-400/60"
+                                      ? 'border-amber-300/80 ring-2 ring-amber-300/70'
+                                      : 'border-sky-400/60'
                                 }`}
                                 style={{
                                   width: PORT_SIZE + 2,
@@ -1009,13 +1101,13 @@ export function CanvasBoard({
                                 onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
                                   event.preventDefault();
                                   event.stopPropagation();
-                                  onDisconnectPort("input", node.id, input);
+                                  onDisconnectPort('input', node.id, input);
                                 }}
                                 aria-label={`Connect to ${formatPortLabel(input)}`}
                                 title={`Input: ${formatPortLabel(input)}`}
                               />
                               {hasMismatch ? (
-                              <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
+                                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
                               ) : null}
                             </div>
                           </Tooltip>
@@ -1023,11 +1115,11 @@ export function CanvasBoard({
                             className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
                               isConnecting
                                 ? isConnectable
-                                  ? "bg-emerald-500/15 text-emerald-200"
-                                  : "bg-muted/60 text-gray-500"
+                                  ? 'bg-emerald-500/15 text-emerald-200'
+                                  : 'bg-muted/60 text-gray-500'
                                 : hasMismatch
-                                  ? "bg-rose-500/15 text-rose-200"
-                                  : "bg-sky-500/10 text-sky-300"
+                                  ? 'bg-rose-500/15 text-rose-200'
+                                  : 'bg-sky-500/10 text-sky-300'
                             }`}
                           >
                             {formatPortLabel(input)}
@@ -1045,16 +1137,16 @@ export function CanvasBoard({
                       right: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
                     }}
-                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("output", node.id, output))}
+                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('output', node.id, output))}
                     onMouseLeave={() =>
                       setHoveredConnectorKey((prev: string | null) =>
-                        prev === buildConnectorKey("output", node.id, output) ? null : prev
+                        prev === buildConnectorKey('output', node.id, output) ? null : prev
                       )
                     }
                   >
                     {((): React.JSX.Element => {
-                      const connectorInfo = buildConnectorInfo("output", node.id, output);
-                      const connectorKey = buildConnectorKey("output", node.id, output);
+                      const connectorInfo = buildConnectorInfo('output', node.id, output);
+                      const connectorKey = buildConnectorKey('output', node.id, output);
                       const isPinned = pinnedConnectorKey === connectorKey;
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
@@ -1064,8 +1156,8 @@ export function CanvasBoard({
                           <span
                             className={`mr-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
                               hasMismatch
-                                ? "bg-rose-500/15 text-rose-200"
-                                : "bg-amber-500/10 text-amber-300"
+                                ? 'bg-rose-500/15 text-rose-200'
+                                : 'bg-amber-500/10 text-amber-300'
                             }`}
                           >
                             {formatPortLabel(output)}
@@ -1082,7 +1174,7 @@ export function CanvasBoard({
                                 type="button"
                                 data-port="output"
                                 className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
-                                  isPinned ? "border-amber-300/80 ring-2 ring-amber-300/70" : "border-amber-400/60"
+                                  isPinned ? 'border-amber-300/80 ring-2 ring-amber-300/70' : 'border-amber-400/60'
                                 }`}
                                 style={{
                                   width: PORT_SIZE + 2,
@@ -1099,7 +1191,7 @@ export function CanvasBoard({
                                 }}                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
                                   event.preventDefault();
                                   event.stopPropagation();
-                                  onDisconnectPort("output", node.id, output);
+                                  onDisconnectPort('output', node.id, output);
                                 }}
                                 aria-label={`Start connection from ${formatPortLabel(output)}`}
                                 title={`Output: ${formatPortLabel(output)}`}
@@ -1127,21 +1219,21 @@ export function CanvasBoard({
                     </span>
                   </div>
                 </div>
-                {node.type === "model" && modelStatusLabel && (
+                {node.type === 'model' && modelStatusLabel && (
                   <div
                     className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${modelStatusClasses}`}
                   >
                     {modelStatusLabel}
                   </div>
                 )}
-                {node.type === "poll" && pollStatusLabel && (
+                {node.type === 'poll' && pollStatusLabel && (
                   <div
                     className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${pollStatusClasses}`}
                   >
                     {pollStatusLabel}
                   </div>
                 )}
-                {node.type === "iterator" && (iteratorStatus || iteratorProgressLabel) ? (
+                {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
                   <div
                     className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
                     title={
@@ -1154,12 +1246,12 @@ export function CanvasBoard({
                     {iteratorStatus ? <span>{iteratorStatus}</span> : null}
                   </div>
                 ) : null}
-                {node.type === "viewer" && !triggerConnected.has(node.id) && (
+                {node.type === 'viewer' && !triggerConnected.has(node.id) && (
                   <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
                     Not wired to a Trigger
                   </div>
                 )}
-                {node.type === "trigger" && (
+                {node.type === 'trigger' && (
                   <Button
                     className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
@@ -1169,29 +1261,37 @@ export function CanvasBoard({
                     Fire Trigger
                   </Button>
                 )}
-                {node.type === "trigger" && (
+                {node.type === 'trigger' && (
                   <div className="text-[10px] uppercase text-lime-200/80">
                     {isScheduledTrigger
-                      ? "Server scheduled trigger"
-                      : "Accepts context input"}
+                      ? 'Server scheduled trigger'
+                      : 'Accepts context input'}
                   </div>
                 )}
-                {node.type === "context" && (
+                {node.type === 'context' && (
                   <span className="text-[10px] uppercase text-emerald-300/80">
                     Role output can feed any Trigger
                   </span>
                 )}
-                {node.type === "simulation" && (
+                {node.type === 'simulation' && (
                   <span className="text-[10px] uppercase text-cyan-300/80">
                     Wire Trigger ↔ Simulation
                   </span>
                 )}
-                {node.type === "viewer" && (
+                {node.type === 'viewer' && (
                   <div className="rounded-md border border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400">
                     Open node to view results
                   </div>
                 )}
               </div>
+              {showNote ? (
+                <div
+                  className="mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm"
+                  style={{ backgroundColor: noteColor }}
+                >
+                  <div className="whitespace-pre-wrap break-words">{noteText}</div>
+                </div>
+              ) : null}
             </div>
           );
         })}

@@ -1,9 +1,10 @@
-"use client";
-import { useState, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ProductWithImages } from "@/features/products";
+'use client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
-import { Dispatch, SetStateAction } from "react";
+import type { ProductWithImages } from '@/features/products';
+
 
 export function useIntegrationOperations(): {
   integrationsProduct: ProductWithImages | null;
@@ -18,7 +19,7 @@ export function useIntegrationOperations(): {
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;
   handleListProductSuccess: () => void;
-} {
+  } {
   const queryClient = useQueryClient();
   
   // Integrations state
@@ -31,9 +32,9 @@ export function useIntegrationOperations(): {
 
   // Load listing badges using useQuery
   const listingsBadgeQuery = useQuery({
-    queryKey: ["integrations", "product-listings-badges"],
+    queryKey: ['integrations', 'product-listings-badges'],
     queryFn: async (): Promise<Record<string, string>> => {
-      const res = await fetch("/api/integrations/product-listings");
+      const res = await fetch('/api/integrations/product-listings');
       if (!res.ok) return {};
       return (await res.json()) as Record<string, string>;
     },
@@ -45,7 +46,7 @@ export function useIntegrationOperations(): {
   const integrationBadgeIds = new Set(entries.map(([productId]: [string, string]) => productId));
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings-badges"] });
+    await queryClient.invalidateQueries({ queryKey: ['integrations', 'product-listings-badges'] });
   }, [queryClient]);
 
   const handleListProductSuccess = (): void => {

@@ -1,30 +1,32 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import SignInPage from "@/features/auth/pages/public/SignInPage";
-import { signIn } from "next-auth/react";
-import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { signIn } from 'next-auth/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock("next/navigation", () => ({
+import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
+import SignInPage from '@/features/auth/pages/public/SignInPage';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+
+
+vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => ({
     get: vi.fn().mockReturnValue(null),
   })),
 }));
 
-vi.mock("next-auth/react", () => ({
+vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
 }));
 
-vi.mock("@/features/auth/hooks/useAuthQueries", () => ({
+vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
   useVerifyCredentials: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/use-settings", () => ({
+vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
 }));
 
@@ -34,7 +36,7 @@ const createTestQueryClient = () => new QueryClient({
   },
 });
 
-describe("SignInPage", () => {
+describe('SignInPage', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -45,7 +47,7 @@ describe("SignInPage", () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
       data: new Map([
-          ["auth_user_pages", JSON.stringify({ allowSocialLogin: true })]
+        ['auth_user_pages', JSON.stringify({ allowSocialLogin: true })]
       ]),
     } as any);
 
@@ -54,23 +56,23 @@ describe("SignInPage", () => {
     } as any);
   });
 
-  it("renders correctly", async () => {
+  it('renders correctly', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <SignInPage />
       </QueryClientProvider>
     );
-    expect(await screen.findByRole("heading", { name: /sign in/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
   });
 
-  it("handles successful sign in", async () => {
+  it('handles successful sign in', async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue({
       ok: true,
-      payload: { ok: true, mfaRequired: false, challengeId: "ch1" },
+      payload: { ok: true, mfaRequired: false, challengeId: 'ch1' },
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
@@ -81,28 +83,28 @@ describe("SignInPage", () => {
     );
 
     const emailInput = await screen.findByLabelText(/email/i);
-    await user.type(emailInput, "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
-    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await user.type(emailInput, 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
+        email: 'test@example.com',
+        password: 'password123',
       });
-      expect(signIn).toHaveBeenCalledWith("credentials", expect.objectContaining({
-        email: "test@example.com",
-        password: "password123",
-        challengeId: "ch1",
+      expect(signIn).toHaveBeenCalledWith('credentials', expect.objectContaining({
+        email: 'test@example.com',
+        password: 'password123',
+        challengeId: 'ch1',
       }));
     });
   });
 
-  it("shows error message on verification failure", async () => {
+  it('shows error message on verification failure', async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue({
       ok: true,
-      payload: { ok: false, message: "Invalid credentials" },
+      payload: { ok: false, message: 'Invalid credentials' },
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
@@ -113,18 +115,18 @@ describe("SignInPage", () => {
     );
 
     const emailInput = await screen.findByLabelText(/email/i);
-    await user.type(emailInput, "wrong@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrong");
-    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await user.type(emailInput, 'wrong@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'wrong');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
+    expect(await screen.findByText('Invalid credentials')).toBeInTheDocument();
   });
 
-  it("shows MFA fields if required", async () => {
+  it('shows MFA fields if required', async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue({
       ok: true,
-      payload: { ok: true, mfaRequired: true, challengeId: "ch-mfa" },
+      payload: { ok: true, mfaRequired: true, challengeId: 'ch-mfa' },
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
@@ -135,16 +137,16 @@ describe("SignInPage", () => {
     );
 
     const emailInput = await screen.findByLabelText(/email/i);
-    await user.type(emailInput, "mfa@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
-    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await user.type(emailInput, 'mfa@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByLabelText(/one-time code/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/recovery code/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /verify & sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /verify & sign in/i })).toBeInTheDocument();
   });
 
-  it("calls social sign in", async () => {
+  it('calls social sign in', async () => {
     const user = userEvent.setup();
     render(
       <QueryClientProvider client={queryClient}>
@@ -152,9 +154,9 @@ describe("SignInPage", () => {
       </QueryClientProvider>
     );
 
-    const googleBtn = await screen.findByRole("button", { name: /continue with google/i });
+    const googleBtn = await screen.findByRole('button', { name: /continue with google/i });
     await user.click(googleBtn);
 
-    expect(signIn).toHaveBeenCalledWith("google", expect.anything());
+    expect(signIn).toHaveBeenCalledWith('google', expect.anything());
   });
 });

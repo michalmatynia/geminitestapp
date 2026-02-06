@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { migrateProductBatch } from "@/features/products/services/product-migration";
-import prisma from "@/shared/lib/db/prisma";
-import { createMockProduct } from "@/features/products/utils/productUtils";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { migrateProductBatch } from '@/features/products/services/product-migration';
+import { createMockProduct } from '@/features/products/utils/productUtils';
+import prisma from '@/shared/lib/db/prisma';
 
 // Use vi.hoisted to define the mock before it's used in vi.mock
 const { mockMongoCollection } = vi.hoisted(() => {
@@ -18,13 +19,13 @@ const { mockMongoCollection } = vi.hoisted(() => {
   };
 });
 
-vi.mock("@/shared/lib/db/mongo-client", () => ({
+vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn().mockResolvedValue({
     collection: vi.fn().mockReturnValue(mockMongoCollection),
   }),
 }));
 
-describe("productMigration", () => {
+describe('productMigration', () => {
   beforeEach(async () => {
     await prisma.productCatalog.deleteMany({});
     await prisma.productImage.deleteMany({});
@@ -33,14 +34,14 @@ describe("productMigration", () => {
     vi.clearAllMocks();
   });
 
-  describe("prisma-to-mongo", () => {
-    it("should process a batch of products and call bulkWrite", async () => {
+  describe('prisma-to-mongo', () => {
+    it('should process a batch of products and call bulkWrite', async () => {
       // Use explicit IDs to ensure deterministic ordering by ID
-      await createMockProduct({ name_en: "P1", sku: "SKU1", id: "a1" } as any);
-      await createMockProduct({ name_en: "P2", sku: "SKU2", id: "a2" } as any);
+      await createMockProduct({ name_en: 'P1', sku: 'SKU1', id: 'a1' } as any);
+      await createMockProduct({ name_en: 'P2', sku: 'SKU2', id: 'a2' } as any);
 
       const result = await migrateProductBatch({
-        direction: "prisma-to-mongo",
+        direction: 'prisma-to-mongo',
         batchSize: 10,
       });
 
@@ -51,16 +52,16 @@ describe("productMigration", () => {
       const bulkWriteCall = (mockMongoCollection.bulkWrite.mock.calls[0] as any[])[0];
       expect(bulkWriteCall.length).toBe(2);
       // Order is guaranteed by orderBy id: asc
-      expect(bulkWriteCall[0].replaceOne?.replacement?.sku).toBe("SKU1");
-      expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe("SKU2");
+      expect(bulkWriteCall[0].replaceOne?.replacement?.sku).toBe('SKU1');
+      expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe('SKU2');
     });
 
-    it("should respect batchSize and cursor", async () => {
-      await createMockProduct({ name_en: "P1", id: "b1" } as any);
-      await createMockProduct({ name_en: "P2", id: "b2" } as any);
+    it('should respect batchSize and cursor', async () => {
+      await createMockProduct({ name_en: 'P1', id: 'b1' } as any);
+      await createMockProduct({ name_en: 'P2', id: 'b2' } as any);
 
       const result = await migrateProductBatch({
-        direction: "prisma-to-mongo",
+        direction: 'prisma-to-mongo',
         batchSize: 1,
       });
 
@@ -68,11 +69,11 @@ describe("productMigration", () => {
       expect(result.nextCursor).toBeDefined();
     });
 
-    it("should not call bulkWrite in dryRun mode", async () => {
-      await createMockProduct({ name_en: "P1", id: "c1" } as any);
+    it('should not call bulkWrite in dryRun mode', async () => {
+      await createMockProduct({ name_en: 'P1', id: 'c1' } as any);
 
       const result = await migrateProductBatch({
-        direction: "prisma-to-mongo",
+        direction: 'prisma-to-mongo',
         dryRun: true,
       });
 
@@ -84,14 +85,14 @@ describe("productMigration", () => {
     });
   });
 
-  describe("mongo-to-prisma", () => {
-    it("should upsert products into Prisma from Mongo docs", async () => {
+  describe('mongo-to-prisma', () => {
+    it('should upsert products into Prisma from Mongo docs', async () => {
       const mockDocs = [
         {
-          _id: "mongo-id-1",
-          id: "mongo-id-1",
-          sku: "MONGO-SKU-1",
-          name_en: "Mongo Product",
+          _id: 'mongo-id-1',
+          id: 'mongo-id-1',
+          sku: 'MONGO-SKU-1',
+          name_en: 'Mongo Product',
           createdAt: new Date(),
           updatedAt: new Date(),
           images: [],
@@ -101,15 +102,15 @@ describe("productMigration", () => {
       mockMongoCollection.find().toArray.mockResolvedValueOnce(mockDocs);
 
       const result = await migrateProductBatch({
-        direction: "mongo-to-prisma",
+        direction: 'mongo-to-prisma',
         batchSize: 10,
       });
 
       expect(result.productsProcessed).toBe(1);
       
-      const dbProduct = await prisma.product.findUnique({ where: { id: "mongo-id-1" } });
+      const dbProduct = await prisma.product.findUnique({ where: { id: 'mongo-id-1' } });
       expect(dbProduct).toBeDefined();
-      expect(dbProduct?.sku).toBe("MONGO-SKU-1");
+      expect(dbProduct?.sku).toBe('MONGO-SKU-1');
     });
   });
 });

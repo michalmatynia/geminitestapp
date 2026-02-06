@@ -1,15 +1,17 @@
-import {
-  GET as GET_CATEGORIES,
-  POST as POST_CATEGORY,
-} from "@/app/api/notes/categories/route";
+import { Category, Note } from '@prisma/client';
+import { NextRequest } from 'next/server';
+
 import {
   PATCH as PATCH_CATEGORY,
   DELETE as DELETE_CATEGORY,
-} from "@/app/api/notes/categories/[id]/route";
-import { GET as GET_TREE } from "@/app/api/notes/categories/tree/route";
-import prisma from "@/shared/lib/db/prisma";
-import { Category, Note } from "@prisma/client";
-import { NextRequest } from "next/server";
+} from '@/app/api/notes/categories/[id]/route';
+import {
+  GET as GET_CATEGORIES,
+  POST as POST_CATEGORY,
+} from '@/app/api/notes/categories/route';
+import { GET as GET_TREE } from '@/app/api/notes/categories/tree/route';
+import prisma from '@/shared/lib/db/prisma';
+
 
 const createCategory = (name: string, parentId?: string | null) =>
   prisma.category.create({ data: { name, parentId: parentId ?? null } });
@@ -26,7 +28,7 @@ const createNote = async (title: string, categoryId: string) => {
   });
 };
 
-describe("Notes Categories API", () => {
+describe('Notes Categories API', () => {
   beforeEach(async () => {
     await prisma.noteRelation.deleteMany({});
     await prisma.noteTag.deleteMany({});
@@ -39,13 +41,13 @@ describe("Notes Categories API", () => {
     await prisma.$disconnect();
   });
 
-  it("lists categories", async () => {
+  it('lists categories', async () => {
     await prisma.category.createMany({
-      data: [{ name: "Work" }, { name: "Home" }],
+      data: [{ name: 'Work' }, { name: 'Home' }],
     });
 
     const res = await GET_CATEGORIES(
-      new NextRequest("http://localhost/api/notes/categories")
+      new NextRequest('http://localhost/api/notes/categories')
     );
     const categories = (await res.json()) as Category[];
 
@@ -53,54 +55,54 @@ describe("Notes Categories API", () => {
     expect(categories).toHaveLength(2);
   });
 
-  it("creates a category and rejects empty names", async () => {
+  it('creates a category and rejects empty names', async () => {
     const res = await POST_CATEGORY(
-      new NextRequest("http://localhost/api/notes/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Projects" }),
+      new NextRequest('http://localhost/api/notes/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Projects' }),
       })
     );
     const created = (await res.json()) as { name: string };
 
     expect(res.status).toBe(201);
-    expect(created.name).toBe("Projects");
+    expect(created.name).toBe('Projects');
 
     const missing = await POST_CATEGORY(
-      new NextRequest("http://localhost/api/notes/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "" }),
+      new NextRequest('http://localhost/api/notes/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: '' }),
       })
     );
 
     expect(missing.status).toBe(400);
   });
 
-  it("updates a category", async () => {
-    const category = await createCategory("Old Name");
+  it('updates a category', async () => {
+    const category = await createCategory('Old Name');
 
     const res = await PATCH_CATEGORY(
       new NextRequest(`http://localhost/api/notes/categories/${category.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "New Name" }),
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Name' }),
       }),
       { params: Promise.resolve({ id: category.id }) }
     );
     const updated = (await res.json()) as { name: string };
 
     expect(res.status).toBe(200);
-    expect(updated.name).toBe("New Name");
+    expect(updated.name).toBe('New Name');
   });
 
-  it("returns a hierarchical category tree", async () => {
-    const root = await createCategory("Root");
-    const child = await createCategory("Child", root.id);
-    await createNote("Child Note", child.id);
+  it('returns a hierarchical category tree', async () => {
+    const root = await createCategory('Root');
+    const child = await createCategory('Child', root.id);
+    await createNote('Child Note', child.id);
 
     const res = await GET_TREE(
-      new NextRequest("http://localhost/api/notes/categories/tree")
+      new NextRequest('http://localhost/api/notes/categories/tree')
     );
     const tree = (await res.json()) as (Category & {
       children: (Category & { notes: Note[] })[];
@@ -112,16 +114,16 @@ describe("Notes Categories API", () => {
     expect(tree[0]!.children[0]!.notes).toHaveLength(1);
   });
 
-  it("deletes categories recursively with notes", async () => {
-    const root = await createCategory("Root");
-    const child = await createCategory("Child", root.id);
-    await createNote("Root Note", root.id);
-    await createNote("Child Note", child.id);
+  it('deletes categories recursively with notes', async () => {
+    const root = await createCategory('Root');
+    const child = await createCategory('Child', root.id);
+    await createNote('Root Note', root.id);
+    await createNote('Child Note', child.id);
 
     const res = await DELETE_CATEGORY(
       new NextRequest(
         `http://localhost/api/notes/categories/${root.id}?recursive=true`,
-        { method: "DELETE" }
+        { method: 'DELETE' }
       ),
       { params: Promise.resolve({ id: root.id }) }
     );

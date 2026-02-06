@@ -7,7 +7,7 @@ export type {
   CreateAgentDto,
   UpdateAgentDto,
   ExecuteAgentDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
 export type AgentPersonaSettings = {
   executorModel: string | null;

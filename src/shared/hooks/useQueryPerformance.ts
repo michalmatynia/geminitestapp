@@ -1,5 +1,5 @@
-import { useQuery, type UseQueryResult, type UndefinedInitialDataOptions } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useQuery, type UseQueryResult, type UndefinedInitialDataOptions } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 
 interface QueryPerformanceMetrics {
   queryKey: string;

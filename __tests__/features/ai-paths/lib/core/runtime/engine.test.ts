@@ -1,14 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { evaluateGraph } from "@/features/ai/ai-paths/lib/core/runtime/engine";
-import type { AiNode, Edge } from "@/shared/types/ai-paths";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe("AI Paths Runtime Engine", () => {
+import { evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine';
+import type { AiNode, Edge } from '@/shared/types/ai-paths';
+
+describe('AI Paths Runtime Engine', () => {
   const mockFetchEntityByType = vi.fn();
   const mockReportAiPathsError = vi.fn();
   const mockToast = vi.fn();
 
   const defaultOptions = {
-    activePathId: "test-path",
+    activePathId: 'test-path',
     fetchEntityByType: mockFetchEntityByType,
     reportAiPathsError: mockReportAiPathsError,
     toast: mockToast,
@@ -18,30 +19,30 @@ describe("AI Paths Runtime Engine", () => {
     vi.clearAllMocks();
   });
 
-  it("should execute a simple linear graph", async () => {
+  it('should execute a simple linear graph', async () => {
     const nodes: AiNode[] = [
       {
-        id: "node-1",
-        type: "constant",
-        title: "Const",
-        description: "",
+        id: 'node-1',
+        type: 'constant',
+        title: 'Const',
+        description: '',
         inputs: [],
-        outputs: ["value"],
+        outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { constant: { valueType: "string", value: "hello" } },
+        config: { constant: { valueType: 'string', value: 'hello' } },
       },
       {
-        id: "node-2",
-        type: "mapper",
-        title: "Mapper",
-        description: "",
-        inputs: ["context"],
-        outputs: ["out"],
+        id: 'node-2',
+        type: 'mapper',
+        title: 'Mapper',
+        description: '',
+        inputs: ['context'],
+        outputs: ['out'],
         position: { x: 100, y: 0 },
         config: {
           mapper: {
-            outputs: ["out"],
-            mappings: { out: "$.val" },
+            outputs: ['out'],
+            mappings: { out: '$.val' },
           },
         },
       },
@@ -49,18 +50,18 @@ describe("AI Paths Runtime Engine", () => {
 
     const edges: Edge[] = [
       {
-        id: "e1",
-        from: "node-1",
-        to: "node-2",
-        fromPort: "value",
-        toPort: "context",
+        id: 'e1',
+        from: 'node-1',
+        to: 'node-2',
+        fromPort: 'value',
+        toPort: 'context',
       },
     ];
 
     // Note: handleMapper expects context to be an object. 
     // We update node-1 to return an object.
-    nodes[0]!.config!.constant!.value = JSON.stringify({ val: "mapped" });
-    nodes[0]!.config!.constant!.valueType = "json";
+    nodes[0]!.config!.constant!.value = JSON.stringify({ val: 'mapped' });
+    nodes[0]!.config!.constant!.valueType = 'json';
 
     const result = await evaluateGraph({
       ...defaultOptions,
@@ -68,31 +69,31 @@ describe("AI Paths Runtime Engine", () => {
       edges,
     });
 
-    expect(result.outputs["node-1"]).toEqual({ value: { val: "mapped" } });
-    expect(result.outputs["node-2"]).toEqual({ out: "mapped" });
+    expect(result.outputs['node-1']).toEqual({ value: { val: 'mapped' } });
+    expect(result.outputs['node-2']).toEqual({ out: 'mapped' });
   });
 
-  it("should respect maxIterations and stop on circular dependencies", async () => {
+  it('should respect maxIterations and stop on circular dependencies', async () => {
     const nodes: AiNode[] = [
       {
-        id: "node-1",
-        type: "math",
-        title: "Add",
-        description: "",
-        inputs: ["value"],
-        outputs: ["value"],
+        id: 'node-1',
+        type: 'math',
+        title: 'Add',
+        description: '',
+        inputs: ['value'],
+        outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { math: { operation: "add", operand: 1 } },
+        config: { math: { operation: 'add', operand: 1 } },
       },
     ];
 
     const edges: Edge[] = [
       {
-        id: "e1",
-        from: "node-1",
-        to: "node-1",
-        fromPort: "value",
-        toPort: "value",
+        id: 'e1',
+        from: 'node-1',
+        to: 'node-1',
+        fromPort: 'value',
+        toPort: 'value',
       },
     ];
 
@@ -100,7 +101,7 @@ describe("AI Paths Runtime Engine", () => {
       ...defaultOptions,
       nodes,
       edges,
-      seedOutputs: { "node-1": { value: 1 } },
+      seedOutputs: { 'node-1': { value: 1 } },
     });
 
     // Max iterations is nodes.length + 2 = 3. 
@@ -108,21 +109,21 @@ describe("AI Paths Runtime Engine", () => {
     // It 1: 1+1 = 2
     // It 2: 2+1 = 3
     // It 3: 3+1 = 4
-    expect(result.outputs["node-1"]?.value).toBeLessThan(10); 
-    expect(result.outputs["node-1"]?.value).toBeDefined();
+    expect(result.outputs['node-1']?.value).toBeLessThan(10); 
+    expect(result.outputs['node-1']?.value).toBeDefined();
   });
 
-  it("should skip nodes provided in skipNodeIds", async () => {
+  it('should skip nodes provided in skipNodeIds', async () => {
     const nodes: AiNode[] = [
       {
-        id: "node-1",
-        type: "constant",
-        title: "Const",
-        description: "",
+        id: 'node-1',
+        type: 'constant',
+        title: 'Const',
+        description: '',
         inputs: [],
-        outputs: ["value"],
+        outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { constant: { valueType: "string", value: "initial" } },
+        config: { constant: { valueType: 'string', value: 'initial' } },
       },
     ];
 
@@ -130,25 +131,25 @@ describe("AI Paths Runtime Engine", () => {
       ...defaultOptions,
       nodes,
       edges: [],
-      skipNodeIds: ["node-1"],
-      seedOutputs: { "node-1": { value: "seeded" } }
+      skipNodeIds: ['node-1'],
+      seedOutputs: { 'node-1': { value: 'seeded' } }
     });
 
     // Should keep the seeded value and not run the handler
-    expect(result.outputs["node-1"]?.value).toBe("seeded");
+    expect(result.outputs['node-1']?.value).toBe('seeded');
   });
 
-  it("should use cache when hashes match", async () => {
+  it('should use cache when hashes match', async () => {
     const nodes: AiNode[] = [
       {
-        id: "node-1",
-        type: "constant",
-        title: "Const",
-        description: "",
+        id: 'node-1',
+        type: 'constant',
+        title: 'Const',
+        description: '',
         inputs: [],
-        outputs: ["value"],
+        outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { constant: { valueType: "string", value: "initial" }, runtime: { cache: { mode: "force" } } },
+        config: { constant: { valueType: 'string', value: 'initial' }, runtime: { cache: { mode: 'force' } } },
       },
     ];
 
@@ -161,7 +162,7 @@ describe("AI Paths Runtime Engine", () => {
       edges: [],
     });
 
-    const hash = result1.hashes?.["node-1"];
+    const hash = result1.hashes?.['node-1'];
     expect(hash).toBeDefined();
 
     // Second run with seed
@@ -175,20 +176,20 @@ describe("AI Paths Runtime Engine", () => {
     });
 
     expect(onNodeStart).not.toHaveBeenCalled();
-    expect(result2.outputs["node-1"]).toEqual(result1.outputs["node-1"]);
+    expect(result2.outputs['node-1']).toEqual(result1.outputs['node-1']);
   });
 
-  it("should trigger onNodeStart and onNodeFinish callbacks", async () => {
+  it('should trigger onNodeStart and onNodeFinish callbacks', async () => {
     const nodes: AiNode[] = [
       {
-        id: "node-1",
-        type: "constant",
-        title: "Const",
-        description: "",
+        id: 'node-1',
+        type: 'constant',
+        title: 'Const',
+        description: '',
         inputs: [],
-        outputs: ["value"],
+        outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { constant: { valueType: "string", value: "test" } },
+        config: { constant: { valueType: 'string', value: 'test' } },
       },
     ];
 
@@ -204,11 +205,11 @@ describe("AI Paths Runtime Engine", () => {
     });
 
     expect(onNodeStart).toHaveBeenCalledWith(expect.objectContaining({
-      node: expect.objectContaining({ id: "node-1" })
+      node: expect.objectContaining({ id: 'node-1' })
     }));
     expect(onNodeFinish).toHaveBeenCalledWith(expect.objectContaining({
-      node: expect.objectContaining({ id: "node-1" }),
-      nextOutputs: { value: "test" }
+      node: expect.objectContaining({ id: 'node-1' }),
+      nextOutputs: { value: 'test' }
     }));
   });
 });

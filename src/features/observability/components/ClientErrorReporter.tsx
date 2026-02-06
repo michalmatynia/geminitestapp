@@ -1,88 +1,91 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { initClientErrorReporting, setClientErrorBaseContext } from "@/features/observability/utils/client-error-logger";
-import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+
+import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { initClientErrorReporting, setClientErrorBaseContext } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export default function ClientErrorReporter(): null {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
 
   useEffect(() => {
     initClientErrorReporting();
   }, []);
 
+  const featureFlagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.featureFlags);
+  const tagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.tags);
+
   useEffect(() => {
-    if (!settingsQuery.data) return;
     const featureFlags = parseJsonSetting<Record<string, unknown> | null>(
-      settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
+      featureFlagsRaw,
       null
     );
     const tags = parseJsonSetting<Record<string, unknown> | null>(
-      settingsQuery.data.get(CLIENT_LOGGING_KEYS.tags),
+      tagsRaw,
       null
     );
     setClientErrorBaseContext({
       featureFlags,
       tags,
     });
-  }, [settingsQuery.data]);
+  }, [featureFlagsRaw, tagsRaw]);
 
   useEffect(() => {
     const context = {
       app: {
-        version: process.env.NEXT_PUBLIC_APP_VERSION ?? "unknown",
+        version: process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown',
         buildId: process.env.NEXT_PUBLIC_BUILD_ID ?? null,
         releaseChannel: process.env.NEXT_PUBLIC_RELEASE_CHANNEL ?? null,
         environment: process.env.NODE_ENV ?? null,
       },
       route: pathname,
-      query: searchParams?.toString() ?? "",
-      referrer: typeof document !== "undefined" ? document.referrer : null,
-      locale: typeof navigator !== "undefined" ? navigator.language : null,
+      query: searchParams?.toString() ?? '',
+      referrer: typeof document !== 'undefined' ? document.referrer : null,
+      locale: typeof navigator !== 'undefined' ? navigator.language : null,
       timezone:
-        typeof Intl !== "undefined"
+        typeof Intl !== 'undefined'
           ? Intl.DateTimeFormat().resolvedOptions().timeZone
           : null,
       device:
-        typeof navigator !== "undefined"
+        typeof navigator !== 'undefined'
           ? {
-              platform: navigator.platform,
-              deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
-              hardwareConcurrency: navigator.hardwareConcurrency ?? null,
-            }
+            platform: navigator.platform,
+            deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
+            hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+          }
           : null,
       network:
-        typeof navigator !== "undefined"
+        typeof navigator !== 'undefined'
           ? {
-              online: navigator.onLine,
-              effectiveType:
+            online: navigator.onLine,
+            effectiveType:
                 (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
                   ?.effectiveType ?? null,
-              downlink:
+            downlink:
                 (navigator as Navigator & { connection?: { downlink?: number } }).connection
                   ?.downlink ?? null,
-              rtt:
+            rtt:
                 (navigator as Navigator & { connection?: { rtt?: number } }).connection?.rtt ??
                 null,
-            }
+          }
           : null,
       viewport:
-        typeof window !== "undefined"
+        typeof window !== 'undefined'
           ? { width: window.innerWidth, height: window.innerHeight }
           : null,
       featureFlags:
-        typeof window !== "undefined"
+        typeof window !== 'undefined'
           ? (window as Window & { __FEATURE_FLAGS__?: Record<string, unknown> }).__FEATURE_FLAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
-                const raw = window.localStorage.getItem("featureFlags");
+                const raw = window.localStorage.getItem('featureFlags');
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
               } catch {
                 return null;
@@ -90,12 +93,12 @@ export default function ClientErrorReporter(): null {
             })()
           : null,
       tags:
-        typeof window !== "undefined"
+        typeof window !== 'undefined'
           ? (window as Window & { __CLIENT_LOG_TAGS__?: Record<string, unknown> })
-              .__CLIENT_LOG_TAGS__ ??
+            .__CLIENT_LOG_TAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
-                const raw = window.localStorage.getItem("clientLogTags");
+                const raw = window.localStorage.getItem('clientLogTags');
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
               } catch {
                 return null;
@@ -104,10 +107,10 @@ export default function ClientErrorReporter(): null {
           : null,
       user: session?.user
         ? {
-            id: session.user.id ?? null,
-            email: session.user.email ?? null,
-            role: session.user.role ?? null,
-          }
+          id: session.user.id ?? null,
+          email: session.user.email ?? null,
+          role: session.user.role ?? null,
+        }
         : null,
     };
     setClientErrorBaseContext(context);

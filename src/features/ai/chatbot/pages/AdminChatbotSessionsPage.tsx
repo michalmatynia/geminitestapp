@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
-import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
-import type { ChatbotSessionListItem } from "../types";
-import * as chatbotApi from "../api";
+import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from '@/shared/ui';
+
+import * as chatbotApi from '../api';
+
+import type { ChatbotSessionListItem } from '../types';
 
 export default function ChatbotSessionsPage(): React.JSX.Element {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<ChatbotSessionListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftTitle, setDraftTitle] = useState<string>("");
+  const [draftTitle, setDraftTitle] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState<boolean>(false);
@@ -30,7 +32,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       if (selectingAll) return;
       setSelectingAll(true);
       try {
-        const term: string = query.trim();
+        const term: string = searchQuery.trim();
         const ids: string[] = await chatbotApi.fetchChatbotSessionIds(
           term || undefined
         );
@@ -38,12 +40,12 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         toast(
           ids.length
             ? `Selected ${ids.length} sessions`
-            : "No matching sessions found"
+            : 'No matching sessions found'
         );
       } catch (error: unknown) {
         const message: string =
-          error instanceof Error ? error.message : "Failed to select sessions.";
-        toast(message, { variant: "error" });
+          error instanceof Error ? error.message : 'Failed to select sessions.';
+        toast(message, { variant: 'error' });
       } finally {
         setSelectingAll(false);
       }
@@ -73,9 +75,9 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       } catch (error: unknown) {
         if (isMounted) {
           const message: string =
-            error instanceof Error ? error.message : "Failed to load sessions.";
+            error instanceof Error ? error.message : 'Failed to load sessions.';
           setError(message);
-          toast(message, { variant: "error" });
+          toast(message, { variant: 'error' });
         }
       } finally {
         if (isMounted) {
@@ -90,22 +92,22 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   }, [toast]);
 
   const filteredSessions = useMemo((): ChatbotSessionListItem[] => {
-    const term: string = query.trim().toLowerCase();
+    const term: string = searchQuery.trim().toLowerCase();
     if (!term) return sessions;
     return sessions.filter((session: ChatbotSessionListItem): boolean => {
-      const title: string = session.title?.toLowerCase() || "";
+      const title: string = session.title?.toLowerCase() || '';
       return title.includes(term) || session.id.toLowerCase().includes(term);
     });
-  }, [query, sessions]);
+  }, [searchQuery, sessions]);
 
   const startEditing = (session: ChatbotSessionListItem): void => {
     setEditingId(session.id);
-    setDraftTitle(session.title || "");
+    setDraftTitle(session.title || '');
   };
 
   const cancelEditing = (): void => {
     setEditingId(null);
-    setDraftTitle("");
+    setDraftTitle('');
   };
 
   const saveTitle = async (sessionId: string): Promise<void> => {
@@ -120,14 +122,14 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         )
       );
       cancelEditing();
-      toast("Session title updated", { variant: "success" });
+      toast('Session title updated', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
         error instanceof Error
           ? error.message
-          : "Failed to update session title.";
+          : 'Failed to update session title.';
       setError(message);
-      toast(message, { variant: "error" });
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -145,12 +147,12 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         next.delete(session.id);
         return next;
       });
-      toast("Session deleted", { variant: "success" });
+      toast('Session deleted', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to delete session.";
+        error instanceof Error ? error.message : 'Failed to delete session.';
       setError(message);
-      toast(message, { variant: "error" });
+      toast(message, { variant: 'error' });
     } finally {
       setDeletingId(null);
       setSessionToDelete(null);
@@ -172,12 +174,12 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       await chatbotApi.deleteChatbotSessions(Array.from(selectedIds));
       setSessions((prev: ChatbotSessionListItem[]): ChatbotSessionListItem[] => prev.filter((item: ChatbotSessionListItem): boolean => !selectedIds.has(item.id)));
       clearSelection();
-      toast("Selected sessions deleted", { variant: "success" });
+      toast('Selected sessions deleted', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to delete sessions.";
+        error instanceof Error ? error.message : 'Failed to delete sessions.';
       setError(message);
-      toast(message, { variant: "error" });
+      toast(message, { variant: 'error' });
     } finally {
       setBulkDeleting(false);
       setIsBulkDeleteConfirmOpen(false);
@@ -211,9 +213,9 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <div className="max-w-sm">
                 <SearchInput
                   placeholder="Search sessions..."
-                  value={query}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-                  onClear={() => setQuery("")}
+                  value={searchQuery}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+                  onClear={() => setSearchQuery('')}
                   className="h-8 text-sm"
                 />
               </div>
@@ -240,7 +242,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                 onClick={selectAllMatching}
                 disabled={bulkDeleting || selectingAll}
               >
-                {selectingAll ? "Selecting..." : "Select all (all pages)"}
+                {selectingAll ? 'Selecting...' : 'Select all (all pages)'}
               </Button>
               <Button
                 variant="ghost"
@@ -260,7 +262,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   selectedIds.size === 0 || bulkDeleting
                 }
               >
-                {bulkDeleting ? "Removing..." : "Remove selected"}
+                {bulkDeleting ? 'Removing...' : 'Remove selected'}
               </Button>
               <Label className="flex items-center gap-2 text-[11px] text-gray-500">
                 <Checkbox
@@ -354,11 +356,11 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     disabled={deletingId === session.id}
                     onClick={() => setSessionToDelete(session)}
                   >
-                    {deletingId === session.id ? "Removing..." : "Remove"}
+                    {deletingId === session.id ? 'Removing...' : 'Remove'}
                   </Button>
                   <Link
                     href={`/admin/chatbot?session=${session.id}`}
-                    onClick={(): void => toast("Opening session...")}
+                    onClick={(): void => toast('Opening session...')}
                   >
                     <Button variant="outline" size="sm">
                       Open

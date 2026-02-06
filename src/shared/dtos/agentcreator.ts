@@ -1,10 +1,10 @@
 // Use consolidated types
-import type { Entity, Status } from '@/shared/types/core/base-types';
+import type { Status } from '@/shared/types/core/base-types';
+
+import { NamedDto, DtoBase } from '../types/base';
 
 // Agent Creator DTOs
-export interface AgentDto extends Entity {
-  name: string;
-  description: string | null;
+export interface AgentDto extends NamedDto {
   model: string;
   systemPrompt: string;
   temperature: number;
@@ -14,7 +14,7 @@ export interface AgentDto extends Entity {
   enabled: boolean;
 }
 
-export interface AgentRunDto extends Entity {
+export interface AgentRunDto extends DtoBase {
   agentId: string;
   status: Status;
   input: Record<string, unknown>;
@@ -24,22 +24,15 @@ export interface AgentRunDto extends Entity {
   completedAt: string | null;
 }
 
-export interface AgentLogDto {
-  id: string;
+export interface AgentLogDto extends DtoBase {
   runId: string;
   level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   data: Record<string, unknown> | null;
-  timestamp: string;
 }
 
-export interface AgentPersonaDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface AgentPersonaDto extends NamedDto {
   settings: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAgentDto {

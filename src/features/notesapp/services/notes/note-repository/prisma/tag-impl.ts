@@ -1,11 +1,13 @@
-import prisma from "@/shared/lib/db/prisma";
-import type { Tag } from "@prisma/client";
+import prisma from '@/shared/lib/db/prisma';
 import type {
   TagRecord,
   TagCreateInput,
   TagUpdateInput,
-} from "@/shared/types/notes";
-import { getOrCreateDefaultNotebook } from "./notebook-impl";
+} from '@/shared/types/notes';
+
+import { getOrCreateDefaultNotebook } from './notebook-impl';
+
+import type { Tag } from '@prisma/client';
 
 export const getAllTags = async (
   notebookId?: string | null
@@ -14,7 +16,7 @@ export const getAllTags = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const tags = await prisma.tag.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: { name: "asc" },
+    orderBy: { name: 'asc' },
   });
   return tags.map((tag: Tag) => ({
     ...tag,

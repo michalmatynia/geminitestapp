@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
-import type { BaseInventory, Template } from "@/features/data-import-export/types/imports";
+import React from 'react';
+
+import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
+import { Label, UnifiedSelect, Checkbox } from '@/shared/ui';
 
 interface BaseListingSettingsProps {
   inventories: BaseInventory[];
@@ -31,26 +32,20 @@ export function BaseListingSettings({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="inventory">
-          Base.com Inventory {loadingInventories && "(Loading...)"}
+          Base.com Inventory {loadingInventories && '(Loading...)'}
         </Label>
-        <Select
+        <UnifiedSelect
           value={selectedInventoryId}
           onValueChange={onInventoryIdChange}
           disabled={loadingInventories || inventories.length === 0}
-        >
-          <SelectTrigger id="inventory">
-            <SelectValue placeholder="Select inventory..." />
-          </SelectTrigger>
-          <SelectContent>
-            {inventories
-              .filter((inventory: BaseInventory): boolean => !!inventory.id)
-              .map((inventory: BaseInventory) => (
-                <SelectItem key={inventory.id} value={inventory.id}>
-                  {inventory.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+          options={inventories
+            .filter((inventory: BaseInventory): boolean => !!inventory.id)
+            .map((inventory: BaseInventory) => ({
+              value: inventory.id,
+              label: inventory.name
+            }))}
+          placeholder="Select inventory..."
+        />
         {inventories.length === 0 && !loadingInventories && (
           <p className="text-xs text-red-400">
             No inventories found. Please check your Base.com account.
@@ -60,24 +55,20 @@ export function BaseListingSettings({
 
       <div className="space-y-2">
         <Label htmlFor="template">Template (Optional)</Label>
-        <Select
+        <UnifiedSelect
           value={selectedTemplateId}
           onValueChange={onTemplateIdChange}
-        >
-          <SelectTrigger id="template">
-            <SelectValue placeholder="No template (use defaults)" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No template</SelectItem>
-            {templates
+          options={[
+            { value: 'none', label: 'No template' },
+            ...templates
               .filter((template: Template): boolean => !!template.id)
-              .map((template: Template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+              .map((template: Template) => ({
+                value: template.id,
+                label: template.name
+              }))
+          ]}
+          placeholder="No template (use defaults)"
+        />
         <p className="text-xs text-gray-500">
           Templates define how product fields map to Base.com fields.
         </p>
@@ -87,7 +78,7 @@ export function BaseListingSettings({
         <Checkbox
           id="allowDuplicateSku"
           checked={allowDuplicateSku} 
-          onCheckedChange={(checked: boolean | "indeterminate"): void => onAllowDuplicateSkuChange(Boolean(checked))}
+          onCheckedChange={(checked: boolean | 'indeterminate'): void => onAllowDuplicateSkuChange(Boolean(checked))}
           className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
         />
         <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

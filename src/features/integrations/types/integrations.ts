@@ -8,7 +8,7 @@ export type {
   UpdateIntegrationDto,
   CreateConnectionDto,
   UpdateConnectionDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
 // Legacy types for backward compatibility
 export type IntegrationRecord = {
@@ -81,7 +81,7 @@ export type IntegrationRepository = {
 };
 
 export interface CapturedLog {
-  level: "info" | "warn" | "error" | "debug";
+  level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   timestamp: string;
   context?: Record<string, unknown>;
@@ -98,18 +98,18 @@ export type ImageExportDiagnostics = {
   }>;
 };
 
-export type ImageBase64Mode = "base-only" | "full-data-uri";
+export type ImageBase64Mode = 'base-only' | 'full-data-uri';
 
 export type ImageTransformOptions = {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number;
-  format?: "jpeg" | "png" | "webp";
+  format?: 'jpeg' | 'png' | 'webp';
 };
 
 export type ImageUrlDiagnostic = {
   url: string;
-  status: "valid" | "invalid" | "unreachable";
+  status: 'valid' | 'invalid' | 'unreachable';
   error?: string;
 };
 

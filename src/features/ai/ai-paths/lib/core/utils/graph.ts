@@ -1,28 +1,27 @@
-import type { AiNode, Edge, ConnectionValidation } from "@/shared/types/ai-paths";
+import type { AiNode, Edge, ConnectionValidation } from '@/shared/types/ai-paths';
+
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   MAX_SCALE,
   MIN_SCALE,
-  NODE_MIN_HEIGHT,
+  PORT_STACK_TOP,
   PORT_GAP,
   PORT_COMPATIBILITY,
-} from "../constants";
+} from '../constants';
 import {
   arePortTypesCompatible,
   formatPortDataTypes,
   getPortDataTypes,
-} from "./port-types";
+} from './port-types';
 
-export const getPortOffsetY = (index: number, totalPorts: number): number => {
-  const totalHeight = (totalPorts - 1) * PORT_GAP;
-  const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
-  return startY + index * PORT_GAP;
+export const getPortOffsetY = (index: number, _totalPorts: number): number => {
+  return PORT_STACK_TOP + index * PORT_GAP;
 };
 
 export const normalizePortName = (port: string): string => {
-  if (port === "productJson") return "entityJson";
-  if (port === "simulation") return "context";
+  if (port === 'productJson') return 'entityJson';
+  if (port === 'simulation') return 'context';
   return port;
 };
 
@@ -40,14 +39,14 @@ export const isValidConnection = (
   const portCompatible = allowed?.includes(toPort) || fromPort === toPort;
   if (!portCompatible) return false;
   if (
-    to.type === "trigger" &&
-    toPort === "context" &&
-    (from.type !== "simulation" || (fromPort !== "context" && fromPort !== "simulation"))
+    to.type === 'trigger' &&
+    toPort === 'context' &&
+    (from.type !== 'simulation' || (fromPort !== 'context' && fromPort !== 'simulation'))
   ) {
     return false;
   }
-  if (to.type === "simulation" && toPort === "trigger") {
-    if (from.type !== "trigger" || fromPort !== "trigger") return false;
+  if (to.type === 'simulation' && toPort === 'trigger') {
+    if (from.type !== 'trigger' || fromPort !== 'trigger') return false;
   }
   const fromTypes = getPortDataTypes(fromPort);
   const toTypes = getPortDataTypes(toPort);
@@ -115,13 +114,13 @@ export const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
 
 export const createParserMappings = (outputs: string[]): Record<string, string> =>
   outputs.reduce<Record<string, string>>((acc: Record<string, string>, output: string) => {
-    acc[output] = "";
+    acc[output] = '';
     return acc;
   }, {});
 
 export const createViewerOutputs = (inputs: string[]): Record<string, string> =>
   inputs.reduce<Record<string, string>>((acc: Record<string, string>, input: string) => {
-    acc[input] = "";
+    acc[input] = '';
     return acc;
   }, {});
 
@@ -132,7 +131,7 @@ export const validateConnection = (
   toPort: string
 ): ConnectionValidation => {
   if (!fromPort || !toPort) {
-    return { valid: false, message: "Invalid port selection." };
+    return { valid: false, message: 'Invalid port selection.' };
   }
   if (!fromNode.outputs.includes(fromPort)) {
     return { valid: false, message: `Port ${fromPort} is not an output of this node.` };
@@ -159,19 +158,19 @@ export const validateConnection = (
       )}) -> ${toPort} (${formatPortDataTypes(toTypes)}).`,
     };
   }
-  if (toNode.type === "trigger" && toPort === "context") {
-    if (fromNode.type !== "simulation" || (fromPort !== "context" && fromPort !== "simulation")) {
+  if (toNode.type === 'trigger' && toPort === 'context') {
+    if (fromNode.type !== 'simulation' || (fromPort !== 'context' && fromPort !== 'simulation')) {
       return {
         valid: false,
-        message: "Trigger 'context' input must connect from Simulation 'context'.",
+        message: 'Trigger \'context\' input must connect from Simulation \'context\'.',
       };
     }
   }
-  if (toNode.type === "simulation" && toPort === "trigger") {
-    if (fromNode.type !== "trigger" || fromPort !== "trigger") {
+  if (toNode.type === 'simulation' && toPort === 'trigger') {
+    if (fromNode.type !== 'trigger' || fromPort !== 'trigger') {
       return {
         valid: false,
-        message: "Simulation 'trigger' input must connect from Trigger 'trigger'.",
+        message: 'Simulation \'trigger\' input must connect from Trigger \'trigger\'.',
       };
     }
   }

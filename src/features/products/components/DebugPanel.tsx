@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { useContext } from "react";
-import { ProductFormContext } from "@/features/products/context/ProductFormContext";
+import { useContext } from 'react';
+
+import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 
 export default function DebugPanel(): React.JSX.Element | null {
   // Directly use the context to avoid throwing an error when it's not available.
@@ -17,7 +18,7 @@ export default function DebugPanel(): React.JSX.Element | null {
   const getCircularReplacer = (): ((key: string, value: unknown) => unknown) => {
     const seen = new WeakSet();
     return (_key: string, value: unknown): unknown => {
-      if (typeof value === "object" && value !== null) {
+      if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
           return; // Omit circular reference
         }

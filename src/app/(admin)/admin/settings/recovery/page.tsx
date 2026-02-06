@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, Switch, useToast } from "@/shared/ui";
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from 'react';
 
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Input, Label, Switch, useToast } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 type TransientRecoverySettings = {
   enabled: boolean;
@@ -37,7 +37,7 @@ export default function TransientRecoverySettingsPage() {
 
   useEffect(() => {
     const loadConstants = async () => {
-      const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import("@/features/observability/constants");
+      const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import('@/features/observability/constants');
       setConstants({ DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS });
     };
     void loadConstants();
@@ -54,37 +54,37 @@ export default function TransientRecoverySettingsPage() {
 
   const initialSettings: TransientRecoverySettings = stored
     ? {
-        enabled: stored.enabled ?? constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
-        retry: {
-          enabled:
+      enabled: stored.enabled ?? constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
+      retry: {
+        enabled:
             stored.retry?.enabled ?? constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.enabled,
-          maxAttempts:
+        maxAttempts:
             stored.retry?.maxAttempts ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts,
-          initialDelayMs:
+        initialDelayMs:
             stored.retry?.initialDelayMs ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs,
-          maxDelayMs:
+        maxDelayMs:
             stored.retry?.maxDelayMs ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxDelayMs,
-          timeoutMs:
+        timeoutMs:
             stored.retry?.timeoutMs === null
               ? 0
               : stored.retry?.timeoutMs ??
                 constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.timeoutMs,
-        },
-        circuit: {
-          enabled:
+      },
+      circuit: {
+        enabled:
             stored.circuit?.enabled ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.enabled,
-          failureThreshold:
+        failureThreshold:
             stored.circuit?.failureThreshold ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.failureThreshold,
-          resetTimeoutMs:
+        resetTimeoutMs:
             stored.circuit?.resetTimeoutMs ??
             constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.resetTimeoutMs,
-        },
-      }
+      },
+    }
     : constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
 
   return <TransientRecoverySettingsForm initialSettings={initialSettings} recoveryKeys={constants.TRANSIENT_RECOVERY_KEYS} />;
@@ -103,7 +103,7 @@ function TransientRecoverySettingsForm({
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
 
-  const updateRetry = (key: keyof TransientRecoverySettings["retry"], value: number | boolean): void => {
+  const updateRetry = (key: keyof TransientRecoverySettings['retry'], value: number | boolean): void => {
     setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       retry: {
@@ -115,7 +115,7 @@ function TransientRecoverySettingsForm({
   };
 
   const updateCircuit = (
-    key: keyof TransientRecoverySettings["circuit"],
+    key: keyof TransientRecoverySettings['circuit'],
     value: number | boolean
   ): void => {
     setSettings((prev: TransientRecoverySettings) => ({
@@ -148,10 +148,10 @@ function TransientRecoverySettingsForm({
         value: serializeSetting(payload),
       });
       setDirty(false);
-      toast("Transient recovery settings saved.", { variant: "success" });
+      toast('Transient recovery settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save settings.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
+        variant: 'error',
       });
     }
   };
@@ -198,7 +198,7 @@ function TransientRecoverySettingsForm({
                 <Label className="text-xs text-gray-400">Enabled</Label>
                 <Switch
                   checked={settings.retry.enabled}
-                  onCheckedChange={(checked: boolean) => updateRetry("enabled", checked)}
+                  onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
                 />
               </div>
             </div>
@@ -212,7 +212,7 @@ function TransientRecoverySettingsForm({
                   value={settings.retry.maxAttempts}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
-                      "maxAttempts",
+                      'maxAttempts',
                       toNumber(event.target.value, settings.retry.maxAttempts, 1)
                     )
                   }
@@ -227,7 +227,7 @@ function TransientRecoverySettingsForm({
                   value={settings.retry.initialDelayMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
-                      "initialDelayMs",
+                      'initialDelayMs',
                       toNumber(event.target.value, settings.retry.initialDelayMs)
                     )
                   }
@@ -242,7 +242,7 @@ function TransientRecoverySettingsForm({
                   value={settings.retry.maxDelayMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
-                      "maxDelayMs",
+                      'maxDelayMs',
                       toNumber(event.target.value, settings.retry.maxDelayMs)
                     )
                   }
@@ -257,7 +257,7 @@ function TransientRecoverySettingsForm({
                   value={settings.retry.timeoutMs ?? 0}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
-                      "timeoutMs",
+                      'timeoutMs',
                       toNumber(event.target.value, settings.retry.timeoutMs ?? 0)
                     )
                   }
@@ -282,7 +282,7 @@ function TransientRecoverySettingsForm({
                 <Label className="text-xs text-gray-400">Enabled</Label>
                 <Switch
                   checked={settings.circuit.enabled}
-                  onCheckedChange={(checked: boolean) => updateCircuit("enabled", checked)}
+                  onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
                 />
               </div>
             </div>
@@ -296,7 +296,7 @@ function TransientRecoverySettingsForm({
                   value={settings.circuit.failureThreshold}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateCircuit(
-                      "failureThreshold",
+                      'failureThreshold',
                       toNumber(
                         event.target.value,
                         settings.circuit.failureThreshold,
@@ -315,7 +315,7 @@ function TransientRecoverySettingsForm({
                   value={settings.circuit.resetTimeoutMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateCircuit(
-                      "resetTimeoutMs",
+                      'resetTimeoutMs',
                       toNumber(
                         event.target.value,
                         settings.circuit.resetTimeoutMs
@@ -338,7 +338,7 @@ function TransientRecoverySettingsForm({
             onClick={() => void saveSettings()}
             disabled={!dirty || updateSetting.isPending}
           >
-            {updateSetting.isPending ? "Saving..." : "Save settings"}
+            {updateSetting.isPending ? 'Saving...' : 'Save settings'}
           </Button>
         </div>
       </div>

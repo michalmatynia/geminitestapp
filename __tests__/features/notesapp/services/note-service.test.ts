@@ -1,14 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { noteService } from "@/features/notesapp/services/notes";
-import prisma from "@/shared/lib/db/prisma";
-import { cleanupNoteFile } from "@/features/notesapp/services/notes/file-cleanup";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { noteService } from '@/features/notesapp/services/notes';
+import { cleanupNoteFile } from '@/features/notesapp/services/notes/file-cleanup';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock file cleanup
-vi.mock("@/features/notesapp/services/notes/file-cleanup", () => ({
+vi.mock('@/features/notesapp/services/notes/file-cleanup', () => ({
   cleanupNoteFile: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe("NoteService", () => {
+describe('NoteService', () => {
   beforeEach(async () => {
     // Clean up DB using prisma directly to ensure a fresh state
     await prisma.noteRelation.deleteMany({});
@@ -23,26 +24,26 @@ describe("NoteService", () => {
     vi.clearAllMocks();
   });
 
-  describe("CRUD Operations", () => {
-    it("creates a note in the default notebook", async () => {
+  describe('CRUD Operations', () => {
+    it('creates a note in the default notebook', async () => {
       const note = await noteService.create({
-        title: "Test Note",
-        content: "Test Content",
+        title: 'Test Note',
+        content: 'Test Content',
       });
 
-      expect(note.title).toBe("Test Note");
+      expect(note.title).toBe('Test Note');
       expect(note.notebookId).toBeDefined();
       
       const notebook = await prisma.notebook.findUnique({
         where: { id: note.notebookId! }
       });
-      expect(notebook?.name).toBe("Default"); // Default name in repository
+      expect(notebook?.name).toBe('Default'); // Default name in repository
     });
 
-    it("retrieves notes with filters and populated relations", async () => {
+    it('retrieves notes with filters and populated relations', async () => {
       const note = await noteService.create({
-        title: "Find Me",
-        content: "Secret",
+        title: 'Find Me',
+        content: 'Secret',
         isPinned: true,
       });
 
@@ -52,67 +53,67 @@ describe("NoteService", () => {
       expect(notes[0]!.relations).toBeDefined();
     });
 
-    it("filters by isFavorite", async () => {
-      await noteService.create({ title: "Fav", content: "...", isFavorite: true });
-      await noteService.create({ title: "Not Fav", content: "...", isFavorite: false });
+    it('filters by isFavorite', async () => {
+      await noteService.create({ title: 'Fav', content: '...', isFavorite: true });
+      await noteService.create({ title: 'Not Fav', content: '...', isFavorite: false });
 
       const favs = await noteService.getAll({ isFavorite: true });
       expect(favs).toHaveLength(1);
-      expect(favs[0]!.title).toBe("Fav");
+      expect(favs[0]!.title).toBe('Fav');
     });
 
-    it("truncates content when requested", async () => {
-      const longContent = "A".repeat(500);
+    it('truncates content when requested', async () => {
+      const longContent = 'A'.repeat(500);
       await noteService.create({
-        title: "Long Note",
+        title: 'Long Note',
         content: longContent,
       });
 
       const notes = await noteService.getAll({ truncateContent: true });
       expect(notes[0]!.content.length).toBeLessThan(500);
-      expect(notes[0]!.content.endsWith("...")).toBe(true);
+      expect(notes[0]!.content.endsWith('...')).toBe(true);
     });
 
-    it("searches notes by title or content", async () => {
-      await noteService.create({ title: "Specific Title", content: "..." });
-      await noteService.create({ title: "...", content: "Specific Content" });
-      await noteService.create({ title: "Other", content: "..." });
+    it('searches notes by title or content', async () => {
+      await noteService.create({ title: 'Specific Title', content: '...' });
+      await noteService.create({ title: '...', content: 'Specific Content' });
+      await noteService.create({ title: 'Other', content: '...' });
 
-      const byTitle = await noteService.getAll({ search: "Specific Title" });
+      const byTitle = await noteService.getAll({ search: 'Specific Title' });
       expect(byTitle).toHaveLength(1);
 
-      const byContent = await noteService.getAll({ search: "Specific Content" });
+      const byContent = await noteService.getAll({ search: 'Specific Content' });
       expect(byContent).toHaveLength(1);
     });
   });
 
-  describe("Notebook Management", () => {
-    it("creates and retrieves notebooks", async () => {
-      const nb = await noteService.createNotebook({ name: "Work" });
-      expect(nb.name).toBe("Work");
+  describe('Notebook Management', () => {
+    it('creates and retrieves notebooks', async () => {
+      const nb = await noteService.createNotebook({ name: 'Work' });
+      expect(nb.name).toBe('Work');
 
       const all = await noteService.getAllNotebooks();
       expect(all.some(n => n.id === nb.id)).toBe(true);
     });
 
-    it("gets or creates default notebook", async () => {
+    it('gets or creates default notebook', async () => {
       const nb = await noteService.getOrCreateDefaultNotebook();
-      expect(nb.name).toBe("Default");
+      expect(nb.name).toBe('Default');
 
       const sameNb = await noteService.getOrCreateDefaultNotebook();
       expect(sameNb.id).toBe(nb.id);
     });
   });
 
-  describe("Relation Syncing", () => {
-    it("automatically creates bidirectional relations", async () => {
+  describe('Relation Syncing', () => {
+    it('automatically creates bidirectional relations', async () => {
       const noteA = await noteService.create({
-        title: "Note A",
-        content: "Content A",
+        title: 'Note A',
+        content: 'Content A',
       });
       const noteB = await noteService.create({
-        title: "Note B",
-        content: "Content B",
+        title: 'Note B',
+        content: 'Content B',
       });
 
       // Relate A -> B
@@ -129,9 +130,9 @@ describe("NoteService", () => {
       expect(updatedB?.relations?.map((r: any) => r.id)).toContain(noteA.id);
     });
 
-    it("removes bidirectional relations when one side is updated", async () => {
-      const noteA = await noteService.create({ title: "A", content: "..." });
-      const noteB = await noteService.create({ title: "B", content: "..." });
+    it('removes bidirectional relations when one side is updated', async () => {
+      const noteA = await noteService.create({ title: 'A', content: '...' });
+      const noteB = await noteService.create({ title: 'B', content: '...' });
 
       // Add relation
       await noteService.update(noteA.id, { relatedNoteIds: [noteB.id] });
@@ -145,17 +146,17 @@ describe("NoteService", () => {
     });
   });
 
-  describe("File Cleanup", () => {
-    it("calls cleanupNoteFile when a note is deleted", async () => {
-      const note = await noteService.create({ title: "Delete Me", content: "..." });
+  describe('File Cleanup', () => {
+    it('calls cleanupNoteFile when a note is deleted', async () => {
+      const note = await noteService.create({ title: 'Delete Me', content: '...' });
       
       // Manually add a file record via prisma for testing
       await prisma.noteFile.create({
         data: {
           noteId: note.id,
-          filename: "test.png",
-          filepath: "uploads/test.png",
-          mimetype: "image/png",
+          filename: 'test.png',
+          filepath: 'uploads/test.png',
+          mimetype: 'image/png',
           size: 100,
           slotIndex: 0,
         }
@@ -163,15 +164,15 @@ describe("NoteService", () => {
 
       await noteService.delete(note.id);
       
-      expect(cleanupNoteFile).toHaveBeenCalledWith(note.id, "uploads/test.png");
+      expect(cleanupNoteFile).toHaveBeenCalledWith(note.id, 'uploads/test.png');
     });
   });
 
-  describe("Categories and Tags", () => {
-    it("manages category trees", async () => {
-      const parent = await noteService.createCategory({ name: "Parent" });
+  describe('Categories and Tags', () => {
+    it('manages category trees', async () => {
+      const parent = await noteService.createCategory({ name: 'Parent' });
       const child = await noteService.createCategory({ 
-        name: "Child", 
+        name: 'Child', 
         parentId: parent.id 
       });
 

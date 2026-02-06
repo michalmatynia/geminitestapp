@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { logClientError, setClientErrorBaseContext } from '@/features/observability/utils/client-error-logger';
+
 import { isSensitiveKey } from '@/features/observability/lib/log-redaction';
+import { logClientError, setClientErrorBaseContext } from '@/features/observability/utils/client-error-logger';
 
 // Mock dependencies
 vi.mock('@/features/observability/lib/log-redaction', () => ({

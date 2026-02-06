@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import type { BlockDefinition } from "../../types/page-builder";
-import { getAllowedBlockTypes } from "./section-registry";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { PickerDropdown } from "./PickerDropdown";
+import React, { useMemo } from 'react';
+
+import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
+import { PickerDropdown } from './PickerDropdown';
+import { getAllowedBlockTypes } from './section-registry';
+
+import type { BlockDefinition } from '../../types/page-builder';
 
 interface BlockPickerProps {
   sectionType: string;
@@ -14,23 +17,23 @@ interface BlockPickerProps {
 }
 
 export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
-    if (!settingsQuery.data) return [];
     return parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledEmbedsRaw,
       []
     );
-  }, [settingsQuery.data]);
+  }, [enabledEmbedsRaw]);
   const hasAppEmbeds = enabledEmbeds.length > 0;
   const blockTypes = getAllowedBlockTypes(sectionType).filter((def: BlockDefinition) => {
-    if (def.type !== "AppEmbed") return true;
+    if (def.type !== 'AppEmbed') return true;
     return hasAppEmbeds;
   });
 
   const groups = useMemo(() => [
     {
-      label: "Blocks",
+      label: 'Blocks',
       options: blockTypes.map((def: BlockDefinition) => ({
         type: def.type,
         label: def.label,

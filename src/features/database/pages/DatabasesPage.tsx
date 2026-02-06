@@ -1,32 +1,44 @@
-"use client";
+'use client';
 
-import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog } from "@/shared/ui";
-import { useState, useRef, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 
-import { getDatabaseColumns } from "../components/DatabaseColumns";
-import { LogModal } from "../components/LogModal";
-import { RestoreModal } from "../components/RestoreModal";
-import type { DatabaseInfo, DatabaseType } from "../types";
+import { logClientError } from '@/features/observability';
+import {
+  DataTable,
+  Button,
+  useToast,
+  SectionPanel,
+  ConfirmDialog,
+  FileUploadButton,
+  type FileUploadHelpers,
+  AdminPageLayout,
+} from '@/shared/ui'; // SectionHeader, Tabs, TabsList, TabsTrigger removed
+
+import { getDatabaseColumns } from '../components/DatabaseColumns';
+import { LogModal } from '../components/LogModal';
+import { RestoreModal } from '../components/RestoreModal';
 import {
   useDatabaseBackups,
   useCreateBackupMutation,
   useRestoreBackupMutation,
   useUploadBackupMutation,
   useDeleteBackupMutation,
-} from "../hooks/useDatabaseQueries";
+} from '../hooks/useDatabaseQueries';
+
+import type { DatabaseInfo, DatabaseType } from '../types';
 
 
 export default function DatabasesPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [logModalContent, setLogModalContent] = useState("");
+  const [logModalContent, setLogModalContent] = useState('');
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isProd = process.env.NODE_ENV === 'production';
 
   const backupsQuery = useDatabaseBackups(activeTab);
   const data = backupsQuery.data ?? [];
@@ -43,8 +55,8 @@ export default function DatabasesPage(): React.JSX.Element {
 
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
-    setLogModalContent("");
-    void queryClient.invalidateQueries({ queryKey: ["database-backups", activeTab] });
+    setLogModalContent('');
+    void queryClient.invalidateQueries({ queryKey: ['database-backups', activeTab] });
   }, [queryClient, activeTab]);
 
 
@@ -67,11 +79,11 @@ export default function DatabasesPage(): React.JSX.Element {
         truncateBeforeRestore: truncate,
       });
       const { ok, payload } = result;
-      const log = payload.log ?? "No log available.";
+      const log = payload.log ?? 'No log available.';
 
       if (ok) {
         openLogModal(
-          `${payload.message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
+          `${payload.message ?? 'Backup restored successfully.'}\n\n---LOG---\n${log}`
         );
       } else {
         const meta = [
@@ -80,16 +92,16 @@ export default function DatabasesPage(): React.JSX.Element {
           payload.backupName ? `Backup: ${payload.backupName}` : null,
         ]
           .filter(Boolean)
-          .join("\n");
+          .join('\n');
 
         openLogModal(
-          `${payload.error ?? "Failed to restore backup."}${ 
-            meta ? `\n\n${meta}` : "" 
+          `${payload.error ?? 'Failed to restore backup.'}${ 
+            meta ? `\n\n${meta}` : '' 
           }\n\n---LOG---\n${log}`
         );
       }
     } catch (error: unknown) {
-      console.error("Error restoring backup:", error);
+      logClientError(error, { context: { source: 'DatabasesPage', action: 'restoreBackup', backupName, dbType: activeTab } });
       openLogModal(`An error occurred during restoration.\n\n${String(error)}`);
     }
   };
@@ -98,28 +110,28 @@ export default function DatabasesPage(): React.JSX.Element {
     try {
       const result = await createBackup.mutateAsync(activeTab);
       const { ok, payload } = result;
-      const log = payload.log ?? "No log available.";
+      const log = payload.log ?? 'No log available.';
       if (ok) {
         if (payload.warning) {
           openLogModal(
-            `${payload.message ?? "Backup created"}: ${ 
+            `${payload.message ?? 'Backup created'}: ${ 
               payload.warning 
             }\n\n---LOG---\n${log}`
           );
         } else {
           openLogModal(
             `${
-              payload.message ?? "Backup created successfully."
+              payload.message ?? 'Backup created successfully.'
             }\n\n---LOG---\n${log}`
           );
         }
       } else {
         openLogModal(
-          `${payload.error ?? "Failed to create backup."}\n\n---LOG---\n${log}`
+          `${payload.error ?? 'Failed to create backup.'}\n\n---LOG---\n${log}`
         );
       }
     } catch (error: unknown) {
-      console.error("Error creating backup:", error);
+      logClientError(error, { context: { source: 'DatabasesPage', action: 'createBackup', dbType: activeTab } });
       openLogModal(`An error occurred during backup.\n\n${String(error)}`);
     }
   };
@@ -133,39 +145,37 @@ export default function DatabasesPage(): React.JSX.Element {
     try {
       const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName: backupToDelete });
       if (result.ok) {
-        toast("Backup deleted successfully.", { variant: "success" });
+        toast('Backup deleted successfully.', { variant: 'success' });
       } else {
-        toast("Failed to delete backup.", { variant: "error" });
+        toast('Failed to delete backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
-      console.error("Error deleting backup:", error);
-      toast("An error occurred during deletion.", { variant: "error" });
+      logClientError(error, { context: { source: 'DatabasesPage', action: 'deleteBackup', backupName: backupToDelete, dbType: activeTab } });
+      toast('An error occurred during deletion.', { variant: 'error' });
     } finally {
       setBackupToDelete(null);
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
+  const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
+    const file = files[0];
     if (!file) return;
 
     try {
-      const result = await uploadBackup.mutateAsync({ dbType: activeTab, file });
+      const result = await uploadBackup.mutateAsync({
+        dbType: activeTab,
+        file,
+        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
+      });
       if (result.ok) {
-        toast("Backup uploaded successfully.", { variant: "success" });
+        toast('Backup uploaded successfully.', { variant: 'success' });
       } else {
-        toast("Failed to upload backup.", { variant: "error" });
+        toast('Failed to upload backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
-      console.error("Error uploading backup:", error);
-      toast("An error occurred during upload.", { variant: "error" });
-    } finally {
-      event.target.value = "";
+      logClientError(error, { context: { source: 'DatabasesPage', action: 'uploadBackup', filename: file.name, dbType: activeTab } });
+      toast('An error occurred during upload.', { variant: 'error' });
     }
-  };
-
-  const triggerFileUpload = (): void => {
-    fileInputRef.current?.click();
   };
 
   const handlePreview = (backupName: string): void => {
@@ -180,7 +190,46 @@ export default function DatabasesPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <AdminPageLayout
+      title={`Databases - ${activeTab === 'postgresql' ? 'PostgreSQL' : 'MongoDB'}`}
+      description={
+        activeTab === 'postgresql'
+          ? 'PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema.'
+          : 'MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format.'
+      }
+      mainActions={
+        <>
+          <Button
+            disabled={isProd}
+            title={isProd ? 'Disabled in production' : undefined}
+            onClick={(): void => {
+              void handleBackup();
+            }}
+          >
+            Create Backup
+          </Button>
+          <FileUploadButton
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+            accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
+            disabled={isProd}
+            title={isProd ? 'Disabled in production' : undefined}
+          >
+            Upload Backup
+          </FileUploadButton>
+          <Button variant="secondary" onClick={handlePreviewCurrent}>
+            Preview Current DB
+          </Button>
+        </>
+      }
+      tabs={{
+        activeTab: activeTab,
+        onTabChange: (value: string) => setActiveTab(value as DatabaseType),
+        tabsList: [
+          { value: 'postgresql', label: 'PostgreSQL' },
+          { value: 'mongodb', label: 'MongoDB' },
+        ],
+      }}
+    >
       {isLogModalOpen && (
         <LogModal content={logModalContent} onClose={closeLogModal} />
       )}
@@ -206,63 +255,11 @@ export default function DatabasesPage(): React.JSX.Element {
         variant="destructive"
       />
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border">
-        <div className="flex gap-4">
-          <Button
-            onClick={(): void => setActiveTab("postgresql")}
-            className={`px-4 py-2 font-medium transition ${ 
-              activeTab === "postgresql"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            PostgreSQL
-          </Button>
-          <Button
-            onClick={(): void => setActiveTab("mongodb")}
-            className={`px-4 py-2 font-medium transition ${ 
-              activeTab === "mongodb"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            MongoDB
-          </Button>
+      {isProd ? (
+        <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Backups are disabled in production. Create or upload backups in a non-production environment.
         </div>
-      </div>
-
-      <SectionHeader
-        title={`Databases - ${activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}`}
-        description={
-          activeTab === "postgresql"
-            ? "PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema."
-            : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."
-        }
-        actions={
-          <>
-            <Button
-              onClick={(): void => {
-                void handleBackup();
-              }}
-            >
-              Create Backup
-            </Button>
-            <Button onClick={triggerFileUpload}>Upload Backup</Button>
-            <Button variant="secondary" onClick={handlePreviewCurrent}>
-              Preview Current DB
-            </Button>
-            <Input
-              type="file"
-              ref={fileInputRef}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleUpload(e); }}
-              className="hidden"
-              accept={activeTab === "postgresql" ? ".dump" : ".archive"}
-            />
-          </>
-        }
-        className="mb-6"
-      />
+      ) : null}
       <SectionPanel className="p-6">
         <DataTable
           columns={getDatabaseColumns({
@@ -271,10 +268,10 @@ export default function DatabasesPage(): React.JSX.Element {
             onDeleteRequest: (name: string): void => { void handleDeleteRequest(name); },
           })}
           data={data}
-          initialSorting={[{ id: "lastModifiedAt", desc: true }]}
+          initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
       </SectionPanel>
-    </div>
+    </AdminPageLayout>
   );
 }

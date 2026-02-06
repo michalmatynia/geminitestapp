@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { ApiConsole, type ApiPreset } from "./ApiConsole";
+import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+
+import { ApiConsole, type ApiPreset } from './ApiConsole';
 
 type BaseApiConsoleProps = {
   activeConnection: IntegrationConnection | null;
@@ -26,28 +27,28 @@ export function BaseApiConsole({
   response,
   onRequest,
 }: BaseApiConsoleProps): React.JSX.Element {
-  const defaultInventoryId = activeConnection?.baseLastInventoryId ?? "";
+  const defaultInventoryId = activeConnection?.baseLastInventoryId ?? '';
   
   const baseApiPresets: ApiPreset[] = [
-    { label: "Inventories", method: "getInventories", params: {} },
+    { label: 'Inventories', method: 'getInventories', params: {} },
     {
-      label: "Products List",
-      method: "getInventoryProductsList",
+      label: 'Products List',
+      method: 'getInventoryProductsList',
       params: { inventory_id: defaultInventoryId, limit: 10 },
     },
     {
-      label: "Inventory Products",
-      method: "getInventoryProductsList",
+      label: 'Inventory Products',
+      method: 'getInventoryProductsList',
       params: { inventory_id: defaultInventoryId },
     },
     {
-      label: "Detailed Product",
-      method: "getInventoryProductDetailed",
-      params: { inventory_id: defaultInventoryId, product_id: "" },
+      label: 'Detailed Product',
+      method: 'getInventoryProductDetailed',
+      params: { inventory_id: defaultInventoryId, product_id: '' },
     },
-    { label: "Orders", method: "getOrders", params: { get_unconfirmed_orders: 1, limit: 10 } },
-    { label: "Order Statuses", method: "getOrderStatusList", params: {} },
-    { label: "Orders Log", method: "getOrdersLog", params: { limit: 10 } },
+    { label: 'Orders', method: 'getOrders', params: { get_unconfirmed_orders: 1, limit: 10 } },
+    { label: 'Order Statuses', method: 'getOrderStatusList', params: {} },
+    { label: 'Orders Log', method: 'getOrdersLog', params: { limit: 10 } },
   ];
 
   return (

@@ -1,13 +1,23 @@
-"use client";
+'use client';
 
 
-import type { BlockInstance } from "../../../types/page-builder";
-import type { GsapAnimationConfig } from "@/features/gsap";
-import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
-import { getBlockTypographyStyles } from "../theme-styles";
-import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { useMediaStyles } from "../media-styles-context";
-import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
+import Image from 'next/image';
+
+import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
+import type { GsapAnimationConfig } from '@/features/gsap';
+import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/features/viewer3d';
+
+import { CssAnimationWrapper } from '../CssAnimationWrapper';
+import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
+import { useMediaStyles } from '../media-styles-context';
+import { getBlockTypographyStyles } from '../theme-styles';
+
+import type { BlockInstance } from '../../../types/page-builder';
+
+
+
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -19,7 +29,8 @@ interface FrontendBlockRendererProps {
 }
 
 export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockRendererProps): React.ReactNode {
-  const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const animConfig = block.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
+  const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
   const mediaStyles = useMediaStyles();
   const content = renderBlockContent(block, mediaStyles, stretch);
 
@@ -27,7 +38,15 @@ export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockR
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      {content}
+      <CssAnimationWrapper config={cssAnimConfig}>
+        <EventEffectsWrapper
+          settings={block.settings}
+          nodeId={block.id}
+          customCss={block.settings['customCss']}
+        >
+          {content}
+        </EventEffectsWrapper>
+      </CssAnimationWrapper>
     </GsapAnimationWrapper>
   );
 }
@@ -38,37 +57,37 @@ function renderBlockContent(
   stretch: boolean = false
 ): React.ReactNode {
   switch (block.type) {
-    case "Heading":
+    case 'Heading':
       return <HeadingBlock settings={block.settings} />;
-    case "Text":
+    case 'Text':
       return <TextBlock settings={block.settings} />;
-    case "TextElement":
+    case 'TextElement':
       return <TextElementBlock settings={block.settings} />;
-    case "TextAtom":
+    case 'TextAtom':
       return <TextAtomBlock block={block} />;
-    case "TextAtomLetter":
+    case 'TextAtomLetter':
       return <TextAtomLetterBlock settings={block.settings} />;
-    case "Announcement":
+    case 'Announcement':
       return <AnnouncementBlock settings={block.settings} />;
-    case "Button":
+    case 'Button':
       return <ButtonBlock settings={block.settings} />;
-    case "RichText":
+    case 'RichText':
       return <RichTextBlock settings={block.settings} />;
-    case "ImageElement":
+    case 'ImageElement':
       return <ImageElementBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
-    case "Image":
+    case 'Image':
       return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
-    case "Model3D":
+    case 'Model3D':
       return <Model3DBlock settings={block.settings} />;
-    case "VideoEmbed":
+    case 'VideoEmbed':
       return <VideoEmbedBlock settings={block.settings} mediaStyles={mediaStyles} />;
-    case "Divider":
+    case 'Divider':
       return <DividerBlock settings={block.settings} />;
-    case "SocialLinks":
+    case 'SocialLinks':
       return <SocialLinksBlock settings={block.settings} />;
-    case "Icon":
+    case 'Icon':
       return <IconBlock settings={block.settings} />;
-    case "AppEmbed":
+    case 'AppEmbed':
       return <AppEmbedBlock settings={block.settings} />;
     default:
       return null;
@@ -80,14 +99,14 @@ function renderBlockContent(
 // ---------------------------------------------------------------------------
 
 function HeadingBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const text = (settings["headingText"] as string) || "Heading";
-  const size = (settings["headingSize"] as string) || "medium";
+  const text = (settings['headingText'] as string) || 'Heading';
+  const size = (settings['headingSize'] as string) || 'medium';
   const typoStyles = getBlockTypographyStyles(settings);
 
-  if (size === "small") {
+  if (size === 'small') {
     return <h3 className="text-xl font-bold leading-tight tracking-tight md:text-2xl" style={typoStyles}>{text}</h3>;
   }
-  if (size === "large") {
+  if (size === 'large') {
     return <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl" style={typoStyles}>{text}</h2>;
   }
   // medium
@@ -95,50 +114,50 @@ function HeadingBlock({ settings }: { settings: Record<string, unknown> }): Reac
 }
 
 function TextBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const text = (settings["textContent"] as string) || "";
+  const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>;
 }
 
 function TextElementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const text = (settings["textContent"] as string) || "";
+  const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
 }
 
 function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
-  const text = (block.settings["text"] as string) || "";
-  const alignment = (block.settings["alignment"] as string) || "left";
-  const letterGap = (block.settings["letterGap"] as number) || 0;
-  const lineGap = (block.settings["lineGap"] as number) || 0;
-  const wrap = (block.settings["wrap"] as string) || "wrap";
+  const text = (block.settings['text'] as string) || '';
+  const alignment = (block.settings['alignment'] as string) || 'left';
+  const letterGap = (block.settings['letterGap'] as number) || 0;
+  const lineGap = (block.settings['lineGap'] as number) || 0;
+  const wrap = (block.settings['wrap'] as string) || 'wrap';
   const letters = (block.blocks ?? []).length
     ? (block.blocks ?? [])
     : Array.from(text).map((char: string, index: number): BlockInstance => ({
-        id: `text-atom-${block.id}-${index}`,
-        type: "TextAtomLetter",
-        settings: { textContent: char },
-      }));
+      id: `text-atom-${block.id}-${index}`,
+      type: 'TextAtomLetter',
+      settings: { textContent: char },
+    }));
 
   if (!letters.length) return null;
 
   const justifyContent =
-    alignment === "center"
-      ? "center"
-      : alignment === "right"
-        ? "flex-end"
-        : "flex-start";
+    alignment === 'center'
+      ? 'center'
+      : alignment === 'right'
+        ? 'flex-end'
+        : 'flex-start';
 
   const containerStyle: React.CSSProperties = {
-    display: "flex",
-    flexWrap: wrap === "nowrap" ? "nowrap" : "wrap",
+    display: 'flex',
+    flexWrap: wrap === 'nowrap' ? 'nowrap' : 'wrap',
     justifyContent,
-    alignItems: "baseline",
+    alignItems: 'baseline',
     columnGap: letterGap,
     rowGap: lineGap,
-    whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
+    whiteSpace: wrap === 'nowrap' ? 'pre' : 'pre-wrap',
   };
 
   return (
@@ -151,23 +170,23 @@ function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
 }
 
 function TextAtomLetterBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const text = (settings["textContent"] as string) ?? "";
+  const text = (settings['textContent'] as string) ?? '';
   const typoStyles = getBlockTypographyStyles(settings);
   return (
-    <span className="inline-block" style={{ ...typoStyles, whiteSpace: "pre" }}>
+    <span className="inline-block" style={{ ...typoStyles, whiteSpace: 'pre' }}>
       {text}
     </span>
   );
 }
 
 const toNumber = (value: unknown, fallback: number): number =>
-  typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
 const toBoolean = (value: unknown, fallback: boolean): boolean => {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") {
-    if (value.toLowerCase() === "true") return true;
-    if (value.toLowerCase() === "false") return false;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    if (value.toLowerCase() === 'true') return true;
+    if (value.toLowerCase() === 'false') return false;
   }
   return fallback;
 };
@@ -175,36 +194,36 @@ const toBoolean = (value: unknown, fallback: boolean): boolean => {
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
 function Model3DBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const assetId = (settings["assetId"] as string) || "";
+  const assetId = (settings['assetId'] as string) || '';
   if (!assetId) return null;
 
-  const height = toNumber(settings["height"], 360);
-  const backgroundColor = (settings["backgroundColor"] as string) || "#111827";
-  const autoRotate = toBoolean(settings["autoRotate"], true);
-  const autoRotateSpeed = toNumber(settings["autoRotateSpeed"], 2);
-  const environment = (settings["environment"] as EnvironmentPreset) || "studio";
-  const lighting = (settings["lighting"] as LightingPreset) || "studio";
-  const lightIntensity = toNumber(settings["lightIntensity"], 1);
-  const enableShadows = toBoolean(settings["enableShadows"], true);
-  const enableBloom = toBoolean(settings["enableBloom"], false);
-  const bloomIntensity = toNumber(settings["bloomIntensity"], 0.5);
-  const exposure = toNumber(settings["exposure"], 1);
-  const showGround = toBoolean(settings["showGround"], false);
-  const enableContactShadows = toBoolean(settings["enableContactShadows"], true);
-  const enableVignette = toBoolean(settings["enableVignette"], false);
-  const autoFit = toBoolean(settings["autoFit"], true);
-  const presentationMode = toBoolean(settings["presentationMode"], false);
+  const height = toNumber(settings['height'], 360);
+  const backgroundColor = (settings['backgroundColor'] as string) || '#111827';
+  const autoRotate = toBoolean(settings['autoRotate'], true);
+  const autoRotateSpeed = toNumber(settings['autoRotateSpeed'], 2);
+  const environment = (settings['environment'] as EnvironmentPreset) || 'studio';
+  const lighting = (settings['lighting'] as LightingPreset) || 'studio';
+  const lightIntensity = toNumber(settings['lightIntensity'], 1);
+  const enableShadows = toBoolean(settings['enableShadows'], true);
+  const enableBloom = toBoolean(settings['enableBloom'], false);
+  const bloomIntensity = toNumber(settings['bloomIntensity'], 0.5);
+  const exposure = toNumber(settings['exposure'], 1);
+  const showGround = toBoolean(settings['showGround'], false);
+  const enableContactShadows = toBoolean(settings['enableContactShadows'], true);
+  const enableVignette = toBoolean(settings['enableVignette'], false);
+  const autoFit = toBoolean(settings['autoFit'], true);
+  const presentationMode = toBoolean(settings['presentationMode'], false);
   const position = [
-    toNumber(settings["positionX"], 0),
-    toNumber(settings["positionY"], 0),
-    toNumber(settings["positionZ"], 0),
+    toNumber(settings['positionX'], 0),
+    toNumber(settings['positionY'], 0),
+    toNumber(settings['positionZ'], 0),
   ] as [number, number, number];
   const rotation = [
-    toRadians(toNumber(settings["rotationX"], 0)),
-    toRadians(toNumber(settings["rotationY"], 0)),
-    toRadians(toNumber(settings["rotationZ"], 0)),
+    toRadians(toNumber(settings['rotationX'], 0)),
+    toRadians(toNumber(settings['rotationY'], 0)),
+    toRadians(toNumber(settings['rotationZ'], 0)),
   ] as [number, number, number];
-  const scale = toNumber(settings["scale"], 1);
+  const scale = toNumber(settings['scale'], 1);
   const modelUrl = `/api/assets3d/${assetId}/file`;
 
   return (
@@ -226,6 +245,7 @@ function Model3DBlock({ settings }: { settings: Record<string, unknown> }): Reac
         enableVignette={enableVignette}
         autoFit={autoFit}
         presentationMode={presentationMode}
+        allowUserControls={false}
         modelPosition={position}
         modelRotation={rotation}
         modelScale={scale}
@@ -236,8 +256,8 @@ function Model3DBlock({ settings }: { settings: Record<string, unknown> }): Reac
 }
 
 function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const text = (settings["text"] as string) || "";
-  const link = (settings["link"] as string) || "";
+  const text = (settings['text'] as string) || '';
+  const link = (settings['link'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
 
@@ -261,21 +281,21 @@ function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }):
 }
 
 function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const label = (settings["buttonLabel"] as string) || "Button";
-  const link = (settings["buttonLink"] as string) || "#";
-  const style = (settings["buttonStyle"] as string) || "solid";
+  const label = (settings['buttonLabel'] as string) || 'Button';
+  const link = (settings['buttonLink'] as string) || '#';
+  const style = (settings['buttonStyle'] as string) || 'solid';
 
-  const baseClasses = "cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const baseClasses = 'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const customStyles: React.CSSProperties = {};
-  const fontFamily = settings["fontFamily"] as string | undefined;
-  const fontSize = settings["fontSize"] as number | undefined;
-  const fontWeight = settings["fontWeight"] as string | undefined;
-  const textColor = settings["textColor"] as string | undefined;
-  const bgColor = settings["bgColor"] as string | undefined;
-  const borderColor = settings["borderColor"] as string | undefined;
-  const borderRadius = settings["borderRadius"] as number | undefined;
-  const borderWidth = settings["borderWidth"] as number | undefined;
+  const fontFamily = settings['fontFamily'] as string | undefined;
+  const fontSize = settings['fontSize'] as number | undefined;
+  const fontWeight = settings['fontWeight'] as string | undefined;
+  const textColor = settings['textColor'] as string | undefined;
+  const bgColor = settings['bgColor'] as string | undefined;
+  const borderColor = settings['borderColor'] as string | undefined;
+  const borderRadius = settings['borderRadius'] as number | undefined;
+  const borderWidth = settings['borderWidth'] as number | undefined;
 
   if (fontFamily) customStyles.fontFamily = fontFamily;
   if (fontSize && fontSize > 0) customStyles.fontSize = `${fontSize}px`;
@@ -286,7 +306,7 @@ function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React
   if (borderRadius && borderRadius > 0) customStyles.borderRadius = `${borderRadius}px`;
   if (borderWidth && borderWidth > 0) customStyles.borderWidth = `${borderWidth}px`;
 
-  if (style === "outline") {
+  if (style === 'outline') {
     return (
       <a
         href={link}
@@ -311,7 +331,7 @@ function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React
 
 function RichTextBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
   // RichText currently stores no editable text content, just renders as a placeholder area
-  const colorScheme = (settings["colorScheme"] as string) || "scheme-1";
+  const colorScheme = (settings['colorScheme'] as string) || 'scheme-1';
   return (
     <div
       className="rounded-lg p-4 text-gray-400"
@@ -331,56 +351,63 @@ function ImageElementBlock({
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
-  const src = (settings["src"] as string) || "";
-  const alt = (settings["alt"] as string) || "Image";
-  const width = (settings["width"] as number) || 100;
-  const height = (settings["height"] as number) || 0;
-  const aspectRatio = (settings["aspectRatio"] as string) || "auto";
-  const objectFit = (settings["objectFit"] as React.CSSProperties["objectFit"]) || "cover";
-  const objectPosition = resolveObjectPosition((settings["objectPosition"] as string) || "center");
-  const opacity = clampNumber(settings["opacity"], 0, 100, 100);
-  const blur = clampNumber(settings["blur"], 0, 20, 0);
-  const grayscale = clampNumber(settings["grayscale"], 0, 100, 0);
-  const brightness = clampNumber(settings["brightness"], 0, 200, 100);
-  const contrast = clampNumber(settings["contrast"], 0, 200, 100);
-  const scale = clampNumber(settings["scale"], 50, 200, 100);
-  const rotate = clampNumber(settings["rotate"], -180, 180, 0);
-  const shape = (settings["shape"] as string) || "none";
-  const borderRadius = (settings["borderRadius"] as number) || 0;
-  const borderWidth = (settings["borderWidth"] as number) || 0;
-  const borderStyle = (settings["borderStyle"] as string) || "solid";
-  const borderColor = (settings["borderColor"] as string) || "#ffffff";
-  const overlayType = (settings["overlayType"] as string) || "none";
-  const overlayColor = (settings["overlayColor"] as string) || "#000000";
-  const overlayOpacity = clampNumber(settings["overlayOpacity"], 0, 100, 0) / 100;
-  const overlayGradientFrom = (settings["overlayGradientFrom"] as string) || "#000000";
-  const overlayGradientTo = (settings["overlayGradientTo"] as string) || "#ffffff";
-  const overlayGradientDirection = (settings["overlayGradientDirection"] as string) || "to-bottom";
-  const transparencyMode = (settings["transparencyMode"] as string) || "none";
-  const transparencyDirection = (settings["transparencyDirection"] as string) || "bottom";
-  const transparencyStrength = clampNumber(settings["transparencyStrength"], 0, 100, 0);
+  const src = (settings['src'] as string) || '';
+  const alt = (settings['alt'] as string) || 'Image';
+  const width = (settings['width'] as number) || 100;
+  const height = (settings['height'] as number) || 0;
+  const aspectRatio = (settings['aspectRatio'] as string) || 'auto';
+  const objectFit = (settings['objectFit'] as React.CSSProperties['objectFit']) || 'cover';
+  const objectPosition = resolveObjectPosition((settings['objectPosition'] as string) || 'center');
+  const opacity = clampNumber(settings['opacity'], 0, 100, 100);
+  const blur = clampNumber(settings['blur'], 0, 20, 0);
+  const grayscale = clampNumber(settings['grayscale'], 0, 100, 0);
+  const brightness = clampNumber(settings['brightness'], 0, 200, 100);
+  const contrast = clampNumber(settings['contrast'], 0, 200, 100);
+  const scale = clampNumber(settings['scale'], 50, 200, 100);
+  const rotate = clampNumber(settings['rotate'], -180, 180, 0);
+  const shape = (settings['shape'] as string) || 'none';
+  const borderRadius = (settings['borderRadius'] as number) || 0;
+  const borderWidth = (settings['borderWidth'] as number) || 0;
+  const borderStyle = (settings['borderStyle'] as string) || 'solid';
+  const borderColor = (settings['borderColor'] as string) || '#ffffff';
+  const overlayType = (settings['overlayType'] as string) || 'none';
+  const overlayColor = (settings['overlayColor'] as string) || '#000000';
+  const overlayOpacity = clampNumber(settings['overlayOpacity'], 0, 100, 0) / 100;
+  const overlayGradientFrom = (settings['overlayGradientFrom'] as string) || '#000000';
+  const overlayGradientTo = (settings['overlayGradientTo'] as string) || '#ffffff';
+  const overlayGradientDirection = (settings['overlayGradientDirection'] as string) || 'to-bottom';
+  const transparencyMode = (settings['transparencyMode'] as string) || 'none';
+  const transparencyDirection = (settings['transparencyDirection'] as string) || 'bottom';
+  const transparencyStrength = clampNumber(settings['transparencyStrength'], 0, 100, 0);
+  const clipOverflow = toBoolean(settings['clipOverflow'], false);
 
   const wrapperStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
     width: `${width}%`,
   };
   if (height > 0) wrapperStyles.height = `${height}px`;
-  if (aspectRatio !== "auto") wrapperStyles.aspectRatio = aspectRatio;
-  if (stretch) wrapperStyles.height = "100%";
-  if (borderWidth > 0 && borderStyle !== "none") {
+  if (aspectRatio !== 'auto') wrapperStyles.aspectRatio = aspectRatio;
+  if (stretch) {
+    wrapperStyles.width = '100%';
+    wrapperStyles.height = '100%';
+  }
+  if (borderWidth > 0 && borderStyle !== 'none') {
     wrapperStyles.borderWidth = `${borderWidth}px`;
     wrapperStyles.borderStyle = borderStyle;
     wrapperStyles.borderColor = borderColor;
   }
-  if (shape === "circle") {
-    wrapperStyles.borderRadius = "9999px";
-    wrapperStyles.overflow = "hidden";
-  } else if (shape === "rounded" && borderRadius > 0) {
+  if (shape === 'circle') {
+    wrapperStyles.borderRadius = '9999px';
+    wrapperStyles.overflow = 'hidden';
+  } else if (shape === 'rounded' && borderRadius > 0) {
     wrapperStyles.borderRadius = `${borderRadius}px`;
-    wrapperStyles.overflow = "hidden";
+    wrapperStyles.overflow = 'hidden';
+  }
+  if (clipOverflow) {
+    wrapperStyles.overflow = 'hidden';
   }
 
-  const shadow = settings["imageShadow"] as Record<string, unknown> | undefined;
+  const shadow = settings['imageShadow'] as Record<string, unknown> | undefined;
   if (shadow) {
     const x = (shadow.x as number) ?? 0;
     const y = (shadow.y as number) ?? 0;
@@ -405,20 +432,20 @@ function ImageElementBlock({
   if (rotate !== 0) transforms.push(`rotate(${rotate}deg)`);
 
   const imageStyles: React.CSSProperties = {
-    width: "100%",
-    maxHeight: "100%",
+    width: '100%',
+    maxHeight: '100%',
     objectFit,
     objectPosition,
     opacity: opacity / 100,
-    filter: filters.length ? filters.join(" ") : undefined,
-    transform: transforms.length ? transforms.join(" ") : undefined,
+    filter: filters.length ? filters.join(' ') : undefined,
+    transform: transforms.length ? transforms.join(' ') : undefined,
+    display: 'block',
   };
-
   const overlayStyles: React.CSSProperties = {};
-  if (overlayType === "solid") {
+  if (overlayType === 'solid') {
     overlayStyles.backgroundColor = overlayColor;
     overlayStyles.opacity = overlayOpacity;
-  } else if (overlayType === "gradient") {
+  } else if (overlayType === 'gradient') {
     overlayStyles.backgroundImage = `linear-gradient(${resolveGradientDirection(overlayGradientDirection)}, ${overlayGradientFrom}, ${overlayGradientTo})`;
     overlayStyles.opacity = overlayOpacity;
   }
@@ -436,22 +463,31 @@ function ImageElementBlock({
       </div>
     );
   }
-
-  const useFill = stretch || height > 0 || aspectRatio !== "auto";
+  const useFill = stretch || height > 0 || aspectRatio !== 'auto';
+  const imageStylesForFill: React.CSSProperties = { ...imageStyles };
+  delete (imageStylesForFill as { width?: string | number }).width;
+  delete (imageStylesForFill as { height?: string | number }).height;
 
   return (
     <div className="relative" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        style={{
-          ...imageStyles,
-          display: "block",
-          height: useFill ? "100%" : "auto",
-        }}
-      />
-      {overlayType !== "none" && (
+      {useFill ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          style={imageStylesForFill}
+        />
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            ...imageStyles,
+            height: 'auto',
+          }}
+        />
+      )}
+      {overlayType !== 'none' && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
       )}
     </div>
@@ -467,10 +503,11 @@ function ImageBlock({
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
-  const src = (settings["src"] as string) || "";
-  const alt = (settings["alt"] as string) || "";
-  const width = (settings["width"] as number) || 100;
-  const borderRadius = (settings["borderRadius"] as number) || 0;
+  const src = (settings['src'] as string) || '';
+  const alt = (settings['alt'] as string) || '';
+  const width = (settings['width'] as number) || 100;
+  const borderRadius = (settings['borderRadius'] as number) || 0;
+  const clipOverflow = toBoolean(settings['clipOverflow'], false);
   const resolvedStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
     ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
@@ -489,53 +526,58 @@ function ImageBlock({
 
   const wrapperStyles: React.CSSProperties = {
     width: `${width}%`,
-    ...(stretch ? { height: "100%" } : {}),
+    ...(stretch ? { width: '100%', height: '100%' } : {}),
     ...resolvedStyles,
+    ...(clipOverflow ? { overflow: 'hidden' } : {}),
   };
   const imageClassName = stretch
-    ? "block h-full w-full object-cover"
-    : "block h-auto w-full max-h-full object-cover";
+    ? 'block h-full w-full object-cover'
+    : 'block h-auto w-full max-h-full object-cover';
+  const useFill = stretch;
 
   return (
     <div className="cms-media" style={wrapperStyles}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className={imageClassName} />
+      {useFill ? (
+        <Image src={src} alt={alt} fill className={imageClassName} />
+      ) : (
+        <img src={src} alt={alt} className={imageClassName} />
+      )}
     </div>
   );
 }
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
-  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
   return Math.min(max, Math.max(min, value));
 }
 
 function resolveObjectPosition(value: string): string {
   const map: Record<string, string> = {
-    center: "center",
-    top: "top",
-    bottom: "bottom",
-    left: "left",
-    right: "right",
-    "top-left": "left top",
-    "top-right": "right top",
-    "bottom-left": "left bottom",
-    "bottom-right": "right bottom",
+    center: 'center',
+    top: 'top',
+    bottom: 'bottom',
+    left: 'left',
+    right: 'right',
+    'top-left': 'left top',
+    'top-right': 'right top',
+    'bottom-left': 'left bottom',
+    'bottom-right': 'right bottom',
   };
-  return map[value] ?? "center";
+  return map[value] ?? 'center';
 }
 
 function resolveGradientDirection(value: string): string {
   const map: Record<string, string> = {
-    "to-top": "to top",
-    "to-bottom": "to bottom",
-    "to-left": "to left",
-    "to-right": "to right",
-    "to-top-left": "to top left",
-    "to-top-right": "to top right",
-    "to-bottom-left": "to bottom left",
-    "to-bottom-right": "to bottom right",
+    'to-top': 'to top',
+    'to-bottom': 'to bottom',
+    'to-left': 'to left',
+    'to-right': 'to right',
+    'to-top-left': 'to top left',
+    'to-top-right': 'to top right',
+    'to-bottom-left': 'to bottom left',
+    'to-bottom-right': 'to bottom right',
   };
-  return map[value] ?? "to bottom";
+  return map[value] ?? 'to bottom';
 }
 
 function buildTransparencyMaskStyles(
@@ -543,18 +585,18 @@ function buildTransparencyMaskStyles(
   direction: string,
   strength: number
 ): React.CSSProperties {
-  if (mode !== "gradient" || strength <= 0) return {};
+  if (mode !== 'gradient' || strength <= 0) return {};
   const dirMap: Record<string, string> = {
-    top: "to bottom",
-    bottom: "to top",
-    left: "to right",
-    right: "to left",
-    "top-left": "to bottom right",
-    "top-right": "to bottom left",
-    "bottom-left": "to top right",
-    "bottom-right": "to top left",
+    top: 'to bottom',
+    bottom: 'to top',
+    left: 'to right',
+    right: 'to left',
+    'top-left': 'to bottom right',
+    'top-right': 'to bottom left',
+    'bottom-left': 'to top right',
+    'bottom-right': 'to top left',
   };
-  const dir = dirMap[direction] ?? "to bottom";
+  const dir = dirMap[direction] ?? 'to bottom';
   const stop = Math.min(100, Math.max(0, strength));
   const gradient = `linear-gradient(${dir}, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${stop}%, rgba(0,0,0,1) 100%)`;
   return {
@@ -570,9 +612,9 @@ function VideoEmbedBlock({
   settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
 }): React.ReactNode {
-  const url = (settings["url"] as string) || "";
-  const aspectRatio = (settings["aspectRatio"] as string) || "16:9";
-  const autoplay = (settings["autoplay"] as string) === "yes";
+  const url = (settings['url'] as string) || '';
+  const aspectRatio = (settings['aspectRatio'] as string) || '16:9';
+  const autoplay = (settings['autoplay'] as string) === 'yes';
 
   let embedUrl: string | null = null;
   if (url) {
@@ -581,11 +623,11 @@ function VideoEmbedBlock({
     else {
       const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
       if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-      else if (url.includes("embed") || url.includes("player")) embedUrl = url;
+      else if (url.includes('embed') || url.includes('player')) embedUrl = url;
     }
   }
 
-  const paddingBottom = aspectRatio === "4:3" ? "75%" : aspectRatio === "1:1" ? "100%" : "56.25%";
+  const paddingBottom = aspectRatio === '4:3' ? '75%' : aspectRatio === '1:1' ? '100%' : '56.25%';
 
   const resolvedStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
@@ -604,7 +646,7 @@ function VideoEmbedBlock({
     <div className="cms-media relative w-full" style={resolvedStyles}>
       <iframe
         className="absolute inset-0 h-full w-full"
-        src={`${embedUrl}${autoplay ? "?autoplay=1&mute=1" : ""}`}
+        src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
         title="Embedded video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -614,16 +656,16 @@ function VideoEmbedBlock({
 }
 
 function DividerBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const style = (settings["dividerStyle"] as string) || "solid";
-  const thickness = (settings["thickness"] as number) || 1;
-  const color = (settings["dividerColor"] as string) || "#4b5563";
+  const style = (settings['dividerStyle'] as string) || 'solid';
+  const thickness = (settings['thickness'] as number) || 1;
+  const color = (settings['dividerColor'] as string) || '#4b5563';
 
-  return <hr className="my-2 border-0" style={{ borderTopStyle: style as "solid" | "dashed" | "dotted", borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
+  return <hr className="my-2 border-0" style={{ borderTopStyle: style as 'solid' | 'dashed' | 'dotted', borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
 }
 
 function SocialLinksBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const platforms = (settings["platforms"] as string) || "";
-  const links = platforms.split(",").map((l: string) => l.trim()).filter(Boolean);
+  const platforms = (settings['platforms'] as string) || '';
+  const links = platforms.split(',').map((l: string) => l.trim()).filter(Boolean);
 
   if (links.length === 0) {
     return <p className="text-sm text-gray-500">Add social media URLs in settings</p>;
@@ -632,9 +674,9 @@ function SocialLinksBlock({ settings }: { settings: Record<string, unknown> }): 
   return (
     <div className="flex items-center gap-4">
       {links.map((link: string, idx: number) => {
-        let label = "Link";
+        let label = 'Link';
         try {
-          label = new URL(link).hostname.replace("www.", "").split(".")[0] ?? "Link";
+          label = new URL(link).hostname.replace('www.', '').split('.')[0] ?? 'Link';
         } catch {
           // keep default
         }
@@ -655,25 +697,25 @@ function SocialLinksBlock({ settings }: { settings: Record<string, unknown> }): 
 }
 
 function IconBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const iconName = (settings["iconName"] as string) || "Star";
-  const iconSize = (settings["iconSize"] as number) || 24;
-  const iconColor = (settings["iconColor"] as string) || "#ffffff";
+  const iconName = (settings['iconName'] as string) || 'Star';
+  const iconSize = (settings['iconSize'] as number) || 24;
+  const iconColor = (settings['iconColor'] as string) || '#ffffff';
 
   return (
     <div className="flex items-center justify-center">
       <span style={{ fontSize: `${iconSize}px`, color: iconColor }} role="img" aria-label={iconName}>
-        {iconName === "Star" ? "★" : iconName === "Heart" ? "♥" : iconName === "Check" ? "✓" : iconName === "Arrow" ? "→" : "●"}
+        {iconName === 'Star' ? '★' : iconName === 'Heart' ? '♥' : iconName === 'Check' ? '✓' : iconName === 'Arrow' ? '→' : '●'}
       </span>
     </div>
   );
 }
 
 function AppEmbedBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
-  const appId = (settings["appId"] as AppEmbedId) || "chatbot";
-  const title = (settings["title"] as string) || "";
-  const embedUrl = (settings["embedUrl"] as string) || "";
-  const height = (settings["height"] as number) || 420;
-  const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? "App";
+  const appId = (settings['appId'] as AppEmbedId) || 'chatbot';
+  const title = (settings['title'] as string) || '';
+  const embedUrl = (settings['embedUrl'] as string) || '';
+  const height = (settings['height'] as number) || 420;
+  const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? 'App';
 
   return (
     <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">

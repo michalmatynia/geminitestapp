@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { ReactNode } from 'react';
+import { describe, it, expect, vi } from 'vitest';
+
+import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({

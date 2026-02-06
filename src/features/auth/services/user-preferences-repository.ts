@@ -1,8 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import { ObjectId } from "mongodb";
-import { operationFailedError } from "@/shared/errors/app-error";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { ObjectId } from 'mongodb';
+
+import { operationFailedError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type JsonValue =
   | string
@@ -22,19 +23,24 @@ export type UserPreferencesData = {
   productListCatalogFilter?: string | null;
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
-  productListThumbnailSource?: "file" | "link" | "base64" | null;
+  productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean | null;
   aiPathsPathIndex?: JsonValue | null;
   aiPathsPathConfigs?: JsonValue | null;
   adminMenuCollapsed?: boolean | null;
+  adminMenuFavorites?: string[] | null;
+  adminMenuSectionColors?: Record<string, string> | null;
+  adminMenuCustomEnabled?: boolean | null;
+  adminMenuCustomNav?: JsonValue | null;
   cmsLastPageId?: string | null;
   cmsActiveDomainId?: string | null;
   cmsThemeOpenSections?: string[] | null;
   cmsThemeLogoWidth?: number | null;
   cmsThemeLogoUrl?: string | null;
   cmsPreviewEnabled?: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
 };
 
 export type UserPreferences = {
@@ -44,19 +50,24 @@ export type UserPreferences = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
-  productListThumbnailSource: "file" | "link" | "base64" | null;
+  productListThumbnailSource: 'file' | 'link' | 'base64' | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
   aiPathsPathIndex: JsonValue | null;
   aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean | null;
+  adminMenuFavorites: string[];
+  adminMenuSectionColors: Record<string, string>;
+  adminMenuCustomEnabled: boolean | null;
+  adminMenuCustomNav: JsonValue | null;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
   cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -68,24 +79,29 @@ type UserPreferencesDocument = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
-  productListThumbnailSource: "file" | "link" | "base64" | null;
+  productListThumbnailSource: 'file' | 'link' | 'base64' | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
   aiPathsPathIndex: JsonValue | null;
   aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean | null;
+  adminMenuFavorites: string[] | null;
+  adminMenuSectionColors: Record<string, string> | null;
+  adminMenuCustomEnabled: boolean | null;
+  adminMenuCustomNav: JsonValue | null;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
   cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-const USER_PREFERENCES_COLLECTION = "user_preferences";
+const USER_PREFERENCES_COLLECTION = 'user_preferences';
 
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   id: String(doc._id),
@@ -94,42 +110,52 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   productListCatalogFilter: doc.productListCatalogFilter,
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
-  productListThumbnailSource: doc.productListThumbnailSource ?? "file",
+  productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
   aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
   aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
   aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
+  adminMenuFavorites: doc.adminMenuFavorites ?? [],
+  adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
+  adminMenuCustomEnabled: doc.adminMenuCustomEnabled ?? false,
+  adminMenuCustomNav: doc.adminMenuCustomNav ?? [],
   cmsLastPageId: doc.cmsLastPageId ?? null,
   cmsActiveDomainId: doc.cmsActiveDomainId ?? null,
   cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
   cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null,
   cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
   cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null,
+  cmsSlideshowPauseOnHoverInEditor: doc.cmsSlideshowPauseOnHoverInEditor ?? false,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
 
-const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "createdAt" | "updatedAt"> => ({
+const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'createdAt' | 'updatedAt'> => ({
   userId,
-  productListNameLocale: "name_en",
-  productListCatalogFilter: "all",
-  productListCurrencyCode: "PLN",
+  productListNameLocale: 'name_en',
+  productListCatalogFilter: 'all',
+  productListCurrencyCode: 'PLN',
   productListPageSize: 12,
-  productListThumbnailSource: "file",
+  productListThumbnailSource: 'file',
   aiPathsActivePathId: null,
-  aiPathsExpandedGroups: ["Triggers"],
+  aiPathsExpandedGroups: ['Triggers'],
   aiPathsPaletteCollapsed: false,
   aiPathsPathIndex: null,
   aiPathsPathConfigs: null,
   adminMenuCollapsed: false,
+  adminMenuFavorites: [],
+  adminMenuSectionColors: {},
+  adminMenuCustomEnabled: false,
+  adminMenuCustomNav: [],
   cmsLastPageId: null,
   cmsActiveDomainId: null,
   cmsThemeOpenSections: [],
   cmsThemeLogoWidth: null,
   cmsThemeLogoUrl: null,
   cmsPreviewEnabled: false,
+  cmsSlideshowPauseOnHoverInEditor: false,
 });
 
 /**
@@ -138,7 +164,7 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
  */
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
   if (!process.env.MONGODB_URI) {
-    throw operationFailedError("MongoDB is not configured.");
+    throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
   const doc = await db
@@ -170,7 +196,7 @@ export async function updateUserPreferences(
   data: Partial<UserPreferencesData>
 ): Promise<UserPreferences> {
   if (!process.env.MONGODB_URI) {
-    throw operationFailedError("MongoDB is not configured.");
+    throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
   const now = new Date();
@@ -195,13 +221,13 @@ export async function updateUserPreferences(
           ...insertDefaults,
         },
       },
-      { upsert: true, returnDocument: "after" }
+      { upsert: true, returnDocument: 'after' }
     );
 
-  if (result && "value" in result && result.value) {
+  if (result && 'value' in result && result.value) {
     return toUserPreferences(result.value as UserPreferencesDocument);
   }
-  if (result && !("value" in result) && result) {
+  if (result && !('value' in result) && result) {
     return toUserPreferences(result as unknown as UserPreferencesDocument);
   }
 
@@ -210,7 +236,7 @@ export async function updateUserPreferences(
     .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
 
   if (!fallbackDoc) {
-    throw operationFailedError("Failed to update preferences", undefined, {
+    throw operationFailedError('Failed to update preferences', undefined, {
       userId,
     });
   }

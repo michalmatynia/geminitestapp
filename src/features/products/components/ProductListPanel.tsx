@@ -1,36 +1,38 @@
-"use client";
-import { Profiler, ProfilerOnRenderCallback, memo, useMemo } from "react";
+'use client';
+import dynamic from 'next/dynamic';
+import { Profiler, ProfilerOnRenderCallback, memo, useMemo } from 'react';
 
-import { DataTable, Button, ListPanel } from "@/shared/ui";
-import dynamic from "next/dynamic";
+import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
+import type { Catalog } from '@/features/products/types';
+import type { PriceGroupWithDetails, ProductWithImages } from '@/features/products/types';
+import type { ProductDraft } from '@/features/products/types/drafts';
+import { DataTable, Button, ListPanel, Alert } from '@/shared/ui';
 
 
 
-import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-table";
-import type { ProductDraft } from "@/features/products/types/drafts";
-import type { Catalog } from "@/features/products/types";
-import type { PriceGroupWithDetails, ProductWithImages } from "@/features/products/types";
+import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
+
 
 const ProductListHeader = dynamic(
   () =>
-    import("@/features/products/components/list/ProductListHeader").then(
-      (mod: typeof import("@/features/products/components/list/ProductListHeader")) => mod.ProductListHeader
+    import('@/features/products/components/list/ProductListHeader').then(
+      (mod: typeof import('@/features/products/components/list/ProductListHeader')) => mod.ProductListHeader
     ),
   { ssr: false }
 );
 
 const ProductFilters = dynamic(
   () =>
-    import("@/features/products/components/list/ProductFilters").then(
-      (mod: typeof import("@/features/products/components/list/ProductFilters")) => mod.ProductFilters
+    import('@/features/products/components/list/ProductFilters').then(
+      (mod: typeof import('@/features/products/components/list/ProductFilters')) => mod.ProductFilters
     ),
   { ssr: false }
 );
 
 const ProductSelectionActions = dynamic(
   () =>
-    import("@/features/products/components/list/ProductFilters").then(
-      (mod: typeof import("@/features/products/components/list/ProductFilters")) => mod.ProductSelectionActions
+    import('@/features/products/components/list/ProductFilters').then(
+      (mod: typeof import('@/features/products/components/list/ProductFilters')) => mod.ProductSelectionActions
     ),
   { ssr: false }
 );
@@ -44,9 +46,9 @@ export type ProductListPanelProps = {
   setPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
-  nameLocale: "name_en" | "name_pl" | "name_de";
-  setNameLocale: (locale: "name_en" | "name_pl" | "name_de") => void;
-  languageOptions: Array<{ value: "name_en" | "name_pl" | "name_de"; label: string }>;
+  nameLocale: 'name_en' | 'name_pl' | 'name_de';
+  setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
+  languageOptions: Array<{ value: 'name_en' | 'name_pl' | 'name_de'; label: string }>;
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
@@ -78,7 +80,7 @@ export type ProductListPanelProps = {
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
-  productNameKey: "name_en" | "name_pl" | "name_de";
+  productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
@@ -148,6 +150,7 @@ export const ProductListPanel = memo(function ProductListPanel({
   isLoading,
   skeletonRows,
 }: ProductListPanelProps) {
+  const queuedProductIds = useQueuedProductIds();
   const headerProps = useMemo(
     () => ({
       onCreateProduct,
@@ -224,26 +227,34 @@ export const ProductListPanel = memo(function ProductListPanel({
     () => ({
       columns: tableColumns,
       data,
-      setRefreshTrigger,
-      productNameKey,
-      currencyCode,
-      priceGroups,
-      onProductNameClick,
-      onProductEditClick,
-      onProductDeleteClick,
-      onIntegrationsClick,
-      onExportSettingsClick,
-      integrationBadgeIds,
-      integrationBadgeStatuses,
       getRowId,
       rowSelection,
       onRowSelectionChange: setRowSelection,
       isLoading,
       skeletonRows,
+      meta: {
+        setRefreshTrigger,
+        productNameKey,
+        currencyCode,
+        priceGroups,
+        onProductNameClick,
+        onProductEditClick,
+        onProductDeleteClick,
+        onIntegrationsClick,
+        onExportSettingsClick,
+        integrationBadgeIds,
+        integrationBadgeStatuses,
+        queuedProductIds,
+      },
     }),
     [
       tableColumns,
       data,
+      getRowId,
+      rowSelection,
+      setRowSelection,
+      isLoading,
+      skeletonRows,
       setRefreshTrigger,
       productNameKey,
       currencyCode,
@@ -255,35 +266,34 @@ export const ProductListPanel = memo(function ProductListPanel({
       onExportSettingsClick,
       integrationBadgeIds,
       integrationBadgeStatuses,
-      getRowId,
-      rowSelection,
-      setRowSelection,
-      isLoading,
-      skeletonRows,
+      queuedProductIds,
     ]
   );
 
   const alerts = useMemo(() => {
     if (!loadError && !actionError) return null;
     return (
-      <>
+      <div className="flex flex-col gap-2">
         {loadError && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {loadError}
-          </div>
+          </Alert>
         )}
         {actionError && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {actionError}
-            <Button
-              onClick={onDismissActionError}
-              className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-            >
-              Dismiss
-            </Button>
-          </div>
+          <Alert variant="error">
+            <div className="flex items-center justify-between">
+              <span>{actionError}</span>
+              <Button
+                variant="ghost"
+                onClick={onDismissActionError}
+                className="h-auto p-0 text-red-200 hover:text-white bg-transparent hover:bg-transparent"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </Alert>
         )}
-      </>
+      </div>
     );
   }, [actionError, loadError, onDismissActionError]);
 

@@ -62,10 +62,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    await ErrorSystem.captureException(error, {
-      service: "api/client-errors",
-      method: "POST",
-    });
     return createErrorResponse(error, {
       request: req,
       source: "client-errors.POST",
@@ -74,6 +70,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 }
 
+const disableClientErrorsRateLimit = process.env.NODE_ENV !== "production";
+
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "client-errors.POST" });
+  {
+    source: "client-errors.POST",
+    requireCsrf: false,
+    rateLimitKey: disableClientErrorsRateLimit ? false : "api",
+  }
+);

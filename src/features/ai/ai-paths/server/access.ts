@@ -1,11 +1,30 @@
-import "server-only";
+import 'server-only';
 
-import { auth } from "@/features/auth/server";
-import { forbiddenError, authError, rateLimitedError } from "@/shared/errors/app-error";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import type { AiPathRunRecord, AiPathRunStatus } from "@/shared/types/ai-paths";
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { auth } from '@/features/auth/server';
+import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
+import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/types/ai-paths';
 
-export const AI_PATHS_PERMISSION = "ai_paths.manage";
+import type { NextRequest } from 'next/server';
+
+export const AI_PATHS_PERMISSION = 'ai_paths.manage';
+const AI_PATHS_RUNNER_PERMISSION = 'products.manage';
+const DEV_INTERNAL_TOKEN = 'dev-secret-change-me';
+
+const getInternalToken = (): string | null => {
+  if (process.env.AI_PATHS_INTERNAL_TOKEN) return process.env.AI_PATHS_INTERNAL_TOKEN;
+  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+  if (process.env.NODE_ENV === 'development') return DEV_INTERNAL_TOKEN;
+  return null;
+};
+
+export const isAiPathsInternalRequest = (request: NextRequest): boolean => {
+  const token = getInternalToken();
+  if (!token) return false;
+  const header = request.headers.get('x-ai-paths-internal');
+  return Boolean(header && header === token);
+};
 
 export type AiPathsAccessContext = {
   userId: string;
@@ -45,13 +64,13 @@ const actionBuckets = new Map<string, { count: number; resetAt: number }>();
 export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
   const session = await auth();
   if (!session?.user?.id) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
   const permissions = session.user.permissions ?? [];
   const isElevated = Boolean(session.user.isElevated);
   const hasAccess = isElevated || permissions.includes(AI_PATHS_PERMISSION);
   if (!hasAccess) {
-    throw forbiddenError("Forbidden.");
+    throw forbiddenError('Forbidden.');
   }
   return {
     userId: session.user.id,
@@ -60,10 +79,50 @@ export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
   };
 };
 
+export const requireAiPathsRunAccess = async (): Promise<AiPathsAccessContext> => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw authError('Unauthorized.');
+  }
+  const permissions = session.user.permissions ?? [];
+  const isElevated = Boolean(session.user.isElevated);
+  const hasAccess =
+    isElevated ||
+    permissions.includes(AI_PATHS_PERMISSION) ||
+    permissions.includes(AI_PATHS_RUNNER_PERMISSION);
+  if (!hasAccess) {
+    throw forbiddenError('Forbidden.');
+  }
+  return {
+    userId: session.user.id,
+    permissions,
+    isElevated,
+  };
+};
+
+export const requireAiPathsAccessOrInternal = async (
+  request: NextRequest
+): Promise<{ access: AiPathsAccessContext; isInternal: boolean }> => {
+  if (isAiPathsInternalRequest(request)) {
+    return {
+      access: {
+        userId: 'system',
+        permissions: [AI_PATHS_PERMISSION],
+        isElevated: true,
+      },
+      isInternal: true,
+    };
+  }
+  return {
+    access: await requireAiPathsAccess(),
+    isInternal: false,
+  };
+};
+
 export const ensureAiPathsPermission = (
   access: AiPathsAccessContext,
   permission: string,
-  message: string = "Forbidden."
+  message: string = 'Forbidden.'
 ): void => {
   if (access.isElevated) return;
   if (!access.permissions.includes(permission)) {
@@ -77,7 +136,7 @@ export const assertAiPathRunAccess = (
 ): void => {
   if (access.isElevated) return;
   if (!run.userId || run.userId !== access.userId) {
-    throw forbiddenError("Run access denied.");
+    throw forbiddenError('Run access denied.');
   }
 };
 
@@ -97,14 +156,14 @@ export const enforceAiPathsRunRateLimit = async (
     });
     if (recent.total >= RUN_RATE_MAX) {
       throw rateLimitedError(
-        "Too many runs queued. Please wait before trying again.",
+        'Too many runs queued. Please wait before trying again.',
         windowMs
       );
     }
   }
 
   if (RUN_ACTIVE_MAX > 0) {
-    const activeStatuses: AiPathRunStatus[] = ["queued", "running", "paused"];
+    const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
     const active = await repo.listRuns({
       userId: access.userId,
       statuses: activeStatuses,
@@ -113,7 +172,7 @@ export const enforceAiPathsRunRateLimit = async (
     });
     if (active.total >= RUN_ACTIVE_MAX) {
       throw rateLimitedError(
-        "Too many active runs. Wait for one to finish before starting another.",
+        'Too many active runs. Wait for one to finish before starting another.',
         windowMs
       );
     }
@@ -136,7 +195,7 @@ export const enforceAiPathsActionRateLimit = (
   bucket.count += 1;
   if (bucket.count > ACTION_RATE_MAX) {
     const retryAfter = Math.max(bucket.resetAt - now, 1000);
-    throw rateLimitedError("Too many requests. Please slow down.", retryAfter, {
+    throw rateLimitedError('Too many requests. Please slow down.', retryAfter, {
       action,
     });
   }

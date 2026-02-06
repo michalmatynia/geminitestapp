@@ -1,8 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import type { AiNode, Edge, AiPathRunRecord } from "@/shared/types/ai-paths";
-import { normalizeNodes, sanitizeEdges } from "@/features/ai/ai-paths/lib";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
+import { normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
+import type { AiNode, Edge, AiPathRunRecord } from '@/shared/types/ai-paths';
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -46,27 +47,31 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
   await repo.createRunNodes(run.id, nodes);
   await repo.createRunEvent({
     runId: run.id,
-    level: "info",
-    message: "Run queued.",
+    level: 'info',
+    message: 'Run queued.',
     metadata: { pathId: run.pathId },
   });
+
+  // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
+  await enqueuePathRunJob(run.id);
+
   return run;
 };
 
 export const resumePathRun = async (
   runId: string,
-  mode: "resume" | "replay" = "resume"
+  mode: 'resume' | 'replay' = 'resume'
 ): Promise<AiPathRunRecord> => {
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
-  if (!run) throw new Error("Run not found");
+  if (!run) throw new Error('Run not found');
   const meta = {
     ...(run.meta ?? {}),
     resumeMode: mode,
     retryNodeIds: [],
   };
   const updated = await repo.updateRun(runId, {
-    status: "queued",
+    status: 'queued',
     errorMessage: null,
     retryCount: 0,
     nextRetryAt: null,
@@ -75,7 +80,7 @@ export const resumePathRun = async (
   });
   await repo.createRunEvent({
     runId,
-    level: "info",
+    level: 'info',
     message: `Run resumed (${mode}).`,
   });
   return updated;
@@ -84,13 +89,13 @@ export const resumePathRun = async (
 export const retryPathRunNode = async (runId: string, nodeId: string): Promise<AiPathRunRecord> => {
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
-  if (!run) throw new Error("Run not found");
+  if (!run) throw new Error('Run not found');
   const nodeInfo =
     run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
   await repo.upsertRunNode(runId, nodeId, {
-    nodeType: nodeInfo?.type ?? "unknown",
+    nodeType: nodeInfo?.type ?? 'unknown',
     nodeTitle: nodeInfo?.title ?? null,
-    status: "pending",
+    status: 'pending',
     attempt: 0,
     inputs: null,
     outputs: null,
@@ -100,11 +105,11 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
   });
   const meta = {
     ...(run.meta ?? {}),
-    resumeMode: "retry",
+    resumeMode: 'retry',
     retryNodeIds: [nodeId],
   };
   const updated = await repo.updateRun(runId, {
-    status: "queued",
+    status: 'queued',
     errorMessage: null,
     retryCount: 0,
     nextRetryAt: null,
@@ -113,7 +118,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
   });
   await repo.createRunEvent({
     runId,
-    level: "info",
+    level: 'info',
     message: `Retry node ${nodeId}.`,
   });
   return updated;
@@ -122,15 +127,15 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
 export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => {
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
-  if (!run) throw new Error("Run not found");
+  if (!run) throw new Error('Run not found');
   const updated = await repo.updateRun(runId, {
-    status: "canceled",
+    status: 'canceled',
     finishedAt: new Date(),
   });
   await repo.createRunEvent({
     runId,
-    level: "warning",
-    message: "Run canceled.",
+    level: 'warning',
+    message: 'Run canceled.',
   });
   return updated;
 };

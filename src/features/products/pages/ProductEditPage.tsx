@@ -1,8 +1,9 @@
-import EditProductForm from "@/features/products/components/EditProductForm";
-import { productService } from "@/features/products/services/productService";
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation';
 
-import type { JSX } from "react";
+import EditProductForm from '@/features/products/components/EditProductForm';
+import { productService } from '@/features/products/services/productService';
+
+import type { JSX } from 'react';
 
 export default async function EditProductPage({
   params,

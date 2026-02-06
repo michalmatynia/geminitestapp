@@ -1,13 +1,14 @@
-import "server-only";
+import 'server-only';
 
-import { ProductAiJob, Prisma } from "@prisma/client";
-import prisma from "@/shared/lib/db/prisma";
+import { ProductAiJob, Prisma } from '@prisma/client';
+
 import type {
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
   ProductAiJobStatus,
-} from "@/features/jobs/types/product-ai-job-repository";
+} from '@/features/jobs/types/product-ai-job-repository';
+import prisma from '@/shared/lib/db/prisma';
 
 const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({
   id: job.id,
@@ -30,7 +31,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
         productId,
         type,
         payload: payload as Prisma.InputJsonValue,
-        status: "pending",
+        status: 'pending',
       },
     });
     return mapJob(job);
@@ -39,7 +40,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
   async findJobs(productId?: string) {
     const jobs = await prisma.productAiJob.findMany({
       where: productId ? { productId } : {},
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return jobs.map(mapJob);
   },
@@ -51,29 +52,29 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
 
   async findNextPendingJob() {
     const job = await prisma.productAiJob.findFirst({
-      where: { status: "pending" },
-      orderBy: { createdAt: "asc" },
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
     });
     return job ? mapJob(job) : null;
   },
 
   async findAnyPendingJob() {
     const job = await prisma.productAiJob.findFirst({
-      where: { status: "pending" },
-      orderBy: { createdAt: "asc" },
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
     });
     return job ? mapJob(job) : null;
   },
 
   async claimNextPendingJob() {
     const job = await prisma.productAiJob.findFirst({
-      where: { status: "pending" },
-      orderBy: { createdAt: "asc" },
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
     });
     if (!job) return null;
     const updated = await prisma.productAiJob.update({
       where: { id: job.id },
-      data: { status: "running", startedAt: new Date() },
+      data: { status: 'running', startedAt: new Date() },
     });
     return mapJob(updated);
   },
@@ -92,7 +93,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
 
   async deleteTerminalJobs() {
     const result = await prisma.productAiJob.deleteMany({
-      where: { status: { in: ["completed", "failed", "canceled"] } },
+      where: { status: { in: ['completed', 'failed', 'canceled'] } },
     });
     return { count: result.count };
   },
@@ -106,13 +107,13 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await prisma.productAiJob.updateMany({
       where: {
-        status: "running",
+        status: 'running',
         startedAt: { lt: cutoff },
       },
       data: {
-        status: "failed",
+        status: 'failed',
         finishedAt: new Date(),
-        errorMessage: "Job marked failed due to stale running state.",
+        errorMessage: 'Job marked failed due to stale running state.',
       },
     });
     return { count: result.count };

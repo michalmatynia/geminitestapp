@@ -45,8 +45,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
             listedAt: listing.listedAt,
             exportHistory: listing.exportHistory ?? null,
             createdAt: listing.createdAt,
-            updatedAt: listing.updatedAt,
-          })),
+            updatedAt: listing.updatedAt
+          }))
         };
       })
     );
@@ -59,11 +59,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "integrations.jobs.GET",
-      fallbackMessage: "Failed to fetch listing jobs",
+      fallbackMessage: "Failed to fetch listing jobs"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "integrations.jobs.GET" });
+ { source: "integrations.jobs.GET", requireCsrf: false });

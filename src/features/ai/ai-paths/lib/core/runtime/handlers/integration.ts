@@ -1,12 +1,3 @@
-import {
-  coerceInput,
-  getValueAtMappingPath,
-  parseJsonSafe,
-  renderJsonTemplate,
-  renderTemplate,
-  safeStringify,
-} from "../../utils";
-import { DEFAULT_DB_QUERY } from "../../constants";
 import type {
   DbSchemaConfig,
   DatabaseConfig,
@@ -18,7 +9,20 @@ import type {
   DatabaseAction,
   DatabaseActionCategory,
   DatabaseOperation
-} from "@/shared/types/ai-paths";
+} from '@/shared/types/ai-paths';
+import type { AiNode, Edge } from '@/shared/types/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+
+import { dbApi, entityApi, ApiResponse } from '../../../api';
+import { DEFAULT_DB_QUERY, DB_PROVIDER_PLACEHOLDERS } from '../../constants';
+import {
+  coerceInput,
+  getValueAtMappingPath,
+  parseJsonSafe,
+  renderJsonTemplate,
+  renderTemplate,
+  safeStringify,
+} from '../../utils';
 import {
   buildDbQueryPayload,
   buildFallbackEntity,
@@ -28,10 +32,9 @@ import {
   pollDatabaseQuery,
   pollGraphJob,
   resolveEntityIdFromInputs,
-} from "../utils";
-import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
-import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { dbApi, entityApi, ApiResponse } from "../../../api";
+} from '../utils';
+
+import type { SchemaResponse } from '../../../api';
 
 interface PromptCandidate {
   edge: Edge;
@@ -70,7 +73,7 @@ export const handleTrigger: NodeHandler = async ({
     return {};
   }
   const eventName: string =
-    triggerEvent ?? node.config?.trigger?.event ?? "manual";
+    triggerEvent ?? node.config?.trigger?.event ?? 'manual';
   const contextInput = (coerceInput(nodeInputs.context) ??
     coerceInput(nodeInputs.simulation)) as
     | { entityId?: string; entityType?: string; productId?: string; entity?: unknown; entityJson?: unknown; product?: unknown }
@@ -90,13 +93,13 @@ export const handleTrigger: NodeHandler = async ({
   const triggerEntity =
     triggerExtras.entity ?? triggerExtras.entityJson ?? triggerExtras.product ?? null;
   const triggerEntityId: string | null =
-    typeof triggerExtras.entityId === "string"
+    typeof triggerExtras.entityId === 'string'
       ? (triggerExtras.entityId)
-      : typeof triggerExtras.productId === "string"
+      : typeof triggerExtras.productId === 'string'
         ? (triggerExtras.productId)
         : null;
   const triggerEntityType: string | null =
-    typeof triggerExtras.entityType === "string"
+    typeof triggerExtras.entityType === 'string'
       ? (triggerExtras.entityType)
       : null;
   const effectiveEntityId: string | null = resolvedEntityId ?? triggerEntityId ?? null;
@@ -110,7 +113,7 @@ export const handleTrigger: NodeHandler = async ({
     hydratedEntity = await fetchEntityCached(effectiveEntityType, effectiveEntityId);
   }
   const resolvedContext: Record<string, unknown> = {
-    ...(contextInput && typeof contextInput === "object" ? contextInput : {}),
+    ...(contextInput && typeof contextInput === 'object' ? contextInput : {}),
     entityType: resolvedEntityType ?? triggerEntityType ?? contextInput?.entityType,
     entityId: resolvedEntityId ?? triggerEntityId ?? contextInput?.entityId,
     source: node.title,
@@ -119,13 +122,13 @@ export const handleTrigger: NodeHandler = async ({
       hydratedEntity ??
       buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
   };
-  if (hydratedEntity && typeof resolvedContext.entityJson === "undefined") {
+  if (hydratedEntity && typeof resolvedContext.entityJson === 'undefined') {
     resolvedContext.entityJson = hydratedEntity;
   }
   if (
     hydratedEntity &&
-    effectiveEntityType === "product" &&
-    typeof resolvedContext.product === "undefined"
+    effectiveEntityType === 'product' &&
+    typeof resolvedContext.product === 'undefined'
   ) {
     resolvedContext.product = hydratedEntity;
   }
@@ -181,18 +184,18 @@ export const handleNotification: NodeHandler = ({
   if (executed.notification.has(node.id)) return prevOutputs;
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
-    if (typeof value === "string") return (value).trim().length > 0;
+    if (typeof value === 'string') return (value).trim().length > 0;
     if (Array.isArray(value)) return (value as unknown[]).length > 0;
-    if (typeof value === "object") return Object.keys(value).length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
     return true;
   };
   const promptCandidates: PromptCandidate[] = edges
-    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === "prompt")
+    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === 'prompt')
     .map((edge: Edge): PromptCandidate => ({
       edge,
       fromNode: nodes.find((item: AiNode): boolean => item.id === edge.from),
     }))
-    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === "prompt");
+    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === 'prompt');
   const promptSourceNode: AiNode | null = promptCandidates[0]?.fromNode ?? null;
   let derivedPromptMessage: string | null = null;
   if (promptSourceNode) {
@@ -204,6 +207,21 @@ export const handleNotification: NodeHandler = ({
       const hasInputValue: boolean =
         Object.values(promptSourceInputs as Record<string, unknown>).some(hasMeaningfulValue);
       if (!hasInputValue) {
+        return prevOutputs;
+      }
+    }
+    const template = promptSourceNode.config?.prompt?.template ?? '';
+    const templateNeedsCurrentValue =
+      /{{\s*(result|value|current)\b[^}]*}}|\[\s*(result|value|current)\b[^\]]*\]/.test(template);
+    if (templateNeedsCurrentValue) {
+      const currentValue =
+        coerceInput(promptSourceInputs.result) ??
+        coerceInput(promptSourceInputs.value);
+      const hasCurrentValue =
+        currentValue !== undefined &&
+        currentValue !== null &&
+        (typeof currentValue !== 'string' || currentValue.trim().length > 0);
+      if (!hasCurrentValue) {
         return prevOutputs;
       }
     }
@@ -235,7 +253,7 @@ export const handleNotification: NodeHandler = ({
   if (!trimmed) {
     return prevOutputs;
   }
-  toast(trimmed, { variant: "success" });
+  toast(trimmed, { variant: 'success' });
   executed.notification.add(node.id);
   return prevOutputs;
 };
@@ -250,15 +268,15 @@ export const handlePoll: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (deferPoll) {
     const existingStatus: string | null =
-      typeof prevOutputs.status === "string" ? (prevOutputs.status) : null;
-    if (existingStatus === "completed" || existingStatus === "failed") {
+      typeof prevOutputs.status === 'string' ? (prevOutputs.status) : null;
+    if (existingStatus === 'completed' || existingStatus === 'failed') {
       return prevOutputs;
     }
     const rawJobId: unknown = coerceInput(nodeInputs.jobId);
     const jobId: string =
-      typeof rawJobId === "string" || typeof rawJobId === "number"
+      typeof rawJobId === 'string' || typeof rawJobId === 'number'
         ? String(rawJobId).trim()
-        : "";
+        : '';
     if (!jobId) {
       return prevOutputs;
     }
@@ -267,11 +285,11 @@ export const handlePoll: NodeHandler = async ({
     executed.poll.add(node.id);
     return {
       result: existingResult,
-      status: "polling",
+      status: 'polling',
       jobId,
       bundle: {
         jobId,
-        status: "polling",
+        status: 'polling',
         result: existingResult,
       },
     };
@@ -279,15 +297,15 @@ export const handlePoll: NodeHandler = async ({
   const pollConfig: PollConfig = node.config?.poll ?? {
     intervalMs: 2000,
     maxAttempts: 30,
-    mode: "job",
+    mode: 'job',
   };
-  const pollMode: "job" | "database" = pollConfig.mode ?? "job";
+  const pollMode: 'job' | 'database' = pollConfig.mode ?? 'job';
   const rawJobId: unknown = coerceInput(nodeInputs.jobId);
   const jobId: string =
-    typeof rawJobId === "string" || typeof rawJobId === "number"
+    typeof rawJobId === 'string' || typeof rawJobId === 'number'
       ? String(rawJobId).trim()
-      : "";
-  if (pollMode === "database") {
+      : '';
+  if (pollMode === 'database') {
     const queryConfig: DbQueryConfig =
       { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
     try {
@@ -295,10 +313,10 @@ export const handlePoll: NodeHandler = async ({
         intervalMs: pollConfig.intervalMs ?? 2000,
         maxAttempts: pollConfig.maxAttempts ?? 30,
         dbQuery: queryConfig,
-        successPath: pollConfig.successPath ?? "status",
-        successOperator: pollConfig.successOperator ?? "equals",
-        successValue: pollConfig.successValue ?? "completed",
-        resultPath: pollConfig.resultPath ?? "result",
+        successPath: pollConfig.successPath ?? 'status',
+        successOperator: pollConfig.successOperator ?? 'equals',
+        successValue: pollConfig.successValue ?? 'completed',
+        resultPath: pollConfig.resultPath ?? 'result',
       });
       return {
         result: response.result,
@@ -313,17 +331,17 @@ export const handlePoll: NodeHandler = async ({
     } catch (error: unknown) {
       reportAiPathsError(
         error,
-        { action: "pollDatabase", nodeId: node.id },
-        "Database polling failed:",
+        { action: 'pollDatabase', nodeId: node.id },
+        'Database polling failed:',
       );
       return {
         result: null,
-        status: "failed",
+        status: 'failed',
         jobId,
         bundle: {
           jobId,
-          status: "failed",
-          error: error instanceof Error ? error.message : "Polling failed",
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Polling failed',
         },
       };
     }
@@ -338,24 +356,24 @@ export const handlePoll: NodeHandler = async ({
     });
     return {
       result,
-      status: "completed",
+      status: 'completed',
       jobId,
-      bundle: { jobId, status: "completed", result },
+      bundle: { jobId, status: 'completed', result },
     };
   } catch (error: unknown) {
     reportAiPathsError(
       error,
-      { action: "pollJob", jobId, nodeId: node.id },
-      "AI job polling failed:",
+      { action: 'pollJob', jobId, nodeId: node.id },
+      'AI job polling failed:',
     );
     return {
       result: null,
-      status: "failed",
+      status: 'failed',
       jobId,
       bundle: {
         jobId,
-        status: "failed",
-        error: error instanceof Error ? error.message : "Polling failed",
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Polling failed',
       },
     };
   }
@@ -371,22 +389,22 @@ export const handleHttp: NodeHandler = async ({
   if (executed.http.has(node.id)) return prevOutputs;
 
   const httpConfig: HttpConfig = node.config?.http ?? {
-    url: "",
-    method: "GET",
-    headers: "{}",
-    bodyTemplate: "",
-    responseMode: "json",
-    responsePath: "",
+    url: '',
+    method: 'GET',
+    headers: '{}',
+    bodyTemplate: '',
+    responseMode: 'json',
+    responsePath: '',
   };
   const resolvedUrl: string = renderTemplate(
-    httpConfig.url ?? "",
+    httpConfig.url ?? '',
     nodeInputs as Record<string, unknown>,
-    "",
+    '',
   );
   if (!resolvedUrl) {
     return {
       value: null,
-      bundle: { ok: false, status: 0, error: "Missing URL" },
+      bundle: { ok: false, status: 0, error: 'Missing URL' },
     };
   }
   let headers: Record<string, string> = {};
@@ -397,33 +415,33 @@ export const handleHttp: NodeHandler = async ({
   } catch (error: unknown) {
     reportAiPathsError(
       error,
-      { action: "parseHeaders", nodeId: node.id },
-      "Invalid HTTP headers JSON:",
+      { action: 'parseHeaders', nodeId: node.id },
+      'Invalid HTTP headers JSON:',
     );
   }
   let body: BodyInit | undefined = undefined;
-  if (httpConfig.method !== "GET" && httpConfig.method !== "DELETE") {
+  if (httpConfig.method !== 'GET' && httpConfig.method !== 'DELETE') {
     const renderedBody: string = httpConfig.bodyTemplate
       ? renderTemplate(
-          httpConfig.bodyTemplate,
+        httpConfig.bodyTemplate,
           nodeInputs as Record<string, unknown>,
-          "",
-        )
-      : "";
+          '',
+      )
+      : '';
     if (renderedBody) {
       const trimmed: string = renderedBody.trim();
-            if (
-              (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-              (trimmed.startsWith("[") && trimmed.endsWith("]"))
-            ) {
+      if (
+        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+              (trimmed.startsWith('[') && trimmed.endsWith(']'))
+      ) {
         body = trimmed;
-        if (!headers["Content-Type"]) {
-          headers["Content-Type"] = "application/json";
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'application/json';
         }
       } else {
         body = renderedBody;
-        if (!headers["Content-Type"]) {
-          headers["Content-Type"] = "text/plain";
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'text/plain';
         }
       }
     }
@@ -438,9 +456,9 @@ export const handleHttp: NodeHandler = async ({
   try {
     const res: Response = await fetch(resolvedUrl, fetchInit);
     let data: unknown = null;
-    if (httpConfig.responseMode === "status") {
+    if (httpConfig.responseMode === 'status') {
       data = res.status;
-    } else if (httpConfig.responseMode === "text") {
+    } else if (httpConfig.responseMode === 'text') {
       data = await res.text();
     } else {
       try {
@@ -467,8 +485,8 @@ export const handleHttp: NodeHandler = async ({
   } catch (error: unknown) {
     reportAiPathsError(
       error,
-      { action: "httpFetch", url: resolvedUrl, nodeId: node.id },
-      "HTTP fetch failed:",
+      { action: 'httpFetch', url: resolvedUrl, nodeId: node.id },
+      'HTTP fetch failed:',
     );
     return {
       value: null,
@@ -476,7 +494,7 @@ export const handleHttp: NodeHandler = async ({
         ok: false,
         status: 0,
         url: resolvedUrl,
-        error: "Fetch failed",
+        error: 'Fetch failed',
       },
     };
   }
@@ -497,13 +515,13 @@ export const handleDatabase: NodeHandler = async ({
   const resolveDatabaseInputs = (inputs: Record<string, unknown>): Record<string, unknown> => {
     const next: Record<string, unknown> = { ...inputs };
     const pickString = (value: unknown): string | undefined =>
-      typeof value === "string" && (value).trim().length > 0
+      typeof value === 'string' && (value).trim().length > 0
         ? (value).trim()
         : undefined;
     const pickFromContext = (
       ctx: Record<string, unknown> | null | undefined,
     ): void => {
-      if (!ctx || typeof ctx !== "object") return;
+      if (!ctx || typeof ctx !== 'object') return;
       const entityId: string | undefined =
         pickString(ctx.entityId) ??
         pickString(ctx.productId) ??
@@ -538,15 +556,15 @@ export const handleDatabase: NodeHandler = async ({
         next.entityType = entityType;
     };
     const contextValue: unknown = coerceInput(inputs.context);
-    if (contextValue && typeof contextValue === "object") {
+    if (contextValue && typeof contextValue === 'object') {
       applyFromObject(contextValue as Record<string, unknown>);
     }
     const metaValue: unknown = coerceInput(inputs.meta);
-    if (metaValue && typeof metaValue === "object") {
+    if (metaValue && typeof metaValue === 'object') {
       applyFromObject(metaValue as Record<string, unknown>);
     }
     const bundleValue: unknown = coerceInput(inputs.bundle);
-    if (bundleValue && typeof bundleValue === "object") {
+    if (bundleValue && typeof bundleValue === 'object') {
       applyFromObject(bundleValue as Record<string, unknown>);
     }
     pickFromContext(triggerContext as Record<string, unknown>);
@@ -561,8 +579,8 @@ export const handleDatabase: NodeHandler = async ({
     }
     if (next.value === undefined) {
       const fallbackValue =
-        (typeof next.entityId === "string" && next.entityId.trim() ? next.entityId : undefined) ??
-        (typeof next.productId === "string" && next.productId.trim() ? next.productId : undefined);
+        (typeof next.entityId === 'string' && next.entityId.trim() ? next.entityId : undefined) ??
+        (typeof next.productId === 'string' && next.productId.trim() ? next.productId : undefined);
       if (fallbackValue) {
         next.value = fallbackValue;
       }
@@ -574,31 +592,122 @@ export const handleDatabase: NodeHandler = async ({
   );
   const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
   const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
-    operation: "query",
-    entityType: "product",
-    idField: "entityId",
-    mode: "replace",
+    operation: 'query',
+    entityType: 'product',
+    idField: 'entityId',
+    mode: 'replace',
     mappings: [],
     query: defaultQuery,
-    writeSource: "bundle",
-    writeSourcePath: "",
+    writeSource: 'bundle',
+    writeSourcePath: '',
     dryRun: false,
   };
-  const operation: DatabaseOperation = dbConfig.operation ?? "query";
+  const operation: DatabaseOperation = dbConfig.operation ?? 'query';
   const queryConfig: DbQueryConfig = { ...defaultQuery, ...(dbConfig.query ?? {}) };
   const dryRun: boolean = dbConfig.dryRun ?? false;
-  const writeSourcePath: string = dbConfig.writeSourcePath?.trim() ?? "";
-  const aiPrompt: string = dbConfig.aiPrompt ?? "";
+  const writeSourcePath: string = dbConfig.writeSourcePath?.trim() ?? '';
+  const aiPromptTemplate: string = dbConfig.aiPrompt ?? '';
   const useMongoActions: boolean = Boolean(
     dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action,
   );
 
+  const templateInputValue: unknown =
+    coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
+  const templateSources: string[] = [
+    aiPromptTemplate,
+    queryConfig.queryTemplate ?? '',
+    dbConfig.updateTemplate ?? '',
+  ].filter((value: string): boolean => value.trim().length > 0);
+  const wantsSchemaPlaceholders = templateSources.some((value: string) =>
+    value.includes('{{Collection:')
+  );
+  const schemaInput = resolvedInputs.schema;
+  let schemaData: SchemaResponse | null = null;
+  if (wantsSchemaPlaceholders) {
+    if (
+      schemaInput &&
+      typeof schemaInput === 'object' &&
+      'collections' in (schemaInput as Record<string, unknown>)
+    ) {
+      schemaData = schemaInput as SchemaResponse;
+    } else {
+      const schemaResult = await dbApi.schema();
+      if (schemaResult.ok) {
+        schemaData = schemaResult.data as SchemaResponse;
+      }
+    }
+  }
+
+  const toTitleCase = (value: string): string =>
+    value
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .filter(Boolean)
+      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  const singularize = (value: string): string => {
+    if (value.endsWith('ies') && value.length > 3) {
+      return `${value.slice(0, -3)}y`;
+    }
+    if (value.endsWith('ses') && value.length > 3) {
+      return value.slice(0, -2);
+    }
+    if (value.endsWith('s') && !value.endsWith('ss') && value.length > 1) {
+      return value.slice(0, -1);
+    }
+    return value;
+  };
+  const normalizeSchemaType = (value: string): string => {
+    const normalized = value.trim();
+    const lower = normalized.toLowerCase();
+    if (lower === 'string') return 'string';
+    if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number') return 'number';
+    if (lower === 'boolean' || lower === 'bool') return 'boolean';
+    if (lower === 'datetime' || lower === 'date') return 'string';
+    if (lower === 'json') return 'Record<string, unknown>';
+    return normalized || 'unknown';
+  };
+  const formatCollectionSchema = (collectionName: string, fields: Array<{ name: string; type: string }> = []): string => {
+    const interfaceName = toTitleCase(singularize(collectionName));
+    if (!fields.length) {
+      return `interface ${interfaceName} {}`;
+    }
+    const lines = fields.map((field: { name: string; type: string }) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+    return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
+  };
+
+  const placeholderContext: Record<string, unknown> = {
+    'Date: Current': new Date().toISOString(),
+  };
+  DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
+    placeholderContext[`DB Provider: ${provider}`] = provider;
+  });
+  if (schemaData?.collections?.length) {
+    schemaData.collections.forEach((collection) => {
+      const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+      const displayName = toTitleCase(singularize(collection.name));
+      const nameSet = new Set<string>([collection.name, displayName]);
+      nameSet.forEach((name: string) => {
+        placeholderContext[`Collection: ${name}`] = schemaText;
+      });
+    });
+  }
+
+  const templateContext: Record<string, unknown> = {
+    ...resolvedInputs,
+    ...placeholderContext,
+  };
+  const aiPrompt: string = aiPromptTemplate.trim()
+    ? renderTemplate(aiPromptTemplate, templateContext, templateInputValue ?? '')
+    : '';
+
   if (useMongoActions) {
-    const actionCategory: DatabaseActionCategory = dbConfig.actionCategory ?? "read";
-    const action: DatabaseAction = dbConfig.action ?? "find";
-    const inputValue: unknown =
-      coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
-    const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
+    const actionCategory: DatabaseActionCategory = dbConfig.actionCategory ?? 'read';
+    const action: DatabaseAction = dbConfig.action ?? 'find';
+    const inputValue: unknown = templateInputValue;
+    const queryPayload = buildDbQueryPayload(templateContext as RuntimePortValues, queryConfig);
     const filter = (queryPayload.query) ?? {};
     const projection = queryPayload.projection;
     const sort = queryPayload.sort;
@@ -606,37 +715,37 @@ export const handleDatabase: NodeHandler = async ({
     const idType = queryPayload.idType;
     const collection = queryPayload.collection;
     const distinctField: string | undefined = dbConfig.distinctField?.trim() || undefined;
-    const updateTemplate: string = dbConfig.updateTemplate?.trim() ?? "";
+    const updateTemplate: string = dbConfig.updateTemplate?.trim() ?? '';
 
     const parseJsonTemplate = (template: string): unknown =>
       parseJsonSafe(
         renderJsonTemplate(
           template,
-          resolvedInputs,
-          inputValue ?? "",
+          templateContext,
+          inputValue ?? '',
         ),
       );
 
-    if (actionCategory === "read" || actionCategory === "aggregate") {
-      if (action === "distinct" && !distinctField) {
-        toast("Distinct requires a field name.", { variant: "error" });
+    if (actionCategory === 'read' || actionCategory === 'aggregate') {
+      if (action === 'distinct' && !distinctField) {
+        toast('Distinct requires a field name.', { variant: 'error' });
         return {
           result: null,
-          bundle: { error: "Missing distinct field" },
+          bundle: { error: 'Missing distinct field' },
           aiPrompt,
         };
       }
-      if (action === "aggregate") {
+      if (action === 'aggregate') {
         const parsedPipeline: unknown = parseJsonTemplate(
-          queryConfig.queryTemplate ?? "[]",
+          queryConfig.queryTemplate ?? '[]',
         );
         if (!Array.isArray(parsedPipeline)) {
-          toast("Aggregation pipeline must be a JSON array.", {
-            variant: "error",
+          toast('Aggregation pipeline must be a JSON array.', {
+            variant: 'error',
           });
           return {
             result: null,
-            bundle: { error: "Invalid pipeline" },
+            bundle: { error: 'Invalid pipeline' },
             aiPrompt,
           };
         }
@@ -658,10 +767,10 @@ export const handleDatabase: NodeHandler = async ({
           pipeline: parsedPipeline,
         });
         if (!aggResult.ok) {
-          toast("Aggregation failed.", { variant: "error" });
+          toast('Aggregation failed.', { variant: 'error' });
           return {
             result: null,
-            bundle: { error: "Aggregation failed" },
+            bundle: { error: 'Aggregation failed' },
             aiPrompt,
           };
         }
@@ -704,8 +813,8 @@ export const handleDatabase: NodeHandler = async ({
         ...(idType !== undefined ? { idType } : {}),
       });
       if (!readResult.ok) {
-        toast("Database read failed.", { variant: "error" });
-        return { result: null, bundle: { error: "Read failed" }, aiPrompt };
+        toast('Database read failed.', { variant: 'error' });
+        return { result: null, bundle: { error: 'Read failed' }, aiPrompt };
       }
       const data: DbActionResult = readResult.data;
       const result: unknown = data.item ?? data.items ?? data.values ?? data.count ?? [];
@@ -723,42 +832,42 @@ export const handleDatabase: NodeHandler = async ({
       };
     }
 
-    if (actionCategory === "create") {
-      const payloadTemplate: string = queryConfig.queryTemplate?.trim() ?? "";
+    if (actionCategory === 'create') {
+      const payloadTemplate: string = queryConfig.queryTemplate?.trim() ?? '';
       const parsedPayload: unknown = payloadTemplate
         ? parseJsonTemplate(payloadTemplate)
         : null;
       if (
         payloadTemplate &&
         (!parsedPayload ||
-          (typeof parsedPayload !== "object" && !Array.isArray(parsedPayload)))
+          (typeof parsedPayload !== 'object' && !Array.isArray(parsedPayload)))
       ) {
-        toast("Insert template must be valid JSON.", {
-          variant: "error",
+        toast('Insert template must be valid JSON.', {
+          variant: 'error',
         });
         return {
           result: null,
-          bundle: { error: "Invalid insert template" },
+          bundle: { error: 'Invalid insert template' },
           aiPrompt,
         };
       }
       const payloadFromTemplate: unknown =
-        parsedPayload && typeof parsedPayload === "object"
+        parsedPayload && typeof parsedPayload === 'object'
           ? parsedPayload
           : null;
       const rawPayload: unknown =
         payloadFromTemplate ??
-        coerceInput(resolvedInputs[dbConfig.writeSource ?? "bundle"]);
+        coerceInput(resolvedInputs[dbConfig.writeSource ?? 'bundle']);
       const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
         if (!value) return null;
-        if (typeof value === "string") {
+        if (typeof value === 'string') {
           const parsed: unknown = parseJsonSafe(value);
-          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             return parsed as Record<string, unknown>;
           }
           return null;
         }
-        if (typeof value === "object" && !Array.isArray(value)) {
+        if (typeof value === 'object' && !Array.isArray(value)) {
           return value as Record<string, unknown>;
         }
         return null;
@@ -769,12 +878,12 @@ export const handleDatabase: NodeHandler = async ({
         : null;
       const payload: unknown[] | Record<string, unknown> | null = payloadArray ?? payloadObject;
       if (!payload) {
-        toast("Insert requires a JSON payload.", { variant: "error" });
-        return { result: null, bundle: { error: "Missing payload" }, aiPrompt };
+        toast('Insert requires a JSON payload.', { variant: 'error' });
+        return { result: null, bundle: { error: 'Missing payload' }, aiPrompt };
       }
-      if (action === "insertOne" && !payloadObject) {
-        toast("insertOne requires a single JSON object.", { variant: "error" });
-        return { result: null, bundle: { error: "Invalid payload" }, aiPrompt };
+      if (action === 'insertOne' && !payloadObject) {
+        toast('insertOne requires a single JSON object.', { variant: 'error' });
+        return { result: null, bundle: { error: 'Invalid payload' }, aiPrompt };
       }
       if (executed.updater.has(node.id)) {
         return prevOutputs;
@@ -790,10 +899,10 @@ export const handleDatabase: NodeHandler = async ({
       const insertResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,
-        ...(action === "insertOne" && payloadObject
+        ...(action === 'insertOne' && payloadObject
           ? { document: payloadObject }
           : {}),
-        ...(action === "insertMany"
+        ...(action === 'insertMany'
           ? { documents: Array.isArray(payload) ? (payload) : [payload] }
           : {}),
       });
@@ -801,13 +910,13 @@ export const handleDatabase: NodeHandler = async ({
       if (!insertResult.ok) {
         reportAiPathsError(
           new Error(insertResult.error),
-          { action: "dbInsert", collection, nodeId: node.id },
-          "Database insert failed:",
+          { action: 'dbInsert', collection, nodeId: node.id },
+          'Database insert failed:',
         );
-        toast("Database insert failed.", { variant: "error" });
-        return { result: null, bundle: { error: "Insert failed" }, aiPrompt };
+        toast('Database insert failed.', { variant: 'error' });
+        return { result: null, bundle: { error: 'Insert failed' }, aiPrompt };
       }
-      toast("Insert completed.", { variant: "success" });
+      toast('Insert completed.', { variant: 'success' });
       return {
         result: insertResult.data,
         bundle: insertResult.data as Record<string, unknown>,
@@ -815,20 +924,20 @@ export const handleDatabase: NodeHandler = async ({
       };
     }
 
-    if (actionCategory === "update") {
+    if (actionCategory === 'update') {
       let resolvedFilter: Record<string, unknown> = filter;
       if (queryConfig.queryTemplate?.trim()) {
         const parsedFilter: unknown = parseJsonTemplate(queryConfig.queryTemplate);
         if (
           parsedFilter &&
-          typeof parsedFilter === "object" &&
+          typeof parsedFilter === 'object' &&
           !Array.isArray(parsedFilter)
         ) {
           resolvedFilter = parsedFilter as Record<string, unknown>;
         }
       }
       const debugPayload: Record<string, unknown> = {
-        mode: "mongo",
+        mode: 'mongo',
         actionCategory,
         action,
         collection,
@@ -846,30 +955,30 @@ export const handleDatabase: NodeHandler = async ({
         unresolvedSourcePorts: string[];
       } => {
         const fallbackTarget: string =
-          dbConfig.mappings?.[0]?.targetPath ?? "content_en";
-        const fallbackSourcePort: string = node.inputs.includes("result")
-          ? "result"
-          : "content_en";
+          dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
+        const fallbackSourcePort: string = node.inputs.includes('result')
+          ? 'result'
+          : 'content_en';
         const mappings: UpdaterMapping[] =
           dbConfig.mappings && dbConfig.mappings.length > 0
             ? dbConfig.mappings
             :
-              [
-                {
-                  targetPath: fallbackTarget,
-                  sourcePort: fallbackSourcePort,
-                },
-              ];
+            [
+              {
+                targetPath: fallbackTarget,
+                sourcePort: fallbackSourcePort,
+              },
+            ];
         const trimStrings: boolean = dbConfig.trimStrings ?? false;
         const skipEmpty: boolean = dbConfig.skipEmpty ?? false;
         const isEmptyValue = (value: unknown): boolean =>
           value === undefined ||
           value === null ||
-          (typeof value === "string" && (value).trim() === "") ||
+          (typeof value === 'string' && (value).trim() === '') ||
           (Array.isArray(value) && (value as unknown[]).length === 0);
         const isEffectivelyMissing = (value: unknown): boolean =>
           isEmptyValue(value) ||
-          (typeof value === "object" &&
+          (typeof value === 'object' &&
             !Array.isArray(value) &&
             value !== null &&
             Object.keys(value as Record<string, unknown>).length === 0);
@@ -883,19 +992,19 @@ export const handleDatabase: NodeHandler = async ({
           const sourceValue: unknown = resolvedInputs[sourcePort];
           if (sourceValue === undefined) return;
           let value: unknown = coerceInput(sourceValue);
-          if (value && typeof value === "object" && mapping.sourcePath) {
+          if (value && typeof value === 'object' && mapping.sourcePath) {
             const resolved: unknown = getValueAtMappingPath(value, mapping.sourcePath);
             if (resolved !== undefined) {
               value = resolved;
-            } else if (sourcePort === "result") {
+            } else if (sourcePort === 'result') {
               unresolvedSourcePorts.add(sourcePort);
               return;
             }
           }
           if (
-            sourcePort === "result" &&
+            sourcePort === 'result' &&
             value &&
-            typeof value === "object" &&
+            typeof value === 'object' &&
             !mapping.sourcePath
           ) {
             const resultValue: unknown = (value as Record<string, unknown>).result;
@@ -904,11 +1013,11 @@ export const handleDatabase: NodeHandler = async ({
             const contentValue: unknown = (value as Record<string, unknown>).content_en;
             value = resultValue ?? descriptionValue ?? contentValue ?? value;
           }
-          if (sourcePort === "result" && isEffectivelyMissing(value)) {
+          if (sourcePort === 'result' && isEffectivelyMissing(value)) {
             unresolvedSourcePorts.add(sourcePort);
             return;
           }
-          if (typeof value === "string" && trimStrings) {
+          if (typeof value === 'string' && trimStrings) {
             value = (value).trim();
           }
           if (skipEmpty && isEmptyValue(value)) {
@@ -941,13 +1050,13 @@ export const handleDatabase: NodeHandler = async ({
         const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([^\]]+)\s*\]/g;
         let match: RegExpExecArray | null = tokenRegex.exec(template);
         while (match) {
-          const token: string = (match[1] ?? match[2] ?? "").trim();
+          const token: string = (match[1] ?? match[2] ?? '').trim();
           if (token) {
-            const rootPort: string = token.split(".")[0]?.trim() ?? "";
+            const rootPort: string = token.split('.')[0]?.trim() ?? '';
             if (
               rootPort &&
-              rootPort !== "value" &&
-              rootPort !== "current" &&
+              rootPort !== 'value' &&
+              rootPort !== 'current' &&
               resolvedInputs[rootPort] === undefined
             ) {
               missing.add(rootPort);
@@ -975,12 +1084,12 @@ export const handleDatabase: NodeHandler = async ({
       if (
         updateTemplate &&
         (!parsedUpdate ||
-          (typeof parsedUpdate !== "object" && !Array.isArray(parsedUpdate)))
+          (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate)))
       ) {
-        toast("Update template must be valid JSON.", { variant: "error" });
+        toast('Update template must be valid JSON.', { variant: 'error' });
         return {
           result: null,
-          bundle: { error: "Invalid update template" },
+          bundle: { error: 'Invalid update template' },
           debugPayload,
           aiPrompt,
         };
@@ -988,25 +1097,25 @@ export const handleDatabase: NodeHandler = async ({
       const updateDoc: unknown = parsedUpdate ?? updates;
       if (
         !updateDoc ||
-        (typeof updateDoc !== "object" && !Array.isArray(updateDoc))
+        (typeof updateDoc !== 'object' && !Array.isArray(updateDoc))
       ) {
-        toast("Update document is missing or invalid.", { variant: "error" });
+        toast('Update document is missing or invalid.', { variant: 'error' });
         return {
           result: null,
-          bundle: { error: "Invalid update" },
+          bundle: { error: 'Invalid update' },
           debugPayload,
           aiPrompt,
         };
       }
       if (
         !Array.isArray(updateDoc) &&
-        typeof updateDoc === "object" &&
+        typeof updateDoc === 'object' &&
         Object.keys(updateDoc as Record<string, unknown>).length === 0
       ) {
-        toast("Update document is empty.", { variant: "error" });
+        toast('Update document is empty.', { variant: 'error' });
         return {
           result: null,
-          bundle: { error: "Empty update" },
+          bundle: { error: 'Empty update' },
           debugPayload,
           aiPrompt,
         };
@@ -1029,6 +1138,84 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
+      const resolveEntityId = (): string | null => {
+        const entityIdValue =
+          typeof resolvedInputs.entityId === 'string'
+            ? resolvedInputs.entityId
+            : typeof resolvedInputs.productId === 'string'
+              ? resolvedInputs.productId
+              : null;
+        if (entityIdValue && entityIdValue.trim()) return entityIdValue;
+        const filterId =
+          typeof resolvedFilter.id === 'string'
+            ? resolvedFilter.id
+            : typeof resolvedFilter._id === 'string'
+              ? resolvedFilter._id
+              : null;
+        return filterId && filterId.trim() ? filterId : null;
+      };
+      const shouldUseEntityUpdate =
+        collection === 'products' && action === 'updateOne';
+      if (shouldUseEntityUpdate) {
+        const updateDocRecord =
+          updateDoc && typeof updateDoc === 'object' && !Array.isArray(updateDoc)
+            ? (updateDoc as Record<string, unknown>)
+            : null;
+        const updateSet =
+          updateDocRecord &&
+          updateDocRecord.$set &&
+          typeof updateDocRecord.$set === 'object' &&
+          !Array.isArray(updateDocRecord.$set)
+            ? (updateDocRecord.$set as Record<string, unknown>)
+            : null;
+        const updatePlain =
+          updateDocRecord && !Object.keys(updateDocRecord).some((key) => key.startsWith('$'))
+            ? updateDocRecord
+            : null;
+        const updatesForEntity =
+          updateSet ?? updatePlain ?? updates;
+        if (!updatesForEntity || Object.keys(updatesForEntity).length === 0) {
+          return prevOutputs;
+        }
+        const entityIdValue = resolveEntityId();
+        if (!entityIdValue) {
+          return prevOutputs;
+        }
+        const updateResult = await entityApi.update({
+          entityType: 'product',
+          entityId: entityIdValue,
+          updates: updatesForEntity,
+          mode: dbConfig.mode ?? 'replace',
+        });
+        executed.updater.add(node.id);
+        if (!updateResult.ok) {
+          reportAiPathsError(
+            new Error(updateResult.error),
+            { action: 'updateEntity', collection, nodeId: node.id },
+            'Database update failed:',
+          );
+          toast('Database update failed.', { variant: 'error' });
+          return {
+            result: null,
+            bundle: { error: 'Update failed' },
+            debugPayload,
+            aiPrompt,
+          };
+        }
+        toast('Update completed.', { variant: 'success' });
+        const primaryValue: unknown = updates[primaryTarget];
+        return {
+          content_en:
+            primaryTarget === 'content_en'
+              ? ((primaryValue as string | undefined) ??
+                (nodeInputs.content_en as string | undefined))
+              : (nodeInputs.content_en as string | undefined),
+          result: updateResult.data,
+          bundle: updateResult.data as Record<string, unknown>,
+          debugPayload,
+          aiPrompt,
+        };
+      }
       const updateResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,
@@ -1040,22 +1227,22 @@ export const handleDatabase: NodeHandler = async ({
       if (!updateResult.ok) {
         reportAiPathsError(
           new Error(updateResult.error),
-          { action: "dbUpdate", collection, nodeId: node.id },
-          "Database update failed:",
+          { action: 'dbUpdate', collection, nodeId: node.id },
+          'Database update failed:',
         );
-        toast("Database update failed.", { variant: "error" });
+        toast('Database update failed.', { variant: 'error' });
         return {
           result: null,
-          bundle: { error: "Update failed" },
+          bundle: { error: 'Update failed' },
           debugPayload,
           aiPrompt,
         };
       }
-      toast("Update completed.", { variant: "success" });
+      toast('Update completed.', { variant: 'success' });
       const primaryValue: unknown = updates[primaryTarget];
       return {
         content_en:
-          primaryTarget === "content_en"
+          primaryTarget === 'content_en'
             ? ((primaryValue as string | undefined) ??
               (nodeInputs.content_en as string | undefined))
             : (nodeInputs.content_en as string | undefined),
@@ -1066,7 +1253,7 @@ export const handleDatabase: NodeHandler = async ({
       };
     }
 
-    if (actionCategory === "delete") {
+    if (actionCategory === 'delete') {
       if (executed.updater.has(node.id)) {
         return prevOutputs;
       }
@@ -1088,13 +1275,13 @@ export const handleDatabase: NodeHandler = async ({
       if (!deleteResult.ok) {
         reportAiPathsError(
           new Error(deleteResult.error),
-          { action: "dbDelete", collection, nodeId: node.id },
-          "Database delete failed:",
+          { action: 'dbDelete', collection, nodeId: node.id },
+          'Database delete failed:',
         );
-        toast("Database delete failed.", { variant: "error" });
-        return { result: null, bundle: { error: "Delete failed" }, aiPrompt };
+        toast('Database delete failed.', { variant: 'error' });
+        return { result: null, bundle: { error: 'Delete failed' }, aiPrompt };
       }
-      toast("Delete completed.", { variant: "success" });
+      toast('Delete completed.', { variant: 'success' });
       return {
         result: deleteResult.data,
         bundle: deleteResult.data as Record<string, unknown>,
@@ -1103,7 +1290,7 @@ export const handleDatabase: NodeHandler = async ({
     }
   }
 
-  if (operation === "query") {
+  if (operation === 'query') {
     const inputQuery: unknown = coerceInput(nodeInputs.query);
     const callbackInput: unknown = coerceInput(nodeInputs.queryCallback);
     const aiQueryInput: unknown = coerceInput(nodeInputs.aiQuery);
@@ -1113,24 +1300,24 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityType,
       simulationEntityId,
     );
-    const inputValue: unknown = coerceInput(resolvedInputs.value);
+    const inputValue: unknown = templateInputValue;
     const entityIdInput: unknown = coerceInput(resolvedInputs.entityId);
     const productIdInput: unknown = coerceInput(resolvedInputs.productId);
     const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
       if (!value) return null;
-      if (typeof value === "object" && !Array.isArray(value)) {
+      if (typeof value === 'object' && !Array.isArray(value)) {
         return value as Record<string, unknown>;
       }
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         const parsed: unknown = parseJsonSafe(value);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           return parsed as Record<string, unknown>;
         }
       }
       return null;
     };
     const callbackTemplate: string | null =
-      typeof callbackInput === "string" && (callbackInput).trim()
+      typeof callbackInput === 'string' && (callbackInput).trim()
         ? (callbackInput)
         : null;
     let query: Record<string, unknown> = {};
@@ -1139,7 +1326,7 @@ export const handleDatabase: NodeHandler = async ({
     if (aiQueryInput !== undefined && aiQueryInput !== null) {
       let parsedAiQuery: Record<string, unknown> | null = null;
 
-      if (typeof aiQueryInput === "string") {
+      if (typeof aiQueryInput === 'string') {
         // Try to extract JSON from AI response (may have markdown code blocks)
         const jsonMatch: RegExpMatchArray | null = (aiQueryInput).match(/```(?:json)?\s*([\s\S]*?)```/);
         const jsonStr: string = jsonMatch ? jsonMatch[1]!.trim() : (aiQueryInput).trim();
@@ -1148,26 +1335,26 @@ export const handleDatabase: NodeHandler = async ({
           unknown
         > | null;
       } else if (
-        typeof aiQueryInput === "object" &&
+        typeof aiQueryInput === 'object' &&
         !Array.isArray(aiQueryInput)
       ) {
         parsedAiQuery = aiQueryInput as Record<string, unknown>;
       }
 
-      if (parsedAiQuery && typeof parsedAiQuery === "object") {
+      if (parsedAiQuery && typeof parsedAiQuery === 'object') {
         // Handle nested query structure (AI might return {query: {...}, collection: "..."})
-        if (parsedAiQuery.query && typeof parsedAiQuery.query === "object") {
+        if (parsedAiQuery.query && typeof parsedAiQuery.query === 'object') {
           query = parsedAiQuery.query as Record<string, unknown>;
           // Override collection if AI specified one
-          if (typeof parsedAiQuery.collection === "string") {
+          if (typeof parsedAiQuery.collection === 'string') {
             queryConfig.collection = parsedAiQuery.collection;
           }
         } else {
           query = parsedAiQuery;
         }
       } else {
-        toast("AI query could not be parsed as valid JSON.", {
-          variant: "error",
+        toast('AI query could not be parsed as valid JSON.', {
+          variant: 'error',
         });
         return {
           result: null,
@@ -1175,7 +1362,7 @@ export const handleDatabase: NodeHandler = async ({
             count: 0,
             query: {},
             collection: queryConfig.collection,
-            error: "Invalid AI query format",
+            error: 'Invalid AI query format',
             rawAiQuery: aiQueryInput,
           },
           aiPrompt,
@@ -1189,18 +1376,18 @@ export const handleDatabase: NodeHandler = async ({
         const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
             callbackTemplate,
-            resolvedInputs,
-            inputValue ?? "",
+            templateContext,
+            inputValue ?? '',
           ),
         );
-        if (parsed && typeof parsed === "object") {
+        if (parsed && typeof parsed === 'object') {
           query = parsed as Record<string, unknown>;
         }
-      } else if (queryConfig.mode === "preset") {
+      } else if (queryConfig.mode === 'preset') {
         const presetValue: unknown =
-          queryConfig.preset === "by_productId"
+          queryConfig.preset === 'by_productId'
             ? (productIdInput ?? inputValue)
-            : queryConfig.preset === "by_entityId"
+            : queryConfig.preset === 'by_entityId'
               ? (entityIdInput ?? inputValue ?? resolvedEntityId)
               : (inputValue ??
                 resolvedEntityId ??
@@ -1208,24 +1395,24 @@ export const handleDatabase: NodeHandler = async ({
                 productIdInput);
         if (presetValue !== undefined) {
           let field: string =
-            queryConfig.preset === "by_productId"
-              ? "productId"
-              : queryConfig.preset === "by_entityId"
-                ? "entityId"
-                : queryConfig.preset === "by_field"
-                  ? queryConfig.field || "id"
-                  : "_id";
+            queryConfig.preset === 'by_productId'
+              ? 'productId'
+              : queryConfig.preset === 'by_entityId'
+                ? 'entityId'
+                : queryConfig.preset === 'by_field'
+                  ? queryConfig.field || 'id'
+                  : '_id';
           if (
-            queryConfig.preset === "by_id" &&
-            field === "_id" &&
+            queryConfig.preset === 'by_id' &&
+            field === '_id' &&
             !looksLikeObjectId(presetValue as string)
           ) {
-            field = "id";
+            field = 'id';
           }
           query = { [field]: presetValue };
         } else {
-          toast("Database query needs an ID/value input.", {
-            variant: "error",
+          toast('Database query needs an ID/value input.', {
+            variant: 'error',
           });
           return {
             result: null,
@@ -1233,7 +1420,7 @@ export const handleDatabase: NodeHandler = async ({
               count: 0,
               query: {},
               collection: queryConfig.collection,
-              error: "Missing query value",
+              error: 'Missing query value',
             },
             aiPrompt,
           };
@@ -1241,20 +1428,20 @@ export const handleDatabase: NodeHandler = async ({
       } else {
         const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
-            queryConfig.queryTemplate ?? "{}",
-            resolvedInputs,
-            inputValue ?? "",
+            queryConfig.queryTemplate ?? '{}',
+            templateContext,
+            inputValue ?? '',
           ),
         );
-        if (parsed && typeof parsed === "object") {
+        if (parsed && typeof parsed === 'object') {
           query = parsed as Record<string, unknown>;
         }
       }
     }
-    const projection: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.projection ?? "") as
+    const projection: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.projection ?? '') as
       | Record<string, unknown>
       | undefined;
-    const sort: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.sort ?? "") as
+    const sort: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.sort ?? '') as
       | Record<string, unknown>
       | undefined;
     if (dryRun) {
@@ -1286,8 +1473,8 @@ export const handleDatabase: NodeHandler = async ({
     if (!queryResult.ok) {
       reportAiPathsError(
         new Error(queryResult.error),
-        { action: "dbQuery", collection: queryConfig.collection, query },
-        "Database query failed:",
+        { action: 'dbQuery', collection: queryConfig.collection, query },
+        'Database query failed:',
       );
       return {
         result: null,
@@ -1295,7 +1482,7 @@ export const handleDatabase: NodeHandler = async ({
           count: 0,
           query,
           collection: queryConfig.collection,
-          error: "Query failed",
+          error: 'Query failed',
         },
         aiPrompt,
       };
@@ -1316,30 +1503,30 @@ export const handleDatabase: NodeHandler = async ({
     };
   }
 
-  if (operation === "update") {
-    const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
-    const fallbackSourcePort: string = node.inputs.includes("result")
-      ? "result"
-      : "content_en";
+  if (operation === 'update') {
+    const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
+    const fallbackSourcePort: string = node.inputs.includes('result')
+      ? 'result'
+      : 'content_en';
     const mappings: UpdaterMapping[] =
       dbConfig.mappings && dbConfig.mappings.length > 0
         ? dbConfig.mappings
         : [
-            {
-              targetPath: fallbackTarget,
-              sourcePort: fallbackSourcePort,
-            },
-          ];
+          {
+            targetPath: fallbackTarget,
+            sourcePort: fallbackSourcePort,
+          },
+        ];
     const trimStrings: boolean = dbConfig.trimStrings ?? false;
     const skipEmpty: boolean = dbConfig.skipEmpty ?? false;
     const isEmptyValue = (value: unknown): boolean =>
       value === undefined ||
       value === null ||
-      (typeof value === "string" && (value).trim() === "") ||
+      (typeof value === 'string' && (value).trim() === '') ||
       (Array.isArray(value) && (value as unknown[]).length === 0);
     const isEffectivelyMissing = (value: unknown): boolean =>
       isEmptyValue(value) ||
-      (typeof value === "object" &&
+      (typeof value === 'object' &&
         !Array.isArray(value) &&
         value !== null &&
         Object.keys(value as Record<string, unknown>).length === 0);
@@ -1353,19 +1540,19 @@ export const handleDatabase: NodeHandler = async ({
       const sourceValue = resolvedInputs[sourcePort];
       if (sourceValue === undefined) return;
       let value: unknown = coerceInput(sourceValue);
-      if (value && typeof value === "object" && mapping.sourcePath) {
+      if (value && typeof value === 'object' && mapping.sourcePath) {
         const resolved = getValueAtMappingPath(value, mapping.sourcePath);
         if (resolved !== undefined) {
           value = resolved;
-        } else if (sourcePort === "result") {
+        } else if (sourcePort === 'result') {
           unresolvedSourcePorts.add(sourcePort);
           return;
         }
       }
       if (
-        sourcePort === "result" &&
+        sourcePort === 'result' &&
         value &&
-        typeof value === "object" &&
+        typeof value === 'object' &&
         !mapping.sourcePath
       ) {
         const resultValue: unknown = (value as Record<string, unknown>).result;
@@ -1373,11 +1560,11 @@ export const handleDatabase: NodeHandler = async ({
         const contentValue: unknown = (value as Record<string, unknown>).content_en;
         value = resultValue ?? descriptionValue ?? contentValue ?? value;
       }
-      if (sourcePort === "result" && isEffectivelyMissing(value)) {
+      if (sourcePort === 'result' && isEffectivelyMissing(value)) {
         unresolvedSourcePorts.add(sourcePort);
         return;
       }
-      if (typeof value === "string" && trimStrings) {
+      if (typeof value === 'string' && trimStrings) {
         value = (value).trim();
       }
       if (skipEmpty && isEmptyValue(value)) {
@@ -1397,9 +1584,9 @@ export const handleDatabase: NodeHandler = async ({
     if (!hasUpdates) {
       return prevOutputs;
     }
-    const updateStrategy = dbConfig.updateStrategy ?? "one";
-    const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
-    const idField = dbConfig.idField ?? "entityId";
+    const updateStrategy = dbConfig.updateStrategy ?? 'one';
+    const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+    const idField = dbConfig.idField ?? 'entityId';
     const entityId = resolveEntityIdFromInputs(
       resolvedInputs as RuntimePortValues,
       idField,
@@ -1407,7 +1594,7 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityId,
     );
     const debugPayload = {
-      mode: "legacy",
+      mode: 'legacy',
       updateStrategy,
       entityType,
       idField,
@@ -1415,30 +1602,30 @@ export const handleDatabase: NodeHandler = async ({
       updates,
       mappings,
     };
-    const needsEntityId = entityType !== "custom";
+    const needsEntityId = entityType !== 'custom';
     let updateResult: unknown = updates;
 
-    if (updateStrategy === "many") {
+    if (updateStrategy === 'many') {
       const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
       const query = (queryPayload.query) ?? {};
       const hasQuery =
-        query && typeof query === "object" && Object.keys(query).length > 0;
+        query && typeof query === 'object' && Object.keys(query).length > 0;
 
       if (
         hasUpdates &&
-        dbConfig.mode === "append" &&
+        dbConfig.mode === 'append' &&
         !executed.updater.has(node.id)
       ) {
         reportAiPathsError(
-          new Error("Append mode is not supported for update many"),
-          { action: "updateMany", nodeId: node.id },
-          "Database update many failed:",
+          new Error('Append mode is not supported for update many'),
+          { action: 'updateMany', nodeId: node.id },
+          'Database update many failed:',
         );
-        toast("Update many does not support append mode.", {
-          variant: "error",
+        toast('Update many does not support append mode.', {
+          variant: 'error',
         });
         updateResult = {
-          error: "append_not_supported",
+          error: 'append_not_supported',
           updates,
           query,
           collection: queryPayload.collection,
@@ -1454,7 +1641,7 @@ export const handleDatabase: NodeHandler = async ({
             collection: queryPayload.collection,
             query,
             updates,
-            mode: dbConfig.mode ?? "replace",
+            mode: dbConfig.mode ?? 'replace',
           };
           executed.updater.add(node.id);
         } else {
@@ -1471,14 +1658,14 @@ export const handleDatabase: NodeHandler = async ({
             reportAiPathsError(
               new Error(dbUpdateResult.error),
               {
-                action: "updateMany",
+                action: 'updateMany',
                 collection: queryPayload.collection,
                 nodeId: node.id,
               },
-              "Database update many failed:",
+              'Database update many failed:',
             );
             toast(`Failed to update ${queryPayload.collection}.`, {
-              variant: "error",
+              variant: 'error',
             });
           } else {
             updateResult = dbUpdateResult.data;
@@ -1486,8 +1673,8 @@ export const handleDatabase: NodeHandler = async ({
             const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
             const countLabel = modified || matched;
             toast(
-              `Updated ${countLabel} document${countLabel === 1 ? "" : "s"} in ${queryPayload.collection}.`,
-              { variant: "success" },
+              `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload.collection}.`,
+              { variant: 'success' },
             );
           }
         }
@@ -1507,7 +1694,7 @@ export const handleDatabase: NodeHandler = async ({
             entityType,
             entityId: entityId || undefined,
             updates,
-            mode: dbConfig.mode ?? "replace",
+            mode: dbConfig.mode ?? 'replace',
           };
           executed.updater.add(node.id);
         } else {
@@ -1516,22 +1703,22 @@ export const handleDatabase: NodeHandler = async ({
               entityType,
               ...(entityId ? { entityId } : {}),
               updates,
-              mode: dbConfig.mode ?? "replace",
+              mode: dbConfig.mode ?? 'replace',
             });
             if (!entityUpdateResult.ok) {
               throw new Error(entityUpdateResult.error);
             }
             updateResult = entityUpdateResult.data ?? updates;
             executed.updater.add(node.id);
-            const suffix = entityId ? ` ${entityId}` : "";
-            toast(`Updated ${entityType}${suffix}`, { variant: "success" });
+            const suffix = entityId ? ` ${entityId}` : '';
+            toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
           } catch (error: unknown) {
             reportAiPathsError(
               error,
-              { action: "updateEntity", entityType, entityId, nodeId: node.id },
-              "Database update failed:",
+              { action: 'updateEntity', entityType, entityId, nodeId: node.id },
+              'Database update failed:',
             );
-            toast(`Failed to update ${entityType}.`, { variant: "error" });
+            toast(`Failed to update ${entityType}.`, { variant: 'error' });
             executed.updater.add(node.id);
           }
         }
@@ -1544,10 +1731,10 @@ export const handleDatabase: NodeHandler = async ({
     const primaryValue = updates[primaryTarget];
     return {
       content_en:
-        primaryTarget === "content_en"
+        primaryTarget === 'content_en'
           ? ((primaryValue as string | undefined) ??
             (nodeInputs.content_en as string | undefined) ??
-            "")
+            '')
           : (nodeInputs.content_en as string | undefined),
       bundle: updates,
       result: updateResult,
@@ -1556,22 +1743,22 @@ export const handleDatabase: NodeHandler = async ({
     };
   }
 
-  if (operation === "insert") {
-    const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
-    const writeSource = dbConfig.writeSource ?? "bundle";
+  if (operation === 'insert') {
+    const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+    const writeSource = dbConfig.writeSource ?? 'bundle';
     const rawPayload = coerceInput(nodeInputs[writeSource]);
     const callbackInput = coerceInput(nodeInputs.queryCallback);
     
     const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
       if (!value) return null;
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         const parsed: unknown = parseJsonSafe(value);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           return parsed as Record<string, unknown>;
         }
         return null;
       }
-      if (typeof value === "object" && !Array.isArray(value)) {
+      if (typeof value === 'object' && !Array.isArray(value)) {
         return value as Record<string, unknown>;
       }
       return null;
@@ -1586,7 +1773,7 @@ export const handleDatabase: NodeHandler = async ({
     // Callback injection for insert: if callback is an object, merge it or use it as payload
     if (
       callbackInput &&
-      typeof callbackInput === "object" &&
+      typeof callbackInput === 'object' &&
       !Array.isArray(callbackInput)
     ) {
       payload = {
@@ -1599,19 +1786,19 @@ export const handleDatabase: NodeHandler = async ({
 
     if (!payload) {
       reportAiPathsError(
-        new Error("Database insert missing payload"),
+        new Error('Database insert missing payload'),
         {
-          action: "insertEntity",
+          action: 'insertEntity',
           nodeId: node.id,
           writeSource,
           writeSourcePath,
         },
-        "Database insert missing payload:",
+        'Database insert missing payload:',
       );
-      toast("Database insert needs a JSON payload.", { variant: "error" });
+      toast('Database insert needs a JSON payload.', { variant: 'error' });
       return {
         result: null,
-        bundle: { error: "Missing payload" },
+        bundle: { error: 'Missing payload' },
         aiPrompt,
       };
     }
@@ -1625,7 +1812,7 @@ export const handleDatabase: NodeHandler = async ({
         };
         executed.updater.add(node.id);
       } else {
-        if (entityType === "product") {
+        if (entityType === 'product') {
           const productResult: ApiResponse<unknown> = await entityApi.createProduct(
             buildFormData(payload),
           );
@@ -1633,30 +1820,30 @@ export const handleDatabase: NodeHandler = async ({
           if (!productResult.ok) {
             reportAiPathsError(
               new Error(productResult.error),
-              { action: "insertEntity", entityType, nodeId: node.id },
-              "Database insert failed:",
+              { action: 'insertEntity', entityType, nodeId: node.id },
+              'Database insert failed:',
             );
-            toast(`Failed to insert ${entityType}.`, { variant: "error" });
+            toast(`Failed to insert ${entityType}.`, { variant: 'error' });
           } else {
             insertResult = productResult.data;
-            toast(`Inserted ${entityType}`, { variant: "success" });
+            toast(`Inserted ${entityType}`, { variant: 'success' });
           }
-        } else if (entityType === "note") {
+        } else if (entityType === 'note') {
           const noteResult: ApiResponse<unknown> = await entityApi.createNote(payload);
           executed.updater.add(node.id);
           if (!noteResult.ok) {
             reportAiPathsError(
               new Error(noteResult.error),
-              { action: "insertEntity", entityType, nodeId: node.id },
-              "Database insert failed:",
+              { action: 'insertEntity', entityType, nodeId: node.id },
+              'Database insert failed:',
             );
-            toast(`Failed to insert ${entityType}.`, { variant: "error" });
+            toast(`Failed to insert ${entityType}.`, { variant: 'error' });
           } else {
             insertResult = noteResult.data;
-            toast(`Inserted ${entityType}`, { variant: "success" });
+            toast(`Inserted ${entityType}`, { variant: 'success' });
           }
         } else {
-          toast("Custom inserts are not supported yet.", { variant: "error" });
+          toast('Custom inserts are not supported yet.', { variant: 'error' });
           executed.updater.add(node.id);
           return {
             result: payload,
@@ -1672,16 +1859,16 @@ export const handleDatabase: NodeHandler = async ({
       bundle: insertResult as Record<string, unknown>,
       content_en:
         typeof (insertResult as Record<string, unknown>)?.content_en ===
-        "string"
+        'string'
           ? ((insertResult as Record<string, unknown>).content_en as string)
           : undefined,
       aiPrompt,
     };
   }
 
-  if (operation === "delete") {
-    const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
-    const idField = dbConfig.idField ?? "entityId";
+  if (operation === 'delete') {
+    const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+    const idField = dbConfig.idField ?? 'entityId';
     const entityId = resolveEntityIdFromInputs(
       nodeInputs,
       idField,
@@ -1690,14 +1877,14 @@ export const handleDatabase: NodeHandler = async ({
     );
     if (!entityId) {
       reportAiPathsError(
-        new Error("Database delete missing entity id"),
-        { action: "deleteEntity", nodeId: node.id },
-        "Database delete missing entity id:",
+        new Error('Database delete missing entity id'),
+        { action: 'deleteEntity', nodeId: node.id },
+        'Database delete missing entity id:',
       );
-      toast("Database delete needs an entity ID input.", { variant: "error" });
+      toast('Database delete needs an entity ID input.', { variant: 'error' });
       return {
         result: null,
-        bundle: { error: "Missing entity id" },
+        bundle: { error: 'Missing entity id' },
         aiPrompt,
       };
     }
@@ -1708,36 +1895,36 @@ export const handleDatabase: NodeHandler = async ({
         deleteResult = { ok: true, dryRun: true, entityId, entityType };
         executed.updater.add(node.id);
       } else {
-        if (entityType === "product") {
+        if (entityType === 'product') {
           const productDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteProduct(entityId);
           executed.updater.add(node.id);
           if (!productDeleteResult.ok) {
             reportAiPathsError(
               new Error(productDeleteResult.error),
-              { action: "deleteEntity", entityType, entityId, nodeId: node.id },
-              "Database delete failed:",
+              { action: 'deleteEntity', entityType, entityId, nodeId: node.id },
+              'Database delete failed:',
             );
-            toast(`Failed to delete ${entityType}.`, { variant: "error" });
+            toast(`Failed to delete ${entityType}.`, { variant: 'error' });
           } else {
             deleteResult = { ok: true, entityId };
-            toast(`Deleted ${entityType} ${entityId}`, { variant: "success" });
+            toast(`Deleted ${entityType} ${entityId}`, { variant: 'success' });
           }
-        } else if (entityType === "note") {
+        } else if (entityType === 'note') {
           const noteDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteNote(entityId);
           executed.updater.add(node.id);
           if (!noteDeleteResult.ok) {
             reportAiPathsError(
               new Error(noteDeleteResult.error),
-              { action: "deleteEntity", entityType, entityId, nodeId: node.id },
-              "Database delete failed:",
+              { action: 'deleteEntity', entityType, entityId, nodeId: node.id },
+              'Database delete failed:',
             );
-            toast(`Failed to delete ${entityType}.`, { variant: "error" });
+            toast(`Failed to delete ${entityType}.`, { variant: 'error' });
           } else {
             deleteResult = { ok: true, entityId };
-            toast(`Deleted ${entityType} ${entityId}`, { variant: "success" });
+            toast(`Deleted ${entityType} ${entityId}`, { variant: 'success' });
           }
         } else {
-          toast("Custom deletes are not supported yet.", { variant: "error" });
+          toast('Custom deletes are not supported yet.', { variant: 'error' });
           executed.updater.add(node.id);
           return {
             result: { ok: false },
@@ -1774,38 +1961,38 @@ type CollectionSchema = {
   relations?: string[];
 };
 
-type SchemaResponse = {
-  provider: "mongodb" | "prisma";
+type LocalSchemaResponse = {
+  provider: 'mongodb' | 'prisma';
   collections: CollectionSchema[];
 };
 
-function formatSchemaAsText(schema: SchemaResponse): string {
+function formatSchemaAsText(schema: LocalSchemaResponse): string {
   const lines: string[] = [
-    "DATABASE SCHEMA",
-    "===============",
+    'DATABASE SCHEMA',
+    '===============',
     `Provider: ${schema.provider}`,
-    "",
+    '',
   ];
 
   for (const collection of schema.collections) {
     lines.push(`Collection: ${collection.name}`);
-    lines.push("Fields:");
+    lines.push('Fields:');
     for (const field of collection.fields ?? []) {
       const markers: string[] = [];
-      if (field.isId) markers.push("ID");
-      if (field.isRequired) markers.push("required");
-      if (field.isUnique) markers.push("unique");
-      if (field.hasDefault) markers.push("has default");
-      const markerStr = markers.length > 0 ? ` [${markers.join(", ")}]` : "";
+      if (field.isId) markers.push('ID');
+      if (field.isRequired) markers.push('required');
+      if (field.isUnique) markers.push('unique');
+      if (field.hasDefault) markers.push('has default');
+      const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
       lines.push(`  - ${field.name} (${field.type})${markerStr}`);
     }
     if (collection.relations && collection.relations.length > 0) {
-      lines.push(`Relations: ${collection.relations.join(", ")}`);
+      lines.push(`Relations: ${collection.relations.join(', ')}`);
     }
-    lines.push("");
+    lines.push('');
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 function filterCollections(
@@ -1833,11 +2020,11 @@ export const handleDbSchema: NodeHandler = async ({
   if (executed.schema?.has(node.id)) return prevOutputs;
 
   const defaultConfig: DbSchemaConfig = {
-    mode: "all",
+    mode: 'all',
     collections: [],
     includeFields: true,
     includeRelations: true,
-    formatAs: "text",
+    formatAs: 'text',
   };
 
   const config: DbSchemaConfig = {
@@ -1849,8 +2036,8 @@ export const handleDbSchema: NodeHandler = async ({
   if (!schemaResult.ok) {
     reportAiPathsError(
       new Error(schemaResult.error),
-      { action: "fetchDbSchema", nodeId: node.id },
-      "Database schema fetch failed:",
+      { action: 'fetchDbSchema', nodeId: node.id },
+      'Database schema fetch failed:',
     );
     return {
       schema: null,
@@ -1862,7 +2049,7 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Filter collections if mode is "selected"
   const schema =
-    config.mode === "selected"
+    config.mode === 'selected'
       ? filterCollections(fullSchema, config.collections ?? [])
       : fullSchema;
 
@@ -1882,7 +2069,7 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Format for AI consumption
   const schemaText =
-    config.formatAs === "text"
+    config.formatAs === 'text'
       ? formatSchemaAsText(schema)
       : JSON.stringify(schema, null, 2);
 

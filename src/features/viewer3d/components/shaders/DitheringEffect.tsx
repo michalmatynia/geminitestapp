@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Effect, BlendFunction } from "postprocessing";
-import { Uniform } from "three";
-import { forwardRef, useMemo } from "react";
+import { Effect, BlendFunction } from 'postprocessing';
+import { forwardRef, useMemo } from 'react';
+import { Uniform } from 'three';
 
 // Bayer 8x8 ordered dithering shader for black & white effect
 const ditheringFragmentShader = `
@@ -52,20 +52,20 @@ export class DitheringEffectImpl extends Effect {
     intensity?: number;
     blendFunction?: BlendFunction;
   } = {}) {
-    super("DitheringEffect", ditheringFragmentShader, {
+    super('DitheringEffect', ditheringFragmentShader, {
       blendFunction,
       uniforms: new Map<string, Uniform>([
-        ["intensity", new Uniform(intensity)],
+        ['intensity', new Uniform(intensity)],
       ]),
     });
   }
 
   get intensity(): number {
-    return this.uniforms.get("intensity")!.value as number;
+    return this.uniforms.get('intensity')!.value as number;
   }
 
   set intensity(value: number) {
-    this.uniforms.get("intensity")!.value = value;
+    this.uniforms.get('intensity')!.value = value;
   }
 }
 
@@ -81,7 +81,8 @@ export const DitheringPass = forwardRef<DitheringEffectImpl, DitheringPassProps>
       [intensity, blendFunction]
     );
 
-    // eslint-disable-next-line react/no-unknown-property
+     
+
     return <primitive ref={ref} object={effect} />;
   }
 );

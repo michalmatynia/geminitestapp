@@ -1,11 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/server";
-import { getIntegrationDataProvider } from "@/features/integrations/services/integration-provider";
+import { randomUUID } from 'crypto';
+
+import { Prisma } from '@prisma/client';
+
+import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import type {
   ProductListingRecord,
   ProductListingExportEvent,
@@ -13,7 +12,10 @@ import type {
   CreateProductListingInput,
   ProductListingRepository,
   IntegrationWithConnectionsBasic,
-} from "@/features/integrations/types/listings";
+} from '@/features/integrations/types/listings';
+import { getProductDataProvider } from '@/features/products/server';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 
 export type {
   ProductListingRecord,
@@ -24,7 +26,7 @@ export type {
   IntegrationWithConnectionsBasic,
 };
 
-const LISTINGS_COLLECTION = "product_listings";
+const LISTINGS_COLLECTION = 'product_listings';
 
 type ProductListingDocument = {
   _id: string;
@@ -73,7 +75,7 @@ const prismaRepository: ProductListingRepository = {
           select: { id: true, name: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return (listings as EnrichedPrismaListing[]).map((listing: EnrichedPrismaListing) => ({
       ...listing,
@@ -98,7 +100,7 @@ const prismaRepository: ProductListingRepository = {
         connectionId: input.connectionId,
         externalListingId: input.externalListingId || null,
         inventoryId: input.inventoryId || null,
-        status: "pending",
+        status: 'pending',
       },
       include: {
         integration: {
@@ -124,7 +126,7 @@ const prismaRepository: ProductListingRepository = {
 
   updateListingStatus: async (id: string, status: string): Promise<void> => {
     const data: { status: string; listedAt?: Date } = { status };
-    if (status === "active") {
+    if (status === 'active') {
       data.listedAt = new Date();
     }
     await prisma.productListing.update({
@@ -198,12 +200,12 @@ const mongoRepository: ProductListingRepository = {
     }, []);
 
     const integrations = await db
-      .collection<{ _id: string; name: string; slug: string }>("integrations")
+      .collection<{ _id: string; name: string; slug: string }>('integrations')
       .find({ _id: { $in: Array.from(integrationIds) } })
       .toArray();
 
     const connections = await db
-      .collection<{ _id: string; name: string }>("integration_connections")
+      .collection<{ _id: string; name: string }>('integration_connections')
       .find({ _id: { $in: Array.from(connectionIds) } })
       .toArray();
 
@@ -217,12 +219,12 @@ const mongoRepository: ProductListingRepository = {
         ...toListingRecord(listing),
         integration: {
           id: integration?._id || listing.integrationId,
-          name: integration?.name || "Unknown",
-          slug: integration?.slug || "",
+          name: integration?.name || 'Unknown',
+          slug: integration?.slug || '',
         },
         connection: {
           id: connection?._id || listing.connectionId,
-          name: connection?.name || "Unknown",
+          name: connection?.name || 'Unknown',
         },
       } as ProductListingWithDetails;
     });
@@ -248,7 +250,7 @@ const mongoRepository: ProductListingRepository = {
       connectionId: input.connectionId,
       externalListingId: input.externalListingId || null,
       inventoryId: input.inventoryId || null,
-      status: "pending",
+      status: 'pending',
       listedAt: null,
       exportHistory: [],
       createdAt: now,
@@ -259,23 +261,23 @@ const mongoRepository: ProductListingRepository = {
 
     // Fetch integration and connection details
     const integration = await db
-      .collection<{ _id: string; name: string; slug: string }>("integrations")
+      .collection<{ _id: string; name: string; slug: string }>('integrations')
       .findOne({ _id: input.integrationId });
 
     const connection = await db
-      .collection<{ _id: string; name: string }>("integration_connections")
+      .collection<{ _id: string; name: string }>('integration_connections')
       .findOne({ _id: input.connectionId });
 
     return {
       ...toListingRecord(doc),
       integration: {
         id: integration?._id || input.integrationId,
-        name: integration?.name || "Unknown",
-        slug: integration?.slug || "",
+        name: integration?.name || 'Unknown',
+        slug: integration?.slug || '',
       },
       connection: {
         id: connection?._id || input.connectionId,
-        name: connection?.name || "Unknown",
+        name: connection?.name || 'Unknown',
       },
     } as ProductListingWithDetails;
   },
@@ -290,7 +292,7 @@ const mongoRepository: ProductListingRepository = {
   updateListingStatus: async (id: string, status: string): Promise<void> => {
     const db = await getMongoDb();
     const updateData: Record<string, unknown> = { status, updatedAt: new Date() };
-    if (status === "active") {
+    if (status === 'active') {
       updateData.listedAt = new Date();
     }
     await db
@@ -349,23 +351,23 @@ const mongoRepository: ProductListingRepository = {
 export const getProductListingRepository = async (): Promise<ProductListingRepository> => {
   // Use the same provider as products since listings are product-related
   const provider = await getProductDataProvider();
-  return provider === "mongodb" ? mongoRepository : prismaRepository;
+  return provider === 'mongodb' ? mongoRepository : prismaRepository;
 };
 
 export const getIntegrationsWithConnections = async (): Promise<IntegrationWithConnectionsBasic[]> => {
   const provider = await getIntegrationDataProvider();
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const db = await getMongoDb();
 
     const integrations = await db
-      .collection<{ _id: string; name: string; slug: string }>("integrations")
+      .collection<{ _id: string; name: string; slug: string }>('integrations')
       .find({})
       .sort({ name: 1 })
       .toArray();
 
     const connections = await db
-      .collection<{ _id: string; name: string; integrationId: string }>("integration_connections")
+      .collection<{ _id: string; name: string; integrationId: string }>('integration_connections')
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
@@ -389,10 +391,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
     include: {
       connections: {
         select: { id: true, name: true, integrationId: true },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       },
     },
-    orderBy: { name: "asc" },
+    orderBy: { name: 'asc' },
   });
 
   return integrations as IntegrationWithConnectionsBasic[];

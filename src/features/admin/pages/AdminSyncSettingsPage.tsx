@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+
+import { useOfflineQueueStatus, type OfflineQueueItem } from '@/shared/hooks/offline';
+import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
+import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvider';
 import {
   Button,
   Input,
@@ -11,20 +16,16 @@ import {
   Switch,
   useToast,
   ConfirmDialog,
-} from "@/shared/ui";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
-import { useBackgroundSyncStatus } from "@/shared/providers/BackgroundSyncProvider";
-import { useOfflineSync } from "@/shared/hooks/offline/useOfflineMutation";
-import { useOfflineQueueStatus, type OfflineQueueItem } from "@/shared/hooks/offline";
+} from '@/shared/ui';
 
 const BACKGROUND_SYNC_KEYS = {
-  enabled: "background_sync_enabled",
-  intervalSeconds: "background_sync_interval_seconds",
+  enabled: 'background_sync_enabled',
+  intervalSeconds: 'background_sync_interval_seconds',
 };
 
 const parseEnabled = (value: string | undefined): boolean => {
   if (!value) return true;
-  return ["true", "1", "yes", "on"].includes(value.toLowerCase());
+  return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
 };
 
 const parseIntervalSeconds = (value: string | undefined): number => {
@@ -68,15 +69,15 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   const handleSave = (): void => {
     updateSettingsBulk.mutate(
       [
-        { key: BACKGROUND_SYNC_KEYS.enabled, value: enabled ? "true" : "false" },
+        { key: BACKGROUND_SYNC_KEYS.enabled, value: enabled ? 'true' : 'false' },
         { key: BACKGROUND_SYNC_KEYS.intervalSeconds, value: String(intervalSeconds) },
       ],
       {
         onSuccess: (): void => {
-          toast("Background sync settings saved", { variant: "success" });
+          toast('Background sync settings saved', { variant: 'success' });
         },
         onError: (error: Error): void => {
-          toast(error.message || "Failed to save settings", { variant: "error" });
+          toast(error.message || 'Failed to save settings', { variant: 'error' });
         },
       }
     );
@@ -84,18 +85,18 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
 
   const handleForceSync = (): void => {
     syncStatus.forceSync();
-    toast("Sync triggered", { variant: "success" });
+    toast('Sync triggered', { variant: 'success' });
   };
 
   const handleProcessQueue = async (): Promise<void> => {
     await processQueue();
     offlineQueue.refresh();
-    toast("Offline queue processed", { variant: "success" });
+    toast('Offline queue processed', { variant: 'success' });
   };
 
   const handleClearQueue = (): void => {
     offlineQueue.clear();
-    toast("Offline queue cleared", { variant: "success" });
+    toast('Offline queue cleared', { variant: 'success' });
   };
 
   return (
@@ -148,7 +149,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={handleSave} disabled={!isDirty || updateSettingsBulk.isPending}>
-              {updateSettingsBulk.isPending ? "Saving..." : "Save Settings"}
+              {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
             </Button>
             <Button variant="outline" onClick={handleForceSync}>
               Run Sync Now
@@ -158,13 +159,13 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           <div className="rounded-lg border border-border bg-muted/20 p-4 text-sm text-gray-300 space-y-1">
             <div className="flex justify-between">
               <span>Status</span>
-              <span className={syncStatus.isOnline ? "text-emerald-300" : "text-rose-300"}>
-                {syncStatus.isOnline ? "Online" : "Offline"}
+              <span className={syncStatus.isOnline ? 'text-emerald-300' : 'text-rose-300'}>
+                {syncStatus.isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Last sync</span>
-              <span>{syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : "Never"}</span>
+              <span>{syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}</span>
             </div>
             <div className="flex justify-between">
               <span>Active interval</span>

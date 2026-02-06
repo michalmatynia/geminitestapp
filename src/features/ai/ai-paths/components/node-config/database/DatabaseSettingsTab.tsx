@@ -1,15 +1,15 @@
-"use client";
-
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+'use client';
 
 
 
 
 
 
-import type { DatabaseConfig, DatabaseOperation, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { DB_COLLECTION_OPTIONS } from "@/features/ai/ai-paths/lib";
-import { formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
+
+import type { DatabaseConfig, DatabaseOperation, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type DatabaseSettingsTabProps = {
   queryEditor: React.ReactNode;
@@ -34,17 +34,17 @@ export function DatabaseSettingsTab({
     <div className="space-y-4">
       {queryEditor}
 
-      {operation === "update" && !databaseConfig.useMongoActions && (
+      {operation === 'update' && !databaseConfig.useMongoActions && (
         <div className="space-y-4">
           <div>
             <Label className="text-xs text-gray-400">Write Mode</Label>
             <Select
-              value={databaseConfig.mode ?? "replace"}
+              value={databaseConfig.mode ?? 'replace'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: {
                     ...databaseConfig,
-                    mode: value as "replace" | "append",
+                    mode: value as 'replace' | 'append',
                   },
                 })
               }
@@ -61,12 +61,12 @@ export function DatabaseSettingsTab({
         </div>
       )}
 
-      {operation === "insert" && !databaseConfig.useMongoActions && (
+      {operation === 'insert' && !databaseConfig.useMongoActions && (
         <div className="space-y-4">
           <div>
             <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
-              value={databaseConfig.entityType ?? "products"}
+              value={databaseConfig.entityType ?? 'products'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
@@ -77,7 +77,7 @@ export function DatabaseSettingsTab({
                 <SelectValue placeholder="Collection type" />
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== "custom").map((option: { value: string; label: string }): React.JSX.Element => (
+                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }): React.JSX.Element => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -114,7 +114,7 @@ export function DatabaseSettingsTab({
             <Label className="text-xs text-gray-400">Payload Path (optional)</Label>
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-              value={databaseConfig.writeSourcePath ?? ""}
+              value={databaseConfig.writeSourcePath ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateSelectedNodeConfig({
                   database: {
@@ -125,9 +125,9 @@ export function DatabaseSettingsTab({
               }
               placeholder="payload.subset"
             />
-            {writeSource === "bundle" && bundleKeys.size > 0 && (
+            {writeSource === 'bundle' && bundleKeys.size > 0 && (
               <Select
-                value={databaseConfig.writeSourcePath ?? ""}
+                value={databaseConfig.writeSourcePath ?? ''}
                 onValueChange={(value: string): void =>
                   updateSelectedNodeConfig({
                     database: {
@@ -156,12 +156,12 @@ export function DatabaseSettingsTab({
         </div>
       )}
 
-      {operation === "delete" && !databaseConfig.useMongoActions && (
+      {operation === 'delete' && !databaseConfig.useMongoActions && (
         <div className="space-y-4">
           <div>
             <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
-              value={databaseConfig.entityType ?? "products"}
+              value={databaseConfig.entityType ?? 'products'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
@@ -172,7 +172,7 @@ export function DatabaseSettingsTab({
                 <SelectValue placeholder="Collection type" />
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== "custom").map((option: { value: string; label: string }): React.JSX.Element => (
+                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }): React.JSX.Element => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

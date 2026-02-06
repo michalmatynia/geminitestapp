@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { DEFAULT_AGENT_SETTINGS } from "@/features/ai/agentcreator/utils/constants";
+import { useState } from 'react';
+
+import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
 
 export const useAgentCreatorSettings = (): {
   agentModeEnabled: boolean;

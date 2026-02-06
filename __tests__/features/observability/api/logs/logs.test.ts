@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
-import prisma from '@/shared/lib/db/prisma';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({

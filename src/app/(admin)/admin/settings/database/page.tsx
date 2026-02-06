@@ -1,57 +1,66 @@
-"use client";
+'use client';
 
-import { useToast, Button, Label } from "@/shared/ui";
-import { useMemo, useState, ChangeEvent } from "react";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
-import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
+import { useMemo, useState, ChangeEvent } from 'react';
+
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useToast, Button, Label } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 
 const providerOptions = [
   {
-    value: "prisma",
-    label: "PostgreSQL (Prisma)",
-    description: "Use Prisma-backed Postgres for all app data.",
+    value: 'prisma',
+    label: 'PostgreSQL (Prisma)',
+    description: 'Use Prisma-backed Postgres for all app data.',
   },
   {
-    value: "mongodb",
-    label: "MongoDB",
-    description: "Use MongoDB for all app data.",
+    value: 'mongodb',
+    label: 'MongoDB',
+    description: 'Use MongoDB for all app data.',
   },
 ] as const;
 
-type ProviderValue = (typeof providerOptions)[number]["value"];
+type ProviderValue = (typeof providerOptions)[number]['value'];
 
 const authProviderOptions = [
   {
-    value: "mongodb",
-    label: "MongoDB",
-    description: "Use MongoDB for users, sessions, accounts, and auth security.",
+    value: 'mongodb',
+    label: 'MongoDB',
+    description: 'Use MongoDB for users, sessions, accounts, and auth security.',
   },
   {
-    value: "prisma",
-    label: "PostgreSQL (Prisma)",
-    description: "Use Prisma-backed Postgres for users, sessions, and auth security.",
+    value: 'prisma',
+    label: 'PostgreSQL (Prisma)',
+    description: 'Use Prisma-backed Postgres for users, sessions, and auth security.',
   },
 ] as const;
 
-type AuthProviderValue = (typeof authProviderOptions)[number]["value"];
+type AuthProviderValue = (typeof authProviderOptions)[number]['value'];
 
 const productProviderOptions = [
   {
-    value: "mongodb",
-    label: "MongoDB",
-    description: "Use MongoDB for products, catalogs, categories, tags, and listings.",
+    value: 'mongodb',
+    label: 'MongoDB',
+    description: 'Use MongoDB for products, catalogs, categories, tags, and listings.',
   },
   {
-    value: "prisma",
-    label: "PostgreSQL (Prisma)",
-    description: "Use Prisma-backed Postgres for products and related entities.",
+    value: 'prisma',
+    label: 'PostgreSQL (Prisma)',
+    description: 'Use Prisma-backed Postgres for products and related entities.',
   },
 ] as const;
 
-type ProductProviderValue = (typeof productProviderOptions)[number]["value"];
+type ProductProviderValue = (typeof productProviderOptions)[number]['value'];
+
+type SettingsBackfillResult = {
+  matched: number;
+  modified: number;
+  remaining: number;
+  sampleIds?: string[];
+};
 
 export default function DatabaseSettingsPage() {
   const settingsQuery = useSettingsMap();
@@ -61,11 +70,11 @@ export default function DatabaseSettingsPage() {
   }
 
   const initialProvider: ProviderValue =
-    settingsQuery.data.get("app_db_provider") === "mongodb" ? "mongodb" : "prisma";
+    settingsQuery.data.get('app_db_provider') === 'mongodb' ? 'mongodb' : 'prisma';
   const initialAuthProvider: AuthProviderValue =
-    settingsQuery.data.get(AUTH_SETTINGS_KEYS.provider) === "prisma" ? "prisma" : "mongodb";
+    settingsQuery.data.get(AUTH_SETTINGS_KEYS.provider) === 'prisma' ? 'prisma' : 'mongodb';
   const initialProductProvider: ProductProviderValue =
-    settingsQuery.data.get(PRODUCT_DB_PROVIDER_SETTING_KEY) === "prisma" ? "prisma" : "mongodb";
+    settingsQuery.data.get(PRODUCT_DB_PROVIDER_SETTING_KEY) === 'prisma' ? 'prisma' : 'mongodb';
 
   return (
     <DatabaseSettingsForm
@@ -92,7 +101,10 @@ function DatabaseSettingsForm({
   const [authDirty, setAuthDirty] = useState(false);
   const [productProvider, setProductProvider] = useState<ProductProviderValue>(initialProductProvider);
   const [productDirty, setProductDirty] = useState(false);
-  const [syncing, setSyncing] = useState<"mongo_to_prisma" | "prisma_to_mongo" | null>(null);
+  const [syncing, setSyncing] = useState<'mongo_to_prisma' | 'prisma_to_mongo' | null>(null);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillLimit, setBackfillLimit] = useState(500);
+  const [backfillResult, setBackfillResult] = useState<SettingsBackfillResult | null>(null);
   const updateSetting = useUpdateSetting();
   const settingsQuery = useSettingsMap(); // Re-fetch or pass as prop if needed for other things, but here it seems only used for initial value. 
   // Wait, the original code used settingsQuery.isPending in the button disabled state.
@@ -101,36 +113,37 @@ function DatabaseSettingsForm({
   const providerDescription = useMemo(
     () =>
       providerOptions.find((option: (typeof providerOptions)[number]) => option.value === provider)?.description ??
-      "",
+      '',
     [provider]
   );
 
   const authProviderDescription = useMemo(
     () =>
       authProviderOptions.find((option: (typeof authProviderOptions)[number]) => option.value === authProvider)
-        ?.description ?? "",
+        ?.description ?? '',
     [authProvider]
   );
 
   const productProviderDescription = useMemo(
     () =>
       productProviderOptions.find((option: (typeof productProviderOptions)[number]) => option.value === productProvider)
-        ?.description ?? "",
+        ?.description ?? '',
     [productProvider]
   );
 
   const saveProvider = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
-        key: "app_db_provider",
+        key: 'app_db_provider',
         value: provider,
       });
       setDirty(false);
-      toast("Database provider saved.", { variant: "success" });
+      toast('Database provider saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveProvider', provider } });
       toast(
-        error instanceof Error ? error.message : "Failed to save settings.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to save settings.',
+        { variant: 'error' }
       );
     }
   };
@@ -142,11 +155,12 @@ function DatabaseSettingsForm({
         value: authProvider,
       });
       setAuthDirty(false);
-      toast("Auth data provider saved.", { variant: "success" });
+      toast('Auth data provider saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveAuthProvider', authProvider } });
       toast(
-        error instanceof Error ? error.message : "Failed to save settings.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to save settings.',
+        { variant: 'error' }
       );
     }
   };
@@ -158,17 +172,18 @@ function DatabaseSettingsForm({
         value: productProvider,
       });
       setProductDirty(false);
-      toast("Product data provider saved.", { variant: "success" });
+      toast('Product data provider saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveProductProvider', productProvider } });
       toast(
-        error instanceof Error ? error.message : "Failed to save settings.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to save settings.',
+        { variant: 'error' }
       );
     }
   };
 
-  const runSync = async (direction: "mongo_to_prisma" | "prisma_to_mongo"): Promise<void> => {
-    const label = direction === "mongo_to_prisma" ? "MongoDB → Prisma" : "Prisma → MongoDB";
+  const runSync = async (direction: 'mongo_to_prisma' | 'prisma_to_mongo'): Promise<void> => {
+    const label = direction === 'mongo_to_prisma' ? 'MongoDB → Prisma' : 'Prisma → MongoDB';
     const confirmed = window.confirm(
       `Run full database sync (${label})?\n\nThis will overwrite the target database and create backups first.`
     );
@@ -176,23 +191,53 @@ function DatabaseSettingsForm({
 
     setSyncing(direction);
     try {
-      const res = await fetch("/api/settings/database/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/settings/database/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ direction }),
       });
       if (!res.ok) {
         const payload = (await res.json()) as { error?: string };
-        throw new Error(payload?.error || "Failed to enqueue database sync.");
+        throw new Error(payload?.error || 'Failed to enqueue database sync.');
       }
-      toast("Database sync job queued. Track progress in AI Jobs.", { variant: "success" });
+      toast('Database sync job queued. Track progress in AI Jobs.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'runSync', direction } });
       toast(
-        error instanceof Error ? error.message : "Failed to start database sync.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to start database sync.',
+        { variant: 'error' }
       );
     } finally {
       setSyncing(null);
+    }
+  };
+
+  const runSettingsBackfill = async (dryRun: boolean): Promise<void> => {
+    setBackfillLoading(true);
+    try {
+      const res = await fetch('/api/settings/migrate/backfill-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun, limit: backfillLimit }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || 'Failed to backfill settings keys.');
+      }
+      const payload = (await res.json()) as SettingsBackfillResult;
+      setBackfillResult(payload);
+      toast(
+        dryRun ? 'Backfill dry run complete.' : 'Backfill completed.',
+        { variant: 'success' }
+      );
+    } catch (error) {
+      logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'runSettingsBackfill', dryRun } });
+      toast(
+        error instanceof Error ? error.message : 'Failed to run backfill.',
+        { variant: 'error' }
+      );
+    } finally {
+      setBackfillLoading(false);
     }
   };
 
@@ -219,7 +264,7 @@ function DatabaseSettingsForm({
             disabled={settingsQuery.isPending || updateSetting.isPending || !dirty}
             className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
           >
-            {updateSetting.isPending ? "Saving..." : "Save"}
+            {updateSetting.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
 
@@ -232,7 +277,7 @@ function DatabaseSettingsForm({
             className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
             value={provider}
             onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-              const value = event.target.value === "mongodb" ? "mongodb" : "prisma";
+              const value = event.target.value === 'mongodb' ? 'mongodb' : 'prisma';
               setProvider(value);
               setDirty(true);
             }}
@@ -266,7 +311,7 @@ function DatabaseSettingsForm({
               disabled={settingsQuery.isPending || updateSetting.isPending || !authDirty}
               className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
             >
-              {updateSetting.isPending ? "Saving..." : "Save"}
+              {updateSetting.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
 
@@ -279,7 +324,7 @@ function DatabaseSettingsForm({
               className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
               value={authProvider}
               onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-                const value = event.target.value === "prisma" ? "prisma" : "mongodb";
+                const value = event.target.value === 'prisma' ? 'prisma' : 'mongodb';
                 setAuthProvider(value);
                 setAuthDirty(true);
               }}
@@ -314,7 +359,7 @@ function DatabaseSettingsForm({
               disabled={settingsQuery.isPending || updateSetting.isPending || !productDirty}
               className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
             >
-              {updateSetting.isPending ? "Saving..." : "Save"}
+              {updateSetting.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
 
@@ -327,7 +372,7 @@ function DatabaseSettingsForm({
               className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
               value={productProvider}
               onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-                const value = event.target.value === "prisma" ? "prisma" : "mongodb";
+                const value = event.target.value === 'prisma' ? 'prisma' : 'mongodb';
                 setProductProvider(value);
                 setProductDirty(true);
               }}
@@ -348,6 +393,72 @@ function DatabaseSettingsForm({
           </div>
         </div>
 
+        <div className="mt-8 border-t border-gray-800 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Settings Key Backfill</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Backfills missing MongoDB settings keys when only a string _id exists.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={backfillLoading}
+                onClick={() => void runSettingsBackfill(true)}
+                className="border-gray-700 text-gray-200 hover:bg-gray-900"
+              >
+                {backfillLoading ? 'Running...' : 'Dry Run'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={backfillLoading}
+                onClick={() => void runSettingsBackfill(false)}
+                className="border-emerald-400/60 text-emerald-100 hover:bg-emerald-500/20"
+              >
+                {backfillLoading ? 'Running...' : 'Run Backfill'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 max-w-xs space-y-2">
+            <Label className="text-sm font-medium text-gray-200" htmlFor="settings-backfill-limit">
+              Batch size
+            </Label>
+            <input
+              id="settings-backfill-limit"
+              type="number"
+              min={1}
+              max={5000}
+              value={backfillLimit}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const next = Number.parseInt(event.target.value, 10);
+                setBackfillLimit(Number.isFinite(next) ? Math.min(Math.max(next, 1), 5000) : 500);
+              }}
+              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+              disabled={backfillLoading}
+            />
+            <p className="text-xs text-gray-400">
+              Updates up to this many missing keys per run.
+            </p>
+          </div>
+
+          {backfillResult && (
+            <div className="mt-4 rounded-md border border-slate-700/60 bg-slate-900/40 p-3 text-xs text-slate-200">
+              <div>Matched: {backfillResult.matched}</div>
+              <div>Modified: {backfillResult.modified}</div>
+              <div>Remaining: {backfillResult.remaining}</div>
+              {backfillResult.sampleIds && backfillResult.sampleIds.length > 0 && (
+                <div className="mt-2 text-slate-300">
+                  Sample ids: {backfillResult.sampleIds.join(', ')}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 rounded-md border border-red-500/30 bg-red-500/10 p-4">
           <h3 className="text-sm font-semibold text-red-200">Database Sync (Destructive)</h3>
           <p className="mt-1 text-xs text-red-200/80">
@@ -359,19 +470,19 @@ function DatabaseSettingsForm({
               type="button"
               variant="outline"
               disabled={syncing !== null}
-              onClick={() => void runSync("mongo_to_prisma")}
+              onClick={() => void runSync('mongo_to_prisma')}
               className="border-red-400/60 text-red-100 hover:bg-red-500/20"
             >
-              {syncing === "mongo_to_prisma" ? "Syncing..." : "Sync MongoDB → Prisma"}
+              {syncing === 'mongo_to_prisma' ? 'Syncing...' : 'Sync MongoDB → Prisma'}
             </Button>
             <Button
               type="button"
               variant="outline"
               disabled={syncing !== null}
-              onClick={() => void runSync("prisma_to_mongo")}
+              onClick={() => void runSync('prisma_to_mongo')}
               className="border-red-400/60 text-red-100 hover:bg-red-500/20"
             >
-              {syncing === "prisma_to_mongo" ? "Syncing..." : "Sync Prisma → MongoDB"}
+              {syncing === 'prisma_to_mongo' ? 'Syncing...' : 'Sync Prisma → MongoDB'}
             </Button>
           </div>
         </div>

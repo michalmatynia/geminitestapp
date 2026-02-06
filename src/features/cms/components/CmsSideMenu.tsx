@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import * as React from "react";
+import * as React from 'react';
 
-import RichTextBlock, { type RichTextContent } from "./RichTextBlock";
-import type { PageComponent, Page } from "@/features/cms/types";
+import type { PageComponent, Page } from '@/features/cms/types';
+import { Button } from '@/shared/ui';
+
+import RichTextBlock, { type RichTextContent } from './RichTextBlock';
+
 
 interface CmsSideMenuProps {
   page: Page | null;
@@ -70,7 +72,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
           <h3 className="font-bold mb-2">Template</h3>
 
           {page.components?.map((component: PageComponent, index: number) => {
-            if (component?.type === "RichText") {
+            if (component?.type === 'RichText') {
               return (
                 <RichTextBlock
                   key={index}
@@ -82,7 +84,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
             return null;
           })}
 
-          <Button onClick={() => addComponent("RichText")}>Add Section</Button>
+          <Button onClick={() => addComponent('RichText')}>Add Section</Button>
         </div>
 
         <div>

@@ -1,16 +1,17 @@
-import { vi, beforeEach, afterAll } from "vitest";
-import { describe, it, expect } from "vitest";
-import { GET } from "@/app/api/products/parameters/route";
-import { NextRequest } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from 'next/server';
+import { vi, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
+
+import { GET } from '@/app/api/products/parameters/route';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock the api-handler module
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
 }));
 
 // Mock Prisma client
-vi.mock("@/shared/lib/db/prisma", () => ({
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     productParameter: {
       findMany: vi.fn(),
@@ -22,8 +23,8 @@ vi.mock("@/shared/lib/db/prisma", () => ({
 }));
 
 // Mock data provider
-vi.mock("@/features/products/server", () => ({
-  getProductDataProvider: vi.fn().mockResolvedValue("prisma"),
+vi.mock('@/features/products/server', () => ({
+  getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
   parseJsonBody: async (req: any, schema: any) => {
     try {
       const body = await req.json();
@@ -33,15 +34,15 @@ vi.mock("@/features/products/server", () => ({
       }
       return { ok: true, data: result.data };
     } catch {
-      return { ok: false, response: new Response("Invalid JSON", { status: 400 }) };
+      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
     }
   },
 }));
 
-describe("Product Parameters API", () => {
+describe('Product Parameters API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://mock";
+    process.env.DATABASE_URL = 'postgresql://mock';
   });
 
   afterAll(() => {
@@ -49,13 +50,13 @@ describe("Product Parameters API", () => {
     delete process.env.DATABASE_URL;
   });
 
-  describe("GET /api/products/parameters", () => {
-    it("should return parameters for a given catalogId", async () => {
-      const mockParams = [{ id: "1", name_en: "Param 1", catalogId: "cat1" }];
+  describe('GET /api/products/parameters', () => {
+    it('should return parameters for a given catalogId', async () => {
+      const mockParams = [{ id: '1', name_en: 'Param 1', catalogId: 'cat1' }];
       vi.mocked(prisma.productParameter.findMany).mockResolvedValue(mockParams as any);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/parameters?catalogId=cat1")
+        new NextRequest('http://localhost/api/products/parameters?catalogId=cat1')
       );
       const data = await res.json();
       expect(res.status).toEqual(200);

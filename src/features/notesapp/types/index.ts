@@ -8,9 +8,9 @@ export type {
   UpdateNoteDto,
   CreateNotebookDto,
   UpdateNotebookDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
-export * from "@/shared/types/notes";
-export * from "./notes-hooks";
-export * from "./notes-ui";
-export * from "./notes-settings";
+export * from '@/shared/types/notes';
+export * from './notes-hooks';
+export * from './notes-ui';
+export * from './notes-settings';

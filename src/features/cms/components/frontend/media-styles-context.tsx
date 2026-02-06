@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext } from 'react';
 
 const MediaStylesContext = createContext<React.CSSProperties | null>(null);
 

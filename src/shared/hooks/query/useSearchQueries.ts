@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 interface SearchConfig<T> {
   searchFn: (query: string) => Promise<T[]>;

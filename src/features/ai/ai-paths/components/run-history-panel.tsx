@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
+import type { AiPathRunRecord } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
@@ -10,13 +11,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui";
+} from '@/shared/ui';
 
-import type { AiPathRunRecord } from "@/features/ai/ai-paths/lib";
-import { RunHistoryEntries } from "./RunHistoryEntries";
-import { buildHistoryNodeOptions } from "./run-history-utils";
+import { buildHistoryNodeOptions } from './run-history-utils';
+import { RunHistoryEntries } from './RunHistoryEntries';
 
-export type RunHistoryFilter = "all" | "active" | "failed" | "dead";
+export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 
 type RunHistoryPanelProps = {
   runs: AiPathRunRecord[];
@@ -29,7 +29,7 @@ type RunHistoryPanelProps = {
   runHistorySelection: Record<string, string>;
   setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   onOpenRunDetail: (runId: string) => void;
-  onResumeRun: (runId: string, mode: "resume" | "replay") => void;
+  onResumeRun: (runId: string, mode: 'resume' | 'replay') => void;
   onCancelRun: (runId: string) => void;
   onRequeueDeadLetter: (runId: string) => void;
 };
@@ -50,18 +50,18 @@ export function RunHistoryPanel({
   onRequeueDeadLetter,
 }: RunHistoryPanelProps): React.JSX.Element {
   const filteredRunList = React.useMemo((): AiPathRunRecord[] => {
-    if (runFilter === "all") return runs;
-    if (runFilter === "active") {
+    if (runFilter === 'all') return runs;
+    if (runFilter === 'active') {
       return runs.filter(
-        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
+        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
     }
-    if (runFilter === "failed") {
+    if (runFilter === 'failed') {
       return runs.filter(
-        (run: AiPathRunRecord): boolean => run.status === "failed" || run.status === "paused"
+        (run: AiPathRunRecord): boolean => run.status === 'failed' || run.status === 'paused'
       );
     }
-    return runs.filter((run: AiPathRunRecord): boolean => run.status === "dead_lettered");
+    return runs.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
   }, [runFilter, runs]);
 
   return (
@@ -74,23 +74,23 @@ export function RunHistoryPanel({
           onClick={onRefresh}
           disabled={isRefreshing}
         >
-          {isRefreshing ? "Refreshing..." : "Refresh"}
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
         {[
-          { id: "all", label: "All" },
-          { id: "active", label: "Active" },
-          { id: "failed", label: "Failed" },
-          { id: "dead", label: "Dead-letter" },
+          { id: 'all', label: 'All' },
+          { id: 'active', label: 'Active' },
+          { id: 'failed', label: 'Failed' },
+          { id: 'dead', label: 'Dead-letter' },
         ].map((filter: { id: string; label: string }): React.JSX.Element => (
           <Button
             key={filter.id}
             type="button"
             className={`rounded-md border px-2 py-1 text-[10px] ${
               runFilter === filter.id
-                ? "border-emerald-500/50 text-emerald-200"
-                : "text-gray-300 hover:bg-muted/60"
+                ? 'border-emerald-500/50 text-emerald-200'
+                : 'text-gray-300 hover:bg-muted/60'
             }`}
             onClick={(): void => setRunFilter(filter.id as RunHistoryFilter)}
           >
@@ -104,24 +104,24 @@ export function RunHistoryPanel({
         <div className="space-y-2 text-xs text-gray-300">
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
             const statusClass =
-              run.status === "completed"
-                ? "text-emerald-200"
-                : run.status === "failed"
-                  ? "text-rose-200"
-                  : run.status === "dead_lettered"
-                    ? "text-rose-300"
-                    : run.status === "running"
-                      ? "text-sky-200"
-                      : run.status === "queued"
-                        ? "text-amber-200"
-                        : "text-gray-300";
+              run.status === 'completed'
+                ? 'text-emerald-200'
+                : run.status === 'failed'
+                  ? 'text-rose-200'
+                  : run.status === 'dead_lettered'
+                    ? 'text-rose-300'
+                    : run.status === 'running'
+                      ? 'text-sky-200'
+                      : run.status === 'queued'
+                        ? 'text-amber-200'
+                        : 'text-gray-300';
             const runHistory = (run.runtimeState?.history ?? undefined);
             const runHistoryOptions = buildHistoryNodeOptions(
               runHistory,
               null,
               run.graph?.nodes ?? null
             );
-            const isScheduledRun = run.triggerEvent === "scheduled_run";
+            const isScheduledRun = run.triggerEvent === 'scheduled_run';
             const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
             const selectedHistoryNodeId = runHistoryOptions.some(
               (option: { id: string }) => option.id === rawSelectedHistoryNodeId
@@ -151,12 +151,12 @@ export function RunHistoryPanel({
                     <div className="text-[11px] text-gray-400">
                       {new Date(run.createdAt).toLocaleString()}
                     </div>
-                    {typeof run.retryCount === "number" &&
-                      typeof run.maxAttempts === "number" && (
-                        <div className="text-[10px] text-gray-500">
+                    {typeof run.retryCount === 'number' &&
+                      typeof run.maxAttempts === 'number' && (
+                      <div className="text-[10px] text-gray-500">
                           Retries: {run.retryCount}/{run.maxAttempts}
-                        </div>
-                      )}
+                      </div>
+                    )}
                     {run.nextRetryAt && (
                       <div className="text-[10px] text-amber-200">
                         Retry at {new Date(run.nextRetryAt).toLocaleString()}
@@ -182,18 +182,18 @@ export function RunHistoryPanel({
                         if (!runHistorySelection[run.id] && runHistoryOptions[0]?.id) {
                           setRunHistorySelection((prev: Record<string, string>) => ({
                             ...prev,
-                            [run.id]: runHistoryOptions[0]?.id ?? "",
+                            [run.id]: runHistoryOptions[0]?.id ?? '',
                           }));
                         }
                       }}
                     >
-                      {historyOpen ? "Hide history" : "History"}
+                      {historyOpen ? 'Hide history' : 'History'}
                     </Button>
-                    {(run.status === "failed" || run.status === "paused") && (
+                    {(run.status === 'failed' || run.status === 'paused') && (
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
-                        onClick={(): void => onResumeRun(run.id, "resume")}
+                        onClick={(): void => onResumeRun(run.id, 'resume')}
                       >
                         Resume
                       </Button>
@@ -201,11 +201,11 @@ export function RunHistoryPanel({
                     <Button
                       type="button"
                       className="rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10"
-                      onClick={(): void => onResumeRun(run.id, "replay")}
+                      onClick={(): void => onResumeRun(run.id, 'replay')}
                     >
                       Replay
                     </Button>
-                    {(run.status === "queued" || run.status === "running") && (
+                    {(run.status === 'queued' || run.status === 'running') && (
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
@@ -214,7 +214,7 @@ export function RunHistoryPanel({
                         Cancel
                       </Button>
                     )}
-                    {run.status === "dead_lettered" && (
+                    {run.status === 'dead_lettered' && (
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
@@ -258,7 +258,7 @@ export function RunHistoryPanel({
                           </Select>
                         ) : (
                           <div className="text-[11px] text-gray-400">
-                            {runHistoryOptions[0]?.label ?? "No nodes"}
+                            {runHistoryOptions[0]?.label ?? 'No nodes'}
                           </div>
                         )
                       ) : null}

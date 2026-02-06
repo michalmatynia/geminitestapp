@@ -9,7 +9,7 @@ import {
   getImportSampleInventoryId,
   getImportSampleProductId,
   setImportSampleInventoryId,
-  setImportSampleProductId,
+  setImportSampleProductId
 } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -20,7 +20,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),
   productId: z.string().trim().min(1).optional(),
-  saveOnly: z.boolean().optional(),
+  saveOnly: z.boolean().optional()
 });
 
 const toStringId = (value: unknown): string | null => {
@@ -77,7 +77,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.sample-product.GET",
-      fallbackMessage: "Failed to fetch sample product.",
+      fallbackMessage: "Failed to fetch sample product."
     });
   }
 }
@@ -85,7 +85,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.sample-product.POST",
+      logPrefix: "imports.base.sample-product.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -104,7 +104,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       return NextResponse.json({
         productId: data.productId ?? null,
-        inventoryId: inventoryId || null,
+        inventoryId: inventoryId || null
       });
     }
 
@@ -130,7 +130,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const token = decryptSecret(connection.baseApiToken);
       const payload = await callBaseApi(token, "getInventoryProductsList", {
         inventory_id: inventoryId,
-        limit: 1,
+        limit: 1
       });
       productId = extractFirstProductId(payload) ?? undefined;
       if (!productId) {
@@ -145,14 +145,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "products.imports.base.sample-product.POST",
-      fallbackMessage: "Failed to save sample product",
+      fallbackMessage: "Failed to save sample product"
     });
   }
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.imports.base.sample-product.GET" });
+ { source: "products.imports.base.sample-product.GET", requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.sample-product.POST" });
+ { source: "products.imports.base.sample-product.POST", requireCsrf: false });

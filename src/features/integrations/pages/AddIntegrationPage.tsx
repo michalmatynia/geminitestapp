@@ -1,43 +1,44 @@
-"use client";
+'use client';
 
-import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
-import Link from "next/link";
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
 
-import { useCreateIntegration } from "@/features/integrations/hooks/useIntegrationMutations";
-import { useIntegrations } from "@/features/integrations/hooks/useIntegrationQueries";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
+
+import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
+import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 
 
 
 const integrations = [
   {
-    name: "Tradera",
-    slug: "tradera",
-    type: "marketplace" as const,
-    method: "browser" as const,
+    name: 'Tradera',
+    slug: 'tradera',
+    type: 'marketplace' as const,
+    method: 'browser' as const,
     description:
-      "Sync and list products on Tradera via browser automation (Playwright).",
+      'Sync and list products on Tradera via browser automation (Playwright).',
   },
   {
-    name: "Allegro",
-    slug: "allegro",
-    type: "marketplace" as const,
-    method: "api" as const,
+    name: 'Allegro',
+    slug: 'allegro',
+    type: 'marketplace' as const,
+    method: 'api' as const,
     description:
-      "List and sync products on Allegro using the official OAuth API.",
+      'List and sync products on Allegro using the official OAuth API.',
   },
   {
-    name: "Baselinker",
-    slug: "baselinker",
-    type: "platform" as const,
-    method: "api" as const,
+    name: 'Baselinker',
+    slug: 'baselinker',
+    type: 'platform' as const,
+    method: 'api' as const,
     description:
-      "Import products and sync inventory with Baselinker warehouse management.",
+      'Import products and sync inventory with Baselinker warehouse management.',
   },
 ];
 
-import type { Integration } from "@/features/integrations/types/integrations-ui";
+import type { Integration } from '@/features/integrations/types/integrations-ui';
 
 export default function AddIntegrationPage(): React.JSX.Element {
   const router = useRouter();
@@ -50,8 +51,8 @@ export default function AddIntegrationPage(): React.JSX.Element {
     const message =
       integrationsQuery.error instanceof Error
         ? integrationsQuery.error.message
-        : "Failed to load integrations.";
-    toast(message, { variant: "error" });
+        : 'Failed to load integrations.';
+    toast(message, { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   const handleAdd = async (integration: (typeof integrations)[number]): Promise<void> => {
@@ -60,11 +61,11 @@ export default function AddIntegrationPage(): React.JSX.Element {
         name: integration.name,
         slug: integration.slug,
       });
-      router.push("/admin/integrations");
+      router.push('/admin/integrations');
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to add integration.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to add integration.';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -108,21 +109,21 @@ export default function AddIntegrationPage(): React.JSX.Element {
                 <div className="flex flex-col items-end gap-2">
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
-                      integration.type === "marketplace"
-                        ? "bg-emerald-500/20 text-emerald-200"
-                        : "bg-purple-500/20 text-purple-200"
+                      integration.type === 'marketplace'
+                        ? 'bg-emerald-500/20 text-emerald-200'
+                        : 'bg-purple-500/20 text-purple-200'
                     }`}
                   >
-                    {integration.type === "marketplace" ? "Marketplace" : "Platform"}
+                    {integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
                   </span>
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
-                      integration.method === "api"
-                        ? "bg-blue-500/20 text-blue-200"
-                        : "bg-orange-500/20 text-orange-200"
+                      integration.method === 'api'
+                        ? 'bg-blue-500/20 text-blue-200'
+                        : 'bg-orange-500/20 text-orange-200'
                     }`}
                   >
-                    {integration.method === "api" ? "API" : "Browser"}
+                    {integration.method === 'api' ? 'API' : 'Browser'}
                   </span>
                   <span className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300">
                     Added: {integrationCounts[integration.slug] ?? 0}

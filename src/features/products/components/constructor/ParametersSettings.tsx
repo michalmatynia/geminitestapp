@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useToast, Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
-import { useState, useCallback } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
 
-import type { CatalogRecord } from "@/features/products/types";
-import type { ProductParameter } from "@/features/products/types";
-import { useSaveParameterMutation, useDeleteParameterMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import type { CatalogRecord } from '@/features/products/types';
+import type { ProductParameter } from '@/features/products/types';
+import { useToast, Button, Input, Label, UnifiedSelect, SharedModal, EmptyState, ConfirmDialog, SectionPanel } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -29,10 +29,10 @@ export function ParametersSettings({
   const [showModal, setShowModal] = useState(false);
   const [editingParameter, setEditingParameter] = useState<ProductParameter | null>(null);
   const [formData, setFormData] = useState({
-    name_en: "",
-    name_pl: "",
-    name_de: "",
-    catalogId: "",
+    name_en: '',
+    name_pl: '',
+    name_de: '',
+    catalogId: '',
   });
   const [parameterToDelete, setParameterToDelete] = useState<ProductParameter | null>(null);
 
@@ -41,14 +41,14 @@ export function ParametersSettings({
 
   const openCreateModal = (): void => {
     if (!selectedCatalogId) {
-      toast("Please select a catalog first.", { variant: "error" });
+      toast('Please select a catalog first.', { variant: 'error' });
       return;
     }
     setEditingParameter(null);
     setFormData({
-      name_en: "",
-      name_pl: "",
-      name_de: "",
+      name_en: '',
+      name_pl: '',
+      name_de: '',
       catalogId: selectedCatalogId,
     });
     setShowModal(true);
@@ -58,8 +58,8 @@ export function ParametersSettings({
     setEditingParameter(parameter);
     setFormData({
       name_en: parameter.name_en,
-      name_pl: parameter.name_pl ?? "",
-      name_de: parameter.name_de ?? "",
+      name_pl: parameter.name_pl ?? '',
+      name_de: parameter.name_de ?? '',
       catalogId: parameter.catalogId,
     });
     setShowModal(true);
@@ -67,11 +67,11 @@ export function ParametersSettings({
 
   const handleSave = async (): Promise<void> => {
     if (!formData.name_en.trim()) {
-      toast("English name is required.", { variant: "error" });
+      toast('English name is required.', { variant: 'error' });
       return;
     }
     if (!formData.catalogId) {
-      toast("Catalog is required.", { variant: "error" });
+      toast('Catalog is required.', { variant: 'error' });
       return;
     }
 
@@ -88,15 +88,15 @@ export function ParametersSettings({
         data: payload,
       });
 
-      toast(editingParameter ? "Parameter updated." : "Parameter created.", {
-        variant: "success",
+      toast(editingParameter ? 'Parameter updated.' : 'Parameter created.', {
+        variant: 'success',
       });
       setShowModal(false);
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to save parameter.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save parameter.';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -108,12 +108,12 @@ export function ParametersSettings({
     if (!parameterToDelete) return;
     try {
       await deleteParameterMutation.mutateAsync({ id: parameterToDelete.id, catalogId: selectedCatalogId });
-      toast("Parameter deleted.", { variant: "success" });
+      toast('Parameter deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete parameter.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to delete parameter.';
+      toast(message, { variant: 'error' });
     } finally {
       setParameterToDelete(null);
     }
@@ -125,30 +125,23 @@ export function ParametersSettings({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Parameters are managed per catalog.
         </p>
         <div className="w-full max-w-xs">
-          <Select
-            value={selectedCatalogId || ""}
+          <UnifiedSelect
+            value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: CatalogRecord) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault ? " (Default)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: CatalogRecord) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {selectedCatalogId && (
         <>
@@ -162,7 +155,7 @@ export function ParametersSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Parameters for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -185,9 +178,10 @@ export function ParametersSettings({
             ) : (
               <div className="space-y-2">
                 {parameters.map((parameter: ProductParameter) => (
-                  <div
+                  <SectionPanel
                     key={parameter.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
+                    variant="subtle-compact"
+                    className="flex items-center justify-between gap-3 p-3"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-gray-100 truncate">
@@ -219,11 +213,11 @@ export function ParametersSettings({
                         <Trash2 className="size-3" />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 
@@ -248,7 +242,7 @@ export function ParametersSettings({
         <SharedModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
-          title={editingParameter ? "Edit Parameter" : "Create Parameter"}
+          title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
           size="md"
         >
           <div className="space-y-3">
@@ -298,7 +292,7 @@ export function ParametersSettings({
               Cancel
             </Button>
             <Button onClick={(): void => { void handleSave(); }} disabled={saveParameterMutation.isPending}>
-              {saveParameterMutation.isPending ? "Saving..." : "Save"}
+              {saveParameterMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </SharedModal>

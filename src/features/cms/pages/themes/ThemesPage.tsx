@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
 
-import { Button, ListPanel, SectionHeader } from "@/shared/ui";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCmsThemes, useDeleteTheme } from "@/features/cms/hooks/useCmsQueries";
-import type { CmsTheme } from "@/features/cms/types";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
+import type { CmsTheme } from '@/features/cms/types';
+import { Button, ListPanel, SectionHeader } from '@/shared/ui';
 
 export default function ThemesPage(): React.ReactNode {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function ThemesPage(): React.ReactNode {
   const themes = themesQuery.data ?? [];
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm("Delete this theme?")) return;
+    if (!confirm('Delete this theme?')) return;
     await deleteMutation.mutateAsync(id);
   };
 
@@ -27,7 +28,7 @@ export default function ThemesPage(): React.ReactNode {
             title="Themes"
             description="Manage color palettes, typography and spacing presets."
             actions={
-              <Button size="sm" onClick={() => router.push("/admin/cms/themes/create")}>
+              <Button size="sm" onClick={() => router.push('/admin/cms/themes/create')}>
                 Create Theme
               </Button>
             }

@@ -64,7 +64,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const backups = await getBackups(type);
     return NextResponse.json(backups);
   } catch (error) {
-    console.error("Failed to list backups:", error);
     return createErrorResponse(error, {
       request: req,
       source: "databases.backups.GET",

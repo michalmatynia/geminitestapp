@@ -1,15 +1,17 @@
-"use client";
+'use client';
 
-import { ItemLibrary, useToast } from "@/shared/ui";
-import Link from "next/link";
-import type { SetStateAction } from "react";
-import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
-import { buildPlaywrightSettings, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
-import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from "@/features/playwright/hooks/usePlaywrightPersonas";
+import Link from 'next/link';
+
+import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
+import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import type {
   PlaywrightPersona,
   PlaywrightSettings,
-} from "@/features/playwright/types";
+} from '@/features/playwright/types';
+import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
+import { ItemLibrary, useToast } from '@/shared/ui';
+
+import type { SetStateAction } from 'react';
 
 export function PlaywrightPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -20,7 +22,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   const handleSavePersona = async (draft: Partial<PlaywrightPersona>): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
-      toast("Persona name is required.", { variant: "error" });
+      toast('Persona name is required.', { variant: 'error' });
       return;
     }
 
@@ -37,17 +39,17 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
     const next = existing
       ? personas.map((persona: PlaywrightPersona) =>
-          persona.id === existing.id ? nextPersona : persona
-        )
+        persona.id === existing.id ? nextPersona : persona
+      )
       : [...personas, nextPersona];
 
     try {
       await savePersonas({ personas: next });
-      toast(existing ? "Persona updated." : "Persona created.", { variant: "success" });
+      toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to save personas.";
-      toast(errorMessage, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save personas.';
+      toast(errorMessage, { variant: 'error' });
     }
   };
 
@@ -55,11 +57,11 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
     try {
       await savePersonas({ personas: next });
-      toast("Persona deleted.", { variant: "success" });
+      toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to save personas.";
-      toast(errorMessage, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save personas.';
+      toast(errorMessage, { variant: 'error' });
     }
   };
 
@@ -79,17 +81,17 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         </Link>
       )}
       buildDefaultItem={() => ({
-        name: "",
-        description: "",
+        name: '',
+        description: '',
         settings: buildPlaywrightSettings(),
       })}
       renderItemTags={(persona: PlaywrightPersona) => {
         const settings = persona.settings;
         const tags = [
-          settings.headless ? "Headless" : "Headful",
-          settings.emulateDevice ? `Device: ${settings.deviceName}` : "Device: default",
+          settings.headless ? 'Headless' : 'Headful',
+          settings.emulateDevice ? `Device: ${settings.deviceName}` : 'Device: default',
           `Timeout: ${settings.timeout}ms`,
-          settings.proxyEnabled ? "Proxy: on" : "Proxy: off",
+          settings.proxyEnabled ? 'Proxy: on' : 'Proxy: off',
         ];
         if (settings.slowMo > 0) {
           tags.push(`SlowMo: ${settings.slowMo}ms`);

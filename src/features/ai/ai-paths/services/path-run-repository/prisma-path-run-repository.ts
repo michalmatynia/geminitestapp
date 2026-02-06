@@ -1,11 +1,7 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from "@/shared/types/ai-paths";
+import { Prisma } from '@prisma/client';
+
 import type {
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
@@ -13,8 +9,14 @@ import type {
   AiPathRunRepository,
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
-} from "@/features/ai/ai-paths/types/path-run-repository";
-import type { AiNode } from "@/shared/types/ai-paths";
+} from '@/features/ai/ai-paths/types/path-run-repository';
+import prisma from '@/shared/lib/db/prisma';
+import type {
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
+  AiPathRunRecord,
+} from '@/shared/types/ai-paths';
+import type { AiNode } from '@/shared/types/ai-paths';
 
 const prismaAny = prisma as unknown as {
   aiPathRun?: {
@@ -24,7 +26,7 @@ const prismaAny = prisma as unknown as {
     findMany: (args: unknown) => Promise<unknown[]>;
     findFirst: (args: unknown) => Promise<unknown>;
     count: (args: unknown) => Promise<number>;
-    updateMany: (args: unknown) => Promise<unknown>;
+    updateMany: (args: unknown) => Promise<{ count: number }>;
   };
   aiPathRunNode?: {
     createMany: (args: unknown) => Promise<unknown>;
@@ -45,13 +47,13 @@ const mapRun = (run: unknown): AiPathRunRecord => {
     pathId: (r.pathId as string) ?? null,
     pathName: (r.pathName as string) ?? null,
     prompt: (r.prompt as string) ?? null,
-    status: r.status as AiPathRunRecord["status"],
+    status: r.status as AiPathRunRecord['status'],
     triggerEvent: (r.triggerEvent as string) ?? null,
     triggerNodeId: (r.triggerNodeId as string) ?? null,
-    triggerContext: (r.triggerContext as AiPathRunRecord["triggerContext"]) ?? null,
-    graph: (r.graph as AiPathRunRecord["graph"]) ?? null,
-    runtimeState: (r.runtimeState as AiPathRunRecord["runtimeState"]) ?? null,
-    meta: (r.meta as AiPathRunRecord["meta"]) ?? null,
+    triggerContext: (r.triggerContext as AiPathRunRecord['triggerContext']) ?? null,
+    graph: (r.graph as AiPathRunRecord['graph']) ?? null,
+    runtimeState: (r.runtimeState as AiPathRunRecord['runtimeState']) ?? null,
+    meta: (r.meta as AiPathRunRecord['meta']) ?? null,
     entityId: (r.entityId as string) ?? null,
     entityType: (r.entityType as string) ?? null,
     errorMessage: (r.errorMessage as string) ?? null,
@@ -74,10 +76,10 @@ const mapNode = (node: unknown): AiPathRunNodeRecord => {
     nodeId: String(n.nodeId),
     nodeType: String(n.nodeType),
     nodeTitle: (n.nodeTitle as string) ?? null,
-    status: n.status as AiPathRunNodeRecord["status"],
+    status: n.status as AiPathRunNodeRecord['status'],
     attempt: (n.attempt as number) ?? 0,
-    inputs: (n.inputs as AiPathRunNodeRecord["inputs"]) ?? null,
-    outputs: (n.outputs as AiPathRunNodeRecord["outputs"]) ?? null,
+    inputs: (n.inputs as AiPathRunNodeRecord['inputs']) ?? null,
+    outputs: (n.outputs as AiPathRunNodeRecord['outputs']) ?? null,
     errorMessage: (n.errorMessage as string) ?? null,
     createdAt: n.createdAt as Date,
     updatedAt: (n.updatedAt as Date) ?? null,
@@ -91,16 +93,16 @@ const mapEvent = (event: unknown): AiPathRunEventRecord => {
   return {
     id: String(e.id),
     runId: String(e.runId),
-    level: e.level as AiPathRunEventRecord["level"],
+    level: e.level as AiPathRunEventRecord['level'],
     message: String(e.message),
-    metadata: (e.metadata as AiPathRunEventRecord["metadata"]) ?? null,
+    metadata: (e.metadata as AiPathRunEventRecord['metadata']) ?? null,
     createdAt: e.createdAt as Date,
   };
 };
 
 const ensureModels = (): void => {
   if (!prismaAny.aiPathRun || !prismaAny.aiPathRunNode || !prismaAny.aiPathRunEvent) {
-    throw new Error("AiPath run models not initialized in Prisma.");
+    throw new Error('AiPath run models not initialized in Prisma.');
   }
 };
 
@@ -112,7 +114,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         userId: input.userId ?? null,
         pathId: input.pathId,
         pathName: input.pathName ?? null,
-        status: "queued",
+        status: 'queued',
         triggerEvent: input.triggerEvent ?? null,
         triggerNodeId: input.triggerNodeId ?? null,
         triggerContext: input.triggerContext ?? null,
@@ -150,47 +152,96 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     ensureModels();
     const query = options.query?.trim();
     const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+    const source = options.source?.trim();
+    const sourceMode = options.sourceMode ?? 'include';
     const parseDate = (value: Date | string | null | undefined): Date | null => {
       if (!value) return null;
-      const date = typeof value === "string" ? new Date(value) : value;
+      const date = typeof value === 'string' ? new Date(value) : value;
       return Number.isNaN(date.getTime()) ? null : date;
     };
     const createdAfter = parseDate(options.createdAfter);
     const createdBefore = parseDate(options.createdBefore);
-    const where = {
-      ...(options.userId ? { userId: options.userId } : {}),
-      ...(options.pathId ? { pathId: options.pathId } : {}),
-      ...(statuses.length > 0
-        ? { status: { in: statuses } }
-        : options.status
-          ? { status: options.status }
-          : {}),
-      ...((createdAfter || createdBefore)
-        ? {
-            createdAt: {
-              ...(createdAfter ? { gte: createdAfter } : {}),
-              ...(createdBefore ? { lte: createdBefore } : {}),
-            },
-          }
-        : {}),
-      ...(query
-        ? {
-            OR: [
-              { id: { contains: query, mode: "insensitive" } },
-              { pathId: { contains: query, mode: "insensitive" } },
-              { pathName: { contains: query, mode: "insensitive" } },
-              { entityId: { contains: query, mode: "insensitive" } },
-              { errorMessage: { contains: query, mode: "insensitive" } },
+    const andFilters: Prisma.AiPathRunWhereInput[] = [];
+    if (options.userId) {
+      andFilters.push({ userId: options.userId });
+    }
+    if (options.pathId) {
+      andFilters.push({ pathId: options.pathId });
+    }
+    if (statuses.length > 0) {
+      andFilters.push({ status: { in: statuses } });
+    } else if (options.status) {
+      andFilters.push({ status: options.status });
+    }
+    if (source) {
+      const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+      const aiPathsTabs = ['product', 'note'];
+      if (sourceMode === 'exclude') {
+        if (source === 'ai_paths_ui') {
+          andFilters.push({
+            AND: [
+              { NOT: { meta: { path: ['source'], equals: 'ai_paths_ui' } } },
+              { NOT: { meta: { path: ['source'], equals: 'trigger_button' } } },
+              { NOT: { meta: { path: ['source'], equals: 'product_panel' } } },
+              ...aiPathsTabs.map((tab) => ({
+                NOT: { meta: { path: ['source', 'tab'], equals: tab } },
+              })),
+              { NOT: { meta: { equals: Prisma.DbNull } } },
+              { NOT: { meta: { equals: Prisma.JsonNull } } },
             ],
-          }
-        : {}),
-    };
+          });
+        } else {
+          andFilters.push({
+            AND: [
+              { NOT: { meta: { path: ['source'], equals: source } } },
+              { NOT: { meta: { equals: Prisma.DbNull } } },
+              { NOT: { meta: { equals: Prisma.JsonNull } } },
+            ],
+          });
+        }
+      } else if (source === 'ai_paths_ui') {
+        andFilters.push({
+          OR: [
+            ...aiPathsSources.map((value) => ({
+              meta: { path: ['source'], equals: value },
+            })),
+            ...aiPathsTabs.map((tab) => ({
+              meta: { path: ['source', 'tab'], equals: tab },
+            })),
+            { meta: { equals: Prisma.DbNull } },
+            { meta: { equals: Prisma.JsonNull } },
+          ],
+        });
+      } else {
+        andFilters.push({ meta: { path: ['source'], equals: source } });
+      }
+    }
+    if (createdAfter || createdBefore) {
+      andFilters.push({
+        createdAt: {
+          ...(createdAfter ? { gte: createdAfter } : {}),
+          ...(createdBefore ? { lte: createdBefore } : {}),
+        },
+      });
+    }
+    if (query) {
+      andFilters.push({
+        OR: [
+          { id: { contains: query, mode: 'insensitive' } },
+          { pathId: { contains: query, mode: 'insensitive' } },
+          { pathName: { contains: query, mode: 'insensitive' } },
+          { entityId: { contains: query, mode: 'insensitive' } },
+          { errorMessage: { contains: query, mode: 'insensitive' } },
+        ],
+      });
+    }
+    const where = andFilters.length > 0 ? { AND: andFilters } : {};
     const [runs, total] = await Promise.all([
       prismaAny.aiPathRun!.findMany({
         where,
-        orderBy: { createdAt: "desc" },
-        ...(typeof options.offset === "number" ? { skip: options.offset } : {}),
-        ...(typeof options.limit === "number" ? { take: options.limit } : {}),
+        orderBy: { createdAt: 'desc' },
+        ...(typeof options.offset === 'number' ? { skip: options.offset } : {}),
+        ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
       }),
       prismaAny.aiPathRun!.count({ where }),
     ]);
@@ -202,17 +253,37 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const now = new Date();
     const run = (await prismaAny.aiPathRun!.findFirst({
       where: {
-        status: "queued",
+        status: 'queued',
         OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
     })) as Record<string, unknown> | null;
     if (!run) return null;
-    const updated = await prismaAny.aiPathRun!.update({
-      where: { id: run.id },
-      data: { status: "running", startedAt: new Date() },
+    const updated = await prismaAny.aiPathRun!.updateMany({
+      where: { id: run.id as string, status: 'queued' },
+      data: { status: 'running', startedAt: new Date() },
     });
-    return mapRun(updated);
+    if (!updated.count) return null;
+    const fresh = await prismaAny.aiPathRun!.findUnique({ where: { id: run.id as string } });
+    return fresh ? mapRun(fresh) : null;
+  },
+
+  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+    ensureModels();
+    const now = new Date();
+    const where = {
+      status: 'queued',
+      OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+    };
+    const [queuedCount, oldest] = await Promise.all([
+      prismaAny.aiPathRun!.count({ where }),
+      prismaAny.aiPathRun!.findFirst({
+        where,
+        orderBy: { createdAt: 'asc' },
+        select: { createdAt: true },
+      }) as Promise<{ createdAt: Date } | null>,
+    ]);
+    return { queuedCount, oldestQueuedAt: oldest?.createdAt ?? null };
   },
 
   async createRunNodes(runId: string, nodes: AiNode[]): Promise<void> {
@@ -223,7 +294,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       nodeId: node.id,
       nodeType: node.type,
       nodeTitle: node.title ?? null,
-      status: "pending",
+      status: 'pending',
       attempt: 0,
     }));
     await prismaAny.aiPathRunNode!.createMany({ data });
@@ -243,7 +314,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         nodeId,
         nodeType: data.nodeType,
         nodeTitle: data.nodeTitle ?? null,
-        status: data.status ?? "pending",
+        status: data.status ?? 'pending',
         attempt: data.attempt ?? 0,
         inputs: data.inputs ?? null,
         outputs: data.outputs ?? null,
@@ -259,7 +330,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     ensureModels();
     const nodes = await prismaAny.aiPathRunNode!.findMany({
       where: { runId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
     });
     return (nodes).map(mapNode);
   },
@@ -294,8 +365,8 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         runId,
         ...(since ? { createdAt: { gt: since } } : {}),
       },
-      orderBy: { createdAt: "asc" },
-      ...(typeof options.limit === "number" ? { take: options.limit } : {}),
+      orderBy: { createdAt: 'asc' },
+      ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
     });
     return (events).map(mapEvent);
   },
@@ -304,11 +375,11 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     ensureModels();
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await prismaAny.aiPathRun!.updateMany({
-      where: { status: "running", startedAt: { lt: cutoff } },
+      where: { status: 'running', startedAt: { lt: cutoff } },
       data: {
-        status: "failed",
+        status: 'failed',
         finishedAt: new Date(),
-        errorMessage: "Run marked failed due to stale running state.",
+        errorMessage: 'Run marked failed due to stale running state.',
       },
     });
     return { count: (result as { count?: number }).count ?? 0 };

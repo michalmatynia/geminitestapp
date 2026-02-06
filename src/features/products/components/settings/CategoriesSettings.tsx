@@ -1,17 +1,22 @@
-"use client";
+'use client';
 
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Input, Textarea, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { Plus } from 'lucide-react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+
+import { useSaveCategoryMutation, useDeleteCategoryMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
 import {
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  Trash2,
-  FolderPlus,
-} from "lucide-react";
+  Button,
+  UnifiedSelect,
+  useToast,
+  EmptyState,
+  ConfirmDialog,
+  SectionPanel,
+} from '@/shared/ui';
+import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
-import type { ProductCategoryWithChildren, Catalog, ProductCategory } from "@/features/products/types";
-import { useSaveCategoryMutation, useDeleteCategoryMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { CategoryForm, type CategoryFormData } from './CategoryForm';
+import { CategoryTreeItem } from './CategoryTreeItem';
 
 type CategoriesSettingsProps = {
   loading: boolean;
@@ -20,200 +25,6 @@ type CategoriesSettingsProps = {
   selectedCatalogId: string | null;
   onCatalogChange: (catalogId: string) => void;
   onRefresh: () => void;
-};
-
-type CategoryNodeProps = {
-  category: ProductCategoryWithChildren;
-  level: number;
-  expandedIds: Set<string>;
-  onToggleExpand: (id: string) => void;
-  onEdit: (category: ProductCategoryWithChildren) => void;
-  onDelete: (category: ProductCategoryWithChildren) => void;
-  onCreateChild: (parentId: string) => void;
-  draggedId: string | null;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
-  onDrop: (draggedId: string, targetId: string | null) => void;
-  allCategories: ProductCategoryWithChildren[];
-};
-
-function CategoryNode({
-  category,
-  level,
-  expandedIds,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onCreateChild,
-  draggedId,
-  onDragStart,
-  onDragEnd,
-  onDrop,
-  allCategories,
-}: CategoryNodeProps): React.JSX.Element {
-  const [isDragOver, setIsDragOver] = useState<boolean>(false);
-  const hasChildren: boolean = category.children.length > 0;
-  const isExpanded: boolean = expandedIds.has(category.id);
-
-  const canDropHere: boolean = useMemo((): boolean => {
-    if (!draggedId) return true;
-    if (draggedId === category.id) return false;
-
-    // Check if the target category is a descendant of the dragged category
-    const isDescendant = (
-      cat: ProductCategoryWithChildren,
-      targetId: string
-    ): boolean => {
-      if (cat.id === targetId) return true;
-      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
-    };
-
-    const findCategory = (
-      cats: ProductCategoryWithChildren[],
-      id: string
-    ): ProductCategoryWithChildren | null => {
-      for (const cat of cats) {
-        if (cat.id === id) return cat;
-        const found: ProductCategoryWithChildren | null = findCategory(cat.children, id);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const draggedCategory: ProductCategoryWithChildren | null = findCategory(allCategories, draggedId);
-    if (!draggedCategory) return true;
-
-    return !isDescendant(draggedCategory, category.id);
-  }, [draggedId, category.id, allCategories]);
-
-  return (
-    <div>
-      <div
-        draggable
-        onDragStart={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          e.dataTransfer.setData("categoryId", category.id);
-          e.dataTransfer.effectAllowed = "move";
-          onDragStart(category.id);
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = "0.5";
-        }}
-        onDragEnd={(e: React.DragEvent): void => {
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = "1";
-          onDragEnd();
-        }}
-        onDragOver={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (canDropHere) {
-            setIsDragOver(true);
-          }
-        }}
-        onDragLeave={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          setIsDragOver(false);
-        }}
-        onDrop={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          const droppedId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
-          if (droppedId && canDropHere) {
-            onDrop(droppedId, category.id);
-          }
-        }}
-        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-          isDragOver && canDropHere
-            ? "bg-emerald-600 text-white"
-            : "text-gray-300 hover:bg-muted/50"
-        }`}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
-      >
-        {hasChildren ? (
-          <Button
-            onClick={(): void => onToggleExpand(category.id)}
-            className="p-0.5 hover:bg-gray-700 rounded"
-          >
-            {isExpanded ? (
-              <ChevronDown className="size-4" />
-            ) : (
-              <ChevronRight className="size-4" />
-            )}
-          </Button>
-        ) : (
-          <div className="w-5" />
-        )}
-
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm truncate">{category.name}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onCreateChild(category.id);
-            }}
-            className="p-1 hover:bg-gray-700 rounded"
-            title="Add subcategory"
-          >
-            <FolderPlus className="size-3" />
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onEdit(category);
-            }}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
-            title="Edit category"
-          >
-            Edit
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onDelete(category);
-            }}
-            className="p-1 hover:bg-red-600 rounded"
-            title="Delete category"
-          >
-            <Trash2 className="size-3" />
-          </Button>
-        </div>
-      </div>
-
-      {isExpanded && hasChildren && (
-        <div>
-          {category.children.map((child: ProductCategoryWithChildren): React.JSX.Element => (
-            <CategoryNode
-              key={child.id}
-              category={child}
-              level={level + 1}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onCreateChild={onCreateChild}
-              draggedId={draggedId}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onDrop={onDrop}
-              allCategories={allCategories}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-type CategoryFormData = {
-  name: string;
-  description: string;
-  color: string;
-  parentId: string | null;
-  catalogId: string;
 };
 
 export function CategoriesSettings({
@@ -231,11 +42,11 @@ export function CategoriesSettings({
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
-    name: "",
-    description: "",
-    color: "#10b981",
+    name: '',
+    description: '',
+    color: '#10b981',
     parentId: null,
-    catalogId: "",
+    catalogId: '',
   });
   const [categoryToDelete, setCategoryToDelete] = useState<ProductCategoryWithChildren | null>(null);
 
@@ -282,14 +93,14 @@ export function CategoriesSettings({
 
   const handleOpenCreateModal = (parentId: string | null = null): void => {
     if (!selectedCatalogId) {
-      toast("Please select a catalog first", { variant: "error" });
+      toast('Please select a catalog first', { variant: 'error' });
       return;
     }
     setEditingCategory(null);
     setFormData({
-      name: "",
-      description: "",
-      color: "#10b981",
+      name: '',
+      description: '',
+      color: '#10b981',
       parentId,
       catalogId: selectedCatalogId,
     });
@@ -301,8 +112,8 @@ export function CategoriesSettings({
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      description: category.description || "",
-      color: category.color || "#10b981",
+      description: category.description || '',
+      color: category.color || '#10b981',
       parentId: category.parentId ?? null,
       catalogId: category.catalogId,
     });
@@ -318,12 +129,12 @@ export function CategoriesSettings({
     if (!categoryToDelete) return;
     try {
       await deleteCategoryMutation.mutateAsync({ id: categoryToDelete.id, catalogId: selectedCatalogId });
-      toast("Category deleted successfully", { variant: "success" });
+      toast('Category deleted successfully', { variant: 'success' });
       onRefresh();
     } catch (error: unknown) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to delete category";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to delete category';
+      toast(message, { variant: 'error' });
     } finally {
       setCategoryToDelete(null);
     }
@@ -331,13 +142,13 @@ export function CategoriesSettings({
 
   const handleSave = async (): Promise<void> => {
     if (!formData.name.trim()) {
-      toast("Category name is required", { variant: "error" });
+      toast('Category name is required', { variant: 'error' });
       return;
     }
 
     const targetCatalogId: string | undefined = (formData.catalogId || selectedCatalogId) || undefined;
     if (!targetCatalogId && !editingCategory) {
-      toast("Please select a catalog first", { variant: "error" });
+      toast('Please select a catalog first', { variant: 'error' });
       return;
     }
 
@@ -357,16 +168,16 @@ export function CategoriesSettings({
 
       toast(
         editingCategory
-          ? "Category updated successfully"
-          : "Category created successfully",
-        { variant: "success" }
+          ? 'Category updated successfully'
+          : 'Category created successfully',
+        { variant: 'success' }
       );
       setShowModal(false);
       onRefresh();
     } catch (error) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to save category";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save category';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -382,18 +193,18 @@ export function CategoriesSettings({
         },
       });
 
-      toast("Category moved successfully", { variant: "success" });
+      toast('Category moved successfully', { variant: 'success' });
       onRefresh();
     } catch (error) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to move category";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to move category';
+      toast(message, { variant: 'error' });
     }
   };
 
   const handleRootDrop = (e: React.DragEvent): void => {
     e.preventDefault();
-    const catId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
+    const catId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
     if (catId) {
       void handleDrop(catId, null);
     }
@@ -469,14 +280,14 @@ export function CategoriesSettings({
         );
         if (!res.ok) {
           const error: { error?: string } = (await res.json()) as { error?: string };
-          throw new Error(error.error || "Failed to load categories.");
+          throw new Error(error.error || 'Failed to load categories.');
         }
         const data: ProductCategoryWithChildren[] = (await res.json()) as ProductCategoryWithChildren[];
         setModalCategories(data);
       } catch (error) {
         const message: string =
-          error instanceof Error ? error.message : "Failed to load categories.";
-        toast(message, { variant: "error" });
+          error instanceof Error ? error.message : 'Failed to load categories.';
+        toast(message, { variant: 'error' });
         setModalCategories([]);
       } finally {
         setModalLoadingCategories(false);
@@ -506,30 +317,23 @@ export function CategoriesSettings({
   return (
     <div className="space-y-5">
       {/* Catalog Selector */}
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Each catalog has its own category tree. Select a catalog to manage its categories.
         </p>
         <div className="w-full max-w-xs">
-          <Select
-            value={selectedCatalogId || ""}
+          <UnifiedSelect
+            value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault && " (Default)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: Catalog) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {/* Category Tree */}
       {selectedCatalogId && (
@@ -544,7 +348,7 @@ export function CategoriesSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -577,14 +381,14 @@ export function CategoriesSettings({
                   className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2"
                   onDragOver={(e: React.DragEvent): void => {
                     e.preventDefault();
-                    (e.currentTarget as HTMLElement).classList.add("bg-emerald-600/20", "border-emerald-500");
+                    (e.currentTarget as HTMLElement).classList.add('bg-emerald-600/20', 'border-emerald-500');
                   }}
                   onDragLeave={(e: React.DragEvent): void => {
-                    (e.currentTarget as HTMLElement).classList.remove("bg-emerald-600/20", "border-emerald-500");
+                    (e.currentTarget as HTMLElement).classList.remove('bg-emerald-600/20', 'border-emerald-500');
                   }}
                   onDrop={(e: React.DragEvent): void => {
                     e.preventDefault();
-                    (e.currentTarget as HTMLElement).classList.remove("bg-emerald-600/20", "border-emerald-500");
+                    (e.currentTarget as HTMLElement).classList.remove('bg-emerald-600/20', 'border-emerald-500');
                     handleRootDrop(e);
                   }}
                 >
@@ -592,7 +396,7 @@ export function CategoriesSettings({
                 </div>
 
                 {categories.map((category: ProductCategoryWithChildren): React.JSX.Element => (
-                  <CategoryNode
+                  <CategoryTreeItem
                     key={category.id}
                     category={category}
                     level={0}
@@ -610,7 +414,7 @@ export function CategoriesSettings({
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 
@@ -635,145 +439,20 @@ export function CategoriesSettings({
         variant="destructive"
       />
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <SharedModal
-          open={showModal}
-          onClose={(): void => setShowModal(false)}
-          title={editingCategory ? "Edit Category" : "Create Category"}
-          size="md"
-        >
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs text-gray-400">Name</Label>
-              <Input
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="Category name"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Description</Label>
-              <Textarea
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                rows={3}
-                value={formData.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Optional description"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.catalogId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-                  const nextCatalogId: string = e.target.value;
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    catalogId: nextCatalogId,
-                    parentId:
-                      prev.catalogId !== nextCatalogId ? null : prev.parentId,
-                  }));
-                  setModalCatalogId(nextCatalogId);
-                }}
-              >
-                {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                  <option key={catalog.id} value={catalog.id}>
-                    {catalog.name}
-                    {catalog.isDefault ? " (Default)" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Parent Category</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.parentId ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setFormData((prev: CategoryFormData) => ({
-                    ...prev,
-                    parentId: e.target.value ? e.target.value : null,
-                  }))
-                }
-                disabled={modalLoadingCategories}
-              >
-                <option value="">No parent (root)</option>
-                {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
-                  <option key={option.id} value={option.id}>
-                    {"|-- ".repeat(option.level)}
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              {modalLoadingCategories && (
-                <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
-              )}
-              {!modalLoadingCategories &&
-                modalCatalogId &&
-                parentOptions.length === 0 && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    No categories available in{" "}
-                    {modalCatalog?.name ?? "this catalog"}.
-                  </p>
-                )}
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-400">Color</Label>
-              <div className="mt-2 flex items-center gap-3">
-                <Input
-                  type="color"
-                  className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
-                  value={formData.color}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                  }
-                />
-                <Input
-                  type="text"
-                  className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.color}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                  }
-                  placeholder="#10b981"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4">
-              <Button
-                className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
-                type="button"
-                onClick={(): void => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                type="button"
-                onClick={(): void => { void handleSave(); }}
-                disabled={saveCategoryMutation.isPending}
-              >
-                {saveCategoryMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-        </SharedModal>
-      )}
+      <CategoryForm
+        open={showModal}
+        onClose={(): void => setShowModal(false)}
+        isEditing={!!editingCategory}
+        formData={formData}
+        onFormDataChange={setFormData}
+        onSave={(): void => { void handleSave(); }}
+        saving={saveCategoryMutation.isPending}
+        catalogs={catalogs}
+        onCatalogChange={setModalCatalogId}
+        parentOptions={parentOptions}
+        loadingCategories={modalLoadingCategories}
+        modalCatalogName={modalCatalog?.name}
+      />
     </div>
   );
 }

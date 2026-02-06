@@ -1,8 +1,11 @@
-"use client";
-import { JSX, useState } from "react";
+'use client';
+import * as Collapsible from '@radix-ui/react-collapsible';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import Link from 'next/link';
+import { JSX, useState } from 'react';
 
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { Button } from '@/shared/ui';
+
 
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
@@ -34,6 +37,14 @@ export default function AdminDashboard(): JSX.Element {
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       <div className="space-y-4">
+        <div className="rounded-lg bg-gray-950 p-6">
+          <h2 className="text-xl font-bold mb-3">Quick Access</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/image-studio">Image Studio</Link>
+            </Button>
+          </div>
+        </div>
         <Collapsible.Root
           open={recentActivityOpen}
           onOpenChange={setRecentActivityOpen}

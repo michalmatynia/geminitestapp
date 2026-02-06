@@ -1,12 +1,13 @@
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
+
 import type {
   Asset3DCreateInput,
   Asset3DListFilters,
   Asset3DRecord,
   Asset3DRepository,
   Asset3DUpdateInput,
-} from "@/features/viewer3d/types";
+} from '@/features/viewer3d/types';
+import prisma from '@/shared/lib/db/prisma';
 
 const toRecord = (asset: {
   id: string;
@@ -68,7 +69,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     if (filters?.filename?.trim()) {
       where.filename = {
         contains: filters.filename.trim(),
-        mode: "insensitive",
+        mode: 'insensitive',
       };
     }
 
@@ -89,15 +90,15 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     if (filters?.search?.trim()) {
       const searchTerm = filters.search.trim();
       where.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-        { description: { contains: searchTerm, mode: "insensitive" } },
-        { filename: { contains: searchTerm, mode: "insensitive" } },
+        { name: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+        { filename: { contains: searchTerm, mode: 'insensitive' } },
       ];
     }
 
     const assets = await prisma.asset3D.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return assets.map(toRecord);
   },
@@ -137,7 +138,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     const results = await prisma.asset3D.findMany({
       where: { category: { not: null } },
       select: { category: true },
-      distinct: ["category"],
+      distinct: ['category'],
     });
     return results
       .map((r: { category: string | null }) => r.category)

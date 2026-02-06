@@ -1,5 +1,5 @@
 export const darkenColor = (hex: string, percent: number): string => {
-  const normalized = hex.replace("#", "");
+  const normalized = hex.replace('#', '');
   const num = parseInt(normalized, 16);
   const amt = Math.round(2.55 * percent);
   const r = Math.max(0, (num >> 16) - amt);

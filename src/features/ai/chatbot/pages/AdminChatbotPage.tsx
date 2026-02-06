@@ -1,27 +1,28 @@
-"use client";
+'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger, SectionPanel } from "@/shared/ui";
-import React, { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from 'next/navigation';
+import React, { Suspense } from 'react';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
 
 
-import { useChatbotLogic } from "../hooks/useChatbotLogic";
-import { ChatInterface } from "../components/ChatInterface";
-import { SettingsTab } from "../components/SettingsTab";
-import { DebugPanel } from "../components/DebugPanel";
-import { SessionSidebar } from "../components/SessionSidebar";
+import { ChatInterface } from '../components/ChatInterface';
+import { DebugPanel } from '../components/DebugPanel';
+import { SessionSidebar } from '../components/SessionSidebar';
+import { SettingsTab } from '../components/SettingsTab';
+import { useChatbotLogic } from '../hooks/useChatbotLogic';
 
 function ChatbotPageInner(): React.JSX.Element | null {
   const logic = useChatbotLogic();
   const searchParams = useSearchParams();
   const [mounted, setMounted] = React.useState<boolean>(false);
-  const [activeTab, setActiveTab] = React.useState<string>("chat");
+  const [activeTab, setActiveTab] = React.useState<string>('chat');
 
   React.useEffect((): void => {
     setMounted(true);
-    const tab = searchParams.get("tab");
-    if (tab === "settings") {
-      setActiveTab("settings");
+    const tab = searchParams.get('tab');
+    if (tab === 'settings') {
+      setActiveTab('settings');
     }
   }, [searchParams]);
 
@@ -35,7 +36,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
   } = logic;
 
   const renderInline = (text: string): React.ReactNode[] => {
-    const parts = text.split("**");
+    const parts = text.split('**');
     return parts.map((part: string, index: number): React.ReactNode =>
       index % 2 === 1 ? (
         <strong key={index}>{part}</strong>
@@ -46,7 +47,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
   };
 
   const renderFormattedMessage = (content: string): React.JSX.Element => {
-    const lines = content.split("\n");
+    const lines = content.split('\n');
     const blocks: React.ReactNode[] = [];
     let listItems: string[] = [];
 
@@ -70,7 +71,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
         return;
       }
 
-      if (trimmed.startsWith("### ")) {
+      if (trimmed.startsWith('### ')) {
         flushList(`list-${index}`);
         blocks.push(
           <h3 key={`h3-${index}`} className="text-sm font-semibold text-white">
@@ -80,7 +81,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
         return;
       }
 
-      if (trimmed.startsWith("## ")) {
+      if (trimmed.startsWith('## ')) {
         flushList(`list-${index}`);
         blocks.push(
           <h2 key={`h2-${index}`} className="text-base font-semibold text-white">
@@ -90,7 +91,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
         return;
       }
 
-      if (trimmed.startsWith("# ")) {
+      if (trimmed.startsWith('# ')) {
         flushList(`list-${index}`);
         blocks.push(
           <h1 key={`h1-${index}`} className="text-lg font-semibold text-white">
@@ -100,7 +101,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
         return;
       }
 
-      if (trimmed.startsWith("- ")) {
+      if (trimmed.startsWith('- ')) {
         listItems.push(trimmed.slice(2));
         return;
       }
@@ -113,7 +114,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
       );
     });
 
-    flushList("list-final");
+    flushList('list-final');
     return <div className="space-y-2">{blocks}</div>;
   };
 

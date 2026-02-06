@@ -1,7 +1,8 @@
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui";
-import { MoreVertical } from "lucide-react";
-import { Catalog } from "@/features/products/types";
-import type { Language } from "@/shared/types/internationalization";
+import { MoreVertical } from 'lucide-react';
+
+import { Catalog } from '@/features/products/types';
+import type { Language } from '@/shared/types/internationalization';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Badge } from '@/shared/ui';
 
 
 type CatalogsSettingsProps = {
@@ -68,34 +69,31 @@ export function CatalogsSettings({
                 className="flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">
-                    {catalog.name}
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-white">
+                      {catalog.name}
+                    </p>
                     {catalog.isDefault ? (
-                      <span className="ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
+                      <Badge variant="success">
                         Default
-                      </span>
+                      </Badge>
                     ) : null}
-                  </p>
+                  </div>
                   <p className="text-xs text-gray-400">
-                    {catalog.description || "No description"}
+                    {catalog.description || 'No description'}
                   </p>
                   {catalog.languageIds && catalog.languageIds.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
                       {resolveCatalogLanguageIds(catalog).map(
                         (languageId: string, index: number) => (
-                          <span
+                          <Badge
                             key={languageId}
-                            className={`rounded-full border px-2 py-0.5 ${
-                              normalizeLanguageId(catalog.defaultLanguageId) ===
-                              languageId
-                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                                : "border bg-gray-900"
-                            }`}
+                            variant={normalizeLanguageId(catalog.defaultLanguageId) === languageId ? 'success' : 'neutral'}
                           >
                             {index + 1}. {getLanguageDisplay(languageId)}
                             {normalizeLanguageId(catalog.defaultLanguageId) ===
-                              languageId && " (Default)"}
-                          </span>
+                              languageId && ' (Default)'}
+                          </Badge>
                         )
                       )}
                     </div>

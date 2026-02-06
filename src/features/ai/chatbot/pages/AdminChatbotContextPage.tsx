@@ -1,14 +1,12 @@
-"use client";
+'use client';
 
-import { Button, Input, Textarea, ModalShell, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
-import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
-import Link from "next/link";
-import React, { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 
-
-
+import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
+import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
 
 
 
@@ -17,14 +15,18 @@ import { PlusIcon } from "lucide-react";
 
 
 
-import * as chatbotApi from "../api";
+
+
+
+
+import * as chatbotApi from '../api';
 
 type ContextItem = {
   id: string;
   title: string;
   content: string;
   tags?: string[];
-  source?: "manual" | "pdf";
+  source?: 'manual' | 'pdf';
   createdAt: string;
 };
 
@@ -49,10 +51,10 @@ const buildContextItems = (
   if (rawLegacy?.trim()) {
     return [
       {
-        id: "legacy-context",
-        title: "Legacy context",
+        id: 'legacy-context',
+        title: 'Legacy context',
         content: rawLegacy,
-        source: "manual",
+        source: 'manual',
         createdAt: new Date().toISOString(),
       },
     ];
@@ -80,8 +82,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
   const initializedFilters: React.MutableRefObject<boolean> = useRef(false);
   const [contexts, setContexts] = useState<ContextItem[]>([]);
   const [activeIds, setActiveIds] = useState<string[]>([]);
-  const [tagDraft, setTagDraft] = useState<string>("");
-  const [tagQuery, setTagQuery] = useState<string>("");
+  const [tagDraft, setTagDraft] = useState<string>('');
+  const [tagQuery, setTagQuery] = useState<string>('');
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -95,13 +97,13 @@ function ChatbotContextPageInner(): React.JSX.Element {
       try {
         const data = await chatbotApi.fetchSettings();
         const storedItems = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context_items"
+          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_items'
         );
         const storedActive = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context_active"
+          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_active'
         );
         const storedLegacy = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context"
+          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context'
         );
         if (isMounted) {
           const items: ContextItem[] = buildContextItems(
@@ -114,8 +116,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
         }
       } catch (error: unknown) {
         const message: string =
-          error instanceof Error ? error.message : "Failed to load context.";
-        toast(message, { variant: "error" });
+          error instanceof Error ? error.message : 'Failed to load context.';
+        toast(message, { variant: 'error' });
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -132,10 +134,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
     if (initializedFilters.current) {
       return;
     }
-    const queryFromUrl: string = searchParams.get("q") || "";
-    const tagsFromUrl: string | null = searchParams.get("tags");
+    const queryFromUrl: string = searchParams.get('q') || '';
+    const tagsFromUrl: string | null = searchParams.get('tags');
     const parsedTags: string[] = tagsFromUrl
-      ? tagsFromUrl.split(",").map((tag: string): string => tag.trim()).filter(Boolean)
+      ? tagsFromUrl.split(',').map((tag: string): string => tag.trim()).filter(Boolean)
       : [];
     setTagQuery(queryFromUrl);
     setTagFilters(parsedTags);
@@ -146,14 +148,14 @@ function ChatbotContextPageInner(): React.JSX.Element {
     const id: string = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setModalDraft({
       id,
-      title: "New context",
-      content: "",
+      title: 'New context',
+      content: '',
       tags: [],
-      source: "manual",
+      source: 'manual',
       createdAt: new Date().toISOString(),
       active: true,
     });
-    setTagDraft("");
+    setTagDraft('');
     setIsModalOpen(true);
   };
 
@@ -163,14 +165,14 @@ function ChatbotContextPageInner(): React.JSX.Element {
       tags: item.tags || [],
       active: activeIds.includes(item.id),
     });
-    setTagDraft("");
+    setTagDraft('');
     setIsModalOpen(true);
   };
 
   const closeModal = (): void => {
     setIsModalOpen(false);
     setModalDraft(null);
-    setTagDraft("");
+    setTagDraft('');
   };
 
   const handleDeleteContext = (id: string): void => {
@@ -206,12 +208,15 @@ function ChatbotContextPageInner(): React.JSX.Element {
     closeModal();
   };
 
-  const handlePdfUpload = async (file: File): Promise<void> => {
+  const handlePdfUpload = async (file: File, helpers?: FileUploadHelpers): Promise<void> => {
     setUploading(true);
     try {
-      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(file);
+      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(
+        file,
+        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      );
       if (data.segments.length === 0) {
-        toast("No text found in PDF.", { variant: "info" });
+        toast('No text found in PDF.', { variant: 'info' });
         return;
       }
       const now: string = new Date().toISOString();
@@ -219,17 +224,17 @@ function ChatbotContextPageInner(): React.JSX.Element {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         title: `PDF Content ${segment.id}`,
         content: segment.content,
-        tags: ["pdf"],
-        source: "pdf" as const,
+        tags: ['pdf'],
+        source: 'pdf' as const,
         createdAt: now,
       }));
       setContexts((prev: ContextItem[]): ContextItem[] => [...prev, ...nextItems]);
       setActiveIds((prev: string[]): string[] => [...prev, ...nextItems.map((item: ContextItem): string => item.id)]);
-      toast("PDF added to context list", { variant: "success" });
+      toast('PDF added to context list', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
-        error instanceof Error ? error.message : "Failed to parse PDF.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to parse PDF.';
+      toast(message, { variant: 'error' });
     } finally {
       setUploading(false);
     }
@@ -239,22 +244,22 @@ function ChatbotContextPageInner(): React.JSX.Element {
     setSaving(true);
     try {
       await chatbotApi.saveSetting(
-        "chatbot_global_context_items",
+        'chatbot_global_context_items',
         JSON.stringify(contexts),
-        "Failed to save contexts."
+        'Failed to save contexts.'
       );
       await chatbotApi.saveSetting(
-        "chatbot_global_context_active",
+        'chatbot_global_context_active',
         JSON.stringify(activeIds),
-        "Failed to save active contexts."
+        'Failed to save active contexts.'
       );
-      toast("Global contexts saved", { variant: "success" });
+      toast('Global contexts saved', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
         error instanceof Error
           ? error.message
-          : "Failed to save contexts.";
-      toast(message, { variant: "error" });
+          : 'Failed to save contexts.';
+      toast(message, { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -302,23 +307,20 @@ function ChatbotContextPageInner(): React.JSX.Element {
               >
                 <PlusIcon className="size-5" />
               </Button>
-              <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
-                {uploading ? "Uploading..." : "Upload PDF"}
-                <Input
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  disabled={loading || saving || uploading}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    void (async (): Promise<void> => {
-                      const file: File | undefined = event.target.files?.[0];
-                      if (!file) return;
-                      await handlePdfUpload(file);
-                      event.target.value = "";
-                    })();
-                  }}
-                />
-              </Label>
+              <FileUploadTrigger
+                accept="application/pdf"
+                disabled={loading || saving || uploading}
+                onFilesSelected={async (files: File[], helpers?: FileUploadHelpers) => {
+                  const file = files[0];
+                  if (!file) return;
+                  await handlePdfUpload(file, helpers);
+                }}
+                asChild
+              >
+                <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
+                  {uploading ? 'Uploading...' : 'Upload PDF'}
+                </Label>
+              </FileUploadTrigger>
               <Button
                 type="button"
                 variant="outline"
@@ -326,14 +328,14 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 onClick={(): void => {
                   const params: URLSearchParams = new URLSearchParams();
                   if (tagQuery.trim()) {
-                    params.set("q", tagQuery.trim());
+                    params.set('q', tagQuery.trim());
                   }
                   if (tagFilters.length > 0) {
-                    params.set("tags", tagFilters.join(","));
+                    params.set('tags', tagFilters.join(','));
                   }
                   const url: string = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                   void navigator.clipboard.writeText(url);
-                  toast("Filtered link copied", { variant: "success" });
+                  toast('Filtered link copied', { variant: 'success' });
                 }}
               >
                 Copy filtered link
@@ -356,8 +358,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 type="button"
                 className={`rounded-full border px-3 py-1 transition ${
                   tagFilters.includes(tag)
-                    ? "border-blue-400/40 bg-blue-500/10 text-blue-100"
-                    : "border bg-gray-900 text-gray-200 hover:border-gray-500"
+                    ? 'border-blue-400/40 bg-blue-500/10 text-blue-100'
+                    : 'border bg-gray-900 text-gray-200 hover:border-gray-500'
                 }`}
                 onClick={(): void => {
                   setTagFilters((prev: string[]): string[] =>
@@ -414,31 +416,29 @@ function ChatbotContextPageInner(): React.JSX.Element {
                           <span className="text-xs text-gray-500">None</span>
                         ) : (
                           (item.tags || []).map((tag: string): React.JSX.Element => (
-                            <span
+                            <Tag
                               key={tag}
-                              className="rounded-full border px-2 py-[1px] text-xs text-gray-300"
-                            >
-                              {tag}
-                            </span>
+                              label={tag}
+                            />
                           ))
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">
-                      {item.source === "pdf" ? "PDF" : "Manual"}
+                      {item.source === 'pdf' ? 'PDF' : 'Manual'}
                     </td>
                     <td className="px-4 py-3">
                       <Label className="flex items-center gap-2 text-xs text-gray-400">
                         <Checkbox
-                          checked={activeIds.includes(item.id)} onCheckedChange={(checked: boolean | "indeterminate"): void => {
+                          checked={activeIds.includes(item.id)} onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                             setActiveIds((prev: string[]): string[] =>
-                              Boolean(checked)
+                              checked
                                 ? [...prev, item.id]
                                 : prev.filter((id: string): boolean => id !== item.id)
                             );
                           }}
                         />
-                        {activeIds.includes(item.id) ? "Enabled" : "Disabled"}
+                        {activeIds.includes(item.id) ? 'Enabled' : 'Disabled'}
                       </Label>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -473,163 +473,150 @@ function ChatbotContextPageInner(): React.JSX.Element {
             onClick={(): void => { void handleSaveContexts(); }}
             disabled={saving || loading}
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </SectionPanel>
       {isModalOpen && modalDraft ? (
-        <AppModal
+        <SharedModal
           open={isModalOpen}
-          onOpenChange={(open: boolean): void => { if (!open) closeModal(); }}
+          onClose={closeModal}
           title={
             contexts.some((item: ContextItem): boolean => item.id === modalDraft.id)
-              ? "Edit context"
-              : "New context"
+              ? 'Edit context'
+              : 'New context'
+          }
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSaveDraft}>
+                Save context
+              </Button>
+            </>
           }
         >
-          <ModalShell
-            title={
-              contexts.some((item: ContextItem): boolean => item.id === modalDraft.id)
-                ? "Edit context"
-                : "New context"
-            }
-            onClose={closeModal}
-            footer={
-              <>
+          <div className="space-y-4">
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                  Title
+              </Label>
+              <Input
+                value={modalDraft.title}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
+                    prev ? { ...prev, title: event.target.value } : prev
+                  )
+                }
+                disabled={saving}
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                    Tags
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {(modalDraft.tags || []).map((tag: string): React.JSX.Element => (
+                  <Tag
+                    key={tag}
+                    label={tag}
+                    onRemove={(): void => {
+                      setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
+                        prev
+                          ? {
+                            ...prev,
+                            tags: (prev.tags || []).filter(
+                              (existing: string): boolean => existing !== tag
+                            ),
+                          }
+                          : prev
+                      );
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  placeholder="Add tag"
+                  value={tagDraft}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTagDraft(event.target.value)}
+                  onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      const nextTag: string = tagDraft.trim();
+                      if (!nextTag) return;
+                      setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
+                        prev
+                          ? {
+                            ...prev,
+                            tags: Array.from(
+                              new Set([...(prev.tags || []), nextTag])
+                            ),
+                          }
+                          : prev
+                      );
+                      setTagDraft('');
+                    }
+                  }}
+                  disabled={saving}
+                />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={closeModal}
-                >
-                  Cancel
-                </Button>
-                <Button type="button" onClick={handleSaveDraft}>
-                  Save context
-                </Button>
-              </>
-            }
-          >
-            <div className="space-y-4">
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-200">
-                  Title
-                </Label>
-                <Input
-                  value={modalDraft.title}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  onClick={(): void => {
+                    const nextTag: string = tagDraft.trim();
+                    if (!nextTag) return;
                     setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                      prev ? { ...prev, title: event.target.value } : prev
-                    )
-                  }
-                  disabled={saving}
-                />
-              </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Tags
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {(modalDraft.tags || []).map((tag: string): React.JSX.Element => (
-                      <Button
-                        key={tag}
-                        type="button"
-                        className="rounded-full border bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                        onClick={(): void => {
-                          setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  tags: (prev.tags || []).filter(
-                                    (existing: string): boolean => existing !== tag
-                                  ),
-                                }
-                              : prev
-                          );
-                        }}
-                      >
-                        {tag}
-                        <span className="ml-1 text-gray-500">×</span>
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <Input
-                      placeholder="Add tag"
-                      value={tagDraft}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTagDraft(event.target.value)}
-                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          const nextTag: string = tagDraft.trim();
-                          if (!nextTag) return;
-                          setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  tags: Array.from(
-                                    new Set([...(prev.tags || []), nextTag])
-                                  ),
-                                }
-                              : prev
-                          );
-                          setTagDraft("");
+                      prev
+                        ? {
+                          ...prev,
+                          tags: Array.from(
+                            new Set([...(prev.tags || []), nextTag])
+                          ),
                         }
-                      }}
-                      disabled={saving}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={(): void => {
-                        const nextTag: string = tagDraft.trim();
-                        if (!nextTag) return;
-                        setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                          prev
-                            ? {
-                                ...prev,
-                                tags: Array.from(
-                                  new Set([...(prev.tags || []), nextTag])
-                                ),
-                              }
-                            : prev
-                        );
-                        setTagDraft("");
-                      }}
-                      disabled={saving}
-                    >
+                        : prev
+                    );
+                    setTagDraft('');
+                  }}
+                  disabled={saving}
+                >
                       Add tag
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Content
-                  </Label>
-                  <Textarea
-                    placeholder="Add instructions..."
-                    value={modalDraft.content}
-                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                      setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                        prev ? { ...prev, content: event.target.value } : prev
-                      )
-                    }
-                    rows={10}
-                    disabled={saving}
-                  />
-                </div>
-                <Label className="flex items-center gap-2 text-sm text-gray-300">
-                  <Checkbox
-                    checked={modalDraft.active} onCheckedChange={(checked: boolean | "indeterminate"): void =>
-                      setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
-                        prev ? { ...prev, active: Boolean(checked) } : prev
-                      )
-                    }
-                  />
-                  Active in global context
-                </Label>
+                </Button>
+              </div>
             </div>
-          </ModalShell>
-        </AppModal>
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                    Content
+              </Label>
+              <Textarea
+                placeholder="Add instructions..."
+                value={modalDraft.content}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                  setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
+                    prev ? { ...prev, content: event.target.value } : prev
+                  )
+                }
+                rows={10}
+                disabled={saving}
+              />
+            </div>
+            <Label className="flex items-center gap-2 text-sm text-gray-300">
+              <Checkbox
+                checked={modalDraft.active} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                  setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
+                    prev ? { ...prev, active: Boolean(checked) } : prev
+                  )
+                }
+              />
+                  Active in global context
+            </Label>
+          </div>
+        </SharedModal>
       ) : null}
     </div>
   );

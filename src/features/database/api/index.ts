@@ -1,3 +1,5 @@
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+
 import type {
   DatabaseBackupResponse,
   DatabaseInfo,
@@ -8,7 +10,7 @@ import type {
   DatabasePreviewTable,
   DatabaseRestoreResponse,
   DatabaseType,
-} from "../types";
+} from '../types';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -42,14 +44,15 @@ export const fetchDatabaseBackups = async (
 ): Promise<DatabaseInfo[]> => {
   const res = await fetch(`/api/databases/backups?type=${dbType}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch backups");
+    throw new Error('Failed to fetch backups');
   }
   return res.json() as Promise<DatabaseInfo[]>;
 };
 
 export const createDatabaseBackup = async (dbType: DatabaseType): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const res = await fetch(`/api/databases/backup?type=${dbType}`, {
-    method: "POST",
+    method: 'POST',
+    headers: withCsrfHeaders(),
   });
   const payload = await safeJson<DatabaseBackupResponse>(res);
   return { ok: res.ok, payload };
@@ -60,8 +63,8 @@ export const restoreDatabaseBackup = async (
   input: { backupName: string; truncateBeforeRestore: boolean }
 ): Promise<{ ok: boolean; payload: DatabaseRestoreResponse }> => {
   const res = await fetch(`/api/databases/restore?type=${dbType}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       backupName: input.backupName,
       truncateBeforeRestore: input.truncateBeforeRestore,
@@ -73,26 +76,27 @@ export const restoreDatabaseBackup = async (
 
 export const uploadDatabaseBackup = async (
   dbType: DatabaseType,
-  file: File
+  file: File,
+  onProgress?: (loaded: number, total?: number) => void
 ): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const formData = new FormData();
-  formData.append("file", file);
-  formData.append("type", dbType);
-  const res = await fetch("/api/databases/upload", {
-    method: "POST",
-    body: formData,
+  formData.append('file', file);
+  formData.append('type', dbType);
+  const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+  const result = await uploadWithProgress<DatabaseBackupResponse>('/api/databases/upload', {
+    formData,
+    onProgress,
   });
-  const payload = await safeJson<DatabaseBackupResponse>(res);
-  return { ok: res.ok, payload };
+  return { ok: result.ok, payload: result.data };
 };
 
 export const deleteDatabaseBackup = async (
   dbType: DatabaseType,
   backupName: string
 ): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
-  const res = await fetch("/api/databases/delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/databases/delete', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ backupName, type: dbType }),
   });
   const payload = await safeJson<DatabaseBackupResponse>(res);
@@ -106,9 +110,9 @@ export const fetchDatabasePreview = async (input: {
   page?: number | undefined;
   pageSize?: number | undefined;
 }): Promise<{ ok: boolean; payload: DatabasePreviewPayload }> => {
-  const res = await fetch("/api/databases/preview", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/databases/preview', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       backupName: input.backupName,
       mode: input.mode,

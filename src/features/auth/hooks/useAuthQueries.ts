@@ -1,6 +1,9 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+
+import { verifyCredentials, type VerifyCredentialsResponse } from '@/features/auth/api/credentials';
+import { registerUser, type RegisterResponse } from '@/features/auth/api/register';
 import {
   fetchAuthUsers,
   fetchAuthUserSecurity,
@@ -9,28 +12,33 @@ import {
   mockSignIn,
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
-} from "@/features/auth/api/users";
-import { registerUser, type RegisterResponse } from "@/features/auth/api/register";
-import { verifyCredentials, type VerifyCredentialsResponse } from "@/features/auth/api/credentials";
-import type { AuthUserSummary } from "../types";
+} from '@/features/auth/api/users';
+
+import type { AuthUserSummary } from '../types';
 
 const authKeys = {
-  users: ["auth-users"] as const,
-  userSecurity: (userId: string) => ["auth-user-security", userId] as const,
+  users: ['auth-users'] as const,
+  userSecurity: (userId: string) => ['auth-user-security', userId] as const,
 };
 
-export function useAuthUsers(): UseQueryResult<AuthUsersResponse, Error> {
+const AUTH_USERS_STALE_MS = 10_000;
+const AUTH_SECURITY_STALE_MS = 10_000;
+
+export function useAuthUsers(enabled: boolean = true): UseQueryResult<AuthUsersResponse, Error> {
   return useQuery({
     queryKey: authKeys.users,
     queryFn: fetchAuthUsers,
+    enabled,
+    staleTime: AUTH_USERS_STALE_MS,
   });
 }
 
 export function useAuthUserSecurity(userId?: string | null): UseQueryResult<AuthUserSecurityProfile, Error> {
   return useQuery({
-    queryKey: userId ? authKeys.userSecurity(userId) : authKeys.userSecurity(""),
-    queryFn: () => fetchAuthUserSecurity(userId as string),
+    queryKey: userId ? authKeys.userSecurity(userId) : authKeys.userSecurity(''),
+    queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId as string),
     enabled: Boolean(userId),
+    staleTime: AUTH_SECURITY_STALE_MS,
   });
 }
 
@@ -38,7 +46,7 @@ export function useUpdateAuthUser(): UseMutationResult<
   AuthUserSummary,
   Error,
   { userId: string; input: { name?: string | null; email?: string | null; emailVerified?: boolean | null } }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -53,7 +61,7 @@ export function useUpdateAuthUser(): UseMutationResult<
       };
     }): Promise<AuthUserSummary> => {
       const result = await updateAuthUser(userId, input);
-      if (!result.ok) throw new Error("Failed to update user");
+      if (!result.ok) throw new Error('Failed to update user');
       return result.payload;
     },
     onSuccess: (): void => {
@@ -66,7 +74,7 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
   AuthUserSecurityProfile,
   Error,
   { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -82,7 +90,7 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
       };
     }): Promise<AuthUserSecurityProfile> => {
       const result = await updateAuthUserSecurity(userId, input);
-      if (!result.ok) throw new Error("Failed to update security settings");
+      if (!result.ok) throw new Error('Failed to update security settings');
       return result.payload;
     },
     onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {
@@ -102,7 +110,7 @@ export function useRegisterUser(): UseMutationResult<
   { ok: boolean; payload: RegisterResponse },
   Error,
   { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: registerUser,
@@ -116,7 +124,7 @@ export function useVerifyCredentials(): UseMutationResult<
   { ok: boolean; payload: VerifyCredentialsResponse },
   Error,
   { email: string; password: string }
-> {
+  > {
   return useMutation({
     mutationFn: verifyCredentials,
   });

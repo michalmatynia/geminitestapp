@@ -1,32 +1,29 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Layers } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui";
-import type { PageSummary } from "../../types";
-import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
-import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+import { Layers } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { UnifiedSelect } from '@/shared/ui';
+
+import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
+import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+
+import type { PageSummary } from '../../types';
 
 type PageSelectorBarProps = {
-  variant?: "bar" | "toolbar";
+  variant?: 'bar' | 'toolbar';
 };
 
-export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): React.ReactNode {
-  const isToolbar = variant === "toolbar";
+export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): React.ReactNode {
+  const isToolbar = variant === 'toolbar';
   const { state, dispatch } = usePageBuilder();
   const { activeDomainId } = useCmsDomainSelection();
   const pagesQuery = useCmsPages(activeDomainId);
   const searchParams = useSearchParams();
-  const pageIdParam = searchParams.get("pageId");
+  const pageIdParam = searchParams.get('pageId');
   const lastSavedPageIdRef = useRef<string | null>(null);
   
   const preferencesQuery = useUserPreferences();
@@ -44,15 +41,15 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
     if (preferredId && pagesQuery.data?.some((page: PageSummary) => page.id === preferredId)) {
       return preferredId;
     }
-    return "";
+    return '';
   }, [pageIdParam, pagesQuery.data, state.currentPage?.id, userPreferences?.cmsLastPageId]);
 
   const [userPageId, setUserPageId] = useState<string | null>(null);
   const selectedPageId = useMemo((): string => {
     const candidate = userPageId ?? initialPageId;
-    if (!candidate) return "";
+    if (!candidate) return '';
     if (!pagesQuery.data) return candidate;
-    return pagesQuery.data.some((page: PageSummary) => page.id === candidate) ? candidate : "";
+    return pagesQuery.data.some((page: PageSummary) => page.id === candidate) ? candidate : '';
   }, [initialPageId, pagesQuery.data, userPageId]);
 
   const pageQuery = useCmsPage(selectedPageId || undefined);
@@ -60,14 +57,14 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   useEffect((): void => {
     if (selectedPageId) return;
     if (!state.currentPage) return;
-    dispatch({ type: "CLEAR_CURRENT_PAGE" });
+    dispatch({ type: 'CLEAR_CURRENT_PAGE' });
   }, [dispatch, selectedPageId, state.currentPage]);
 
   useEffect((): void => {
     if (!pageQuery.data) return;
     if (pageQuery.data.id !== selectedPageId) return;
     if (state.currentPage?.id === pageQuery.data.id) return;
-    dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
+    dispatch({ type: 'SET_CURRENT_PAGE', page: pageQuery.data });
   }, [pageQuery.data, selectedPageId, state.currentPage?.id, dispatch]);
 
   useEffect((): void => {
@@ -89,8 +86,8 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
     <div
       className={
         isToolbar
-          ? "flex items-center gap-2"
-          : "flex w-full items-center justify-center gap-3"
+          ? 'flex items-center gap-2'
+          : 'flex w-full items-center justify-center gap-3'
       }
     >
       {!isToolbar && (
@@ -99,18 +96,17 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
           <span>Page</span>
         </div>
       )}
-      <Select value={selectedPageId} onValueChange={handlePageChange}>
-        <SelectTrigger className={isToolbar ? "h-8 w-56" : "w-64"}>
-          <SelectValue placeholder="Select a page..." />
-        </SelectTrigger>
-        <SelectContent>
-          {(pagesQuery.data ?? []).map((page: PageSummary) => (
-            <SelectItem key={page.id} value={page.id}>
-              {page.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <UnifiedSelect
+        value={selectedPageId}
+        onValueChange={handlePageChange}
+        options={(pagesQuery.data ?? []).map((page: PageSummary) => ({
+          value: page.id,
+          label: page.name
+        }))}
+        placeholder="Select a page..."
+        className={isToolbar ? 'w-56' : 'w-64'}
+        triggerClassName={isToolbar ? 'h-8' : undefined}
+      />
     </div>
   );
 }

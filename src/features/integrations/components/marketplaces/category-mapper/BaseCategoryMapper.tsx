@@ -1,16 +1,14 @@
-"use client";
+import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 
-import { useToast, Button, Label } from "@/shared/ui";
-import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
-
-import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
-import type { ProductCategoryDto, Catalog } from "@/features/products";
-
-import { useCatalogs } from "@/features/products/hooks/useCatalogQueries";
-import { useProductCategories } from "@/features/products/hooks/useCategoryQueries";
-import { useExternalCategories, useCategoryMappings } from "@/features/integrations/hooks/useMarketplaceQueries";
-import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from "@/features/integrations/hooks/useMarketplaceMutations";
+import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
+import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
+import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
+import { logClientError } from '@/features/observability';
+import type { Catalog, ProductCategoryDto } from '@/features/products';
+import { useCatalogs } from '@/features/products/hooks/useCatalogQueries';
+import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
+import { useToast, Button, Label, UnifiedSelect, SectionHeader } from '@/shared/ui';
 
 type BaseCategoryMapperProps = {
   connectionId: string;
@@ -101,11 +99,11 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const handleFetchFromBase = async (): Promise<void> => {
     try {
       const result = await fetchMutation.mutateAsync({ connectionId });
-      toast(result.message, { variant: "success" });
+      toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to fetch from Base.com:", error);
-      const message = error instanceof Error ? error.message : "Failed to fetch categories";
-      toast(message, { variant: "error" });
+      logClientError(error, { context: { source: 'BaseCategoryMapper', action: 'fetchFromBase', connectionId } });
+      const message = error instanceof Error ? error.message : 'Failed to fetch categories';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -139,7 +137,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   // Save all pending mappings
   const handleSave = async (): Promise<void> => {
     if (pendingMappings.size === 0 || !selectedCatalogId) {
-      toast("No changes to save", { variant: "info" });
+      toast('No changes to save', { variant: 'info' });
       return;
     }
 
@@ -157,12 +155,12 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         mappings: mappingsToSave,
       });
 
-      toast(result.message, { variant: "success" });
+      toast(result.message, { variant: 'success' });
       setPendingMappings(new Map());
     } catch (error: unknown) {
-      console.error("Failed to save mappings:", error);
-      const message = error instanceof Error ? error.message : "Failed to save mappings";
-      toast(message, { variant: "error" });
+      logClientError(error, { context: { source: 'BaseCategoryMapper', action: 'saveMappings', connectionId, catalogId: selectedCatalogId } });
+      const message = error instanceof Error ? error.message : 'Failed to save mappings';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -208,7 +206,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
     return (
       <React.Fragment key={category.id}>
-        <tr className={`border-b border-border ${hasPendingChange ? "bg-yellow-500/5" : ""}`}>
+        <tr className={`border-b border-border ${hasPendingChange ? 'bg-yellow-500/5' : ''}`}>
           <td className="px-4 py-2">
             <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
               {hasChildren ? (
@@ -232,21 +230,18 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
             </div>
           </td>
           <td className="px-4 py-2">
-            <select
-              value={currentMapping ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                handleMappingChange(category.id, e.target.value || null)
+            <UnifiedSelect
+              value={currentMapping ?? '__unmapped__'}
+              onValueChange={(v: string): void =>
+                handleMappingChange(category.id, v === '__unmapped__' ? null : v)
               }
-              className="w-full rounded border bg-gray-800 px-2 py-1 text-sm text-white"
               disabled={internalCategoriesLoading || !selectedCatalogId}
-            >
-              <option value="">— Not mapped —</option>
-              {internalCategories.map((ic: ProductCategoryDto) => (
-                <option key={ic.id} value={ic.id}>
-                  {ic.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '__unmapped__', label: '— Not mapped —' },
+                ...internalCategories.map((ic: ProductCategoryDto) => ({ value: ic.id, label: ic.name }))
+              ]}
+              triggerClassName="w-full bg-gray-800 border-border text-white text-sm h-8"
+            />
           </td>
         </tr>
         {hasChildren && isExpanded && (
@@ -262,65 +257,56 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">
-            Base.com Categories
-          </h2>
-          <p className="text-sm text-gray-400">
-            Connection: {connectionName}
-          </p>
-        </div>
+      <SectionHeader
+        title="Base.com Categories"
+        description={`Connection: ${connectionName}`}
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={(): void => { void handleFetchFromBase(); }}
+              disabled={fetchMutation.isPending}
+              className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
+            >
+              {fetchMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {fetchMutation.isPending ? 'Fetching...' : 'Fetch Categories'}
+            </Button>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={(): void => { void handleFetchFromBase(); }}
-            disabled={fetchMutation.isPending}
-            className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {fetchMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {fetchMutation.isPending ? "Fetching..." : "Fetch Categories"}
-          </Button>
-
-          <Button
-            onClick={(): void => { void handleSave(); }}
-            disabled={saveMutation.isPending || pendingMappings.size === 0}
-            className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-          >
-            {saveMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {saveMutation.isPending ? "Saving..." : `Save (${pendingMappings.size})`}
-          </Button>
-        </div>
-      </div>
+            <Button
+              onClick={(): void => { void handleSave(); }}
+              disabled={saveMutation.isPending || pendingMappings.size === 0}
+              className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {saveMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saveMutation.isPending ? 'Saving...' : `Save (${pendingMappings.size})`}
+            </Button>
+          </div>
+        }
+      />
 
       {/* Catalog Selector */}
       <div className="flex items-center gap-4">
         <Label className="text-sm text-gray-400">Target Catalog:</Label>
-        <select
-          value={selectedCatalogId ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCatalogId(e.target.value || null)}
-          disabled={catalogsLoading}
-          className="rounded border bg-gray-800 px-3 py-2 text-sm text-white"
-        >
-          {catalogsLoading && <option value="">Loading...</option>}
-          {!catalogsLoading && catalogs.length === 0 && (
-            <option value="">No catalogs available</option>
-          )}
-          {catalogs.map((catalog: Catalog) => (
-            <option key={catalog.id} value={catalog.id}>
-              {catalog.name}
-            </option>
-          ))}
-        </select>
+        <div className="w-[200px]">
+          <UnifiedSelect
+            value={selectedCatalogId ?? '__none__'}
+            onValueChange={(v: string): void => setSelectedCatalogId(v === '__none__' ? null : v)}
+            disabled={catalogsLoading}
+            options={[
+              ...(!catalogsLoading && catalogs.length === 0 ? [{ value: '__none__', label: 'No catalogs available' }] : []),
+              ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
+            ]}
+            placeholder={catalogsLoading ? 'Loading...' : 'Select catalog'}
+            triggerClassName="bg-gray-800 border-border text-white text-sm h-9"
+          />
+        </div>
 
         {selectedCatalogId && (
           <span className="text-xs text-gray-500">

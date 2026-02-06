@@ -11,12 +11,89 @@ import {
 } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { getSettingValue } from "@/features/products/services/aiDescriptionService";
 
 export const runtime = "nodejs";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const OLLAMA_MODELS_TIMEOUT_MS = 2500;
+
+const MODEL_PRESETS = {
+  openai: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", "o1-mini", "o1-preview"],
+  anthropic: ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
+  gemini: ["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],
+} as const;
+
+const buildProviderFallbackModels = async (): Promise<string[]> => {
+  const models = new Set<string>();
+
+  const openaiKey =
+    (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? "";
+  const anthropicKey =
+    (await getSettingValue("anthropic_api_key")) ?? process.env.ANTHROPIC_API_KEY ?? "";
+  const geminiKey =
+    (await getSettingValue("gemini_api_key")) ?? process.env.GEMINI_API_KEY ?? "";
+
+  if (openaiKey) {
+    MODEL_PRESETS.openai.forEach((model) => models.add(model));
+    const openaiModel = (await getSettingValue("openai_model"))?.trim();
+    if (openaiModel) models.add(openaiModel);
+  }
+  if (anthropicKey) {
+    MODEL_PRESETS.anthropic.forEach((model) => models.add(model));
+  }
+  if (geminiKey) {
+    MODEL_PRESETS.gemini.forEach((model) => models.add(model));
+  }
+
+  return Array.from(models);
+};
+
+const fetchOllamaModels = async (
+  ctx: ApiHandlerContext,
+  requestStart: number
+): Promise<string[] | null> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OLLAMA_MODELS_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      if (DEBUG_CHATBOT) {
+        console.warn("[chatbot][models] Upstream error", {
+          status: res.status,
+          statusText: res.statusText,
+          errorText,
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+        });
+      }
+      return null;
+    }
+
+    const data = (await res.json()) as unknown as { models?: Array<{ name?: string }> };
+    return (data.models || [])
+      .map((model: { name?: string }) => model.name)
+      .filter((name: string | undefined): name is string => Boolean(name));
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][models] Upstream fetch failed", {
+        error,
+        durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
+      });
+    }
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
 
 const chatbotTempRoot = path.join(
   process.cwd(),
@@ -120,81 +197,53 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   try {
 
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
-
-      headers: { "Content-Type": "application/json" },
-
-    });
-
-
-
-    if (!res.ok) {
-
-      const errorText = await res.text();
-
+    const ollamaModels = await fetchOllamaModels(ctx, requestStart);
+    if (ollamaModels && ollamaModels.length > 0) {
       if (DEBUG_CHATBOT) {
-        console.warn("[chatbot][models] Upstream error", {
-          status: res.status,
-          statusText: res.statusText,
-          errorText,
+        console.info("[chatbot][models] Loaded", {
+          count: ollamaModels.length,
           durationMs: Date.now() - requestStart,
           requestId: ctx.requestId,
         });
       }
-      return NextResponse.json({
-        models: [],
-        warning: {
-          code: "OLLAMA_UNAVAILABLE",
-          message: `Failed to load models: ${errorText || res.statusText}`,
-        },
-      });
-
+      return NextResponse.json({ models: ollamaModels });
     }
 
-
-
-    const data = (await res.json()) as unknown as { models?: Array<{ name?: string }> };
-
-    const models = (data.models || [])
-
-      .map((model: { name?: string }) => model.name)
-
-      .filter((name: string | undefined): name is string => Boolean(name));
-
-
-
-    if (DEBUG_CHATBOT) {
-
-      console.info("[chatbot][models] Loaded", {
-
-        count: models.length,
-
-        durationMs: Date.now() - requestStart,
-
-        requestId: ctx.requestId,
-
-      });
-
-    }
-
-
-
-    return NextResponse.json({ models });
+    const fallbackModels = await buildProviderFallbackModels();
+    return NextResponse.json({
+      models: fallbackModels,
+      warning: {
+        code: "OLLAMA_UNAVAILABLE",
+        message: "Ollama models unavailable. Returned provider presets instead.",
+      },
+    });
 
   } catch (error) {
 
-    const message =
-      error instanceof Error ? error.message : "Failed to load models.";
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][models] Upstream fetch failed", {
-        message,
-        durationMs: Date.now() - requestStart,
-        requestId: ctx.requestId,
+    const message = error instanceof Error ? error.message : "Failed to load models.";
+    try {
+      const { logSystemEvent } = await import("@/features/observability/server");
+      await logSystemEvent({
+        level: "warn",
+        message: "[chatbot][models] Failed to resolve model list",
+        error,
+        source: "api/chatbot",
+        context: { action: "getModels", requestId: ctx.requestId },
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.warn("[chatbot][models] Model list fetch failed (and logging failed)", {
+          message,
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+          logError,
+        });
+      }
     }
+
     return NextResponse.json({
-      models: [],
-      warning: { code: "OLLAMA_UNAVAILABLE", message },
+      models: await buildProviderFallbackModels(),
+      warning: { code: "MODEL_LIST_UNAVAILABLE", message },
     });
 
   }
@@ -476,10 +525,17 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
           });
         }
       } catch (error) {
-        console.error("[chatbot][chat] Failed to save session messages", {
-          error,
-          requestId: ctx.requestId
-        });
+        try {
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[chatbot][chat] Failed to save session messages",
+            error,
+            source: "api/chatbot",
+            context: { action: "save_session_messages", sessionId, requestId: ctx.requestId }
+          });
+        } catch (logError) {
+          console.error("[chatbot][chat] Failed to save session messages (and logging failed)", error, logError);
+        }
       }
     }
 

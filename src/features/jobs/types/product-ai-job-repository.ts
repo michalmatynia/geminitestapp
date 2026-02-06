@@ -1,9 +1,9 @@
 export type ProductAiJobStatus =
-  | "pending"
-  | "running"
-  | "completed"
-  | "failed"
-  | "canceled";
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'canceled';
 
 export type ProductAiJobRecord = {
   id: string;
@@ -22,13 +22,13 @@ export type ProductAiJobRecord = {
 export type ProductAiJobUpdate = Partial<
   Pick<
     ProductAiJobRecord,
-    | "status"
-    | "type"
-    | "payload"
-    | "result"
-    | "errorMessage"
-    | "startedAt"
-    | "finishedAt"
+    | 'status'
+    | 'type'
+    | 'payload'
+    | 'result'
+    | 'errorMessage'
+    | 'startedAt'
+    | 'finishedAt'
   >
 > & {
   productId?: string;

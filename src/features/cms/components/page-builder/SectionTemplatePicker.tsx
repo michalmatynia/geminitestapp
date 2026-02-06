@@ -1,11 +1,14 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback } from "react";
-import { BookTemplate } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui";
-import type { PageZone } from "../../types/page-builder";
-import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
+import { BookTemplate } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/ui';
+
+import { getTemplatesByCategory, type SectionTemplate } from './section-templates';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+
+import type { PageZone } from '../../types/page-builder';
 
 interface SectionTemplatePickerProps {
   zone: PageZone;
@@ -21,7 +24,7 @@ export function SectionTemplatePicker({ zone, disabled }: SectionTemplatePickerP
     (template: SectionTemplate) => {
       const section = template.create();
       section.zone = zone;
-      dispatch({ type: "INSERT_TEMPLATE_SECTION", section });
+      dispatch({ type: 'INSERT_TEMPLATE_SECTION', section });
       setIsOpen(false);
     },
     [zone, dispatch]

@@ -1,12 +1,32 @@
-import { QueryClient, type Query } from "@tanstack/react-query";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { QueryClient, type Query } from '@tanstack/react-query';
+import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-persist-client';
 
 export function setupOfflineSupport(queryClient: QueryClient): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
   const persister = createSyncStoragePersister({
     storage: window.localStorage,
+    deserialize: (cachedString: string): PersistedClient => {
+      const parsed = JSON.parse(cachedString) as {
+        clientState?: { queries?: Array<Record<string, unknown>> };
+      };
+      const queries = parsed?.clientState?.queries;
+      if (Array.isArray(queries)) {
+        parsed.clientState!.queries = queries
+          .filter((query: Record<string, unknown>) => query?.state && (query.state as { status?: string }).status === 'success')
+          .map((query: Record<string, unknown>) => {
+            if (query && typeof query === 'object' && 'promise' in query) {
+              const { promise: _ignored, ...rest } = query;
+              return rest;
+            }
+            return query;
+          })
+          // Drop any persisted queries with non-array keys (legacy v3 format)
+          .filter((query: Record<string, unknown>) => Array.isArray(query?.queryKey));
+      }
+      return parsed as unknown as PersistedClient;
+    },
   });
 
   const [, restorePromise] = persistQueryClient({
@@ -14,7 +34,8 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
     persister,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     dehydrateOptions: {
-      shouldDehydrateQuery: (query: { queryKey: unknown }) => Array.isArray(query.queryKey),
+      shouldDehydrateQuery: (query: Query) =>
+        Array.isArray(query.queryKey) && query.state.status === 'success',
     },
   });
 
@@ -35,13 +56,13 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
 
 // Queries that should be cached offline
 export const offlineQueries: string[] = [
-  "settings",
-  "user-preferences",
-  "products",
-  "jobs",
+  'settings',
+  'user-preferences',
+  'products',
+  'jobs',
 ];
 
 export function isOfflineQuery(queryKey: readonly unknown[]): boolean {
   const firstPart: unknown = queryKey[0];
-  return typeof firstPart === "string" && offlineQueries.includes(firstPart);
+  return typeof firstPart === 'string' && offlineQueries.includes(firstPart);
 }

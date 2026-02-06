@@ -1,10 +1,13 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useChatbotMemory } from "../hooks/useChatbotMemory";
-import type { ChatbotMemoryItem } from "../types";
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+
+import { Button, Input, Label, SectionHeader, SectionPanel } from '@/shared/ui';
+
+import { useChatbotMemory } from '../hooks/useChatbotMemory';
+
+import type { ChatbotMemoryItem } from '../types';
 
 interface ExtendedMemoryItem extends ChatbotMemoryItem {
   memoryKey?: string;
@@ -18,24 +21,24 @@ interface ExtendedMemoryItem extends ChatbotMemoryItem {
 }
 
 const formatDate = (value?: string | null): string => {
-  if (!value) return "—";
+  if (!value) return '—';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
 };
 
 export default function AgentMemoryPage(): React.JSX.Element {
-  const [memoryKey, setMemoryKey] = useState<string>("");
-  const [tag, setTag] = useState<string>("");
-  const [query, setQuery] = useState<string>("");
+  const [memoryKey, setMemoryKey] = useState<string>('');
+  const [tag, setTag] = useState<string>('');
+  const [query, setQuery] = useState<string>('');
   const [limit, setLimit] = useState<number>(50);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const queryString = useMemo((): string => {
     const params = new URLSearchParams();
-    if (memoryKey.trim()) params.set("memoryKey", memoryKey.trim());
-    if (tag.trim()) params.set("tag", tag.trim());
-    if (query.trim()) params.set("q", query.trim());
-    if (limit) params.set("limit", String(limit));
+    if (memoryKey.trim()) params.set('memoryKey', memoryKey.trim());
+    if (tag.trim()) params.set('tag', tag.trim());
+    if (query.trim()) params.set('q', query.trim());
+    if (limit) params.set('limit', String(limit));
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
@@ -129,11 +132,11 @@ export default function AgentMemoryPage(): React.JSX.Element {
                     ) : (
                       <span>No tags</span>
                     )}
-                    <span>Importance: {item.importance ?? "—"}</span>
-                    <span>Run: {item.runId ?? "—"}</span>
+                    <span>Importance: {item.importance ?? '—'}</span>
+                    <span>Run: {item.runId ?? '—'}</span>
                   </div>
                   <div className="mt-2 text-xs text-gray-500">
-                    Created: {formatDate(item.createdAt)} · Last accessed:{" "}
+                    Created: {formatDate(item.createdAt)} · Last accessed:{' '}
                     {formatDate(item.lastAccessedAt || item.updatedAt)}
                   </div>
                   <div className="mt-2">
@@ -147,7 +150,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                         }))
                       }
                     >
-                      {expanded[item.id] ? "Hide details" : "Show details"}
+                      {expanded[item.id] ? 'Hide details' : 'Show details'}
                     </Button>
                   </div>
                   {expanded[item.id] ? (

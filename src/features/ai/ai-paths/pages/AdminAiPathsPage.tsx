@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import { Tabs, TabsList, TabsTrigger, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
-import { AiPathsSettings } from "../components/AiPathsSettings";
+import { useEffect, useState } from 'react';
+
+import { Tabs, TabsList, TabsTrigger, SectionHeader, SectionPanel } from '@/shared/ui';
+
+import { AiPathsSettings } from '../components/AiPathsSettings';
 
 
 
 export function AdminAiPathsPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
-    "canvas"
+  const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>(
+    'canvas'
   );
   const [mounted, setMounted] = useState(false);
 
@@ -24,7 +26,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
           <Tabs
             value={activeTab}
             onValueChange={(value: string) =>
-              setActiveTab(value as "canvas" | "paths" | "docs")
+              setActiveTab(value as 'canvas' | 'paths' | 'docs')
             }
           >
             <TabsList className="bg-card/70">

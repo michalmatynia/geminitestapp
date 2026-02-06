@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
-import { GET, POST, DELETE } from "@/app/api/agentcreator/agent/route";
-import prisma from "@/shared/lib/db/prisma";
-import { startAgentQueue } from "@/features/jobs/server";
+import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock("@/shared/lib/db/prisma", () => ({
+import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
+import { startAgentQueue } from '@/features/jobs/server';
+import prisma from '@/shared/lib/db/prisma';
+
+vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     chatbotAgentRun: {
       findMany: vi.fn(),
@@ -14,30 +15,30 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/jobs/server", () => ({
+vi.mock('@/features/jobs/server', () => ({
   startAgentQueue: vi.fn(),
 }));
 
-vi.mock("@/features/ai/agent-runtime/server", () => ({
+vi.mock('@/features/ai/agent-runtime/server', () => ({
   logAgentAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => handler,
 }));
 
-describe("Agent Creator API", () => {
+describe('Agent Creator API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("GET", () => {
-    it("returns list of agent runs", async () => {
-      const mockRuns = [{ id: "run-1", prompt: "test" }];
+  describe('GET', () => {
+    it('returns list of agent runs', async () => {
+      const mockRuns = [{ id: 'run-1', prompt: 'test' }];
       vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue(mockRuns as any);
 
-      const req = new NextRequest("http://localhost/api/agentcreator/agent");
+      const req = new NextRequest('http://localhost/api/agentcreator/agent');
       const res = await GET(req);
       const data = await res.json();
 
@@ -46,11 +47,11 @@ describe("Agent Creator API", () => {
       expect(startAgentQueue).toHaveBeenCalled();
     });
 
-    it("returns 500 if prisma table is missing", async () => {
+    it('returns 500 if prisma table is missing', async () => {
       const originalPrisma = (prisma as any).chatbotAgentRun;
       delete (prisma as any).chatbotAgentRun;
       
-      const req = new NextRequest("http://localhost/api/agentcreator/agent");
+      const req = new NextRequest('http://localhost/api/agentcreator/agent');
       const res = await GET(req);
       expect(res.status).toBe(500);
 
@@ -58,19 +59,19 @@ describe("Agent Creator API", () => {
     });
   });
 
-  describe("POST", () => {
-    it("creates a new agent run", async () => {
+  describe('POST', () => {
+    it('creates a new agent run', async () => {
       vi.mocked(prisma.chatbotAgentRun.create).mockResolvedValue({
-        id: "new-run",
-        status: "queued",
+        id: 'new-run',
+        status: 'queued',
       } as any);
 
-      const req = new NextRequest("http://localhost/api/agentcreator/agent", {
-        method: "POST",
+      const req = new NextRequest('http://localhost/api/agentcreator/agent', {
+        method: 'POST',
         body: JSON.stringify({
-          prompt: "Verify the price of item X",
-          model: "gpt-4",
-          tools: ["browser"],
+          prompt: 'Verify the price of item X',
+          model: 'gpt-4',
+          tools: ['browser'],
           planSettings: { maxSteps: 5 }
         }),
       });
@@ -79,25 +80,25 @@ describe("Agent Creator API", () => {
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data.runId).toBe("new-run");
+      expect(data.runId).toBe('new-run');
       expect(prisma.chatbotAgentRun.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            prompt: "Verify the price of item X",
+            prompt: 'Verify the price of item X',
             planState: expect.objectContaining({
-                settings: expect.objectContaining({
-                    maxSteps: 5
-                })
+              settings: expect.objectContaining({
+                maxSteps: 5
+              })
             })
           })
         })
       );
     });
 
-    it("returns 400 if prompt is missing", async () => {
-      const req = new NextRequest("http://localhost/api/agentcreator/agent", {
-        method: "POST",
-        body: JSON.stringify({ prompt: "" }),
+    it('returns 400 if prompt is missing', async () => {
+      const req = new NextRequest('http://localhost/api/agentcreator/agent', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: '' }),
       });
 
       const res = await POST(req);
@@ -105,13 +106,13 @@ describe("Agent Creator API", () => {
     });
   });
 
-  describe("DELETE", () => {
-    it("deletes terminal runs", async () => {
-      vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([{ id: "run-1" }] as any);
+  describe('DELETE', () => {
+    it('deletes terminal runs', async () => {
+      vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([{ id: 'run-1' }] as any);
       vi.mocked(prisma.chatbotAgentRun.deleteMany).mockResolvedValue({ count: 1 } as any);
 
-      const req = new NextRequest("http://localhost/api/agentcreator/agent?scope=terminal", {
-        method: "DELETE",
+      const req = new NextRequest('http://localhost/api/agentcreator/agent?scope=terminal', {
+        method: 'DELETE',
       });
 
       const res = await DELETE(req);
@@ -121,9 +122,9 @@ describe("Agent Creator API", () => {
       expect(data.deleted).toBe(1);
     });
 
-    it("returns 400 for unsupported scope", async () => {
-      const req = new NextRequest("http://localhost/api/agentcreator/agent?scope=all", {
-        method: "DELETE",
+    it('returns 400 for unsupported scope', async () => {
+      const req = new NextRequest('http://localhost/api/agentcreator/agent?scope=all', {
+        method: 'DELETE',
       });
       const res = await DELETE(req);
       expect(res.status).toBe(400);

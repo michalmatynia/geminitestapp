@@ -1,5 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { NoteCreateData } from "@/features/notesapp";
+
+import { NoteCreateData } from '@/features/notesapp';
+
 import type { PathParams } from 'msw';
 
 type ParamsContext = { params: PathParams };
@@ -46,9 +48,9 @@ const now = new Date().toISOString();
 
 const mockTags = [
   {
-    id: "tag-1",
-    name: "Work",
-    color: "#3b82f6",
+    id: 'tag-1',
+    name: 'Work',
+    color: '#3b82f6',
     notebookId: null,
     createdAt: now,
     updatedAt: now,
@@ -57,10 +59,10 @@ const mockTags = [
 
 const mockCategories = [
   {
-    id: "cat-1",
-    name: "Projects",
+    id: 'cat-1',
+    name: 'Projects',
     description: null,
-    color: "#10b981",
+    color: '#10b981',
     parentId: null,
     notebookId: null,
     themeId: null,
@@ -71,9 +73,9 @@ const mockCategories = [
 
 const mockNotebooks = [
   {
-    id: "notebook-1",
-    name: "Default",
-    color: "#3b82f6",
+    id: 'notebook-1',
+    name: 'Default',
+    color: '#3b82f6',
     createdAt: now,
     updatedAt: now,
   },
@@ -81,11 +83,11 @@ const mockNotebooks = [
 
 const mockNotes = [
   {
-    id: "note-1",
-    title: "Alpha",
-    content: "First note",
-    color: "#ffffff",
-    editorType: "markdown",
+    id: 'note-1',
+    title: 'Alpha',
+    content: 'First note',
+    color: '#ffffff',
+    editorType: 'markdown',
     isPinned: true,
     isArchived: false,
     isFavorite: false,
@@ -94,16 +96,16 @@ const mockNotes = [
     updatedAt: now,
     tags: [
       {
-        noteId: "note-1",
-        tagId: "tag-1",
+        noteId: 'note-1',
+        tagId: 'tag-1',
         assignedAt: now,
         tag: mockTags[0],
       },
     ],
     categories: [
       {
-        noteId: "note-1",
-        categoryId: "cat-1",
+        noteId: 'note-1',
+        categoryId: 'cat-1',
         assignedAt: now,
         category: mockCategories[0],
       },
@@ -113,11 +115,11 @@ const mockNotes = [
     relations: [],
   },
   {
-    id: "note-2",
-    title: "Beta",
-    content: "Second note",
-    color: "#ffffff",
-    editorType: "markdown",
+    id: 'note-2',
+    title: 'Beta',
+    content: 'Second note',
+    color: '#ffffff',
+    editorType: 'markdown',
     isPinned: false,
     isArchived: false,
     isFavorite: false,
@@ -281,7 +283,7 @@ export const handlers = [
       children: [],
       notes: mockNotes
         .filter((note: (typeof mockNotes)[number]) =>
-          note.categories.some((cat: (typeof mockNotes)[number]["categories"][number]) => cat.categoryId === category.id)
+          note.categories.some((cat: (typeof mockNotes)[number]['categories'][number]) => cat.categoryId === category.id)
         )
         .map((note: (typeof mockNotes)[number]) => ({
           id: note.id,

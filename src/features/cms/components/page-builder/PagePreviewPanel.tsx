@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from "lucide-react";
+import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { CmsDomainSelector } from '@/features/cms';
+import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+import { logClientError } from '@/features/observability';
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,
   Checkbox,
@@ -11,26 +16,27 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
-} from "@/shared/ui";
-import { CmsDomainSelector } from "@/features/cms";
-import type { PageZone, SectionInstance } from "../../types/page-builder";
-import type { PageSlugLink, Slug } from "../../types";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useCmsSlugs, useUpdatePage } from "../../hooks/useCmsQueries";
-import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
-import { MediaLibraryPanel } from "./MediaLibraryPanel";
-import { PageSelectorBar } from "./PageSelectorBar";
-import { useThemeSettings } from "./ThemeSettingsContext";
-import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
-import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
-import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+} from '@/shared/ui';
 
-const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
+import { MediaLibraryPanel } from './MediaLibraryPanel';
+import { PageSelectorBar } from './PageSelectorBar';
+import { PreviewEditorPreferencesProvider, PreviewSection, type MediaReplaceTarget } from './PreviewBlock';
+import { useThemeSettings } from './ThemeSettingsContext';
+import { VectorOverlay } from './VectorOverlay';
+import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
+import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
+
+
+import type { PageSlugLink, Slug } from '../../types';
+import type { PageZone, SectionInstance } from '../../types/page-builder';
+
+const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 const EDIT_BUTTON_HIDE_DELAY = 2000;
 
 export function PagePreviewPanel(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
+  const { state, dispatch, vectorOverlay, closeVectorOverlay } = usePageBuilder();
   const { theme } = useThemeSettings();
   const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
@@ -102,19 +108,19 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const previewUrl = useMemo((): string | null => {
     if (!selectedPreviewSlug) return null;
-    if (typeof window === "undefined") return `/${selectedPreviewSlug}`;
+    if (typeof window === 'undefined') return `/${selectedPreviewSlug}`;
 
     const protocol = window.location.protocol;
     const currentHost = window.location.host;
     const currentHostname = window.location.hostname;
     const targetHost = activeDomain?.domain ?? currentHostname;
     const resolvedHost = targetHost === currentHostname ? currentHost : targetHost;
-    const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    const path = selectedPreviewSlug.startsWith('/') ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
     return `${protocol}//${resolvedHost}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
 
   const previewHostMatches = useMemo((): boolean => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === 'undefined') return true;
     if (!previewUrl) return true;
     try {
       const url = new URL(previewUrl);
@@ -126,7 +132,7 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const previewFallbackUrl = useMemo((): string | null => {
     if (!state.currentPage) return null;
-    if (typeof window === "undefined") return `/preview/${state.currentPage.id}`;
+    if (typeof window === 'undefined') return `/preview/${state.currentPage.id}`;
     return `${window.location.origin}/preview/${state.currentPage.id}`;
   }, [state.currentPage]);
 
@@ -137,16 +143,22 @@ export function PagePreviewPanel(): React.ReactNode {
   const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
   const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
 
+  const initialPauseSlideshowOnHoverInEditor = useMemo((): boolean => {
+    return Boolean(userPreferences?.cmsSlideshowPauseOnHoverInEditor);
+  }, [userPreferences?.cmsSlideshowPauseOnHoverInEditor]);
+  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<boolean | null>(null);
+  const pauseSlideshowOnHoverInEditor = userPauseSlideshowOnHoverInEditor ?? initialPauseSlideshowOnHoverInEditor;
+
   const previewTargetLabel = useMemo((): string => {
-    if (!selectedPreviewSlug) return "";
-    const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
-    const host = activeDomain?.domain ?? "current";
+    if (!selectedPreviewSlug) return '';
+    const path = selectedPreviewSlug.startsWith('/') ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    const host = activeDomain?.domain ?? 'current';
     return `${host}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
 
   const handleSelectNode = useCallback(
     (nodeId: string): void => {
-      dispatch({ type: "SELECT_NODE", nodeId });
+      dispatch({ type: 'SELECT_NODE', nodeId });
     },
     [dispatch]
   );
@@ -163,33 +175,39 @@ export function PagePreviewPanel(): React.ReactNode {
     (event: React.PointerEvent<HTMLDivElement>): void => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest("[data-cms-canvas='true']")) return;
-      dispatch({ type: "SELECT_NODE", nodeId: null });
+      if (target.closest('[data-cms-canvas=\'true\']')) return;
+      dispatch({ type: 'SELECT_NODE', nodeId: null });
     },
     [dispatch]
   );
 
   const effectiveHoveredNodeId = state.inspectorEnabled ? hoveredNodeId : null;
+  const isVectorOverlayOpen = Boolean(vectorOverlay);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
 
     const page = state.currentPage;
+    const slugIds =
+      Array.isArray(page.slugIds)
+        ? page.slugIds.filter((idValue: string | undefined | null) => typeof idValue === 'string' && idValue.trim().length > 0)
+        : undefined;
     const updatedPage = {
       ...page,
+      name: page.name?.trim() || 'Untitled page',
       showMenu: page.showMenu ?? true,
       status: page.status,
-      publishedAt: page.publishedAt || "",
-      seoTitle: page.seoTitle || "",
-      seoDescription: page.seoDescription || "",
-      seoOgImage: page.seoOgImage || "",
-      seoCanonical: page.seoCanonical || "",
-      robotsMeta: page.robotsMeta || "",
+      ...(page.publishedAt ? { publishedAt: page.publishedAt } : {}),
+      ...(page.seoTitle && { seoTitle: page.seoTitle }),
+      ...(page.seoDescription && { seoDescription: page.seoDescription }),
+      ...(page.seoOgImage && { seoOgImage: page.seoOgImage }),
+      ...(page.seoCanonical && { seoCanonical: page.seoCanonical }),
+      ...(page.robotsMeta && { robotsMeta: page.robotsMeta }),
       components: state.sections.map((s: SectionInstance) => ({
         type: s.type,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
       })),
-      ...(page.slugIds && { slugIds: page.slugIds }),
+      ...(slugIds ? { slugIds } : {}),
     };
 
     await updatePage.mutateAsync({
@@ -200,10 +218,10 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const handlePreview = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
-    const initialTarget = previewFallbackUrl ?? "about:blank";
-    const previewWindow = window.open(initialTarget, "_blank");
+    const initialTarget = previewFallbackUrl ?? 'about:blank';
+    const previewWindow = window.open(initialTarget, '_blank');
     if (!previewWindow) {
-      toast("Popup blocked. Allow popups to open the preview.", { variant: "error" });
+      toast('Popup blocked. Allow popups to open the preview.', { variant: 'error' });
       return;
     }
     try {
@@ -214,23 +232,23 @@ export function PagePreviewPanel(): React.ReactNode {
     try {
       await handleSave();
       if (slugsQuery.isLoading) {
-        toast("Loading zone slugs. Try again in a moment.", { variant: "error" });
+        toast('Loading zone slugs. Try again in a moment.', { variant: 'error' });
         return;
       }
-      const isPublished = state.currentPage.status === "published";
+      const isPublished = state.currentPage.status === 'published';
       const shouldUseSlug = Boolean(previewUrl) && (isPublished || previewDraftsEnabled) && previewHostMatches;
       const targetUrl = shouldUseSlug ? previewUrl : previewFallbackUrl;
       if (!targetUrl) {
-        toast("This page has no slug in the current zone.", { variant: "error" });
+        toast('This page has no slug in the current zone.', { variant: 'error' });
         return;
       }
       if (!previewHostMatches && previewUrl) {
-        toast("Previewing on current host (domain mismatch).", { variant: "info" });
+        toast('Previewing on current host (domain mismatch).', { variant: 'info' });
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
-      console.error("Failed to save before preview:", error);
-      toast("Save before preview failed. Try again.", { variant: "error" });
+      logClientError(error, { context: { source: 'PagePreviewPanel', action: 'saveBeforePreview', pageId: state.currentPage.id } });
+      toast('Save before preview failed. Try again.', { variant: 'error' });
     }
   }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
 
@@ -252,9 +270,9 @@ export function PagePreviewPanel(): React.ReactNode {
       const image = filepaths[0];
       if (!image) return;
 
-      if (mediaTarget.kind === "section") {
+      if (mediaTarget.kind === 'section') {
         dispatch({
-          type: "UPDATE_SECTION_SETTINGS",
+          type: 'UPDATE_SECTION_SETTINGS',
           sectionId: mediaTarget.sectionId,
           settings: { [mediaTarget.key]: image },
         });
@@ -262,7 +280,7 @@ export function PagePreviewPanel(): React.ReactNode {
         if (!mediaTarget.blockId) return;
         if (mediaTarget.columnId && mediaTarget.parentBlockId) {
           dispatch({
-            type: "UPDATE_NESTED_BLOCK_SETTINGS",
+            type: 'UPDATE_NESTED_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
             columnId: mediaTarget.columnId,
             parentBlockId: mediaTarget.parentBlockId,
@@ -271,7 +289,7 @@ export function PagePreviewPanel(): React.ReactNode {
           });
         } else if (mediaTarget.columnId) {
           dispatch({
-            type: "UPDATE_BLOCK_IN_COLUMN",
+            type: 'UPDATE_BLOCK_IN_COLUMN',
             sectionId: mediaTarget.sectionId,
             columnId: mediaTarget.columnId,
             blockId: mediaTarget.blockId,
@@ -279,7 +297,7 @@ export function PagePreviewPanel(): React.ReactNode {
           });
         } else {
           dispatch({
-            type: "UPDATE_BLOCK_SETTINGS",
+            type: 'UPDATE_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
             blockId: mediaTarget.blockId,
             settings: { [mediaTarget.key]: image },
@@ -308,10 +326,10 @@ export function PagePreviewPanel(): React.ReactNode {
   const setPanelsCollapsed = useCallback(
     (leftCollapsed: boolean, rightCollapsed: boolean): void => {
       if (state.leftPanelCollapsed !== leftCollapsed) {
-        dispatch({ type: "TOGGLE_LEFT_PANEL" });
+        dispatch({ type: 'TOGGLE_LEFT_PANEL' });
       }
       if (state.rightPanelCollapsed !== rightCollapsed) {
-        dispatch({ type: "TOGGLE_RIGHT_PANEL" });
+        dispatch({ type: 'TOGGLE_RIGHT_PANEL' });
       }
     },
     [dispatch, state.leftPanelCollapsed, state.rightPanelCollapsed]
@@ -346,7 +364,7 @@ export function PagePreviewPanel(): React.ReactNode {
       lastPointerMoveRef.current = Date.now();
       showEdit();
     };
-    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener('pointermove', handlePointerMove);
     const idleCheck = window.setInterval(() => {
       if (Date.now() - lastPointerMoveRef.current > EDIT_BUTTON_HIDE_DELAY) {
         hideEdit();
@@ -354,7 +372,7 @@ export function PagePreviewPanel(): React.ReactNode {
     }, 200);
 
     return (): void => {
-      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener('pointermove', handlePointerMove);
       window.clearInterval(idleCheck);
     };
   }, [hideEdit, isViewing, showEdit]);
@@ -370,29 +388,29 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const hasSections = state.sections.length > 0;
   const previewWidthClass =
-    state.previewMode === "mobile"
-      ? "max-w-[420px]"
-      : "w-full";
+    state.previewMode === 'mobile'
+      ? 'max-w-[420px]'
+      : 'w-full';
   const previewFrameClass =
-    state.previewMode === "mobile"
-      ? "rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
-      : "";
+    state.previewMode === 'mobile'
+      ? 'rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]'
+      : '';
 
-  const basePadding = typeof theme.pagePadding === "number" ? theme.pagePadding : 0;
-  const baseMargin = typeof theme.pageMargin === "number" ? theme.pageMargin : 0;
-  const paddingTop = typeof theme.pagePaddingTop === "number" ? theme.pagePaddingTop : basePadding;
-  const paddingRight = typeof theme.pagePaddingRight === "number" ? theme.pagePaddingRight : basePadding;
-  const paddingBottom = typeof theme.pagePaddingBottom === "number" ? theme.pagePaddingBottom : basePadding;
-  const paddingLeft = typeof theme.pagePaddingLeft === "number" ? theme.pagePaddingLeft : basePadding;
-  const marginTop = typeof theme.pageMarginTop === "number" ? theme.pageMarginTop : baseMargin;
-  const marginRight = typeof theme.pageMarginRight === "number" ? theme.pageMarginRight : baseMargin;
-  const marginBottom = typeof theme.pageMarginBottom === "number" ? theme.pageMarginBottom : baseMargin;
-  const marginLeft = typeof theme.pageMarginLeft === "number" ? theme.pageMarginLeft : baseMargin;
-  const pageRadius = typeof theme.borderRadius === "number" ? theme.borderRadius : 0;
+  const basePadding = typeof theme.pagePadding === 'number' ? theme.pagePadding : 0;
+  const baseMargin = typeof theme.pageMargin === 'number' ? theme.pageMargin : 0;
+  const paddingTop = typeof theme.pagePaddingTop === 'number' ? theme.pagePaddingTop : basePadding;
+  const paddingRight = typeof theme.pagePaddingRight === 'number' ? theme.pagePaddingRight : basePadding;
+  const paddingBottom = typeof theme.pagePaddingBottom === 'number' ? theme.pagePaddingBottom : basePadding;
+  const paddingLeft = typeof theme.pagePaddingLeft === 'number' ? theme.pagePaddingLeft : basePadding;
+  const marginTop = typeof theme.pageMarginTop === 'number' ? theme.pageMarginTop : baseMargin;
+  const marginRight = typeof theme.pageMarginRight === 'number' ? theme.pageMarginRight : baseMargin;
+  const marginBottom = typeof theme.pageMarginBottom === 'number' ? theme.pageMarginBottom : baseMargin;
+  const marginLeft = typeof theme.pageMarginLeft === 'number' ? theme.pageMarginLeft : baseMargin;
+  const pageRadius = typeof theme.borderRadius === 'number' ? theme.borderRadius : 0;
   const pageStyle: React.CSSProperties = {
     backgroundColor: theme.backgroundColor,
     borderRadius: pageRadius > 0 ? pageRadius : undefined,
-    overflow: pageRadius > 0 ? "hidden" : undefined,
+    overflow: pageRadius > 0 ? 'hidden' : undefined,
   };
   const contentStyle: React.CSSProperties = {
     paddingTop,
@@ -404,28 +422,28 @@ export function PagePreviewPanel(): React.ReactNode {
     marginBottom,
     marginLeft,
   };
-  const faithfulDesktopPreview = !state.inspectorSettings.showEditorChrome && state.previewMode === "desktop";
-  const shouldScaleCanvas = faithfulDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
+  const isDesktopPreview = state.previewMode === 'desktop';
+  const shouldScaleCanvas = isDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
   const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
     ? {
-        width: `${canvasWidth}px`,
-        position: "absolute",
-        left: "50%",
-        top: 0,
-        transform: `translateX(-50%) scale(${canvasScale})`,
-        transformOrigin: "top center",
-      }
+      width: `${canvasWidth}px`,
+      position: 'absolute',
+      left: '50%',
+      top: 0,
+      transform: `translateX(-50%) scale(${canvasScale})`,
+      transformOrigin: 'top center',
+    }
     : {};
   const scaledCanvasWrapperStyle: React.CSSProperties = shouldScaleCanvas && canvasScaledHeight
-    ? { height: `${canvasScaledHeight}px`, position: "relative", overflow: "hidden" }
+    ? { height: `${canvasScaledHeight}px`, position: 'relative', overflow: 'hidden' }
     : {};
 
   useEffect((): (() => void) | void => {
-    if (!faithfulDesktopPreview) return undefined;
+    if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
-      "[data-cms-canvas-viewport='true']"
+      '[data-cms-canvas-viewport=\'true\']'
     ) as HTMLDivElement | null;
-    if (!viewport || typeof window === "undefined") return undefined;
+    if (!viewport || typeof window === 'undefined') return undefined;
 
     const updateScale = (): void => {
       const availableWidth = viewport.clientWidth;
@@ -439,16 +457,16 @@ export function PagePreviewPanel(): React.ReactNode {
     updateScale();
     const observer = new ResizeObserver(updateScale);
     observer.observe(viewport);
-    window.addEventListener("resize", updateScale);
+    window.addEventListener('resize', updateScale);
 
     return (): void => {
       observer.disconnect();
-      window.removeEventListener("resize", updateScale);
+      window.removeEventListener('resize', updateScale);
     };
-  }, [faithfulDesktopPreview]);
+  }, [isDesktopPreview]);
 
   useEffect((): (() => void) | void => {
-    if (!faithfulDesktopPreview) return undefined;
+    if (!isDesktopPreview) return undefined;
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
 
@@ -464,7 +482,7 @@ export function PagePreviewPanel(): React.ReactNode {
     return (): void => {
       observer.disconnect();
     };
-  }, [faithfulDesktopPreview, canvasScale, state.sections, previewWidthClass]);
+  }, [isDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col bg-gray-950">
@@ -472,8 +490,8 @@ export function PagePreviewPanel(): React.ReactNode {
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           isViewing
-            ? "max-h-0 opacity-0 -translate-y-4 pointer-events-none border-transparent"
-            : "max-h-20 opacity-100 translate-y-0 border-b border-border"
+            ? 'max-h-0 opacity-0 -translate-y-4 pointer-events-none border-transparent'
+            : 'max-h-20 opacity-100 translate-y-0 border-b border-border'
         }`}
       >
         <div className="flex items-center justify-end gap-2 px-6 py-3">
@@ -487,7 +505,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 </div>
               ) : zoneSlugValues.length > 1 ? (
                 <Select
-                  value={selectedPreviewSlug ?? ""}
+                  value={selectedPreviewSlug ?? ''}
                   onValueChange={(value: string): void =>
                     setUserPreviewSlug((prev: string | null) => (prev === value ? prev : value))
                   }
@@ -517,19 +535,30 @@ export function PagePreviewPanel(): React.ReactNode {
               )}
               {outOfZoneSlugs.length > 0 && (
                 <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200">
-                  Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(", ")}
+                  Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(', ')}
                 </div>
               )}
               <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
                 <Checkbox
                   checked={previewDraftsEnabled}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => {
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => {
                     const next = value === true;
                     setUserPreviewDraftsEnabled(next);
                     updatePreferencesMutation.mutate({ cmsPreviewEnabled: next });
                   }}
                 />
                 Draft preview
+              </label>
+              <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
+                <Checkbox
+                  checked={pauseSlideshowOnHoverInEditor}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => {
+                    const next = value === true;
+                    setUserPauseSlideshowOnHoverInEditor(next);
+                    updatePreferencesMutation.mutate({ cmsSlideshowPauseOnHoverInEditor: next });
+                  }}
+                />
+                Pause slides on hover (editor)
               </label>
               <Button
                 onClick={(): void => { void handlePreview(); }}
@@ -539,10 +568,10 @@ export function PagePreviewPanel(): React.ReactNode {
                 disabled={!state.currentPage || updatePage.isPending}
               >
                 <Eye className="mr-2 size-4" />
-                {updatePage.isPending ? "Saving..." : "Preview"}
+                {updatePage.isPending ? 'Saving...' : 'Preview'}
               </Button>
               <Button
-                onClick={(): void => dispatch({ type: "UNDO" })}
+                onClick={(): void => dispatch({ type: 'UNDO' })}
                 size="icon"
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
@@ -551,7 +580,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 <Undo2 className="size-4" />
               </Button>
               <Button
-                onClick={(): void => dispatch({ type: "REDO" })}
+                onClick={(): void => dispatch({ type: 'REDO' })}
                 size="icon"
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
@@ -565,7 +594,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={!state.currentPage || updatePage.isPending}
               >
-                {updatePage.isPending ? "Saving..." : "Save"}
+                {updatePage.isPending ? 'Saving...' : 'Save'}
               </Button>
             </>
           )}
@@ -588,7 +617,7 @@ export function PagePreviewPanel(): React.ReactNode {
         <div className="pointer-events-none absolute right-6 top-4 z-20 flex justify-end">
           <div
             className={`pointer-events-auto transition-all duration-300 ease-in-out ${
-              showEditButton ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+              showEditButton ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
             }`}
           >
             <Button
@@ -625,8 +654,8 @@ export function PagePreviewPanel(): React.ReactNode {
               <div
                 data-cms-canvas="true"
                 ref={canvasRef}
-                className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
-                  state.inspectorEnabled ? "cursor-crosshair" : ""
+                className={`cms-hover-scope relative mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? 'p-3' : ''} ${
+                  state.inspectorEnabled ? 'cursor-crosshair' : ''
                 }`}
                 style={{
                   ...hoverVars,
@@ -635,43 +664,48 @@ export function PagePreviewPanel(): React.ReactNode {
                   ...scaledCanvasStyle,
                 }}
               >
-                <div style={contentStyle}>
-                  {ZONE_ORDER.map((zone: PageZone) => {
-                    const zoneSections = sectionsByZone[zone];
-                    if (zoneSections.length === 0) return null;
+                <div style={contentStyle} className={isVectorOverlayOpen ? 'pointer-events-none' : ''}>
+                  <PreviewEditorPreferencesProvider value={{ pauseSlideshowOnHoverInEditor }}>
+                    {ZONE_ORDER.map((zone: PageZone) => {
+                      const zoneSections = sectionsByZone[zone];
+                      if (zoneSections.length === 0) return null;
 
-                    return (
-                      <div key={zone}>
-                        {/* Zone sections */}
-                        <div>
-                          {zoneSections.map((section: SectionInstance) => (
-                            <PreviewSection
-                              key={section.id}
-                              section={section}
-                              layout={{ fullWidth: theme.fullWidth }}
-                              selectedNodeId={state.selectedNodeId}
-                              isInspecting={state.inspectorEnabled}
-                              inspectorSettings={state.inspectorSettings}
-                              hoveredNodeId={effectiveHoveredNodeId}
-                              colorSchemes={colorSchemes || {}}
-                              mediaStyles={mediaStyles}
-                              onSelect={handleSelectNode}
-                              onHoverNode={handleHoverNode}
-                              onOpenMedia={handleOpenMedia}
-                              onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
-                              onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
-                                dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
-                              }
-                              onRemoveRow={(sectionId: string, rowId: string) =>
-                                dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
-                              }
-                            />
-                          ))}
+                      return (
+                        <div key={zone}>
+                          {/* Zone sections */}
+                          <div>
+                            {zoneSections.map((section: SectionInstance) => (
+                              <PreviewSection
+                                key={section.id}
+                                section={section}
+                                layout={{ fullWidth: theme.fullWidth }}
+                                selectedNodeId={state.selectedNodeId}
+                                isInspecting={state.inspectorEnabled}
+                                inspectorSettings={state.inspectorSettings}
+                                hoveredNodeId={effectiveHoveredNodeId}
+                                colorSchemes={colorSchemes || {}}
+                                mediaStyles={mediaStyles}
+                                onSelect={handleSelectNode}
+                                onHoverNode={handleHoverNode}
+                                onOpenMedia={handleOpenMedia}
+                                onRemoveSection={(sectionId: string) => dispatch({ type: 'REMOVE_SECTION', sectionId })}
+                                onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
+                                  dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId, settings: { isHidden } })
+                                }
+                                onRemoveRow={(sectionId: string, rowId: string) =>
+                                  dispatch({ type: 'REMOVE_GRID_ROW', sectionId, rowId })
+                                }
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </PreviewEditorPreferencesProvider>
                 </div>
+                {vectorOverlay ? (
+                  <VectorOverlay request={vectorOverlay} onClose={closeVectorOverlay} />
+                ) : null}
               </div>
             </div>
           </>

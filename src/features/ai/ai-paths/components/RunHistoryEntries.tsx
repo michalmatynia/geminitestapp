@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { RuntimeHistoryEntry } from "@/features/ai/ai-paths/lib";
-import { formatRuntimeValue } from "@/features/ai/ai-paths/lib";
+import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/features/ai/ai-paths/lib';
+import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 
 type RunHistoryEntriesProps = {
   entries: RuntimeHistoryEntry[];
@@ -10,16 +10,16 @@ type RunHistoryEntriesProps = {
 };
 
 const statusStyles: Record<string, string> = {
-  completed: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200",
-  failed: "border-rose-500/40 bg-rose-500/10 text-rose-200",
-  delayed: "border-amber-500/40 bg-amber-500/10 text-amber-200",
-  cached: "border-sky-500/40 bg-sky-500/10 text-sky-200",
+  completed: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
+  failed: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+  delayed: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+  cached: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
 };
 
 const formatHistoryValue = (value: unknown): string => {
-  if (value === undefined) return "-";
-  if (value === null) return "null";
-  if (typeof value === "string") return value;
+  if (value === undefined) return '-';
+  if (value === null) return 'null';
+  if (typeof value === 'string') return value;
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -28,11 +28,11 @@ const formatHistoryValue = (value: unknown): string => {
 };
 
 const formatPortData = (value: unknown): string => {
-  if (value === undefined || value === null) return "-";
-  if (typeof value !== "object") return formatHistoryValue(value);
-  if (Array.isArray(value)) return value.length ? formatHistoryValue(value) : "-";
+  if (value === undefined || value === null) return '-';
+  if (typeof value !== 'object') return formatHistoryValue(value);
+  if (Array.isArray(value)) return value.length ? formatHistoryValue(value) : '-';
   const keys = Object.keys(value as Record<string, unknown>);
-  if (keys.length === 0) return "-";
+  if (keys.length === 0) return '-';
   return formatHistoryValue(value);
 };
 
@@ -48,7 +48,7 @@ export function RunHistoryEntries({
   if (sortedEntries.length === 0) {
     return (
       <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
-        {emptyMessage ?? "No history recorded yet."}
+        {emptyMessage ?? 'No history recorded yet.'}
       </div>
     );
   }
@@ -56,8 +56,8 @@ export function RunHistoryEntries({
   return (
     <div className="space-y-4">
       {sortedEntries.map((entry: RuntimeHistoryEntry, index: number) => {
-        const statusClass = statusStyles[entry.status] ?? "border-border bg-card/40 text-gray-200";
-        const pathLabel = entry.pathName ?? entry.pathId ?? "Unknown path";
+        const statusClass = statusStyles[entry.status] ?? 'border-border bg-card/40 text-gray-200';
+        const pathLabel = entry.pathName ?? entry.pathId ?? 'Unknown path';
         const nodeLabel = entry.nodeTitle ?? entry.nodeId;
         return (
           <div key={`${entry.timestamp}-${index}`} className="rounded-md border border-border bg-card/40 p-4">
@@ -72,11 +72,11 @@ export function RunHistoryEntries({
                 {showNodeLabel ? (
                   <span className="text-gray-200">
                     Node: {nodeLabel}
-                    {entry.nodeType ? ` (${entry.nodeType})` : ""}
+                    {entry.nodeType ? ` (${entry.nodeType})` : ''}
                   </span>
                 ) : null}
                 <span className="text-gray-500">Path: {pathLabel}</span>
-                {typeof entry.iteration === "number" && (
+                {typeof entry.iteration === 'number' && (
                   <span className="text-gray-500">Iter {entry.iteration + 1}</span>
                 )}
               </div>
@@ -110,16 +110,16 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">From</div>
                 {entry.inputsFrom && entry.inputsFrom.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.inputsFrom.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
+                    {entry.inputsFrom.map((link: RuntimeHistoryLink, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
-                        {link.nodeType ? ` (${link.nodeType})` : ""}
+                        {link.nodeType ? ` (${link.nodeType})` : ''}
                         {link.fromPort || link.toPort ? (
                           <span className="text-gray-500">
-                            {" "}
-                            {link.fromPort ?? "default"}
-                            {" -> "}
-                            {link.toPort ?? "default"}
+                            {' '}
+                            {link.fromPort ?? 'default'}
+                            {' -> '}
+                            {link.toPort ?? 'default'}
                           </span>
                         ) : null}
                       </li>
@@ -133,16 +133,16 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">To</div>
                 {entry.outputsTo && entry.outputsTo.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.outputsTo.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
+                    {entry.outputsTo.map((link: RuntimeHistoryLink, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
-                        {link.nodeType ? ` (${link.nodeType})` : ""}
+                        {link.nodeType ? ` (${link.nodeType})` : ''}
                         {link.fromPort || link.toPort ? (
                           <span className="text-gray-500">
-                            {" "}
-                            {link.fromPort ?? "default"}
-                            {" -> "}
-                            {link.toPort ?? "default"}
+                            {' '}
+                            {link.fromPort ?? 'default'}
+                            {' -> '}
+                            {link.toPort ?? 'default'}
                           </span>
                         ) : null}
                       </li>

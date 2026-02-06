@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from "@/features/viewer3d/api";
-import type { Asset3DListFilters, Asset3DRecord } from "@/features/viewer3d/types";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+
+import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from '@/features/viewer3d/api';
+import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 
 export const asset3dKeys = {
-  all: ["assets3d"] as const,
-  list: (filters: Asset3DListFilters) => ["assets3d", "list", filters] as const,
-  categories: ["assets3d", "categories"] as const,
-  tags: ["assets3d", "tags"] as const,
-  detail: (id: string | null) => ["assets3d", "detail", id] as const,
+  all: ['assets3d'] as const,
+  list: (filters: Asset3DListFilters) => ['assets3d', 'list', filters] as const,
+  categories: ['assets3d', 'categories'] as const,
+  tags: ['assets3d', 'tags'] as const,
+  detail: (id: string | null) => ['assets3d', 'detail', id] as const,
 };
 
 export function useAssets3D(filters: Asset3DListFilters): UseQueryResult<Asset3DRecord[], Error> {
@@ -39,7 +40,7 @@ export function useAsset3DById(id: string | null): UseQueryResult<Asset3DRecord,
     queryFn: async () => {
       const res = await fetch(`/api/assets3d/${id}`);
       if (!res.ok) {
-        throw new Error("Failed to fetch 3D asset");
+        throw new Error('Failed to fetch 3D asset');
       }
       return (await res.json()) as Asset3DRecord;
     },
@@ -52,9 +53,9 @@ export function useDeleteAsset3DMutation(): UseMutationResult<void, Error, strin
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/assets3d/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
-      if (!res.ok) throw new Error("Failed to delete 3D asset");
+      if (!res.ok) throw new Error('Failed to delete 3D asset');
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
@@ -67,11 +68,11 @@ export function useUpdateAsset3DMutation(): UseMutationResult<Asset3DRecord, Err
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Asset3DRecord> }): Promise<Asset3DRecord> => {
       const res = await fetch(`/api/assets3d/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update 3D asset");
+      if (!res.ok) throw new Error('Failed to update 3D asset');
       return res.json() as Promise<Asset3DRecord>;
     },
     onSuccess: (data: Asset3DRecord) => {
@@ -92,7 +93,7 @@ export function useReindexAssets3DMutation(): UseMutationResult<
   },
   Error,
   void
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => reindexAssets3DFromDisk(),

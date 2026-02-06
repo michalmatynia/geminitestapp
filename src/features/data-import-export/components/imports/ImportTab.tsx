@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, Checkbox, Pagination } from "@/shared/ui";
-import NextImage from "next/image";
+import NextImage from 'next/image';
+
 import type {
   CatalogOption,
   ImportListItem,
@@ -9,7 +9,8 @@ import type {
   InventoryOption,
   Template,
   ImportListStats,
-} from "@/features/data-import-export/types/imports";
+} from '@/features/data-import-export/types/imports';
+import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 type ImportTabProps = {
   inventories: InventoryOption[];
@@ -28,8 +29,8 @@ type ImportTabProps = {
   setImportTemplateId: (value: string) => void;
   importTemplates: Template[];
   loadingImportTemplates: boolean;
-  imageMode: "links" | "download";
-  setImageMode: (value: "links" | "download") => void;
+  imageMode: 'links' | 'download';
+  setImageMode: (value: 'links' | 'download') => void;
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (value: boolean) => void;
   importing: boolean;
@@ -101,8 +102,8 @@ export function ImportTab({
   lastResult,
 }: ImportTabProps): React.JSX.Element {
   return (
-    <>
-      <div className="rounded-md border border-border bg-gray-900 p-4">
+    <div className="space-y-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Base.com</h2>
@@ -125,28 +126,20 @@ export function ImportTab({
               disabled={loadingInventories}
               className="mt-6"
             >
-              {loadingInventories ? "Loading..." : "Load inventories"}
+              {loadingInventories ? 'Loading...' : 'Load inventories'}
             </Button>
             <div className="flex-1 min-w-[200px]">
               <Label className="text-xs text-gray-400">Inventory</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={inventoryId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setInventoryId(event.target.value)
-                }
-                disabled={inventories.length === 0}
-              >
-                {inventories.length === 0 ? (
-                  <option value="">Load inventories first</option>
-                ) : (
-                  inventories.map((inventory: InventoryOption) => (
-                    <option key={inventory.id} value={inventory.id}>
-                      {inventory.name}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={inventoryId}
+                  onValueChange={setInventoryId}
+                  disabled={inventories.length === 0}
+                  options={inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name }))}
+                  placeholder={inventories.length === 0 ? 'Load inventories first' : 'Select inventory'}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
+              </div>
             </div>
             <Button
               type="button"
@@ -161,85 +154,73 @@ export function ImportTab({
             </Button>
             <div className="w-40">
               <Label className="text-xs text-gray-400">Limit</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={limit}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setLimit(event.target.value)
-                }
-              >
-                <option value="1">1</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="all">All</option>
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={limit}
+                  onValueChange={setLimit}
+                  options={[
+                    { value: '1', label: '1' },
+                    { value: '5', label: '5' },
+                    { value: '10', label: '10' },
+                    { value: '50', label: '50' },
+                    { value: '100', label: '100' },
+                    { value: 'all', label: 'All' }
+                  ]}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
+              </div>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={catalogId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setCatalogId(event.target.value)
-                }
-                disabled={loadingCatalogs || catalogs.length === 0}
-              >
-                {catalogs.length === 0 ? (
-                  <option value="">
-                    {loadingCatalogs ? "Loading catalogs..." : "No catalogs"}
-                  </option>
-                ) : (
-                  catalogs.map((catalog: CatalogOption) => (
-                    <option key={catalog.id} value={catalog.id}>
-                      {catalog.name}
-                      {catalog.isDefault ? " (Default)" : ""}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={catalogId || '__none__'}
+                  onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
+                  disabled={loadingCatalogs || catalogs.length === 0}
+                  options={[
+                    { value: '__none__', label: '— No catalog —' },
+                    ...catalogs.map((cat: CatalogOption) => ({ value: cat.id, label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}` }))
+                  ]}
+                  placeholder={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
+              </div>
             </div>
             <div>
               <Label className="text-xs text-gray-400">Import template</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={importTemplateId}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setImportTemplateId(event.target.value)
-                }
-                disabled={
-                  loadingImportTemplates || importTemplates.length === 0
-                }
-              >
-                <option value="">No template</option>
-                {importTemplates.map((template: Template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={importTemplateId || '__none__'}
+                  onValueChange={(v: string): void => setImportTemplateId(v === '__none__' ? '' : v)}
+                  disabled={loadingImportTemplates || importTemplates.length === 0}
+                  options={[
+                    { value: '__none__', label: 'No template' },
+                    ...importTemplates.map((template: Template) => ({ value: template.id, label: template.name }))
+                  ]}
+                  placeholder="No template"
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
+              </div>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label className="text-xs text-gray-400">Images</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={imageMode}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setImageMode(
-                    event.target.value === "download" ? "download" : "links",
-                  )
-                }
-              >
-                <option value="links">Import image links</option>
-                <option value="download">Download product images</option>
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={imageMode}
+                  onValueChange={(v: string): void => setImageMode(v as 'links' | 'download')}
+                  options={[
+                    { value: 'links', label: 'Import image links' },
+                    { value: 'download', label: 'Download product images' }
+                  ]}
+                  triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+                />
+              </div>
               <p className="mt-2 text-xs text-gray-500">
                 Image links keep Base.com URLs. Download stores images in your
                 uploads folder.
@@ -251,7 +232,7 @@ export function ImportTab({
                 <Checkbox
                   id="allowDuplicateSku"
                   checked={allowDuplicateSku}
-                  onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                  onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     setAllowDuplicateSku(Boolean(checked))
                   }
                   className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
@@ -279,13 +260,13 @@ export function ImportTab({
               }}
               disabled={importing}
             >
-              {importing ? "Importing..." : "Import products"}
+              {importing ? 'Importing...' : 'Import products'}
             </Button>
           </div>
         </div>
-      </div>
+      </SectionPanel>
 
-      <div className="rounded-md border border-border bg-gray-900 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-white">
@@ -312,37 +293,41 @@ export function ImportTab({
               placeholder="Search SKU..."
               className="h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
-            <select
-              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
-              value={uniqueOnly ? "unique" : "all"}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                (setUniqueOnly(event.target.value === "unique"), setImportListPage(1))
+            <UnifiedSelect
+              value={uniqueOnly ? 'unique' : 'all'}
+              onValueChange={(v: string): void =>
+                (setUniqueOnly(v === 'unique'), setImportListPage(1))
               }
-            >
-              <option value="unique">Unique only</option>
-              <option value="all">All products</option>
-            </select>
-            <select
-              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+              options={[
+                { value: 'unique', label: 'Unique only' },
+                { value: 'all', label: 'All products' }
+              ]}
+              className="w-32"
+              triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
+            />
+            <UnifiedSelect
               value={String(importListPageSize)}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-                const nextSize = Number(event.target.value);
+              onValueChange={(value: string): void => {
+                const nextSize = Number(value);
                 setImportListPageSize(Number.isFinite(nextSize) ? nextSize : 25);
                 setImportListPage(1);
               }}
-            >
-              <option value="10">10 / page</option>
-              <option value="25">25 / page</option>
-              <option value="50">50 / page</option>
-              <option value="100">100 / page</option>
-            </select>
+              options={[
+                { value: '10', label: '10 / page' },
+                { value: '25', label: '25 / page' },
+                { value: '50', label: '50 / page' },
+                { value: '100', label: '100 / page' }
+              ]}
+              className="w-32"
+              triggerClassName="h-8 border-border bg-gray-900 text-xs text-white"
+            />
             <Button
               onClick={(): void => {
                 void handleLoadImportList();
               }}
               disabled={loadingImportList}
             >
-              {loadingImportList ? "Loading..." : "Load import list"}
+              {loadingImportList ? 'Loading...' : 'Load import list'}
             </Button>
           </div>
         </div>
@@ -350,13 +335,13 @@ export function ImportTab({
         {importListStats ? (
           <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
             <div>
-              Total: {importListStats.total} · Existing:{" "}
-              {importListStats.existing} · Available:{" "}
-              {importListStats.available ?? importListStats.filtered} · Showing:{" "}
+              Total: {importListStats.total} · Existing:{' '}
+              {importListStats.existing} · Available:{' '}
+              {importListStats.available ?? importListStats.filtered} · Showing:{' '}
               {importListStats.filtered} · Selected: {selectedImportCount}
               {importListStats.skuDuplicates ? (
                 <span className="text-yellow-400">
-                  {" "}
+                  {' '}
                   · SKU duplicates: {importListStats.skuDuplicates}
                 </span>
               ) : null}
@@ -371,19 +356,19 @@ export function ImportTab({
         ) : null}
 
         {importList.length > 0 ? (
-          <div className="mt-3 max-h-96 overflow-auto rounded-md border border-border bg-card/70">
+          <SectionPanel variant="subtle-compact" className="mt-3 max-h-96 overflow-auto p-0">
             <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10">
               <span className="flex items-center">
                 <Checkbox
                   aria-label="Select all visible products"
                   checked={
                     allVisibleSelected ||
-                    (isSomeVisibleSelected && "indeterminate")
+                    (isSomeVisibleSelected && 'indeterminate')
                   }
                   onCheckedChange={(
-                    checked: boolean | "indeterminate",
+                    checked: boolean | 'indeterminate',
                   ): void => {
-                    if (Boolean(checked)) {
+                    if (checked) {
                       setSelectedImportIds((prev: Set<string>) => {
                         const next = new Set(prev);
                         importList.forEach((item: ImportListItem) => {
@@ -418,14 +403,14 @@ export function ImportTab({
                 key={item.baseProductId}
                 className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
                   selectedImportIds.has(item.baseProductId)
-                    ? "bg-emerald-500/5"
-                    : "hover:bg-card/40"
+                    ? 'bg-emerald-500/5'
+                    : 'hover:bg-card/40'
                 }`}
               >
                 <Checkbox
                   checked={selectedImportIds.has(item.baseProductId)}
                   onCheckedChange={(
-                    checked: boolean | "indeterminate",
+                    checked: boolean | 'indeterminate',
                   ): void => {
                     const isChecked = Boolean(checked);
                     setSelectedImportIds((prev: Set<string>) => {
@@ -448,7 +433,7 @@ export function ImportTab({
                       alt=""
                       fill
                       className="object-cover"
-                      unoptimized={!item.image.includes("baselinker.com")}
+                      unoptimized={!item.image.includes('baselinker.com')}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-600">
@@ -471,10 +456,10 @@ export function ImportTab({
                 </div>
                 <span
                   className={`truncate font-mono text-[11px] ${
-                    item.skuExists ? "text-yellow-400" : "text-gray-400"
+                    item.skuExists ? 'text-yellow-400' : 'text-gray-400'
                   }`}
                 >
-                  {item.sku ?? "—"}
+                  {item.sku ?? '—'}
                   {item.skuExists && (
                     <span className="ml-1" title="SKU already exists">
                       ⚠
@@ -486,28 +471,28 @@ export function ImportTab({
                 <span
                   className={`text-[11px] font-medium ${
                     item.exists
-                      ? "text-amber-400"
+                      ? 'text-amber-400'
                       : item.skuExists
-                        ? "text-yellow-400"
-                        : "text-emerald-400"
+                        ? 'text-yellow-400'
+                        : 'text-emerald-400'
                   }`}
                 >
-                  {item.exists ? "Exists" : item.skuExists ? "SKU dup" : "New"}
+                  {item.exists ? 'Exists' : item.skuExists ? 'SKU dup' : 'New'}
                 </span>
               </div>
             ))}
-          </div>
+          </SectionPanel>
         ) : (
           <p className="mt-3 text-xs text-gray-500">
             {importList.length > 0
-              ? "No matches for this search."
-              : "No items loaded yet."}
+              ? 'No matches for this search.'
+              : 'No items loaded yet.'}
           </p>
         )}
-      </div>
+      </SectionPanel>
 
       {lastResult ? (
-        <div className="rounded-md border border-border bg-gray-900 p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <h3 className="text-sm font-semibold text-white">
             Last import summary
           </h3>
@@ -526,8 +511,8 @@ export function ImportTab({
               ))}
             </div>
           ) : null}
-        </div>
+        </SectionPanel>
       ) : null}
-    </>
+    </div>
   );
 }

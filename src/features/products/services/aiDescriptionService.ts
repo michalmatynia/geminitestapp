@@ -1,33 +1,37 @@
-import "server-only";
+import 'server-only';
 
-import OpenAI from "openai";
-import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getImageFileRepository } from "@/features/files/server";
-import type { ProductFormData } from "../types/forms";
-import type { ImageFileRecord } from "@/shared/types/files";
-import fs from "fs/promises";
-import path from "path";
+import fs from 'fs/promises';
+import path from 'path';
+
+import OpenAI from 'openai';
+
+import { getImageFileRepository } from '@/features/files/server';
+import { ErrorSystem } from '@/features/observability/server';
 import {
   badRequestError,
   configurationError,
   operationFailedError,
-} from "@/shared/errors/app-error";
+} from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ImageFileRecord } from '@/shared/types/files';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+import type { ProductFormData } from '../types/forms';
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
+
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
 // AI-related settings that should be read from MongoDB when available
 const AI_SETTINGS_KEYS = new Set([
-  "ai_vision_model",
-  "ai_vision_user_prompt",
-  "ai_vision_prompt",
-  "ai_vision_output_enabled",
-  "openai_model",
-  "openai_api_key",
-  "description_generation_user_prompt",
-  "description_generation_prompt",
-  "ai_generation_output_enabled",
+  'ai_vision_model',
+  'ai_vision_user_prompt',
+  'ai_vision_prompt',
+  'ai_vision_output_enabled',
+  'openai_model',
+  'openai_api_key',
+  'description_generation_user_prompt',
+  'description_generation_prompt',
+  'ai_generation_output_enabled',
 ]);
 
 interface MongoSetting {
@@ -43,14 +47,18 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       const mongo = await getMongoDb();
       const doc = await mongo
-        .collection<MongoSetting>("settings")
+        .collection<MongoSetting>('settings')
         .findOne({ _id: key });
-      if (doc && typeof doc.value === "string") {
+      if (doc && typeof doc.value === 'string') {
         value = doc.value;
         return value; // Return immediately if found in MongoDB
       }
     } catch (err) {
-      console.warn(`Mongo setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
+        service: 'ai-description-service',
+        key,
+        error: err
+      });
     }
   }
 
@@ -63,7 +71,11 @@ export async function getSettingValue(key: string): Promise<string | null> {
       });
       if (setting) value = setting.value;
     } catch (err) {
-      console.warn(`Prisma setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+        service: 'ai-description-service',
+        key,
+        error: err
+      });
     }
   }
 
@@ -72,13 +84,17 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       const mongo = await getMongoDb();
       const doc = await mongo
-        .collection<MongoSetting>("settings")
+        .collection<MongoSetting>('settings')
         .findOne({ _id: key });
-      if (doc && typeof doc.value === "string") {
+      if (doc && typeof doc.value === 'string') {
         value = doc.value;
       }
     } catch (err) {
-      console.warn(`Mongo fallback setting fetch failed for ${key}:`, err);
+      void ErrorSystem.logWarning(`Mongo fallback setting fetch failed for ${key}`, {
+        service: 'ai-description-service',
+        key,
+        error: err
+      });
     }
   }
 
@@ -92,13 +108,13 @@ function getClient(
   // Check if it's a real OpenAI model (not gpt-oss or other Ollama variants)
   const modelLower = modelName.toLowerCase();
   const isOpenAI =
-    (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
-    modelLower.startsWith("ft:gpt-") ||
-    modelLower.startsWith("o1-");
+    (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
+    modelLower.startsWith('ft:gpt-') ||
+    modelLower.startsWith('o1-');
 
   if (isOpenAI) {
     if (!apiKey) {
-      throw configurationError("OpenAI API key is missing for GPT model.");
+      throw configurationError('OpenAI API key is missing for GPT model.');
     }
     return { openai: new OpenAI({ apiKey }), isOllama: false };
   }
@@ -107,7 +123,7 @@ function getClient(
   return {
     openai: new OpenAI({
       baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: "ollama",
+      apiKey: 'ollama',
     }),
     isOllama: true,
   };
@@ -140,7 +156,7 @@ export async function generateProductDescription(params: {
   } = params;
 
   if (!productData?.name_en) {
-    throw badRequestError("Product name is required", { field: "name_en" });
+    throw badRequestError('Product name is required', { field: 'name_en' });
   }
 
   const [
@@ -154,51 +170,51 @@ export async function generateProductDescription(params: {
     generationOutputPromptSetting,
     generationOutputEnabledSetting,
   ] = await Promise.all([
-    getSettingValue("openai_api_key"),
-    getSettingValue("ai_vision_model"),
-    getSettingValue("ai_vision_user_prompt"),
-    getSettingValue("ai_vision_prompt"),
-    getSettingValue("ai_vision_output_enabled"),
-    getSettingValue("openai_model"),
-    getSettingValue("description_generation_user_prompt"),
-    getSettingValue("description_generation_prompt"),
-    getSettingValue("ai_generation_output_enabled"),
+    getSettingValue('openai_api_key'),
+    getSettingValue('ai_vision_model'),
+    getSettingValue('ai_vision_user_prompt'),
+    getSettingValue('ai_vision_prompt'),
+    getSettingValue('ai_vision_output_enabled'),
+    getSettingValue('openai_model'),
+    getSettingValue('description_generation_user_prompt'),
+    getSettingValue('description_generation_prompt'),
+    getSettingValue('ai_generation_output_enabled'),
   ]);
 
   const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
-  const visionModel = visionModelSetting?.trim() || "gemma3:27b";
+  const visionModel = visionModelSetting?.trim() || 'gemma3:27b';
   const visionInputPrompt =
-    visionInputPromptSetting?.trim() || "Analyze these product images...";
-  const visionOutputPrompt = visionOutputPromptSetting?.trim() || "";
+    visionInputPromptSetting?.trim() || 'Analyze these product images...';
+  const visionOutputPrompt = visionOutputPromptSetting?.trim() || '';
   const isVisionOutputEnabled =
     visionOutputEnabled !== undefined
       ? visionOutputEnabled
-      : visionOutputEnabledSetting === "true";
+      : visionOutputEnabledSetting === 'true';
 
-  const generationModel = generationModelSetting?.trim() || "qwen3-vl:30b";
+  const generationModel = generationModelSetting?.trim() || 'qwen3-vl:30b';
   const generationInputPrompt =
     generationInputPromptSetting?.trim() ||
-    "Generate description for [name_en]";
-  const generationOutputPrompt = generationOutputPromptSetting?.trim() || "";
+    'Generate description for [name_en]';
+  const generationOutputPrompt = generationOutputPromptSetting?.trim() || '';
   const isGenerationOutputEnabled =
     generationOutputEnabled !== undefined
       ? generationOutputEnabled
-      : generationOutputEnabledSetting === "true";
+      : generationOutputEnabledSetting === 'true';
 
   const processPrompt = (
     text: string,
-    currentResult: string = "",
-    analysisResult: string = "",
-    descriptionInitial: string = "",
+    currentResult: string = '',
+    analysisResult: string = '',
+    descriptionInitial: string = '',
   ): { text: string; attachImages: boolean } => {
     let processed = text;
-    const hasImagesPlaceholder = processed.includes("[images]");
+    const hasImagesPlaceholder = processed.includes('[images]');
     processed = processed.replace(/\[analysis\]/g, analysisResult);
     processed = processed.replace(/\[imageAnalysis\]/g, analysisResult);
     processed = processed.replace(/\[description\]/g, descriptionInitial);
     processed = processed.replace(/\[result\]/g, currentResult);
     processed = processed.replace(/\[initialResult\]/g, currentResult);
-    processed = processed.replace(/\[images\]/g, "");
+    processed = processed.replace(/\[images\]/g, '');
 
     if (productData) {
       for (const key in productData) {
@@ -206,9 +222,9 @@ export async function generateProductDescription(params: {
           const value = productData[key as keyof ProductFormData];
           if (value !== null && value !== undefined) {
             const stringValue =
-              typeof value === "object" ? JSON.stringify(value) : String(value);
+              typeof value === 'object' ? JSON.stringify(value) : String(value);
             processed = processed.replace(
-              new RegExp(`\\[${key}\\]`, "g"),
+              new RegExp(`\\[${key}\\]`, 'g'),
               stringValue,
             );
           }
@@ -229,22 +245,22 @@ export async function generateProductDescription(params: {
     const imagePromises = imageUrls.map(async (item: string) => {
       try {
         let base64Image: string;
-        let mimetype: string = "image/jpeg";
-        if (item.startsWith("http")) {
+        let mimetype: string = 'image/jpeg';
+        if (item.startsWith('http')) {
           const res = await fetch(item);
           if (!res.ok) return null;
           const buffer = Buffer.from(await res.arrayBuffer());
-          base64Image = buffer.toString("base64");
-          mimetype = res.headers.get("content-type") || "image/jpeg";
+          base64Image = buffer.toString('base64');
+          mimetype = res.headers.get('content-type') || 'image/jpeg';
         } else {
-          const imagePath = path.join(process.cwd(), "public", item);
+          const imagePath = path.join(process.cwd(), 'public', item);
           const buffer = await fs.readFile(imagePath);
-          base64Image = buffer.toString("base64");
+          base64Image = buffer.toString('base64');
           const record = imageFileMap.get(item);
           if (record) mimetype = record.mimetype;
         }
         return {
-          type: "image_url" as const,
+          type: 'image_url' as const,
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
         } as ChatCompletionContentPart;
       } catch {
@@ -256,8 +272,8 @@ export async function generateProductDescription(params: {
     );
   }
 
-  let analysisInitial = "";
-  let analysisFinal = "";
+  let analysisInitial = '';
+  let analysisFinal = '';
   const { openai: visionClient, isOllama: isVisionOllama } = getClient(
     visionModel,
     apiKey,
@@ -266,20 +282,20 @@ export async function generateProductDescription(params: {
   try {
     const prompt1_1 = processPrompt(visionInputPrompt);
     const content1_1: ChatCompletionContentPart[] = [
-      { type: "text", text: prompt1_1.text },
+      { type: 'text', text: prompt1_1.text },
     ];
     if (prompt1_1.attachImages) content1_1.push(...processedImages);
 
     const visionCompletion = await visionClient.chat.completions.create({
       model: visionModel,
       messages: [
-        { role: "system", content: "You are an AI assistant." },
-        { role: "user", content: content1_1 },
+        { role: 'system', content: 'You are an AI assistant.' },
+        { role: 'user', content: content1_1 },
       ],
       max_tokens: 500,
     });
     analysisInitial =
-      visionCompletion.choices[0]?.message.content?.trim() || "";
+      visionCompletion.choices[0]?.message.content?.trim() || '';
 
     if (isVisionOutputEnabled && visionOutputPrompt) {
       const prompt1_2 = processPrompt(
@@ -288,27 +304,27 @@ export async function generateProductDescription(params: {
         analysisInitial,
       );
       const content1_2: ChatCompletionContentPart[] = [
-        { type: "text", text: prompt1_2.text },
+        { type: 'text', text: prompt1_2.text },
       ];
       if (prompt1_2.attachImages) content1_2.push(...processedImages);
       const refineCompletion = await visionClient.chat.completions.create({
         model: visionModel,
         messages: [
-          { role: "system", content: "You are an AI assistant." },
-          { role: "user", content: content1_2 },
+          { role: 'system', content: 'You are an AI assistant.' },
+          { role: 'user', content: content1_2 },
         ],
         max_tokens: 500,
       });
       analysisFinal =
-        refineCompletion.choices[0]?.message.content?.trim() || "";
+        refineCompletion.choices[0]?.message.content?.trim() || '';
     }
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+      error instanceof Error ? error.message : 'Unknown error';
     const isConnectionError =
-      errorMessage.includes("ECONNREFUSED") ||
-      errorMessage.includes("fetch failed") ||
-      errorMessage.includes("failed to fetch");
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('fetch failed') ||
+      errorMessage.includes('failed to fetch');
 
     if (isVisionOllama && isConnectionError) {
       throw operationFailedError(
@@ -329,8 +345,8 @@ export async function generateProductDescription(params: {
     generationModel,
     apiKey,
   );
-  let descriptionInitial = "";
-  let descriptionFinal = "";
+  let descriptionInitial = '';
+  let descriptionFinal = '';
 
   try {
     const prompt2_1 = processPrompt(
@@ -339,19 +355,19 @@ export async function generateProductDescription(params: {
       visionResultForNext,
     );
     const content2_1: ChatCompletionContentPart[] = [
-      { type: "text", text: prompt2_1.text },
+      { type: 'text', text: prompt2_1.text },
     ];
     if (prompt2_1.attachImages) content2_1.push(...processedImages);
     const genCompletion = await generationClient.chat.completions.create({
       model: generationModel,
       messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: content2_1 },
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: content2_1 },
       ],
       max_tokens: 1000,
     });
     descriptionInitial =
-      genCompletion.choices[0]?.message.content?.trim() || "";
+      genCompletion.choices[0]?.message.content?.trim() || '';
 
     if (isGenerationOutputEnabled && generationOutputPrompt) {
       const prompt2_2 = processPrompt(
@@ -361,28 +377,28 @@ export async function generateProductDescription(params: {
         descriptionInitial,
       );
       const content2_2: ChatCompletionContentPart[] = [
-        { type: "text", text: prompt2_2.text },
+        { type: 'text', text: prompt2_2.text },
       ];
       if (prompt2_2.attachImages) content2_2.push(...processedImages);
       const refineGenCompletion =
         await generationClient.chat.completions.create({
           model: generationModel,
           messages: [
-            { role: "system", content: "You are a helpful assistant." },
-            { role: "user", content: content2_2 },
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: content2_2 },
           ],
           max_tokens: 1000,
         });
       descriptionFinal =
-        refineGenCompletion.choices[0]?.message.content?.trim() || "";
+        refineGenCompletion.choices[0]?.message.content?.trim() || '';
     }
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+      error instanceof Error ? error.message : 'Unknown error';
     const isConnectionError =
-      errorMessage.includes("ECONNREFUSED") ||
-      errorMessage.includes("fetch failed") ||
-      errorMessage.includes("failed to fetch");
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('fetch failed') ||
+      errorMessage.includes('failed to fetch');
 
     if (isGenerationOllama && isConnectionError) {
       throw operationFailedError(

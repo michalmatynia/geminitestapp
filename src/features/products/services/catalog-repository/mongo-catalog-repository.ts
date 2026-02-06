@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import type { WithId } from "mongodb";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { randomUUID } from 'crypto';
+
 import type {
   CatalogCreateInput,
   CatalogRecord,
   CatalogRepository,
   CatalogUpdateInput,
-} from "@/features/products/types/services/catalog-repository";
+} from '@/features/products/types/services/catalog-repository';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+import type { WithId } from 'mongodb';
 
 type CatalogDocument = {
   _id: string;
@@ -24,7 +26,7 @@ type CatalogDocument = {
   priceGroupIds?: string[];
 };
 
-const CATALOG_COLLECTION = "catalogs";
+const CATALOG_COLLECTION = 'catalogs';
 
 const toRecord = (doc: WithId<CatalogDocument>): CatalogRecord => ({
   id: doc.id ?? doc._id,
@@ -116,7 +118,7 @@ export const mongoCatalogRepository: CatalogRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: id }, { id }] },
         { $set: updateDoc },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
     return result ? toRecord({ ...result, _id: result._id }) : null;
   },

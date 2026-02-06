@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 
 
@@ -23,28 +23,28 @@ export default function RichTextBlock({ content, onChange }: RichTextBlockProps)
         <div>
           <Label className="block mb-1">Heading</Label>
           <Input
-            value={content.heading || ""}
+            value={content.heading || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...content, heading: e.target.value })}
           />
         </div>
         <div>
           <Label className="block mb-1">Text</Label>
           <Textarea
-            value={content.text || ""}
+            value={content.text || ''}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ ...content, text: e.target.value })}
           />
         </div>
         <div>
           <Label className="block mb-1">Button Text</Label>
           <Input
-            value={content.buttonText || ""}
+            value={content.buttonText || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...content, buttonText: e.target.value })}
           />
         </div>
         <div>
           <Label className="block mb-1">Button Link</Label>
           <Input
-            value={content.buttonLink || ""}
+            value={content.buttonLink || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...content, buttonLink: e.target.value })}
           />
         </div>
@@ -52,4 +52,4 @@ export default function RichTextBlock({ content, onChange }: RichTextBlockProps)
     </div>
   );
 }
-import { Input, Textarea, Label } from "@/shared/ui";
+import { Input, Textarea, Label } from '@/shared/ui';

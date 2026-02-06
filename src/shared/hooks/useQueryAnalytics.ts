@@ -1,8 +1,8 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useCallback } from 'react';
 
 interface QueryMetrics {
   queryKey: string;

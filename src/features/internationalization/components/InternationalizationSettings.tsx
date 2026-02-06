@@ -1,8 +1,8 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input } from "@/shared/ui";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from 'lucide-react';
 
-import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
-import { countryFlagMap } from "@/shared/constants/internationalization";
+import { countryFlagMap } from '@/shared/constants/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Badge, Alert, SearchInput } from '@/shared/ui';
 
 
 type InternationalizationSettingsProps = {
@@ -90,7 +90,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Currency actions"
                         type="button"
                       >
@@ -139,14 +140,13 @@ export function InternationalizationSettings({
             </Button>
           </div>
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="w-full md:max-w-sm">
-              <Input
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                placeholder="Search countries..."
-                value={countrySearch}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
-              />
-            </div>
+            <SearchInput
+              containerClassName="w-full md:max-w-sm"
+              placeholder="Search countries..."
+              value={countrySearch}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
+              onClear={() => setCountrySearch('')}
+            />
             <p className="text-xs text-gray-500">
               {filteredCountries.length} result(s)
             </p>
@@ -177,12 +177,12 @@ export function InternationalizationSettings({
                     <div className="mt-1 flex flex-wrap gap-2">
                       {country.currencies?.length ? (
                         country.currencies.map((entry: { currencyId: string; currency: { code: string } }) => (
-                          <span
+                          <Badge
                             key={entry.currencyId}
-                            className="rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            variant="neutral"
                           >
                             {entry.currency.code}
-                          </span>
+                          </Badge>
                         ))
                       ) : (
                         <span className="text-xs text-gray-500">
@@ -194,7 +194,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Country actions"
                         type="button"
                       >
@@ -244,8 +245,10 @@ export function InternationalizationSettings({
               Loading languages...
             </div>
           ) : languagesError ? (
-            <div className="mt-4 rounded-md border border-dashed border-red-500/40 p-4 text-center text-sm text-red-200">
-              {languagesError}
+            <div className="mt-4">
+              <Alert variant="error">
+                {languagesError}
+              </Alert>
             </div>
           ) : languages.length === 0 ? (
             <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
@@ -273,16 +276,17 @@ export function InternationalizationSettings({
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
                       {language.countries?.length ? (
                         language.countries.map((entry: { countryId: string; country: { name: string; code: string } }) => (
-                          <div
+                          <Badge
                             key={entry.countryId}
-                            className="flex items-center gap-2 rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            variant="neutral"
                             title={entry.country.name}
+                            className="flex items-center gap-2"
                           >
                             <span className="h-3 w-4 overflow-hidden rounded-sm border border">
                               {countryFlagMap[entry.country.code] ?? null}
                             </span>
                             <span>{entry.country.name}</span>
-                          </div>
+                          </Badge>
                         ))
                       ) : (
                         <span>No countries assigned</span>
@@ -292,7 +296,8 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
+                        variant="ghost"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white p-0"
                         aria-label="Language actions"
                         type="button"
                       >

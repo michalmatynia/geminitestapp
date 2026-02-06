@@ -1,4 +1,4 @@
-import type { ProductCategoryDto } from "@/features/products";
+import type { ProductCategoryDto } from '@/features/products';
 
 export type ExternalCategory = {
   id: string;

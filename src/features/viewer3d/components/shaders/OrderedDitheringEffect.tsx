@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { Effect, BlendFunction } from "postprocessing";
-import { Uniform, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
-import { forwardRef, useMemo } from "react";
-import orderedDitheringShader from "./OrderedDitheringShader";
+import { Effect, BlendFunction } from 'postprocessing';
+import { forwardRef, useMemo } from 'react';
+import { Uniform, Vector2, WebGLRenderTarget, WebGLRenderer } from 'three';
+
+import orderedDitheringShader from './OrderedDitheringShader';
 
 export interface OrderedDitheringEffectOptions {
   time?: number;
@@ -28,17 +29,17 @@ export class OrderedDitheringEffectImpl extends Effect {
     blendFunction = BlendFunction.NORMAL,
   }: OrderedDitheringEffectOptions = {}) {
     const uniforms = new Map<string, Uniform>([
-      ["time", new Uniform(time)],
-      ["resolution", new Uniform(resolution)],
-      ["gridSize", new Uniform(gridSize)],
-      ["luminanceMethod", new Uniform(luminanceMethod)],
-      ["invertColor", new Uniform(invertColor ? 1 : 0)],
-      ["ditheringEnabled", new Uniform(1)],
-      ["pixelSizeRatio", new Uniform(pixelSizeRatio)],
-      ["grayscaleOnly", new Uniform(grayscaleOnly ? 1 : 0)],
+      ['time', new Uniform(time)],
+      ['resolution', new Uniform(resolution)],
+      ['gridSize', new Uniform(gridSize)],
+      ['luminanceMethod', new Uniform(luminanceMethod)],
+      ['invertColor', new Uniform(invertColor ? 1 : 0)],
+      ['ditheringEnabled', new Uniform(1)],
+      ['pixelSizeRatio', new Uniform(pixelSizeRatio)],
+      ['grayscaleOnly', new Uniform(grayscaleOnly ? 1 : 0)],
     ]);
 
-    super("OrderedDitheringEffect", orderedDitheringShader, {
+    super('OrderedDitheringEffect', orderedDitheringShader, {
       blendFunction,
       uniforms,
     });
@@ -49,47 +50,47 @@ export class OrderedDitheringEffectImpl extends Effect {
     inputBuffer: WebGLRenderTarget,
     deltaTime: number
   ): void {
-    const timeUniform = this.uniforms.get("time");
-    if (timeUniform && typeof timeUniform.value === "number") {
+    const timeUniform = this.uniforms.get('time');
+    if (timeUniform && typeof timeUniform.value === 'number') {
       timeUniform.value += deltaTime;
     }
 
-    const resolutionUniform = this.uniforms.get("resolution");
+    const resolutionUniform = this.uniforms.get('resolution');
     if (resolutionUniform?.value instanceof Vector2) {
       resolutionUniform.value.set(inputBuffer.width, inputBuffer.height);
     }
   }
 
   setGridSize(size: number): void {
-    const gridSizeUniform = this.uniforms.get("gridSize");
+    const gridSizeUniform = this.uniforms.get('gridSize');
     if (gridSizeUniform) {
       gridSizeUniform.value = size;
     }
   }
 
   setPixelSizeRatio(ratio: number): void {
-    const pixelSizeRatioUniform = this.uniforms.get("pixelSizeRatio");
+    const pixelSizeRatioUniform = this.uniforms.get('pixelSizeRatio');
     if (pixelSizeRatioUniform) {
       pixelSizeRatioUniform.value = ratio;
     }
   }
 
   setGrayscaleOnly(grayscaleOnly: boolean): void {
-    const grayscaleOnlyUniform = this.uniforms.get("grayscaleOnly");
+    const grayscaleOnlyUniform = this.uniforms.get('grayscaleOnly');
     if (grayscaleOnlyUniform) {
       grayscaleOnlyUniform.value = grayscaleOnly ? 1 : 0;
     }
   }
 
   setInvertColor(invertColor: boolean): void {
-    const invertColorUniform = this.uniforms.get("invertColor");
+    const invertColorUniform = this.uniforms.get('invertColor');
     if (invertColorUniform) {
       invertColorUniform.value = invertColor ? 1 : 0;
     }
   }
 
   setLuminanceMethod(luminanceMethod: number): void {
-    const luminanceMethodUniform = this.uniforms.get("luminanceMethod");
+    const luminanceMethodUniform = this.uniforms.get('luminanceMethod');
     if (luminanceMethodUniform) {
       luminanceMethodUniform.value = luminanceMethod;
     }
@@ -132,6 +133,7 @@ export const OrderedDitheringPass = forwardRef<
     [gridSize, luminanceMethod, invertColor, pixelSizeRatio, grayscaleOnly, blendFunction]
   );
 
-  // eslint-disable-next-line react/no-unknown-property
+   
+   
   return <primitive ref={ref} object={effect} />;
 });

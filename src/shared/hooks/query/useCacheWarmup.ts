@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useCallback, useRef } from 'react';
 
 interface CacheWarmupConfig {
   queryKey: unknown[];
@@ -26,7 +26,7 @@ export function useCacheWarmup(configs: CacheWarmupConfig[]): void {
     if (config.conditions && !config.conditions()) return;
 
     const delay = config.priority === 'high' ? 100 : 
-                 config.priority === 'medium' ? 500 : 1000;
+      config.priority === 'medium' ? 500 : 1000;
 
     const timeout = setTimeout(() => {
       void queryClient.prefetchQuery({
@@ -56,7 +56,7 @@ export function useCacheWarmup(configs: CacheWarmupConfig[]): void {
 export function useSmartPrefetch(): {
   prefetchOnHover: (queryKey: unknown[], queryFn: () => Promise<unknown>, delay?: number) => { onMouseEnter: () => void; onMouseLeave: () => void };
   prefetchOnFocus: (queryKey: unknown[], queryFn: () => Promise<unknown>) => { onFocus: () => void };
-} {
+  } {
   const queryClient = useQueryClient();
 
   const prefetchOnHover = useCallback((

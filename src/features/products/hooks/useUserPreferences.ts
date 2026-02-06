@@ -1,14 +1,16 @@
-import { useCallback } from "react";
-import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
-import { useOfflineMutation } from "@/shared/hooks/useOfflineMutation";
-import type { ProductListPreferences } from "@/features/products/types/products-ui";
+import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback } from 'react';
+
+import { logClientError } from '@/features/observability';
+import type { ProductListPreferences } from '@/features/products/types/products-ui';
+import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
-  nameLocale: "name_en",
-  catalogFilter: "all",
-  currencyCode: "PLN",
+  nameLocale: 'name_en',
+  catalogFilter: 'all',
+  currencyCode: 'PLN',
   pageSize: 12,
-  thumbnailSource: "file",
+  thumbnailSource: 'file',
 };
 
 type PreferencesApiResponse = {
@@ -16,26 +18,26 @@ type PreferencesApiResponse = {
   productListCatalogFilter?: string;
   productListCurrencyCode?: string | null;
   productListPageSize?: number;
-  productListThumbnailSource?: "file" | "link" | "base64" | null;
+  productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
 };
 
-const userPreferencesQueryKey = ["user-preferences", "product-list"] as const;
+const userPreferencesQueryKey = ['user-preferences', 'product-list'] as const;
 
 async function fetchUserPreferences(): Promise<ProductListPreferences> {
-  const res = await fetch("/api/user/preferences");
+  const res = await fetch('/api/user/preferences');
   if (!res.ok) {
-    throw new Error("Failed to load preferences");
+    throw new Error('Failed to load preferences');
   }
   const data = (await res.json()) as PreferencesApiResponse;
   return {
-    nameLocale: (data.productListNameLocale || "name_en") as
-      | "name_en"
-      | "name_pl"
-      | "name_de",
-    catalogFilter: data.productListCatalogFilter || "all",
-    currencyCode: data.productListCurrencyCode ?? "PLN",
+    nameLocale: (data.productListNameLocale || 'name_en') as
+      | 'name_en'
+      | 'name_pl'
+      | 'name_de',
+    catalogFilter: data.productListCatalogFilter || 'all',
+    currencyCode: data.productListCurrencyCode ?? 'PLN',
     pageSize: data.productListPageSize || 12,
-    thumbnailSource: data.productListThumbnailSource || "file",
+    thumbnailSource: data.productListThumbnailSource || 'file',
   };
 }
 
@@ -44,9 +46,9 @@ async function updateUserPreference(
   value: unknown,
 ): Promise<void> {
   const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-  const res = await fetch("/api/user/preferences", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/user/preferences', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ [apiKey]: value }),
   });
   if (!res.ok) {
@@ -55,24 +57,24 @@ async function updateUserPreference(
 }
 
 function getLocalStorageFallback(): Partial<ProductListPreferences> {
-  if (typeof window === "undefined") return {};
+  if (typeof window === 'undefined') return {};
 
-  const storedLocale = window.localStorage.getItem("productListNameLocale");
+  const storedLocale = window.localStorage.getItem('productListNameLocale');
   const storedCatalogFilter = window.localStorage.getItem(
-    "productListCatalogFilter",
+    'productListCatalogFilter',
   );
   const storedCurrencyCode = window.localStorage.getItem(
-    "productListCurrencyCode",
+    'productListCurrencyCode',
   );
-  const storedPageSize = window.localStorage.getItem("productListPageSize");
+  const storedPageSize = window.localStorage.getItem('productListPageSize');
   const storedThumbnailSource = window.localStorage.getItem(
-    "productListThumbnailSource",
+    'productListThumbnailSource',
   );
 
   return {
-    ...(storedLocale === "name_en" ||
-    storedLocale === "name_pl" ||
-    storedLocale === "name_de"
+    ...(storedLocale === 'name_en' ||
+    storedLocale === 'name_pl' ||
+    storedLocale === 'name_de'
       ? { nameLocale: storedLocale }
       : {}),
     ...(storedCatalogFilter ? { catalogFilter: storedCatalogFilter } : {}),
@@ -80,9 +82,9 @@ function getLocalStorageFallback(): Partial<ProductListPreferences> {
     ...(storedPageSize && !Number.isNaN(Number(storedPageSize))
       ? { pageSize: Number(storedPageSize) }
       : {}),
-    ...(storedThumbnailSource === "file" ||
-    storedThumbnailSource === "link" ||
-    storedThumbnailSource === "base64"
+    ...(storedThumbnailSource === 'file' ||
+    storedThumbnailSource === 'link' ||
+    storedThumbnailSource === 'base64'
       ? { thumbnailSource: storedThumbnailSource }
       : {}),
   };
@@ -92,7 +94,7 @@ function updateLocalStorage(
   key: keyof ProductListPreferences,
   value: unknown,
 ): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
   const storageKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
   window.localStorage.setItem(storageKey, String(value));
@@ -106,13 +108,13 @@ async function updateUserPreferences(
     const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
     payload[apiKey] = value;
   }
-  const res = await fetch("/api/user/preferences", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/user/preferences', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    throw new Error("Failed to update preferences");
+    throw new Error('Failed to update preferences');
   }
 }
 
@@ -130,11 +132,11 @@ export interface UserPreferencesHookResult {
   preferences: ProductListPreferences;
   loading: boolean;
   error: string | null;
-  setNameLocale: (locale: "name_en" | "name_pl" | "name_de") => void;
+  setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
   setCatalogFilter: (filter: string) => void;
   setCurrencyCode: (code: string | null) => void;
   setPageSize: (size: number) => void;
-  setThumbnailSource: (source: "file" | "link" | "base64") => void;
+  setThumbnailSource: (source: 'file' | 'link' | 'base64') => void;
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
@@ -144,7 +146,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
       try {
         return await fetchUserPreferences();
       } catch (error) {
-        console.error("Failed to load user preferences:", error);
+        logClientError(error, { context: { source: 'useUserPreferences', action: 'loadPreferences' } });
         // Fall back to localStorage if database fails
         const fallback = getLocalStorageFallback();
         return { ...DEFAULT_PREFERENCES, ...fallback };
@@ -164,8 +166,8 @@ export function useUserPreferences(): UserPreferencesHookResult {
         ...(oldData || {}),
         [key]: value,
       } as ProductListPreferences),
-      successMessage: "Preferences updated",
-      errorMessage: "Failed to update preferences",
+      successMessage: 'Preferences updated',
+      errorMessage: 'Failed to update preferences',
     }
   );
 
@@ -180,36 +182,36 @@ export function useUserPreferences(): UserPreferencesHookResult {
   );
 
   const setNameLocale = useCallback(
-    (locale: "name_en" | "name_pl" | "name_de"): void => {
-      setPreference("nameLocale", locale);
+    (locale: 'name_en' | 'name_pl' | 'name_de'): void => {
+      setPreference('nameLocale', locale);
     },
     [setPreference],
   );
 
   const setCatalogFilter = useCallback(
     (filter: string): void => {
-      setPreference("catalogFilter", filter);
+      setPreference('catalogFilter', filter);
     },
     [setPreference],
   );
 
   const setCurrencyCode = useCallback(
     (code: string | null): void => {
-      setPreference("currencyCode", code);
+      setPreference('currencyCode', code);
     },
     [setPreference],
   );
 
   const setPageSize = useCallback(
     (size: number): void => {
-      setPreference("pageSize", size);
+      setPreference('pageSize', size);
     },
     [setPreference],
   );
 
   const setThumbnailSource = useCallback(
-    (source: "file" | "link" | "base64"): void => {
-      setPreference("thumbnailSource", source);
+    (source: 'file' | 'link' | 'base64'): void => {
+      setPreference('thumbnailSource', source);
     },
     [setPreference],
   );

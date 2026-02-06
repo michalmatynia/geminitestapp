@@ -29,7 +29,7 @@ async function POST_handler(
       throw notFoundError("Run not found", { runId });
     }
     assertAiPathRunAccess(access, existing);
-    const run: unknown = cancelPathRun(runId);
+    const run: unknown = await cancelPathRun(runId);
     return NextResponse.json({ run });
   } catch (error) {
     return createErrorResponse(error, {

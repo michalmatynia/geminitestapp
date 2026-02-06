@@ -20,11 +20,6 @@ const updatePreferencesSchema = z.object({
   productListCurrencyCode: z.string().optional().nullable(),
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
   productListThumbnailSource: z.enum(["file", "link", "base64"]).optional().nullable(),
-  aiPathsActivePathId: z.string().optional().nullable(),
-  aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
-  aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
-  aiPathsPathIndex: z.array(z["unknown"]()).optional().nullable(),
-  aiPathsPathConfigs: z.union([z.record(z.string(), z["unknown"]()), z.string()]).optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
   cmsActiveDomainId: z.string().optional().nullable(),
@@ -32,6 +27,7 @@ const updatePreferencesSchema = z.object({
   cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
   cmsThemeLogoUrl: z.string().optional().nullable(),
   cmsPreviewEnabled: z.boolean().optional().nullable(),
+  cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
 });
 
 /**
@@ -41,6 +37,8 @@ const updatePreferencesSchema = z.object({
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let userId = DEFAULT_USER_ID;
   try {
+    const include = _req.nextUrl.searchParams.get("include") ?? "";
+    const includeAdminMenu = include.split(",").map((value: string) => value.trim()).includes("admin-menu");
     const session = await auth();
     userId = session?.user?.id ?? DEFAULT_USER_ID;
     if (!isDatabaseConfigured) {
@@ -50,11 +48,6 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         productListCurrencyCode: "PLN",
         productListPageSize: 12,
         productListThumbnailSource: "file",
-        aiPathsActivePathId: null,
-        aiPathsExpandedGroups: ["Triggers"],
-        aiPathsPaletteCollapsed: false,
-        aiPathsPathIndex: null,
-        aiPathsPathConfigs: null,
         adminMenuCollapsed: false,
         cmsLastPageId: null,
         cmsActiveDomainId: null,
@@ -62,15 +55,42 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         cmsThemeLogoWidth: null,
         cmsThemeLogoUrl: null,
         cmsPreviewEnabled: false,
+        cmsSlideshowPauseOnHoverInEditor: false,
+        ...(includeAdminMenu
+          ? {
+              adminMenuFavorites: [],
+              adminMenuSectionColors: {},
+              adminMenuCustomEnabled: false,
+              adminMenuCustomNav: [],
+            }
+          : {}),
       });
     }
     const preferences = await getUserPreferences(userId);
-    return NextResponse.json(preferences);
-  } catch (error) {
-    console.error("[user/preferences][GET] Error:", {
-      error,
-      hasMongo: Boolean(process.env.MONGODB_URI),
+    return NextResponse.json({
+      productListNameLocale: preferences.productListNameLocale ?? "name_en",
+      productListCatalogFilter: preferences.productListCatalogFilter ?? "all",
+      productListCurrencyCode: preferences.productListCurrencyCode ?? "PLN",
+      productListPageSize: preferences.productListPageSize ?? 12,
+      productListThumbnailSource: preferences.productListThumbnailSource ?? "file",
+      adminMenuCollapsed: preferences.adminMenuCollapsed ?? false,
+      cmsLastPageId: preferences.cmsLastPageId ?? null,
+      cmsActiveDomainId: preferences.cmsActiveDomainId ?? null,
+      cmsThemeOpenSections: preferences.cmsThemeOpenSections ?? [],
+      cmsThemeLogoWidth: preferences.cmsThemeLogoWidth ?? null,
+      cmsThemeLogoUrl: preferences.cmsThemeLogoUrl ?? null,
+      cmsPreviewEnabled: preferences.cmsPreviewEnabled ?? false,
+      cmsSlideshowPauseOnHoverInEditor: preferences.cmsSlideshowPauseOnHoverInEditor ?? false,
+      ...(includeAdminMenu
+        ? {
+            adminMenuFavorites: preferences.adminMenuFavorites ?? [],
+            adminMenuSectionColors: preferences.adminMenuSectionColors ?? {},
+            adminMenuCustomEnabled: preferences.adminMenuCustomEnabled ?? false,
+            adminMenuCustomNav: preferences.adminMenuCustomNav ?? [],
+          }
+        : {}),
     });
+  } catch (error) {
     return createErrorResponse(error, {
       source: "user.preferences.GET",
       fallbackMessage: "Failed to fetch preferences",
@@ -110,11 +130,6 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
     if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
     if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
-    if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
-    if (parsed.aiPathsExpandedGroups !== undefined) partial.aiPathsExpandedGroups = parsed.aiPathsExpandedGroups ?? [];
-    if (parsed.aiPathsPaletteCollapsed !== undefined) partial.aiPathsPaletteCollapsed = parsed.aiPathsPaletteCollapsed;
-    if (parsed.aiPathsPathIndex !== undefined) partial.aiPathsPathIndex = parsed.aiPathsPathIndex ?? null;
-    if (parsed.aiPathsPathConfigs !== undefined) partial.aiPathsPathConfigs = parsed.aiPathsPathConfigs ?? null;
     if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
     if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
     if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
@@ -122,6 +137,9 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
     if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
     if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
+    if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
+      partial.cmsSlideshowPauseOnHoverInEditor = parsed.cmsSlideshowPauseOnHoverInEditor;
+    }
     data = partial as Partial<UserPreferencesData>;
 
     if (!isDatabaseConfigured) {
@@ -144,11 +162,6 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (isAbort) {
       return new NextResponse(null, { status: 204 });
     }
-    console.error("[user/preferences][PATCH] Error:", {
-      error,
-      hasMongo: Boolean(process.env.MONGODB_URI),
-      payload: data,
-    });
     return createErrorResponse(error, {
       request: req,
       source: "user.preferences.PATCH",

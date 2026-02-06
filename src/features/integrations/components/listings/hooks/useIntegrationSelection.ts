@@ -1,6 +1,7 @@
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
+import { useQuery } from '@tanstack/react-query';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+
+import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 
 // Why: Integration selection has complex side effects:
 // - Loading integrations on mount
@@ -20,26 +21,26 @@ export function useIntegrationSelection(
   setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
   setSelectedConnectionId: Dispatch<SetStateAction<string>>;
 } {
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
   const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
 
   const preferredConnectionQuery = useQuery({
-    queryKey: ["integrations", "base", "default-connection"],
+    queryKey: ['integrations', 'base', 'default-connection'],
     queryFn: async (): Promise<{ connectionId?: string | null }> => {
-      const res = await fetch("/api/integrations/exports/base/default-connection");
+      const res = await fetch('/api/integrations/exports/base/default-connection');
       if (!res.ok) {
-        throw new Error("Failed to load preferred connection");
+        throw new Error('Failed to load preferred connection');
       }
       return (await res.json()) as { connectionId?: string | null };
     },
   });
 
   const integrationsQuery = useQuery({
-    queryKey: ["integrations", "with-connections"],
+    queryKey: ['integrations', 'with-connections'],
     queryFn: async (): Promise<IntegrationWithConnections[]> => {
-      const res = await fetch("/api/integrations/with-connections");
-      if (!res.ok) throw new Error("Failed to load integrations");
+      const res = await fetch('/api/integrations/with-connections');
+      if (!res.ok) throw new Error('Failed to load integrations');
       return (await res.json()) as IntegrationWithConnections[];
     },
   });
@@ -79,15 +80,15 @@ export function useIntegrationSelection(
         if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
           setSelectedConnectionId(preferredConnectionId);
         } else if (selectedConnectionId) {
-          setSelectedConnectionId("");
+          setSelectedConnectionId('');
         }
       }
     }
   }
 
   const selectedIntegration = (integrations || []).find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
-  const isBaseComIntegration = ["baselinker", "base-com"].includes(
-    selectedIntegration?.slug ?? ""
+  const isBaseComIntegration = ['baselinker', 'base-com'].includes(
+    selectedIntegration?.slug ?? ''
   );
 
   return {

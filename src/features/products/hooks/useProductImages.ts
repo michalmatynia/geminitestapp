@@ -1,17 +1,19 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ProductWithImages, ProductImageRecord } from "@/features/products/types";
-import type { ImageFileSelection } from "@/shared/types/files";
-import type { ProductImageSlot } from "@/features/products/types/products-ui";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useRef, useEffect } from 'react';
+
+import { logClientError } from '@/features/observability';
+import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
+import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import type { ImageFileSelection } from '@/shared/types/files';
 
 const TOTAL_IMAGE_SLOTS = 15;
 
 const normalizeImageLinks = (links?: string[] | null): string[] => {
-  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link: string, index: number) => {
-      const value = typeof link === "string" ? link.trim() : "";
-      next[index] = value && !value.startsWith("data:") ? value : "";
+      const value = typeof link === 'string' ? link.trim() : '';
+      next[index] = value && !value.startsWith('data:') ? value : '';
     });
   }
   return next;
@@ -21,18 +23,18 @@ const normalizeImageBase64s = (
   base64s?: string[] | null,
   links?: string[] | null,
 ): string[] => {
-  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (Array.isArray(base64s)) {
     base64s.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
-      next[index] = typeof value === "string" && value.trim().startsWith("data:")
+      next[index] = typeof value === 'string' && value.trim().startsWith('data:')
         ? value.trim()
-        : "";
+        : '';
     });
   }
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
-      const trimmed = typeof value === "string" ? value.trim() : "";
-      if (trimmed.startsWith("data:") && !next[index]) {
+      const trimmed = typeof value === 'string' ? value.trim() : '';
+      if (trimmed.startsWith('data:') && !next[index]) {
         next[index] = trimmed;
       }
     });
@@ -51,7 +53,7 @@ const buildImageSlotsFromProduct = (
   product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
     if (pImg.imageFile) {
       slots[index] = {
-        type: "existing",
+        type: 'existing',
         data: pImg.imageFile as ImageFileSelection,
         previewUrl: pImg.imageFile.filepath,
         slotId: pImg.imageFile.id,
@@ -62,7 +64,7 @@ const buildImageSlotsFromProduct = (
 };
 
 const createSlotId = (): string =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -106,19 +108,19 @@ export function useProductImages(
   const disconnectImageMutation = useMutation({
     mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }): Promise<void> => {
       const res = await fetch(`/api/products/${productId}/images/${imageFileId}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
-      if (!res.ok) throw new Error("Failed to disconnect image");
+      if (!res.ok) throw new Error('Failed to disconnect image');
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
     }
   });
 
   // Effect to clean up object URLs when imageSlots change
   useEffect(() => {
     const currentObjectUrls = imageSlots
-      .map((slot: ProductImageSlot | null): string | null => (slot?.type === "file" ? slot.previewUrl : null))
+      .map((slot: ProductImageSlot | null): string | null => (slot?.type === 'file' ? slot.previewUrl : null))
       .filter((url: string | null): url is string => Boolean(url));
 
     // Revoke old object URLs that are no longer in use
@@ -146,11 +148,11 @@ export function useProductImages(
         if (file) {
           // Revoke existing object URL if replacing an image
           const existingSlot = newSlots[index];
-          if (existingSlot?.type === "file") {
+          if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
           newSlots[index] = {
-            type: "file",
+            type: 'file',
             data: file,
             previewUrl: URL.createObjectURL(file),
             slotId: createSlotId(),
@@ -158,7 +160,7 @@ export function useProductImages(
         } else {
           // Revoke object URL if clearing the slot
           const existingSlot = newSlots[index];
-          if (existingSlot?.type === "file") {
+          if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
           newSlots[index] = null;
@@ -176,11 +178,11 @@ export function useProductImages(
         if (file) {
           // Revoke object URL if replacing a file upload with an existing file
           const existingSlot = newSlots[index];
-          if (existingSlot?.type === "file") {
+          if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
           newSlots[index] = {
-            type: "existing",
+            type: 'existing',
             data: file,
             previewUrl: file.filepath,
             slotId: file.id,
@@ -188,7 +190,7 @@ export function useProductImages(
         } else {
           // Revoke object URL if clearing the slot
           const existingSlot = newSlots[index];
-          if (existingSlot?.type === "file") {
+          if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
           newSlots[index] = null;
@@ -211,16 +213,16 @@ export function useProductImages(
         return newSlots;
       });
 
-      if (slotToClear.type === "existing" && product?.id) {
+      if (slotToClear.type === 'existing' && product?.id) {
         try {
           await disconnectImageMutation.mutateAsync({
             productId: product.id,
             imageFileId: slotToClear.data.id,
           });
         } catch (error) {
-          console.error("Failed to disconnect image from product:", error);
+          logClientError(error, { context: { source: 'useProductImages', action: 'disconnectImage', productId: product.id, imageFileId: slotToClear.data.id } });
         }
-      } else if (slotToClear.type === "file") {
+      } else if (slotToClear.type === 'file') {
         URL.revokeObjectURL(slotToClear.previewUrl);
       }
     },
@@ -254,7 +256,7 @@ export function useProductImages(
           const file = files[fileIndex];
           if (file) {
             newSlots[i] = {
-              type: "file",
+              type: 'file',
               data: file,
               previewUrl: URL.createObjectURL(file),
               slotId: createSlotId(),
@@ -276,7 +278,7 @@ export function useProductImages(
           const file = files[fileIndex];
           if (file) {
             newSlots[i] = {
-              type: "existing",
+              type: 'existing',
               data: file,
               previewUrl: file.filepath,
               slotId: file.id,
@@ -333,11 +335,11 @@ export function useProductImages(
           // Only update if the image ID changed or slot was empty
           if (
             !existingSlot ||
-            existingSlot.type !== "existing" ||
+            existingSlot.type !== 'existing' ||
             existingSlot.slotId !== pImg.imageFile.id
           ) {
             newSlots[index] = {
-              type: "existing",
+              type: 'existing',
               data: pImg.imageFile,
               previewUrl: pImg.imageFile.filepath,
               slotId: pImg.imageFile.id,
@@ -348,7 +350,7 @@ export function useProductImages(
 
       // Clear slots beyond saved images count
       for (let i = savedProduct.images.length; i < TOTAL_IMAGE_SLOTS; i++) {
-        if (newSlots[i]?.type === "file") {
+        if (newSlots[i]?.type === 'file') {
           // Keep temporary file uploads that haven't been saved yet
           continue;
         }
@@ -378,8 +380,8 @@ export function useProductImages(
     (savedProduct: ProductWithImages): void => {
       if (isReorderingRef.current) {
         pendingRefreshRef.current = savedProduct;
-        if (process.env.NODE_ENV !== "production") {
-          console.info("[product-images] Refresh deferred during reorder");
+        if (process.env.NODE_ENV !== 'production') {
+          console.info('[product-images] Refresh deferred during reorder');
         }
         return;
       }

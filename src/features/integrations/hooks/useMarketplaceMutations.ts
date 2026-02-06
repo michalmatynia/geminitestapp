@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 export function useFetchExternalCategoriesMutation(): UseMutationResult<
   { fetched: number; message: string },
   Error,
   { connectionId: string }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ connectionId }: { connectionId: string }): Promise<{ fetched: number; message: string }> => {
-      const res = await fetch("/api/marketplace/categories/fetch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/marketplace/categories/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ connectionId }),
       });
 
       if (!res.ok) {
         const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || "Failed to fetch categories");
+        throw new Error(error.error || 'Failed to fetch categories');
       }
 
       return (await res.json()) as { fetched: number; message: string };
     },
     onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ["marketplace-categories", connectionId] });
+      void queryClient.invalidateQueries({ queryKey: ['marketplace-categories', connectionId] });
     },
   });
 }
@@ -34,14 +34,14 @@ export function useSaveMappingsMutation(): UseMutationResult<
   { upserted: number; message: string },
   Error,
   { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ connectionId, catalogId, mappings }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }): Promise<{ upserted: number; message: string }> => {
-      const res = await fetch("/api/marketplace/mappings/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/marketplace/mappings/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           connectionId,
           catalogId,
@@ -51,13 +51,13 @@ export function useSaveMappingsMutation(): UseMutationResult<
 
       if (!res.ok) {
         const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || "Failed to save mappings");
+        throw new Error(error.error || 'Failed to save mappings');
       }
 
       return (await res.json()) as { upserted: number; message: string };
     },
     onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => {
-      void queryClient.invalidateQueries({ queryKey: ["category-mappings", connectionId, catalogId] });
+      void queryClient.invalidateQueries({ queryKey: ['category-mappings', connectionId, catalogId] });
     },
   });
 }

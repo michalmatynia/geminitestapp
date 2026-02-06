@@ -1,20 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
-import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/ai/agent-runtime/server";
-import { startAgentQueue } from "@/features/jobs/server";
-import { promises as fs } from "fs";
-import path from "path";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { promises as fs } from 'fs';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
+
+import { logAgentAudit } from '@/features/ai/agent-runtime/server';
+import { startAgentQueue } from '@/features/jobs/server';
 import {
   badRequestError,
   conflictError,
   internalError,
   notFoundError,
-} from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+} from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import prisma from '@/shared/lib/db/prisma';
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+import type { Prisma } from '@prisma/client';
+
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
@@ -22,12 +25,12 @@ async function GET_handler(req: NextRequest,
   const requestStart = Date.now();
   try {
     startAgentQueue();
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.[runId].GET" }
+        { request: req, source: 'chatbot.agent.[runId].GET' }
       );
     }
     const { runId } = await params;
@@ -35,13 +38,13 @@ async function GET_handler(req: NextRequest,
       where: { id: runId },
     });
     if (!run) {
-      return createErrorResponse(notFoundError("Run not found."), {
+      return createErrorResponse(notFoundError('Run not found.'), {
         request: req,
-        source: "chatbot.agent.[runId].GET",
+        source: 'chatbot.agent.[runId].GET',
       });
     }
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][GET] Run loaded", {
+      console.info('[chatbot][agent][GET] Run loaded', {
         runId,
         status: run.status,
         durationMs: Date.now() - requestStart,
@@ -51,8 +54,8 @@ async function GET_handler(req: NextRequest,
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.[runId].GET",
-      fallbackMessage: "Failed to load agent run.",
+      source: 'chatbot.agent.[runId].GET',
+      fallbackMessage: 'Failed to load agent run.',
     });
   }
 }
@@ -62,43 +65,43 @@ async function POST_handler(req: NextRequest,
 ): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.[runId].POST" }
+        { request: req, source: 'chatbot.agent.[runId].POST' }
       );
     }
     const { runId } = await params;
     let body: {
       action?: string;
       stepId?: string;
-      status?: "completed" | "failed" | "pending";
+      status?: 'completed' | 'failed' | 'pending';
       prompt?: string;
     };
 
     try {
       body = (await req.json()) as typeof body;
     } catch (_error) {
-      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+      return createErrorResponse(badRequestError('Invalid JSON payload'), {
         request: req,
-        source: "chatbot.agent.[runId].POST",
+        source: 'chatbot.agent.[runId].POST',
       });
     }
     if (
       !body.action ||
-      !["stop", "resume", "retry_step", "override_step", "approve_step"].includes(
+      !['stop', 'resume', 'retry_step', 'override_step', 'approve_step'].includes(
         body.action
       )
     ) {
-      return createErrorResponse(badRequestError("Unsupported action."), {
+      return createErrorResponse(badRequestError('Unsupported action.'), {
         request: req,
-        source: "chatbot.agent.[runId].POST",
+        source: 'chatbot.agent.[runId].POST',
       });
     }
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][POST] Request", {
+      console.info('[chatbot][agent][POST] Request', {
         runId,
         action: body.action,
       });
@@ -109,41 +112,41 @@ async function POST_handler(req: NextRequest,
     });
 
     if (!run) {
-      return createErrorResponse(notFoundError("Run not found."), {
+      return createErrorResponse(notFoundError('Run not found.'), {
         request: req,
-        source: "chatbot.agent.[runId].POST",
+        source: 'chatbot.agent.[runId].POST',
       });
     }
 
-    if (body.action === "resume") {
-      if (run.status === "running") {
+    if (body.action === 'resume') {
+      if (run.status === 'running') {
         return NextResponse.json({ status: run.status });
       }
       const nextPrompt =
-        typeof body.prompt === "string" && body.prompt.trim()
+        typeof body.prompt === 'string' && body.prompt.trim()
           ? body.prompt.trim()
           : null;
       const resumeStepId =
-        typeof body.stepId === "string" && body.stepId.trim()
+        typeof body.stepId === 'string' && body.stepId.trim()
           ? body.stepId.trim()
           : null;
       const resumePlanState =
-        run.planState && typeof run.planState === "object"
+        run.planState && typeof run.planState === 'object'
           ? {
-              ...(run.planState as Record<string, unknown>),
-              resumeRequestedAt: new Date().toISOString(),
-              ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-              ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-            }
+            ...(run.planState as Record<string, unknown>),
+            resumeRequestedAt: new Date().toISOString(),
+            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+          }
           : {
-              resumeRequestedAt: new Date().toISOString(),
-              ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-              ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-            };
+            resumeRequestedAt: new Date().toISOString(),
+            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+          };
       const updated = await prisma.chatbotAgentRun.update({
         where: { id: runId },
         data: {
-          status: "queued",
+          status: 'queued',
           requiresHumanIntervention: false,
           errorMessage: null,
           finishedAt: null,
@@ -157,13 +160,13 @@ async function POST_handler(req: NextRequest,
         },
       });
       if (nextPrompt && nextPrompt !== run.prompt) {
-        await logAgentAudit(updated.id, "warning", "Agent prompt updated.", {
+        await logAgentAudit(updated.id, 'warning', 'Agent prompt updated.', {
           promptLength: nextPrompt.length,
         });
       }
-      await logAgentAudit(updated.id, "info", "Agent run resume requested.");
+      await logAgentAudit(updated.id, 'info', 'Agent run resume requested.');
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][agent][POST] Resumed", {
+        console.info('[chatbot][agent][POST] Resumed', {
           runId,
           status: updated.status,
           durationMs: Date.now() - requestStart,
@@ -172,21 +175,21 @@ async function POST_handler(req: NextRequest,
       return NextResponse.json({ status: updated.status });
     }
 
-    if (body.action === "retry_step") {
-      if (run.status === "running") {
+    if (body.action === 'retry_step') {
+      if (run.status === 'running') {
         return createErrorResponse(
-          conflictError("Run is running. Stop it before retrying steps."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          conflictError('Run is running. Stop it before retrying steps.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       if (!body.stepId?.trim()) {
         return createErrorResponse(
-          badRequestError("stepId is required for retry_step."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          badRequestError('stepId is required for retry_step.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       const planState =
-        run.planState && typeof run.planState === "object"
+        run.planState && typeof run.planState === 'object'
           ? (run.planState as Record<string, unknown>)
           : null;
       const steps = Array.isArray(planState?.steps)
@@ -194,12 +197,12 @@ async function POST_handler(req: NextRequest,
         : null;
       if (!steps) {
         return createErrorResponse(
-          badRequestError("No plan steps available to retry."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          badRequestError('No plan steps available to retry.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       const nextSteps = steps.map((step) => {
-        if (step && typeof step === "object" && step.id === body.stepId) {
+        if (step && typeof step === 'object' && step.id === body.stepId) {
           const typed = step as {
             id: string;
             status?: string;
@@ -208,7 +211,7 @@ async function POST_handler(req: NextRequest,
           };
           return {
             ...typed,
-            status: "pending",
+            status: 'pending',
             attempts: 0,
             maxAttempts: (typed.maxAttempts ?? 1) + 1,
           };
@@ -226,7 +229,7 @@ async function POST_handler(req: NextRequest,
       const updated = await prisma.chatbotAgentRun.update({
         where: { id: runId },
         data: {
-          status: "queued",
+          status: 'queued',
           requiresHumanIntervention: false,
           errorMessage: null,
           finishedAt: null,
@@ -238,11 +241,11 @@ async function POST_handler(req: NextRequest,
           },
         },
       });
-      await logAgentAudit(updated.id, "warning", "Step retry requested.", {
+      await logAgentAudit(updated.id, 'warning', 'Step retry requested.', {
         stepId: body.stepId,
       });
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][agent][POST] Step retry queued", {
+        console.info('[chatbot][agent][POST] Step retry queued', {
           runId,
           stepId: body.stepId,
           durationMs: Date.now() - requestStart,
@@ -251,21 +254,21 @@ async function POST_handler(req: NextRequest,
       return NextResponse.json({ status: updated.status });
     }
 
-    if (body.action === "override_step") {
-      if (run.status === "running") {
+    if (body.action === 'override_step') {
+      if (run.status === 'running') {
         return createErrorResponse(
-          conflictError("Run is running. Stop it before overriding steps."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          conflictError('Run is running. Stop it before overriding steps.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       if (!body.stepId?.trim() || !body.status) {
         return createErrorResponse(
-          badRequestError("stepId and status are required for override_step."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          badRequestError('stepId and status are required for override_step.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       const planState =
-        run.planState && typeof run.planState === "object"
+        run.planState && typeof run.planState === 'object'
           ? (run.planState as Record<string, unknown>)
           : null;
       const steps = Array.isArray(planState?.steps)
@@ -273,24 +276,24 @@ async function POST_handler(req: NextRequest,
         : null;
       if (!steps) {
         return createErrorResponse(
-          badRequestError("No plan steps available to override."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          badRequestError('No plan steps available to override.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       const nextSteps = steps.map((step) => {
-        if (step && typeof step === "object" && step.id === body.stepId) {
+        if (step && typeof step === 'object' && step.id === body.stepId) {
           return { ...step, status: body.status };
         }
         return step;
       });
       const nextActive =
-        body.status === "completed"
+        body.status === 'completed'
           ? (nextSteps.find(
-              (step) =>
-                step &&
-                typeof step === "object" &&
-                (step as { status?: string }).status !== "completed"
-            ) as { id?: string } | undefined)?.id ?? null
+            (step) =>
+              step &&
+                typeof step === 'object' &&
+                (step as { status?: string }).status !== 'completed'
+          ) as { id?: string } | undefined)?.id ?? null
           : body.stepId;
       const now = new Date().toISOString();
       const nextPlanState = {
@@ -310,12 +313,12 @@ async function POST_handler(req: NextRequest,
           },
         },
       });
-      await logAgentAudit(updated.id, "warning", "Step overridden.", {
+      await logAgentAudit(updated.id, 'warning', 'Step overridden.', {
         stepId: body.stepId,
         status: body.status,
       });
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][agent][POST] Step overridden", {
+        console.info('[chatbot][agent][POST] Step overridden', {
           runId,
           stepId: body.stepId,
           status: body.status,
@@ -325,28 +328,28 @@ async function POST_handler(req: NextRequest,
       return NextResponse.json({ status: updated.status });
     }
 
-    if (body.action === "approve_step") {
-      if (run.status === "running") {
+    if (body.action === 'approve_step') {
+      if (run.status === 'running') {
         return createErrorResponse(
-          conflictError("Run is running. Stop it before approving steps."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          conflictError('Run is running. Stop it before approving steps.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       if (!body.stepId?.trim()) {
         return createErrorResponse(
-          badRequestError("stepId is required for approve_step."),
-          { request: req, source: "chatbot.agent.[runId].POST" }
+          badRequestError('stepId is required for approve_step.'),
+          { request: req, source: 'chatbot.agent.[runId].POST' }
         );
       }
       const planState =
-        run.planState && typeof run.planState === "object"
+        run.planState && typeof run.planState === 'object'
           ? (run.planState as Record<string, unknown>)
           : null;
       const now = new Date().toISOString();
       const updated = await prisma.chatbotAgentRun.update({
         where: { id: runId },
         data: {
-          status: "queued",
+          status: 'queued',
           requiresHumanIntervention: false,
           errorMessage: null,
           finishedAt: null,
@@ -364,11 +367,11 @@ async function POST_handler(req: NextRequest,
           },
         },
       });
-      await logAgentAudit(updated.id, "warning", "Step approval granted.", {
+      await logAgentAudit(updated.id, 'warning', 'Step approval granted.', {
         stepId: body.stepId.trim(),
       });
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][agent][POST] Step approved", {
+        console.info('[chatbot][agent][POST] Step approved', {
           runId,
           stepId: body.stepId.trim(),
           durationMs: Date.now() - requestStart,
@@ -377,9 +380,9 @@ async function POST_handler(req: NextRequest,
       return NextResponse.json({ status: updated.status });
     }
 
-    if (["completed", "failed", "stopped"].includes(run.status)) {
+    if (['completed', 'failed', 'stopped'].includes(run.status)) {
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][agent][POST] Already terminal", {
+        console.info('[chatbot][agent][POST] Already terminal', {
           runId,
           status: run.status,
           durationMs: Date.now() - requestStart,
@@ -391,17 +394,17 @@ async function POST_handler(req: NextRequest,
     const updated = await prisma.chatbotAgentRun.update({
       where: { id: runId },
       data: {
-        status: "stopped",
+        status: 'stopped',
         finishedAt: new Date(),
         logLines: {
           push: `[${new Date().toISOString()}] Run stopped by user.`,
         },
       },
     });
-    await logAgentAudit(updated.id, "warning", "Agent run stopped by user.");
+    await logAgentAudit(updated.id, 'warning', 'Agent run stopped by user.');
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][POST] Stopped", {
+      console.info('[chatbot][agent][POST] Stopped', {
         runId,
         status: updated.status,
         durationMs: Date.now() - requestStart,
@@ -412,8 +415,8 @@ async function POST_handler(req: NextRequest,
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.[runId].POST",
-      fallbackMessage: "Failed to update agent run.",
+      source: 'chatbot.agent.[runId].POST',
+      fallbackMessage: 'Failed to update agent run.',
     });
   }
 }
@@ -423,12 +426,12 @@ async function DELETE_handler(req: NextRequest,
 ): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.[runId].DELETE" }
+        { request: req, source: 'chatbot.agent.[runId].DELETE' }
       );
     }
     const { runId } = await params;
@@ -436,33 +439,33 @@ async function DELETE_handler(req: NextRequest,
       where: { id: runId },
     });
     if (!run) {
-      return createErrorResponse(notFoundError("Run not found."), {
+      return createErrorResponse(notFoundError('Run not found.'), {
         request: req,
-        source: "chatbot.agent.[runId].DELETE",
+        source: 'chatbot.agent.[runId].DELETE',
       });
     }
     const url = new URL(req.url);
-    const force = url.searchParams.get("force") === "true";
-    if (run.status === "running" && !force) {
+    const force = url.searchParams.get('force') === 'true';
+    if (run.status === 'running' && !force) {
       return createErrorResponse(
-        conflictError("Run is running. Stop it before deleting."),
-        { request: req, source: "chatbot.agent.[runId].DELETE" }
+        conflictError('Run is running. Stop it before deleting.'),
+        { request: req, source: 'chatbot.agent.[runId].DELETE' }
       );
     }
-    if (run.status === "running" && force) {
+    if (run.status === 'running' && force) {
       await prisma.chatbotAgentRun.update({
         where: { id: runId },
-        data: { status: "stopped", finishedAt: new Date() },
+        data: { status: 'stopped', finishedAt: new Date() },
       });
     }
     await prisma.chatbotAgentRun.delete({ where: { id: runId } });
-    const runDir = path.join(process.cwd(), "tmp", "chatbot-agent", runId);
+    const runDir = path.join(process.cwd(), 'tmp', 'chatbot-agent', runId);
     await fs.rm(runDir, { recursive: true, force: true });
-    await logAgentAudit(runId, "warning", "Agent run deleted.", {
+    await logAgentAudit(runId, 'warning', 'Agent run deleted.', {
       deletedAt: new Date().toISOString(),
     });
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][DELETE] Deleted", {
+      console.info('[chatbot][agent][DELETE] Deleted', {
         runId,
         durationMs: Date.now() - requestStart,
       });
@@ -471,21 +474,21 @@ async function DELETE_handler(req: NextRequest,
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.[runId].DELETE",
-      fallbackMessage: "Failed to delete agent run.",
+      source: 'chatbot.agent.[runId].DELETE',
+      fallbackMessage: 'Failed to delete agent run.',
     });
   }
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.agent.[runId].GET" }
+  { source: 'chatbot.agent.[runId].GET' }
 );
 export const POST = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.agent.[runId].POST" }
+  { source: 'chatbot.agent.[runId].POST' }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.agent.[runId].DELETE" }
+  { source: 'chatbot.agent.[runId].DELETE' }
 );

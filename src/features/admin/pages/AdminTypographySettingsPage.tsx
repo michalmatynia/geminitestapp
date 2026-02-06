@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Button, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from "@/shared/constants/typography";
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+
+import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Label, SectionHeader, SectionPanel, UnifiedSelect, useToast } from '@/shared/ui';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -29,9 +30,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
     updateSetting.mutate(
       { key: APP_FONT_SET_SETTING_KEY, value: selected },
       {
-        onSuccess: (): void => toast("Typography settings saved", { variant: "success" }),
+        onSuccess: (): void => toast('Typography settings saved', { variant: 'success' }),
         onError: (error: Error): void =>
-          toast(error.message || "Failed to save typography settings", { variant: "error" }),
+          toast(error.message || 'Failed to save typography settings', { variant: 'error' }),
       }
     );
   };
@@ -60,30 +61,25 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
               <Label htmlFor="font-set" className="mb-3 block text-sm font-semibold">
                 Font set
               </Label>
-              <Select value={selected} onValueChange={(val: string) => setSelected(val as AppFontSetId)}>
-                <SelectTrigger id="font-set">
-                  <SelectValue placeholder="Select a font set" />
-                </SelectTrigger>
-                <SelectContent>
-                  {APP_FONT_SETS.map((set: { id: AppFontSetId; name: string; description: string; heading: string; body: string }) => (
-                    <SelectItem key={set.id} value={set.id}>
-                      <div>
-                        <p className="font-medium">{set.name}</p>
-                        <p className="text-xs text-gray-400">{set.description}</p>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={selected}
+                onValueChange={(val: string) => setSelected(val as AppFontSetId)}
+                options={APP_FONT_SETS.map((set: { id: AppFontSetId; name: string; description: string }) => ({
+                  value: set.id,
+                  label: set.name,
+                  description: set.description
+                }))}
+                placeholder="Select a font set"
+              />
               <p className="mt-2 text-xs text-gray-400">
-                Fonts are defined in <span className="font-mono">src/app/fonts.css</span> and loaded from{" "}
+                Fonts are defined in <span className="font-mono">src/app/fonts.css</span> and loaded from{' '}
                 <span className="font-mono">public/fonts</span>.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-border pt-6">
               <Button onClick={handleSave} disabled={!isDirty || updateSetting.isPending}>
-                {updateSetting.isPending ? "Saving..." : "Save Settings"}
+                {updateSetting.isPending ? 'Saving...' : 'Save Settings'}
               </Button>
               <Button variant="outline" onClick={() => setSelected(storedId)} disabled={!isDirty}>
                 Reset
@@ -96,22 +92,22 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
           <SectionPanel className="sticky top-6 p-6 space-y-4">
             <h2 className="text-sm font-semibold text-white">Preview</h2>
 
-            <div className="rounded-lg border border-border bg-muted/10 p-4">
+            <SectionPanel variant="subtle-compact" className="p-4">
               <div className="text-xs text-gray-400">Headings</div>
               <div className="mt-2 space-y-2">
                 <h3 className="text-xl font-semibold text-white">Edit Product</h3>
                 <h4 className="text-base font-semibold text-white">Product Settings</h4>
               </div>
-            </div>
+            </SectionPanel>
 
-            <div className="rounded-lg border border-border bg-muted/10 p-4">
+            <SectionPanel variant="subtle-compact" className="p-4">
               <div className="text-xs text-gray-400">Body</div>
               <p className="mt-2 text-sm text-gray-200">
                 The quick brown fox jumps over the lazy dog. 0123456789.
               </p>
-            </div>
+            </SectionPanel>
 
-            <div className="rounded-lg border border-border bg-muted/10 p-4 text-xs text-gray-300">
+            <SectionPanel variant="subtle-compact" className="p-4 text-xs text-gray-300">
               <div className="flex justify-between">
                 <span>Selected</span>
                 <span className="font-mono text-gray-200">{current.id}</span>
@@ -126,13 +122,13 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                   <span className="truncate font-mono text-[10px] text-gray-200">{current.body}</span>
                 </div>
               </div>
-            </div>
+            </SectionPanel>
 
-            <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+            <SectionPanel variant="subtle-compact" className="border-blue-500/20 bg-blue-500/5 p-3">
               <p className="text-xs text-blue-200">
                 Tip: If a font file is missing, the app silently falls back to system fonts.
               </p>
-            </div>
+            </SectionPanel>
           </SectionPanel>
         </div>
       </div>

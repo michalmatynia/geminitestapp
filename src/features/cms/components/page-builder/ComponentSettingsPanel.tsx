@@ -1,115 +1,43 @@
-"use client";
+'use client';
 
-import React, { useCallback, useMemo, useState } from "react";
-import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, useToast } from "@/shared/ui";
-import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
-import type { GsapAnimationConfig } from "@/features/gsap";
-import type { PageStatus, Slug, PageSlugLink } from "../../types";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from "../../hooks/useCmsQueries";
-import { CmsDomainSelector } from "../CmsDomainSelector";
-import { getSectionDefinition, getBlockDefinition } from "./section-registry";
-import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
-import { AnimationConfigPanel } from "./AnimationConfigPanel";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
-import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
+import { Trash2, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
-const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
+
+import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
+import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
+import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
+import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
+import {
+  getEventEffectsConfig,
+} from '@/features/cms/utils/event-effects';
+import type { GsapAnimationConfig } from '@/features/gsap';
+import { logClientError } from '@/features/observability';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
+import type { ChatMessage } from '@/shared/types/chatbot';
+import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+
+import { AnimationConfigPanel } from './AnimationConfigPanel';
+import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from './grid-templates';
+import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from './section-registry';
+import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, type SectionTemplateRecord } from './section-template-store';
+import { ConnectionsTab } from './settings/ConnectionsTab';
+import { ContentAiSection } from './settings/ContentAiSection';
+import { CssAiSection, extractCssFromResponse, extractJsonFromResponse } from './settings/CssAiSection';
+import { EventEffectsTab } from './settings/EventEffectsTab';
+import { prependManagementFields, groupSettingsFields, renderFieldGroups } from './settings/field-group-helpers';
+import { PageSettingsTab } from './settings/PageSettingsTab';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+
+import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from '../../types/page-builder';
+
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
-const MANAGEMENT_FIELDS: SettingsField[] = [
-  { key: "label", label: "Label", type: "text", defaultValue: "" },
-  { key: "notes", label: "Internal notes", type: "text", defaultValue: "" },
-];
-
-function prependManagementFields(schema: SettingsField[]): SettingsField[] {
-  const existing = new Set(schema.map((field: SettingsField) => field.key));
-  const extra = MANAGEMENT_FIELDS.filter((field: SettingsField) => !existing.has(field.key));
-  return extra.length ? [...extra, ...schema] : schema;
-}
-
-interface FieldGroup {
-  kind: "single" | "padding" | "margin";
-  fields: SettingsField[];
-}
-
-/** Groups consecutive padding / margin number fields so they render compactly. */
-function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
-  const groups: FieldGroup[] = [];
-  let paddingBuf: SettingsField[] = [];
-  let marginBuf: SettingsField[] = [];
-
-  const flushPadding = (): void => {
-    if (paddingBuf.length) { groups.push({ kind: "padding", fields: paddingBuf }); paddingBuf = []; }
-  };
-  const flushMargin = (): void => {
-    if (marginBuf.length) { groups.push({ kind: "margin", fields: marginBuf }); marginBuf = []; }
-  };
-
-  for (const field of schema) {
-    if (PADDING_KEYS.has(field.key)) {
-      flushMargin();
-      paddingBuf.push(field);
-    } else if (MARGIN_KEYS.has(field.key)) {
-      flushPadding();
-      marginBuf.push(field);
-    } else {
-      flushPadding();
-      flushMargin();
-      groups.push({ kind: "single", fields: [field] });
-    }
-  }
-  flushPadding();
-  flushMargin();
-  return groups;
-}
-
-function renderFieldGroups(
-  groups: FieldGroup[],
-  settings: Record<string, unknown>,
-  onChange: (key: string, value: unknown) => void,
-  resolveField?: (field: SettingsField) => SettingsField,
-): React.ReactNode[] {
-  return groups.map((group: FieldGroup) => {
-    if (group.kind === "single") {
-      const raw = group.fields[0]!;
-      const field = resolveField ? resolveField(raw) : raw;
-      return (
-        <SettingsFieldRenderer
-          key={field.key}
-          field={field}
-          value={settings[field.key]}
-          onChange={onChange}
-        />
-      );
-    }
-    const label = group.kind === "padding" ? "Padding" : "Margin";
-    return (
-      <div key={group.kind} className="space-y-1.5">
-        <Label className="text-xs text-gray-400">{label}</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {group.fields.map((field: SettingsField) => (
-            <div key={field.key} className="space-y-0.5">
-              <span className="text-[10px] text-gray-500 uppercase">
-                {field.key.replace(/^(padding|margin)/, "")}
-              </span>
-              <Input
-                type="number"
-                value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(field.key, Number(e.target.value))}
-                className="text-xs h-7 px-1.5"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  });
-}
 
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
@@ -120,53 +48,308 @@ export function ComponentSettingsPanel(): React.ReactNode {
     selectedColumn,
     selectedColumnParentSection,
     selectedParentColumn,
+    selectedParentRow,
     selectedParentBlock,
     dispatch,
   } = usePageBuilder();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const [gridTemplateName, setGridTemplateName] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
-  const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
-  const rowCount = useMemo((): number => {
-    if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
-    return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row").length;
-  }, [selectedParentSection]);
-  const canRemoveRow = rowCount > 1;
-  const rowIndex = useMemo((): number | null => {
-    if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
-    const rows = selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row");
-    const idx = rows.findIndex((b: BlockInstance) => b.id === selectedBlock.id);
-    return idx >= 0 ? idx + 1 : null;
-  }, [isRowBlock, selectedParentSection, selectedBlock]);
-  const rowHeightMode = (selectedBlock?.settings?.["heightMode"] as string) || "inherit";
-  const rowSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
-    if (!isRowBlock || !selectedBlock) return null;
-    if (rowHeightMode !== "inherit") return selectedBlock.settings;
-    return { ...selectedBlock.settings, height: 0 };
-  }, [isRowBlock, selectedBlock, rowHeightMode]);
-  const columnHeightMode = (selectedColumn?.settings?.["heightMode"] as string) || "inherit";
-  const columnSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
-    if (!selectedColumn) return null;
-    if (columnHeightMode !== "inherit") return selectedColumn.settings;
-    return { ...selectedColumn.settings, height: 0 };
-  }, [selectedColumn, columnHeightMode]);
-  const isGridImageElement =
-    selectedBlock?.type === "ImageElement" &&
-    selectedParentSection?.type === "Grid" &&
-    !selectedParentBlock;
-  const imageBackgroundSrc = (selectedBlock?.settings?.["src"] as string) || "";
+  const [sectionTemplateName, setSectionTemplateName] = useState<string>('');
+  const [sectionTemplateCategory, setSectionTemplateCategory] = useState<string>('');
+  const [cssAiAppend, setCssAiAppend] = useState<boolean>(true);
+  const [cssAiAutoApply, setCssAiAutoApply] = useState<boolean>(false);
+  const [cssAiLoading, setCssAiLoading] = useState<boolean>(false);
+  const [cssAiError, setCssAiError] = useState<string | null>(null);
+  const [cssAiOutput, setCssAiOutput] = useState<string>('');
+  const [contentAiProvider, setContentAiProvider] = useState<'model' | 'agent'>('model');
+  const [contentAiModelId, setContentAiModelId] = useState<string>('');
+  const [contentAiAgentId, setContentAiAgentId] = useState<string>('');
+  const [contentAiPrompt, setContentAiPrompt] = useState<string>('');
+  const [contentAiLoading, setContentAiLoading] = useState<boolean>(false);
+  const [contentAiError, setContentAiError] = useState<string | null>(null);
+  const [contentAiOutput, setContentAiOutput] = useState<string>('');
+  const [contextPreviewOpen, setContextPreviewOpen] = useState<boolean>(false);
+  const [contextPreviewTab, setContextPreviewTab] = useState<'page' | 'element'>('page');
+  const [contextPreviewFull, setContextPreviewFull] = useState<boolean>(false);
+  const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
+  const cssAiAbortRef = useRef<AbortController | null>(null);
+  const contentAiAbortRef = useRef<AbortController | null>(null);
+  const [activeTab, setActiveTab] = useState<'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai'>('settings');
+  const isRowBlock = selectedBlock?.type === 'Row' && selectedParentSection?.type === 'Grid';
+  const isGridSection = selectedSection?.type === 'Grid';
+  const isBlockSection = selectedSection?.type === 'Block';
+  const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || selectedBlock);
+  const customCssValue = useMemo((): string => {
+    if (selectedSection && (isGridSection || isBlockSection)) {
+      return (selectedSection.settings['customCss'] as string) || '';
+    }
+    if (selectedColumn) {
+      return (selectedColumn.settings['customCss'] as string) || '';
+    }
+    if (selectedBlock) {
+      return (selectedBlock.settings['customCss'] as string) || '';
+    }
+    return '';
+  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
+  const customCssAiRaw = useMemo((): CustomCssAiConfig | undefined => {
+    if (selectedSection && (isGridSection || isBlockSection)) {
+      return selectedSection.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    }
+    if (selectedColumn) {
+      return selectedColumn.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    }
+    if (selectedBlock) {
+      return selectedBlock.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    }
+    return undefined;
+  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
+  const customCssAiConfig = useMemo(
+    (): CustomCssAiConfig => ({ ...DEFAULT_CUSTOM_CSS_AI_CONFIG, ...(customCssAiRaw ?? {}) }),
+    [customCssAiRaw]
+  );
+  useEffect((): void => {
+    if (cssAiLoading && cssAiAbortRef.current) {
+      cssAiAbortRef.current.abort();
+      cssAiAbortRef.current = null;
+    }
+    setCssAiOutput('');
+    setCssAiError(null);
+  }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, cssAiLoading]);
+
+  useEffect((): void => {
+    if (contentAiLoading && contentAiAbortRef.current) {
+      contentAiAbortRef.current.abort();
+      contentAiAbortRef.current = null;
+    }
+    setContentAiOutput('');
+    setContentAiError(null);
+  }, [selectedSection?.id, selectedColumn?.id, selectedBlock?.id, contentAiLoading]);
+
+  useEffect((): (() => void) => {
+
+    return (): void => {
+
+      if (cssAiAbortRef.current) {
+
+        cssAiAbortRef.current.abort();
+
+        cssAiAbortRef.current = null;
+
+      }
+
+      if (contentAiAbortRef.current) {
+
+        contentAiAbortRef.current.abort();
+
+        contentAiAbortRef.current = null;
+
+      }
+
+    };
+
+  }, []);
+
+
+
+  const modelsQuery = useChatbotModels({ enabled: showCustomCssTab });
+
+  const teachingAgentsQuery = useTeachingAgents();
+
+  const modelOptions = useMemo((): string[] => {
+
+    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+
+    return Array.from(new Set(fromApi));
+
+  }, [modelsQuery.data]);
+
+  const agentOptions = useMemo(
+
+    (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
+
+    [teachingAgentsQuery.data]
+
+  );
+
+  const providerOptions = useMemo(
+
+    (): Array<{ label: string; value: string }> => [
+
+      { label: 'AI model', value: 'model' },
+
+      { label: 'Deepthinking agent', value: 'agent' },
+
+    ],
+
+    []
+
+  );
+  const PAGE_CONTEXT_LIMIT = 6000;
+  const ELEMENT_CONTEXT_LIMIT = 2500;
+
+  useEffect((): void => {
+    if (contentAiProvider !== 'model') return;
+    if (contentAiModelId.trim().length) return;
+    if (!modelOptions.length) return;
+    setContentAiModelId(modelOptions[0]!);
+  }, [contentAiProvider, contentAiModelId, modelOptions]);
+
+  const stringifyContext = useCallback((value: unknown, limit?: number | null): string => {
+    try {
+      const json = JSON.stringify(value, null, 2);
+      if (limit == null) return json;
+      if (json.length <= limit) return json;
+      return `${json.slice(0, limit)}\n...truncated...`;
+    } catch {
+      const fallback = (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') ? String(value) : '[complex value]';
+      if (limit == null) return fallback;
+      return fallback.length <= limit ? fallback : `${fallback.slice(0, limit)}...`;
+    }
+  }, []);
+
+  const serializeBlock = useCallback((block: BlockInstance): Record<string, unknown> => ({
+    id: block.id,
+    type: block.type,
+    settings: block.settings ?? {},
+    blocks: (block.blocks ?? []).map(serializeBlock),
+  }), []);
+
+  const buildPageContext = useCallback((limit?: number | null): string => {
+    const resolvedLimit = limit === undefined ? PAGE_CONTEXT_LIMIT : limit;
+    if (!state.currentPage) return 'No page loaded.';
+    const pageContext = {
+      page: {
+        id: state.currentPage.id,
+        name: state.currentPage.name,
+        status: state.currentPage.status,
+        themeId: state.currentPage.themeId,
+        publishedAt: state.currentPage.publishedAt,
+        slugs: state.currentPage.slugs ?? [],
+        slugIds: state.currentPage.slugIds ?? [],
+      },
+      sections: state.sections.map((section: SectionInstance) => ({
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        settings: section.settings ?? {},
+        blocks: (section.blocks ?? []).map(serializeBlock),
+      })),
+    };
+    return stringifyContext(pageContext, resolvedLimit);
+  }, [state.currentPage, state.sections, stringifyContext, serializeBlock]);
+
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
-    if (!selectedParentSection || selectedParentSection.type !== "Grid" || !selectedParentColumn) return null;
+    if (!selectedParentSection || selectedParentSection.type !== 'Grid' || !selectedParentColumn) return null;
     return (
       selectedParentSection.blocks.find(
         (block: BlockInstance) =>
-          block.type === "Row" &&
+          block.type === 'Row' &&
           (block.blocks ?? []).some((column: BlockInstance) => column.id === selectedParentColumn.id)
       ) ?? null
     );
   }, [selectedParentSection, selectedParentColumn]);
+
+  const buildElementContext = useCallback((limit?: number | null): string => {
+    const resolvedLimit = limit === undefined ? ELEMENT_CONTEXT_LIMIT : limit;
+    if (selectedSection && !selectedBlock && !selectedColumn) {
+      return stringifyContext(
+        {
+          kind: 'section',
+          id: selectedSection.id,
+          type: selectedSection.type,
+          zone: selectedSection.zone,
+          settings: selectedSection.settings ?? {},
+          blocks: (selectedSection.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    if (selectedColumn) {
+      return stringifyContext(
+        {
+          kind: 'column',
+          id: selectedColumn.id,
+          sectionId: selectedColumnParentSection?.id,
+          rowId: selectedGridRow?.id,
+          settings: selectedColumn.settings ?? {},
+          blocks: (selectedColumn.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    if (selectedBlock) {
+      return stringifyContext(
+        {
+          kind: selectedBlock.type === 'Row' ? 'row' : 'block',
+          id: selectedBlock.id,
+          type: selectedBlock.type,
+          sectionId: selectedParentSection?.id,
+          columnId: selectedParentColumn?.id,
+          parentBlockId: selectedParentBlock?.id,
+          settings: selectedBlock.settings ?? {},
+          blocks: (selectedBlock.blocks ?? []).map(serializeBlock),
+        },
+        resolvedLimit
+      );
+    }
+    return 'No element selected.';
+  }, [
+    selectedSection,
+    selectedBlock,
+    selectedColumn,
+    selectedParentSection,
+    selectedParentColumn,
+    selectedParentBlock,
+    selectedColumnParentSection,
+    selectedGridRow,
+    stringifyContext,
+    serializeBlock,
+  ]);
+  const rowCount = useMemo((): number => {
+    if (!selectedParentSection || selectedParentSection.type !== 'Grid') return 0;
+    return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === 'Row').length;
+  }, [selectedParentSection]);
+  const canRemoveRow = rowCount > 1;
+  const rowIndex = useMemo((): number | null => {
+    if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
+    const rows = selectedParentSection.blocks.filter((b: BlockInstance) => b.type === 'Row');
+    const idx = rows.findIndex((b: BlockInstance) => b.id === selectedBlock.id);
+    return idx >= 0 ? idx + 1 : null;
+  }, [isRowBlock, selectedParentSection, selectedBlock]);
+  const rowHeightMode = (selectedBlock?.settings?.['heightMode'] as string) || 'inherit';
+  const rowSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
+    if (!isRowBlock || !selectedBlock) return null;
+    if (rowHeightMode !== 'inherit') return selectedBlock.settings;
+    return { ...selectedBlock.settings, height: 0 };
+  }, [isRowBlock, selectedBlock, rowHeightMode]);
+  const columnHeightMode = (selectedColumn?.settings?.['heightMode'] as string) || 'inherit';
+  const columnSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
+    if (!selectedColumn) return null;
+    if (columnHeightMode !== 'inherit') return selectedColumn.settings;
+    return { ...selectedColumn.settings, height: 0 };
+  }, [selectedColumn, columnHeightMode]);
+  const isGridImageElement =
+    selectedBlock?.type === 'ImageElement' &&
+    selectedParentSection?.type === 'Grid' &&
+    !selectedParentBlock;
+  const imageBackgroundSrc = (selectedBlock?.settings?.['src'] as string) || '';
+  // ---------------------------------------------------------------------------
+  // Background mode for ImageElement
+  // ---------------------------------------------------------------------------
+  const isImageElementInContainer =
+    selectedBlock?.type === 'ImageElement' &&
+    selectedParentSection?.type === 'Grid' &&
+    !selectedParentBlock;
+  const currentBackgroundTarget = (selectedBlock?.settings?.['backgroundTarget'] as ImageBackgroundTarget) || 'none';
+  const isInBackgroundMode = currentBackgroundTarget !== 'none';
+  const backgroundTargetOptions = useMemo(() => {
+    if (!isImageElementInContainer) return [];
+    const hasGrid = selectedParentSection?.type === 'Grid';
+    const hasRow = Boolean(selectedGridRow);
+    const hasColumn = Boolean(selectedParentColumn);
+    return getImageBackgroundTargetOptions(hasGrid, hasRow, hasColumn);
+  }, [isImageElementInContainer, selectedParentSection, selectedGridRow, selectedParentColumn]);
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -175,10 +358,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleSectionSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedSection) return;
+      const nextSettings = {
+        [key]: value,
+        ...(key === 'background' ? { backgroundColor: '' } : {}),
+      };
       dispatch({
-        type: "UPDATE_SECTION_SETTINGS",
+        type: 'UPDATE_SECTION_SETTINGS',
         sectionId: selectedSection.id,
-        settings: { [key]: value },
+        settings: nextSettings,
       });
     },
     [selectedSection, dispatch]
@@ -186,17 +373,17 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const handleRemoveSection = useCallback((): void => {
     if (!selectedSection) return;
-    dispatch({ type: "REMOVE_SECTION", sectionId: selectedSection.id });
+    dispatch({ type: 'REMOVE_SECTION', sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
   const handleCopySection = useCallback((): void => {
     if (!selectedSection) return;
-    dispatch({ type: "COPY_SECTION", sectionId: selectedSection.id });
+    dispatch({ type: 'COPY_SECTION', sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
   const handleDuplicateSection = useCallback((): void => {
     if (!selectedSection) return;
-    dispatch({ type: "DUPLICATE_SECTION", sectionId: selectedSection.id });
+    dispatch({ type: 'DUPLICATE_SECTION', sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
   // ---------------------------------------------------------------------------
@@ -206,15 +393,28 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleBlockSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedBlock || !selectedParentSection) return;
-      const shouldResetRowHeight = selectedBlock.type === "Row" && key === "heightMode" && value === "inherit";
-      const nextSettings = { [key]: value, ...(shouldResetRowHeight ? { height: 0 } : {}) };
+      const shouldResetRowHeight = selectedBlock.type === 'Row' && key === 'heightMode' && value === 'inherit';
+      const nextSettings = {
+        [key]: value,
+        ...(key === 'background' ? { backgroundColor: '' } : {}),
+        ...(shouldResetRowHeight ? { height: 0 } : {}),
+      };
 
       if (selectedParentBlock && selectedParentColumn) {
         // Element inside a section-type block inside a column
         dispatch({
-          type: "UPDATE_NESTED_BLOCK_SETTINGS",
+          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
           columnId: selectedParentColumn.id,
+          parentBlockId: selectedParentBlock.id,
+          blockId: selectedBlock.id,
+          settings: nextSettings,
+        });
+      } else if (selectedParentBlock) {
+        // Element inside a nested block within a section (e.g. slideshow frame)
+        dispatch({
+          type: 'UPDATE_SECTION_BLOCK_SETTINGS',
+          sectionId: selectedParentSection.id,
           parentBlockId: selectedParentBlock.id,
           blockId: selectedBlock.id,
           settings: nextSettings,
@@ -222,24 +422,321 @@ export function ComponentSettingsPanel(): React.ReactNode {
       } else if (selectedParentColumn) {
         // Block directly inside a column
         dispatch({
-          type: "UPDATE_BLOCK_IN_COLUMN",
+          type: 'UPDATE_BLOCK_IN_COLUMN',
           sectionId: selectedParentSection.id,
           columnId: selectedParentColumn.id,
+          blockId: selectedBlock.id,
+          settings: nextSettings,
+        });
+      } else if (selectedParentRow) {
+        // Block directly inside a Row container
+        dispatch({
+          type: 'UPDATE_SECTION_BLOCK_SETTINGS',
+          sectionId: selectedParentSection.id,
+          parentBlockId: selectedParentRow.id,
           blockId: selectedBlock.id,
           settings: nextSettings,
         });
       } else {
         // Direct block inside a section
         dispatch({
-          type: "UPDATE_BLOCK_SETTINGS",
+          type: 'UPDATE_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
           blockId: selectedBlock.id,
           settings: nextSettings,
         });
       }
     },
-    [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]
+    [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]
   );
+
+  const handleEventSettingChange = useCallback(
+    (key: string, value: unknown): void => {
+      if (selectedBlock) {
+        handleBlockSettingChange(key, value);
+        return;
+      }
+      if (selectedSection) {
+        handleSectionSettingChange(key, value);
+      }
+    },
+    [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Column settings handlers
+  // ---------------------------------------------------------------------------
+
+  const handleColumnSettingChange = useCallback(
+    (key: string, value: unknown): void => {
+      if (!selectedColumn || !selectedColumnParentSection) return;
+      const nextSettings: Record<string, unknown> = {
+        [key]: value,
+        ...(key === 'background' ? { backgroundColor: '' } : {}),
+      };
+      if (key === 'heightMode' && value === 'inherit') {
+        nextSettings.height = 0;
+      }
+      dispatch({
+        type: 'UPDATE_COLUMN_SETTINGS',
+        sectionId: selectedColumnParentSection.id,
+        columnId: selectedColumn.id,
+        settings: nextSettings,
+      });
+    },
+    [selectedColumn, selectedColumnParentSection, dispatch]
+  );
+
+  const handleCustomCssChange = useCallback(
+    (value: string): void => {
+      if (selectedSection && (isGridSection || isBlockSection)) {
+        handleSectionSettingChange('customCss', value);
+        return;
+      }
+      if (selectedColumn) {
+        handleColumnSettingChange('customCss', value);
+        return;
+      }
+      if (selectedBlock) {
+        handleBlockSettingChange('customCss', value);
+      }
+    },
+    [
+      selectedSection,
+      selectedColumn,
+      selectedBlock,
+      isGridSection,
+      isBlockSection,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+    ]
+  );
+
+  const handleCustomCssAiChange = useCallback(
+    (patch: Partial<CustomCssAiConfig>): void => {
+      const next: CustomCssAiConfig = { ...customCssAiConfig, ...patch };
+      if (selectedSection && (isGridSection || isBlockSection)) {
+        handleSectionSettingChange('customCssAi', next);
+        return;
+      }
+      if (selectedColumn) {
+        handleColumnSettingChange('customCssAi', next);
+        return;
+      }
+      if (selectedBlock) {
+        handleBlockSettingChange('customCssAi', next);
+      }
+    },
+    [
+      customCssAiConfig,
+      selectedSection,
+      selectedColumn,
+      selectedBlock,
+      isGridSection,
+      isBlockSection,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+    ]
+  );
+
+  const pageContextPreview = useMemo((): string => {
+    if (!contextPreviewOpen) return '';
+
+    contextPreviewNonce;
+    return buildPageContext(contextPreviewFull ? null : undefined);
+  }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
+
+  const elementContextPreview = useMemo((): string => {
+    if (!contextPreviewOpen) return '';
+
+    contextPreviewNonce;
+    return buildElementContext(contextPreviewFull ? null : undefined);
+  }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);
+
+  const handleCopyContext = useCallback(
+    async (value: string): Promise<void> => {
+      try {
+        await navigator.clipboard.writeText(value);
+        toast('Context copied.', { variant: 'success' });
+      } catch (error) {
+        toast('Failed to copy context.', { variant: 'error' });
+        logClientError(error, { context: { source: 'ComponentSettingsPanel', action: 'copyContext' } });
+      }
+    },
+    [toast]
+  );
+
+  const buildCssAiPrompt = useCallback((): string => {
+    const basePrompt = (customCssAiConfig.prompt ?? '').trim();
+    const pageContext = buildPageContext();
+    const elementContext = buildElementContext();
+    const defaultPrompt =
+      'Generate a CSS snippet for the selected element. Return only CSS without explanations.';
+    const promptBody = basePrompt.length > 0 ? basePrompt : defaultPrompt;
+    const hasPagePlaceholder = /{{\s*page_context\s*}}/i.test(promptBody);
+    const hasElementPlaceholder = /{{\s*element_context\s*}}/i.test(promptBody);
+    const resolved = promptBody
+      .replace(/{{\s*page_context\s*}}/gi, pageContext)
+      .replace(/{{\s*element_context\s*}}/gi, elementContext);
+    if (hasPagePlaceholder || hasElementPlaceholder) {
+      return resolved;
+    }
+    return `${resolved}\n\nPage context:\n${pageContext}\n\nElement context:\n${elementContext}`;
+  }, [customCssAiConfig.prompt, buildPageContext, buildElementContext]);
+
+  const handleGenerateCss = useCallback(async (): Promise<void> => {
+    if (cssAiLoading) return;
+    setCssAiError(null);
+    setCssAiLoading(true);
+    setCssAiOutput('');
+    try {
+      const prompt = buildCssAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error('Prompt is empty.');
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: 'system',
+          content: 'You are a CSS assistant. Return only valid CSS without code fences or explanations.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const controller = new AbortController();
+      cssAiAbortRef.current = controller;
+
+      const provider = customCssAiConfig.provider ?? 'model';
+      const modelId = (customCssAiConfig.modelId ?? '').trim() || modelOptions[0] || '';
+      const agentId = (customCssAiConfig.agentId ?? '').trim();
+      if (provider === 'model' && !modelId) {
+        throw new Error('Select an AI model first.');
+      }
+      if (provider === 'agent' && !agentId) {
+        throw new Error('Select a Deepthinking agent first.');
+      }
+
+      const res = await fetch('/api/cms/css-ai/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'Streaming request failed.');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split('\n').map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith('data:'));
+        if (!dataLine) return;
+        const payload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
+          delta?: string;
+          done?: boolean;
+          error?: string;
+        };
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.delta) {
+          accumulated += payload.delta;
+          setCssAiOutput(accumulated);
+        }
+        if (payload.done) {
+          doneSignal = true;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop() ?? '';
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const finalCss = extractCssFromResponse(accumulated);
+      if (!finalCss) throw new Error('No CSS returned.');
+      setCssAiOutput(finalCss);
+      if (cssAiAutoApply) {
+        const nextCss = cssAiAppend
+          ? [customCssValue.trim(), finalCss].filter(Boolean).join('\n\n')
+          : finalCss;
+        handleCustomCssChange(nextCss);
+        toast(`CSS generated and applied (${provider}).`, { variant: 'success' });
+      } else {
+        toast(`CSS generated from ${provider}.`, { variant: 'success' });
+      }
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') {
+        setCssAiError('Generation cancelled.');
+        toast('Generation cancelled.', { variant: 'info' });
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to generate CSS.';
+        setCssAiError(message);
+        toast(message, { variant: 'error' });
+      }
+    } finally {
+      setCssAiLoading(false);
+      cssAiAbortRef.current = null;
+    }
+  }, [
+    cssAiLoading,
+    buildCssAiPrompt,
+    customCssAiConfig.provider,
+    customCssAiConfig.agentId,
+    customCssAiConfig.modelId,
+    modelOptions,
+    cssAiAppend,
+    cssAiAutoApply,
+    customCssValue,
+    handleCustomCssChange,
+    toast,
+  ]);
+
+  const handleApplyGeneratedCss = useCallback(
+    (mode: 'append' | 'replace'): void => {
+      if (!cssAiOutput) return;
+      const nextCss =
+        mode === 'append'
+          ? [customCssValue.trim(), cssAiOutput].filter(Boolean).join('\n\n')
+          : cssAiOutput;
+      handleCustomCssChange(nextCss);
+      toast(mode === 'append' ? 'CSS appended.' : 'CSS replaced.', { variant: 'success' });
+    },
+    [cssAiOutput, customCssValue, handleCustomCssChange, toast]
+  );
+
+  const handleCancelCss = useCallback((): void => {
+    if (cssAiAbortRef.current) {
+      cssAiAbortRef.current.abort();
+      cssAiAbortRef.current = null;
+    }
+  }, []);
 
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
@@ -247,49 +744,65 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (selectedParentBlock && selectedParentColumn) {
       // Element inside nested block
       dispatch({
-        type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK",
+        type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK',
         sectionId: selectedParentSection.id,
         columnId: selectedParentColumn.id,
+        parentBlockId: selectedParentBlock.id,
+        elementId: selectedBlock.id,
+      });
+    } else if (selectedParentBlock) {
+      // Element inside a nested block within a section (e.g. slideshow frame)
+      dispatch({
+        type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK',
+        sectionId: selectedParentSection.id,
         parentBlockId: selectedParentBlock.id,
         elementId: selectedBlock.id,
       });
     } else if (selectedParentColumn) {
       // Block inside a column
       dispatch({
-        type: "REMOVE_BLOCK_FROM_COLUMN",
+        type: 'REMOVE_BLOCK_FROM_COLUMN',
         sectionId: selectedParentSection.id,
         columnId: selectedParentColumn.id,
         blockId: selectedBlock.id,
       });
+    } else if (selectedParentRow) {
+      // Block inside a Row container
+      dispatch({
+        type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK',
+        sectionId: selectedParentSection.id,
+        parentBlockId: selectedParentRow.id,
+        elementId: selectedBlock.id,
+      });
     } else {
       // Direct block inside a section
       dispatch({
-        type: "REMOVE_BLOCK",
+        type: 'REMOVE_BLOCK',
         sectionId: selectedParentSection.id,
         blockId: selectedBlock.id,
       });
     }
-  }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]);
+  }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]);
 
   const handleMakeBackground = useCallback(
-    (target: "grid" | "row" | "column"): void => {
-      if (!selectedBlock || selectedBlock.type !== "ImageElement" || !selectedParentSection) return;
-      if (selectedParentSection.type !== "Grid") return;
+    (target: 'grid' | 'row' | 'column'): void => {
+      if (!selectedBlock || selectedBlock.type !== 'ImageElement' || !selectedParentSection) return;
+      if (selectedParentSection.type !== 'Grid') return;
       if (!imageBackgroundSrc) return;
       if (selectedParentBlock) return;
 
       const backgroundImage = { ...selectedBlock.settings };
 
-      if (target === "grid") {
+      if (target === 'grid') {
         dispatch({
-          type: "UPDATE_SECTION_SETTINGS",
+          type: 'UPDATE_SECTION_SETTINGS',
           sectionId: selectedParentSection.id,
           settings: { backgroundImage },
         });
-      } else if (target === "row") {
+      } else if (target === 'row') {
         if (!selectedGridRow) return;
         dispatch({
-          type: "UPDATE_BLOCK_SETTINGS",
+          type: 'UPDATE_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
           blockId: selectedGridRow.id,
           settings: { backgroundImage },
@@ -297,7 +810,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       } else {
         if (!selectedParentColumn) return;
         dispatch({
-          type: "UPDATE_COLUMN_SETTINGS",
+          type: 'UPDATE_COLUMN_SETTINGS',
           sectionId: selectedParentSection.id,
           columnId: selectedParentColumn.id,
           settings: { backgroundImage },
@@ -306,14 +819,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
       if (selectedParentColumn) {
         dispatch({
-          type: "REMOVE_BLOCK_FROM_COLUMN",
+          type: 'REMOVE_BLOCK_FROM_COLUMN',
           sectionId: selectedParentSection.id,
           columnId: selectedParentColumn.id,
           blockId: selectedBlock.id,
         });
       } else {
         dispatch({
-          type: "REMOVE_BLOCK",
+          type: 'REMOVE_BLOCK',
           sectionId: selectedParentSection.id,
           blockId: selectedBlock.id,
         });
@@ -333,45 +846,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleRemoveRow = useCallback((): void => {
     if (!isRowBlock || !selectedParentSection || !selectedBlock) return;
     dispatch({
-      type: "REMOVE_GRID_ROW",
+      type: 'REMOVE_GRID_ROW',
       sectionId: selectedParentSection.id,
       rowId: selectedBlock.id,
     });
   }, [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
 
-  // ---------------------------------------------------------------------------
-  // Column settings handlers
-  // ---------------------------------------------------------------------------
-
-  const handleColumnSettingChange = useCallback(
-    (key: string, value: unknown): void => {
-      if (!selectedColumn || !selectedColumnParentSection) return;
-      const nextSettings: Record<string, unknown> = { [key]: value };
-      if (key === "heightMode" && value === "inherit") {
-        nextSettings.height = 0;
-      }
-      dispatch({
-        type: "UPDATE_COLUMN_SETTINGS",
-        sectionId: selectedColumnParentSection.id,
-        columnId: selectedColumn.id,
-        settings: nextSettings,
-      });
-    },
-    [selectedColumn, selectedColumnParentSection, dispatch]
-  );
-
   const handleSectionSettingChangeWithGridColumns = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedSection) return;
-      if (key === "columns" && selectedSection.type === "Grid") {
+      if (key === 'columns' && selectedSection.type === 'Grid') {
         dispatch({
-          type: "SET_GRID_COLUMNS",
+          type: 'SET_GRID_COLUMNS',
           sectionId: selectedSection.id,
           columnCount: value as number,
         });
-      } else if (key === "rows" && selectedSection.type === "Grid") {
+      } else if (key === 'rows' && selectedSection.type === 'Grid') {
         dispatch({
-          type: "SET_GRID_ROWS",
+          type: 'SET_GRID_ROWS',
           sectionId: selectedSection.id,
           rowCount: value as number,
         });
@@ -389,11 +881,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleAnimationChange = useCallback(
     (config: GsapAnimationConfig): void => {
       if (selectedSection && !selectedBlock && !selectedColumn) {
-        handleSectionSettingChange("gsapAnimation", config);
+        handleSectionSettingChange('gsapAnimation', config);
       } else if (selectedColumn) {
-        handleColumnSettingChange("gsapAnimation", config);
+        handleColumnSettingChange('gsapAnimation', config);
       } else if (selectedBlock) {
-        handleBlockSettingChange("gsapAnimation", config);
+        handleBlockSettingChange('gsapAnimation', config);
       }
     },
     [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]
@@ -401,24 +893,50 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const currentAnimationConfig = useMemo((): GsapAnimationConfig | undefined => {
     if (selectedSection && !selectedBlock && !selectedColumn) {
-      return selectedSection.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+      return selectedSection.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
     }
     if (selectedColumn) {
-      return selectedColumn.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+      return selectedColumn.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
     }
     if (selectedBlock) {
-      return selectedBlock.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+      return selectedBlock.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
     }
     return undefined;
   }, [selectedSection, selectedBlock, selectedColumn]);
 
+  const handleCssAnimationChange = useCallback(
+    (config: CssAnimationConfig): void => {
+      if (selectedSection && !selectedBlock && !selectedColumn) {
+        handleSectionSettingChange('cssAnimation', config);
+      } else if (selectedColumn) {
+        handleColumnSettingChange('cssAnimation', config);
+      } else if (selectedBlock) {
+        handleBlockSettingChange('cssAnimation', config);
+      }
+    },
+    [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]
+  );
+
+  const currentCssAnimationConfig = useMemo((): CssAnimationConfig | undefined => {
+    if (selectedSection && !selectedBlock && !selectedColumn) {
+      return selectedSection.settings['cssAnimation'] as CssAnimationConfig | undefined;
+    }
+    if (selectedColumn) {
+      return selectedColumn.settings['cssAnimation'] as CssAnimationConfig | undefined;
+    }
+    if (selectedBlock) {
+      return selectedBlock.settings['cssAnimation'] as CssAnimationConfig | undefined;
+    }
+    return undefined;
+  }, [selectedSection, selectedBlock, selectedColumn]);
+
+  const enabledAppEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledAppEmbeds = useMemo<AppEmbedId[]>(() => {
-    if (!settingsQuery.data) return [];
     return parseJsonSetting<AppEmbedId[]>(
-      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      enabledAppEmbedsRaw,
       []
     );
-  }, [settingsQuery.data]);
+  }, [enabledAppEmbedsRaw]);
 
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
     const options = APP_EMBED_OPTIONS
@@ -428,46 +946,79 @@ export function ComponentSettingsPanel(): React.ReactNode {
         value: option.id,
       }));
     if (options.length > 0) return options;
-    return [{ label: "No app embeds enabled", value: "" }];
+    return [{ label: 'No app embeds enabled', value: '' }];
   }, [enabledAppEmbeds]);
 
+  const gridTemplatesRaw = settingsStore.get(GRID_TEMPLATE_SETTINGS_KEY);
   const gridTemplates = useMemo<GridTemplateRecord[]>(() => {
-    if (!settingsQuery.data) return [];
     const stored = parseJsonSetting<unknown>(
-      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      gridTemplatesRaw,
       []
     );
     return normalizeGridTemplates(stored);
-  }, [settingsQuery.data]);
+  }, [gridTemplatesRaw]);
 
-  const handleSaveGridTemplate = useCallback(async (): Promise<void> => {
-    if (!selectedSection || selectedSection.type !== "Grid") return;
-    const trimmed = gridTemplateName.trim();
-    const name = trimmed.length > 0 ? trimmed : `Grid template ${gridTemplates.length + 1}`;
+  const sectionTemplatesRaw = settingsStore.get(SECTION_TEMPLATE_SETTINGS_KEY);
+  const sectionTemplates = useMemo<SectionTemplateRecord[]>(() => {
+    const stored = parseJsonSetting<unknown>(
+      sectionTemplatesRaw,
+      []
+    );
+    return normalizeSectionTemplates(stored);
+  }, [sectionTemplatesRaw]);
+
+  const handleSaveSectionTemplate = useCallback(async (): Promise<void> => {
+    if (!selectedSection) return;
+    const trimmedName = sectionTemplateName.trim();
+    const name = trimmedName.length > 0 ? trimmedName : `${selectedSection.type} template ${sectionTemplates.length + 1}`;
+    const category = sectionTemplateCategory.trim().length > 0 ? sectionTemplateCategory.trim() : 'Saved sections';
     const sectionClone: SectionInstance = structuredClone({
       ...selectedSection,
-      zone: "template",
+      zone: 'template',
     });
-    const nextTemplate: GridTemplateRecord = {
-      id: `grid-${Date.now()}`,
+    const nextRecord: SectionTemplateRecord = {
+      id: `section-${Date.now()}`,
       name,
-      description: "",
+      description: '',
+      category,
+      sectionType: selectedSection.type,
       createdAt: new Date().toISOString(),
       section: sectionClone,
     };
-    const nextTemplates = [...gridTemplates, nextTemplate];
+    const nextTemplates = [...sectionTemplates, nextRecord];
     try {
-      await updateSetting.mutateAsync({
-        key: GRID_TEMPLATE_SETTINGS_KEY,
-        value: serializeSetting(nextTemplates),
-      });
-      setGridTemplateName("");
-      toast("Grid saved as template.", { variant: "success" });
+      const promises: Promise<unknown>[] = [
+        updateSetting.mutateAsync({
+          key: SECTION_TEMPLATE_SETTINGS_KEY,
+          value: serializeSetting(nextTemplates),
+        }),
+      ];
+      // For Grid sections, also save to grid templates for backward compat
+      if (selectedSection.type === 'Grid') {
+        const gridRecord: GridTemplateRecord = {
+          id: `grid-${Date.now()}`,
+          name,
+          description: '',
+          createdAt: new Date().toISOString(),
+          section: sectionClone,
+        };
+        const nextGridTemplates = [...gridTemplates, gridRecord];
+        promises.push(
+          updateSetting.mutateAsync({
+            key: GRID_TEMPLATE_SETTINGS_KEY,
+            value: serializeSetting(nextGridTemplates),
+          })
+        );
+      }
+      await Promise.all(promises);
+      setSectionTemplateName('');
+      setSectionTemplateCategory('');
+      toast('Section saved as template.', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save grid template:", error);
-      toast("Failed to save grid template.", { variant: "error" });
+      logClientError(error, { context: { source: 'ComponentSettingsPanel', action: 'saveSectionTemplate', templateName: sectionTemplateName } });
+      toast('Failed to save section template.', { variant: 'error' });
     }
-  }, [selectedSection, gridTemplateName, gridTemplates, updateSetting, toast]);
+  }, [selectedSection, sectionTemplateName, sectionTemplateCategory, sectionTemplates, gridTemplates, updateSetting, toast]);
 
   // ---------------------------------------------------------------------------
   // Determine what to show
@@ -475,27 +1026,259 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const sectionDef = selectedSection ? getSectionDefinition(selectedSection.type) : null;
   const blockDef = selectedBlock ? getBlockDefinition(selectedBlock.type) : null;
-  const columnDef = selectedColumn ? getBlockDefinition("Column") : null;
+  const columnDef = selectedColumn ? getBlockDefinition('Column') : null;
   const inspectorSettings = state.inspectorSettings;
 
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
+  const showEventsTab = Boolean(selectedBlock || selectedSection);
+  const eventSettingsSource = selectedBlock?.settings ?? selectedSection?.settings ?? null;
+  const eventConfig = useMemo(
+    () => (eventSettingsSource ? getEventEffectsConfig(eventSettingsSource) : null),
+    [eventSettingsSource]
+  );
+
+  const contentAiAllowedKeys = useMemo((): string[] => {
+    if (selectedSection && sectionDef) {
+      return prependManagementFields(sectionDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
+    }
+    if (selectedColumn && columnDef) {
+      return prependManagementFields(columnDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
+    }
+    if (selectedBlock && blockDef) {
+      return prependManagementFields(blockDef.settingsSchema ?? []).map((field: SettingsField) => field.key);
+    }
+    return [];
+  }, [selectedSection, selectedColumn, selectedBlock, sectionDef, columnDef, blockDef]);
+
+  const contentAiPlaceholder = '{{page_context}}\n{{element_context}}\n{{allowed_keys}}';
+
+  const buildContentAiPrompt = useCallback((): string => {
+    const basePrompt = contentAiPrompt.trim();
+    const defaultPrompt = 'Generate JSON settings for the selected element. Return only JSON.';
+    const promptBody = basePrompt.length ? basePrompt : defaultPrompt;
+    const pageContext = buildPageContext();
+    const elementContext = buildElementContext();
+    const allowedKeys = contentAiAllowedKeys.length
+      ? contentAiAllowedKeys.join(', ')
+      : 'No schema keys available.';
+    const withPlaceholders = promptBody
+      .replace(/{{\s*page_context\s*}}/gi, pageContext)
+      .replace(/{{\s*element_context\s*}}/gi, elementContext)
+      .replace(/{{\s*allowed_keys\s*}}/gi, allowedKeys);
+    const usesPlaceholders =
+      /{{\s*page_context\s*}}/i.test(promptBody) ||
+      /{{\s*element_context\s*}}/i.test(promptBody) ||
+      /{{\s*allowed_keys\s*}}/i.test(promptBody);
+    if (usesPlaceholders) return withPlaceholders;
+    return `${withPlaceholders}\n\nAllowed keys:\n${allowedKeys}\n\nPage context:\n${pageContext}\n\nElement context:\n${elementContext}`;
+  }, [contentAiPrompt, buildPageContext, buildElementContext, contentAiAllowedKeys]);
+
+  const applyContentAiSettings = useCallback(
+    (settingsPatch: Record<string, unknown>): void => {
+      const allowed = new Set(contentAiAllowedKeys);
+      const filtered =
+        allowed.size > 0
+          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>((acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
+            if (allowed.has(key)) acc[key] = value;
+            return acc;
+          }, {})
+          : settingsPatch;
+      const entries = Object.entries(filtered);
+      if (entries.length === 0) {
+        setContentAiError('No valid settings keys found in AI output.');
+        return;
+      }
+      entries.forEach(([key, value]: [string, unknown]) => {
+        if (selectedSection && !selectedBlock && !selectedColumn) {
+          handleSectionSettingChangeWithGridColumns(key, value);
+        } else if (selectedColumn) {
+          handleColumnSettingChange(key, value);
+        } else if (selectedBlock) {
+          handleBlockSettingChange(key, value);
+        }
+      });
+      toast('AI settings applied.', { variant: 'success' });
+    },
+    [
+      contentAiAllowedKeys,
+      selectedSection,
+      selectedBlock,
+      selectedColumn,
+      handleSectionSettingChangeWithGridColumns,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+      toast,
+    ]
+  );
+
+  const handleGenerateContentAi = useCallback(async (): Promise<void> => {
+    if (contentAiLoading) return;
+    setContentAiError(null);
+    setContentAiOutput('');
+    setContentAiLoading(true);
+    try {
+      const prompt = buildContentAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error('Prompt is empty.');
+      }
+
+      const provider = contentAiProvider;
+      const modelId = provider === 'model' ? (contentAiModelId.trim() || modelOptions[0] || '') : '';
+      const agentId = provider === 'agent' ? contentAiAgentId.trim() : '';
+      if (provider === 'model' && !modelId) {
+        throw new Error('Select an AI model first.');
+      }
+      if (provider === 'agent' && !agentId) {
+        throw new Error('Select a Deepthinking agent first.');
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: 'system',
+          content:
+            'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const controller = new AbortController();
+      contentAiAbortRef.current = controller;
+
+      const res = await fetch('/api/cms/css-ai/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ provider, modelId, agentId, messages }),
+      });
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'Streaming request failed.');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+      let doneSignal = false;
+
+      const processEvent = (raw: string): void => {
+        const lines = raw.split('\n').map((line: string) => line.trim());
+        const dataLine = lines.find((line: string) => line.startsWith('data:'));
+        if (!dataLine) return;
+        const payload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
+          delta?: string;
+          done?: boolean;
+          error?: string;
+        };
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.delta) {
+          accumulated += payload.delta;
+          setContentAiOutput(accumulated);
+        }
+        if (payload.done) {
+          doneSignal = true;
+        }
+      };
+
+      while (!doneSignal) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop() ?? '';
+        for (const chunk of chunks) {
+          processEvent(chunk);
+          if (doneSignal) break;
+        }
+      }
+      if (buffer.trim() && !doneSignal) {
+        processEvent(buffer);
+      }
+      if (doneSignal) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+      }
+
+      const parsed = extractJsonFromResponse(accumulated);
+      if (!parsed) throw new Error('AI response did not include JSON.');
+      setContentAiOutput(JSON.stringify(parsed, null, 2));
+      toast(`AI output ready (${provider}).`, { variant: 'success' });
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') {
+        setContentAiError('Generation cancelled.');
+        toast('Generation cancelled.', { variant: 'info' });
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to generate AI output.';
+        setContentAiError(message);
+        toast(message, { variant: 'error' });
+      }
+    } finally {
+      setContentAiLoading(false);
+      contentAiAbortRef.current = null;
+    }
+  }, [
+    contentAiLoading,
+    buildContentAiPrompt,
+    contentAiProvider,
+    contentAiModelId,
+    contentAiAgentId,
+    modelOptions,
+    toast,
+  ]);
+
+  const handleApplyContentAi = useCallback((): void => {
+    if (!contentAiOutput.trim()) {
+      setContentAiError('No AI output to apply.');
+      return;
+    }
+    const parsed = extractJsonFromResponse(contentAiOutput);
+    if (!parsed) {
+      setContentAiError('AI output is not valid JSON.');
+      return;
+    }
+    const settingsSource =
+      typeof parsed.settings === 'object' && parsed.settings
+        ? (parsed.settings as Record<string, unknown>)
+        : parsed;
+    applyContentAiSettings(settingsSource);
+  }, [contentAiOutput, applyContentAiSettings]);
+
+  const handleCancelContentAi = useCallback((): void => {
+    if (contentAiAbortRef.current) {
+      contentAiAbortRef.current.abort();
+      contentAiAbortRef.current = null;
+    }
+  }, []);
 
   const selectedLabel = useMemo((): string => {
     if (selectedSection) return sectionDef?.label ?? selectedSection.type;
-    if (selectedColumn) return "Column";
+    if (selectedColumn) return 'Column';
     if (selectedBlock) return blockDef?.label ?? selectedBlock.type;
-    return "";
+    return '';
   }, [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
+
+  const selectedTitle = useMemo((): string => {
+    if (selectedSection) return `Section: ${selectedLabel}`;
+    if (selectedBlock) return `Block: ${selectedLabel}`;
+    if (selectedColumn) return 'Column';
+    return 'Settings';
+  }, [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
 
   const connectionSettings = useMemo(() => {
     const settings = selectedSection
       ? selectedSection.settings
       : selectedColumn
-      ? selectedColumn.settings
-      : selectedBlock
-      ? selectedBlock.settings
-      : null;
+        ? selectedColumn.settings
+        : selectedBlock
+          ? selectedBlock.settings
+          : null;
     const raw = (settings?.connection ?? {}) as {
       enabled?: boolean;
       source?: string;
@@ -504,9 +1287,9 @@ export function ComponentSettingsPanel(): React.ReactNode {
     };
     return {
       enabled: raw.enabled ?? false,
-      source: raw.source ?? "",
-      path: raw.path ?? "",
-      fallback: raw.fallback ?? "",
+      source: raw.source ?? '',
+      path: raw.path ?? '',
+      fallback: raw.fallback ?? '',
     };
   }, [selectedSection, selectedColumn, selectedBlock]);
 
@@ -514,15 +1297,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
     (patch: Partial<{ enabled: boolean; source: string; path: string; fallback: string }>): void => {
       const next = { ...connectionSettings, ...patch };
       if (selectedSection && !selectedBlock && !selectedColumn) {
-        handleSectionSettingChange("connection", next);
+        handleSectionSettingChange('connection', next);
         return;
       }
       if (selectedColumn) {
-        handleColumnSettingChange("connection", next);
+        handleColumnSettingChange('connection', next);
         return;
       }
       if (selectedBlock) {
-        handleBlockSettingChange("connection", next);
+        handleBlockSettingChange('connection', next);
       }
     },
     [
@@ -538,112 +1321,115 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const updateInspectorSetting = useCallback(
     (patch: Partial<InspectorSettings>): void => {
-      dispatch({ type: "UPDATE_INSPECTOR_SETTINGS", settings: patch });
+      dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch });
     },
     [dispatch]
   );
 
   const handleToggleInspector = useCallback((): void => {
     const nextEnabled = !state.inspectorEnabled;
-    dispatch({ type: "TOGGLE_INSPECTOR" });
+    dispatch({ type: 'TOGGLE_INSPECTOR' });
     if (nextEnabled) {
-      setActiveTab("connections");
+      setActiveTab('connections');
       return;
     }
-    if (activeTab === "connections") {
-      setActiveTab("settings");
+    if (activeTab === 'connections') {
+      setActiveTab('settings');
     }
   }, [activeTab, dispatch, state.inspectorEnabled]);
 
+  useEffect((): void => {
+    if (!showEventsTab && activeTab === 'events') {
+      setActiveTab('settings');
+      return;
+    }
+    if (!showCustomCssTab && activeTab === 'customCss') {
+      setActiveTab('settings');
+    }
+  }, [showEventsTab, showCustomCssTab, activeTab]);
+
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
-      {/* Header */}
-      <div className="border-b border-border px-4 py-2">
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
-            aria-label="Hide right panel"
-            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-          >
-            <PanelRightClose className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={handleToggleInspector}
-            title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
-            aria-label="Toggle inspector"
-            className={`h-6 w-6 p-0 ${
-              state.inspectorEnabled
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <MousePointer2 className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
-            title="Desktop preview"
-            aria-label="Desktop preview"
-            className={`h-6 w-6 p-0 ${
-              state.previewMode === "desktop"
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <Monitor className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
-            title="Mobile preview"
-            aria-label="Mobile preview"
-            className={`h-6 w-6 p-0 ${
-              state.previewMode === "mobile"
-                ? "text-blue-300 bg-blue-500/10"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            <Smartphone className="size-3.5" />
-          </Button>
-        </div>
-      </div>
-      <div className="px-4 py-2">
-        <h3 className="text-sm font-semibold text-white">
-          {selectedSection
-            ? `${sectionDef?.label ?? selectedSection.type}`
-            : selectedColumn
-            ? "Column"
-            : selectedBlock
-            ? `${blockDef?.label ?? selectedBlock.type}`
-            : "Settings"}
-        </h3>
-      </div>
-
-      <div className="border-b border-border px-4 py-3">
-        <div className="text-[10px] uppercase tracking-wider text-gray-400">Preview appearance</div>
-        <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
-          <span>Edit chrome</span>
-          <Checkbox
-            checked={inspectorSettings.showEditorChrome}
-            onCheckedChange={(value: boolean | "indeterminate"): void =>
-              updateInspectorSetting({ showEditorChrome: value === true })
-            }
-          />
-        </div>
-        <p className="mt-1 text-[11px] text-gray-500">
-          Turn off for a faithful preview that matches the rendered page.
-        </p>
-      </div>
+      <PanelHeader
+        title={selectedTitle}
+        className="flex-row-reverse"
+        titleClassName="text-right"
+        actionsClassName="justify-start"
+        actions={(
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
+              aria-label="Hide right panel"
+              className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+            >
+              <PanelRightClose className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={handleToggleInspector}
+              title={state.inspectorEnabled ? 'Inspector (on)' : 'Inspector'}
+              aria-label="Toggle inspector"
+              className={`h-6 w-6 p-0 ${
+                state.inspectorEnabled
+                  ? 'text-blue-300 bg-blue-500/10'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <MousePointer2 className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })}
+              title="Desktop preview"
+              aria-label="Desktop preview"
+              className={`h-6 w-6 p-0 ${
+                state.previewMode === 'desktop'
+                  ? 'text-blue-300 bg-blue-500/10'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <Monitor className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })}
+              title="Mobile preview"
+              aria-label="Mobile preview"
+              className={`h-6 w-6 p-0 ${
+                state.previewMode === 'mobile'
+                  ? 'text-blue-300 bg-blue-500/10'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <Smartphone className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(): void => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })}
+              title={inspectorSettings.showEditorChrome ? 'Hide edit chrome' : 'Show edit chrome'}
+              aria-label="Toggle edit chrome"
+              className={`h-6 w-6 p-0 ${
+                inspectorSettings.showEditorChrome
+                  ? 'text-blue-300 bg-blue-500/10'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <Paintbrush className="size-3.5" />
+            </Button>
+          </div>
+        )}
+      />
 
       {state.inspectorEnabled && (
         <div className="border-b border-border px-4 py-3">
@@ -652,7 +1438,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             <label className="flex items-center gap-2">
               <Checkbox
                 checked={inspectorSettings.showTooltip}
-                onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showTooltip: value === true })}
+                onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showTooltip: value === true })}
               />
               Enable tooltip
             </label>
@@ -661,35 +1447,35 @@ export function ComponentSettingsPanel(): React.ReactNode {
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showStyleSettings}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showStyleSettings: value === true })}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showStyleSettings: value === true })}
                 />
                 Style settings
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showStructureInfo}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showStructureInfo: value === true })}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showStructureInfo: value === true })}
                 />
                 Structure info (zone + counts)
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showIdentifiers}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showIdentifiers: value === true })}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showIdentifiers: value === true })}
                 />
                 Identifiers (IDs)
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showVisibilityInfo}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showVisibilityInfo: value === true })}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showVisibilityInfo: value === true })}
                 />
                 Visibility info
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showConnectionInfo}
-                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showConnectionInfo: value === true })}
+                  onCheckedChange={(value: boolean | 'indeterminate'): void => updateInspectorSetting({ showConnectionInfo: value === true })}
                 />
                 Connection info
               </label>
@@ -711,16 +1497,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab(value as "settings" | "animation" | "connections")
+            setActiveTab(value as 'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai')
           }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
             <TabsTrigger value="animation" className="flex-1 text-xs">Animation</TabsTrigger>
+            <TabsTrigger value="cssAnimation" className="flex-1 text-xs">CSS Anim</TabsTrigger>
+            {showCustomCssTab && (
+              <TabsTrigger value="customCss" className="flex-1 text-xs">CSS</TabsTrigger>
+            )}
+            {showEventsTab && (
+              <TabsTrigger value="events" className="flex-1 text-xs">Events</TabsTrigger>
+            )}
             {showConnectionsTab && (
               <TabsTrigger value="connections" className="flex-1 text-xs">Connections</TabsTrigger>
             )}
+            <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
           </TabsList>
 
           {/* ---- Settings tab ---- */}
@@ -752,7 +1546,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
                 {renderFieldGroups(
                   groupSettingsFields(
-                    selectedSection.type === "Grid"
+                    selectedSection.type === 'Grid'
                       ? prependManagementFields(sectionDef.settingsSchema)
                       : sectionDef.settingsSchema
                   ),
@@ -760,30 +1554,36 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   handleSectionSettingChangeWithGridColumns,
                 )}
 
-                {selectedSection.type === "Grid" && (
-                  <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Save grid as template</div>
-                    <p className="mt-1 text-[11px] text-gray-500">
-                      Saved grids appear under Templates when adding sections.
-                    </p>
-                    <div className="mt-2 flex gap-2">
+                <div className="rounded border border-border/40 bg-gray-900/40 p-3">
+                  <div className="text-xs font-semibold text-gray-200">Save section as template</div>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Saved sections appear under Templates when adding sections.
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex gap-2">
                       <Input
-                        value={gridTemplateName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGridTemplateName(e.target.value)}
+                        value={sectionTemplateName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSectionTemplateName(e.target.value)}
                         placeholder="Template name"
                         className="h-8 text-xs"
                       />
-                      <Button
-                        onClick={() => void handleSaveGridTemplate()}
-                        size="sm"
-                        className="h-8"
-                        disabled={updateSetting.isPending || !selectedSection || !settingsQuery.data}
-                      >
-                        Save
-                      </Button>
+                      <Input
+                        value={sectionTemplateCategory}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSectionTemplateCategory(e.target.value)}
+                        placeholder="Category"
+                        className="h-8 text-xs"
+                      />
                     </div>
+                    <Button
+                      onClick={() => void handleSaveSectionTemplate()}
+                      size="sm"
+                      className="h-8 w-full"
+                      disabled={updateSetting.isPending || !selectedSection}
+                    >
+                      Save as template
+                    </Button>
                   </div>
-                )}
+                </div>
 
                 <div className="border-t border-border/30 pt-4">
                   <Button
@@ -813,7 +1613,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   columnSettingsForRender ?? selectedColumn.settings,
                   handleColumnSettingChange,
                   (field: SettingsField): SettingsField =>
-                    columnHeightMode === "inherit" && field.key === "height"
+                    columnHeightMode === 'inherit' && field.key === 'height'
                       ? { ...field, disabled: true }
                       : field,
                 )}
@@ -843,55 +1643,93 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   )}
                 </div>
 
-                {renderFieldGroups(
-                  groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-                  rowSettingsForRender ?? selectedBlock.settings,
-                  handleBlockSettingChange,
-                  (field: SettingsField): SettingsField =>
-                    (selectedBlock.type === "AppEmbed" && field.key === "appId")
-                      ? { ...field, options: appEmbedOptions }
-                      : (isRowBlock && rowHeightMode === "inherit" && field.key === "height")
-                        ? { ...field, disabled: true }
-                        : field,
+                {/* Background mode selector for ImageElement in Grid containers */}
+                {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
+                  <div className="rounded border border-border/40 bg-gray-900/40 p-3 mb-4">
+                    <div className="text-xs font-semibold text-gray-200">Background Mode</div>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      Attach this image as a background to a container element.
+                    </p>
+                    <div className="mt-2">
+                      <select
+                        value={currentBackgroundTarget}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => handleBlockSettingChange('backgroundTarget', e.target.value as ImageBackgroundTarget)}
+                        className="w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200"
+                      >
+                        {backgroundTargetOptions.map((opt: { label: string; value: ImageBackgroundTarget }) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {isInBackgroundMode && (
+                      <div className="mt-2 px-2 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded text-[11px] text-blue-300">
+                        This image is now a {currentBackgroundTarget} background. It will render behind the {currentBackgroundTarget} content.
+                      </div>
+                    )}
+                  </div>
                 )}
 
-                {isGridImageElement && (
+                {/* Show background mode settings when in background mode, otherwise regular settings */}
+                {isImageElementInContainer && isInBackgroundMode ? (
+                  renderFieldGroups(
+                    groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)),
+                    selectedBlock.settings,
+                    handleBlockSettingChange,
+                  )
+                ) : (
+                  renderFieldGroups(
+                    groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
+                    rowSettingsForRender ?? selectedBlock.settings,
+                    handleBlockSettingChange,
+                    (field: SettingsField): SettingsField =>
+                      (selectedBlock.type === 'AppEmbed' && field.key === 'appId')
+                        ? { ...field, options: appEmbedOptions }
+                        : (isRowBlock && rowHeightMode === 'inherit' && field.key === 'height')
+                          ? { ...field, disabled: true }
+                          : field,
+                  )
+                )}
+
+                {/* Keep the old "Make background" option for quick conversion (removes the element) */}
+                {isGridImageElement && !isInBackgroundMode && (
                   <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Make background</div>
+                    <div className="text-xs font-semibold text-gray-200">Convert to static background</div>
                     <p className="mt-1 text-[11px] text-gray-500">
-                      Move this image behind grid content while keeping its effects.
+                      Move this image into the container&apos;s background settings (removes this element).
                     </p>
                     <div className="mt-3 grid gap-2">
                       {selectedParentColumn && (
                         <Button
-                          onClick={(): void => handleMakeBackground("column")}
+                          onClick={(): void => handleMakeBackground('column')}
                           variant="outline"
                           size="sm"
                           className="w-full text-xs"
                           disabled={!imageBackgroundSrc}
                         >
-                          Make column background
+                          Convert to column background
                         </Button>
                       )}
                       {selectedGridRow && (
                         <Button
-                          onClick={(): void => handleMakeBackground("row")}
+                          onClick={(): void => handleMakeBackground('row')}
                           variant="outline"
                           size="sm"
                           className="w-full text-xs"
                           disabled={!imageBackgroundSrc}
                         >
-                          Make row background
+                          Convert to row background
                         </Button>
                       )}
                       <Button
-                        onClick={(): void => handleMakeBackground("grid")}
+                        onClick={(): void => handleMakeBackground('grid')}
                         variant="outline"
                         size="sm"
                         className="w-full text-xs"
                         disabled={!imageBackgroundSrc}
                       >
-                        Make grid background
+                        Convert to grid background
                       </Button>
                       {!imageBackgroundSrc && (
                         <div className="text-[11px] text-gray-500">
@@ -937,426 +1775,115 @@ export function ComponentSettingsPanel(): React.ReactNode {
               onChange={handleAnimationChange}
             />
           </TabsContent>
+          {/* ---- CSS Animation tab ---- */}
+          <TabsContent value="cssAnimation" className="flex-1 overflow-y-auto p-4 mt-0">
+            <CssAnimationConfigPanel
+              value={currentCssAnimationConfig ?? {}}
+              onChange={handleCssAnimationChange}
+            />
+          </TabsContent>
+          {/* ---- AI tab ---- */}
+          <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
+            <ContentAiSection
+              selectedLabel={selectedLabel}
+              contentAiProvider={contentAiProvider}
+              setContentAiProvider={setContentAiProvider}
+              contentAiModelId={contentAiModelId}
+              setContentAiModelId={setContentAiModelId}
+              contentAiAgentId={contentAiAgentId}
+              setContentAiAgentId={setContentAiAgentId}
+              contentAiPrompt={contentAiPrompt}
+              setContentAiPrompt={setContentAiPrompt}
+              contentAiLoading={contentAiLoading}
+              contentAiError={contentAiError}
+              contentAiOutput={contentAiOutput}
+              contentAiAllowedKeys={contentAiAllowedKeys}
+              contentAiPlaceholder={contentAiPlaceholder}
+              providerOptions={providerOptions}
+              modelOptions={modelOptions}
+              agentOptions={agentOptions}
+              onGenerateContentAi={(): void => void handleGenerateContentAi()}
+              onCancelContentAi={handleCancelContentAi}
+              onApplyContentAi={handleApplyContentAi}
+            />
+          </TabsContent>
+          {showCustomCssTab && (
+            <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0">
+              <div className="space-y-3">
+                <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+                  Custom CSS for{' '}
+                  <span className="text-gray-200">
+                    {selectedSection && (isGridSection || isBlockSection)
+                      ? selectedSection.type
+                      : selectedColumn
+                        ? 'Column'
+                        : selectedBlock?.type ?? 'Item'}
+                  </span>
+                </div>
+                <CssAiSection
+                  customCssValue={customCssValue}
+                  cssAiOutput={cssAiOutput}
+                  cssAiError={cssAiError}
+                  cssAiLoading={cssAiLoading}
+                  cssAiAutoApply={cssAiAutoApply}
+                  setCssAiAutoApply={setCssAiAutoApply}
+                  cssAiAppend={cssAiAppend}
+                  setCssAiAppend={setCssAiAppend}
+                  onGenerateCss={(): void => void handleGenerateCss()}
+                  onCancelCss={handleCancelCss}
+                  onApplyGeneratedCss={handleApplyGeneratedCss}
+                  customCssAiConfig={customCssAiConfig}
+                  onCustomCssAiChange={handleCustomCssAiChange}
+                  providerOptions={providerOptions}
+                  modelOptions={modelOptions}
+                  agentOptions={agentOptions}
+                  contextPreviewOpen={contextPreviewOpen}
+                  setContextPreviewOpen={setContextPreviewOpen}
+                  contextPreviewTab={contextPreviewTab}
+                  setContextPreviewTab={setContextPreviewTab}
+                  contextPreviewFull={contextPreviewFull}
+                  setContextPreviewFull={setContextPreviewFull}
+                  setContextPreviewNonce={setContextPreviewNonce}
+                  pageContextPreview={pageContextPreview}
+                  elementContextPreview={elementContextPreview}
+                  onCopyContext={(value: string): void => void handleCopyContext(value)}
+                />
+                <div className="text-[11px] text-gray-500">
+                  Use <span className="font-mono text-gray-300">parent</span> to target this element and{' '}
+                  <span className="font-mono text-gray-300">children</span> to target its direct children.
+                </div>
+                <Textarea
+                  value={customCssValue}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => handleCustomCssChange(e.target.value)}
+                  placeholder={'parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}'}
+                  className="min-h-[160px] font-mono text-xs"
+                  spellCheck={false}
+                />
+              </div>
+            </TabsContent>
+          )}
+          {showEventsTab && (
+            <TabsContent value="events" className="flex-1 overflow-y-auto p-4 mt-0">
+              <EventEffectsTab
+                eventConfig={eventConfig}
+                selectedBlockLabel={selectedBlock ? blockDef?.label ?? 'Block' : null}
+                selectedSectionLabel={selectedSection ? sectionDef?.label ?? 'Section' : null}
+                onEventSettingChange={handleEventSettingChange}
+              />
+            </TabsContent>
+          )}
           {showConnectionsTab && (
             <TabsContent value="connections" className="flex-1 overflow-y-auto p-4 mt-0">
-              {!hasSelection ? (
-                <div className="text-xs text-gray-500">Select an element to configure connections.</div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                    Connection settings for <span className="text-gray-200">{selectedLabel}</span>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Data source</Label>
-                    <Input
-                      value={connectionSettings.source}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ source: e.target.value })
-                      }
-                      placeholder="e.g. product, collection, hero"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Key path</Label>
-                    <Input
-                      value={connectionSettings.path}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ path: e.target.value })
-                      }
-                      placeholder="e.g. title, hero.text"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-400">Fallback</Label>
-                    <Input
-                      value={connectionSettings.fallback}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateConnectionSetting({ fallback: e.target.value })
-                      }
-                      placeholder="Optional fallback text"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                  <label className="flex items-center gap-2 text-xs text-gray-400">
-                    <Checkbox
-                      checked={connectionSettings.enabled}
-                      onCheckedChange={(value: boolean | "indeterminate"): void =>
-                        updateConnectionSetting({ enabled: value === true })
-                      }
-                    />
-                    Enable data connection
-                  </label>
-                </div>
-              )}
+              <ConnectionsTab
+                hasSelection={hasSelection}
+                selectedLabel={selectedLabel}
+                connectionSettings={connectionSettings}
+                updateConnectionSetting={updateConnectionSetting}
+              />
             </TabsContent>
           )}
         </Tabs>
       )}
     </aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page-level settings (status + SEO) — shown when no node is selected
-// ---------------------------------------------------------------------------
-
-const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
-  { label: "Draft", value: "draft" },
-  { label: "Published", value: "published" },
-];
-
-function PageSettingsTab(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
-  const page = state.currentPage;
-  const { activeDomainId } = useCmsDomainSelection();
-  const slugsQuery = useCmsSlugs(activeDomainId);
-  const allSlugsQuery = useCmsAllSlugs(Boolean(page));
-  const updateSlug = useUpdateSlug();
-  const [search, setSearch] = useState("");
-
-  const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
-  const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
-  const allSlugByValue = useMemo((): Map<string, Slug> => {
-    const map = new Map<string, Slug>();
-    allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
-    return map;
-  }, [allSlugs]);
-
-  const selectedSlugIds = useMemo((): string[] => {
-    if (!page) return [];
-    const pageSlugValues = (page.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
-    return pageSlugValues
-      .map((value: string) => allSlugByValue.get(value)?.id)
-      .filter((value: string | undefined): value is string => Boolean(value));
-  }, [page, allSlugByValue]);
-
-  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
-  const selectedSlugs = useMemo((): Slug[] => {
-    const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
-    return selectedSlugIds
-      .map((idValue: string) => byId.get(idValue))
-      .filter((value: Slug | undefined): value is Slug => Boolean(value));
-  }, [allSlugs, selectedSlugIds]);
-
-  const crossZoneSlugs = useMemo(
-    (): Slug[] => selectedSlugs.filter((slug: Slug) => !domainSlugIds.has(slug.id)),
-    [selectedSlugs, domainSlugIds]
-  );
-  const eligibleHomeSlugs = useMemo(
-    (): Slug[] => selectedSlugs.filter((slug: Slug) => domainSlugIds.has(slug.id)),
-    [selectedSlugs, domainSlugIds]
-  );
-  const currentHomeSlug = useMemo(
-    (): Slug | null => domainSlugs.find((slug: Slug) => slug.isDefault) ?? null,
-    [domainSlugs]
-  );
-  const pageHomeSlug = useMemo(
-    (): Slug | null => (currentHomeSlug ? eligibleHomeSlugs.find((slug: Slug) => slug.id === currentHomeSlug.id) ?? null : null),
-    [currentHomeSlug, eligibleHomeSlugs]
-  );
-
-  const filteredDomainSlugs = useMemo((): Slug[] => {
-    const term = search.trim().toLowerCase();
-    if (!term) return domainSlugs;
-    return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
-  }, [domainSlugs, search]);
-
-  if (!page) return null;
-
-  const handleStatusChange = (status: PageStatus): void => {
-    dispatch({ type: "SET_PAGE_STATUS", status });
-  };
-
-  const handleNameChange = (value: string): void => {
-    dispatch({ type: "SET_PAGE_NAME", name: value });
-  };
-
-  const handleSeoChange = (key: string, value: string): void => {
-    dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
-  };
-
-  const handleMenuVisibilityChange = (checked: boolean): void => {
-    dispatch({ type: "SET_PAGE_MENU_VISIBILITY", showMenu: checked });
-  };
-
-  const showMenuValue = page.showMenu !== false;
-
-  const applySelectedSlugIds = (ids: string[]): void => {
-    const selectedSlugsList = ids
-      .map((idValue: string) => allSlugs.find((slug: Slug) => slug.id === idValue))
-      .filter((value: Slug | undefined): value is Slug => Boolean(value));
-    dispatch({
-      type: "UPDATE_PAGE_SLUGS",
-      slugIds: ids,
-      slugValues: selectedSlugsList.map((slug: Slug) => slug.slug),
-    });
-  };
-
-  const handleToggleSlug = (slug: Slug): void => {
-    const nextIds = selectedSlugIds.includes(slug.id)
-      ? selectedSlugIds.filter((idValue: string) => idValue !== slug.id)
-      : [...selectedSlugIds, slug.id];
-    applySelectedSlugIds(nextIds);
-  };
-
-  const handleRemoveSlug = (slug: Slug): void => {
-    applySelectedSlugIds(selectedSlugIds.filter((idValue: string) => idValue !== slug.id));
-  };
-
-  const handleSetHome = async (slug: Slug): Promise<void> => {
-    await updateSlug.mutateAsync({
-      id: slug.id,
-      input: { slug: slug.slug, isDefault: true },
-      domainId: activeDomainId,
-    });
-  };
-
-  return (
-    <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
-      <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
-        <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
-        <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
-      </TabsList>
-
-      {/* ---- Page tab ---- */}
-      <TabsContent value="page" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            <FileText className="mr-1.5 inline size-3" />
-            {page.name}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="page-name" className="text-xs text-gray-400">Page name</Label>
-            <Input
-              id="page-name"
-              value={page.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
-              placeholder="Page name"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
-            <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
-          </div>
-
-          {/* Status */}
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Status</Label>
-            <div className="flex gap-2">
-              {STATUS_OPTIONS.map((opt: { label: string; value: PageStatus }) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={(): void => handleStatusChange(opt.value)}
-                  className={`flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition ${
-                    page.status === opt.value
-                      ? opt.value === "published"
-                        ? "border-green-500 bg-green-500/10 text-green-400"
-                        : "border-blue-500 bg-blue-500/10 text-blue-400"
-                      : "border-border/40 bg-gray-800/30 text-gray-400 hover:border-border/60"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {page.publishedAt && page.status === "published" && (
-              <p className="text-[10px] text-gray-500">
-                Published: {new Date(page.publishedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Menu</Label>
-            <div className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2">
-              <span className="text-xs text-gray-300">Show global menu on this page</span>
-              <Switch checked={showMenuValue} onCheckedChange={handleMenuVisibilityChange} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Slugs for this zone</Label>
-            <Input
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-              placeholder="Search slugs..."
-              className="h-8 text-xs"
-            />
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2">
-              {filteredDomainSlugs.length === 0 ? (
-                <p className="py-4 text-center text-xs text-gray-500">
-                  No slugs available for this zone.
-                </p>
-              ) : (
-                filteredDomainSlugs.map((slug: Slug) => {
-                  const checked = selectedSlugIds.includes(slug.id);
-                  return (
-                    <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(): void => handleToggleSlug(slug)}
-                      />
-                      /{slug.slug}
-                    </label>
-                  );
-                })
-              )}
-            </div>
-            <p className="text-[10px] text-gray-500">{selectedSlugIds.length} selected</p>
-          </div>
-
-          {crossZoneSlugs.length > 0 ? (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
-                Cross-zone slugs
-              </p>
-              <p className="mt-1 text-[10px] text-amber-200/80">
-                These slugs are not part of the current zone. Remove them or switch zones.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {crossZoneSlugs.map((slug: Slug) => (
-                  <button
-                    key={slug.id}
-                    type="button"
-                    onClick={(): void => handleRemoveSlug(slug)}
-                    className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
-                  >
-                    /{slug.slug} ×
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Home page</Label>
-            {eligibleHomeSlugs.length === 0 ? (
-              <p className="text-xs text-gray-500">
-                Assign at least one slug in this zone to set this page as the home page.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {eligibleHomeSlugs.map((slug: Slug) => {
-                  const isHome = currentHomeSlug?.id === slug.id;
-                  return (
-                    <div
-                      key={slug.id}
-                      className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-2.5 py-2 text-xs"
-                    >
-                      <span className="text-gray-200">/{slug.slug}</span>
-                      {isHome ? (
-                        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300">
-                          Home
-                        </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={updateSlug.isPending}
-                          onClick={(): void => { void handleSetHome(slug); }}
-                          className="h-6 px-2 text-[10px]"
-                        >
-                          Set as home
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-                {currentHomeSlug && !pageHomeSlug ? (
-                  <p className="text-[10px] text-gray-500">
-                    Current home page: /{currentHomeSlug.slug}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
-
-          <p className="text-xs text-gray-500">
-            Select a section or block from the tree to edit its settings.
-          </p>
-        </div>
-      </TabsContent>
-
-      {/* ---- SEO tab ---- */}
-      <TabsContent value="seo" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            <Globe className="mr-1.5 inline size-3" />
-            Search Engine Optimization
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-title" className="text-xs text-gray-400">Page title</Label>
-            <Input
-              id="seo-title"
-              value={page.seoTitle ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoTitle", e.target.value)}
-              placeholder={page.name}
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-desc" className="text-xs text-gray-400">Meta description</Label>
-            <Input
-              id="seo-desc"
-              value={page.seoDescription ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoDescription", e.target.value)}
-              placeholder="Page description for search engines"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-canonical" className="text-xs text-gray-400">Canonical URL</Label>
-            <Input
-              id="seo-canonical"
-              value={page.seoCanonical ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoCanonical", e.target.value)}
-              placeholder="https://example.com/page"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-og" className="text-xs text-gray-400">OG Image URL</Label>
-            <Input
-              id="seo-og"
-              value={page.seoOgImage ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoOgImage", e.target.value)}
-              placeholder="https://example.com/image.png"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-robots" className="text-xs text-gray-400">Robots meta</Label>
-            <Input
-              id="seo-robots"
-              value={page.robotsMeta ?? "index,follow"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("robotsMeta", e.target.value)}
-              placeholder="index,follow"
-              className="h-8 text-xs"
-            />
-          </div>
-
-          {/* SEO Preview */}
-          <div className="space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Search preview</p>
-            <p className="text-sm font-medium text-blue-400 truncate">
-              {page.seoTitle || page.name}
-            </p>
-            <p className="text-xs text-gray-400 line-clamp-2">
-              {page.seoDescription || "No description set"}
-            </p>
-          </div>
-        </div>
-      </TabsContent>
-    </Tabs>
   );
 }

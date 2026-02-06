@@ -1,11 +1,15 @@
-import "server-only";
+import 'server-only';
 
-import type { Browser, BrowserContext, Page, Cookie } from "playwright";
-import prisma from "@/shared/lib/db/prisma";
-import path from "path";
-import { promises as fs } from "fs";
-import { toDataUrl } from "../utils";
-import { createRequire } from "module";
+import { promises as fs } from 'fs';
+import { createRequire } from 'module';
+import path from 'path';
+
+import prisma from '@/shared/lib/db/prisma';
+
+import { toDataUrl } from '../utils';
+
+
+import type { Browser, BrowserContext, Page, Cookie } from 'playwright';
 
 const getPlaywright = (): {
   chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
@@ -15,7 +19,7 @@ const getPlaywright = (): {
   // Turbopack currently struggles to bundle Playwright (node built-ins + non-JS assets from playwright-core).
   // Keep it out of the bundler graph by requiring it at runtime with a non-literal specifier.
   const requireFn = createRequire(import.meta.url);
-  const pkgName = "play" + "wright";
+  const pkgName = 'play' + 'wright';
   return requireFn(pkgName) as unknown as {
     chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
     firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
@@ -24,14 +28,14 @@ const getPlaywright = (): {
 };
 
 export const launchBrowser = async (
-  browserName: string = "chromium",
+  browserName: string = 'chromium',
   headless: boolean = true
 ): Promise<Browser> => {
   const { chromium, firefox, webkit } = getPlaywright();
   const browserType =
-    browserName === "firefox"
+    browserName === 'firefox'
       ? firefox
-      : browserName === "webkit"
+      : browserName === 'webkit'
         ? webkit
         : chromium;
   return browserType.launch({ headless });
@@ -87,8 +91,8 @@ export const captureSessionContext = async (
     await prisma.agentAuditLog.create({
       data: {
         runId,
-        level: "info",
-        message: "Captured session context.",
+        level: 'info',
+        message: 'Captured session context.',
         metadata: {
           label,
           url: page.url(),
@@ -100,7 +104,7 @@ export const captureSessionContext = async (
       },
     });
     if (log) {
-      await log("info", "Captured session context.", {
+      await log('info', 'Captured session context.', {
         label,
         url: page.url(),
         title: await page.title(),
@@ -111,7 +115,7 @@ export const captureSessionContext = async (
     }
   } catch (error) {
     if (log) {
-      await log("warning", "Failed to capture session context.", {
+      await log('warning', 'Failed to capture session context.', {
         label,
         error: error instanceof Error ? error.message : String(error),
         stepId: activeStepId ?? null,
@@ -129,16 +133,16 @@ export const captureSnapshot = async (
   activeStepId?: string | null
 ): Promise<{ domText: string; domHtml: string; url: string }> => {
   if (!page) {
-    return { domText: "", domHtml: "", url: "" };
+    return { domText: '', domHtml: '', url: '' };
   }
   const domHtml = await page.content();
   const domText = await page.evaluate(
-    () => document.body?.innerText || document.documentElement?.innerText || ""
+    () => document.body?.innerText || document.documentElement?.innerText || ''
   );
   const title = await page.title();
   const snapshotUrl = page.url();
   const screenshotBuffer = await page.screenshot({ fullPage: true });
-  const safeLabel = label.replace(/[^a-z0-9-_]/gi, "_").toLowerCase();
+  const safeLabel = label.replace(/[^a-z0-9-_]/gi, '_').toLowerCase();
   const screenshotFile = `snapshot-${Date.now()}-${safeLabel}.png`;
   const screenshotPath = path.join(runDir, screenshotFile);
   await fs.writeFile(screenshotPath, screenshotBuffer);
@@ -162,7 +166,7 @@ export const captureSnapshot = async (
   });
 
   if (log) {
-    await log("info", "Captured DOM snapshot.", {
+    await log('info', 'Captured DOM snapshot.', {
       label,
       screenshotFile,
       domTextLength: domText.length,

@@ -1,38 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { internalError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { AgentAuditLogRecord } from "@/features/ai/agent-runtime/types/agent";
+import { NextRequest, NextResponse } from 'next/server';
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+import type { AgentAuditLogRecord } from '@/features/ai/agent-runtime/types/agent';
+import { internalError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import prisma from '@/shared/lib/db/prisma';
+
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("agentAuditLog" in prisma)) {
+    if (!('agentAuditLog' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent steps not initialized. Run prisma generate/db push."
+          'Agent steps not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.[runId].audits.GET" }
+        { request: req, source: 'chatbot.agent.[runId].audits.GET' }
       );
     }
     const { runId } = await params;
     const url = new URL(req.url);
-    const stepId = url.searchParams.get("stepId");
-    const limit = Number(url.searchParams.get("limit") ?? "200");
+    const stepId = url.searchParams.get('stepId');
+    const limit = Number(url.searchParams.get('limit') ?? '200');
     const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 10), 500) : 200;
     const audits = await prisma.agentAuditLog.findMany({
       where: { runId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       take,
     });
     const filtered = stepId
       ? audits.filter((audit: AgentAuditLogRecord) => {
-          const metadata = audit.metadata as
+        const metadata = audit.metadata as
             | {
                 stepId?: string;
                 failedStepId?: string;
@@ -40,21 +41,21 @@ async function GET_handler(req: NextRequest,
                 steps?: Array<{ id?: string }>;
               }
             | null;
-          if (
-            metadata?.stepId === stepId ||
+        if (
+          metadata?.stepId === stepId ||
             metadata?.failedStepId === stepId ||
             metadata?.activeStepId === stepId
-          ) {
-            return true;
-          }
-          if (Array.isArray(metadata?.steps)) {
-            return metadata?.steps.some((step) => step?.id === stepId);
-          }
-          return false;
-        })
+        ) {
+          return true;
+        }
+        if (Array.isArray(metadata?.steps)) {
+          return metadata?.steps.some((step) => step?.id === stepId);
+        }
+        return false;
+      })
       : audits;
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][audits] Loaded", {
+      console.info('[chatbot][agent][audits] Loaded', {
         runId,
         count: filtered.length,
         durationMs: Date.now() - requestStart,
@@ -64,13 +65,13 @@ async function GET_handler(req: NextRequest,
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.[runId].audits.GET",
-      fallbackMessage: "Failed to load agent steps.",
+      source: 'chatbot.agent.[runId].audits.GET',
+      fallbackMessage: 'Failed to load agent steps.',
     });
   }
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.agent.[runId].audits.GET" }
+  { source: 'chatbot.agent.[runId].audits.GET' }
 );

@@ -6,10 +6,11 @@ export type {
   UpdateJobDto,
   JobQueueStatsDto,
   CreateProductAiJobDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
 export type ProductAiJobsPanelProps = {
   title?: string;
   description?: string;
   showTabs?: boolean;
+  embedded?: boolean;
 };

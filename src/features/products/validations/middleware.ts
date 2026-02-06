@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
-import { validateProductCreate, validateProductUpdate, type ValidationError } from "./validators";
+import { NextResponse } from 'next/server';
+
+import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
 
 export type ValidationMiddlewareOptions = {
   skipValidation?: boolean;
@@ -21,13 +22,13 @@ export async function validateProductCreateMiddleware(
     const response = options.customErrorHandler 
       ? options.customErrorHandler(result.errors)
       : NextResponse.json(
-          { 
-            error: "Validation failed", 
-            details: result.errors,
-            code: "VALIDATION_ERROR"
-          },
-          { status: 400 }
-        );
+        { 
+          error: 'Validation failed', 
+          details: result.errors,
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
     return { success: false, response };
   }
 
@@ -49,13 +50,13 @@ export async function validateProductUpdateMiddleware(
     const response = options.customErrorHandler 
       ? options.customErrorHandler(result.errors)
       : NextResponse.json(
-          { 
-            error: "Validation failed", 
-            details: result.errors,
-            code: "VALIDATION_ERROR"
-          },
-          { status: 400 }
-        );
+        { 
+          error: 'Validation failed', 
+          details: result.errors,
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
     return { success: false, response };
   }
 

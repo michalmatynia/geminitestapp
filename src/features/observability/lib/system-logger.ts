@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import { createHash } from "crypto";
-import type { SystemLogLevel } from "@/shared/types/system-logs";
-import { notifyCriticalError } from "./critical-error-notifier";
-import { createSystemLog } from "./system-log-repository";
+import { createHash } from 'crypto';
+
+import type { SystemLogLevel } from '@/shared/types/system-logs';
+
+import { notifyCriticalError } from './critical-error-notifier';
 import {
   isSensitiveKey,
   REDACTED_VALUE,
   truncateString,
-} from "./log-redaction";
+} from './log-redaction';
+import { createSystemLog } from './system-log-repository';
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
@@ -20,13 +22,13 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
       value,
       (_key: string, val: unknown): unknown => {
         if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
-        if (typeof val === "object" && val !== null) {
-          if (seen.has(val)) return "[Circular]";
+        if (typeof val === 'object' && val !== null) {
+          if (seen.has(val)) return '[Circular]';
           seen.add(val);
         }
-        if (typeof val === "function") return "[Function]";
-        if (typeof val === "bigint") return val.toString();
-        if (typeof val === "string")
+        if (typeof val === 'function') return '[Function]';
+        if (typeof val === 'bigint') return val.toString();
+        if (typeof val === 'string')
           return truncateString(val, MAX_VALUE_LENGTH);
         return val;
       },
@@ -40,12 +42,12 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
       };
     }
     const parsed = JSON.parse(json) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>;
     }
     return { value: parsed };
   } catch {
-    return { error: "Failed to serialize context." };
+    return { error: 'Failed to serialize context.' };
   }
 };
 
@@ -64,10 +66,10 @@ export const normalizeErrorInfo = (
       name: error.name,
     };
   }
-  if (typeof error === "string") {
+  if (typeof error === 'string') {
     return { message: error };
   }
-  return { message: "Unknown error", raw: sanitizeValue(error) };
+  return { message: 'Unknown error', raw: sanitizeValue(error) };
 };
 
 const extractRequestInfo = (
@@ -79,7 +81,7 @@ const extractRequestInfo = (
     return {
       path: url.pathname,
       method: request.method,
-      ...(request.headers.get("x-request-id") && { requestId: request.headers.get("x-request-id")! }),
+      ...(request.headers.get('x-request-id') && { requestId: request.headers.get('x-request-id')! }),
     };
   } catch {
     return {};
@@ -97,23 +99,23 @@ export const buildErrorFingerprint = (input: {
     name?: string;
   } | null;
 }): string => {
-  const hash = createHash("sha256");
-  hash.update(input.message ?? "");
-  hash.update(String(input.source ?? ""));
-  hash.update(String(input.path ?? ""));
-  hash.update(String(input.statusCode ?? ""));
+  const hash = createHash('sha256');
+  hash.update(input.message ?? '');
+  hash.update(String(input.source ?? ''));
+  hash.update(String(input.path ?? ''));
+  hash.update(String(input.statusCode ?? ''));
   if (input.errorInfo) {
-    hash.update(String(input.errorInfo.name ?? ""));
-    hash.update(String(input.errorInfo.message ?? ""));
-    const stack = input.errorInfo.stack ?? "";
+    hash.update(String(input.errorInfo.name ?? ''));
+    hash.update(String(input.errorInfo.message ?? ''));
+    const stack = input.errorInfo.stack ?? '';
     const normalizedStack = stack
-      .split("\n")
+      .split('\n')
       .slice(0, 6)
-      .map((line: string) => line.replace(/\s+at\s+/g, " at ").trim())
-      .join("\n");
+      .map((line: string) => line.replace(/\s+at\s+/g, ' at ').trim())
+      .join('\n');
     hash.update(normalizedStack);
   }
-  return hash.digest("hex").slice(0, 16);
+  return hash.digest('hex').slice(0, 16);
 };
 
 export const getErrorFingerprint = (input: {
@@ -141,7 +143,7 @@ export type SystemLogInput = {
   context?: Record<string, unknown> | null;
   error?: unknown;
   request?: Request;
-  statusCode?: number;
+  statusCode?: number | undefined;
   userId?: string | null;
   requestId?: string | null;
   critical?: boolean;
@@ -152,14 +154,14 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
     const fingerprint =
-      input.level === "error" || input.level === "warn" || errorInfo
+      input.level === 'error' || input.level === 'warn' || errorInfo
         ? buildErrorFingerprint({
-            message: input.message,
-            source: input.source ?? null,
-            path: input.request?.url ? (requestInfo.path ?? null) : null,
-            statusCode: input.statusCode ?? null,
-            errorInfo,
-          })
+          message: input.message,
+          source: input.source ?? null,
+          path: input.request?.url ? (requestInfo.path ?? null) : null,
+          statusCode: input.statusCode ?? null,
+          errorInfo,
+        })
         : null;
     const context = {
       ...(input.context ?? {}),
@@ -167,7 +169,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       ...(fingerprint ? { fingerprint } : {}),
     };
     const created = await createSystemLog({
-      level: input.level ?? "info",
+      level: input.level ?? 'info',
       message: input.message,
       source: input.source ?? null,
       context: sanitizeValue(context),
@@ -180,22 +182,32 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     });
 
     const critical =
-      typeof input.critical === "boolean"
+      typeof input.critical === 'boolean'
         ? input.critical
-        : typeof input.context?.critical === "boolean"
+        : typeof input.context?.critical === 'boolean'
           ? Boolean(input.context?.critical)
           : false;
+
+    // Emit to console for standard logging and capture tools
+    const consoleMsg = `[${input.source || 'system'}] ${input.message}`;
+    if (input.level === 'error' || critical) {
+      console.error(consoleMsg, context);
+    } else if (input.level === 'warn') {
+      console.warn(consoleMsg, context);
+    } else {
+      console.log(consoleMsg, context);
+    }
 
     if (critical) {
       await notifyCriticalError(created, critical);
     }
   } catch (error) {
-    console.error("[system-logger] Failed to write system log", error);
+    console.error('[system-logger] Failed to write system log', error);
   }
 }
 
 export async function logSystemError(
-  input: Omit<SystemLogInput, "level">,
+  input: Omit<SystemLogInput, 'level'>,
 ): Promise<void> {
-  await logSystemEvent({ ...input, level: "error" });
+  await logSystemEvent({ ...input, level: 'error' });
 }

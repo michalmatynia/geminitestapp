@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-
+import React from 'react';
 
 
 
 
 
-import type { AiNode, NodeConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
+
+
+import type { AiNode, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
 import {
   DEFAULT_CONTEXT_ROLE,
   applyContextPreset,
@@ -17,18 +17,19 @@ import {
   parsePathList,
   safeStringify,
   toggleContextTarget,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
-  if (!value || typeof value !== "object") return value;
-  if (seen.has(value)) return "[Circular]";
+  if (!value || typeof value !== 'object') return value;
+  if (seen.has(value)) return '[Circular]';
   seen.add(value);
   if (Array.isArray(value)) {
     return value.map((item: unknown) => pruneLargeFields(item, seen));
   }
   const result: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value)) {
-    if (typeof val === "string" && val.length > 1000) {
+    if (typeof val === 'string' && val.length > 1000) {
       result[key] = `${val.substring(0, 1000)}... [truncated, ${val.length} chars]`;
     } else {
       result[key] = pruneLargeFields(val, seen);
@@ -45,7 +46,7 @@ type ContextNodeConfigSectionProps = {
   selectedNode: AiNode;
   runtimeState: RuntimeState;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
 };
 
 export function ContextNodeConfigSection({
@@ -58,15 +59,15 @@ export function ContextNodeConfigSection({
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
 
-  if (selectedNode.type !== "context") return null;
+  if (selectedNode.type !== 'context') return null;
 
   const contextConfig = selectedNode.config?.context ?? {
     role: DEFAULT_CONTEXT_ROLE,
-    entityType: "product",
-    entityIdSource: "simulation",
-    entityId: "",
-    scopeMode: "full",
-    scopeTarget: "entity",
+    entityType: 'product',
+    entityIdSource: 'simulation',
+    entityId: '',
+    scopeMode: 'full',
+    scopeTarget: 'entity',
     includePaths: [],
     excludePaths: [],
   };
@@ -75,28 +76,28 @@ export function ContextNodeConfigSection({
   const resolvedOutputs = runtimeState.outputs[selectedNode.id] ?? {};
 
   const stringifyPayload = (value: unknown): string => {
-    if (value === undefined) return "";
-    if (typeof value === "string") return value;
+    if (value === undefined) return '';
+    if (typeof value === 'string') return value;
     try {
       return JSON.stringify(value, null, 2);
     } catch {
       return safeStringify(value);
     }
   };
-  const receivedContext = sanitizePayload(receivedInputs["context"], hideLargeFields);
+  const receivedContext = sanitizePayload(receivedInputs['context'], hideLargeFields);
   const sanitizedInputs = sanitizePayload(receivedInputs, hideLargeFields) as Record<string, unknown>;
   const sanitizedOutputs = sanitizePayload(resolvedOutputs, hideLargeFields) as Record<string, unknown>;
   const receivedContextText = stringifyPayload(receivedContext);
   const receivedInputsText = stringifyPayload(sanitizedInputs);
   const resolvedOutputsText = stringifyPayload(sanitizedOutputs);
   const resolvedEntityId =
-    typeof sanitizedOutputs?.entityId === "string"
+    typeof sanitizedOutputs?.entityId === 'string'
       ? (sanitizedOutputs.entityId)
-      : "";
+      : '';
   const resolvedEntityType =
-    typeof sanitizedOutputs?.entityType === "string"
+    typeof sanitizedOutputs?.entityType === 'string'
       ? (sanitizedOutputs.entityType)
-      : "";
+      : '';
   const diffInputs = sanitizedInputs ?? {};
   const diffOutputs = sanitizedOutputs ?? {};
   const diffKeys = Array.from(
@@ -160,19 +161,19 @@ export function ContextNodeConfigSection({
   const copyPayload = async (payload: unknown, label: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(stringifyPayload(payload));
-      toast(`${label} copied.`, { variant: "success" });
+      toast(`${label} copied.`, { variant: 'success' });
     } catch (error) {
-      toast("Failed to copy payload.", { variant: "error" });
-      console.warn("Failed to copy payload", error);
+      toast('Failed to copy payload.', { variant: 'error' });
+      console.warn('Failed to copy payload', error);
     }
   };
   const copyDiff = async (): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(diffLines.join("\n"));
-      toast("Diff copied.", { variant: "success" });
+      await navigator.clipboard.writeText(diffLines.join('\n'));
+      toast('Diff copied.', { variant: 'success' });
     } catch (error) {
-      toast("Failed to copy diff.", { variant: "error" });
-      console.warn("Failed to copy diff", error);
+      toast('Failed to copy diff.', { variant: 'error' });
+      console.warn('Failed to copy diff', error);
     }
   };
   const combinedPayload = {
@@ -196,21 +197,21 @@ export function ContextNodeConfigSection({
         <Button
           type="button"
           className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
-          onClick={() => { void copyPayload(combinedPayload, "Payload"); }}
+          onClick={() => { void copyPayload(combinedPayload, 'Payload'); }}
         >
           Copy payload
         </Button>
         <Button
           type="button"
           className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
-          onClick={() => { void copyPayload(sanitizedInputs, "Inputs"); }}
+          onClick={() => { void copyPayload(sanitizedInputs, 'Inputs'); }}
         >
           Copy inputs
         </Button>
         <Button
           type="button"
           className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
-          onClick={() => { void copyPayload(sanitizedOutputs, "Outputs"); }}
+          onClick={() => { void copyPayload(sanitizedOutputs, 'Outputs'); }}
         >
           Copy outputs
         </Button>
@@ -225,35 +226,35 @@ export function ContextNodeConfigSection({
           type="button"
           className={`rounded-md border px-2 py-1 text-[10px] ${
             hideLargeFields
-              ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-              : "border text-gray-200 hover:bg-card/70"
+              ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
+              : 'border text-gray-200 hover:bg-card/70'
           }`}
           onClick={() => setHideLargeFields((prev: boolean) => !prev)}
         >
-          {hideLargeFields ? "Hide large fields" : "Show large fields"}
+          {hideLargeFields ? 'Hide large fields' : 'Show large fields'}
         </Button>
         <Button
           type="button"
           className={`rounded-md border px-2 py-1 text-[10px] ${
             showDiff
-              ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-              : "border text-gray-200 hover:bg-card/70"
+              ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
+              : 'border text-gray-200 hover:bg-card/70'
           }`}
           onClick={() => setShowDiff((prev: boolean) => !prev)}
         >
-          {showDiff ? "Diff on" : "Diff off"}
+          {showDiff ? 'Diff on' : 'Diff off'}
         </Button>
         {showDiff && (
           <Button
             type="button"
             className={`rounded-md border px-2 py-1 text-[10px] ${
               diffOnlyChanges
-                ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-                : "border text-gray-200 hover:bg-card/70"
+                ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
+                : 'border text-gray-200 hover:bg-card/70'
             }`}
             onClick={() => setDiffOnlyChanges((prev: boolean) => !prev)}
           >
-            {diffOnlyChanges ? "Changes only" : "Show all"}
+            {diffOnlyChanges ? 'Changes only' : 'Show all'}
           </Button>
         )}
       </div>
@@ -262,8 +263,8 @@ export function ContextNodeConfigSection({
           <div className="text-[11px] text-gray-400">Resolved Entity</div>
           <div className="mt-2 text-[12px] text-gray-200">
             {resolvedEntityId
-              ? `${resolvedEntityType || "entity"} · ${resolvedEntityId}`
-              : "No entity resolved yet"}
+              ? `${resolvedEntityType || 'entity'} · ${resolvedEntityId}`
+              : 'No entity resolved yet'}
           </div>
         </div>
         <div className="rounded-md border border-border bg-card/60 p-3">
@@ -271,7 +272,7 @@ export function ContextNodeConfigSection({
           <div className="mt-2 text-[12px] text-gray-200">
             {receivedContextText
               ? `${receivedContextText.length} chars`
-              : "No context input received"}
+              : 'No context input received'}
           </div>
         </div>
       </div>
@@ -325,7 +326,7 @@ export function ContextNodeConfigSection({
           </div>
           {diffLines.length > 0 ? (
             <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
-              {diffLines.join("\n")}
+              {diffLines.join('\n')}
             </pre>
           ) : (
             <p className="mt-2 text-[11px] text-gray-500">
@@ -352,7 +353,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Context Scope Presets</Label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(["light", "medium", "full"] as const).map((preset: "light" | "medium" | "full") => (
+          {(['light', 'medium', 'full'] as const).map((preset: 'light' | 'medium' | 'full') => (
             <Button
               key={preset}
               type="button"
@@ -373,7 +374,7 @@ export function ContextNodeConfigSection({
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
-                  scopeMode: "full",
+                  scopeMode: 'full',
                   includePaths: [],
                   excludePaths: [],
                 },
@@ -390,8 +391,8 @@ export function ContextNodeConfigSection({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label className="text-xs text-gray-400">Collection Type</Label>
-        <Select
-            value={contextConfig.entityType ?? "auto"}
+          <Select
+            value={contextConfig.entityType ?? 'auto'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: { ...contextConfig, entityType: value },
@@ -413,12 +414,12 @@ export function ContextNodeConfigSection({
         <div>
           <Label className="text-xs text-gray-400">Scope Target</Label>
           <Select
-            value={contextConfig.scopeTarget ?? "entity"}
+            value={contextConfig.scopeTarget ?? 'entity'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
-                  scopeTarget: value as "entity" | "context",
+                  scopeTarget: value as 'entity' | 'context',
                 },
               })
             }
@@ -439,12 +440,12 @@ export function ContextNodeConfigSection({
         <div>
           <Label className="text-xs text-gray-400">Entity ID Source</Label>
           <Select
-            value={contextConfig.entityIdSource ?? "simulation"}
+            value={contextConfig.entityIdSource ?? 'simulation'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
-                  entityIdSource: value as "simulation" | "manual" | "context",
+                  entityIdSource: value as 'simulation' | 'manual' | 'context',
                 },
               })
             }
@@ -476,8 +477,8 @@ export function ContextNodeConfigSection({
                 }
                 className={`rounded-full border px-2 py-1 text-[10px] transition ${
                   active
-                    ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-                    : "border text-gray-300 hover:bg-card/70"
+                    ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
+                    : 'border text-gray-300 hover:bg-card/70'
                 }`}
               >
                 {field}
@@ -490,7 +491,7 @@ export function ContextNodeConfigSection({
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
-                  scopeMode: "include",
+                  scopeMode: 'include',
                   includePaths: [],
                   excludePaths: [],
                 },
@@ -505,12 +506,12 @@ export function ContextNodeConfigSection({
           Click to toggle fields. This switches scope to include mode.
         </p>
       </div>
-      {contextConfig.entityIdSource === "manual" && (
+      {contextConfig.entityIdSource === 'manual' && (
         <div>
           <Label className="text-xs text-gray-400">Entity ID</Label>
           <Input
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-            value={contextConfig.entityId ?? ""}
+            value={contextConfig.entityId ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateSelectedNodeConfig({
                 context: { ...contextConfig, entityId: event.target.value },
@@ -519,19 +520,19 @@ export function ContextNodeConfigSection({
           />
         </div>
       )}
-        <div>
-          <Label className="text-xs text-gray-400">Data Scope</Label>
-          <Select
-            value={contextConfig.scopeMode ?? "full"}
-            onValueChange={(value: string) =>
-              updateSelectedNodeConfig({
-                context: {
-                  ...contextConfig,
-                  scopeMode: value as "full" | "include" | "exclude",
-                },
-              })
-            }
-          >
+      <div>
+        <Label className="text-xs text-gray-400">Data Scope</Label>
+        <Select
+          value={contextConfig.scopeMode ?? 'full'}
+          onValueChange={(value: string) =>
+            updateSelectedNodeConfig({
+              context: {
+                ...contextConfig,
+                scopeMode: value as 'full' | 'include' | 'exclude',
+              },
+            })
+          }
+        >
 
           <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select scope" />
@@ -546,20 +547,20 @@ export function ContextNodeConfigSection({
           Use dot paths (e.g. <span className="text-gray-300">priceGroups.default</span>).
         </p>
       </div>
-      {(contextConfig.scopeMode === "include" ||
-        contextConfig.scopeMode === "exclude") && (
+      {(contextConfig.scopeMode === 'include' ||
+        contextConfig.scopeMode === 'exclude') && (
         <div>
           <Label className="text-xs text-gray-400">
-            {contextConfig.scopeMode === "include"
-              ? "Include paths (one per line)"
-              : "Exclude paths (one per line)"}
+            {contextConfig.scopeMode === 'include'
+              ? 'Include paths (one per line)'
+              : 'Exclude paths (one per line)'}
           </Label>
           <Textarea
             className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={
-              contextConfig.scopeMode === "include"
-                ? (contextConfig.includePaths ?? []).join("\n")
-                : (contextConfig.excludePaths ?? []).join("\n")
+              contextConfig.scopeMode === 'include'
+                ? (contextConfig.includePaths ?? []).join('\n')
+                : (contextConfig.excludePaths ?? []).join('\n')
             }
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
               const list = parsePathList(event.target.value);
@@ -567,11 +568,11 @@ export function ContextNodeConfigSection({
                 context: {
                   ...contextConfig,
                   includePaths:
-                    contextConfig.scopeMode === "include"
+                    contextConfig.scopeMode === 'include'
                       ? list
                       : contextConfig.includePaths ?? [],
                   excludePaths:
-                    contextConfig.scopeMode === "exclude"
+                    contextConfig.scopeMode === 'exclude'
                       ? list
                       : contextConfig.excludePaths ?? [],
                 },

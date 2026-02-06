@@ -1,7 +1,8 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, MissingImagePlaceholder } from "@/shared/ui";
-import Image from "next/image";
-import Link from "next/link";
-import type { ProductWithImages } from "@/features/products/types";
+import Image from 'next/image';
+import Link from 'next/link';
+
+import type { ProductWithImages } from '@/features/products/types';
+import { MissingImagePlaceholder, ResourceCard } from '@/shared/ui';
 
 
 interface ProductCardProps {
@@ -19,34 +20,31 @@ export default function ProductCard({ product }: ProductCardProps): React.JSX.El
     product.name_en ??
     product.name_pl ??
     product.name_de ??
-    "Product";
+    'Product';
 
   return (
-    <Link href={`/products/${product.id}`}>
-      <Card className="h-full">
-        <CardHeader>
+    <Link href={`/products/${product.id}`} className="block h-full">
+      <ResourceCard
+        title={name}
+        className="h-full"
+        media={
           <div className="relative h-48 w-full">
             {imageUrl ? (
               <Image
                 src={imageUrl}
                 alt={name}
                 fill
-                className="rounded-t-lg object-cover"
+                className="rounded-md object-cover"
               />
             ) : (
-              <MissingImagePlaceholder className="h-full w-full rounded-t-lg" />
+              <MissingImagePlaceholder className="h-full w-full rounded-md" />
             )}
           </div>
-        </CardHeader>
-
-        <CardContent>
-          <CardTitle className="text-lg">{name}</CardTitle>
-        </CardContent>
-
-        <CardFooter>
+        }
+        footer={
           <p className="text-lg font-semibold">${product.price}</p>
-        </CardFooter>
-      </Card>
+        }
+      />
     </Link>
   );
 }

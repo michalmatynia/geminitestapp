@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useMemo } from "react";
-import { useSystemSync } from "@/shared/hooks/sync/useSystemSync";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { QueryDevPanel } from "@/shared/ui";
+import { createContext, useContext, useEffect, useMemo } from 'react';
+
+import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { QueryDevPanel } from '@/shared/ui';
 
 type BackgroundSyncContextValue = {
   enabled: boolean;
@@ -16,38 +17,38 @@ type BackgroundSyncContextValue = {
 const BackgroundSyncContext = createContext<BackgroundSyncContextValue | null>(null);
 
 const BACKGROUND_SYNC_KEYS = {
-  enabled: "background_sync_enabled",
-  intervalSeconds: "background_sync_interval_seconds",
+  enabled: 'background_sync_enabled',
+  intervalSeconds: 'background_sync_interval_seconds',
 };
 
 const QUERY_PANEL_KEYS = {
-  enabled: "query_status_panel_enabled",
-  open: "query_status_panel_open",
+  enabled: 'query_status_panel_enabled',
+  open: 'query_status_panel_open',
 };
 
-const parseEnabled = (value: string | undefined): boolean => {
-  if (!value) return true;
-  return ["true", "1", "yes", "on"].includes(value.toLowerCase());
+const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
+  if (!value) return fallback;
+  return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
 };
 
 const parseIntervalSeconds = (value: string | undefined): number => {
-  if (!value) return 60;
+  if (!value) return 300;
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 60;
-  return Math.min(Math.max(parsed, 10), 3600);
+  if (!Number.isFinite(parsed)) return 300;
+  return Math.min(Math.max(parsed, 60), 3600);
 };
 
 export function BackgroundSyncProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const resolvedSettings = useMemo(() => {
-    const map = settingsQuery.data;
+    const map = settingsStore.map;
     return {
-      enabled: parseEnabled(map?.get(BACKGROUND_SYNC_KEYS.enabled)),
+      enabled: parseEnabled(map?.get(BACKGROUND_SYNC_KEYS.enabled), true),
       intervalSeconds: parseIntervalSeconds(map?.get(BACKGROUND_SYNC_KEYS.intervalSeconds)),
-      queryPanelEnabled: parseEnabled(map?.get(QUERY_PANEL_KEYS.enabled)),
-      queryPanelOpen: parseEnabled(map?.get(QUERY_PANEL_KEYS.open)),
+      queryPanelEnabled: parseEnabled(map?.get(QUERY_PANEL_KEYS.enabled), false),
+      queryPanelOpen: parseEnabled(map?.get(QUERY_PANEL_KEYS.open), false),
     };
-  }, [settingsQuery.data]);
+  }, [settingsStore.map]);
 
   const { isOnline, lastSync, forceSync } = useSystemSync({
     enabled: resolvedSettings.enabled,
@@ -55,8 +56,8 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   });
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("Background sync status:", { isOnline, lastSync });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Background sync status:', { isOnline, lastSync });
     }
   }, [isOnline, lastSync]);
 
@@ -87,7 +88,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
 export function useBackgroundSyncStatus(): BackgroundSyncContextValue {
   const context = useContext(BackgroundSyncContext);
   if (!context) {
-    throw new Error("useBackgroundSyncStatus must be used within BackgroundSyncProvider");
+    throw new Error('useBackgroundSyncStatus must be used within BackgroundSyncProvider');
   }
   return context;
 }

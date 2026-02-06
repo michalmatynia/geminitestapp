@@ -1,12 +1,12 @@
 const BRAVE_SEARCH_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_API_URL =
-  process.env.BRAVE_SEARCH_API_URL || "https://api.search.brave.com/res/v1/web/search";
+  process.env.BRAVE_SEARCH_API_URL || 'https://api.search.brave.com/res/v1/web/search';
 const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
 const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
 const GOOGLE_SEARCH_API_URL =
-  process.env.GOOGLE_SEARCH_API_URL || "https://www.googleapis.com/customsearch/v1";
+  process.env.GOOGLE_SEARCH_API_URL || 'https://www.googleapis.com/customsearch/v1';
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
-const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
+const SERPAPI_API_URL = process.env.SERPAPI_API_URL || 'https://serpapi.com/search.json';
 
 export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string; snippet?: string }>> => {
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
@@ -23,12 +23,12 @@ export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ tit
     const rawUrl = match[1];
     const rawTitle = match[2];
     if (!rawUrl || !rawTitle) continue;
-    const title = rawTitle.replace(/<[^>]+>/g, "").trim();
-    const url = rawUrl.includes("duckduckgo.com/l/")
+    const title = rawTitle.replace(/<[^>]+>/g, '').trim();
+    const url = rawUrl.includes('duckduckgo.com/l/')
       ? decodeURIComponent(
-          new URL(rawUrl, "https://duckduckgo.com").searchParams.get("uddg") ??
+        new URL(rawUrl, 'https://duckduckgo.com').searchParams.get('uddg') ??
             rawUrl
-        )
+      )
       : rawUrl;
     if (title && url) {
       results.push({ title, url });
@@ -45,18 +45,18 @@ export const fetchSearchResults = async (
 ): Promise<Array<{ title: string; url: string }>> => {
   const normalizedProvider = provider.toLowerCase();
   
-  if (normalizedProvider === "brave") {
+  if (normalizedProvider === 'brave') {
     try {
       if (!BRAVE_SEARCH_API_KEY) {
-        throw new Error("Brave search API key not configured.");
+        throw new Error('Brave search API key not configured.');
       }
       const url = new URL(BRAVE_SEARCH_API_URL);
-      url.searchParams.set("q", query);
-      url.searchParams.set("count", "6");
+      url.searchParams.set('q', query);
+      url.searchParams.set('count', '6');
       const res = await fetch(url.toString(), {
         headers: {
-          Accept: "application/json",
-          "X-Subscription-Token": BRAVE_SEARCH_API_KEY,
+          Accept: 'application/json',
+          'X-Subscription-Token': BRAVE_SEARCH_API_KEY,
         },
       });
       if (!res.ok) {
@@ -69,14 +69,14 @@ export const fetchSearchResults = async (
       return (
         data.web?.results
           ?.map((item: { title?: string; url?: string }) => ({
-            title: item.title || "Untitled",
-            url: item.url || "",
+            title: item.title || 'Untitled',
+            url: item.url || '',
           }))
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
       if (log) {
-        await log("warning", "Brave search failed; falling back to DuckDuckGo.", {
+        await log('warning', 'Brave search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -84,16 +84,16 @@ export const fetchSearchResults = async (
     }
   }
   
-  if (normalizedProvider === "google") {
+  if (normalizedProvider === 'google') {
     try {
       if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
-        throw new Error("Google search API key/engine not configured.");
+        throw new Error('Google search API key/engine not configured.');
       }
       const url = new URL(GOOGLE_SEARCH_API_URL);
-      url.searchParams.set("key", GOOGLE_SEARCH_API_KEY);
-      url.searchParams.set("cx", GOOGLE_SEARCH_ENGINE_ID);
-      url.searchParams.set("q", query);
-      url.searchParams.set("num", "6");
+      url.searchParams.set('key', GOOGLE_SEARCH_API_KEY);
+      url.searchParams.set('cx', GOOGLE_SEARCH_ENGINE_ID);
+      url.searchParams.set('q', query);
+      url.searchParams.set('num', '6');
       const res = await fetch(url.toString());
       if (!res.ok) {
         const text = await res.text();
@@ -105,14 +105,14 @@ export const fetchSearchResults = async (
       return (
         data.items
           ?.map((item: { title?: string; link?: string }) => ({
-            title: item.title || "Untitled",
-            url: item.link || "",
+            title: item.title || 'Untitled',
+            url: item.link || '',
           }))
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
-       if (log) {
-        await log("warning", "Google search failed; falling back to DuckDuckGo.", {
+      if (log) {
+        await log('warning', 'Google search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -120,16 +120,16 @@ export const fetchSearchResults = async (
     }
   }
   
-  if (normalizedProvider === "serpapi") {
+  if (normalizedProvider === 'serpapi') {
     try {
       if (!SERPAPI_API_KEY) {
-        throw new Error("SerpApi key not configured.");
+        throw new Error('SerpApi key not configured.');
       }
       const url = new URL(SERPAPI_API_URL);
-      url.searchParams.set("api_key", SERPAPI_API_KEY);
-      url.searchParams.set("engine", "google");
-      url.searchParams.set("q", query);
-      url.searchParams.set("num", "6");
+      url.searchParams.set('api_key', SERPAPI_API_KEY);
+      url.searchParams.set('engine', 'google');
+      url.searchParams.set('q', query);
+      url.searchParams.set('num', '6');
       const res = await fetch(url.toString());
       if (!res.ok) {
         const text = await res.text();
@@ -141,14 +141,14 @@ export const fetchSearchResults = async (
       return (
         data.organic_results
           ?.map((item: { title?: string; link?: string }) => ({
-            title: item.title || "Untitled",
-            url: item.link || "",
+            title: item.title || 'Untitled',
+            url: item.link || '',
           }))
           .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
       if (log) {
-        await log("warning", "SerpApi search failed; falling back to DuckDuckGo.", {
+        await log('warning', 'SerpApi search failed; falling back to DuckDuckGo.', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -157,8 +157,8 @@ export const fetchSearchResults = async (
   }
   
   if (log) {
-    await log("warning", "Unsupported search provider; falling back to DuckDuckGo.", {
-        provider,
+    await log('warning', 'Unsupported search provider; falling back to DuckDuckGo.', {
+      provider,
     });
   }
   return await fetchDuckDuckGoResults(query);

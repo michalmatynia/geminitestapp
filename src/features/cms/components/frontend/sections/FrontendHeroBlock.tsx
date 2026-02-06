@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { useMediaStyles } from "../media-styles-context";
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useMediaStyles } from '../media-styles-context';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendHeroBlockProps {
   settings: Record<string, unknown>;
@@ -11,7 +12,7 @@ interface FrontendHeroBlockProps {
 }
 
 export function FrontendHeroBlock({ settings, blocks }: FrontendHeroBlockProps): React.ReactNode {
-  const image = settings["image"] as string | undefined;
+  const image = settings['image'] as string | undefined;
   const mediaStyles = useMediaStyles();
 
   return (

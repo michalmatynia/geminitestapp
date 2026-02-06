@@ -1,35 +1,37 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { ComponentTreePanel } from "@/features/cms/components/page-builder/ComponentTreePanel";
-import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
-import { useCmsPages, useCmsPage } from "@/features/cms/hooks/useCmsQueries";
-import { vi } from "vitest";
+import { screen, fireEvent } from '@testing-library/react';
+import { vi } from 'vitest';
+
+import { render } from '@/__tests__/test-utils';
+import { ComponentTreePanel } from '@/features/cms/components/page-builder/ComponentTreePanel';
+import { useCmsPages, useCmsPage } from '@/features/cms/hooks/useCmsQueries';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock the hooks
-vi.mock("@/features/cms/hooks/usePageBuilderContext", () => ({
+vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
   usePageBuilder: vi.fn(),
 }));
 
-vi.mock("@/features/cms/hooks/useCmsQueries", () => ({
+vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsPages: vi.fn(),
   useCmsPage: vi.fn(),
 }));
 
 // Mock the child components to simplify testing
-vi.mock("@/features/cms/components/page-builder/ComponentTreeNodeItem", () => ({
+vi.mock('@/features/cms/components/page-builder/ComponentTreeNodeItem', () => ({
   SectionNodeItem: ({ section }: any) => <div data-testid="section-item">{section.type}</div>,
 }));
-vi.mock("@/features/cms/components/page-builder/SectionPicker", () => ({
+vi.mock('@/features/cms/components/page-builder/SectionPicker', () => ({
   SectionPicker: () => <button>Add Section</button>,
 }));
-vi.mock("@/features/cms/components/page-builder/SectionTemplatePicker", () => ({
+vi.mock('@/features/cms/components/page-builder/SectionTemplatePicker', () => ({
   SectionTemplatePicker: () => <button>Templates</button>,
 }));
 
-describe("ComponentTreePanel Component", () => {
+describe('ComponentTreePanel Component', () => {
   const mockDispatch = vi.fn();
   const mockPages = [
-    { id: "1", name: "Home", status: "published" },
-    { id: "2", name: "About", status: "draft" },
+    { id: '1', name: 'Home', status: 'published' },
+    { id: '2', name: 'About', status: 'draft' },
   ];
 
   beforeEach(() => {
@@ -38,7 +40,7 @@ describe("ComponentTreePanel Component", () => {
     (useCmsPage as any).mockReturnValue({ data: null, isLoading: false });
   });
 
-  it("should render empty when no page is selected", () => {
+  it('should render empty when no page is selected', () => {
     (usePageBuilder as any).mockReturnValue({
       state: { pages: mockPages, currentPage: null, sections: [] },
       dispatch: mockDispatch,
@@ -49,11 +51,11 @@ describe("ComponentTreePanel Component", () => {
     expect(container.querySelector('.p-4')).toBeInTheDocument();
   });
 
-  it("should render zones and sections when a page is selected", () => {
-    const mockCurrentPage = { id: "1", name: "Home" };
+  it('should render zones and sections when a page is selected', () => {
+    const mockCurrentPage = { id: '1', name: 'Home' };
     const mockSections = [
-      { id: "s1", type: "Hero", zone: "template", blocks: [] },
-      { id: "s2", type: "RichText", zone: "footer", blocks: [] },
+      { id: 's1', type: 'Hero', zone: 'template', blocks: [] },
+      { id: 's2', type: 'RichText', zone: 'footer', blocks: [] },
     ];
 
     (usePageBuilder as any).mockReturnValue({
@@ -70,20 +72,20 @@ describe("ComponentTreePanel Component", () => {
     render(<ComponentTreePanel />);
 
     // Check zones
-    expect(screen.getByText("Header")).toBeInTheDocument();
-    expect(screen.getByText("Template")).toBeInTheDocument();
-    expect(screen.getByText("Footer")).toBeInTheDocument();
+    expect(screen.getByText('Header')).toBeInTheDocument();
+    expect(screen.getByText('Template')).toBeInTheDocument();
+    expect(screen.getByText('Footer')).toBeInTheDocument();
 
     // Check sections
-    const sectionItems = screen.getAllByTestId("section-item");
+    const sectionItems = screen.getAllByTestId('section-item');
     expect(sectionItems.length).toBe(2);
-    expect(screen.getByText("Hero")).toBeInTheDocument();
-    expect(screen.getByText("RichText")).toBeInTheDocument();
+    expect(screen.getByText('Hero')).toBeInTheDocument();
+    expect(screen.getByText('RichText')).toBeInTheDocument();
   });
 
-  it("should toggle zone visibility", () => {
-    const mockCurrentPage = { id: "1", name: "Home" };
-    const mockSections = [{ id: "s1", type: "Hero", zone: "header", blocks: [] }];
+  it('should toggle zone visibility', () => {
+    const mockCurrentPage = { id: '1', name: 'Home' };
+    const mockSections = [{ id: 's1', type: 'Hero', zone: 'header', blocks: [] }];
 
     (usePageBuilder as any).mockReturnValue({
       state: { 
@@ -98,17 +100,17 @@ describe("ComponentTreePanel Component", () => {
     render(<ComponentTreePanel />);
 
     // Initially visible
-    expect(screen.getByText("Hero")).toBeInTheDocument();
+    expect(screen.getByText('Hero')).toBeInTheDocument();
 
     // Toggle header zone
-    const headerToggle = screen.getByText("Header");
+    const headerToggle = screen.getByText('Header');
     fireEvent.click(headerToggle);
 
     // After toggle, it should be hidden (since we mocked the state to be updated by internal useState in real component, 
     // but here we are testing if the click event is handled and triggers re-render or state change if we were using external state.
     // Wait, ComponentTreePanel uses internal setCollapsedZones. So it should work without extra mocking of state for collapse.)
     
-    expect(screen.queryByText("Hero")).not.toBeInTheDocument();
+    expect(screen.queryByText('Hero')).not.toBeInTheDocument();
   });
 
 

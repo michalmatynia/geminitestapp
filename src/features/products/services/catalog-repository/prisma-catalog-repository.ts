@@ -1,12 +1,12 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
 import type {
   CatalogCreateInput,
   CatalogRecord,
   CatalogRepository,
   CatalogUpdateInput,
-} from "@/features/products/types/services/catalog-repository";
+} from '@/features/products/types/services/catalog-repository';
+import prisma from '@/shared/lib/db/prisma';
 
 const toRecord = (catalog: {
   id: string;
@@ -43,10 +43,10 @@ export const prismaCatalogRepository: CatalogRepository = {
       include: {
         languages: {
           select: { languageId: true, position: true },
-          orderBy: { position: "asc" },
+          orderBy: { position: 'asc' },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return catalogs.map(toRecord);
   },
@@ -57,7 +57,7 @@ export const prismaCatalogRepository: CatalogRepository = {
       include: {
         languages: {
           select: { languageId: true, position: true },
-          orderBy: { position: "asc" },
+          orderBy: { position: 'asc' },
         },
       },
     });
@@ -101,7 +101,7 @@ export const prismaCatalogRepository: CatalogRepository = {
       include: {
         languages: {
           select: { languageId: true, position: true },
-          orderBy: { position: "asc" },
+          orderBy: { position: 'asc' },
         },
       },
     });
@@ -155,7 +155,7 @@ export const prismaCatalogRepository: CatalogRepository = {
       include: {
         languages: {
           select: { languageId: true, position: true },
-          orderBy: { position: "asc" },
+          orderBy: { position: 'asc' },
         },
       },
     });
@@ -173,7 +173,7 @@ export const prismaCatalogRepository: CatalogRepository = {
       include: {
         languages: {
           select: { languageId: true, position: true },
-          orderBy: { position: "asc" },
+          orderBy: { position: 'asc' },
         },
       },
     });

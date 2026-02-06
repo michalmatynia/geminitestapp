@@ -11,7 +11,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
+import { AppErrorCodes, badRequestError, isAppError } from "@/shared/errors/app-error";
 import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
@@ -179,6 +179,9 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const triggerButtons = parseTriggerButtons(raw);
     return NextResponse.json(triggerButtons);
   } catch (error) {
+    if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
+      return NextResponse.json([]);
+    }
     return createErrorResponse(error, {
       request: req,
       source: "ai-paths.trigger-buttons.GET",

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, NodeCacheMode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { CACHEABLE_NODE_TYPES } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeCacheMode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { CACHEABLE_NODE_TYPES } from '@/features/ai/ai-paths/lib';
+import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type RuntimeNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -15,7 +15,7 @@ export function RuntimeNodeConfigSection({
 }: RuntimeNodeConfigSectionProps): React.JSX.Element {
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
-  const cacheMode: NodeCacheMode = cacheConfig.mode ?? "auto";
+  const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
   const isAutoCacheable = CACHEABLE_NODE_TYPES.includes(selectedNode.type);
 
   return (
@@ -47,7 +47,7 @@ export function RuntimeNodeConfigSection({
         </Select>
       </div>
       <p className="text-[11px] text-gray-500">
-        Auto caches deterministic nodes. {isAutoCacheable ? "This node supports auto caching." : "Auto caching is off for this node type."}
+        Auto caches deterministic nodes. {isAutoCacheable ? 'This node supports auto caching.' : 'Auto caching is off for this node type.'}
       </p>
       <p className="text-[11px] text-gray-500">
         Force cache reuses outputs even for side-effect nodes (HTTP, DB writes, AI, delays, notifications).

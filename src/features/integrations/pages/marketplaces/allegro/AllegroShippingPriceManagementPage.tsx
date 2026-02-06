@@ -1,8 +1,7 @@
-import { SectionHeader, SectionPanel } from "@/shared/ui";
-import Link from "next/link";
+import Link from 'next/link';
+import React from 'react';
 
-
-import React from "react";
+import { SectionHeader, SectionPanel } from '@/shared/ui';
 
 export default function AllegroShippingPriceManagementPage(): React.JSX.Element {
   return (

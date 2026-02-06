@@ -1,9 +1,9 @@
-"use client";
-import { Button } from "@/shared/ui";
-import { useEffect } from "react";
-import Link from "next/link";
+'use client';
+import Link from 'next/link';
+import { useEffect } from 'react';
 
-import { logClientError } from "@/features/observability";
+import { logClientError } from '@/features/observability';
+import { Button } from '@/shared/ui';
 
 export default function GlobalError({
   error,
@@ -22,7 +22,7 @@ export default function GlobalError({
     <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-gray-800 bg-gray-900 p-8 text-center text-gray-200">
       <h2 className="text-xl font-semibold text-red-400">Something went wrong</h2>
       <p className="max-w-md text-sm text-gray-400">
-        {error.message || "An unexpected error occurred. Please try again."}
+        {error.message || 'An unexpected error occurred. Please try again.'}
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button onClick={() => reset()} className="bg-blue-600 text-white hover:bg-blue-700">

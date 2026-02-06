@@ -1,23 +1,23 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import {
   AUTH_SETTINGS_KEYS,
-} from "@/features/auth/utils/auth-management";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
+} from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
-} from "@/features/auth/utils/auth-security";
-import { logSystemEvent } from "@/features/observability/server";
-import { MongoSettingRecord } from "@/shared/types/base-types";
+} from '@/features/auth/utils/auth-security';
+import { logSystemEvent } from '@/features/observability/server';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { MongoSettingRecord } from '@/shared/types/base-types';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 type AttemptRecord = {
   _id: string;
-  scope: "email" | "ip";
+  scope: 'email' | 'ip';
   value: string;
   count: number;
   firstAttemptAt: Date;
@@ -26,14 +26,14 @@ type AttemptRecord = {
   expiresAt?: Date | null;
 };
 
-const ATTEMPTS_COLLECTION = "auth_security_attempts";
+const ATTEMPTS_COLLECTION = 'auth_security_attempts';
 
 const memoryAttempts = new Map<string, AttemptRecord>();
 let indexesReady: Promise<void> | null = null;
 
 const ensureAuthSecurityIndexes = async (): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider !== "mongodb") return;
+  if (provider !== 'mongodb') return;
   if (!process.env.MONGODB_URI) return;
   if (!indexesReady) {
     indexesReady = (async (): Promise<void> => {
@@ -50,13 +50,32 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<MongoSettingRecord>("settings")
+    .collection<MongoSettingRecord>('settings')
     .findOne({ $or: [{ _id: key }, { key }] });
-  return typeof doc?.value === "string" ? doc.value : null;
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
+
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
+
+const readPrismaSetting = async (key: string): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key },
+      select: { value: true },
+    });
+    return setting?.value ?? null;
+  } catch {
+    return null;
+  }
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  return readMongoSetting(key);
+  if (process.env.MONGODB_URI) {
+    return readMongoSetting(key);
+  }
+  return readPrismaSetting(key);
 };
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
@@ -75,7 +94,7 @@ export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
       legacyUserPages,
       {}
     );
-    if (typeof parsed.requireStrongPassword === "boolean") {
+    if (typeof parsed.requireStrongPassword === 'boolean') {
       return normalizeAuthSecurityPolicy({
         ...DEFAULT_AUTH_SECURITY_POLICY,
         requireStrongPassword: parsed.requireStrongPassword,
@@ -97,16 +116,16 @@ export const validatePasswordStrength = (
 
   if (policy.requireStrongPassword) {
     if (policy.requireUppercase && !/[A-Z]/.test(password)) {
-      errors.push("Password must include at least one uppercase letter.");
+      errors.push('Password must include at least one uppercase letter.');
     }
     if (policy.requireLowercase && !/[a-z]/.test(password)) {
-      errors.push("Password must include at least one lowercase letter.");
+      errors.push('Password must include at least one lowercase letter.');
     }
     if (policy.requireNumber && !/[0-9]/.test(password)) {
-      errors.push("Password must include at least one number.");
+      errors.push('Password must include at least one number.');
     }
     if (policy.requireSymbol && !/[^A-Za-z0-9]/.test(password)) {
-      errors.push("Password must include at least one symbol.");
+      errors.push('Password must include at least one symbol.');
     }
   }
 
@@ -114,9 +133,9 @@ export const validatePasswordStrength = (
 };
 
 const normalizeKey = (value: string | null | undefined): string =>
-  value?.trim().toLowerCase() ?? "";
+  value?.trim().toLowerCase() ?? '';
 
-const buildAttemptKey = (scope: "email" | "ip", value: string): string =>
+const buildAttemptKey = (scope: 'email' | 'ip', value: string): string =>
   `${scope}:${value}`;
 
 const getMemoryAttempt = (key: string): AttemptRecord | null => {
@@ -145,7 +164,7 @@ const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
 const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
   const row = await prisma.authSecurityAttempt.findUnique({ where: { id: key } });
   if (!row) return null;
-  if (row.data && typeof row.data === "object") {
+  if (row.data && typeof row.data === 'object') {
     return row.data as unknown as AttemptRecord;
   }
   return null;
@@ -181,7 +200,7 @@ const clearPrismaAttempt = async (key: string): Promise<void> => {
 
 const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     return await getPrismaAttempt(key);
   }
   if (process.env.MONGODB_URI) {
@@ -192,7 +211,7 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
 
 const saveAttempt = async (record: AttemptRecord): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     await setPrismaAttempt(record);
     return;
   }
@@ -205,7 +224,7 @@ const saveAttempt = async (record: AttemptRecord): Promise<void> => {
 
 const clearAttempt = async (key: string): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     await clearPrismaAttempt(key);
     return;
   }
@@ -220,7 +239,7 @@ const isLocked = (record: AttemptRecord, now: Date): boolean =>
   record.lockedUntil ? record.lockedUntil.getTime() > now.getTime() : false;
 
 const bumpAttempt = async (
-  scope: "email" | "ip",
+  scope: 'email' | 'ip',
   value: string,
   maxAttempts: number,
   windowMinutes: number,
@@ -269,7 +288,7 @@ const bumpAttempt = async (
   return { lockedUntil, count: nextCount };
 };
 
-const resetAttempt = async (scope: "email" | "ip", value: string): Promise<void> => {
+const resetAttempt = async (scope: 'email' | 'ip', value: string): Promise<void> => {
   const key = buildAttemptKey(scope, value);
   await clearAttempt(key);
 };
@@ -284,26 +303,26 @@ export const checkLoginAllowed = async (input: {
   const now = new Date();
 
   if (emailKey) {
-    const emailAttempt = await getAttempt(buildAttemptKey("email", emailKey));
+    const emailAttempt = await getAttempt(buildAttemptKey('email', emailKey));
     if (emailAttempt?.expiresAt && emailAttempt.expiresAt.getTime() <= now.getTime()) {
-      await clearAttempt(buildAttemptKey("email", emailKey));
+      await clearAttempt(buildAttemptKey('email', emailKey));
     } else if (emailAttempt && isLocked(emailAttempt, now)) {
       return {
         allowed: false,
-        reason: "EMAIL_LOCKED",
+        reason: 'EMAIL_LOCKED',
         lockedUntil: emailAttempt.lockedUntil ?? null,
       };
     }
   }
 
   if (ipKey) {
-    const ipAttempt = await getAttempt(buildAttemptKey("ip", ipKey));
+    const ipAttempt = await getAttempt(buildAttemptKey('ip', ipKey));
     if (ipAttempt?.expiresAt && ipAttempt.expiresAt.getTime() <= now.getTime()) {
-      await clearAttempt(buildAttemptKey("ip", ipKey));
+      await clearAttempt(buildAttemptKey('ip', ipKey));
     } else if (ipAttempt && isLocked(ipAttempt, now)) {
       return {
         allowed: false,
-        reason: "IP_RATE_LIMIT",
+        reason: 'IP_RATE_LIMIT',
         lockedUntil: ipAttempt.lockedUntil ?? null,
       };
     }
@@ -324,7 +343,7 @@ export const recordLoginFailure = async (input: {
 
   if (emailKey) {
     const result = await bumpAttempt(
-      "email",
+      'email',
       emailKey,
       policy.lockoutMaxAttempts,
       policy.lockoutWindowMinutes,
@@ -332,9 +351,9 @@ export const recordLoginFailure = async (input: {
     );
     if (result.lockedUntil) {
       await logSystemEvent({
-        level: "warn",
-        message: "Auth email lockout triggered",
-        source: "auth.security",
+        level: 'warn',
+        message: 'Auth email lockout triggered',
+        source: 'auth.security',
         context: {
           email: emailKey,
           lockedUntil: result.lockedUntil.toISOString(),
@@ -347,7 +366,7 @@ export const recordLoginFailure = async (input: {
 
   if (ipKey) {
     const result = await bumpAttempt(
-      "ip",
+      'ip',
       ipKey,
       policy.ipRateLimitMaxAttempts,
       policy.ipRateLimitWindowMinutes,
@@ -355,9 +374,9 @@ export const recordLoginFailure = async (input: {
     );
     if (result.lockedUntil) {
       await logSystemEvent({
-        level: "warn",
-        message: "Auth IP rate limit triggered",
-        source: "auth.security",
+        level: 'warn',
+        message: 'Auth IP rate limit triggered',
+        source: 'auth.security',
         context: {
           ip: ipKey,
           lockedUntil: result.lockedUntil.toISOString(),
@@ -378,13 +397,13 @@ export const recordLoginSuccess = async (input: {
   await ensureAuthSecurityIndexes();
   const emailKey = normalizeKey(input.email);
   const ipKey = normalizeKey(input.ip);
-  if (emailKey) await resetAttempt("email", emailKey);
-  if (ipKey) await resetAttempt("ip", ipKey);
+  if (emailKey) await resetAttempt('email', emailKey);
+  if (ipKey) await resetAttempt('ip', ipKey);
 
   await logSystemEvent({
-    level: "info",
-    message: "User signed in successfully",
-    source: "auth.security",
+    level: 'info',
+    message: 'User signed in successfully',
+    source: 'auth.security',
     context: {
       email: emailKey || null,
       ip: ipKey || null,
@@ -396,7 +415,27 @@ export const recordLoginSuccess = async (input: {
 
 export const extractClientIp = (request?: Request | null): string | null => {
   if (!request) return null;
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() ?? null;
-  return request.headers.get("x-real-ip") ?? null;
+
+  const headerCandidates = [
+    'cf-connecting-ip',
+    'x-vercel-forwarded-for',
+    'x-forwarded-for',
+    'x-real-ip',
+    'x-client-ip',
+  ];
+
+  for (const headerName of headerCandidates) {
+    const value = request.headers.get(headerName);
+    if (!value) continue;
+    const candidate = value.split(',')[0]?.trim();
+    if (candidate) return normalizeClientIp(candidate);
+  }
+
+  return null;
+};
+
+const normalizeClientIp = (ip: string): string => {
+  if (ip.startsWith('::ffff:')) return ip.slice(7);
+  if (ip === '::1') return '127.0.0.1';
+  return ip;
 };

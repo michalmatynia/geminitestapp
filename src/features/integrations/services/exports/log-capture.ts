@@ -5,7 +5,7 @@
 
 export interface CapturedLog {
   timestamp: string;
-  level: "info" | "warn" | "error";
+  level: 'info' | 'warn' | 'error';
   message: string;
   context?: Record<string, unknown> | undefined;
 }
@@ -25,17 +25,17 @@ export class LogCapture {
   start(): void {
     // Override console methods to capture logs
     console.log = (...args: unknown[]): void => {
-      this.captureLog("info", args);
+      this.captureLog('info', args);
       this.originalLog(...args);
     };
 
     console.warn = (...args: unknown[]): void => {
-      this.captureLog("warn", args);
+      this.captureLog('warn', args);
       this.originalWarn(...args);
     };
 
     console.error = (...args: unknown[]): void => {
-      this.captureLog("error", args);
+      this.captureLog('error', args);
       this.originalError(...args);
     };
   }
@@ -47,34 +47,34 @@ export class LogCapture {
     console.error = this.originalError;
   }
 
-  private captureLog(level: "info" | "warn" | "error", args: unknown[]): void {
+  private captureLog(level: 'info' | 'warn' | 'error', args: unknown[]): void {
     if (args.length === 0) return;
 
     const timestamp = new Date().toISOString();
     const firstArg = args[0];
 
     // Extract message and context from arguments
-    let message = "";
+    let message = '';
     let context: Record<string, unknown> | undefined;
 
-    if (typeof firstArg === "string") {
+    if (typeof firstArg === 'string') {
       message = firstArg;
       // If there are additional arguments (context objects), combine them
       if (args.length > 1) {
         context = {};
         for (let i = 1; i < args.length; i++) {
           const arg = args[i];
-          if (typeof arg === "object" && arg !== null) {
+          if (typeof arg === 'object' && arg !== null) {
             context = { ...context, ...(arg as Record<string, unknown>) };
           }
         }
       }
-    } else if (typeof firstArg === "object" && firstArg !== null) {
+    } else if (typeof firstArg === 'object' && firstArg !== null) {
       // If first argument is an object, use it as context
-      message = "Log data";
+      message = 'Log data';
       context = firstArg as Record<string, unknown>;
     } else {
-      message = firstArg === null ? "null" : (typeof firstArg === "symbol" ? firstArg.toString() : String(firstArg as unknown));
+      message = firstArg === null ? 'null' : (typeof firstArg === 'symbol' ? firstArg.toString() : String(firstArg as unknown));
     }
 
     this.logs.push({
@@ -93,7 +93,7 @@ export class LogCapture {
     this.logs = [];
   }
 
-  getFilteredLogs(level?: "info" | "warn" | "error"): CapturedLog[] {
+  getFilteredLogs(level?: 'info' | 'warn' | 'error'): CapturedLog[] {
     if (!level) return this.getLogs();
     return this.logs.filter((log: CapturedLog) => log.level === level);
   }
@@ -107,9 +107,9 @@ export class LogCapture {
       .map((log: CapturedLog) => {
         const contextStr = log.context
           ? `\n  ${JSON.stringify(log.context)}`
-          : "";
+          : '';
         return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
       })
-      .join("\n");
+      .join('\n');
   }
 }

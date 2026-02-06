@@ -1,11 +1,14 @@
-"use client";
+'use client';
 
 
-import Image from "next/image";
-import { Image as ImageIcon } from "lucide-react";
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { useMediaStyles } from "../media-styles-context";
+import { Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+
+
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useMediaStyles } from '../media-styles-context';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendImageWithTextBlockProps {
   settings: Record<string, unknown>;
@@ -13,13 +16,13 @@ interface FrontendImageWithTextBlockProps {
 }
 
 export function FrontendImageWithTextBlock({ settings, blocks }: FrontendImageWithTextBlockProps): React.ReactNode {
-  const image = settings["image"] as string | undefined;
-  const placement = (settings["desktopImagePlacement"] as string) || "image-first";
-  const imageFirst = placement !== "image-second";
+  const image = settings['image'] as string | undefined;
+  const placement = (settings['desktopImagePlacement'] as string) || 'image-first';
+  const imageFirst = placement !== 'image-second';
   const mediaStyles = useMediaStyles();
 
   return (
-    <div className={`flex flex-col gap-4 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"}`}>
+    <div className={`flex flex-col gap-4 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
       {/* Image */}
       <div className="cms-media relative w-full md:w-2/5" style={mediaStyles ?? undefined}>
         {image ? (

@@ -1,13 +1,13 @@
-import type { PlanStep } from "@/features/ai/agent-runtime/types/agent";
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/features/ai/agent-runtime/core/config";
+import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
+import type { PlanStep } from '@/features/ai/agent-runtime/types/agent';
 
 const parseJsonObject = (content: string): unknown => {
   try {
     const parsed: unknown = JSON.parse(content);
     return parsed;
   } catch {
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
+    const start = content.indexOf('{');
+    const end = content.lastIndexOf('}');
     if (start === -1 || end <= start) return null;
     try {
       const parsed: unknown = JSON.parse(content.slice(start, end + 1));
@@ -19,7 +19,7 @@ const parseJsonObject = (content: string): unknown => {
 };
 
 export function requiresHumanApproval(step: PlanStep, prompt: string): boolean {
-  if (step.tool === "none") return false;
+  if (step.tool === 'none') return false;
   const text = `${step.title} ${prompt}`.toLowerCase();
   return /login|log in|sign in|signup|register|checkout|purchase|pay|payment|card|delete|remove|cancel|unsubscribe|transfer|withdraw|submit order|place order|invoice|billing|confirm|approve|admin/i.test(
     text
@@ -48,19 +48,19 @@ export async function evaluateApprovalGateWithLLM({
 } | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
         stream: false,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
-              "You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.",
+              'You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.',
           },
           {
-            role: "user",
+            role: 'user',
             content: JSON.stringify({
               prompt,
               step: {
@@ -84,14 +84,14 @@ export async function evaluateApprovalGateWithLLM({
     const payload = (await response.json()) as {
       message?: { content?: string };
     };
-    const content = payload.message?.content?.trim() ?? "";
+    const content = payload.message?.content?.trim() ?? '';
     const parsed = parseJsonObject(content) as {
       requiresApproval?: boolean;
       reason?: string;
       riskLevel?: string;
     } | null;
-    if (!parsed || typeof parsed.requiresApproval !== "boolean") {
-      throw new Error("Approval gate model returned invalid JSON.");
+    if (!parsed || typeof parsed.requiresApproval !== 'boolean') {
+      throw new Error('Approval gate model returned invalid JSON.');
     }
     return {
       requiresApproval: parsed.requiresApproval,
@@ -100,7 +100,7 @@ export async function evaluateApprovalGateWithLLM({
     };
   } catch (error) {
     if (runId && DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Approval gate model failed", {
+      console.warn('[chatbot][agent][engine] Approval gate model failed', {
         runId,
         error: error instanceof Error ? error.message : error,
       });

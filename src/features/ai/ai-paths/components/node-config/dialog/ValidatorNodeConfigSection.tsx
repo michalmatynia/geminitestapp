@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
-import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
-import { parsePathList } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { parsePathList } from '@/features/ai/ai-paths/lib';
+import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type ValidatorNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,11 +16,11 @@ export function ValidatorNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: ValidatorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "validator") return null;
+  if (selectedNode.type !== 'validator') return null;
 
   const validatorConfig = selectedNode.config?.validator ?? {
-    requiredPaths: ["entity.id"],
-    mode: "all",
+    requiredPaths: ['entity.id'],
+    mode: 'all',
   };
 
   return (
@@ -33,7 +33,7 @@ export function ValidatorNodeConfigSection({
             updateSelectedNodeConfig({
               validator: {
                 ...validatorConfig,
-                mode: value as "all" | "any",
+                mode: value as 'all' | 'any',
               },
             })
           }
@@ -53,7 +53,7 @@ export function ValidatorNodeConfigSection({
         </Label>
         <Textarea
           className="mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-          value={(validatorConfig.requiredPaths ?? []).join("\n")}
+          value={(validatorConfig.requiredPaths ?? []).join('\n')}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               validator: {

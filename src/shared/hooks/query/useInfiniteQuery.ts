@@ -1,4 +1,4 @@
-import { useInfiniteQuery, type UseInfiniteQueryOptions, type InfiniteData, type UseInfiniteQueryResult } from "@tanstack/react-query";
+import { useInfiniteQuery, type UseInfiniteQueryOptions, type InfiniteData, type UseInfiniteQueryResult } from '@tanstack/react-query';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -30,7 +30,7 @@ export function useInfiniteQueryWithPagination<TData>(
       unknown[],
       number
     >,
-    "queryKey" | "queryFn" | "getNextPageParam" | "getPreviousPageParam" | "initialPageParam"
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'getPreviousPageParam' | 'initialPageParam'
   > & {
     pageSize?: number;
     initialParams?: Record<string, unknown>;

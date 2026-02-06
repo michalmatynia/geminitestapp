@@ -1,8 +1,22 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import type { Filter, WithId, UpdateFilter } from "mongodb";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { randomUUID } from 'crypto';
+
+import type {
+  NoteTagEmbedded,
+  NoteCategoryEmbedded,
+  NoteRelationFromEmbedded,
+  NoteRelationToEmbedded,
+  NoteDocument,
+  TagDocument,
+  CategoryDocument,
+  NotebookDocument,
+  NoteFileDocument,
+  ThemeDocument,
+} from '@/features/notesapp/services/notes/types/mongo-note-types';
+import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
+import { notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   NoteWithRelations as NoteRecord,
   NoteFilters,
@@ -23,34 +37,22 @@ import type {
   ThemeRecord,
   ThemeCreateInput,
   ThemeUpdateInput,
-} from "@/shared/types/notes";
-import type { NoteRepository } from "@/features/notesapp/services/notes/types/note-repository";
-import type {
-  NoteTagEmbedded,
-  NoteCategoryEmbedded,
-  NoteRelationFromEmbedded,
-  NoteRelationToEmbedded,
-  NoteDocument,
-  TagDocument,
-  CategoryDocument,
-  NotebookDocument,
-  NoteFileDocument,
-  ThemeDocument,
-} from "@/features/notesapp/services/notes/types/mongo-note-types";
-import { notFoundError } from "@/shared/errors/app-error";
+} from '@/shared/types/notes';
 
-const noteCollectionName = "notes";
-const tagCollectionName = "tags";
-const categoryCollectionName = "categories";
-const notebookCollectionName = "notebooks";
-const noteFileCollectionName = "noteFiles";
-const themeCollectionName = "themes";
+import type { Filter, WithId, UpdateFilter } from 'mongodb';
+
+const noteCollectionName = 'notes';
+const tagCollectionName = 'tags';
+const categoryCollectionName = 'categories';
+const notebookCollectionName = 'notebooks';
+const noteFileCollectionName = 'noteFiles';
+const themeCollectionName = 'themes';
 
 const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   id: doc.id ?? doc._id,
   title: doc.title,
   content: doc.content,
-  editorType: doc.editorType ?? "markdown",
+  editorType: doc.editorType ?? 'markdown',
   color: doc.color ?? null,
   isPinned: doc.isPinned ?? false,
   isArchived: doc.isArchived ?? false,
@@ -208,27 +210,27 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   }
 
   if (filters.search) {
-    const regex = { $regex: filters.search, $options: "i" };
-    const searchScope = filters.searchScope || "both";
+    const regex = { $regex: filters.search, $options: 'i' };
+    const searchScope = filters.searchScope || 'both';
 
-    if (searchScope === "both") {
+    if (searchScope === 'both') {
       filter.$or = [{ title: regex }, { content: regex }];
-    } else if (searchScope === "title") {
+    } else if (searchScope === 'title') {
       filter.title = regex;
-    } else if (searchScope === "content") {
+    } else if (searchScope === 'content') {
       filter.content = regex;
     }
   }
 
-  if (typeof filters.isPinned === "boolean") {
+  if (typeof filters.isPinned === 'boolean') {
     filter.isPinned = filters.isPinned;
   }
 
-  if (typeof filters.isArchived === "boolean") {
+  if (typeof filters.isArchived === 'boolean') {
     filter.isArchived = filters.isArchived;
   }
 
-  if (typeof filters.isFavorite === "boolean") {
+  if (typeof filters.isFavorite === 'boolean') {
     filter.isFavorite = filters.isFavorite;
   }
 
@@ -251,22 +253,22 @@ export const mongoNoteRepository: NoteRepository = {
     const notebook = existing[0]
       ? toNotebookResponse(existing[0])
       : toNotebookResponse(
-          (await (async (): Promise<WithId<NotebookDocument>> => {
-            const id = randomUUID();
-            const now = new Date();
-            const doc: NotebookDocument = {
-              _id: id,
-              id,
-              name: "Default",
-              color: "#3b82f6",
-              defaultThemeId: null,
-              createdAt: now.toISOString(),
-              updatedAt: now.toISOString(),
-            };
-            await collection.insertOne(doc);
-            return doc as WithId<NotebookDocument>;
-          })())
-        );
+        (await (async (): Promise<WithId<NotebookDocument>> => {
+          const id = randomUUID();
+          const now = new Date();
+          const doc: NotebookDocument = {
+            _id: id,
+            id,
+            name: 'Default',
+            color: '#3b82f6',
+            defaultThemeId: null,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          };
+          await collection.insertOne(doc);
+          return doc as WithId<NotebookDocument>;
+        })())
+      );
 
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const tagCollection = db.collection<TagDocument>(tagCollectionName);
@@ -302,9 +304,9 @@ export const mongoNoteRepository: NoteRepository = {
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
     const noteFiles = noteIds.length
       ? await noteFileCollection
-          .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
-          .sort({ slotIndex: 1 })
-          .toArray()
+        .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
+        .sort({ slotIndex: 1 })
+        .toArray()
       : [];
     const filesByNoteId = new Map<string, NoteFileRecord[]>();
     noteFiles.forEach((fileDoc: WithId<NoteFileDocument>): void => {
@@ -315,8 +317,8 @@ export const mongoNoteRepository: NoteRepository = {
     });
     const incomingDocs = noteIds.length
       ? await collection
-          .find({ "relationsFrom.targetNoteId": { $in: noteIds } } as Filter<NoteDocument>)
-          .toArray()
+        .find({ 'relationsFrom.targetNoteId': { $in: noteIds } } as Filter<NoteDocument>)
+        .toArray()
       : [];
     const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
     
@@ -329,7 +331,7 @@ export const mongoNoteRepository: NoteRepository = {
     if (filters.truncateContent) {
       return result.map((note: NoteRecord) => ({
         ...note,
-        content: note.content.length > 300 ? note.content.slice(0, 300) + "..." : note.content,
+        content: note.content.length > 300 ? note.content.slice(0, 300) + '...' : note.content,
       })) as NoteRecord[];
     }
 
@@ -348,7 +350,7 @@ export const mongoNoteRepository: NoteRepository = {
       .sort({ slotIndex: 1 })
       .toArray();
     const incomingDocs = await collection
-      .find({ "relationsFrom.targetNoteId": note.id } as Filter<NoteDocument>)
+      .find({ 'relationsFrom.targetNoteId': note.id } as Filter<NoteDocument>)
       .toArray();
     const relationsTo: NoteRelationToEmbedded[] = incomingDocs
       .map((incoming: NoteDocument): NoteRelationToEmbedded | null => {
@@ -447,8 +449,8 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       title: data.title,
       content: data.content,
-      editorType: data.editorType ?? "markdown",
-      color: data.color ?? "#ffffff",
+      editorType: data.editorType ?? 'markdown',
+      color: data.color ?? '#ffffff',
       isPinned: data.isPinned ?? false,
       isArchived: data.isArchived ?? false,
       isFavorite: data.isFavorite ?? false,
@@ -469,7 +471,7 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const currentDoc = await collection.findOne({ $or: [{ id }, { _id: id }] } as Filter<NoteDocument>);
-    if (!currentDoc) throw notFoundError("Note not found");
+    if (!currentDoc) throw notFoundError('Note not found');
     const fallbackNotebookId =
       currentDoc.notebookId ??
       (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
@@ -576,10 +578,10 @@ export const mongoNoteRepository: NoteRepository = {
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] } as Filter<NoteDocument>,
       updateDoc,
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
 
-    if (!result) throw notFoundError("Note not found");
+    if (!result) throw notFoundError('Note not found');
     return toNoteResponse(result);
   },
 
@@ -625,7 +627,7 @@ export const mongoNoteRepository: NoteRepository = {
       _id: id,
       id,
       name: data.name,
-      color: data.color ?? "#3b82f6",
+      color: data.color ?? '#3b82f6',
       notebookId: resolvedNotebookId,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -650,10 +652,10 @@ export const mongoNoteRepository: NoteRepository = {
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] } as Filter<TagDocument>,
       updateDoc,
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
 
-    if (!result) throw notFoundError("Tag not found");
+    if (!result) throw notFoundError('Tag not found');
     return toTagResponse(result);
   },
 
@@ -667,7 +669,7 @@ export const mongoNoteRepository: NoteRepository = {
     const pullTags: UpdateFilter<NoteDocument> = {
       $pull: { tags: { tagId: id } },
     };
-    await noteCollection.updateMany({ "tags.tagId": id } as Filter<NoteDocument>, pullTags);
+    await noteCollection.updateMany({ 'tags.tagId': id } as Filter<NoteDocument>, pullTags);
     
     return result.deletedCount > 0;
   },
@@ -706,7 +708,7 @@ export const mongoNoteRepository: NoteRepository = {
     // Fetch all notes that have categories to populate the tree
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const noteDocs = await noteCollection
-      .find({ "categories.0": { $exists: true }, notebookId: resolvedNotebookId } as Filter<NoteDocument>)
+      .find({ 'categories.0': { $exists: true }, notebookId: resolvedNotebookId } as Filter<NoteDocument>)
       .toArray();
     const notes = noteDocs.map(toNoteResponse);
 
@@ -734,7 +736,7 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       name: data.name,
       description: data.description ?? null,
-      color: data.color ?? "#10b981",
+      color: data.color ?? '#10b981',
       parentId,
       themeId: data.themeId ?? null,
       notebookId: resolvedNotebookId,
@@ -752,7 +754,7 @@ export const mongoNoteRepository: NoteRepository = {
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
 
     const current = await collection.findOne({ $or: [{ id }, { _id: id }] } as Filter<CategoryDocument>);
-    if (!current) throw notFoundError("Category not found");
+    if (!current) throw notFoundError('Category not found');
 
     let nextSortIndex: number | undefined;
     if (data.parentId !== undefined && data.sortIndex === undefined) {
@@ -777,18 +779,18 @@ export const mongoNoteRepository: NoteRepository = {
         ...(data.sortIndex !== undefined
           ? { sortIndex: data.sortIndex }
           : nextSortIndex !== undefined
-          ? { sortIndex: nextSortIndex }
-          : {}),
+            ? { sortIndex: nextSortIndex }
+            : {}),
       },
     };
 
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] } as Filter<CategoryDocument>,
       updateDoc,
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
 
-    if (!result) throw notFoundError("Category not found");
+    if (!result) throw notFoundError('Category not found');
     return toCategoryResponse(result);
   },
 
@@ -821,7 +823,7 @@ export const mongoNoteRepository: NoteRepository = {
 
       // Delete all notes that belong to any of these categories
       await noteCollection.deleteMany({
-        "categories.categoryId": { $in: categoryIds },
+        'categories.categoryId': { $in: categoryIds },
       } as Filter<NoteDocument>);
 
       // Delete all categories (in reverse order to handle children first)
@@ -843,7 +845,7 @@ export const mongoNoteRepository: NoteRepository = {
         $pull: { categories: { categoryId: id } },
       };
       await noteCollection.updateMany(
-        { "categories.categoryId": id } as Filter<NoteDocument>,
+        { 'categories.categoryId': id } as Filter<NoteDocument>,
         pullCategories
       );
     }
@@ -875,7 +877,7 @@ export const mongoNoteRepository: NoteRepository = {
       _id: id,
       id,
       name: data.name,
-      color: data.color ?? "#3b82f6",
+      color: data.color ?? '#3b82f6',
       defaultThemeId: data.defaultThemeId ?? null,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -898,7 +900,7 @@ export const mongoNoteRepository: NoteRepository = {
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] } as Filter<NotebookDocument>,
       updateDoc,
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
     if (!result) return null;
     return toNotebookResponse(result);
@@ -952,17 +954,17 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       name: data.name,
       notebookId: resolvedNotebookId,
-      textColor: data.textColor ?? "#e5e7eb",
-      backgroundColor: data.backgroundColor ?? "#111827",
-      markdownHeadingColor: data.markdownHeadingColor ?? "#ffffff",
-      markdownLinkColor: data.markdownLinkColor ?? "#60a5fa",
-      markdownCodeBackground: data.markdownCodeBackground ?? "#1f2937",
-      markdownCodeText: data.markdownCodeText ?? "#e5e7eb",
+      textColor: data.textColor ?? '#e5e7eb',
+      backgroundColor: data.backgroundColor ?? '#111827',
+      markdownHeadingColor: data.markdownHeadingColor ?? '#ffffff',
+      markdownLinkColor: data.markdownLinkColor ?? '#60a5fa',
+      markdownCodeBackground: data.markdownCodeBackground ?? '#1f2937',
+      markdownCodeText: data.markdownCodeText ?? '#e5e7eb',
       relatedNoteBorderWidth: data.relatedNoteBorderWidth ?? 1,
-      relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#374151",
+      relatedNoteBorderColor: data.relatedNoteBorderColor ?? '#374151',
       relatedNoteBackgroundColor:
-        data.relatedNoteBackgroundColor ?? "#1f2937",
-      relatedNoteTextColor: data.relatedNoteTextColor ?? "#e5e7eb",
+        data.relatedNoteBackgroundColor ?? '#1f2937',
+      relatedNoteTextColor: data.relatedNoteTextColor ?? '#e5e7eb',
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };
@@ -993,7 +995,7 @@ export const mongoNoteRepository: NoteRepository = {
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] } as Filter<ThemeDocument>,
       updateDoc,
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
     if (!result) return null;
     return toThemeResponse(result);

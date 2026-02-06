@@ -1,25 +1,26 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
-import type { IntegrationWithConnections } from "@/features/integrations";
-import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from "@/features/data-import-export/types/imports";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+
+import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
+import type { IntegrationWithConnections } from '@/features/integrations';
 
 export type { CatalogRecord };
 
 export const importKeys = {
-  all: ["import-export"] as const,
-  connections: () => [...importKeys.all, "connections"] as const,
-  catalogs: () => [...importKeys.all, "catalogs"] as const,
-  templates: (scope: "import" | "export") => [...importKeys.all, "templates", scope] as const,
-  preferences: () => [...importKeys.all, "preferences"] as const,
+  all: ['import-export'] as const,
+  connections: () => [...importKeys.all, 'connections'] as const,
+  catalogs: () => [...importKeys.all, 'catalogs'] as const,
+  templates: (scope: 'import' | 'export') => [...importKeys.all, 'templates', scope] as const,
+  preferences: () => [...importKeys.all, 'preferences'] as const,
   pref: (key: string) => [...importKeys.preferences(), key] as const,
-  inventories: (connectionId?: string) => [...importKeys.all, "inventories", { connectionId }] as const,
+  inventories: (connectionId?: string) => [...importKeys.all, 'inventories', { connectionId }] as const,
   warehouses: (inventoryId: string, connectionId?: string, includeAll?: boolean) => 
-    [...importKeys.all, "warehouses", { inventoryId, connectionId, includeAll }] as const,
+    [...importKeys.all, 'warehouses', { inventoryId, connectionId, includeAll }] as const,
   parameters: (inventoryId: string, productId: string) => 
-    [...importKeys.all, "parameters", { inventoryId, productId }] as const,
+    [...importKeys.all, 'parameters', { inventoryId, productId }] as const,
   importList: (inventoryId: string, params: { limit?: string | number; uniqueOnly?: boolean; page?: number; pageSize?: number; searchName?: string; searchSku?: string }) =>
-    [...importKeys.all, "import-list", { inventoryId, ...params }] as const,
+    [...importKeys.all, 'import-list', { inventoryId, ...params }] as const,
 };
 
 // --- Queries ---
@@ -28,8 +29,8 @@ export function useIntegrationConnections(): UseQueryResult<IntegrationWithConne
   return useQuery({
     queryKey: importKeys.connections(),
     queryFn: async (): Promise<IntegrationWithConnections[]> => {
-      const res = await fetch("/api/integrations/with-connections");
-      if (!res.ok) throw new Error("Failed to load integrations");
+      const res = await fetch('/api/integrations/with-connections');
+      if (!res.ok) throw new Error('Failed to load integrations');
       return (await res.json()) as IntegrationWithConnections[];
     },
   });
@@ -39,17 +40,17 @@ export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
   return useQuery({
     queryKey: importKeys.catalogs(),
     queryFn: async (): Promise<CatalogRecord[]> => {
-      const res = await fetch("/api/catalogs");
-      if (!res.ok) throw new Error("Failed to load catalogs");
+      const res = await fetch('/api/catalogs');
+      if (!res.ok) throw new Error('Failed to load catalogs');
       return (await res.json()) as CatalogRecord[];
     },
   });
 }
 
-export function useTemplates(scope: "import" | "export"): UseQueryResult<Template[], Error> {
-  const endpoint = scope === "import" 
-    ? "/api/integrations/import-templates" 
-    : "/api/integrations/export-templates";
+export function useTemplates(scope: 'import' | 'export'): UseQueryResult<Template[], Error> {
+  const endpoint = scope === 'import' 
+    ? '/api/integrations/import-templates' 
+    : '/api/integrations/export-templates';
     
   return useQuery({
     queryKey: importKeys.templates(scope),
@@ -61,14 +62,27 @@ export function useTemplates(scope: "import" | "export"): UseQueryResult<Templat
   });
 }
 
-export function useImportPreference<T>(key: string, endpoint: string): UseQueryResult<T, Error> {
+type ImportPreferenceOptions<T> = {
+  fallback?: T;
+  enabled?: boolean;
+};
+
+export function useImportPreference<T>(
+  key: string,
+  endpoint: string,
+  options?: ImportPreferenceOptions<T>
+): UseQueryResult<T, Error> {
   return useQuery({
     queryKey: importKeys.pref(key),
     queryFn: async (): Promise<T> => {
       const res = await fetch(endpoint);
-      if (!res.ok) throw new Error(`Failed to load preference: ${key}`);
+      if (!res.ok) {
+        if (options?.fallback !== undefined) return options.fallback;
+        throw new Error(`Failed to load preference: ${key}`);
+      }
       return (await res.json()) as T;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -79,29 +93,29 @@ export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, {
   
   return useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: unknown }): Promise<unknown> => {
-      if (!endpoint || !endpoint.startsWith("/api/")) {
+      if (!endpoint || !endpoint.startsWith('/api/')) {
         throw new Error(`Invalid preference endpoint: ${String(endpoint)}`);
       }
 
       let res: Response;
       try {
         res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
       } catch (error) {
         // Usually indicates a network-level problem (server down, request aborted) or an invalid URL.
         throw new Error(
-          `Failed to reach ${endpoint}: ${error instanceof Error ? error.message : "network error"}`
+          `Failed to reach ${endpoint}: ${error instanceof Error ? error.message : 'network error'}`
         );
       }
-      if (!res.ok) throw new Error("Failed to save preference");
+      if (!res.ok) throw new Error('Failed to save preference');
       return res.json();
     },
     onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
       // Extract key from endpoint to invalidate specific pref
-      const key = endpoint.split("/").pop();
+      const key = endpoint.split('/').pop();
       if (key) {
         void queryClient.invalidateQueries({ queryKey: importKeys.pref(key) });
       }
@@ -109,26 +123,26 @@ export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, {
   });
 }
 
-export function useTemplateMutation(scope: "import" | "export", id?: string): UseMutationResult<unknown, Error, { data?: unknown; isDelete?: boolean }> {
+export function useTemplateMutation(scope: 'import' | 'export', id?: string): UseMutationResult<unknown, Error, { data?: unknown; isDelete?: boolean }> {
   const queryClient = useQueryClient();
-  const endpoint = scope === "import" 
-    ? "/api/integrations/import-templates" 
-    : "/api/integrations/export-templates";
+  const endpoint = scope === 'import' 
+    ? '/api/integrations/import-templates' 
+    : '/api/integrations/export-templates';
     
   return useMutation({
     mutationFn: async ({ data, isDelete = false }: { data?: unknown; isDelete?: boolean }): Promise<unknown> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
-      const method = isDelete ? "DELETE" : (id ? "PUT" : "POST");
+      const method = isDelete ? 'DELETE' : (id ? 'PUT' : 'POST');
       
       const fetchOptions: RequestInit = {
         method,
-        headers: isDelete ? {} : { "Content-Type": "application/json" },
+        headers: isDelete ? {} : { 'Content-Type': 'application/json' },
       };
       if (!isDelete) fetchOptions.body = JSON.stringify(data);
       
       const res = await fetch(url, fetchOptions);
       
-      if (!res.ok) throw new Error(`Failed to ${isDelete ? "delete" : "save"} template`);
+      if (!res.ok) throw new Error(`Failed to ${isDelete ? 'delete' : 'save'} template`);
       return res.json();
     },
     onSuccess: () => {
@@ -141,12 +155,12 @@ export function useInventories(connectionId?: string, enabled: boolean = true): 
   return useQuery({
     queryKey: importKeys.inventories(connectionId),
     queryFn: async (): Promise<BaseInventory[]> => {
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "inventories", connectionId }),
+      const res = await fetch('/api/integrations/imports/base', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'inventories', connectionId }),
       });
-      if (!res.ok) throw new Error("Failed to load inventories");
+      if (!res.ok) throw new Error('Failed to load inventories');
       const data = await res.json() as { inventories: BaseInventory[] };
       return data.inventories;
     },
@@ -158,12 +172,12 @@ export function useWarehouses(inventoryId: string, connectionId?: string, includ
   return useQuery({
     queryKey: importKeys.warehouses(inventoryId, connectionId, includeAll),
     queryFn: async (): Promise<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> => {
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "warehouses", inventoryId, connectionId, includeAllWarehouses: includeAll }),
+      const res = await fetch('/api/integrations/imports/base', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'warehouses', inventoryId, connectionId, includeAllWarehouses: includeAll }),
       });
-      if (!res.ok) throw new Error("Failed to load warehouses");
+      if (!res.ok) throw new Error('Failed to load warehouses');
       return (await res.json()) as { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] };
     },
     enabled: enabled && !!inventoryId,
@@ -174,12 +188,12 @@ export function useParameters(inventoryId: string, productId: string, enabled: b
   return useQuery({
     queryKey: importKeys.parameters(inventoryId, productId),
     queryFn: async (): Promise<{ parameters?: Array<{ id: string; name: string }> }> => {
-      const res = await fetch("/api/integrations/imports/base/parameters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/integrations/imports/base/parameters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inventoryId, productId }),
       });
-      if (!res.ok) throw new Error("Failed to load parameters");
+      if (!res.ok) throw new Error('Failed to load parameters');
       return (await res.json()) as { parameters?: Array<{ id: string; name: string }> };
     },
     enabled: enabled && !!inventoryId && !!productId,
@@ -202,13 +216,13 @@ export function useImportList(
     queryKey: importKeys.importList(inventoryId, params),
     queryFn: async (): Promise<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }> => {
       const { limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/integrations/imports/base', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: "list",
+          action: 'list',
           inventoryId,
-          limit: limit === "all" ? undefined : Number(limit),
+          limit: limit === 'all' ? undefined : Number(limit),
           uniqueOnly,
           page,
           pageSize,
@@ -216,7 +230,7 @@ export function useImportList(
           searchSku,
         }),
       });
-      if (!res.ok) throw new Error("Failed to load import list");
+      if (!res.ok) throw new Error('Failed to load import list');
       return (await res.json()) as { products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number };
     },
     enabled: enabled && !!inventoryId,
@@ -228,7 +242,7 @@ export function useImportMutation(): UseMutationResult<ImportResponse, Error, {
   catalogId: string;
   templateId?: string;
   limit?: number;
-  imageMode: "links" | "download";
+  imageMode: 'links' | 'download';
   uniqueOnly: boolean;
   allowDuplicateSku: boolean;
   selectedIds?: string[];
@@ -239,22 +253,22 @@ export function useImportMutation(): UseMutationResult<ImportResponse, Error, {
       catalogId: string;
       templateId?: string;
       limit?: number;
-      imageMode: "links" | "download";
+      imageMode: 'links' | 'download';
       uniqueOnly: boolean;
       allowDuplicateSku: boolean;
       selectedIds?: string[];
     }): Promise<ImportResponse> => {
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/integrations/imports/base', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: "import",
+          action: 'import',
           ...params,
         }),
       });
       if (!res.ok) {
         const payload = await res.json() as { error?: string };
-        throw new Error(payload.error || "Import failed");
+        throw new Error(payload.error || 'Import failed');
       }
       return (await res.json()) as ImportResponse;
     },
@@ -281,38 +295,38 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
       exportWarehouseId?: string | null;
     }): Promise<void> => {
       const requests = [
-        fetch("/api/integrations/exports/base/active-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/integrations/exports/base/active-template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ templateId: params.exportActiveTemplateId }),
         }),
-        fetch("/api/integrations/exports/base/default-inventory", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/integrations/exports/base/default-inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ inventoryId: params.exportInventoryId }),
         }),
-        fetch("/api/integrations/exports/base/default-connection", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/integrations/exports/base/default-connection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ connectionId: params.selectedBaseConnectionId }),
         }),
-        fetch("/api/integrations/exports/base/stock-fallback", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/integrations/exports/base/stock-fallback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled: params.exportStockFallbackEnabled }),
         }),
-        fetch("/api/integrations/exports/base/image-retry-presets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/integrations/exports/base/image-retry-presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ presets: params.imageRetryPresets }),
         }),
       ];
       
       if (params.exportInventoryId && params.exportWarehouseId !== undefined) {
         requests.push(
-          fetch("/api/integrations/imports/base/export-warehouse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          fetch('/api/integrations/imports/base/export-warehouse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               warehouseId: params.exportWarehouseId,
               inventoryId: params.exportInventoryId,
@@ -322,7 +336,7 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
       }
       
       const responses = await Promise.all(requests);
-      if (responses.some((r: Response) => !r.ok)) throw new Error("Failed to save some settings");
+      if (responses.some((r: Response) => !r.ok)) throw new Error('Failed to save some settings');
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });

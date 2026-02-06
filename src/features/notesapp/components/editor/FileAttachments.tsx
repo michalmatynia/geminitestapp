@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Input, Label } from "@/shared/ui";
+import { Upload, FileIcon, Link2, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import React from 'react';
 
-import Image from "next/image";
-import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
-import type { NoteFileRecord } from "@/shared/types/notes";
+import type { NoteFileRecord } from '@/shared/types/notes';
+import { Button, Label, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
+
+
 
 
 
@@ -16,7 +18,7 @@ interface FileAttachmentsProps {
   uploadingSlots: Set<number>;
   getNextAvailableSlot: () => number | null;
   onFileUpload: (slotIndex: number, file: File) => Promise<void>;
-  onMultiFileUpload: (files: FileList | File[]) => Promise<void>;
+  onMultiFileUpload: (files: FileList | File[], helpers?: FileUploadHelpers) => Promise<void>;
   onFileDelete: (slotIndex: number) => Promise<void>;
   onInsertFileReference: (file: NoteFileRecord) => void;
   formatFileSize: (bytes: number) => string;
@@ -36,8 +38,6 @@ export function FileAttachments({
   formatFileSize,
   isImageFile,
 }: FileAttachmentsProps): React.JSX.Element {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-
   if (!noteId) {
     return (
       <div className="rounded-lg border border-dashed border-border/60 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
@@ -78,26 +78,19 @@ export function FileAttachments({
                 </div>
               ) : (
                 <Label className="flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors">
-                  <Upload size={14} />
-                  <span className="mt-1 text-[10px]">Upload</span>
-                  <span className="mt-0.5 text-[10px] text-gray-400">
-                    {maxSlots - noteFiles.length} left
-                  </span>
-                  <Input
-                    ref={(el: HTMLInputElement | null): void => {
-                      fileInputRefs.current[nextSlot] = el;
-                    }}
-                    type="file"
+                  <FileUploadTrigger
                     multiple
-                    className="hidden"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                      const files = e.target.files;
-                      if (files && files.length > 0) {
-                        void onMultiFileUpload(files);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
+                    asChild
+                    onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => onMultiFileUpload(files, helpers)}
+                  >
+                    <span className="flex h-full w-full flex-col items-center justify-center">
+                      <Upload size={14} />
+                      <span className="mt-1 text-[10px]">Upload</span>
+                      <span className="mt-0.5 text-[10px] text-gray-400">
+                        {maxSlots - noteFiles.length} left
+                      </span>
+                    </span>
+                  </FileUploadTrigger>
                 </Label>
               )}
             </div>
@@ -123,7 +116,7 @@ export function FileAttachments({
                   <FileIcon className="h-6 w-6 text-gray-400" />
                   <span className="mt-1 text-[10px] text-gray-400 truncate w-full text-center">
                     {file.filename.length > 12
-                      ? file.filename.slice(0, 10) + "..."
+                      ? file.filename.slice(0, 10) + '...'
                       : file.filename}
                   </span>
                 </div>

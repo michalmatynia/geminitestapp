@@ -4,6 +4,7 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { useToast } from "@/shared/ui";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 interface ErrorHandlingConfig {
   showToast?: boolean;
@@ -134,7 +135,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           if (loggableError !== undefined) {
             logPayload.error = loggableError;
           }
-          console.error("Query error:", logPayload);
+          logClientError(loggableError || message, { context: logPayload });
         }
 
         // Show toast notification
@@ -197,7 +198,7 @@ export function useResilientQuery<TData>(
 
   useEffect((): void => {
     if (query.isError) {
-      console.error('Query failed:', { queryKey, error: query.error });
+      logClientError(query.error, { context: { queryKey } });
       if (toast) {
         toast(query.error.message, { variant: "error" });
       }

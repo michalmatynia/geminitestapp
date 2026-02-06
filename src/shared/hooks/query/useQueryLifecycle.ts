@@ -1,8 +1,8 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQueryClient, type Query } from "@tanstack/react-query";
-import { useEffect, useCallback, useRef } from "react";
+import { useQueryClient, type Query } from '@tanstack/react-query';
+import { useEffect, useCallback, useRef } from 'react';
 
 interface QueryMetadata {
   priority: number;
@@ -17,7 +17,7 @@ export function useQueryLifecycle(): {
   cleanupStaleQueries: () => void;
   optimizeQueryPriorities: () => void;
   getQueryStats: () => { totalQueries: number; activeQueries: number; highPriorityQueries: number; totalMemoryUsage: number; avgAccessCount: number };
-} {
+  } {
   const queryClient = useQueryClient();
   const queryMetadata = useRef<Map<string, QueryMetadata>>(new Map());
 

@@ -1,36 +1,36 @@
 import {
   TestLogEntry,
   TestStatus,
-} from "@/features/integrations/types/integrations-ui";
+} from '@/features/integrations/types/integrations-ui';
 
 export const coerceStatus = (value: unknown): TestStatus => {
-  if (value === "pending" || value === "ok" || value === "failed") {
+  if (value === 'pending' || value === 'ok' || value === 'failed') {
     return value;
   }
-  return "failed";
+  return 'failed';
 };
 
 export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
   return value.map((raw: unknown): TestLogEntry => {
     const s =
-      raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+      raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const stepValue = s?.step;
     return {
       step:
-        typeof stepValue === "string"
+        typeof stepValue === 'string'
           ? stepValue
           : stepValue == null
-            ? ""
-            : typeof stepValue === "number" || typeof stepValue === "boolean"
+            ? ''
+            : typeof stepValue === 'number' || typeof stepValue === 'boolean'
               ? String(stepValue)
               : JSON.stringify(stepValue),
       status: coerceStatus(s?.status),
       timestamp:
-        typeof s?.timestamp === "string"
+        typeof s?.timestamp === 'string'
           ? s.timestamp
           : new Date().toISOString(),
-      ...(typeof s?.detail === "string" && { detail: s.detail }),
+      ...(typeof s?.detail === 'string' && { detail: s.detail }),
     };
   });
 };

@@ -1,8 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
-import type { NoteFileRecord, NoteFileCreateInput } from "@/shared/types/notes";
+import { Prisma } from '@prisma/client';
+
+import prisma from '@/shared/lib/db/prisma';
+import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/types/notes';
 
 export const createNoteFile = async (
   data: NoteFileCreateInput
@@ -27,7 +28,7 @@ export const getNoteFiles = async (
 ): Promise<NoteFileRecord[]> => {
   return prisma.noteFile.findMany({
     where: { noteId },
-    orderBy: { slotIndex: "asc" },
+    orderBy: { slotIndex: 'asc' },
   });
 };
 

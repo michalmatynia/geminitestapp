@@ -1,11 +1,11 @@
-"use client";
-import { Button, useToast, Textarea, Label } from "@/shared/ui";
-import { useState, ChangeEvent } from "react";
+'use client';
+import { useState, ChangeEvent } from 'react';
 
 
-import { CLIENT_LOGGING_KEYS } from "@/features/observability";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+import { CLIENT_LOGGING_KEYS } from '@/features/observability';
+import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { Button, useToast, Textarea, Label } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 
 export default function LoggingSettingsPage() {
@@ -65,10 +65,10 @@ function LoggingSettingsForm({
         },
       ]);
       setDirty(false);
-      toast("Logging settings saved.", { variant: "success" });
+      toast('Logging settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save settings.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
+        variant: 'error',
       });
     }
   };
@@ -95,7 +95,7 @@ function LoggingSettingsForm({
             onClick={() => void saveSettings()}
             disabled={!dirty || saveSettingsMutation.isPending}
           >
-            {saveSettingsMutation.isPending ? "Saving..." : "Save settings"}
+            {saveSettingsMutation.isPending ? 'Saving...' : 'Save settings'}
           </Button>
         </div>
         <div className="grid gap-4 md:grid-cols-2">

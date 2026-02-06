@@ -1,13 +1,15 @@
-"use client";
+'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import { useRealtimeQuery } from "@/shared/hooks/useRealtimeQuery";
-import type { UseQueryResult } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+
+import { useRealtimeQuery } from '@/shared/hooks/useRealtimeQuery';
+
+import type { UseQueryResult } from '@tanstack/react-query';
 
 export const jobKeys = {
-  all: ["jobs"] as const,
-  realtime: ["jobs", "realtime"] as const,
-  status: (id: string) => ["jobs", "status", id] as const,
+  all: ['jobs'] as const,
+  realtime: ['jobs', 'realtime'] as const,
+  status: (id: string) => ['jobs', 'status', id] as const,
 };
 
 // Real-time job monitoring
@@ -15,8 +17,8 @@ export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(
     jobKeys.realtime,
     async (): Promise<unknown> => {
-      const res = await fetch("/api/jobs/status");
-      if (!res.ok) throw new Error("Failed to fetch job status");
+      const res = await fetch('/api/jobs/status');
+      if (!res.ok) throw new Error('Failed to fetch job status');
       return res.json();
     },
     {
@@ -32,7 +34,7 @@ export function useJobStatus(jobId: string): UseQueryResult<unknown, Error> {
     jobKeys.status(jobId),
     async (): Promise<unknown> => {
       const res = await fetch(`/api/jobs/${jobId}/status`);
-      if (!res.ok) throw new Error("Failed to fetch job status");
+      if (!res.ok) throw new Error('Failed to fetch job status');
       return res.json();
     },
     {
@@ -49,9 +51,9 @@ export function useCancelJob(): UseMutationResult<unknown, Error, string> {
   return useMutation({
     mutationFn: async (jobId: string): Promise<unknown> => {
       const res = await fetch(`/api/jobs/${jobId}/cancel`, {
-        method: "POST",
+        method: 'POST',
       });
-      if (!res.ok) throw new Error("Failed to cancel job");
+      if (!res.ok) throw new Error('Failed to cancel job');
       return res.json();
     },
     onSuccess: (): void => {

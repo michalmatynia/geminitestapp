@@ -42,7 +42,7 @@ async function POST_handler(
     }
     assertAiPathRunAccess(access, existing);
     const { nodeId } = parsed.data;
-    const run: unknown = retryPathRunNode(runId, nodeId);
+    const run: unknown = await retryPathRunNode(runId, nodeId);
     startAiPathRunQueue();
     return NextResponse.json({ run });
   } catch (error) {

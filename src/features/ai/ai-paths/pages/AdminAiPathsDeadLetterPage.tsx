@@ -1,5 +1,14 @@
-"use client";
+'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+
+import { runsApi } from '@/features/ai/ai-paths/lib';
+import type {
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
+  AiPathRunRecord,
+} from '@/shared/types/ai-paths';
 import {
   Button,
   Checkbox,
@@ -9,19 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   SectionHeader,
   SectionPanel,
   Table,
@@ -31,15 +28,8 @@ import {
   TableHeader,
   TableRow,
   useToast,
-} from "@/shared/ui";
-import { runsApi } from "@/features/ai/ai-paths/lib";
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from "@/shared/types/ai-paths";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Fragment, useEffect, useMemo, useState } from "react";
+  ConfirmDialog,
+} from '@/shared/ui';
 
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -52,10 +42,10 @@ type RunDetail = {
 
 export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [pathId, setPathId] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [pathId, setPathId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-  const [requeueMode, setRequeueMode] = useState<"resume" | "replay">("resume");
+  const [requeueMode, setRequeueMode] = useState<'resume' | 'replay'>('resume');
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -65,7 +55,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const [retryFailedPending, setRetryFailedPending] = useState(false);
   const [showRetryFailedConfirm, setShowRetryFailedConfirm] = useState(false);
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
-  const [streamStatus, setStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
+  const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'stopped' | 'paused'>('stopped');
   const [streamPaused, setStreamPaused] = useState(false);
   const [eventsOverflow, setEventsOverflow] = useState(false);
   const [eventsBatchLimit, setEventsBatchLimit] = useState<number | null>(null);
@@ -75,17 +65,17 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const offset = (page - 1) * pageSize;
 
   const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
-    queryKey: ["ai-paths-dead-letter", normalizedPathId, normalizedQuery, page, pageSize],
+    queryKey: ['ai-paths-dead-letter', normalizedPathId, normalizedQuery, page, pageSize],
     queryFn: async (): Promise<{ runs: AiPathRunRecord[]; total: number }> => {
       const response = await runsApi.list({
-        status: "dead_lettered",
+        status: 'dead_lettered',
         ...(normalizedPathId ? { pathId: normalizedPathId } : {}),
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
         limit: pageSize,
         offset,
       });
       if (!response.ok) {
-        throw new Error(response.error || "Failed to load dead-letter runs.");
+        throw new Error(response.error || 'Failed to load dead-letter runs.');
       }
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
@@ -119,8 +109,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     toast(
       runsQuery.error instanceof Error
         ? runsQuery.error.message
-        : "Failed to load dead-letter runs.",
-      { variant: "error" }
+        : 'Failed to load dead-letter runs.',
+      { variant: 'error' }
     );
   }, [runsQuery.error, toast]);
 
@@ -132,11 +122,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
   useEffect((): void | (() => void) => {
     if (!detailOpen || !detail?.run?.id) {
-      setStreamStatus("stopped");
+      setStreamStatus('stopped');
       return;
     }
     if (streamPaused) {
-      setStreamStatus("paused");
+      setStreamStatus('paused');
       return;
     }
 
@@ -144,38 +134,38 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     const params = new URLSearchParams();
     const latestEventTimestamp = getLatestEventTimestamp(detail.events);
     if (latestEventTimestamp) {
-      params.set("since", latestEventTimestamp);
+      params.set('since', latestEventTimestamp);
     }
     const url = params.toString()
       ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
       : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
     const source = new EventSource(url);
-    setStreamStatus("connecting");
+    setStreamStatus('connecting');
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
       setDetail((prev: RunDetail): RunDetail => {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
-                  incoming.forEach((event: AiPathRunEventRecord) => {
-                    if (!existingIds.has(event.id)) {
-                      merged.push(event);
-                    }
-                  });
-                  merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-                    const aTime = new Date(a.createdAt).getTime();
-                    const bTime = new Date(b.createdAt).getTime();
-                    return aTime - bTime;
-                  });
-                  return { ...prev, events: merged };
+        incoming.forEach((event: AiPathRunEventRecord) => {
+          if (!existingIds.has(event.id)) {
+            merged.push(event);
+          }
+        });
+        merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return aTime - bTime;
+        });
+        return { ...prev, events: merged };
         
       });
     };
 
-    source.addEventListener("ready", (): void => {
-      setStreamStatus("live");
+    source.addEventListener('ready', (): void => {
+      setStreamStatus('live');
     });
-    source.addEventListener("run", (event: MessageEvent): void => {
+    source.addEventListener('run', (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
         setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, run: payload } : prev));
@@ -183,7 +173,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         // ignore parse errors
       }
     });
-    source.addEventListener("nodes", (event: MessageEvent): void => {
+    source.addEventListener('nodes', (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
         setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, nodes: payload } : prev));
@@ -191,7 +181,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         // ignore parse errors
       }
     });
-    source.addEventListener("events", (event: MessageEvent): void => {
+    source.addEventListener('events', (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
@@ -204,7 +194,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         }
         const events = Array.isArray(payload.events) ? payload.events : [];
         mergeEvents(events);
-        if (typeof payload.limit === "number") {
+        if (typeof payload.limit === 'number') {
           setEventsBatchLimit(payload.limit);
         }
         if (payload.overflow) {
@@ -216,17 +206,17 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         // ignore parse errors
       }
     });
-    source.addEventListener("done", (): void => {
-      setStreamStatus("stopped");
+    source.addEventListener('done', (): void => {
+      setStreamStatus('stopped');
       source.close();
     });
-    source.addEventListener("error", (): void => {
-      setStreamStatus("stopped");
+    source.addEventListener('error', (): void => {
+      setStreamStatus('stopped');
     });
 
     return (): void => {
       source.close();
-      setStreamStatus("stopped");
+      setStreamStatus('stopped');
     };
   }, [detailOpen, detail?.run?.id, streamPaused, detail?.events]);
 
@@ -242,7 +232,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       : allVisibleSelected
         ? true
         : visibleSelectedCount > 0
-          ? "indeterminate"
+          ? 'indeterminate'
           : false;
 
   const toggleSelected = (runId: string): void => {
@@ -272,20 +262,20 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const clearSelection = (): void => setSelectedIds(new Set());
   const hasFilters = normalizedPathId.length > 0 || searchQuery.trim().length > 0;
   const clearFilters = (): void => {
-    setPathId("");
-    setSearchQuery("");
-    setDebouncedSearchQuery("");
+    setPathId('');
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
   };
 
   const handleRequeueResult = (data: {
     requeued: number;
     errors?: Array<{ runId: string; error: string }>;
   }): void => {
-    const modeLabel = requeueMode === "resume" ? "resume" : "replay";
-    toast(`Requeued ${data.requeued} run(s) (${modeLabel}).`, { variant: "success" });
+    const modeLabel = requeueMode === 'resume' ? 'resume' : 'replay';
+    toast(`Requeued ${data.requeued} run(s) (${modeLabel}).`, { variant: 'success' });
     const errorCount = data.errors?.length ?? 0;
     if (errorCount > 0) {
-      toast(`${errorCount} run(s) failed to requeue.`, { variant: "error" });
+      toast(`${errorCount} run(s) failed to requeue.`, { variant: 'error' });
     }
   };
 
@@ -299,7 +289,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         mode: requeueMode,
       });
       if (!response.ok) {
-        throw new Error(response.error || "Failed to requeue selected runs.");
+        throw new Error(response.error || 'Failed to requeue selected runs.');
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
@@ -309,8 +299,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
-      toast(error instanceof Error ? error.message : "Failed to requeue runs.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
+        variant: 'error',
       });
     },
   });
@@ -326,7 +316,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         mode: requeueMode,
       });
       if (!response.ok) {
-        throw new Error(response.error || "Failed to requeue dead-letter runs.");
+        throw new Error(response.error || 'Failed to requeue dead-letter runs.');
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
@@ -336,8 +326,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
-      toast(error instanceof Error ? error.message : "Failed to requeue runs.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
+        variant: 'error',
       });
     },
   });
@@ -349,7 +339,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     try {
       const response = await runsApi.get(runId);
       if (!response.ok) {
-        throw new Error(response.error || "Failed to load run details.");
+        throw new Error(response.error || 'Failed to load run details.');
       }
       setDetail(
         response.data as {
@@ -359,8 +349,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         }
       );
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Failed to load run details.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to load run details.', {
+        variant: 'error',
       });
       setDetail(null);
     } finally {
@@ -369,7 +359,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   };
 
   const paginationLabel = useMemo((): string => {
-    if (total === 0) return "0 results";
+    if (total === 0) return '0 results';
     const start = offset + 1;
     const end = Math.min(offset + pageSize, total);
     return `${start}-${end} of ${total}`;
@@ -399,9 +389,9 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   };
 
   const formatTimestamp = (value?: Date | string | null): string => {
-    if (!value) return "-";
+    if (!value) return '-';
     const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
+    if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleString();
   };
 
@@ -420,11 +410,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const handleRequeueSingle = async (runId: string): Promise<void> => {
     const response = await runsApi.resume(runId, requeueMode);
     if (!response.ok) {
-      toast(response.error || "Failed to requeue run.", { variant: "error" });
+      toast(response.error || 'Failed to requeue run.', { variant: 'error' });
       return;
     }
-    toast(`Run requeued (${requeueMode === "resume" ? "resume" : "replay"}).`, {
-      variant: "success",
+    toast(`Run requeued (${requeueMode === 'resume' ? 'resume' : 'replay'}).`, {
+      variant: 'success',
     });
     void runsQuery.refetch();
   };
@@ -437,20 +427,20 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     mutationFn: async ({ runId, nodeId }: { runId: string; nodeId: string }): Promise<{ run: unknown }> => {
       const response = await runsApi.retryNode(runId, nodeId);
       if (!response.ok) {
-        throw new Error(response.error || "Failed to retry node.");
+        throw new Error(response.error || 'Failed to retry node.');
       }
       return response.data as { run: unknown };
     },
     onSuccess: (_data: { run: unknown }, variables: { runId: string; nodeId: string }): void => {
-      toast(`Node ${variables.nodeId} retry queued.`, { variant: "success" });
+      toast(`Node ${variables.nodeId} retry queued.`, { variant: 'success' });
       void runsQuery.refetch();
       if (detail?.run?.id) {
         void handleOpenDetail(detail.run.id);
       }
     },
     onError: (error: Error): void => {
-      toast(error instanceof Error ? error.message : "Failed to retry node.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to retry node.', {
+        variant: 'error',
       });
     },
   });
@@ -458,10 +448,10 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const handleRetryFailedNodes = async (): Promise<void> => {
     if (!detail || retryFailedPending) return;
     const retryableNodes = detail.nodes.filter(
-      (node: AiPathRunNodeRecord) => node.status === "failed" || node.status === "blocked"
+      (node: AiPathRunNodeRecord) => node.status === 'failed' || node.status === 'blocked'
     );
     if (retryableNodes.length === 0) {
-      toast("No failed or blocked nodes to retry.", { variant: "info" });
+      toast('No failed or blocked nodes to retry.', { variant: 'info' });
       return;
     }
     setRetryFailedPending(true);
@@ -472,18 +462,18 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       const failed = results.filter((result: { ok: boolean }) => !result.ok);
       const successCount = results.length - failed.length;
       if (successCount > 0) {
-        toast(`Queued ${successCount} node(s) for retry.`, { variant: "success" });
+        toast(`Queued ${successCount} node(s) for retry.`, { variant: 'success' });
       }
       if (failed.length > 0) {
-        toast(`${failed.length} node(s) failed to retry.`, { variant: "error" });
+        toast(`${failed.length} node(s) failed to retry.`, { variant: 'error' });
       }
       if (successCount > 0) {
         void runsQuery.refetch();
         void handleOpenDetail(detail.run.id);
       }
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Failed to retry nodes.", {
-        variant: "error",
+      toast(error instanceof Error ? error.message : 'Failed to retry nodes.', {
+        variant: 'error',
       });
     } finally {
       setRetryFailedPending(false);
@@ -524,7 +514,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               onClick={() => { void runsQuery.refetch(); }}
               disabled={runsQuery.isFetching}
             >
-              {runsQuery.isFetching ? "Refreshing..." : "Refresh"}
+              {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
         }
@@ -543,7 +533,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               onClick={toggleSelectVisible}
               disabled={runs.length === 0}
             >
-              {allVisibleSelected ? "Unselect visible" : "Select visible"}
+              {allVisibleSelected ? 'Unselect visible' : 'Select visible'}
             </Button>
             <Button
               variant="ghost"
@@ -553,25 +543,23 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             >
               Clear selection
             </Button>
-            <Select
+            <UnifiedSelect
               value={requeueMode}
-              onValueChange={(value: string) => setRequeueMode(value as "resume" | "replay")}
-            >
-              <SelectTrigger className="h-8 w-[160px] border-border bg-card/70 text-xs text-white">
-                <SelectValue placeholder="Requeue mode" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900 text-white">
-                <SelectItem value="resume">Resume (continue)</SelectItem>
-                <SelectItem value="replay">Replay (from start)</SelectItem>
-              </SelectContent>
-            </Select>
+              onValueChange={(value: string) => setRequeueMode(value as 'resume' | 'replay')}
+              options={[
+                { value: 'resume', label: 'Resume (continue)' },
+                { value: 'replay', label: 'Replay (from start)' },
+              ]}
+              placeholder="Requeue mode"
+              triggerClassName="h-8 w-[160px] border-border bg-card/70 text-xs text-white"
+            />
             <Button
               variant="outline"
               size="sm"
               onClick={() => { void requeueSelectedMutation.mutateAsync(); }}
               disabled={selectedCount === 0 || requeueSelectedMutation.isPending}
             >
-              {requeueSelectedMutation.isPending ? "Requeueing..." : "Requeue selected"}
+              {requeueSelectedMutation.isPending ? 'Requeueing...' : 'Requeue selected'}
             </Button>
             <Button
               variant="secondary"
@@ -579,7 +567,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               onClick={() => { void requeueAllMutation.mutateAsync(); }}
               disabled={requeueAllMutation.isPending || total === 0}
             >
-              {requeueAllMutation.isPending ? "Requeueing..." : "Requeue all filtered"}
+              {requeueAllMutation.isPending ? 'Requeueing...' : 'Requeue all filtered'}
             </Button>
           </div>
         </div>
@@ -622,7 +610,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     ) : null}
                   </TableCell>
                   <TableCell className="text-xs text-gray-300">
-                    <div>{run.pathName || "Untitled"}</div>
+                    <div>{run.pathName || 'Untitled'}</div>
                     <div className="text-[10px] text-gray-500">{run.pathId}</div>
                   </TableCell>
                   <TableCell className="text-xs text-gray-300">
@@ -633,10 +621,10 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       ? new Date(run.deadLetteredAt).toLocaleString()
                       : run.updatedAt
                         ? new Date(run.updatedAt).toLocaleString()
-                        : "-"}
+                        : '-'}
                   </TableCell>
                   <TableCell className="text-[11px] text-gray-500">
-                    {run.errorMessage || "-"}
+                    {run.errorMessage || '-'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -675,7 +663,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             {PAGE_SIZES.map((size: number) => (
               <Button
                 key={size}
-                variant={size === pageSize ? "secondary" : "ghost"}
+                variant={size === pageSize ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setPageSize(size)}
               >
@@ -717,21 +705,21 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   <span>Run summary</span>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[11px] text-gray-500">
-                      Stream:{" "}
-                      {streamStatus === "live"
-                        ? "live"
-                        : streamStatus === "connecting"
-                          ? "connecting"
-                          : streamStatus === "paused"
-                            ? "paused"
-                            : "stopped"}
+                      Stream:{' '}
+                      {streamStatus === 'live'
+                        ? 'live'
+                        : streamStatus === 'connecting'
+                          ? 'connecting'
+                          : streamStatus === 'paused'
+                            ? 'paused'
+                            : 'stopped'}
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setStreamPaused((prev: boolean) => !prev)}
                     >
-                      {streamPaused ? "Resume stream" : "Pause stream"}
+                      {streamPaused ? 'Resume stream' : 'Pause stream'}
                     </Button>
                   </div>
                 </div>
@@ -746,12 +734,12 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   </div>
                   <div>
                     <div className="text-[11px] text-gray-500">Path</div>
-                    <div className="mt-1 text-xs text-gray-200">{detail.run.pathName || "Untitled"}</div>
+                    <div className="mt-1 text-xs text-gray-200">{detail.run.pathName || 'Untitled'}</div>
                     <div className="text-[10px] text-gray-500">{detail.run.pathId}</div>
                   </div>
                   <div>
                     <div className="text-[11px] text-gray-500">Entity</div>
-                    <div className="mt-1 text-xs text-gray-200">{detail.run.entityId || "-"}</div>
+                    <div className="mt-1 text-xs text-gray-200">{detail.run.entityId || '-'}</div>
                   </div>
                   <div>
                     <div className="text-[11px] text-gray-500">Retries</div>
@@ -780,7 +768,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   <div className="md:col-span-3">
                     <div className="text-[11px] text-gray-500">Error</div>
                     <div className="mt-1 text-xs text-gray-200">
-                      {detail.run.errorMessage || "-"}
+                      {detail.run.errorMessage || '-'}
                     </div>
                   </div>
                   {nodeStatusSummary ? (
@@ -797,13 +785,13 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                           style={{ width: `${nodeStatusSummary.progress}%` }}
                         />
                       </div>
-                                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                                                {Object.entries(nodeStatusSummary.counts).map(([status, count]: [string, number]) => (
-                                                  <span key={status}>
-                                                    {status}: {count}
-                                                  </span>
-                                                ))}
-                                              </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                        {Object.entries(nodeStatusSummary.counts).map(([status, count]: [string, number]) => (
+                          <span key={status}>
+                            {status}: {count}
+                          </span>
+                        ))}
+                      </div>
                       
                     </div>
                   ) : null}
@@ -815,44 +803,44 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   <span>Nodes</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-gray-500">{detail.nodes.length} total</span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              const hasAnyExpanded = detail.nodes.some((node: AiPathRunNodeRecord) =>
-                                                expandedNodeIds.has(node.nodeId)
-                                              );
-                                              if (hasAnyExpanded) {
-                                                setExpandedNodeIds(new Set());
-                                                return;
-                                              }
-                                              const next = new Set<string>();
-                                              detail.nodes.forEach((node: AiPathRunNodeRecord) => {
-                                                if (node.inputs || node.outputs) {
-                                                  next.add(node.nodeId);
-                                                }
-                                              });
-                                              setExpandedNodeIds(next);
-                                            }}
-                                            disabled={detail.nodes.every((node: AiPathRunNodeRecord) => !node.inputs && !node.outputs)}
-                                          >
-                                            {detail.nodes.some((node: AiPathRunNodeRecord) => expandedNodeIds.has(node.nodeId))
-                                              ? "Collapse all"
-                                              : "Expand all"}
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setShowRetryFailedConfirm(true)}
-                                            disabled={
-                                              retryFailedPending ||
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const hasAnyExpanded = detail.nodes.some((node: AiPathRunNodeRecord) =>
+                          expandedNodeIds.has(node.nodeId)
+                        );
+                        if (hasAnyExpanded) {
+                          setExpandedNodeIds(new Set());
+                          return;
+                        }
+                        const next = new Set<string>();
+                        detail.nodes.forEach((node: AiPathRunNodeRecord) => {
+                          if (node.inputs || node.outputs) {
+                            next.add(node.nodeId);
+                          }
+                        });
+                        setExpandedNodeIds(next);
+                      }}
+                      disabled={detail.nodes.every((node: AiPathRunNodeRecord) => !node.inputs && !node.outputs)}
+                    >
+                      {detail.nodes.some((node: AiPathRunNodeRecord) => expandedNodeIds.has(node.nodeId))
+                        ? 'Collapse all'
+                        : 'Expand all'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowRetryFailedConfirm(true)}
+                      disabled={
+                        retryFailedPending ||
                                               detail.nodes.every(
-                                                (node: AiPathRunNodeRecord) => node.status !== "failed" && node.status !== "blocked"
+                                                (node: AiPathRunNodeRecord) => node.status !== 'failed' && node.status !== 'blocked'
                                               )
-                                            }
-                                          >
+                      }
+                    >
                     
-                      {retryFailedPending ? "Retrying..." : "Retry failed only"}
+                      {retryFailedPending ? 'Retrying...' : 'Retry failed only'}
                     </Button>
                   </div>
                 </div>
@@ -871,7 +859,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     </TableHeader>
                     <TableBody>
                       {detail.nodes.map((node: AiPathRunNodeRecord) => {
-                        const isRetryable = node.status === "failed" || node.status === "blocked";
+                        const isRetryable = node.status === 'failed' || node.status === 'blocked';
                         const isRetrying =
                           retryNodeMutation.isPending &&
                           retryNodeMutation.variables?.nodeId === node.nodeId &&
@@ -893,7 +881,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                               <TableCell className="text-xs text-gray-300">{node.status}</TableCell>
                               <TableCell className="text-xs text-gray-300">{node.attempt ?? 0}</TableCell>
                               <TableCell className="text-[11px] text-gray-500">
-                                {node.errorMessage || "-"}
+                                {node.errorMessage || '-'}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -902,7 +890,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                                   onClick={() => toggleNodeExpanded(node.nodeId)}
                                   disabled={!hasData}
                                 >
-                                  {hasData ? (isExpanded ? "Hide" : "Show") : "No data"}
+                                  {hasData ? (isExpanded ? 'Hide' : 'Show') : 'No data'}
                                 </Button>
                               </TableCell>
                               <TableCell className="text-right">
@@ -917,7 +905,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                                   }
                                   disabled={!isRetryable || retryNodeMutation.isPending}
                                 >
-                                  {isRetrying ? "Retrying..." : "Retry node"}
+                                  {isRetrying ? 'Retrying...' : 'Retry node'}
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -954,13 +942,13 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                                     <div>
                                       <div className="text-[11px] text-gray-500">Inputs</div>
                                       <pre className="mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap">
-                                        {node.inputs ? JSON.stringify(node.inputs, null, 2) : "No inputs"}
+                                        {node.inputs ? JSON.stringify(node.inputs, null, 2) : 'No inputs'}
                                       </pre>
                                     </div>
                                     <div>
                                       <div className="text-[11px] text-gray-500">Outputs</div>
                                       <pre className="mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap">
-                                        {node.outputs ? JSON.stringify(node.outputs, null, 2) : "No outputs"}
+                                        {node.outputs ? JSON.stringify(node.outputs, null, 2) : 'No outputs'}
                                       </pre>
                                     </div>
                                   </div>
@@ -982,27 +970,16 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <AlertDialog open={showRetryFailedConfirm} onOpenChange={setShowRetryFailedConfirm}>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Retry failed nodes?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will requeue all failed or blocked nodes for this run. Any node retries
-                      will reset their status to pending and enqueue the run.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={retryFailedPending}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => { void handleRetryFailedNodes(); }}
-                      className="bg-amber-500 text-white hover:bg-amber-600"
-                      disabled={retryFailedPending}
-                    >
-                      {retryFailedPending ? "Retrying..." : "Retry failed nodes"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <ConfirmDialog
+                open={showRetryFailedConfirm}
+                onOpenChange={setShowRetryFailedConfirm}
+                onConfirm={() => { void handleRetryFailedNodes(); }}
+                title="Retry failed nodes?"
+                description="This will requeue all failed or blocked nodes for this run. Any node retries will reset their status to pending and enqueue the run."
+                confirmText="Retry failed nodes"
+                variant="success"
+                loading={retryFailedPending}
+              />
 
               <div className="rounded-md border border-border/70 bg-black/20">
                 <div className="flex items-center justify-between px-4 pt-4 text-xs text-gray-400">
@@ -1010,7 +987,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     <span>Events</span>
                     {eventsOverflow ? (
                       <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
-                        Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ""}
+                        Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ''}
                       </span>
                     ) : null}
                   </div>

@@ -1,23 +1,23 @@
-import type { ProductCreateInput as ProductCreateData } from "@/features/products/validations/schemas";
-import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
+import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
+import type { ProductCreateInput as ProductCreateData } from '@/features/products/validations/schemas';
 
 const toTrimmedString = (value: unknown): string | null => {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const trimmed = value.trim();
     return trimmed ? trimmed : null;
   }
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
     return String(value);
   }
   return null;
 };
 
 const toInt = (value: unknown): number | null => {
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.round(value);
   }
-  if (typeof value === "string") {
-    const parsed = Number(value.replace(",", "."));
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(',', '.'));
     if (Number.isFinite(parsed)) {
       return Math.round(parsed);
     }
@@ -47,7 +47,7 @@ const pickNested = (
 ): unknown => {
   let current: unknown = record;
   for (const key of path) {
-    if (!current || typeof current !== "object") return null;
+    if (!current || typeof current !== 'object') return null;
     current = (current as Record<string, unknown>)[key];
   }
   return current;
@@ -71,12 +71,12 @@ const pickNestedString = (record: BaseProductRecord, paths: string[][]): string 
 
 const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number | null => {
   const obj = record[key];
-  if (!obj || typeof obj !== "object") return null;
+  if (!obj || typeof obj !== 'object') return null;
   const values = Object.values(obj);
   for (const v of values) {
-    if (typeof v === "number") return toInt(v);
-    if (typeof v === "string") return toInt(v);
-    if (typeof v === "object" && v) {
+    if (typeof v === 'number') return toInt(v);
+    if (typeof v === 'string') return toInt(v);
+    if (typeof v === 'object' && v) {
       const pObj = v as Record<string, unknown>;
       const p = toInt(
         pObj.price ?? pObj.price_brutto ?? pObj.price_gross
@@ -91,7 +91,7 @@ const isUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
 const collectUrls = (value: unknown, urls: string[]): void => {
   if (!value) return;
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     if (isUrl(value)) urls.push(value);
     return;
   }
@@ -99,7 +99,7 @@ const collectUrls = (value: unknown, urls: string[]): void => {
     value.forEach((entry: unknown) => collectUrls(entry, urls));
     return;
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
     const candidates = [
       record.url,
@@ -124,31 +124,31 @@ const extractImageUrlsFromValue = (value: unknown): string[] => {
 };
 
 const IMAGE_SLOT_KEYS = [
-  "images",
-  "image",
-  "photos",
-  "photo",
-  "gallery",
-  "pictures",
-  "main_image",
-  "mainImage",
+  'images',
+  'image',
+  'photos',
+  'photo',
+  'gallery',
+  'pictures',
+  'main_image',
+  'mainImage',
 ];
 
 const IMAGE_LINK_KEYS = [
-  "image_links",
-  "images_links",
-  "image_link",
-  "images_link",
-  "image_url",
-  "imageUrl",
-  "image_urls",
-  "images_url",
-  "images_urls",
-  "imageUrls",
-  "image_links_all",
-  "images_link_all",
-  "links",
-  "link",
+  'image_links',
+  'images_links',
+  'image_link',
+  'images_link',
+  'image_url',
+  'imageUrl',
+  'image_urls',
+  'images_url',
+  'images_urls',
+  'imageUrls',
+  'image_links_all',
+  'images_link_all',
+  'links',
+  'link',
 ];
 
 const extractImageUrlsFromRecordKeys = (
@@ -177,20 +177,20 @@ const getImageUrlsForAll = (record: BaseProductRecord): string[] => {
 
 const resolveImageTargetIndex = (targetField: string): number | null => {
   const normalized = targetField.toLowerCase();
-  if (normalized.startsWith("image_slot_")) {
-    const index = parseInt(normalized.replace("image_slot_", ""), 10);
+  if (normalized.startsWith('image_slot_')) {
+    const index = parseInt(normalized.replace('image_slot_', ''), 10);
     return Number.isNaN(index) ? null : index - 1;
   }
-  if (normalized.startsWith("image_file_")) {
-    const index = parseInt(normalized.replace("image_file_", ""), 10);
+  if (normalized.startsWith('image_file_')) {
+    const index = parseInt(normalized.replace('image_file_', ''), 10);
     return Number.isNaN(index) ? null : index - 1;
   }
-  if (normalized.startsWith("image_link_")) {
-    const index = parseInt(normalized.replace("image_link_", ""), 10);
+  if (normalized.startsWith('image_link_')) {
+    const index = parseInt(normalized.replace('image_link_', ''), 10);
     return Number.isNaN(index) ? null : index - 1;
   }
-  if (normalized.startsWith("image_")) {
-    const index = parseInt(normalized.replace("image_", ""), 10);
+  if (normalized.startsWith('image_')) {
+    const index = parseInt(normalized.replace('image_', ''), 10);
     return Number.isNaN(index) ? null : index - 1;
   }
   return null;
@@ -199,18 +199,18 @@ const resolveImageTargetIndex = (targetField: string): number | null => {
 export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   const urls: string[] = [];
   const keys = [
-    "images",
-    "image",
-    "image_url",
-    "imageUrl",
-    "images_url",
-    "images_urls",
-    "photos",
-    "photo",
-    "gallery",
-    "pictures",
-    "main_image",
-    "mainImage",
+    'images',
+    'image',
+    'image_url',
+    'imageUrl',
+    'images_url',
+    'images_urls',
+    'photos',
+    'photo',
+    'gallery',
+    'pictures',
+    'main_image',
+    'mainImage',
   ];
   keys.forEach((key: string) => collectUrls(record[key], urls));
   collectUrls(record, urls);
@@ -223,12 +223,12 @@ type TemplateMapping = {
 };
 
 const NUMBER_FIELDS = new Set([
-  "price",
-  "stock",
-  "sizeLength",
-  "sizeWidth",
-  "weight",
-  "length",
+  'price',
+  'stock',
+  'sizeLength',
+  'sizeWidth',
+  'weight',
+  'length',
 ]);
 
 const toStringValue = (value: unknown): string | null => {
@@ -236,9 +236,9 @@ const toStringValue = (value: unknown): string | null => {
     const parts = value
       .map((entry: unknown) => toTrimmedString(entry))
       .filter((entry: string | null): entry is string => Boolean(entry));
-    return parts.length ? parts.join(", ") : null;
+    return parts.length ? parts.join(', ') : null;
   }
-  if (value && typeof value === "object") {
+  if (value && typeof value === 'object') {
     try {
       return JSON.stringify(value);
     } catch {
@@ -262,7 +262,7 @@ const toIntValue = (value: unknown): number | null => {
 const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
   let current: unknown = record;
   for (const key of path) {
-    if (!current || typeof current !== "object") return null;
+    if (!current || typeof current !== 'object') return null;
     current = (current as Record<string, unknown>)[key];
   }
   return current;
@@ -275,7 +275,7 @@ const findParameterValue = (
   if (!params) return null;
   if (Array.isArray(params)) {
     for (const entry of params) {
-      if (!entry || typeof entry !== "object") continue;
+      if (!entry || typeof entry !== 'object') continue;
       const record = entry as Record<string, unknown>;
       const name = toTrimmedString(record.name ?? record.parameter ?? record.code);
       const id = toTrimmedString(
@@ -293,7 +293,7 @@ const findParameterValue = (
     }
     return null;
   }
-  if (typeof params === "object") {
+  if (typeof params === 'object') {
     const record = params as Record<string, unknown>;
     if (sourceKey in record) return record[sourceKey];
   }
@@ -306,40 +306,40 @@ const resolveTemplateValue = (
 ): unknown => {
   if (!sourceKey) return null;
   const normalized = sourceKey.trim().toLowerCase();
-  if (normalized === "image_slots_all") {
+  if (normalized === 'image_slots_all') {
     return getImageUrlsForSlots(record);
   }
-  if (normalized === "image_all") {
+  if (normalized === 'image_all') {
     return getImageUrlsForSlots(record);
   }
-  if (normalized === "images_link_all" || normalized === "image_links_all") {
+  if (normalized === 'images_link_all' || normalized === 'image_links_all') {
     return getImageUrlsForLinks(record);
   }
-  if (normalized === "images_all") {
+  if (normalized === 'images_all') {
     return getImageUrlsForAll(record);
   }
-  if (normalized.startsWith("image_slot_")) {
-    const index = parseInt(normalized.replace("image_slot_", ""), 10);
+  if (normalized.startsWith('image_slot_')) {
+    const index = parseInt(normalized.replace('image_slot_', ''), 10);
     if (Number.isNaN(index)) return null;
     return getImageUrlsForSlots(record)[index - 1] ?? null;
   }
-  if (normalized.startsWith("image_file_")) {
-    const index = parseInt(normalized.replace("image_file_", ""), 10);
+  if (normalized.startsWith('image_file_')) {
+    const index = parseInt(normalized.replace('image_file_', ''), 10);
     if (Number.isNaN(index)) return null;
     return getImageUrlsForSlots(record)[index - 1] ?? null;
   }
-  if (normalized.startsWith("image_link_")) {
-    const index = parseInt(normalized.replace("image_link_", ""), 10);
+  if (normalized.startsWith('image_link_')) {
+    const index = parseInt(normalized.replace('image_link_', ''), 10);
     if (Number.isNaN(index)) return null;
     return getImageUrlsForLinks(record)[index - 1] ?? null;
   }
-  if (normalized.startsWith("image_")) {
-    const index = parseInt(normalized.replace("image_", ""), 10);
+  if (normalized.startsWith('image_')) {
+    const index = parseInt(normalized.replace('image_', ''), 10);
     if (Number.isNaN(index)) return null;
     return getImageUrlsForAll(record)[index - 1] ?? null;
   }
-  if (sourceKey.includes(".")) {
-    const pathParts = sourceKey.split(".").map((part: string) => part.trim());
+  if (sourceKey.includes('.')) {
+    const pathParts = sourceKey.split('.').map((part: string) => part.trim());
     const value = getByPath(record, pathParts);
     if (value !== null && value !== undefined) return value;
   }
@@ -375,7 +375,7 @@ const applyTemplateMappings = (
     }
     const stringValue = toStringValue(rawValue);
     if (!stringValue) continue;
-    if (targetField === "sku") {
+    if (targetField === 'sku') {
       mapped.sku = stringValue;
       continue;
     }
@@ -386,13 +386,13 @@ const applyTemplateMappings = (
       continue;
     }
     if (
-      targetField === "image_all" ||
-      targetField === "image_links" ||
-      targetField === "image_links_all" ||
-      targetField === "image_files" ||
-      targetField === "image_slots" ||
-      targetField === "image_slots_all" ||
-      targetField === "images_all"
+      targetField === 'image_all' ||
+      targetField === 'image_links' ||
+      targetField === 'image_links_all' ||
+      targetField === 'image_files' ||
+      targetField === 'image_slots' ||
+      targetField === 'image_slots_all' ||
+      targetField === 'images_all'
     ) {
       const urls = extractImageUrlsFromValue(rawValue);
       if (urls.length > 0) {
@@ -415,57 +415,57 @@ export function mapBaseProduct(
 ): ProductCreateData {
   // Extend this mapper as new Base.com fields are needed.
   const baseProductId = pickString(record, [
-    "base_product_id",
-    "product_id",
-    "id",
+    'base_product_id',
+    'product_id',
+    'id',
   ]);
 
   const nameEn =
-    pickString(record, ["name_en", "name", "title"]) ??
+    pickString(record, ['name_en', 'name', 'title']) ??
     pickNestedString(record, [
-      ["text_fields", "name"],
-      ["text_fields", "name_en"],
-      ["text_fields", "name|en"],
-      ["text_fields", "title"],
+      ['text_fields', 'name'],
+      ['text_fields', 'name_en'],
+      ['text_fields', 'name|en'],
+      ['text_fields', 'title'],
     ]);
 
-  const namePl = pickString(record, ["name_pl"]);
-  const nameDe = pickString(record, ["name_de"]);
+  const namePl = pickString(record, ['name_pl']);
+  const nameDe = pickString(record, ['name_de']);
 
   const descriptionEn =
     pickString(record, [
-      "description_en",
-      "description",
-      "description_long",
+      'description_en',
+      'description',
+      'description_long',
     ]) ??
     pickNestedString(record, [
-      ["text_fields", "description"],
-      ["text_fields", "description_en"],
-      ["text_fields", "description|en"],
-      ["text_fields", "description_long"],
+      ['text_fields', 'description'],
+      ['text_fields', 'description_en'],
+      ['text_fields', 'description|en'],
+      ['text_fields', 'description_long'],
     ]);
 
-  const descriptionPl = pickString(record, ["description_pl"]);
-  const descriptionDe = pickString(record, ["description_de"]);
+  const descriptionPl = pickString(record, ['description_pl']);
+  const descriptionDe = pickString(record, ['description_de']);
 
-  const sku = pickString(record, ["sku", "code", "product_code", "item_code"]);
+  const sku = pickString(record, ['sku', 'code', 'product_code', 'item_code']);
 
   const price =
-    pickInt(record, ["price", "price_gross", "price_brutto"]) ??
+    pickInt(record, ['price', 'price_gross', 'price_brutto']) ??
     pickNestedInt(record, [
-      ["prices", "0", "price"],
-      ["prices", "0", "price_brutto"],
+      ['prices', '0', 'price'],
+      ['prices', '0', 'price_brutto'],
     ]) ??
-    pickFirstIntFromObject(record, "prices");
+    pickFirstIntFromObject(record, 'prices');
 
   const stock =
-    pickInt(record, ["stock", "quantity", "qty", "available"]) ??
-    pickFirstIntFromObject(record, "stock");
+    pickInt(record, ['stock', 'quantity', 'qty', 'available']) ??
+    pickFirstIntFromObject(record, 'stock');
 
-  const weight = pickInt(record, ["weight"]);
-  const sizeLength = pickInt(record, ["sizeLength", "length_cm"]);
-  const sizeWidth = pickInt(record, ["sizeWidth", "width_cm"]);
-  const length = pickInt(record, ["length"]);
+  const weight = pickInt(record, ['weight']);
+  const sizeLength = pickInt(record, ['sizeLength', 'length_cm']);
+  const sizeWidth = pickInt(record, ['sizeWidth', 'width_cm']);
+  const length = pickInt(record, ['length']);
 
   const mapped: ProductCreateData = {
     baseProductId: baseProductId ?? undefined,
@@ -475,7 +475,7 @@ export function mapBaseProduct(
     description_en: descriptionEn ?? undefined,
     description_pl: descriptionPl ?? undefined,
     description_de: descriptionDe ?? undefined,
-    sku: sku ?? "",
+    sku: sku ?? '',
     price: price ?? undefined,
     stock: stock ?? undefined,
     weight: weight ?? undefined,

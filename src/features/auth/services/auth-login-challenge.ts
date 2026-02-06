@@ -1,9 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import crypto from "crypto";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
+import crypto from 'crypto';
+
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 
 type ChallengeRecord = {
   _id: string;
@@ -15,7 +16,7 @@ type ChallengeRecord = {
   createdAt: Date;
 };
 
-const CHALLENGES_COLLECTION = "auth_login_challenges";
+const CHALLENGES_COLLECTION = 'auth_login_challenges';
 const CHALLENGE_TTL_MINUTES = 5;
 
 const memoryChallenges = new Map<string, ChallengeRecord>();
@@ -33,7 +34,7 @@ const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> =>
 const getPrismaChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   const row = await prisma.authLoginChallenge.findUnique({ where: { id } });
   if (!row) return null;
-  if (row.data && typeof row.data === "object") {
+  if (row.data && typeof row.data === 'object') {
     return row.data as unknown as ChallengeRecord;
   }
   return null;
@@ -71,7 +72,7 @@ const deleteMemoryChallenge = (id: string): boolean => memoryChallenges.delete(i
 
 const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     return getPrismaChallenge(id);
   }
   if (process.env.MONGODB_URI) {
@@ -82,7 +83,7 @@ const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
 
 const setChallenge = async (record: ChallengeRecord): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     await setPrismaChallenge(record);
     return;
   }
@@ -104,7 +105,7 @@ const setChallenge = async (record: ChallengeRecord): Promise<void> => {
 
 const deleteChallenge = async (id: string): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider === "prisma") {
+  if (provider === 'prisma') {
     await deletePrismaChallenge(id);
     return;
   }
@@ -121,7 +122,7 @@ export const createLoginChallenge = async (input: {
   ip: string | null;
   mfaRequired: boolean;
 }): Promise<{ id: string; expiresAt: Date; mfaRequired: boolean }> => {
-  const id = crypto.randomBytes(32).toString("hex");
+  const id = crypto.randomBytes(32).toString('hex');
   const record: ChallengeRecord = {
     _id: id,
     userId: input.userId,

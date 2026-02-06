@@ -1,23 +1,10 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import { Store } from "lucide-react";
+import { Button } from '@/shared/ui';
 
-type Integration = {
-  id: string;
-  name: string;
-  slug: string;
-};
+import { Store } from 'lucide-react';
 
-type Connection = {
-  id: string;
-  integrationId: string;
-  name: string;
-};
-
-type IntegrationWithConnections = Integration & {
-  connections: Connection[];
-};
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/types';
 
 type MarketplaceSelectorProps = {
   integrations: IntegrationWithConnections[];
@@ -26,7 +13,7 @@ type MarketplaceSelectorProps = {
   onSelectConnection: (connectionId: string) => void;
 };
 
-import Link from "next/link";
+import Link from 'next/link';
 
 export function MarketplaceSelector({
   integrations,
@@ -51,10 +38,10 @@ export function MarketplaceSelector({
       <div className="space-y-2">
         <h2 className="mb-4 text-sm font-semibold text-gray-300">Connections</h2>
         <p className="text-sm text-gray-500">
-          No marketplace connections found. Configure a Base.com connection in{" "}
+          No marketplace connections found. Configure a Base.com connection in{' '}
           <Link href="/admin/integrations" className="text-blue-400 hover:underline">
             Integrations
-          </Link>{" "}
+          </Link>{' '}
           first.
         </p>
       </div>
@@ -76,14 +63,14 @@ export function MarketplaceSelector({
             {integration.connections.length === 0 ? (
               <p className="text-xs text-gray-600">No connections</p>
             ) : (
-              integration.connections.map((connection: Connection) => (
+              integration.connections.map((connection: IntegrationConnectionBasic) => (
                 <Button
                   key={connection.id}
                   onClick={(): void => onSelectConnection(connection.id)}
                   className={`w-full rounded px-3 py-2 text-left text-sm transition ${
                     selectedConnectionId === connection.id
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-muted/50/60"
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-muted/50/60'
                   }`}
                 >
                   {connection.name}

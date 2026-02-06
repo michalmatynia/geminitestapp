@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { AppModal } from "@/shared/ui";
-import { XIcon } from "lucide-react";
-import Image from "next/image";
+import Image from 'next/image';
+
+import { AppModal } from '@/shared/ui';
 
 export interface FilePreviewData {
   id?: string;
@@ -31,77 +31,69 @@ export default function FilePreviewModal({
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={file.filename}
+      size="lg"
     >
-      <div className="bg-gray-900 rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-          aria-label="Close modal"
-        >
-          <XIcon className="size-6" />
-        </button>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">{file.filename}</h2>
-            <div className="relative w-full h-64">
-              <Image
-                src={file.filepath}
-                alt={file.filename}
-                fill
-                className="rounded object-contain"
-              />
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">{file.filename}</h2>
+          <div className="relative w-full h-64">
+            <Image
+              src={file.filepath}
+              alt={file.filename}
+              fill
+              className="rounded object-contain"
+            />
           </div>
-          <div>
-            <h3 className="text-xl font-bold mb-4">File Information</h3>
-            <div className="space-y-2 text-sm text-gray-200">
-              {file.id && (
-                <p>
-                  <strong>ID:</strong> {file.id}
-                </p>
-              )}
+        </div>
+        <div>
+          <h3 className="text-xl font-bold mb-4">File Information</h3>
+          <div className="space-y-2 text-sm text-gray-200">
+            {file.id && (
               <p>
-                <strong>Path:</strong> {file.filepath}
+                <strong>ID:</strong> {file.id}
               </p>
+            )}
+            <p>
+              <strong>Path:</strong> {file.filepath}
+            </p>
+            <p>
+              <strong>MIME Type:</strong> {file.mimetype}
+            </p>
+            <p>
+              <strong>Size:</strong> {(file.size / 1024).toFixed(2)} KB
+            </p>
+            <p>
+              <strong>Dimensions:</strong> {file.width} x {file.height}
+            </p>
+            {file.createdAt && (
               <p>
-                <strong>MIME Type:</strong> {file.mimetype}
+                <strong>Added:</strong>{' '}
+                {new Date(file.createdAt).toLocaleString()}
               </p>
+            )}
+            {file.updatedAt && (
               <p>
-                <strong>Size:</strong> {(file.size / 1024).toFixed(2)} KB
+                <strong>Modified:</strong>{' '}
+                {new Date(file.updatedAt).toLocaleString()}
               </p>
+            )}
+            {(file.tags ?? []).length > 0 && (
               <p>
-                <strong>Dimensions:</strong> {file.width} x {file.height}
+                <strong>Tags:</strong> {(file.tags ?? []).join(', ')}
               </p>
-              {file.createdAt && (
-                <p>
-                  <strong>Added:</strong>{" "}
-                  {new Date(file.createdAt).toLocaleString()}
-                </p>
-              )}
-              {file.updatedAt && (
-                <p>
-                  <strong>Modified:</strong>{" "}
-                  {new Date(file.updatedAt).toLocaleString()}
-                </p>
-              )}
-              {(file.tags ?? []).length > 0 && (
-                <p>
-                  <strong>Tags:</strong> {(file.tags ?? []).join(", ")}
-                </p>
-              )}
-            </div>
-            <div className="mt-4 rounded-md border border-border/60 bg-black/30 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            )}
+          </div>
+          <div className="mt-4 rounded-md border border-border/60 bg-black/30 p-3">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                 Raw Metadata
-              </div>
-              <pre className="mt-2 max-h-48 overflow-auto text-[11px] text-gray-300">
-                {JSON.stringify(file, null, 2)}
-              </pre>
             </div>
-            {children}
+            <pre className="mt-2 max-h-48 overflow-auto text-[11px] text-gray-300">
+              {JSON.stringify(file, null, 2)}
+            </pre>
           </div>
+          {children}
         </div>
       </div>
     </AppModal>

@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo } from "react";
-import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
-import type { CmsDomain } from "@/features/cms/types";
-import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+import { useCallback, useEffect, useMemo } from 'react';
+
+import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
+import type { CmsDomain } from '@/features/cms/types';
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/features/cms/types/domain-settings';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 type CmsDomainSelectionOptions = {
   initialDomainId?: string | null;
@@ -29,12 +31,14 @@ type CmsDomainSelectionResult = {
 export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): CmsDomainSelectionResult {
   const { initialDomainId = null, persist = true } = options;
   const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
+  const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
     () =>
       normalizeCmsDomainSettings(
-        parseJsonSetting(settingsQuery.data?.get(CMS_DOMAIN_SETTINGS_KEY), null)
+        parseJsonSetting(domainSettingsRaw, null)
       ),
-    [settingsQuery.data]
+    [domainSettingsRaw]
   );
   const zoningEnabled = domainSettings.zoningEnabled;
   const domainsQuery = useCmsDomains();
@@ -45,7 +49,7 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const hostDomainId = useMemo((): string | null => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === 'undefined') return null;
     if (!zoningEnabled) return null;
     if (!domains.length) return null;
     const host = window.location.hostname.toLowerCase();

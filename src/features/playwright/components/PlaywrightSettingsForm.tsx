@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, Checkbox, SectionPanel } from "@/shared/ui";
-import { Dispatch, SetStateAction, ChangeEvent, ReactElement } from "react";
-import type { PlaywrightSettings } from "@/features/playwright/types";
-import { playwrightDeviceOptions } from "@/features/playwright/constants/playwright";
+import { Dispatch, SetStateAction, ChangeEvent, ReactElement } from 'react';
+
+import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
+import type { PlaywrightSettings } from '@/features/playwright/types';
+import { Button, Input, Label, Checkbox, SectionPanel, UnifiedSelect } from '@/shared/ui';
 
 type PlaywrightSettingsProps = {
   settings: PlaywrightSettings;
@@ -16,7 +17,7 @@ type PlaywrightSettingsProps = {
 };
 
 const toNumber = (value: string, fallback: number): number => {
-  if (value.trim() === "") return fallback;
+  if (value.trim() === '') return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
@@ -38,10 +39,10 @@ export function PlaywrightSettingsForm({
       className="max-h-[70vh] overflow-y-auto p-4"
     >
       <h3 className="text-sm font-semibold text-white">
-        {title ?? "Playwright settings"}
+        {title ?? 'Playwright settings'}
       </h3>
       <p className="mt-1 text-xs text-gray-400">
-        {description ?? "Control how the browser behaves during crosslisting."}
+        {description ?? 'Control how the browser behaves during crosslisting.'}
       </p>
 
       <div className="mt-4 space-y-4">
@@ -56,7 +57,7 @@ export function PlaywrightSettingsForm({
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
               checked={settings.headless}
-              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                 setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   headless: Boolean(checked),
@@ -77,7 +78,7 @@ export function PlaywrightSettingsForm({
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
               checked={settings.emulateDevice}
-              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                 setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   emulateDevice: Boolean(checked),
@@ -87,24 +88,17 @@ export function PlaywrightSettingsForm({
           </Label>
           {settings.emulateDevice && (
             <div className="mt-3">
-              <select
-                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+              <UnifiedSelect
                 value={settings.deviceName}
-                onChange={(e: ChangeEvent<HTMLSelectElement>): void =>
+                onValueChange={(v: string): void =>
                   setSettings((prev: PlaywrightSettings) => ({
                     ...prev,
-                    deviceName: e.target.value,
+                    deviceName: v,
                   }))
                 }
-              >
-                {playwrightDeviceOptions.map(
-                  (opt: { label: string; value: string }): ReactElement => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  )
-                )}
-              </select>
+                options={playwrightDeviceOptions}
+                placeholder="Select device"
+              />
             </div>
           )}
         </SectionPanel>
@@ -170,7 +164,7 @@ export function PlaywrightSettingsForm({
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
               checked={settings.humanizeMouse}
-              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                 setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   humanizeMouse: Boolean(checked),
@@ -198,220 +192,222 @@ export function PlaywrightSettingsForm({
           )}
         </SectionPanel>
 
-        <details className="rounded-lg border bg-card/60 p-3 backdrop-blur">
-          <summary className="cursor-pointer text-sm font-semibold text-gray-200">
-            Advanced settings
-          </summary>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="text-xs font-semibold text-gray-300">
+        <SectionPanel variant="subtle" className="p-3">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-gray-200">
+              Advanced settings
+            </summary>
+            <div className="mt-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-300">
                 Interaction delays (ms)
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
                 Add random pauses between actions for human-like pacing.
-              </p>
-            </div>
+                </p>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+              <div className="grid gap-4 md:grid-cols-2">
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Click delay min
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.clickDelayMin}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      clickDelayMin: toNumber(
-                        e.target.value,
-                        prev.clickDelayMin
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.clickDelayMin}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        clickDelayMin: toNumber(
+                          e.target.value,
+                          prev.clickDelayMin
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Click delay max
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.clickDelayMax}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      clickDelayMax: toNumber(
-                        e.target.value,
-                        prev.clickDelayMax
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-            </div>
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.clickDelayMax}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        clickDelayMax: toNumber(
+                          e.target.value,
+                          prev.clickDelayMax
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+              <div className="grid gap-4 md:grid-cols-2">
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Input delay min
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.inputDelayMin}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      inputDelayMin: toNumber(
-                        e.target.value,
-                        prev.inputDelayMin
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.inputDelayMin}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        inputDelayMin: toNumber(
+                          e.target.value,
+                          prev.inputDelayMin
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Input delay max
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.inputDelayMax}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      inputDelayMax: toNumber(
-                        e.target.value,
-                        prev.inputDelayMax
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-            </div>
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.inputDelayMax}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        inputDelayMax: toNumber(
+                          e.target.value,
+                          prev.inputDelayMax
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+              <div className="grid gap-4 md:grid-cols-2">
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Action delay min
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.actionDelayMin}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      actionDelayMin: toNumber(
-                        e.target.value,
-                        prev.actionDelayMin
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-              <SectionPanel variant="subtle-compact">
-                <Label className="text-xs text-gray-400">
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.actionDelayMin}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        actionDelayMin: toNumber(
+                          e.target.value,
+                          prev.actionDelayMin
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+                <SectionPanel variant="subtle-compact">
+                  <Label className="text-xs text-gray-400">
                   Action delay max
-                </Label>
-                <Input
-                  type="number"
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={settings.actionDelayMax}
-                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      actionDelayMax: toNumber(
-                        e.target.value,
-                        prev.actionDelayMax
-                      ),
-                    }))
-                  }
-                />
-              </SectionPanel>
-            </div>
+                  </Label>
+                  <Input
+                    type="number"
+                    className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={settings.actionDelayMax}
+                    onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        actionDelayMax: toNumber(
+                          e.target.value,
+                          prev.actionDelayMax
+                        ),
+                      }))
+                    }
+                  />
+                </SectionPanel>
+              </div>
 
-            <SectionPanel variant="subtle-compact">
-              <Label className="flex items-center justify-between text-sm text-gray-300">
-                <span>
+              <SectionPanel variant="subtle-compact">
+                <Label className="flex items-center justify-between text-sm text-gray-300">
+                  <span>
                   Proxy
-                  <span className="ml-2 block text-xs text-gray-500">
+                    <span className="ml-2 block text-xs text-gray-500">
                     Route traffic through a proxy server.
+                    </span>
                   </span>
-                </span>
-                <Checkbox
-                  className="h-4 w-4 accent-emerald-400"
-                  checked={settings.proxyEnabled}
-                  onCheckedChange={(checked: boolean | "indeterminate"): void =>
-                    setSettings((prev: PlaywrightSettings) => ({
-                      ...prev,
-                      proxyEnabled: Boolean(checked),
-                    }))
-                  }
-                />
-              </Label>
-              {settings.proxyEnabled && (
-                <div className="mt-3 space-y-3">
-                  <div>
-                    <Label className="text-xs text-gray-400">
-                      Proxy server
-                    </Label>
-                    <Input
-                      type="text"
-                      className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                      placeholder="http://host:port"
-                      value={settings.proxyServer}
-                      onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                        setSettings((prev: PlaywrightSettings) => ({
-                          ...prev,
-                          proxyServer: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <Checkbox
+                    className="h-4 w-4 accent-emerald-400"
+                    checked={settings.proxyEnabled}
+                    onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        proxyEnabled: Boolean(checked),
+                      }))
+                    }
+                  />
+                </Label>
+                {settings.proxyEnabled && (
+                  <div className="mt-3 space-y-3">
                     <div>
                       <Label className="text-xs text-gray-400">
-                        Proxy username
+                      Proxy server
                       </Label>
                       <Input
                         type="text"
                         className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                        value={settings.proxyUsername}
+                        placeholder="http://host:port"
+                        value={settings.proxyServer}
                         onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                           setSettings((prev: PlaywrightSettings) => ({
                             ...prev,
-                            proxyUsername: e.target.value,
+                            proxyServer: e.target.value,
                           }))
                         }
                       />
                     </div>
-                    <div>
-                      <Label className="text-xs text-gray-400">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label className="text-xs text-gray-400">
+                        Proxy username
+                        </Label>
+                        <Input
+                          type="text"
+                          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                          value={settings.proxyUsername}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                            setSettings((prev: PlaywrightSettings) => ({
+                              ...prev,
+                              proxyUsername: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-400">
                         Proxy password
-                      </Label>
-                      <Input
-                        type="password"
-                        className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                        value={settings.proxyPassword}
-                        onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                          setSettings((prev: PlaywrightSettings) => ({
-                            ...prev,
-                            proxyPassword: e.target.value,
-                          }))
-                        }
-                      />
+                        </Label>
+                        <Input
+                          type="password"
+                          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                          value={settings.proxyPassword}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                            setSettings((prev: PlaywrightSettings) => ({
+                              ...prev,
+                              proxyPassword: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </SectionPanel>
-          </div>
-        </details>
+                )}
+              </SectionPanel>
+            </div>
+          </details>
+        </SectionPanel>
 
         {shouldShowSave && onSave ? (
           <div className="flex justify-end">
@@ -420,7 +416,7 @@ export function PlaywrightSettingsForm({
               className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
               onClick={onSave}
             >
-              {saveLabel ?? "Save Playwright Settings"}
+              {saveLabel ?? 'Save Playwright Settings'}
             </Button>
           </div>
         ) : null}

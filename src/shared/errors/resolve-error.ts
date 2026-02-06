@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import { z } from "zod";
+import { randomUUID } from 'crypto';
+
+import { z } from 'zod';
+
 import {
   AppErrorCodes,
   internalError,
   isAppError,
   type AppErrorCode,
-} from "@/shared/errors/app-error";
-import { mapErrorToAppError } from "@/shared/errors/error-mapper";
+} from '@/shared/errors/app-error';
+import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 
 export type ResolvedError = {
   errorId: string;
@@ -55,7 +57,7 @@ export const resolveError = (
     expected: appError.expected,
     critical: appError.critical,
     retryable: appError.retryable,
-    ...(typeof appError.retryAfterMs === "number" ? { retryAfterMs: appError.retryAfterMs } : {}),
+    ...(typeof appError.retryAfterMs === 'number' ? { retryAfterMs: appError.retryAfterMs } : {}),
     ...(appError.meta ? { meta: appError.meta } : {}),
     cause: appError.cause,
   });
@@ -72,7 +74,7 @@ export const resolveError = (
   if (error instanceof z.ZodError) {
     return {
       errorId,
-      message: "Invalid request payload",
+      message: 'Invalid request payload',
       code: AppErrorCodes.validation,
       httpStatus: 400,
       expected: true,
@@ -89,10 +91,10 @@ export const resolveError = (
   }
 
   // Handle fetch/network errors
-  if (error instanceof TypeError && error.message.includes("fetch")) {
+  if (error instanceof TypeError && error.message.includes('fetch')) {
     return {
       errorId,
-      message: "Network request failed",
+      message: 'Network request failed',
       code: AppErrorCodes.externalService,
       httpStatus: 502,
       expected: false,
@@ -102,7 +104,7 @@ export const resolveError = (
     };
   }
 
-  const fallback = options?.fallbackMessage ?? "Unexpected error occurred";
+  const fallback = options?.fallbackMessage ?? 'Unexpected error occurred';
   const internal = internalError(fallback);
   return {
     errorId,
@@ -123,10 +125,10 @@ export const resolveError = (
 function isPrismaError(error: unknown): error is Error & { code?: string } {
   return (
     error instanceof Error &&
-    (error.constructor.name.startsWith("Prisma") ||
-      "code" in error && typeof (error as { code?: unknown }).code === "string" &&
-      ((error as { code: string }).code.startsWith("P") ||
-        (error as { code: string }).code.includes("ECONN")))
+    (error.constructor.name.startsWith('Prisma') ||
+      'code' in error && typeof (error as { code?: unknown }).code === 'string' &&
+      ((error as { code: string }).code.startsWith('P') ||
+        (error as { code: string }).code.includes('ECONN')))
   );
 }
 
@@ -141,10 +143,10 @@ function resolvePrismaError(
   const code = error.code;
 
   // Unique constraint violation
-  if (code === "P2002") {
+  if (code === 'P2002') {
     return {
       errorId,
-      message: "A record with this value already exists",
+      message: 'A record with this value already exists',
       code: AppErrorCodes.duplicateEntry,
       httpStatus: 409,
       expected: true,
@@ -156,10 +158,10 @@ function resolvePrismaError(
   }
 
   // Record not found
-  if (code === "P2001" || code === "P2025") {
+  if (code === 'P2001' || code === 'P2025') {
     return {
       errorId,
-      message: "Record not found",
+      message: 'Record not found',
       code: AppErrorCodes.notFound,
       httpStatus: 404,
       expected: true,
@@ -171,10 +173,10 @@ function resolvePrismaError(
   }
 
   // Foreign key constraint
-  if (code === "P2003") {
+  if (code === 'P2003') {
     return {
       errorId,
-      message: "Referenced record not found",
+      message: 'Referenced record not found',
       code: AppErrorCodes.badRequest,
       httpStatus: 400,
       expected: true,
@@ -186,10 +188,10 @@ function resolvePrismaError(
   }
 
   // Connection errors
-  if (code === "P1001" || code === "P1002" || code?.includes("ECONN")) {
+  if (code === 'P1001' || code === 'P1002' || code?.includes('ECONN')) {
     return {
       errorId,
-      message: "Database connection failed",
+      message: 'Database connection failed',
       code: AppErrorCodes.databaseError,
       httpStatus: 503,
       expected: false,
@@ -202,10 +204,10 @@ function resolvePrismaError(
   }
 
   // Timeout
-  if (code === "P1008" || code === "P2024") {
+  if (code === 'P1008' || code === 'P2024') {
     return {
       errorId,
-      message: "Database operation timed out",
+      message: 'Database operation timed out',
       code: AppErrorCodes.timeout,
       httpStatus: 504,
       expected: false,
@@ -219,7 +221,7 @@ function resolvePrismaError(
   // Generic database error
   return {
     errorId,
-    message: options?.fallbackMessage ?? "Database operation failed",
+    message: options?.fallbackMessage ?? 'Database operation failed',
     code: AppErrorCodes.databaseError,
     httpStatus: 500,
     expected: false,
@@ -238,7 +240,7 @@ export const getUserMessage = (resolved: ResolvedError): string => {
     return resolved.message;
   }
   // For unexpected errors, return a generic message
-  return "An unexpected error occurred. Please try again later.";
+  return 'An unexpected error occurred. Please try again later.';
 };
 
 /**

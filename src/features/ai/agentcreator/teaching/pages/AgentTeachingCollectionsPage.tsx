@@ -1,13 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import React from "react";
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from "@/shared/ui";
-import { Pencil, Trash2 } from "lucide-react";
-import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
-import { buildModelProfile } from "@/features/ai/chatbot/utils";
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
-import { useDeleteEmbeddingCollectionMutation, useTeachingAgents, useTeachingCollections, useUpsertEmbeddingCollectionMutation } from "../hooks/useAgentTeaching";
+import { Pencil, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import React from 'react';
+
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { buildModelProfile } from '@/features/ai/chatbot/utils';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
+
+import { useDeleteEmbeddingCollectionMutation, useTeachingAgents, useTeachingCollections, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
@@ -35,9 +37,9 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
   const openCreate = (): void => {
     setEditing(null);
     setDraft({
-      name: "",
-      description: "",
-      embeddingModel: embeddingModels[0] ?? "",
+      name: '',
+      description: '',
+      embeddingModel: embeddingModels[0] ?? '',
     });
     setModalOpen(true);
   };
@@ -57,25 +59,25 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
   const handleSave = async (): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
-      toast("Collection name is required.", { variant: "error" });
+      toast('Collection name is required.', { variant: 'error' });
       return;
     }
     const embeddingModel = draft.embeddingModel?.trim();
     if (!embeddingModel) {
-      toast("Embedding model is required.", { variant: "error" });
+      toast('Embedding model is required.', { variant: 'error' });
       return;
     }
     try {
       await upsert({
         ...(editing?.id ? { id: editing.id } : {}),
         name,
-        description: typeof draft.description === "string" ? draft.description : null,
+        description: typeof draft.description === 'string' ? draft.description : null,
         embeddingModel,
       });
-      toast(editing ? "Collection updated." : "Collection created.", { variant: "success" });
+      toast(editing ? 'Collection updated.' : 'Collection created.', { variant: 'success' });
       closeModal();
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save collection.", { variant: "error" });
+      toast(error instanceof Error ? error.message : 'Failed to save collection.', { variant: 'error' });
     }
   };
 
@@ -102,12 +104,12 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
       <SectionPanel className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-gray-500">
-            {isLoading ? "Loading..." : `${collections.length} collection(s)`}
+            {isLoading ? 'Loading...' : `${collections.length} collection(s)`}
           </div>
         </div>
       </SectionPanel>
 
-      <div className="rounded-md border bg-card/60 backdrop-blur">
+      <SectionPanel variant="subtle" className="p-0 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-border/60">
@@ -139,7 +141,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
                 <TableCell className="text-xs text-gray-300">{collection.embeddingModel}</TableCell>
                 <TableCell className="text-xs text-gray-300">{usedByCount(collection.id)} learner(s)</TableCell>
                 <TableCell className="text-xs text-gray-400">
-                  {collection.updatedAt ? new Date(collection.updatedAt).toLocaleString() : "—"}
+                  {collection.updatedAt ? new Date(collection.updatedAt).toLocaleString() : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -177,7 +179,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             )}
           </TableBody>
         </Table>
-      </div>
+      </SectionPanel>
 
       <ConfirmDialog
         open={!!itemToDelete}
@@ -193,9 +195,9 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
           void (async (): Promise<void> => {
             try {
               await remove({ id: itemToDelete.id });
-              toast("Collection deleted.", { variant: "success" });
+              toast('Collection deleted.', { variant: 'success' });
             } catch (error) {
-              toast(error instanceof Error ? error.message : "Failed to delete collection.", { variant: "error" });
+              toast(error instanceof Error ? error.message : 'Failed to delete collection.', { variant: 'error' });
             } finally {
               setItemToDelete(null);
             }
@@ -207,14 +209,14 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         open={modalOpen}
         onClose={closeModal}
         size="sm"
-        title={editing ? "Edit Collection" : "New Collection"}
+        title={editing ? 'Edit Collection' : 'New Collection'}
         footer={(
           <>
             <Button type="button" variant="outline" onClick={closeModal} disabled={saving || deleting}>
               Cancel
             </Button>
             <Button type="button" onClick={() => void handleSave()} disabled={saving || deleting || !draft.name?.trim()}>
-              {saving ? "Saving..." : "Save"}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </>
         )}
@@ -223,7 +225,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
           <div className="space-y-2">
             <Label>Name</Label>
             <Input
-              value={draft.name ?? ""}
+              value={draft.name ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, name: event.target.value }))
               }
@@ -233,7 +235,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
           <div className="space-y-2">
             <Label>Description</Label>
             <Textarea
-              value={draft.description ?? ""}
+              value={draft.description ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, description: event.target.value }))
               }
@@ -243,21 +245,12 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
           </div>
           <div className="space-y-2">
             <Label>Embedding model</Label>
-            <Select
-              value={draft.embeddingModel ?? ""}
+            <UnifiedSelect
+              value={draft.embeddingModel ?? ''}
               onValueChange={(value: string): void => setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, embeddingModel: value }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select embedding model" />
-              </SelectTrigger>
-              <SelectContent>
-                {embeddingModels.map((model: string) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
+              placeholder="Select embedding model"
+            />
             <div className="text-[11px] text-gray-500">
               This model will be used to embed documents added to this collection.
             </div>

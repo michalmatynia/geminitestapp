@@ -14,7 +14,7 @@ const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
     username: z.string().trim().min(1),
-    password: z.string().trim().min(1),
+    password: z.string().trim().min(1)
   })
   .strict();
 
@@ -72,7 +72,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       playwrightProxyUsername: connection.playwrightProxyUsername,
       playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
       playwrightEmulateDevice: connection.playwrightEmulateDevice,
-      playwrightDeviceName: connection.playwrightDeviceName,
+      playwrightDeviceName: connection.playwrightDeviceName
     }));
 
     return NextResponse.json(payload);
@@ -81,7 +81,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       request: req,
       source: "integrations.[id].connections.GET",
       fallbackMessage: "Failed to fetch connections",
-      ...(integrationId ? { extra: { integrationId } } : {}),
+      ...(integrationId ? { extra: { integrationId } } : {})
     });
   }
 }
@@ -101,7 +101,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
 
     const parsed = await parseJsonBody(req, createConnectionSchema, {
-      logPrefix: "integrations.connections.POST",
+      logPrefix: "integrations.connections.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -122,7 +122,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const created = await repo.createConnection(integrationId, {
       name: data.name,
       username: data.username,
-      password: encryptSecret(data.password),
+      password: encryptSecret(data.password)
     });
 
     return NextResponse.json({
@@ -155,17 +155,23 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       playwrightProxyUsername: created.playwrightProxyUsername,
       playwrightProxyHasPassword: Boolean(created.playwrightProxyPassword),
       playwrightEmulateDevice: created.playwrightEmulateDevice,
-      playwrightDeviceName: created.playwrightDeviceName,
+      playwrightDeviceName: created.playwrightDeviceName
     });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.[id].connections.POST",
       fallbackMessage: "Failed to create connection",
-      ...(integrationId ? { extra: { integrationId } } : {}),
+      ...(integrationId ? { extra: { integrationId } } : {})
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "integrations.[id].connections.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "integrations.[id].connections.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  GET_handler,
+  { source: "integrations.[id].connections.GET", requireCsrf: false }
+);
+export const POST = apiHandlerWithParams<{ id: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.POST", requireCsrf: false }
+);

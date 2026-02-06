@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 
 
 
-import { Input, Label, Textarea } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { Input, Label, Textarea } from '@/shared/ui';
 
 type MutatorNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -15,11 +15,11 @@ export function MutatorNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: MutatorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "mutator") return null;
+  if (selectedNode.type !== 'mutator') return null;
 
   const mutatorConfig = selectedNode.config?.mutator ?? {
-    path: "entity.title",
-    valueTemplate: "{{value}}",
+    path: 'entity.title',
+    valueTemplate: '{{value}}',
   };
 
   return (
@@ -51,9 +51,9 @@ export function MutatorNodeConfigSection({
           }
         />
         <p className="mt-2 text-[11px] text-gray-500">
-          Use <span className="text-gray-300">{`{{value}}`}</span> for the
-          current value or dot paths like{" "}
-          <span className="text-gray-300">{`{{entity.title}}`}</span>.
+          Use <span className="text-gray-300">{'{{value}}'}</span> for the
+          current value or dot paths like{' '}
+          <span className="text-gray-300">{'{{entity.title}}'}</span>.
         </p>
       </div>
     </div>

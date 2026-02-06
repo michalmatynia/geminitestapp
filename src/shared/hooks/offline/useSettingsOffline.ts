@@ -1,5 +1,11 @@
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { useOfflineMutation } from "@/shared/hooks/useOfflineMutation";
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+
+import {
+  fetchSettingsCached,
+  invalidateSettingsCache,
+} from '@/shared/api/settings-client';
+import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 export interface SettingRecord {
   key: string;
@@ -16,11 +22,15 @@ export interface SettingsOfflineHookResult {
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
   const settingsQuery: UseQueryResult<SettingRecord[], Error> = useQuery({
-    queryKey: ["settings"],
+    queryKey: ['settings', 'light'],
     queryFn: async (): Promise<SettingRecord[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return (await res.json()) as SettingRecord[];
+      try {
+        return await fetchSettingsCached({ scope: 'light' });
+      } catch (error) {
+        throw error instanceof Error
+          ? error
+          : new Error('Failed to fetch settings');
+      }
     },
     staleTime: 1000 * 60 * 30, // 30 minutes - longer for offline support
     networkMode: 'offlineFirst',
@@ -28,16 +38,17 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
 
   const updateSettingMutation = useOfflineMutation<SettingRecord, Error, { key: string; value: string }, SettingRecord[]>(
     async ({ key, value }: { key: string; value: string }): Promise<SettingRecord> => {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ key, value }),
       });
-      if (!res.ok) throw new Error("Failed to update setting");
+      if (!res.ok) throw new Error('Failed to update setting');
+      invalidateSettingsCache();
       return (await res.json()) as SettingRecord;
     },
     {
-      queryKey: ["settings"],
+      queryKey: ['settings', 'light'],
       optimisticUpdate: (oldData: SettingRecord[] | undefined, { key, value }: { key: string; value: string }): SettingRecord[] => {
         if (!Array.isArray(oldData)) return oldData || [];
         const updated = oldData.map((item: SettingRecord) => 
@@ -47,8 +58,8 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
           ? updated 
           : [...updated, { key, value }];
       },
-      successMessage: "Setting updated successfully",
-      errorMessage: "Failed to update setting",
+      successMessage: 'Setting updated successfully',
+      errorMessage: 'Failed to update setting',
     }
   );
 

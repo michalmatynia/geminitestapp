@@ -1,11 +1,13 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
+
+import { ErrorSystem } from '@/features/observability/server';
 import {
   apiKeyInvalidError,
   configurationError,
   operationFailedError,
-} from "@/shared/errors/app-error";
-import { ErrorSystem } from "@/features/observability/server";
-import { getSettingValue } from "./aiDescriptionService";
+} from '@/shared/errors/app-error';
+
+import { getSettingValue } from './aiDescriptionService';
 
 interface TranslateProductParams {
   productId: string;
@@ -25,17 +27,17 @@ interface TranslationResult {
   sourceLanguage?: string;
 }
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
 function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
   const modelLower = modelName.toLowerCase();
-  const isOpenAI = (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
-                   modelLower.startsWith("ft:gpt-") ||
-                   modelLower.startsWith("o1-");
+  const isOpenAI = (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
+                   modelLower.startsWith('ft:gpt-') ||
+                   modelLower.startsWith('o1-');
 
   if (isOpenAI) {
     if (!apiKey) {
-      throw configurationError("OpenAI API key is missing for GPT model.");
+      throw configurationError('OpenAI API key is missing for GPT model.');
     }
     return { openai: new OpenAI({ apiKey }), isOllama: false };
   }
@@ -44,7 +46,7 @@ function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; 
   return {
     openai: new OpenAI({
       baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: "ollama",
+      apiKey: 'ollama',
     }),
     isOllama: true
   };
@@ -89,30 +91,42 @@ export async function translateProduct(params: TranslateProductParams): Promise<
 
   // Load configuration from settings
   const [translationModelSetting, apiKeySetting] = await Promise.all([
-    getSettingValue("ai_translation_model"),
-    getSettingValue("openai_api_key"),
+    getSettingValue('ai_translation_model'),
+    getSettingValue('openai_api_key'),
   ]);
 
-  const translationModel = translationModelSetting?.trim() || "gpt-4o";
+  const translationModel = translationModelSetting?.trim() || 'gpt-4o';
   const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
 
-  console.log(`[aiTranslationService] Using model: ${translationModel}`);
+  await ErrorSystem.logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
+    service: 'ai-translation-service',
+    translationModel
+  });
 
   const { openai, isOllama } = getClient(translationModel, apiKey);
 
   if (isOllama) {
-    console.log(`[aiTranslationService] Using Ollama at: ${OLLAMA_BASE_URL}`);
+    await ErrorSystem.logInfo('[aiTranslationService] Using Ollama', {
+      service: 'ai-translation-service',
+      url: OLLAMA_BASE_URL
+    });
   }
 
-  console.log(`[aiTranslationService] Target languages: ${targetLanguages.join(", ")}`);
-  console.log(`[aiTranslationService] Source language: ${sourceLanguage}`);
+  await ErrorSystem.logInfo('[aiTranslationService] Starting translation', {
+    service: 'ai-translation-service',
+    targetLanguages,
+    sourceLanguage
+  });
 
   const translations: Record<string, { name: string; description: string }> = {};
 
   // Translate to each target language
   for (const targetLang of targetLanguages) {
     if (targetLang.toLowerCase() === sourceLanguage.toLowerCase()) {
-      console.log(`[aiTranslationService] Skipping ${targetLang} because it is the source language`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Skipping ${targetLang} (source language)`, {
+        service: 'ai-translation-service',
+        targetLanguage: targetLang
+      });
       continue;
     }
 
@@ -136,13 +150,16 @@ Important:
 - Only respond with the JSON, no additional text`;
 
     try {
-      console.log(`[aiTranslationService] Translating to ${targetLang}...`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Translating to ${targetLang}...`, {
+        service: 'ai-translation-service',
+        targetLanguage: targetLang
+      });
 
       const options: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
         model: translationModel,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: prompt,
           },
         ],
@@ -151,38 +168,45 @@ Important:
 
       // Only use response_format for OpenAI models, as Ollama models might not support it reliably via the SDK
       const modelLower = translationModel.toLowerCase();
-      const supportsJsonMode = !isOllama && !modelLower.startsWith("o1-");
+      const supportsJsonMode = !isOllama && !modelLower.startsWith('o1-');
       
       if (supportsJsonMode) {
-        options.response_format = { type: "json_object" };
+        options.response_format = { type: 'json_object' };
       }
 
       const response = await openai.chat.completions.create(options);
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        console.error(`[aiTranslationService] No content in response for ${targetLang}`);
+        void ErrorSystem.logWarning(`No content in response for ${targetLang}`, {
+          service: 'ai-translation-service',
+          targetLanguage: targetLang,
+        });
         throw operationFailedError(`No translation received for ${targetLang}`, undefined, {
           targetLanguage: targetLang,
         });
       }
 
-      console.log(`[aiTranslationService] Received response for ${targetLang}`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Received response for ${targetLang}`, {
+        service: 'ai-translation-service',
+        targetLanguage: targetLang
+      });
 
       const parsed = extractJson(content) as { name?: string; description?: string };
       translations[targetLang.toLowerCase()] = {
-        name: parsed.name || "",
-        description: parsed.description || "",
+        name: parsed.name || '',
+        description: parsed.description || '',
       };
 
-      console.log(`[aiTranslationService] Successfully translated to ${targetLang}`);
+      await ErrorSystem.logInfo(`[aiTranslationService] Successfully translated to ${targetLang}`, {
+        service: 'ai-translation-service',
+        targetLanguage: targetLang
+      });
     } catch (error) {
-      console.error(`[aiTranslationService] Error translating to ${targetLang}:`, error);
-      
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
-                               errorMessage.includes("fetch failed") || 
-                               errorMessage.includes("failed to fetch");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isConnectionError = errorMessage.includes('ECONNREFUSED') || 
+                               errorMessage.includes('fetch failed') || 
+                               errorMessage.includes('failed to fetch');
 
       if (isOllama && isConnectionError) {
         throw operationFailedError(
@@ -193,27 +217,31 @@ Important:
       }
 
       await ErrorSystem.captureException(error, {
-        service: "ai-translation-service",
+        service: 'ai-translation-service',
         targetLanguage: targetLang,
         productName
       });
       
       // If this is an API key error, throw it to fail the entire job
-      if (errorMessage.includes("API key") || errorMessage.includes("401") || errorMessage.includes("authentication")) {
+      if (errorMessage.includes('API key') || errorMessage.includes('401') || errorMessage.includes('authentication')) {
         throw apiKeyInvalidError(
           `Translation failed: ${errorMessage}. Please check your OpenAI API key configuration.`,
-          "openai"
+          'openai'
         );
       }
 
       // For other errors, continue with other languages but don't save fallback
-      console.warn(`[aiTranslationService] Skipping ${targetLang} due to error`);
+      await ErrorSystem.logWarning(`[aiTranslationService] Skipping ${targetLang} due to error`, {
+        service: 'ai-translation-service',
+        targetLanguage: targetLang,
+        error: errorMessage
+      });
     }
   }
 
   // If no translations were successful, throw an error
   if (Object.keys(translations).length === 0) {
-    throw operationFailedError("Translation failed: No translations were completed successfully.");
+    throw operationFailedError('Translation failed: No translations were completed successfully.');
   }
 
   return {

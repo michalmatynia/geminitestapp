@@ -1,9 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import { createHash } from "crypto";
-import type { ObjectId } from "mongodb";
+import { createHash } from 'crypto';
 
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
@@ -14,9 +14,11 @@ import type {
   AnalyticsSummaryDto,
   AnalyticsUtm,
   AnalyticsViewport,
-} from "@/shared/types";
+} from '@/shared/types';
 
-const COLLECTION_NAME = "analytics_events";
+import type { ObjectId } from 'mongodb';
+
+const COLLECTION_NAME = 'analytics_events';
 
 type AnalyticsUtmDoc = {
   source?: string;
@@ -48,6 +50,8 @@ type AnalyticsEventMongoDoc = {
   connection?: AnalyticsConnectionInfo;
   meta?: Record<string, unknown>;
   clientTs?: Date;
+  ip?: string;
+  ipMasked?: string;
   ipHash?: string;
   userAgent?: string;
   country?: string;
@@ -101,8 +105,51 @@ const normalizeUtm = (utm: AnalyticsUtm | null | undefined): AnalyticsUtmDoc | u
 };
 
 const hashIp = (ip: string): string => {
-  const salt = process.env.ANALYTICS_IP_SALT ?? process.env.NEXTAUTH_SECRET ?? "";
-  return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
+  const salt = process.env.ANALYTICS_IP_SALT ?? process.env.NEXTAUTH_SECRET ?? '';
+  return createHash('sha256').update(`${salt}:${ip}`).digest('hex');
+};
+
+const normalizeIpMode = (): 'full' | 'masked' | 'hash' | 'none' => {
+  const raw = process.env.ANALYTICS_IP_MODE?.toLowerCase().trim();
+  if (raw === 'full' || raw === 'masked' || raw === 'hash' || raw === 'none') {
+    return raw;
+  }
+  return 'masked';
+};
+
+const maskIp = (ip: string): string => {
+  if (ip.includes('.')) {
+    const parts = ip.split('.');
+    if (parts.length === 4) {
+      return `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+    }
+  }
+
+  if (ip.includes(':')) {
+    const parts = ip.split(':').filter(Boolean);
+    const head = parts.slice(0, 3).join(':');
+    if (head) {
+      return `${head}:xxxx:xxxx:xxxx:xxxx`;
+    }
+  }
+
+  return ip;
+};
+
+const buildIpFields = (ip: string | undefined): { ip?: string; ipMasked?: string; ipHash?: string } => {
+  if (!ip) return {};
+  const mode = normalizeIpMode();
+  if (mode === 'none') return {};
+  const ipMasked = maskIp(ip);
+  const ipHash = hashIp(ip);
+
+  if (mode === 'hash') {
+    return { ipHash };
+  }
+  if (mode === 'full') {
+    return { ip, ipMasked, ipHash };
+  }
+  return { ipMasked, ipHash };
 };
 
 const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
@@ -127,6 +174,8 @@ const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
   ...(doc.connection ? { connection: doc.connection } : {}),
   ...(doc.meta ? { meta: doc.meta } : {}),
   ...(doc.clientTs ? { clientTs: doc.clientTs.toISOString() } : {}),
+  ...(doc.ip ? { ip: doc.ip } : {}),
+  ...(doc.ipMasked ? { ipMasked: doc.ipMasked } : {}),
   ...(doc.ipHash ? { ipHash: doc.ipHash } : {}),
   ...(doc.userAgent ? { userAgent: doc.userAgent } : {}),
   ...(doc.country ? { country: doc.country } : {}),
@@ -164,6 +213,7 @@ export async function insertAnalyticsEvent(
   const serverCountry = normalizeOptionalString(server?.country ?? null);
   const serverRegion = normalizeOptionalString(server?.region ?? null);
   const serverCity = normalizeOptionalString(server?.city ?? null);
+  const ipFields = buildIpFields(serverIp ?? undefined);
 
   const doc = {
     ts: new Date(),
@@ -186,12 +236,12 @@ export async function insertAnalyticsEvent(
     ...(input.connection ? { connection: input.connection } : {}),
     ...(input.meta ? { meta: input.meta } : {}),
     ...(clientTsDate ? { clientTs: clientTsDate } : {}),
-    ...(serverIp ? { ipHash: hashIp(serverIp) } : {}),
+    ...ipFields,
     ...(serverUserAgent ? { userAgent: serverUserAgent } : {}),
     ...(serverCountry ? { country: serverCountry } : {}),
     ...(serverRegion ? { region: serverRegion } : {}),
     ...(serverCity ? { city: serverCity } : {}),
-  } as Omit<AnalyticsEventMongoDoc, "_id">;
+  } as Omit<AnalyticsEventMongoDoc, '_id'>;
 
   const result = await col.insertOne(doc);
   return { id: result.insertedId.toString() };
@@ -262,7 +312,7 @@ export async function getAnalyticsSummary(input: {
                 events: { $sum: 1 },
                 pageviews: {
                   $sum: {
-                    $cond: [{ $eq: ["$type", "pageview"] }, 1, 0],
+                    $cond: [{ $eq: ['$type', 'pageview'] }, 1, 0],
                   },
                 },
               },
@@ -270,40 +320,40 @@ export async function getAnalyticsSummary(input: {
             { $project: { _id: 0, events: 1, pageviews: 1 } },
           ],
           visitors: [
-            { $group: { _id: "$visitorId" } },
-            { $count: "count" },
+            { $group: { _id: '$visitorId' } },
+            { $count: 'count' },
           ],
           sessions: [
-            { $group: { _id: "$sessionId" } },
-            { $count: "count" },
+            { $group: { _id: '$sessionId' } },
+            { $count: 'count' },
           ],
           topPages: [
-            { $match: { type: "pageview" } },
-            { $group: { _id: "$path", count: { $sum: 1 } } },
+            { $match: { type: 'pageview' } },
+            { $group: { _id: '$path', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 20 },
-            { $project: { _id: 0, path: "$_id", count: 1 } },
+            { $project: { _id: 0, path: '$_id', count: 1 } },
           ],
           topReferrers: [
-            { $match: { referrer: { $exists: true, $ne: "" } } },
-            { $group: { _id: "$referrer", count: { $sum: 1 } } },
+            { $match: { referrer: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$referrer', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 20 },
-            { $project: { _id: 0, referrer: "$_id", count: 1 } },
+            { $project: { _id: 0, referrer: '$_id', count: 1 } },
           ],
           topLanguages: [
-            { $match: { language: { $exists: true, $ne: "" } } },
-            { $group: { _id: "$language", count: { $sum: 1 } } },
+            { $match: { language: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$language', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 20 },
-            { $project: { _id: 0, language: "$_id", count: 1 } },
+            { $project: { _id: 0, language: '$_id', count: 1 } },
           ],
           topCountries: [
-            { $match: { country: { $exists: true, $ne: "" } } },
-            { $group: { _id: "$country", count: { $sum: 1 } } },
+            { $match: { country: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$country', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 20 },
-            { $project: { _id: 0, country: "$_id", count: 1 } },
+            { $project: { _id: 0, country: '$_id', count: 1 } },
           ],
           recent: [
             { $sort: { ts: -1 } },
@@ -321,14 +371,23 @@ export async function getAnalyticsSummary(input: {
   return {
     from: input.from.toISOString(),
     to: input.to.toISOString(),
-    scope: input.scope ?? "all",
+    scope: input.scope ?? 'all',
     totals,
     visitors,
     sessions,
     topPages: result?.topPages ?? [],
     topReferrers: result?.topReferrers ?? [],
+    topEventNames: [],
     topLanguages: result?.topLanguages ?? [],
     topCountries: result?.topCountries ?? [],
+    topRegions: [],
+    topCities: [],
+    topBrowsers: [],
+    topOs: [],
+    topDevices: [],
+    topUtmSources: [],
+    topUtmMediums: [],
+    topUtmCampaigns: [],
     recent: (result?.recent ?? []).map(toEventDto),
   };
 }

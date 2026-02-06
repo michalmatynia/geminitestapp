@@ -89,7 +89,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         await chatbotSessionRepository.addMessage(session.id, {
           role: "user",
           content: trimmedUserMessage,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         });
       }
     }

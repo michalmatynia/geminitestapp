@@ -6,6 +6,6 @@ export type {
   CreateAsset3dDto,
   UpdateAsset3dDto,
   Asset3dViewerConfigDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
-export * from "./asset3d";
+export * from './asset3d';

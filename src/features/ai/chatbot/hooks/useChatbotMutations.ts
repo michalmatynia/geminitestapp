@@ -1,6 +1,9 @@
-"use client";
+'use client';
 
-import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
+import { useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
+
+import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from '@/shared/types/chatbot';
+
 import {
   chatbotQueryKeys,
   createChatbotSession,
@@ -10,14 +13,14 @@ import {
   persistSessionMessage,
   sendChatbotMessage,
   saveChatbotSettings,
-} from "../api";
-import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from "@/shared/types/chatbot";
-import type { ChatbotSessionListItem } from "../types";
+} from '../api';
+
+import type { ChatbotSessionListItem } from '../types';
 
 /**
  * Mutation hook for creating a new chatbot session
  */
-export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string; session?: ChatSession }, Error, { title?: string; settings?: ChatSession["settings"] }> {
+export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string; session?: ChatSession }, Error, { title?: string; settings?: ChatSession['settings'] }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -82,7 +85,7 @@ export function useDeleteChatbotSessions(): UseMutationResult<unknown, Error, st
  */
 type PersistSessionMessageVariables = {
   sessionId: string;
-  role: ChatMessage["role"];
+  role: ChatMessage['role'];
   content: string;
 };
 
@@ -119,7 +122,7 @@ export function useSaveChatbotSettings(): UseMutationResult<
   { settings?: { settings?: ChatbotSettingsPayload } },
   Error,
   SaveChatbotSettingsVariables
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation<{ settings?: { settings?: ChatbotSettingsPayload } }, Error, SaveChatbotSettingsVariables>({

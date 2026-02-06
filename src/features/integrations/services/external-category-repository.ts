@@ -1,11 +1,12 @@
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
+
 import type {
   ExternalCategory,
   ExternalCategoryWithChildren,
   ExternalCategorySyncInput,
   BaseCategory,
-} from "@/features/integrations/types/category-mapping";
+} from '@/features/integrations/types/category-mapping';
+import prisma from '@/shared/lib/db/prisma';
 
 export type ExternalCategoryRepository = {
   syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
@@ -35,7 +36,7 @@ function buildCategoryPath(
     currentId = cat.parentId;
   }
 
-  return parts.join(" > ");
+  return parts.join(' > ');
 }
 
 /**
@@ -158,7 +159,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
     async listByConnection(connectionId: string): Promise<ExternalCategory[]> {
       const records = await prisma.externalCategory.findMany({
         where: { connectionId },
-        orderBy: [{ depth: "asc" }, { name: "asc" }],
+        orderBy: [{ depth: 'asc' }, { name: 'asc' }],
       });
 
       return records.map((r: ExternalCategoryDoc) => toRecord(r));
@@ -167,7 +168,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
       const records = await prisma.externalCategory.findMany({
         where: { connectionId },
-        orderBy: [{ depth: "asc" }, { name: "asc" }],
+        orderBy: [{ depth: 'asc' }, { name: 'asc' }],
       });
 
       const categories: ExternalCategory[] = records.map((r: ExternalCategoryDoc) => toRecord(r));

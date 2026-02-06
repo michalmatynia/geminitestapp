@@ -1,4 +1,4 @@
-import { validateAndAddAgentLongTermMemory } from "@/features/ai/agent-runtime/memory";
+import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
 
 export async function addProblemSolutionMemory({
   memoryKey,
@@ -28,7 +28,7 @@ export async function addProblemSolutionMemory({
     runId,
     content: summary,
     summary,
-    tags: ["problem-solution", ...tags],
+    tags: ['problem-solution', ...tags],
     metadata: {
       problem,
       countermeasure,

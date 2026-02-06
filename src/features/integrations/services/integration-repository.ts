@@ -1,17 +1,19 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import type { Prisma } from "@prisma/client";
-import type { WithId } from "mongodb";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getIntegrationDataProvider } from "@/features/integrations/services/integration-provider";
-import { conflictError, notFoundError } from "@/shared/errors/app-error";
+import { randomUUID } from 'crypto';
+
+import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import type {
   IntegrationRecord,
   IntegrationConnectionRecord,
   IntegrationRepository,
-} from "@/features/integrations/types/integrations";
+} from '@/features/integrations/types/integrations';
+import { conflictError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Prisma } from '@prisma/client';
+import type { WithId } from 'mongodb';
 
 export type { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository };
 
@@ -33,12 +35,12 @@ const CONNECTION_DEFAULTS = {
   playwrightProxyUsername: null,
   playwrightProxyPassword: null,
   playwrightEmulateDevice: false,
-  playwrightDeviceName: "Desktop Chrome",
+  playwrightDeviceName: 'Desktop Chrome',
   allegroUseSandbox: false,
 } as const;
 
-const INTEGRATIONS_COLLECTION = "integrations";
-const CONNECTIONS_COLLECTION = "integration_connections";
+const INTEGRATIONS_COLLECTION = 'integrations';
+const CONNECTIONS_COLLECTION = 'integration_connections';
 
 type IntegrationDocument = {
   _id: string;
@@ -156,7 +158,7 @@ const toConnectionRecord = (
 const prismaRepository: IntegrationRepository = {
   listIntegrations: async (): Promise<IntegrationRecord[]> => {
     const integrations = await prisma.integration.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return integrations;
   },
@@ -174,7 +176,7 @@ const prismaRepository: IntegrationRepository = {
   listConnections: async (integrationId: string): Promise<IntegrationConnectionRecord[]> => {
     return prisma.integrationConnection.findMany({
       where: { integrationId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   },
   getConnectionById: async (id: string): Promise<IntegrationConnectionRecord | null> => {
@@ -292,7 +294,7 @@ const mongoRepository: IntegrationRepository = {
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ integrationId });
     if (existing) {
-      throw conflictError("Connection already exists", { integrationId });
+      throw conflictError('Connection already exists', { integrationId });
     }
     const id = randomUUID();
     const doc: IntegrationConnectionDocument = {
@@ -326,7 +328,7 @@ const mongoRepository: IntegrationRepository = {
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ _id: id });
     if (!updated) {
-      throw notFoundError("Connection not found", { id });
+      throw notFoundError('Connection not found', { id });
     }
     return toConnectionRecord(updated);
   },
@@ -340,5 +342,5 @@ const mongoRepository: IntegrationRepository = {
 
 export const getIntegrationRepository = async (): Promise<IntegrationRepository> => {
   const provider = await getIntegrationDataProvider();
-  return provider === "mongodb" ? mongoRepository : prismaRepository;
+  return provider === 'mongodb' ? mongoRepository : prismaRepository;
 };

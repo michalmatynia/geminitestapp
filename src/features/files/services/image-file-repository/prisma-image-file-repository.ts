@@ -1,10 +1,10 @@
-import prisma from "@/shared/lib/db/prisma";
 import type {
   ImageFileCreateInput,
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from "@/features/files/types/services/image-file-repository";
+} from '@/features/files/types/services/image-file-repository';
+import prisma from '@/shared/lib/db/prisma';
 
 const toRecord = (imageFile: {
   id: string;
@@ -56,7 +56,7 @@ export const prismaImageFileRepository: ImageFileRepository = {
     const tags = (filters?.tags ?? []).filter(Boolean);
     const where: Record<string, unknown> = {};
     if (filename) {
-      where.filename = { contains: filename, mode: "insensitive" };
+      where.filename = { contains: filename, mode: 'insensitive' };
     }
     if (tags.length > 0) {
       where.tags = { hasSome: tags };

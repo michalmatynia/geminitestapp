@@ -1,6 +1,6 @@
-import type { AgentPlanPreferences, AgentPlanSettings } from "@/features/ai/agent-runtime/types/agent";
+import type { AgentPlanPreferences, AgentPlanSettings } from '@/features/ai/agent-runtime/types/agent';
 
-export const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+export const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 export const MAX_PLAN_STEPS = 12;
 export const MAX_STEP_ATTEMPTS = 2;
 export const MAX_REPLAN_CALLS = 2;
@@ -10,8 +10,8 @@ export const LOOP_GUARD_THRESHOLD = 2;
 export const LOOP_BACKOFF_BASE_MS = 2000;
 export const LOOP_BACKOFF_MAX_MS = 12000;
 export const OLLAMA_BASE_URL =
-  process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-export const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
+  process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+export const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'qwen3-vl:30b';
 export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxSteps: MAX_PLAN_STEPS,
   maxStepAttempts: MAX_STEP_ATTEMPTS,
@@ -30,9 +30,9 @@ export const clampInt = (
   fallback: number
 ): number => {
   const numeric =
-    typeof value === "number"
+    typeof value === 'number'
       ? value
-      : typeof value === "string"
+      : typeof value === 'string'
         ? Number(value)
         : NaN;
   if (!Number.isFinite(numeric)) return fallback;
@@ -43,7 +43,7 @@ export function resolveAgentPlanSettings(
   planState: unknown
 ): AgentPlanSettings {
   const rawSettings =
-    planState && typeof planState === "object"
+    planState && typeof planState === 'object'
       ? (planState as { settings?: Partial<AgentPlanSettings> }).settings
       : null;
   return {
@@ -102,50 +102,50 @@ export function resolveAgentPreferences(
   planState: unknown
 ): AgentPlanPreferences {
   const rawPreferences =
-    planState && typeof planState === "object"
+    planState && typeof planState === 'object'
       ? (planState as { preferences?: AgentPlanPreferences }).preferences
       : null;
   return {
     ignoreRobotsTxt: Boolean(rawPreferences?.ignoreRobotsTxt),
     requireHumanApproval: Boolean(rawPreferences?.requireHumanApproval),
     memoryValidationModel:
-      typeof rawPreferences?.memoryValidationModel === "string"
+      typeof rawPreferences?.memoryValidationModel === 'string'
         ? rawPreferences.memoryValidationModel
         : undefined,
     plannerModel:
-      typeof rawPreferences?.plannerModel === "string"
+      typeof rawPreferences?.plannerModel === 'string'
         ? rawPreferences.plannerModel
         : undefined,
     selfCheckModel:
-      typeof rawPreferences?.selfCheckModel === "string"
+      typeof rawPreferences?.selfCheckModel === 'string'
         ? rawPreferences.selfCheckModel
         : undefined,
     extractionValidationModel:
-      typeof rawPreferences?.extractionValidationModel === "string"
+      typeof rawPreferences?.extractionValidationModel === 'string'
         ? rawPreferences.extractionValidationModel
         : undefined,
     toolRouterModel:
-      typeof rawPreferences?.toolRouterModel === "string"
+      typeof rawPreferences?.toolRouterModel === 'string'
         ? rawPreferences.toolRouterModel
         : undefined,
     loopGuardModel:
-      typeof rawPreferences?.loopGuardModel === "string"
+      typeof rawPreferences?.loopGuardModel === 'string'
         ? rawPreferences.loopGuardModel
         : undefined,
     approvalGateModel:
-      typeof rawPreferences?.approvalGateModel === "string"
+      typeof rawPreferences?.approvalGateModel === 'string'
         ? rawPreferences.approvalGateModel
         : undefined,
     memorySummarizationModel:
-      typeof rawPreferences?.memorySummarizationModel === "string"
+      typeof rawPreferences?.memorySummarizationModel === 'string'
         ? rawPreferences.memorySummarizationModel
         : undefined,
     selectorInferenceModel:
-      typeof rawPreferences?.selectorInferenceModel === "string"
+      typeof rawPreferences?.selectorInferenceModel === 'string'
         ? rawPreferences.selectorInferenceModel
         : undefined,
     outputNormalizationModel:
-      typeof rawPreferences?.outputNormalizationModel === "string"
+      typeof rawPreferences?.outputNormalizationModel === 'string'
         ? rawPreferences.outputNormalizationModel
         : undefined,
   };

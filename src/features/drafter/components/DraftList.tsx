@@ -1,18 +1,19 @@
-"use client";
-import { Button, ListPanel, useToast, SectionHeader, EmptyState } from "@/shared/ui";
-import { useState } from "react";
-import { useDrafts, useDeleteDraft } from "@/features/drafter/hooks/useDrafts";
-import type { ProductDraft } from "@/features/products/types/drafts";
-
+'use client';
 import {
   PlusIcon,
   Edit2Icon,
   TrashIcon,
   CheckIcon,
   XIcon,
-} from "lucide-react";
-import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
-import { ConfirmDialog } from "@/shared/ui";
+} from 'lucide-react';
+import { useState } from 'react';
+
+import { useDrafts, useDeleteDraft } from '@/features/drafter/hooks/useDrafts';
+import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { logClientError } from '@/features/observability';
+import type { ProductDraft } from '@/features/products/types/drafts';
+import { Button, ListPanel, useToast, SectionHeader, EmptyState } from '@/shared/ui';
+import { ConfirmDialog } from '@/shared/ui';
 
 interface DraftListProps {
   onEdit: (id: string) => void;
@@ -31,10 +32,10 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
     try {
       setDeleting(draftToDelete);
       await deleteDraftMutation.mutateAsync(draftToDelete);
-      toast("Draft deleted successfully", { variant: "success" });
+      toast('Draft deleted successfully', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to delete draft:", error);
-      toast("Failed to delete draft", { variant: "error" });
+      logClientError(error, { context: { source: 'DraftList', action: 'deleteDraft', draftId: draftToDelete } });
+      toast('Failed to delete draft', { variant: 'error' });
     } finally {
       setDeleting(null);
       setDraftToDelete(null);
@@ -90,7 +91,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                   <div className="flex items-center gap-3">
                     {draft.icon &&
                       ((): React.JSX.Element | null => {
-                        const IconComponent = PRODUCT_ICON_MAP[draft.icon];
+                        const IconComponent = ICON_LIBRARY_MAP[draft.icon];
                         return IconComponent ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400">
                             <IconComponent className="h-4 w-4" />
@@ -104,8 +105,8 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                       <span
                         className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
                           draft.active
-                            ? "bg-emerald-500/10 text-emerald-500"
-                            : "bg-gray-500/10 text-gray-500"
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : 'bg-gray-500/10 text-gray-500'
                         }`}
                       >
                         {draft.active ? (
@@ -138,9 +139,9 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                         {draft.catalogIds.length} Catalog(s)
                       </span>
                     )}
-                    {draft.categoryIds && draft.categoryIds.length > 0 && (
+                    {draft.categoryId && (
                       <span className="rounded bg-gray-800 px-2 py-1">
-                        {draft.categoryIds.length} Category(s)
+                        Category set
                       </span>
                     )}
                     {draft.tagIds && draft.tagIds.length > 0 && (
@@ -168,7 +169,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                     className="flex items-center gap-1 border-red-600 text-red-600 hover:bg-red-600/10"
                   >
                     <TrashIcon className="h-3 w-3" />
-                    {deleting === draft.id ? "Deleting..." : "Delete"}
+                    {deleting === draft.id ? 'Deleting...' : 'Delete'}
                   </Button>
                 </div>
               </div>

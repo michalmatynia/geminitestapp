@@ -13,7 +13,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const deleteSchema = z.object({
-  inventoryId: z.string().min(1).optional(),
+  inventoryId: z.string().min(1).optional()
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
@@ -31,7 +31,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
     const parsed = await parseJsonBody(req, deleteSchema, {
       logPrefix: "integrations.products.listings.DELETE_FROM_BASE",
-      allowEmpty: true,
+      allowEmpty: true
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -79,7 +79,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     );
     if (!connection) {
       throw notFoundError("Connection not found", {
-        connectionId: listing.connectionId,
+        connectionId: listing.connectionId
       });
     }
 
@@ -92,7 +92,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
     if (!token) {
       throw badRequestError("Base.com API token not found in connection.", {
-        connectionId: listing.connectionId,
+        connectionId: listing.connectionId
       });
     }
 
@@ -118,7 +118,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       exportedAt: new Date(),
       status: "deleted",
       inventoryId,
-      externalListingId: listing.externalListingId,
+      externalListingId: listing.externalListingId
     });
 
     return NextResponse.json({ status: "deleted" });
@@ -126,9 +126,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.listings.DELETE_FROM_BASE",
-      fallbackMessage: "Failed to delete listing from Base.com",
+      fallbackMessage: "Failed to delete listing from Base.com"
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(POST_handler, { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST" });
+export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(
+  POST_handler,
+  { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST", requireCsrf: false }
+);

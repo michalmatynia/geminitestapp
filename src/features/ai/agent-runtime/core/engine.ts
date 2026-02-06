@@ -1,49 +1,52 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
-import { randomUUID } from "crypto";
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
-import { validateAndAddAgentLongTermMemory } from "@/features/ai/agent-runtime/memory";
-import { runAgentTool } from "@/features/ai/agent-runtime/tools";
+import { randomUUID } from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
+
+import { Prisma } from '@prisma/client';
+
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import {
+  DEFAULT_OLLAMA_MODEL,
+  DEBUG_CHATBOT,
+} from '@/features/ai/agent-runtime/core/config';
+import { reminderList } from '@/features/ai/agent-runtime/core/utils';
+import { prepareRunContext } from '@/features/ai/agent-runtime/execution/context';
+import { finalizeAgentRun } from '@/features/ai/agent-runtime/execution/finalize';
+import { initializePlanState } from '@/features/ai/agent-runtime/execution/plan';
+import { runPlanStepLoop } from '@/features/ai/agent-runtime/execution/step-runner';
+import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
+import {
+  buildCheckpointState,
+  parseCheckpoint,
+} from '@/features/ai/agent-runtime/memory/checkpoint';
+import {
+  appendTaskTypeToPrompt,
+  decideNextAction,
+} from '@/features/ai/agent-runtime/planning/utils';
+import { runAgentTool } from '@/features/ai/agent-runtime/tools';
 import {
   launchBrowser,
   createBrowserContext,
-} from "@/features/ai/agent-runtime/tools/playwright/browser";
-import type { Browser, BrowserContext } from "playwright";
-import path from "path";
-import { promises as fs } from "fs";
+} from '@/features/ai/agent-runtime/tools/playwright/browser';
 import type {
   AgentDecision,
   PlanStep,
   PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
-import {
-  DEFAULT_OLLAMA_MODEL,
-  DEBUG_CHATBOT,
-} from "@/features/ai/agent-runtime/core/config";
-import { reminderList } from "@/features/ai/agent-runtime/core/utils";
-import {
-  appendTaskTypeToPrompt,
-  decideNextAction,
-} from "@/features/ai/agent-runtime/planning/utils";
-import {
-  buildCheckpointState,
-  parseCheckpoint,
-} from "@/features/ai/agent-runtime/memory/checkpoint";
-import { prepareRunContext } from "@/features/ai/agent-runtime/execution/context";
-import { initializePlanState } from "@/features/ai/agent-runtime/execution/plan";
-import { runPlanStepLoop } from "@/features/ai/agent-runtime/execution/step-runner";
-import { finalizeAgentRun } from "@/features/ai/agent-runtime/execution/finalize";
-import { ErrorSystem } from "@/features/observability/server";
+} from '@/features/ai/agent-runtime/types/agent';
+import { ErrorSystem } from '@/features/observability/server';
+import prisma from '@/shared/lib/db/prisma';
+
+import type { Browser, BrowserContext } from 'playwright';
 
 export async function runAgentControlLoop(runId: string): Promise<void> {
   let sharedBrowser: Browser | null = null;
   let sharedContext: BrowserContext | null = null;
   try {
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       if (DEBUG_CHATBOT) {
-        console.warn("[chatbot][agent][engine] Agent tables not initialized.");
+        console.warn('[chatbot][agent][engine] Agent tables not initialized.');
       }
       return;
     }
@@ -54,20 +57,20 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
 
     if (!run) {
       if (DEBUG_CHATBOT) {
-        console.warn("[chatbot][agent][engine] Run not found", { runId });
+        console.warn('[chatbot][agent][engine] Run not found', { runId });
       }
       return;
     }
 
     sharedBrowser = await launchBrowser(
-      run.agentBrowser || "chromium",
+      run.agentBrowser || 'chromium',
       run.runHeadless ?? true
     );
-    const runDir = path.join(process.cwd(), "tmp", "chatbot-agent", runId);
+    const runDir = path.join(process.cwd(), 'tmp', 'chatbot-agent', runId);
     await fs.mkdir(runDir, { recursive: true });
     sharedContext = await createBrowserContext(sharedBrowser, runDir);
 
-    await logAgentAudit(run.id, "info", "Agent loop started.");
+    await logAgentAudit(run.id, 'info', 'Agent loop started.');
     const {
       memoryKey,
       memoryContext: initialMemoryContext,
@@ -90,7 +93,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     });
     let memoryContext = initialMemoryContext;
     let planSteps: PlanStep[] = [];
-    let taskType: PlannerMeta["taskType"] | null = null;
+    let taskType: PlannerMeta['taskType'] | null = null;
     let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
     let stepIndex = 0;
     const checkpoint = parseCheckpoint(run.planState);
@@ -115,14 +118,14 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       memorySummarizationModel,
     }));
 
-    await logAgentAudit(run.id, "info", "Decision made.", decision);
+    await logAgentAudit(run.id, 'info', 'Decision made.', decision);
 
-    if (decision.action === "tool") {
-      await logAgentAudit(run.id, "warning", "Tool execution queued.", {
+    if (decision.action === 'tool') {
+      await logAgentAudit(run.id, 'warning', 'Tool execution queued.', {
         toolName: decision.toolName,
         reason: decision.reason,
       });
-      await logAgentAudit(run.id, "info", "Playwright tool starting.");
+      await logAgentAudit(run.id, 'info', 'Playwright tool starting.');
 
       let overallOk = true;
       let lastError: string | null = null;
@@ -167,7 +170,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         await prisma.chatbotAgentRun.update({
           where: { id: run.id },
           data: {
-            status: "waiting_human",
+            status: 'waiting_human',
             requiresHumanIntervention: true,
             activeStepId: planSteps[stepIndex]?.id ?? null,
             planState: buildCheckpointState({
@@ -187,8 +190,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             },
           },
         });
-        await logAgentAudit(run.id, "warning", "Waiting for human input.", {
-          result: "waiting_human",
+        await logAgentAudit(run.id, 'warning', 'Waiting for human input.', {
+          result: 'waiting_human',
           error: lastError,
         });
         return;
@@ -196,14 +199,14 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
 
       if (planSteps.length === 0) {
         if (!sharedBrowser || !sharedContext) {
-          throw new Error("Browser context is not available.");
+          throw new Error('Browser context is not available.');
         }
         const toolResult = await runAgentTool(
           {
-            name: "playwright",
+            name: 'playwright',
             input: {
               prompt: appendTaskTypeToPrompt(run.prompt, taskType),
-              browser: run.agentBrowser || "chromium",
+              browser: run.agentBrowser || 'chromium',
               runId: run.id,
               runHeadless: run.runHeadless,
             },
@@ -212,7 +215,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           sharedContext
         );
         overallOk = toolResult.ok;
-        lastError = toolResult.ok ? null : toolResult.error || "Tool failed.";
+        lastError = toolResult.ok ? null : toolResult.error || 'Tool failed.';
       }
 
       const { verificationContext, verification, improvementReview } =
@@ -237,29 +240,29 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           content: [
             `Self-improvement review: ${improvementReview.summary}`,
             improvementReview.mistakes.length
-              ? reminderList("Mistakes", improvementReview.mistakes)
+              ? reminderList('Mistakes', improvementReview.mistakes)
               : null,
             improvementReview.improvements.length
-              ? reminderList("Improvements", improvementReview.improvements)
+              ? reminderList('Improvements', improvementReview.improvements)
               : null,
             improvementReview.guardrails.length
-              ? reminderList("Guardrails", improvementReview.guardrails)
+              ? reminderList('Guardrails', improvementReview.guardrails)
               : null,
             improvementReview.toolAdjustments.length
               ? reminderList(
-                  "Tool adjustments",
-                  improvementReview.toolAdjustments
-                )
+                'Tool adjustments',
+                improvementReview.toolAdjustments
+              )
               : null,
           ]
             .filter(Boolean)
-            .join("\n"),
+            .join('\n'),
           summary: improvementReview.summary,
-          tags: ["self-improvement", overallOk ? "completed" : "failed"],
+          tags: ['self-improvement', overallOk ? 'completed' : 'failed'],
           metadata: {
             prompt: run.prompt,
             taskType,
-            status: overallOk ? "completed" : "failed",
+            status: overallOk ? 'completed' : 'failed',
             verification: verification ?? null,
             mistakes: improvementReview.mistakes,
             improvements: improvementReview.improvements,
@@ -273,12 +276,12 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           prompt: run.prompt,
         });
         if (memoryResult?.skipped) {
-          await logAgentAudit(run.id, "warning", "Long-term memory rejected.", {
-            type: "memory-validation",
+          await logAgentAudit(run.id, 'warning', 'Long-term memory rejected.', {
+            type: 'memory-validation',
             model: memoryResult.validation.model,
             issues: memoryResult.validation.issues,
             reason: memoryResult.validation.reason,
-            scope: "self-improvement",
+            scope: 'self-improvement',
           });
         }
       }
@@ -289,15 +292,15 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           extractedCount?: number;
           items?: string[];
         } | null = null;
-        if ("agentAuditLog" in prisma) {
+        if ('agentAuditLog' in prisma) {
           const latestExtraction = await prisma.agentAuditLog.findFirst({
             where: {
               runId: run.id,
               message: {
-                in: ["Extracted product names.", "Extracted emails."],
+                in: ['Extracted product names.', 'Extracted emails.'],
               },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
             select: { metadata: true },
           });
           if (latestExtraction?.metadata) {
@@ -308,7 +311,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             };
             extractionSummary = {
               ...(metadata.extractionType && { extractionType: metadata.extractionType }),
-              ...(typeof metadata.extractedCount === "number" && {
+              ...(typeof metadata.extractedCount === 'number' && {
                 extractedCount: metadata.extractedCount,
               }),
               ...(Array.isArray(metadata.items) && {
@@ -325,7 +328,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         }));
         const summaryLines = [
           `Task: ${run.prompt}`,
-          `Status: ${overallOk ? "completed" : "failed"}`,
+          `Status: ${overallOk ? 'completed' : 'failed'}`,
           taskType ? `Task type: ${taskType}` : null,
           finalUrl ? `URL: ${finalUrl}` : null,
           verification?.verdict
@@ -335,7 +338,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             ? `Extraction: ${extractionSummary.extractionType} (${extractionSummary.extractedCount ?? 0})`
             : null,
         ].filter(Boolean);
-        const summary = summaryLines.join(" · ");
+        const summary = summaryLines.join(' · ');
         const runDetails = {
           id: run.id,
           prompt: run.prompt,
@@ -344,7 +347,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           searchProvider: run.searchProvider,
           agentBrowser: run.agentBrowser,
           runHeadless: run.runHeadless,
-          status: overallOk ? "completed" : "failed",
+          status: overallOk ? 'completed' : 'failed',
           requiresHumanIntervention: run.requiresHumanIntervention,
           errorMessage: run.errorMessage,
           memoryKey: run.memoryKey,
@@ -361,35 +364,35 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           runId: run.id,
           content: [
             summary,
-            "Steps:",
+            'Steps:',
             ...stepSummary.map(
               (step: { title: string; status: string; phase: string | null; priority: number | null }, index: number) =>
                 `${index + 1}. ${step.title} (${step.status}${
-                  step.phase ? `, ${step.phase}` : ""
+                  step.phase ? `, ${step.phase}` : ''
                 })`
             ),
             verification?.evidence?.length
-              ? `Evidence: ${verification.evidence.join(" | ")}`
+              ? `Evidence: ${verification.evidence.join(' | ')}`
               : null,
             verification?.missing?.length
-              ? `Missing: ${verification.missing.join(" | ")}`
+              ? `Missing: ${verification.missing.join(' | ')}`
               : null,
             verification?.followUp
               ? `Follow-up: ${verification.followUp}`
               : null,
             extractionSummary?.items?.length
-              ? `Sample items: ${extractionSummary.items.join(" | ")}`
+              ? `Sample items: ${extractionSummary.items.join(' | ')}`
               : null,
           ]
             .filter(Boolean)
-            .join("\n"),
+            .join('\n'),
           summary,
-          tags: ["agent-run", overallOk ? "completed" : "failed"],
+          tags: ['agent-run', overallOk ? 'completed' : 'failed'],
           metadata: {
             run: runDetails,
             prompt: run.prompt,
             taskType,
-            status: overallOk ? "completed" : "failed",
+            status: overallOk ? 'completed' : 'failed',
             url: finalUrl,
             runId: run.id,
             steps: stepSummary,
@@ -402,43 +405,43 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           prompt: run.prompt,
         });
         if (memoryResult?.skipped) {
-          await logAgentAudit(run.id, "warning", "Long-term memory rejected.", {
-            type: "memory-validation",
+          await logAgentAudit(run.id, 'warning', 'Long-term memory rejected.', {
+            type: 'memory-validation',
             model: memoryResult.validation.model,
             issues: memoryResult.validation.issues,
             reason: memoryResult.validation.reason,
-            scope: "run-summary",
+            scope: 'run-summary',
           });
         }
       }
       await logAgentAudit(
         run.id,
-        overallOk ? "info" : "error",
-        "Playwright tool finished.",
+        overallOk ? 'info' : 'error',
+        'Playwright tool finished.',
         {
-          result: overallOk ? "completed" : "failed",
+          result: overallOk ? 'completed' : 'failed',
           error: lastError,
         }
       );
       return;
     }
 
-    if (decision.action === "respond") {
+    if (decision.action === 'respond') {
       if (planSteps.length > 0) {
         planSteps = planSteps.map((step: PlanStep) => ({
           ...step,
-          status: "completed",
+          status: 'completed',
         }));
-        await logAgentAudit(run.id, "info", "Plan updated.", {
-          type: "plan-update",
+        await logAgentAudit(run.id, 'info', 'Plan updated.', {
+          type: 'plan-update',
           steps: planSteps,
-          result: "completed",
+          result: 'completed',
         });
       }
       await prisma.chatbotAgentRun.update({
         where: { id: run.id },
         data: {
-          status: "completed",
+          status: 'completed',
           finishedAt: new Date(),
           activeStepId: null,
           planState: buildCheckpointState({
@@ -462,7 +465,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     await prisma.chatbotAgentRun.update({
       where: { id: run.id },
       data: {
-        status: "waiting_human",
+        status: 'waiting_human',
         requiresHumanIntervention: true,
         finishedAt: new Date(),
         activeStepId: planSteps[stepIndex]?.id ?? null,
@@ -484,21 +487,21 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     });
   } catch (error) {
     const errorId = randomUUID();
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
     
     // Use centralized error system
     await ErrorSystem.captureException(error, {
-      service: "agent-engine",
+      service: 'agent-engine',
       runId,
       errorId,
     });
 
     try {
-      if ("chatbotAgentRun" in prisma) {
+      if ('chatbotAgentRun' in prisma) {
         await prisma.chatbotAgentRun.update({
           where: { id: runId },
           data: {
-            status: "failed",
+            status: 'failed',
             errorMessage: message,
             finishedAt: new Date(),
             activeStepId: null,
@@ -511,12 +514,23 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         });
       }
     } catch (innerError) {
-      if (DEBUG_CHATBOT) {
-        console.error("[chatbot][agent][engine] Failed to persist error", {
-          runId,
-          errorId,
-          innerError,
+      try {
+        const { ErrorSystem } = await import('@/features/observability/services/error-system');
+        void ErrorSystem.captureException(innerError, { 
+          service: 'agent-engine', 
+          action: 'persistError',
+          targetRunId: runId,
+          originalErrorId: errorId
         });
+      } catch (logError) {
+        if (DEBUG_CHATBOT) {
+          console.error('[chatbot][agent][engine] Failed to persist error (and logging failed)', {
+            runId,
+            errorId,
+            innerError,
+            logError
+          });
+        }
       }
     }
   } finally {

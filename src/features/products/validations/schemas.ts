@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Base validation helpers
 const trimmedString = z.string().trim();
@@ -14,13 +14,13 @@ function tryParseJson(value: string): unknown {
 }
 
 function jsonToValue(value: unknown): unknown {
-  if (typeof value !== "string") return value;
+  if (typeof value !== 'string') return value;
   const trimmed = value.trim();
   if (!trimmed) return value;
   // We only attempt JSON parse for payloads that look like JSON.
   if (
-    (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
-    (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+    (trimmed.startsWith('{') && trimmed.endsWith('}'))
   ) {
     return tryParseJson(trimmed);
   }
@@ -29,10 +29,10 @@ function jsonToValue(value: unknown): unknown {
 
 const optionalNonNegativeInt = z.preprocess((value: unknown) => {
   if (value === undefined || value === null) return undefined;
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     return Number.isNaN(value) ? undefined : value;
   }
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const trimmed = value.trim();
     if (!trimmed) return undefined;
     const parsed = Number(trimmed);
@@ -44,15 +44,15 @@ const optionalNonNegativeInt = z.preprocess((value: unknown) => {
 // Array validation helpers
 const stringArray = z.preprocess(jsonToValue, z.array(z.string()).default([]));
 const imageUrlArray = stringArray.transform((urls: string[]) => 
-  urls.filter((url: string) => url && !url.startsWith("data:"))
+  urls.filter((url: string) => url && !url.startsWith('data:'))
 );
 const base64Array = stringArray.transform((urls: string[]) => 
-  urls.filter((url: string) => url && url.startsWith("data:"))
+  urls.filter((url: string) => url && url.startsWith('data:'))
 );
 
 // Parameter validation
 const parameterValueSchema = z.object({
-  parameterId: trimmedString.min(1, "Parameter ID is required"),
+  parameterId: trimmedString.min(1, 'Parameter ID is required'),
   value: z.string().nullish(),
 });
 
@@ -101,7 +101,7 @@ const productBaseSchema = z.object({
 
 // Export schemas
 export const productCreateSchema = productBaseSchema.extend({
-  sku: trimmedString.min(1, "SKU is required for new products"),
+  sku: trimmedString.min(1, 'SKU is required for new products'),
 });
 
 export const productUpdateSchema = productBaseSchema.partial();

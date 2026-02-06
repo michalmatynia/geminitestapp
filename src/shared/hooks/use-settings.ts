@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/typedef */
-"use client";
+ 
+'use client';
 
 import {
   useQuery,
@@ -7,40 +7,83 @@ import {
   useQueryClient,
   type UseQueryResult,
   type UseMutationResult,
-} from "@tanstack/react-query";
-import type { SystemSetting } from "@/shared/types/settings";
+} from '@tanstack/react-query';
+
+import {
+  fetchSettingsCached,
+  fetchLiteSettingsCached,
+  invalidateSettingsCache,
+  type SettingsScope,
+} from '@/shared/api/settings-client';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import type { SystemSetting } from '@/shared/types/settings';
 
 export type { SystemSetting };
 
-export function useSettings(): UseQueryResult<SystemSetting[], Error> {
+const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
+  new Map(data.map((item) => [item.key, item.value]));
+
+export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<SystemSetting[], Error> {
+  const scope = options?.scope ?? 'light';
   return useQuery({
-    queryKey: ["settings"],
+    queryKey: ['settings', scope],
     queryFn: async (): Promise<SystemSetting[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return (await res.json()) as SystemSetting[];
+      try {
+        return (await fetchSettingsCached({ scope })) as SystemSetting[];
+      } catch (error) {
+        console.warn('[settings] Failed to fetch settings', error);
+        return [];
+      }
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 1,
   });
 }
 
-export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
+export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
+  const scope = options?.scope ?? 'light';
   return useQuery({
-    queryKey: ["settings"],
+    queryKey: ['settings', scope],
     queryFn: async (): Promise<SystemSetting[]> => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return (await res.json()) as SystemSetting[];
+      try {
+        return (await fetchSettingsCached({ scope })) as SystemSetting[];
+      } catch (error) {
+        console.warn('[settings] Failed to fetch settings', error);
+        return [];
+      }
     },
-    select: (data: SystemSetting[]): Map<string, string> =>
-      new Map(data.map((item) => [item.key, item.value])),
-    staleTime: 0,
-    refetchOnMount: true,
+    select: selectSettingsMap,
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 1,
+  });
+}
+
+export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'lite'],
+    queryFn: async (): Promise<SystemSetting[]> => {
+      try {
+        return (await fetchLiteSettingsCached()) as SystemSetting[];
+      } catch (error) {
+        console.warn('[settings] Failed to fetch lite settings', error);
+        return [];
+      }
+    },
+    select: selectSettingsMap,
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
   });
 }
 
@@ -48,7 +91,7 @@ export function useUpdateSetting(): UseMutationResult<
   SystemSetting,
   Error,
   { key: string; value: string }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -59,16 +102,20 @@ export function useUpdateSetting(): UseMutationResult<
       key: string;
       value: string;
     }): Promise<SystemSetting> => {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        credentials: 'include',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ key, value }),
       });
-      if (!res.ok) throw new Error("Failed to update setting");
+      if (!res.ok) throw new Error('Failed to update setting');
+      invalidateSettingsCache();
       return (await res.json()) as SystemSetting;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["settings"] });
+      void queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'settings',
+      });
     },
   });
 }
@@ -77,7 +124,7 @@ export function useUpdateSettingsBulk(): UseMutationResult<
   Response[],
   Error,
   Array<{ key: string; value: string }>
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -86,20 +133,24 @@ export function useUpdateSettingsBulk(): UseMutationResult<
     ): Promise<Response[]> => {
       const responses = await Promise.all(
         payloads.map((payload) =>
-          fetch("/api/settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          fetch('/api/settings', {
+            method: 'POST',
+            credentials: 'include',
+            headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(payload),
           }),
         ),
       );
       if (responses.some((res) => !res.ok)) {
-        throw new Error("Failed to update settings");
+        throw new Error('Failed to update settings');
       }
+      invalidateSettingsCache();
       return responses;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["settings"] });
+      void queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'settings',
+      });
     },
   });
 }

@@ -1,15 +1,15 @@
-import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import type {
   AgentCheckpoint,
   AgentPlanPreferences,
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
+} from '@/features/ai/agent-runtime/types/agent';
+import prisma from '@/shared/lib/db/prisma';
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
-  if (!payload || typeof payload !== "object") return null;
+  if (!payload || typeof payload !== 'object') return null;
   const raw = payload as Partial<AgentCheckpoint>;
   if (!Array.isArray(raw.steps)) return null;
   return {
@@ -20,15 +20,15 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
     resumeRequestedAt: raw.resumeRequestedAt ?? null,
     resumeProcessedAt: raw.resumeProcessedAt ?? null,
     approvalRequestedStepId:
-      typeof raw.approvalRequestedStepId === "string"
+      typeof raw.approvalRequestedStepId === 'string'
         ? raw.approvalRequestedStepId
         : null,
     approvalGrantedStepId:
-      typeof raw.approvalGrantedStepId === "string"
+      typeof raw.approvalGrantedStepId === 'string'
         ? raw.approvalGrantedStepId
         : null,
     checkpointBrief:
-      typeof raw.checkpointBrief === "string" ? raw.checkpointBrief : null,
+      typeof raw.checkpointBrief === 'string' ? raw.checkpointBrief : null,
     checkpointNextActions: Array.isArray(raw.checkpointNextActions)
       ? raw.checkpointNextActions
       : null,
@@ -36,13 +36,13 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
       ? raw.checkpointRisks
       : null,
     checkpointStepId:
-      typeof raw.checkpointStepId === "string" ? raw.checkpointStepId : null,
+      typeof raw.checkpointStepId === 'string' ? raw.checkpointStepId : null,
     checkpointCreatedAt:
-      typeof raw.checkpointCreatedAt === "string"
+      typeof raw.checkpointCreatedAt === 'string'
         ? raw.checkpointCreatedAt
         : null,
     summaryCheckpoint:
-      typeof raw.summaryCheckpoint === "number" ? raw.summaryCheckpoint : null,
+      typeof raw.summaryCheckpoint === 'number' ? raw.summaryCheckpoint : null,
     settings: raw.settings ?? null,
     preferences: raw.preferences ?? null,
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
@@ -53,7 +53,7 @@ export function buildCheckpointState(payload: {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
-  taskType?: PlannerMeta["taskType"] | null;
+  taskType?: PlannerMeta['taskType'] | null;
   resumeRequestedAt?: string | null;
   resumeProcessedAt?: string | null;
   approvalRequestedStepId?: string | null;
@@ -93,7 +93,7 @@ export async function persistCheckpoint(payload: {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
-  taskType?: PlannerMeta["taskType"] | null;
+  taskType?: PlannerMeta['taskType'] | null;
   resumeRequestedAt?: string | null;
   resumeProcessedAt?: string | null;
   approvalRequestedStepId?: string | null;
@@ -115,8 +115,8 @@ export async function persistCheckpoint(payload: {
       checkpointedAt: new Date(),
     },
   });
-  await logAgentAudit(payload.runId, "info", "Checkpoint saved.", {
-    type: "checkpoint-save",
+  await logAgentAudit(payload.runId, 'info', 'Checkpoint saved.', {
+    type: 'checkpoint-save',
     activeStepId: payload.activeStepId,
     stepCount: payload.steps.length,
   });

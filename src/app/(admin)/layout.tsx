@@ -1,7 +1,12 @@
-import { JSX } from "react";
-import { AdminLayout } from "@/features/admin";
-import { auth } from "@/features/auth/server";
-import { getUserPreferences } from "@/features/auth/server";
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { JSX } from 'react';
+
+import { AdminLayout } from '@/features/admin/layout/AdminLayout';
+import { auth } from '@/features/auth/server';
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
+
+export const dynamic = 'force-dynamic';
 
 export default async function Layout({
   children,
@@ -9,13 +14,28 @@ export default async function Layout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   let initialMenuCollapsed = false;
+  let session = null;
   try {
-    const session = await auth();
-    const userId = session?.user?.id ?? "default-user";
-    const preferences = await getUserPreferences(userId);
-    initialMenuCollapsed = Boolean(preferences.adminMenuCollapsed);
+    session = await auth();
+    if (!session?.user) {
+      redirect('/auth/signin');
+    }
+    if (session.user.accountDisabled || session.user.accountBanned) {
+      redirect('/auth/signin?error=AccountDisabled');
+    }
+    const cookieStore = await cookies();
+    const cookieValue = cookieStore.get('adminMenuCollapsed')?.value;
+    if (cookieValue === 'true' || cookieValue === '1') {
+      initialMenuCollapsed = true;
+    }
   } catch {
-    initialMenuCollapsed = false;
+    redirect('/auth/signin');
   }
-  return <AdminLayout initialMenuCollapsed={initialMenuCollapsed}>{children}</AdminLayout>;
+  return (
+    <SettingsStoreProvider mode="admin">
+      <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
+        {children}
+      </AdminLayout>
+    </SettingsStoreProvider>
+  );
 }

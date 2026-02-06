@@ -1,14 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
+import { Prisma } from '@prisma/client';
+
+import prisma from '@/shared/lib/db/prisma';
 import type {
   CategoryRecord,
   CategoryWithChildren,
   CategoryCreateInput,
   CategoryUpdateInput,
-} from "@/shared/types/notes";
-import { Prisma } from "@prisma/client";
-import { getOrCreateDefaultNotebook } from "./notebook-impl";
+} from '@/shared/types/notes';
+
+import { getOrCreateDefaultNotebook } from './notebook-impl';
 
 const categoryTreeInclude = {
   notes: {
@@ -34,7 +36,7 @@ export const getAllCategories = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   return prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: [{ sortIndex: "asc" }, { name: "asc" }],
+    orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
   });
 };
 
@@ -51,7 +53,7 @@ export const getCategoryTree = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const categories: CategoryTreeRecord[] = await prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: [{ sortIndex: "asc" }, { name: "asc" }],
+    orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
     include: categoryTreeInclude,
   });
 
@@ -60,11 +62,11 @@ export const getCategoryTree = async (
       .filter((cat: CategoryTreeRecord) => cat.parentId === parentId)
       .map((cat: CategoryTreeRecord): CategoryWithChildren => ({
         ...cat,
-        notes: cat.notes.map((nc: CategoryTreeRecord["notes"][number]) => ({
+        notes: cat.notes.map((nc: CategoryTreeRecord['notes'][number]) => ({
           ...nc.note,
           createdAt: nc.note.createdAt.toISOString(),
           updatedAt: nc.note.updatedAt.toISOString(),
-          tags: nc.note.tags.map((t: CategoryTreeRecord["notes"][number]["note"]["tags"][number]) => ({
+          tags: nc.note.tags.map((t: CategoryTreeRecord['notes'][number]['note']['tags'][number]) => ({
             ...t,
             assignedAt: t.assignedAt,
             tag: {
@@ -73,7 +75,7 @@ export const getCategoryTree = async (
               updatedAt: t.tag.updatedAt.toISOString(),
             },
           })),
-          categories: nc.note.categories.map((c: CategoryTreeRecord["notes"][number]["note"]["categories"][number]) => ({
+          categories: nc.note.categories.map((c: CategoryTreeRecord['notes'][number]['note']['categories'][number]) => ({
             ...c,
             assignedAt: c.assignedAt,
             category: {
@@ -100,7 +102,7 @@ export const createCategory = async (
     where: { notebookId: resolvedNotebookId, parentId },
     _max: { sortIndex: true },
   });
-      const nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
+  const nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
   const createData: Prisma.CategoryCreateInput = {
     name: data.name,
     notebook: { connect: { id: resolvedNotebookId } },
@@ -139,8 +141,8 @@ export const updateCategory = async (
       ...(data.sortIndex !== undefined && data.sortIndex !== null
         ? { sortIndex: data.sortIndex }
         : nextSortIndex !== undefined
-        ? { sortIndex: nextSortIndex }
-        : {}),
+          ? { sortIndex: nextSortIndex }
+          : {}),
       ...(data.parentId !== undefined &&
         (data.parentId
           ? { parent: { connect: { id: data.parentId } } }
@@ -217,7 +219,13 @@ export const deleteCategory = async (
     }
     return true;
   } catch (error) {
-    console.error("[PrismaNoteRepository][deleteCategory] Error:", error);
+    const { logSystemError } = await import('@/features/observability/server');
+    await logSystemError({
+      message: '[PrismaNoteRepository][deleteCategory] Error',
+      error,
+      context: { id, recursive },
+      source: 'note-repository-prisma'
+    });
     return false;
   }
 };

@@ -1,14 +1,19 @@
-"use client";
+'use client';
 
-import { DataTable, StatusBadge } from "@/shared/ui";
-import { useMemo } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, XCircle, Loader2, Trash2, Clock, CheckCircle } from "lucide-react";
-import { Button } from "@/shared/ui";
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { Eye, XCircle, Loader2, Trash2, Clock, CheckCircle } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
 
-export type JobStatus = "pending" | "running" | "completed" | "failed" | "cancelled" | "success" | "listed" | "deleted" | "removed" | "processing" | "in_progress";
+import { DataTable, StatusBadge } from '@/shared/ui';
+import { Button } from '@/shared/ui';
+
+import type { ColumnDef } from '@tanstack/react-table';
+
+
+
+
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
 
 export interface JobRowData {
   id: string;
@@ -36,21 +41,21 @@ interface JobTableProps {
 
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
-    case "pending":
+    case 'pending':
       return <Clock className="size-3" />;
-    case "completed":
-    case "success":
-    case "listed":
+    case 'completed':
+    case 'success':
+    case 'listed':
       return <CheckCircle className="size-3" />;
-    case "deleted":
-    case "removed":
-    case "failed":
-    case "error":
-    case "cancelled":
+    case 'deleted':
+    case 'removed':
+    case 'failed':
+    case 'error':
+    case 'cancelled':
       return <XCircle className="size-3" />;
-    case "processing":
-    case "running":
-    case "in_progress":
+    case 'processing':
+    case 'running':
+    case 'in_progress':
       return <Loader2 className="size-3 animate-spin" />;
     default:
       return <Clock className="size-3" />;
@@ -69,8 +74,8 @@ export function JobTable({
   const columns = useMemo<ColumnDef<JobRowData>[]>(
     () => [
       {
-        accessorKey: "entityName",
-        header: "Entity / Product",
+        accessorKey: 'entityName',
+        header: 'Entity / Product',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
           return (
@@ -95,8 +100,8 @@ export function JobTable({
         },
       },
       {
-        accessorKey: "type",
-        header: "Type / ID",
+        accessorKey: 'type',
+        header: 'Type / ID',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
           return (
@@ -108,8 +113,8 @@ export function JobTable({
         },
       },
       {
-        accessorKey: "status",
-        header: "Status",
+        accessorKey: 'status',
+        header: 'Status',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
           return (
@@ -125,12 +130,12 @@ export function JobTable({
         },
       },
       {
-        accessorKey: "createdAt",
-        header: "Timing",
+        accessorKey: 'createdAt',
+        header: 'Timing',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
           const formatTime = (value: string | Date | null | undefined): string => {
-            if (!value) return "—";
+            if (!value) return '—';
             const date = new Date(value);
             return date.toLocaleTimeString();
           };
@@ -145,7 +150,7 @@ export function JobTable({
         },
       },
       {
-        id: "actions",
+        id: 'actions',
         header: (): React.JSX.Element => <div className="text-right">Actions</div>,
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
@@ -160,7 +165,7 @@ export function JobTable({
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              {onCancel && (job.status === "pending" || job.status === "running") && (
+              {onCancel && (job.status === 'pending' || job.status === 'running') && (
                 <Button
                   variant="ghost"
                   size="icon"

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 
-import { Button } from "@/shared/ui";
-import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { Button } from '@/shared/ui';
 
 type AiDescriptionNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -13,7 +13,7 @@ export function AiDescriptionNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: AiDescriptionNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "ai_description") return null;
+  if (selectedNode.type !== 'ai_description') return null;
 
   const descriptionConfig = selectedNode.config?.description ?? {
     visionOutputEnabled: true,
@@ -28,8 +28,8 @@ export function AiDescriptionNodeConfigSection({
           type="button"
           className={`rounded border px-3 py-1 text-xs ${
             descriptionConfig.visionOutputEnabled
-              ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-muted/50"
+              ? 'text-emerald-200 hover:bg-emerald-500/10'
+              : 'text-gray-300 hover:bg-muted/50'
           }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
@@ -40,7 +40,7 @@ export function AiDescriptionNodeConfigSection({
             })
           }
         >
-          {descriptionConfig.visionOutputEnabled ? "Enabled" : "Disabled"}
+          {descriptionConfig.visionOutputEnabled ? 'Enabled' : 'Disabled'}
         </Button>
       </div>
       <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
@@ -49,8 +49,8 @@ export function AiDescriptionNodeConfigSection({
           type="button"
           className={`rounded border px-3 py-1 text-xs ${
             descriptionConfig.generationOutputEnabled
-              ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-muted/50"
+              ? 'text-emerald-200 hover:bg-emerald-500/10'
+              : 'text-gray-300 hover:bg-muted/50'
           }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
@@ -61,7 +61,7 @@ export function AiDescriptionNodeConfigSection({
             })
           }
         >
-          {descriptionConfig.generationOutputEnabled ? "Enabled" : "Disabled"}
+          {descriptionConfig.generationOutputEnabled ? 'Enabled' : 'Disabled'}
         </Button>
       </div>
     </div>

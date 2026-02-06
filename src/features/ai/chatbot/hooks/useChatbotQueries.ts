@@ -1,7 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import type { ChatSession } from "@/shared/types/chatbot";
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
+
+import type { ChatSession } from '@/shared/types/chatbot';
+
 import {
   chatbotQueryKeys,
   fetchChatbotSessions,
@@ -9,8 +11,9 @@ import {
   fetchChatbotSettings,
   fetchOllamaModels,
   fetchChatbotMemory,
-} from "../api";
-import type { ChatbotSessionListItem } from "../types";
+} from '../api';
+
+import type { ChatbotSessionListItem } from '../types';
 
 /**
  * Query hook for fetching all chatbot sessions
@@ -31,10 +34,10 @@ export function useChatbotSessions(options?: { enabled?: boolean }): UseQueryRes
  */
 export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: [...chatbotQueryKeys.sessions(), "ids", query ?? "all"],
+    queryKey: [...chatbotQueryKeys.sessions(), 'ids', query ?? 'all'],
     queryFn: async (): Promise<string[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
-        scope: "ids",
+        scope: 'ids',
         ...(query ? { query } : {}),
       });
       return data.ids ?? [];
@@ -48,7 +51,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
  */
 export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): UseQueryResult<ChatSession | null> {
   return useQuery({
-    queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : ["chatbot", "session", "none"],
+    queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : ['chatbot', 'session', 'none'],
     queryFn: async () => {
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
@@ -75,9 +78,9 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
   return useQuery({
     queryKey: chatbotQueryKeys.models(),
     queryFn: async (): Promise<string[]> => {
-      const res = await fetch("/api/chatbot");
+      const res = await fetch('/api/chatbot');
       if (!res.ok) {
-        throw new Error("Failed to fetch models");
+        throw new Error('Failed to fetch models');
       }
       const data = (await res.json()) as { models?: string[] };
       return data.models ?? [];
@@ -92,7 +95,7 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
  */
 export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: [...chatbotQueryKeys.models(), "ollama", baseUrl],
+    queryKey: [...chatbotQueryKeys.models(), 'ollama', baseUrl],
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
     enabled: (options?.enabled ?? true) && !!baseUrl,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -105,7 +108,7 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
 export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): UseQueryResult<unknown> {
   return useQuery({
     queryKey: chatbotQueryKeys.memory(query),
-    queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ""),
+    queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ''),
     enabled: options?.enabled ?? true,
   });
 }

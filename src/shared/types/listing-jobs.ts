@@ -1,2 +1,2 @@
-// Legacy compatibility - re-export from api/listing-jobs
-export * from './api/listing-jobs';
+// Legacy compatibility - re-export from domain/listing-jobs
+export * from './domain/listing-jobs';

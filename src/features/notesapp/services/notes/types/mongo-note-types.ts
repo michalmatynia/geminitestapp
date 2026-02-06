@@ -1,4 +1,4 @@
-import type { TagRecord, CategoryRecord, NotebookRecord, NoteFileRecord, ThemeRecord, NoteWithRelations } from "@/shared/types/notes";
+import type { TagRecord, CategoryRecord, NotebookRecord, NoteFileRecord, ThemeRecord, NoteWithRelations } from '@/shared/types/notes';
 
 export type NoteTagEmbedded = {
   noteId: string;
@@ -34,7 +34,7 @@ export type NoteRelationToEmbedded = {
   sourceNote: RelatedNoteEmbedded;
 };
 
-export type NoteDocument = Omit<NoteWithRelations, "tags" | "categories" | "relationsFrom" | "relationsTo"> & {
+export type NoteDocument = Omit<NoteWithRelations, 'tags' | 'categories' | 'relationsFrom' | 'relationsTo'> & {
   _id: string;
   tags: NoteTagEmbedded[];
   categories: NoteCategoryEmbedded[];
@@ -42,7 +42,7 @@ export type NoteDocument = Omit<NoteWithRelations, "tags" | "categories" | "rela
   relationsTo?: NoteRelationToEmbedded[];
 };
 
-import { MongoDocument } from "@/shared/types/base-types";
+import { MongoDocument } from '@/shared/types/base-types';
 
 export type TagDocument = MongoDocument<TagRecord>;
 export type CategoryDocument = MongoDocument<CategoryRecord>;

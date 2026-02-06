@@ -1,6 +1,6 @@
-import type { Entity } from '@/shared/types/base-types';
+import { DtoBase, NamedDto } from '../types/base';
 
-export interface AuthUserDto extends Entity {
+export interface AuthUserDto extends DtoBase {
   name: string | null;
   email: string | null;
   image: string | null;
@@ -8,7 +8,7 @@ export interface AuthUserDto extends Entity {
   provider: string;
 }
 
-export interface AuthUserAccessDto extends Entity {
+export interface AuthUserAccessDto extends DtoBase {
   userId: string;
   permissions: string[];
   roles: string[];
@@ -33,8 +33,7 @@ export interface AuthPermissionDto {
   resource: string;
 }
 
-export interface AuthRoleDto {
-  name: string;
+export interface AuthRoleDto extends NamedDto {
   permissions: AuthPermissionDto[];
 }
 
@@ -59,4 +58,63 @@ export interface RegisterDto {
   name: string;
   email: string;
   password: string;
+}
+
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
+export interface UserPreferencesDto extends DtoBase {
+  userId: string;
+  productListNameLocale: 'name_en' | 'name_pl' | 'name_de';
+  productListCatalogFilter: string;
+  productListCurrencyCode: string | null;
+  productListPageSize: number;
+  productListThumbnailSource: 'file' | 'link' | 'base64';
+  aiPathsActivePathId: string | null;
+  aiPathsExpandedGroups: string[];
+  aiPathsPaletteCollapsed: boolean;
+  aiPathsPathIndex: JsonValue | null;
+  aiPathsPathConfigs: JsonValue | null;
+  adminMenuCollapsed: boolean;
+  adminMenuFavorites: string[];
+  adminMenuSectionColors: Record<string, string>;
+  adminMenuCustomEnabled: boolean;
+  adminMenuCustomNav: JsonValue | null;
+  cmsLastPageId: string | null;
+  cmsActiveDomainId: string | null;
+  cmsThemeOpenSections: string[];
+  cmsThemeLogoWidth: number | null;
+  cmsThemeLogoUrl: string | null;
+  cmsPreviewEnabled: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor: boolean | null;
+}
+
+export interface UpdateUserPreferencesDto {
+  productListNameLocale?: 'name_en' | 'name_pl' | 'name_de';
+  productListCatalogFilter?: string;
+  productListCurrencyCode?: string | null;
+  productListPageSize?: number;
+  productListThumbnailSource?: 'file' | 'link' | 'base64';
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[];
+  aiPathsPaletteCollapsed?: boolean;
+  aiPathsPathIndex?: JsonValue | null;
+  aiPathsPathConfigs?: JsonValue | null;
+  adminMenuCollapsed?: boolean;
+  adminMenuFavorites?: string[];
+  adminMenuSectionColors?: Record<string, string>;
+  adminMenuCustomEnabled?: boolean;
+  adminMenuCustomNav?: JsonValue | null;
+  cmsLastPageId?: string | null;
+  cmsActiveDomainId?: string | null;
+  cmsThemeOpenSections?: string[];
+  cmsThemeLogoWidth?: number | null;
+  cmsThemeLogoUrl?: string | null;
+  cmsPreviewEnabled?: boolean | null;
+  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
 }

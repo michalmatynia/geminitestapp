@@ -21,7 +21,7 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
 const requestSchema = z
   .object({
     method: z.string().trim().min(1),
-    parameters: z.record(z.string(), z["unknown"]()).optional(),
+    parameters: z.record(z.string(), z["unknown"]()).optional()
   })
   .passthrough();
 
@@ -36,7 +36,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       throw badRequestError("Integration id and connection id are required");
     }
     const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "integrations.base.request.POST",
+      logPrefix: "integrations.base.request.POST"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -90,7 +90,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
             : undefined;
       const products = await fetchBaseProducts(baseToken, inventoryId, limit);
       return NextResponse.json({
-        data: { products, count: products.length, inventoryId },
+        data: { products, count: products.length, inventoryId }
       });
     }
 
@@ -117,7 +117,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
       const payload = await callBaseApi(baseToken, "getInventoryProductsData", {
         inventory_id: inventoryId,
-        products: [productId],
+        products: [productId]
       });
       const rawProducts = (payload as { products?: unknown }).products;
       let product: unknown = null;
@@ -144,8 +144,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         data: {
           product: product ?? null,
           inventoryId,
-          productId,
-        },
+          productId
+        }
       });
     }
 
@@ -184,9 +184,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return createErrorResponse(error, {
       request: req,
       source: "integrations.[id].connections.[connectionId].base.request.POST",
-      fallbackMessage: message,
+      fallbackMessage: message
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].base.request.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].base.request.POST", requireCsrf: false }
+);

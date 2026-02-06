@@ -1,13 +1,13 @@
-import "server-only";
+import 'server-only';
 
-import crypto from "crypto";
+import crypto from 'crypto';
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 const base32Encode = (buffer: Buffer): string => {
   let bits = 0;
   let value = 0;
-  let output = "";
+  let output = '';
   for (const byte of buffer) {
     value = (value << 8) | byte;
     bits += 8;
@@ -23,7 +23,7 @@ const base32Encode = (buffer: Buffer): string => {
 };
 
 const base32Decode = (input: string): Buffer => {
-  const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, "");
+  const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, '');
   let bits = 0;
   let value = 0;
   const output: number[] = [];
@@ -60,14 +60,14 @@ const generateTotp = (secret: string, timestamp: number, digits: number = 6, ste
   const buffer = Buffer.alloc(8);
   buffer.writeBigInt64BE(BigInt(counter));
   const key = base32Decode(secret);
-  const hmac = crypto.createHmac("sha1", key).update(buffer).digest();
+  const hmac = crypto.createHmac('sha1', key).update(buffer).digest();
   const offset = hmac[hmac.length - 1]! & 0x0f;
   const code =
     ((hmac[offset]! & 0x7f) << 24) |
     ((hmac[offset + 1]! & 0xff) << 16) |
     ((hmac[offset + 2]! & 0xff) << 8) |
     (hmac[offset + 3]! & 0xff);
-  const otp = (code % 10 ** digits).toString().padStart(digits, "0");
+  const otp = (code % 10 ** digits).toString().padStart(digits, '0');
   return otp;
 };
 
@@ -76,7 +76,7 @@ export const verifyTotpToken = (
   token: string,
   window: number = 1
 ): boolean => {
-  const clean = token.replace(/\s+/g, "");
+  const clean = token.replace(/\s+/g, '');
   const now = Date.now();
   for (let offset = -window; offset <= window; offset += 1) {
     const ts = now + offset * 30 * 1000;
@@ -89,15 +89,15 @@ export const verifyTotpToken = (
 
 export const generateRecoveryCodes = (count: number = 8): string[] => {
   return Array.from({ length: count }, (): string => {
-    const raw = crypto.randomBytes(6).toString("hex").toUpperCase();
+    const raw = crypto.randomBytes(6).toString('hex').toUpperCase();
     return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
   });
 };
 
 export const normalizeRecoveryCode = (code: string): string =>
-  code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  code.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 export const hashRecoveryCode = (code: string): string => {
   const normalized = normalizeRecoveryCode(code);
-  return crypto.createHash("sha256").update(normalized).digest("hex");
+  return crypto.createHash('sha256').update(normalized).digest('hex');
 };

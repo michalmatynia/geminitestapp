@@ -1,20 +1,10 @@
-"use client";
-import { AppModal, ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog } from "@/shared/ui";
-import React, { useMemo, useState } from "react";
-import Link from "next/link";
+'use client';
+import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from 'lucide-react';
+import Link from 'next/link';
+import React, { useMemo, useState } from 'react';
 
-import type { ProductWithImages } from "@/features/products/types";
-import type { ProductListingWithDetails, ProductListingExportEvent, IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
-import { SyncDirection } from "@/features/products/types";
-import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
-import { ExportLogViewer } from "./ExportLogViewer";
-import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
-import type { ImageRetryPreset, ImageTransformOptions } from "@/features/data-import-export";
-import { useImageRetryPresets } from "./useImageRetryPresets";
-
-import { isImageExportError } from "./utils";
-import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
-import { useProductListings } from "@/features/integrations/hooks/useListingQueries";
+import type { ImageRetryPreset, ImageTransformOptions } from '@/features/data-import-export';
+import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
   useDeleteFromBaseMutation,
   usePurgeListingMutation,
@@ -22,7 +12,36 @@ import {
   useExportToBaseMutation,
   useSyncBaseImagesMutation,
   type ExportToBaseVariables,
-} from "@/features/integrations/hooks/useProductListingMutations";
+} from '@/features/integrations/hooks/useProductListingMutations';
+import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import type { ProductListingWithDetails, ProductListingExportEvent } from '@/features/integrations/types/listings';
+import { logClientError } from '@/features/observability';
+import type { ProductWithImages } from '@/features/products/types';
+import { SyncDirection } from '@/features/products/types';
+import {
+  SharedModal,
+  Button,
+  Input,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Label,
+  useToast,
+  StatusBadge,
+  ConfirmDialog,
+  Alert,
+  SectionPanel,
+  IntegrationSelector,
+  ImageRetryDropdown,
+} from '@/shared/ui';
+
+
+import { ExportLogViewer } from './ExportLogViewer';
+import { useIntegrationSelection } from './hooks/useIntegrationSelection';
+import { useImageRetryPresets } from './useImageRetryPresets';
+import { isImageExportError } from './utils';
+
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -61,7 +80,6 @@ export function ProductListingsModal({
     loading: _loadingIntegrations,
     selectedIntegrationId,
     selectedConnectionId,
-    selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useIntegrationSelection();
@@ -74,7 +92,7 @@ export function ProductListingsModal({
   const syncBaseImagesMutation = useSyncBaseImagesMutation(product.id);
 
   const productName: string =
-    product.name_en || product.name_pl || product.name_de || "Unnamed Product";
+    product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
 
   const listingsQuery = useProductListings(product.id);
 
@@ -84,7 +102,7 @@ export function ProductListingsModal({
   const combinedError: string | null = useMemo((): string | null => {
     if (error) return error;
     if (!listingsError) return null;
-    return listingsError instanceof Error ? listingsError.message : "Failed to load listings";
+    return listingsError instanceof Error ? listingsError.message : 'Failed to load listings';
   }, [error, listingsError]);
 
   const filteredListings: ProductListingWithDetails[] = filterIntegrationSlug
@@ -94,35 +112,35 @@ export function ProductListingsModal({
     return (
       filteredListings.find(
         (listing: ProductListingWithDetails): boolean =>
-          ["baselinker", "base-com"].includes(listing.integration.slug)
+          ['baselinker', 'base-com'].includes(listing.integration.slug)
       ) ?? null
     );
   }, [filteredListings]);
   const statusTargetLabel: string =
-    filterIntegrationSlug === "baselinker"
-      ? "Base.com"
-      : filterIntegrationSlug ?? "integration";
+    filterIntegrationSlug === 'baselinker'
+      ? 'Base.com'
+      : filterIntegrationSlug ?? 'integration';
 
   const formatTimestamp = (value: string | Date | null | undefined): string => {
-    if (!value) return "—";
+    if (!value) return '—';
     const date: Date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) return '—';
     return date.toLocaleString();
   };
 
   const formatListValue = (value: string | null | undefined): string =>
-    value ? value : "—";
+    value ? value : '—';
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
-    if (product.sku) fields.push("SKU");
-    if (product.ean) fields.push("EAN");
-    if (product.weight !== null && product.weight !== undefined) fields.push("Weight");
-    if (product.name_en) fields.push("Name");
-    if (product.description_en) fields.push("Description");
-    if (product.price !== null && product.price !== undefined) fields.push("Price");
-    if (product.stock !== null && product.stock !== undefined) fields.push("Stock");
-    return fields.length > 0 ? fields.join(", ") : "No exportable fields detected";
+    if (product.sku) fields.push('SKU');
+    if (product.ean) fields.push('EAN');
+    if (product.weight !== null && product.weight !== undefined) fields.push('Weight');
+    if (product.name_en) fields.push('Name');
+    if (product.description_en) fields.push('Description');
+    if (product.price !== null && product.price !== undefined) fields.push('Price');
+    if (product.stock !== null && product.stock !== undefined) fields.push('Stock');
+    return fields.length > 0 ? fields.join(', ') : 'No exportable fields detected';
   };
 
   const getLatestTemplateId = (listing: ProductListingWithDetails): string | null => {
@@ -140,146 +158,106 @@ export function ProductListingsModal({
   const getSyncFields = (): { name: string; value: string; hasValue: boolean; syncDirection: SyncDirection; description: string }[] => {
     return [
       {
-        name: "SKU",
-        value: product.sku || "—",
+        name: 'SKU',
+        value: product.sku || '—',
         hasValue: !!product.sku,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Product identifier",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Product identifier',
       },
       {
-        name: "Name",
-        value: product.name_en || "—",
+        name: 'Name',
+        value: product.name_en || '—',
         hasValue: !!product.name_en,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Product name (English)",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Product name (English)',
       },
       {
-        name: "Description",
-        value: product.description_en ? `${product.description_en.slice(0, 50)}...` : "—",
+        name: 'Description',
+        value: product.description_en ? `${product.description_en.slice(0, 50)}...` : '—',
         hasValue: !!product.description_en,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Product description (English)",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Product description (English)',
       },
       {
-        name: "Price",
-        value: product.price !== null && product.price !== undefined ? `${product.price.toFixed(2)}` : "—",
+        name: 'Price',
+        value: product.price !== null && product.price !== undefined ? `${product.price.toFixed(2)}` : '—',
         hasValue: product.price !== null && product.price !== undefined,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Base price",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Base price',
       },
       {
-        name: "Stock",
-        value: product.stock !== null && product.stock !== undefined ? `${product.stock}` : "—",
+        name: 'Stock',
+        value: product.stock !== null && product.stock !== undefined ? `${product.stock}` : '—',
         hasValue: product.stock !== null && product.stock !== undefined,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Inventory quantity",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Inventory quantity',
       },
       {
-        name: "EAN",
-        value: product.ean || "—",
+        name: 'EAN',
+        value: product.ean || '—',
         hasValue: !!product.ean,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Barcode / EAN",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Barcode / EAN',
       },
       {
-        name: "Weight",
-        value: product.weight !== null && product.weight !== undefined ? `${product.weight}g` : "—",
+        name: 'Weight',
+        value: product.weight !== null && product.weight !== undefined ? `${product.weight}g` : '—',
         hasValue: product.weight !== null && product.weight !== undefined,
-        syncDirection: "to_base" as SyncDirection,
-        description: "Product weight",
+        syncDirection: 'to_base' as SyncDirection,
+        description: 'Product weight',
       },
     ];
   };
 
-  const getSyncDirectionIcon = (direction: SyncDirection | "none"): React.JSX.Element => {
+  const getSyncDirectionIcon = (direction: SyncDirection | 'none'): React.JSX.Element => {
     switch (direction) {
-      case "to_base":
+      case 'to_base':
         return <ArrowRight className="size-3 text-blue-400" />;
-      case "from_base":
+      case 'from_base':
         return <ArrowLeft className="size-3 text-purple-400" />;
-      case "bidirectional":
+      case 'bidirectional':
         return <ArrowLeftRight className="size-3 text-emerald-400" />;
       default:
         return <X className="size-3 text-gray-500" />;
     }
   };
 
-  const getSyncDirectionLabel = (direction: SyncDirection | "none"): string => {
+  const getSyncDirectionLabel = (direction: SyncDirection | 'none'): string => {
     switch (direction) {
-      case "to_base":
-        return "To Base.com";
-      case "from_base":
-        return "From Base.com";
-      case "bidirectional":
-        return "Both ways";
+      case 'to_base':
+        return 'To Base.com';
+      case 'from_base':
+        return 'From Base.com';
+      case 'bidirectional':
+        return 'Both ways';
       default:
-        return "Not synced";
+        return 'Not synced';
     }
   };
 
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
 
   const StartListingPanel: React.FC = (): React.JSX.Element => (
-    <div className="rounded-md border border-border bg-card/60 px-4 py-4">
+    <SectionPanel variant="subtle" className="px-4 py-4">
       {_loadingIntegrations ? (
         <p className="text-sm text-gray-400">Loading integrations...</p>
       ) : integrations.length === 0 ? (
-        <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
-          No connected integrations.{" "}
+        <SectionPanel variant="subtle-compact" className="border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+          No connected integrations.{' '}
           <Link href="/admin/integrations" className="underline hover:text-yellow-100">
             Set up an integration
           </Link>
           .
-        </div>
+        </SectionPanel>
       ) : (
         <div className="space-y-4">
-          <div className="text-left">
-            <Label className="mb-2 block text-xs font-medium text-gray-300">
-              Integration
-            </Label>
-            <Select
-              value={selectedIntegrationId}
-              onValueChange={setSelectedIntegrationId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an integration..." />
-              </SelectTrigger>
-              <SelectContent>
-                {integrations
-                  .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                  .map((integration: IntegrationWithConnections): React.JSX.Element => (
-                    <SelectItem key={integration.id} value={integration.id}>
-                      {integration.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {selectedIntegration && selectedIntegration.connections.length > 0 && (
-            <div className="text-left">
-              <Label className="mb-2 block text-xs font-medium text-gray-300">
-                Account / Connection
-              </Label>
-              <Select
-                value={selectedConnectionId}
-                onValueChange={setSelectedConnectionId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an account..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedIntegration.connections
-                    .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                    .map((connection: IntegrationConnectionBasic): React.JSX.Element => (
-                      <SelectItem key={connection.id} value={connection.id}>
-                        {connection.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <IntegrationSelector
+            integrations={integrations}
+            selectedIntegrationId={selectedIntegrationId}
+            onIntegrationChange={setSelectedIntegrationId}
+            selectedConnectionId={selectedConnectionId}
+            onConnectionChange={setSelectedConnectionId}
+          />
 
           <div className="flex justify-center">
             <Button
@@ -295,7 +273,7 @@ export function ProductListingsModal({
           </div>
         </div>
       )}
-    </div>
+    </SectionPanel>
   );
 
   const SyncConfigurationPanel: React.FC = (): React.JSX.Element => {
@@ -305,7 +283,7 @@ export function ProductListingsModal({
     const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
 
     return (
-      <div className="rounded-md border border-border bg-card/60 p-3">
+      <SectionPanel variant="subtle" className="p-3">
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-xs font-medium uppercase tracking-wide text-gray-400">
             Sync Configuration
@@ -316,23 +294,24 @@ export function ProductListingsModal({
           </div>
         </div>
 
-        <div className="mb-3 rounded border border-blue-500/20 bg-blue-500/5 px-2 py-1.5">
+        <SectionPanel variant="subtle-compact" className="mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5">
           <div className="flex items-center gap-2 text-xs text-blue-300">
             <ArrowRight className="size-3" />
             <span>
               Currently configured for <strong>one-way export</strong> (Product &rarr; Base.com)
             </span>
           </div>
-        </div>
+        </SectionPanel>
 
         <div className="space-y-1">
           {syncFields.map((field: { name: string; value: string; hasValue: boolean; syncDirection: SyncDirection; description: string }): React.JSX.Element => (
-            <div
+            <SectionPanel
               key={field.name}
-              className={`flex items-center justify-between rounded px-2 py-1.5 text-xs ${
+              variant="subtle-compact"
+              className={`flex items-center justify-between px-2 py-1.5 text-xs ${
                 field.hasValue
-                  ? "bg-card/50"
-                  : "bg-gray-900/20 opacity-50"
+                  ? 'bg-card/50'
+                  : 'bg-gray-900/20 opacity-50 border-none'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -341,7 +320,7 @@ export function ProductListingsModal({
                 ) : (
                   <X className="size-3 text-gray-600" />
                 )}
-                <span className={field.hasValue ? "text-gray-200" : "text-gray-500"}>
+                <span className={field.hasValue ? 'text-gray-200' : 'text-gray-500'}>
                   {field.name}
                 </span>
               </div>
@@ -350,10 +329,10 @@ export function ProductListingsModal({
                   {field.value}
                 </span>
                 <div className="flex items-center gap-1" title={getSyncDirectionLabel(field.syncDirection)}>
-                  {getSyncDirectionIcon(field.hasValue ? field.syncDirection : "none")}
+                  {getSyncDirectionIcon(field.hasValue ? field.syncDirection : 'none')}
                 </div>
               </div>
-            </div>
+            </SectionPanel>
           ))}
         </div>
 
@@ -377,7 +356,7 @@ export function ProductListingsModal({
           </div>
         </div>
 
-        <div className="mt-4 rounded border border-border bg-card/50 p-3">
+        <SectionPanel variant="subtle-compact" className="mt-4 border border-border bg-card/50 p-3">
           <div className="mb-2 flex items-center justify-between">
             <h5 className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Images
@@ -397,15 +376,15 @@ export function ProductListingsModal({
             onClick={(): void => setIsSyncImagesConfirmOpen(true)}
             className="border-slate-500/40 text-slate-200 hover:bg-slate-500/10"
           >
-            {syncingImages === baseListing?.id ? "Syncing..." : "Sync image URLs from Base.com"}
+            {syncingImages === baseListing?.id ? 'Syncing...' : 'Sync image URLs from Base.com'}
           </Button>
           {!baseListing && (
             <p className="mt-2 text-[10px] text-gray-500">
               Connect this product to Base.com to enable image sync.
             </p>
           )}
-        </div>
-      </div>
+        </SectionPanel>
+      </SectionPanel>
     );
   };
 
@@ -415,13 +394,14 @@ export function ProductListingsModal({
 
     try {
       setDeletingFromBase(listingId);
-      const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+      const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
       
       await deleteFromBaseMutation.mutateAsync({ listingId, inventoryId });
       
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to delete from Base.com");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'deleteFromBase', listingId, productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to delete from Base.com');
     } finally {
       setDeletingFromBase(null);
       setListingToDelete(null);
@@ -437,7 +417,8 @@ export function ProductListingsModal({
       await purgeListingMutation.mutateAsync({ listingId });
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to remove listing history");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'purgeListing', listingId, productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to remove listing history');
     } finally {
       setPurgingListing(null);
       setListingToPurge(null);
@@ -445,9 +426,9 @@ export function ProductListingsModal({
   };
 
   const handleSaveInventoryId = async (listingId: string): Promise<void> => {
-    const value: string = (inventoryOverrides[listingId] ?? "").trim();
+    const value: string = (inventoryOverrides[listingId] ?? '').trim();
     if (!value) {
-      setError("Inventory ID is required.");
+      setError('Inventory ID is required.');
       return;
     }
 
@@ -462,7 +443,8 @@ export function ProductListingsModal({
       });
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save inventory ID");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'saveInventoryId', listingId, productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to save inventory ID');
     } finally {
       setSavingInventoryId(null);
     }
@@ -470,20 +452,21 @@ export function ProductListingsModal({
 
   const handleSyncBaseImages = async (): Promise<void> => {
     if (!baseListing) {
-      setError("Base.com listing not found for this product.");
+      setError('Base.com listing not found for this product.');
       return;
     }
     try {
       setSyncingImages(baseListing.id);
       setError(null);
-      const inventoryId: string = (inventoryOverrides[baseListing.id] || baseListing.inventoryId || "").trim();
+      const inventoryId: string = (inventoryOverrides[baseListing.id] || baseListing.inventoryId || '').trim();
       const response = await syncBaseImagesMutation.mutateAsync({
         listingId: baseListing.id,
         ...(inventoryId ? { inventoryId } : {}),
       });
-      toast(`Synced ${response.count} image link(s) from Base.com`, { variant: "success" });
+      toast(`Synced ${response.count} image link(s) from Base.com`, { variant: 'success' });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to sync image URLs");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'syncBaseImages', productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to sync image URLs');
     } finally {
       setSyncingImages(null);
       setIsSyncImagesConfirmOpen(false);
@@ -493,15 +476,15 @@ export function ProductListingsModal({
   const exportListingToBase = async (
     listingId: string,
     options?: {
-      imageBase64Mode?: "base-only" | "full-data-uri";
+      imageBase64Mode?: 'base-only' | 'full-data-uri';
       imageTransform?: ImageTransformOptions | null;
     }
   ): Promise<void> => {
     const listing: ProductListingWithDetails | undefined = listings.find((item: ProductListingWithDetails): boolean => item.id === listingId);
     if (!listing) return;
-    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
     if (!inventoryId) {
-      throw new Error("Inventory ID is required.");
+      throw new Error('Inventory ID is required.');
     }
     const templateId: string | undefined = getLatestTemplateId(listing) ?? undefined;
     
@@ -524,18 +507,18 @@ export function ProductListingsModal({
   const exportListingImagesOnly = async (
     listingId: string,
     options?: {
-      imageBase64Mode?: "base-only" | "full-data-uri";
+      imageBase64Mode?: 'base-only' | 'full-data-uri';
       imageTransform?: ImageTransformOptions | null;
     }
   ): Promise<void> => {
     const listing: ProductListingWithDetails | undefined = listings.find((item: ProductListingWithDetails): boolean => item.id === listingId);
     if (!listing) return;
-    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
     if (!inventoryId) {
-      throw new Error("Inventory ID is required.");
+      throw new Error('Inventory ID is required.');
     }
     if (!listing.externalListingId) {
-      throw new Error("External Base.com product ID is missing.");
+      throw new Error('External Base.com product ID is missing.');
     }
     
     const exportData: ExportToBaseVariables = {
@@ -559,9 +542,9 @@ export function ProductListingsModal({
   const handleExportAgain = async (listingId: string): Promise<void> => {
     const listing: ProductListingWithDetails | undefined = listings.find((item: ProductListingWithDetails): boolean => item.id === listingId);
     if (!listing) return;
-    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
     if (!inventoryId) {
-      setError("Inventory ID is required.");
+      setError('Inventory ID is required.');
       return;
     }
 
@@ -573,7 +556,8 @@ export function ProductListingsModal({
       await exportListingToBase(listingId);
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to export product");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'exportAgain', listingId, productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to export product');
     } finally {
       setExportingListing(null);
     }
@@ -595,7 +579,8 @@ export function ProductListingsModal({
       } : undefined);
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to export product images");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'exportImagesOnly', listingId, productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to export product images');
     } finally {
       setExportingListing(null);
     }
@@ -614,7 +599,8 @@ export function ProductListingsModal({
       });
       onListingsUpdated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to export product");
+      logClientError(err, { context: { source: 'ProductListingsModal', action: 'imageRetry', productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to export product');
     } finally {
       setExportingListing(null);
     }
@@ -623,81 +609,57 @@ export function ProductListingsModal({
   const loading: boolean = loadingListings;
 
   return (
-          <AppModal
-            open={true}
-            onOpenChange={(open: boolean) => !open && onClose()}
-            title={`Integrations - ${productName}`}
-          >
-            <ModalShell title={`Integrations - ${productName}`} onClose={onClose}>
-              <ConfirmDialog
-              open={!!listingToDelete}
-              onOpenChange={(open: boolean) => !open && setListingToDelete(null)}
-              onConfirm={() => { if (listingToDelete) void handleDeleteFromBase(listingToDelete); }}
-              title="Delete from Base.com"
-              description="Delete this product from Base.com? This cannot be undone."
-              confirmText="Delete"
-              variant="destructive"
-            />
-            <ConfirmDialog
-              open={!!listingToPurge}
-              onOpenChange={(open: boolean) => !open && setListingToPurge(null)}
-              onConfirm={() => { if (listingToPurge) void handlePurgeListing(listingToPurge); }}
-              title="Remove History"
-              description="Remove this integration connection and its history? This will NOT delete the product from the marketplace."
-              confirmText="Remove"
-              variant="destructive"
-            />
-            <ConfirmDialog
-              open={isSyncImagesConfirmOpen}
-              onOpenChange={(open: boolean) => setIsSyncImagesConfirmOpen(open)}
-              onConfirm={() => { void handleSyncBaseImages(); }}
-              title="Sync Images from Base.com"
-              description="Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots."
-              confirmText="Sync Images"
-            />      <div className="space-y-4">
+    <SharedModal
+      open={true}
+      onClose={onClose}
+      title={`Integrations - ${productName}`}
+    >
+      <ConfirmDialog
+        open={!!listingToDelete}
+        onOpenChange={(open: boolean) => !open && setListingToDelete(null)}
+        onConfirm={() => { if (listingToDelete) void handleDeleteFromBase(listingToDelete); }}
+        title="Delete from Base.com"
+        description="Delete this product from Base.com? This cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={!!listingToPurge}
+        onOpenChange={(open: boolean) => !open && setListingToPurge(null)}
+        onConfirm={() => { if (listingToPurge) void handlePurgeListing(listingToPurge); }}
+        title="Remove History"
+        description="Remove this integration connection and its history? This will NOT delete the product from the marketplace."
+        confirmText="Remove"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={isSyncImagesConfirmOpen}
+        onOpenChange={(open: boolean) => setIsSyncImagesConfirmOpen(open)}
+        onConfirm={() => { void handleSyncBaseImages(); }}
+        title="Sync Images from Base.com"
+        description="Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots."
+        confirmText="Sync Images"
+      />      <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading listings...</p>
         ) : combinedError ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             <div className="flex flex-col gap-3">
               <span>{combinedError}</span>
               {isImageExportError(combinedError) && lastExportListingId ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
-                        disabled={Boolean(exportingListing)}
-                      >
-                        Retry image export
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-card border-border">
-                      {imageRetryPresets.map((preset: ImageRetryPreset): React.JSX.Element => (
-                        <DropdownMenuItem
-                          key={preset.id}
-                          onSelect={(): void => { void handleImageRetry(preset); }}
-                          className="text-gray-200 focus:bg-gray-800/70"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm">{preset.label}</span>
-                            <span className="text-xs text-gray-400">
-                              {preset.description}
-                            </span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <ImageRetryDropdown
+                    presets={imageRetryPresets}
+                    onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
+                    disabled={Boolean(exportingListing)}
+                  />
                   <span className="text-xs text-red-200/80">
                     Applies JPEG resize/compression and retries automatically.
                   </span>
                 </div>
               ) : null}
             </div>
-          </div>
+          </Alert>
         ) : (
           <div className="space-y-3">
             {canStartListing && <StartListingPanel />}
@@ -711,7 +673,7 @@ export function ProductListingsModal({
                     <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400">
                       Not connected.
                     </div>
-                    {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
+                    {filterIntegrationSlug === 'baselinker' && <SyncConfigurationPanel />}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -730,10 +692,10 @@ export function ProductListingsModal({
               <div className="space-y-3">
                 {filterIntegrationSlug && (
                   <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300">
-                    {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
+                    {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
                   </div>
                 )}
-                {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
+                {filterIntegrationSlug === 'baselinker' && <SyncConfigurationPanel />}
                 {filteredListings.map((listing: ProductListingWithDetails): React.JSX.Element => (
                   <div
                     key={listing.id}
@@ -763,7 +725,7 @@ export function ProductListingsModal({
                         <p>Last export: {formatTimestamp(listing.listedAt)}</p>
                         <p>Created: {formatTimestamp(listing.createdAt)}</p>
                         <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
-                        {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                        {['baselinker', 'base-com'].includes(listing.integration.slug) && (
                           <p>Exported fields: {getExportFieldsLabel()}</p>
                         )}
                       </div>
@@ -784,8 +746,8 @@ export function ProductListingsModal({
                               className="text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
                             >
                               {(historyOpenByListing[listing.id] ?? false)
-                                ? "Hide"
-                                : "Show"}
+                                ? 'Hide'
+                                : 'Show'}
                             </Button>
                           </div>
                           {(historyOpenByListing[listing.id] ?? false) ? (
@@ -795,7 +757,7 @@ export function ProductListingsModal({
                                   <div className="flex items-center justify-between text-gray-300">
                                     <span>{formatTimestamp(event.exportedAt)}</span>
                                     <span className="uppercase text-[10px] text-gray-500">
-                                      {event.status ?? "success"}
+                                      {event.status ?? 'success'}
                                     </span>
                                   </div>
                                   <div className="grid gap-1">
@@ -806,7 +768,7 @@ export function ProductListingsModal({
                                       <span>External ID: {event.externalListingId}</span>
                                     )}
                                     {event.fields && event.fields.length > 0 ? (
-                                      <span>Fields: {event.fields.join(", ")}</span>
+                                      <span>Fields: {event.fields.join(', ')}</span>
                                     ) : (
                                       <span>Fields: &mdash;</span>
                                     )}
@@ -821,9 +783,9 @@ export function ProductListingsModal({
                       )}
                     </div>
                     <div className="ml-4 flex flex-col gap-2">
-                      {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                      {['baselinker', 'base-com'].includes(listing.integration.slug) && (
                         <>
-                          {listing.status === "failed" && (
+                          {listing.status === 'failed' && (
                             <Button
                               type="button"
                               variant="outline"
@@ -835,7 +797,7 @@ export function ProductListingsModal({
                               Export again
                             </Button>
                           )}
-                          {listing.status !== "removed" && (
+                          {listing.status !== 'removed' && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -892,7 +854,7 @@ export function ProductListingsModal({
                               </Label>
                               <Input
                                 id={`inventory-${listing.id}`}
-                                value={inventoryOverrides[listing.id] ?? ""}
+                                value={inventoryOverrides[listing.id] ?? ''}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                                   setInventoryOverrides((prev: Record<string, string>): Record<string, string> => ({
                                     ...prev,
@@ -914,7 +876,7 @@ export function ProductListingsModal({
                               </Button>
                             </div>
                           )}
-                          {listing.status !== "removed" && (
+                          {listing.status !== 'removed' && (
                             <Button
                               type="button"
                               variant="outline"
@@ -956,8 +918,7 @@ export function ProductListingsModal({
           </div>
         )}
       </div>
-      </ModalShell>
-    </AppModal>
+    </SharedModal>
   );
 }
 

@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { AppModal, ModalShell } from "@/shared/ui";
-import * as React from "react";
+import * as React from 'react';
+
+import { AppModal } from '@/shared/ui';
 
 type TestResultModalProps = {
   success: boolean;
@@ -28,7 +29,7 @@ export function TestResultModal({
     meta?.connectionId ? `Connection ID: ${meta.connectionId}` : null,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
@@ -44,14 +45,10 @@ export function TestResultModal({
   return (
     <AppModal
       open={true}
-      onOpenChange={() => {}}
-      title={success ? "Playwright Test Success" : "Playwright Test Error"}
+      onClose={onClose}
+      title={success ? 'Playwright Test Success' : 'Playwright Test Error'}
+      footer={footer}
     >
-      <ModalShell
-        title={success ? "Playwright Test Success" : "Playwright Test Error"}
-        onClose={onClose}
-        footer={footer}
-      >
       <div className="space-y-3">
         {!success && (
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
@@ -62,15 +59,15 @@ export function TestResultModal({
           <div className="grid gap-2 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 md:grid-cols-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Error ID</p>
-              <p className="mt-1 break-all text-gray-200">{meta?.errorId || "—"}</p>
+              <p className="mt-1 break-all text-gray-200">{meta?.errorId || '—'}</p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Integration ID</p>
-              <p className="mt-1 break-all text-gray-200">{meta?.integrationId || "—"}</p>
+              <p className="mt-1 break-all text-gray-200">{meta?.integrationId || '—'}</p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Connection ID</p>
-              <p className="mt-1 break-all text-gray-200">{meta?.connectionId || "—"}</p>
+              <p className="mt-1 break-all text-gray-200">{meta?.connectionId || '—'}</p>
             </div>
           </div>
         )}
@@ -84,7 +81,6 @@ export function TestResultModal({
           </pre>
         )}
       </div>
-      </ModalShell>
     </AppModal>
   );
 }

@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { clearOfflineMutationQueue } from "@/shared/hooks/useOfflineMutation";
+import { useCallback, useEffect, useState } from 'react';
+
+import { clearOfflineMutationQueue } from '@/shared/hooks/useOfflineMutation';
 
 export type OfflineQueueItem = {
   id: string;
@@ -9,21 +10,21 @@ export type OfflineQueueItem = {
   timestamp: number;
 };
 
-const STORAGE_KEY = "offline-mutation-queue";
+const STORAGE_KEY = 'offline-mutation-queue';
 
 const readQueueFromStorage = (): OfflineQueueItem[] => {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return [];
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as Array<Partial<OfflineQueueItem>>;
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((item: Partial<OfflineQueueItem>): boolean => item !== null && typeof item.id === "string")
+      .filter((item: Partial<OfflineQueueItem>): boolean => item !== null && typeof item.id === 'string')
       .map((item: Partial<OfflineQueueItem>): OfflineQueueItem => ({
         id: item.id as string,
         queryKey: Array.isArray(item.queryKey) ? item.queryKey : [],
-        timestamp: typeof item.timestamp === "number" ? item.timestamp : Date.now(),
+        timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now(),
       }));
   } catch {
     return [];
@@ -35,7 +36,7 @@ export function useOfflineQueueStatus(): {
   count: number;
   refresh: () => void;
   clear: () => void;
-} {
+  } {
   const [items, setItems] = useState<OfflineQueueItem[]>((): OfflineQueueItem[] => readQueueFromStorage());
 
   const refresh = useCallback((): void => {
@@ -43,7 +44,7 @@ export function useOfflineQueueStatus(): {
   }, []);
 
   const clear = useCallback((): void => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.localStorage.removeItem(STORAGE_KEY);
     }
     clearOfflineMutationQueue();
@@ -57,10 +58,10 @@ export function useOfflineQueueStatus(): {
         refresh();
       }
     };
-    window.addEventListener("storage", onStorage);
+    window.addEventListener('storage', onStorage);
     return (): void => {
       clearInterval(intervalId);
-      window.removeEventListener("storage", onStorage);
+      window.removeEventListener('storage', onStorage);
     };
   }, [refresh]);
 

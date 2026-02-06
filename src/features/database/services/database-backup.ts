@@ -1,16 +1,7 @@
-import "server-only";
+import 'server-only';
 
-import path from "path";
-import { promises as fs } from "fs";
-
-import {
-  backupsDir as pgBackupsDir,
-  ensureBackupsDir as ensurePgBackupsDir,
-  getDatabaseName,
-  getPgConnectionUrl,
-  getPgDumpCommand,
-  execFileAsync as pgExecFileAsync,
-} from "@/features/database/utils/postgres";
+import { promises as fs } from 'fs';
+import path from 'path';
 
 import {
   backupsDir as mongoBackupsDir,
@@ -19,8 +10,16 @@ import {
   getMongoDatabaseName,
   getMongoDumpCommand,
   execFileAsync as mongoExecFileAsync,
-} from "@/features/database/utils/mongo";
-import { operationFailedError } from "@/shared/errors/app-error";
+} from '@/features/database/utils/mongo';
+import {
+  backupsDir as pgBackupsDir,
+  ensureBackupsDir as ensurePgBackupsDir,
+  getDatabaseName,
+  getPgConnectionUrl,
+  getPgDumpCommand,
+  execFileAsync as pgExecFileAsync,
+} from '@/features/database/utils/postgres';
+import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 
 export type DatabaseBackupResult = {
   message: string;
@@ -29,7 +28,16 @@ export type DatabaseBackupResult = {
   warning?: string | undefined;
 };
 
+const shouldSkipBackups = (): boolean => process.env.SKIP_DB_BACKUP === 'true';
+
+const assertBackupsAllowed = (): void => {
+  if (process.env.NODE_ENV === 'production') {
+    throw forbiddenError('Database backups are disabled in production.');
+  }
+};
+
 export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
+  assertBackupsAllowed();
   const mongoUri = getMongoConnectionUrl();
   const databaseName = getMongoDatabaseName();
   await ensureMongoBackupsDir();
@@ -40,17 +48,17 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
 
   const command = getMongoDumpCommand();
   const args = [
-    "--uri",
+    '--uri',
     mongoUri,
-    "--db",
+    '--db',
     databaseName,
-    "--archive=" + backupPath,
-    "--gzip",
+    '--archive=' + backupPath,
+    '--gzip',
   ];
-  const commandString = `${command} ${args.join(" ")}`;
+  const commandString = `${command} ${args.join(' ')}`;
 
-  let stdout = "";
-  let stderr = "";
+  let stdout = '';
+  let stderr = '';
   try {
     const result = await mongoExecFileAsync(command, args);
     stdout = result.stdout;
@@ -60,16 +68,16 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     await fs.writeFile(logPath, logContent);
 
     return {
-      message: "Backup created",
+      message: 'Backup created',
       backupName,
       log: logContent,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
     const cause = (error as { cause?: { stdout?: string; stderr?: string } })
       .cause;
-    stdout = cause?.stdout || "";
-    stderr = cause?.stderr || "";
+    stdout = cause?.stdout || '';
+    stderr = cause?.stderr || '';
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
     await fs.writeFile(logPath, logContent);
@@ -78,7 +86,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     const stat = await fs.stat(backupPath).catch(() => null);
     if (stat && stat.size > 0) {
       return {
-        message: "Backup created with warnings",
+        message: 'Backup created with warnings',
         backupName,
         warning: details || message,
         log: logContent,
@@ -86,7 +94,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     }
 
     throw operationFailedError(
-      "Failed to create MongoDB backup",
+      'Failed to create MongoDB backup',
       error,
       details ? { details } : undefined
     );
@@ -94,6 +102,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
 };
 
 export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
+  assertBackupsAllowed();
   const databaseUrl = getPgConnectionUrl();
   const databaseName = getDatabaseName(databaseUrl);
   await ensurePgBackupsDir();
@@ -103,11 +112,11 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
   const logPath = path.join(pgBackupsDir, `${backupName}.log`);
 
   const command = getPgDumpCommand();
-  const args = ["-Fc", "--file", backupPath, "--dbname", databaseUrl];
-  const commandString = `${command} ${args.join(" ")}`;
+  const args = ['-Fc', '--file', backupPath, '--dbname', databaseUrl];
+  const commandString = `${command} ${args.join(' ')}`;
 
-  let stdout = "";
-  let stderr = "";
+  let stdout = '';
+  let stderr = '';
   try {
     const result = await pgExecFileAsync(command, args);
     stdout = result.stdout;
@@ -117,16 +126,16 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
     await fs.writeFile(logPath, logContent);
 
     return {
-      message: "Backup created",
+      message: 'Backup created',
       backupName,
       log: logContent,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
     const cause = (error as { cause?: { stdout?: string; stderr?: string } })
       .cause;
-    stdout = cause?.stdout || "";
-    stderr = cause?.stderr || "";
+    stdout = cause?.stdout || '';
+    stderr = cause?.stderr || '';
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
     await fs.writeFile(logPath, logContent);
@@ -135,7 +144,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
     const stat = await fs.stat(backupPath).catch(() => null);
     if (stat && stat.size > 0) {
       return {
-        message: "Backup created with warnings",
+        message: 'Backup created with warnings',
         backupName,
         warning: details || message,
         log: logContent,
@@ -143,7 +152,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
     }
 
     throw operationFailedError(
-      "Failed to create Postgres backup",
+      'Failed to create Postgres backup',
       error,
       details ? { details } : undefined
     );
@@ -151,6 +160,16 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
 };
 
 export const createFullDatabaseBackup = async (): Promise<{ mongo: DatabaseBackupResult; postgres: DatabaseBackupResult }> => {
+  if (shouldSkipBackups()) {
+    const timestamp = Date.now();
+    const message = 'Backup skipped (SKIP_DB_BACKUP=true)';
+    const log = `Skipped backup at ${new Date(timestamp).toISOString()}`;
+    return {
+      mongo: { message, backupName: `skipped-mongo-${timestamp}`, log },
+      postgres: { message, backupName: `skipped-postgres-${timestamp}`, log },
+    };
+  }
+  assertBackupsAllowed();
   const mongo = await createMongoBackup();
   const postgres = await createPostgresBackup();
   return { mongo, postgres };

@@ -40,7 +40,7 @@ export type IntegrationConnection = {
   playwrightDeviceName?: string | null;
 };
 
-export const TEST_STATUSES = ["pending", "ok", "failed"] as const;
+export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
 export type TestStatus = (typeof TEST_STATUSES)[number];
 
 export type TestLogEntry = {
@@ -60,7 +60,7 @@ export type TestConnectionResponse = {
 };
 
 export const integrationDefinitions = [
-  { name: "Tradera", slug: "tradera" },
-  { name: "Allegro", slug: "allegro" },
-  { name: "Baselinker", slug: "baselinker" },
+  { name: 'Tradera', slug: 'tradera' },
+  { name: 'Allegro', slug: 'allegro' },
+  { name: 'Baselinker', slug: 'baselinker' },
 ] as const;

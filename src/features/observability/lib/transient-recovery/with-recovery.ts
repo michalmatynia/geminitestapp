@@ -1,17 +1,19 @@
-import "server-only";
+import 'server-only';
 
-import { isRetryableError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
-import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from "@/shared/utils/retry";
-import { getTransientRecoverySettings } from "./settings";
-import type { TransientRecoverySettings } from "./constants";
+import { logSystemEvent } from '@/features/observability/server';
+import { isRetryableError } from '@/shared/errors/app-error';
+import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from '@/shared/utils/retry';
+
+import { getTransientRecoverySettings } from './settings';
+
+import type { TransientRecoverySettings } from './constants';
 
 export type TransientRecoveryOptions = {
   source?: string;
   circuitId?: string;
   fallback?: () => unknown;
   retry?: RetryOptions;
-  circuit?: Omit<CircuitBreakerOptions, "circuitId">;
+  circuit?: Omit<CircuitBreakerOptions, 'circuitId'>;
 };
 
 export const isTransientError = (error: unknown): boolean => {
@@ -19,13 +21,13 @@ export const isTransientError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
   const message: string = error.message.toLowerCase();
   return (
-    message.includes("timeout") ||
-    message.includes("timed out") ||
-    message.includes("ecconn") ||
-    message.includes("econn") ||
-    message.includes("network") ||
-    message.includes("eai_again") ||
-    message.includes("enotfound")
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('ecconn') ||
+    message.includes('econn') ||
+    message.includes('network') ||
+    message.includes('eai_again') ||
+    message.includes('enotfound')
   );
 };
 
@@ -48,7 +50,7 @@ export async function withTransientRecovery<T>(
       maxAttempts: retryOptions?.maxAttempts ?? settings.retry.maxAttempts,
       initialDelayMs: retryOptions?.initialDelayMs ?? settings.retry.initialDelayMs,
       maxDelayMs: retryOptions?.maxDelayMs ?? settings.retry.maxDelayMs,
-      source: retryOptions?.source ?? options?.source ?? "transient-recovery",
+      source: retryOptions?.source ?? options?.source ?? 'transient-recovery',
       isRetryable: retryOptions?.isRetryable ?? isTransientError,
     };
     if (retryOptions?.timeoutMs !== undefined) {
@@ -85,9 +87,9 @@ export async function withTransientRecovery<T>(
   } catch (error) {
     if (options?.fallback && isTransientError(error)) {
       void logSystemEvent({
-        level: "warn",
-        message: "Transient recovery fallback executed",
-        source: options?.source ?? "transient-recovery",
+        level: 'warn',
+        message: 'Transient recovery fallback executed',
+        source: options?.source ?? 'transient-recovery',
         error,
       });
       return (await options.fallback()) as T;

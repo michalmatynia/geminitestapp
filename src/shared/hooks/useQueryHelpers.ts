@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMutationOptions, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { useToast } from "@/shared/ui";
-import { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMutationOptions, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useEffect } from 'react';
+
+import { useToast } from '@/shared/ui';
 
 // Enhanced query hook with built-in error handling and toast notifications
 export function useQueryWithToast<TData, TError = Error>(
@@ -14,15 +15,15 @@ export function useQueryWithToast<TData, TError = Error>(
 
   useEffect(() => {
     if (query.isSuccess && options.successMessage) {
-      toast(options.successMessage, { variant: "success" });
+      toast(options.successMessage, { variant: 'success' });
     }
   }, [query.isSuccess, options.successMessage, toast]);
 
   useEffect(() => {
     if (query.isError) {
       const message: string = options.errorMessage || 
-        (query.error instanceof Error ? query.error.message : "An error occurred");
-      toast(message, { variant: "error" });
+        (query.error instanceof Error ? query.error.message : 'An error occurred');
+      toast(message, { variant: 'error' });
     }
   }, [query.isError, query.error, options.errorMessage, toast]);
   
@@ -42,15 +43,15 @@ export function useMutationWithToast<TData, TError = Error, TVariables = void, T
     ...options,
     onSuccess: (data: TData, variables: TVariables, context: TContext): void => {
       if (options.successMessage) {
-        toast(options.successMessage, { variant: "success" });
+        toast(options.successMessage, { variant: 'success' });
       }
       // @ts-expect-error - options.onSuccess type mismatch in library
       options.onSuccess?.(data, variables, context);
     },
     onError: (error: TError, variables: TVariables, context: TContext | undefined): void => {
       const message: string = options.errorMessage || 
-        (error instanceof Error ? error.message : "An error occurred");
-      toast(message, { variant: "error" });
+        (error instanceof Error ? error.message : 'An error occurred');
+      toast(message, { variant: 'error' });
       // @ts-expect-error - options.onError type mismatch in library
       options.onError?.(error, variables, context);
     },
@@ -96,15 +97,15 @@ export function useOptimisticMutation<TData, TError = Error, TVariables = void, 
       }
       
       const message: string = options.errorMessage || 
-        (error instanceof Error ? error.message : "An error occurred");
-      toast(message, { variant: "error" });
+        (error instanceof Error ? error.message : 'An error occurred');
+      toast(message, { variant: 'error' });
       
       // @ts-expect-error - options.onError type mismatch in library
       options.onError?.(error, variables, context);
     },
     onSuccess: (data: TData, variables: TVariables, context: TContext): void => {
       if (options.successMessage) {
-        toast(options.successMessage, { variant: "success" });
+        toast(options.successMessage, { variant: 'success' });
       }
       // @ts-expect-error - options.onSuccess type mismatch in library
       options.onSuccess?.(data, variables, context);

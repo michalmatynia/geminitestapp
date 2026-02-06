@@ -50,7 +50,7 @@ When reviewing components, classify them:
 
 UI primitive (Button-ish, Modal-ish) → shared/ui - scan for unified
 
-Composable pattern (SearchBar, Pagination, FilterPanel) → shared/components
+Composable pattern (SearchBar, Pagination, FilterPanel) → shared/ui
 
 Feature widget (for example ProductCard, ProductGrid, ProductEditor) → stay in features/<NAMEOFSECTION>
 

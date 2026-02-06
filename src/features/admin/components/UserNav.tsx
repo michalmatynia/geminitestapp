@@ -1,5 +1,10 @@
-"use client";
+'use client';
 
+import { LogOut, LogIn, SparklesIcon } from 'lucide-react';
+import { signIn, signOut, useSession } from 'next-auth/react';
+
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Avatar,
   AvatarFallback,
@@ -12,34 +17,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Switch,
-} from "@/shared/ui";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { LogOut, LogIn } from "lucide-react";
+  ThemeToggle as ThemeToggleComponent,
+} from '@/shared/ui';
 
-export function UserNav(): React.ReactNode {
+
+export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } = {}): React.ReactNode {
   const { data: session } = useSession();
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
-  const settingsMap = settingsQuery.data;
 
   const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
     if (value === undefined) return fallback;
-    return ["true", "1", "yes", "on"].includes(value.toLowerCase());
+    return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
   };
 
-  const queryPanelEnabled = parseEnabled(settingsMap?.get("query_status_panel_enabled"), false);
-  const queryPanelOpen = parseEnabled(settingsMap?.get("query_status_panel_open"), false);
+  const queryPanelEnabled = parseEnabled(settingsStore.get('query_status_panel_enabled'), false);
+  const queryPanelOpen = parseEnabled(settingsStore.get('query_status_panel_open'), false);
 
   const setQueryPanelSetting = (key: string, value: boolean): void => {
-    if (key === "query_status_panel_enabled") {
+    if (key === 'query_status_panel_enabled') {
       updateSettings.mutate([
-        { key: "query_status_panel_enabled", value: value ? "true" : "false" },
-        { key: "query_status_panel_open", value: value ? "true" : "false" },
+        { key: 'query_status_panel_enabled', value: value ? 'true' : 'false' },
+        { key: 'query_status_panel_open', value: value ? 'true' : 'false' },
       ]);
       return;
     }
-    updateSettings.mutate([{ key, value: value ? "true" : "false" }]);
+    updateSettings.mutate([{ key, value: value ? 'true' : 'false' }]);
   };
 
   if (!session) {
@@ -54,14 +57,17 @@ export function UserNav(): React.ReactNode {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100"
+        >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={session.user?.image ?? ""} alt={session.user?.name ?? ""} />
-            <AvatarFallback>{session.user?.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+            <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
+            <AvatarFallback>{session.user?.name?.[0]?.toUpperCase() ?? 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{session.user?.name}</p>
@@ -72,6 +78,16 @@ export function UserNav(): React.ReactNode {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          onSelect={() => {
+            if (onOpenAiWarnings) onOpenAiWarnings();
+          }}
+          disabled={!onOpenAiWarnings}
+        >
+          <SparklesIcon className="mr-2 h-4 w-4" />
+          <span>AI warnings</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
           className="flex flex-col items-start gap-2"
           onSelect={(event: Event) => event.preventDefault()}
         >
@@ -80,14 +96,14 @@ export function UserNav(): React.ReactNode {
             <span className="text-sm">Enable Panel</span>
             <Switch
               checked={queryPanelEnabled}
-              onCheckedChange={(checked: boolean): void => setQueryPanelSetting("query_status_panel_enabled", checked)}
+              onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_enabled', checked)}
             />
           </div>
           <div className="flex w-full items-center justify-between gap-3">
             <span className="text-sm">Open Panel</span>
             <Switch
               checked={queryPanelOpen}
-              onCheckedChange={(checked: boolean): void => setQueryPanelSetting("query_status_panel_open", checked)}
+              onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_open', checked)}
               disabled={!queryPanelEnabled}
             />
           </div>
@@ -98,8 +114,8 @@ export function UserNav(): React.ReactNode {
               className="h-7 px-2 text-xs"
               onClick={() =>
                 updateSettings.mutate([
-                  { key: "query_status_panel_enabled", value: "false" },
-                  { key: "query_status_panel_open", value: "false" },
+                  { key: 'query_status_panel_enabled', value: 'false' },
+                  { key: 'query_status_panel_open', value: 'false' },
                 ])
               }
             >
@@ -107,6 +123,11 @@ export function UserNav(): React.ReactNode {
             </Button>
           </div>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="flex items-center justify-between px-2 py-1.5">
+          <span className="text-sm font-medium">Appearance</span>
+          <ThemeToggleComponent />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => { void signOut(); }}>
           <LogOut className="mr-2 h-4 w-4" />

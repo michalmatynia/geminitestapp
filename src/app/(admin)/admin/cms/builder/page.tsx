@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import dynamic from "next/dynamic";
+import dynamic from 'next/dynamic';
 
 // Dynamically import the PageBuilderPage to avoid server-side rendering issues
 const PageBuilderPage = dynamic(
-  () => import("@/features/cms/pages/builder/PageBuilderPage"),
+  () => import('@/features/cms/pages/builder/PageBuilderPage'),
   {
     ssr: false,
     loading: () => (

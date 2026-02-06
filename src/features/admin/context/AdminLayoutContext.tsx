@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AdminLayoutContextType {
   isMenuCollapsed: boolean;
@@ -35,7 +35,7 @@ export function AdminLayoutProvider({
 export function useAdminLayout(): AdminLayoutContextType {
   const context = useContext(AdminLayoutContext);
   if (context === undefined) {
-    throw new Error("useAdminLayout must be used within an AdminLayoutProvider");
+    throw new Error('useAdminLayout must be used within an AdminLayoutProvider');
   }
   return context;
 }

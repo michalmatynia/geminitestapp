@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
 interface IntegrationAccountSummaryProps {
   integrationName: string | undefined;
@@ -14,12 +14,12 @@ export function IntegrationAccountSummary({
   return (
     <div className="rounded-md border bg-card/50 px-4 py-3">
       <p className="text-sm text-gray-300">
-        <span className="text-gray-500">Integration:</span>{" "}
-        <span className="font-medium">{integrationName || "Loading..."}</span>
+        <span className="text-gray-500">Integration:</span>{' '}
+        <span className="font-medium">{integrationName || 'Loading...'}</span>
       </p>
       <p className="text-sm text-gray-300">
-        <span className="text-gray-500">Account:</span>{" "}
-        <span className="font-medium">{connectionName || "Loading..."}</span>
+        <span className="text-gray-500">Account:</span>{' '}
+        <span className="font-medium">{connectionName || 'Loading...'}</span>
       </p>
     </div>
   );

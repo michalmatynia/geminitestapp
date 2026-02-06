@@ -1,8 +1,5 @@
-"use client";
+'use client';
 
-import { Button, Input, SectionHeader, SectionPanel, Pagination } from "@/shared/ui";
-import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   BoxesIcon,
   BracesIcon,
@@ -16,8 +13,14 @@ import {
   RefreshCwIcon,
   ShieldCheckIcon,
   TableIcon,
-} from "lucide-react";
-import { useSearchParams } from "next/navigation";
+} from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
+
+import { Button, Input, SectionHeader, SectionPanel, Pagination } from '@/shared/ui';
+
+import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
 import type {
   DatabasePreviewGroup,
@@ -25,16 +28,15 @@ import type {
   DatabasePreviewRow,
   DatabasePreviewTable,
   DatabaseType,
-} from "../types";
-import { useDatabasePreview } from "../hooks/useDatabaseQueries";
+} from '../types';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   TABLE: TableIcon,
-  "TABLE DATA": DatabaseIcon,
+  'TABLE DATA': DatabaseIcon,
   VIEW: LayersIcon,
-  "MATERIALIZED VIEW": LayersIcon,
+  'MATERIALIZED VIEW': LayersIcon,
   SEQUENCE: HashIcon,
-  "SEQUENCE SET": HashIcon,
+  'SEQUENCE SET': HashIcon,
   FUNCTION: BracesIcon,
   TYPE: BoxesIcon,
   INDEX: ListIcon,
@@ -46,13 +48,13 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 function DatabasePreviewPageInner(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const backupName = searchParams.get("backup") ?? "";
-  const mode = searchParams.get("mode") ?? "backup";
-  const previewType = searchParams.get("type") ?? "postgresql";
+  const backupName = searchParams.get('backup') ?? '';
+  const mode = searchParams.get('mode') ?? 'backup';
+  const previewType = searchParams.get('type') ?? 'postgresql';
   const previewMode: DatabasePreviewMode =
-    mode === "current" ? "current" : "backup";
+    mode === 'current' ? 'current' : 'backup';
   
-  const [groupQuery, setGroupQuery] = useState("");
+  const [groupQuery, setGroupQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -65,7 +67,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
     backupName?: string;
   } = {
     mode: previewMode,
-    type: (previewType === "mongodb" ? "mongodb" : "postgresql") as DatabaseType,
+    type: (previewType === 'mongodb' ? 'mongodb' : 'postgresql') as DatabaseType,
     page,
     pageSize,
   };
@@ -76,7 +78,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const error = queryError?.message || null;
   const errorMeta = (queryError as Error & { payload?: { errorId?: string; stage?: string; backupName?: string; mode?: string } })?.payload || null;
 
-  const content = payload?.content ?? "";
+  const content = payload?.content ?? '';
   const groups: DatabasePreviewGroup[] = useMemo(() => payload?.groups ?? [], [payload?.groups]);
   const tables: DatabasePreviewTable[] = payload?.tables ?? [];
   const tableRows: DatabasePreviewRow[] = useMemo(() => payload?.tableRows ?? [], [payload?.tableRows]);
@@ -124,11 +126,11 @@ function DatabasePreviewPageInner(): React.JSX.Element {
       <SectionHeader
         title="Backup Preview"
         description={
-          mode === "current"
-            ? "Source: Current database"
+          mode === 'current'
+            ? 'Source: Current database'
             : backupName
               ? `Source: ${backupName}`
-              : "No backup selected."
+              : 'No backup selected.'
         }
         actions={
           <Button asChild variant="outline" size="sm">
@@ -179,7 +181,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                       Stage
                     </p>
                     <p className="mt-1 break-all text-gray-200">
-                      {errorMeta.stage || "—"}
+                      {errorMeta.stage || '—'}
                     </p>
                   </div>
                   <div>
@@ -187,7 +189,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                       Source
                     </p>
                     <p className="mt-1 break-all text-gray-200">
-                      {errorMeta.backupName || errorMeta.mode || "—"}
+                      {errorMeta.backupName || errorMeta.mode || '—'}
                     </p>
                   </div>
                 </div>
@@ -227,7 +229,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                     </Button>
                     {expanded && (
                       <div className="border-t border-border px-3 py-2 text-xs text-gray-400">
-                        {group.objects.join(", ")}
+                        {group.objects.join(', ')}
                       </div>
                     )}
                   </div>
@@ -292,39 +294,39 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                 className="scale-90 origin-right"
               />
             </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-white">
+          </div>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">
                           Raw Backup List
-                        </h2>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(): void => { void navigator.clipboard.writeText(content); }}
-                          className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                        >
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(): void => { void navigator.clipboard.writeText(content); }}
+              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
+            >
                           Copy
-                        </Button>
-                      </div>
+            </Button>
+          </div>
           
-                      <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-gray-500">
                         Rows are extracted from a temporary restore of the backup.
-                      </p>
-                    </SectionPanel>
+          </p>
+        </SectionPanel>
           
-                    <div className="rounded-lg border border-border bg-card p-5">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-white">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">
                           Raw Backup List
-                        </h2>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => { void navigator.clipboard.writeText(content); }}
-                          className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                        >
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { void navigator.clipboard.writeText(content); }}
+              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
+            >
                           Copy
-                        </Button>          </div>
+            </Button>          </div>
           <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}
           </pre>

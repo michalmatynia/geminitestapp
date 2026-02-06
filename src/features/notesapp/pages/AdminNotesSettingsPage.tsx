@@ -1,40 +1,40 @@
-"use client";
+'use client';
 
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from "@/shared/ui";
-import Link from "next/link";
-import { RotateCcw } from "lucide-react";
-
+import { RotateCcw } from 'lucide-react';
+import Link from 'next/link';
 
 
 
-import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from "@/features/notesapp/hooks/NoteSettingsContext";
-import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
+
+import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
+import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from '@/shared/ui';
 
 
 
 
 
 const sortByOptions = [
-  { value: "created", label: "Created Date" },
-  { value: "updated", label: "Modified Date" },
-  { value: "name", label: "Name" },
+  { value: 'created', label: 'Created Date' },
+  { value: 'updated', label: 'Modified Date' },
+  { value: 'name', label: 'Name' },
 ] as const;
 
 const sortOrderOptions = [
-  { value: "desc", label: "Descending (Newest/Z-A)" },
-  { value: "asc", label: "Ascending (Oldest/A-Z)" },
+  { value: 'desc', label: 'Descending (Newest/Z-A)' },
+  { value: 'asc', label: 'Ascending (Oldest/A-Z)' },
 ] as const;
 
 const searchScopeOptions = [
-  { value: "both", label: "Title & Content" },
-  { value: "title", label: "Title Only" },
-  { value: "content", label: "Content Only" },
+  { value: 'both', label: 'Title & Content' },
+  { value: 'title', label: 'Title Only' },
+  { value: 'content', label: 'Content Only' },
 ] as const;
 
 const editorModeOptions = [
-  { value: "markdown", label: "Markdown", description: "Plain text with markdown syntax and live preview" },
-  { value: "wysiwyg", label: "WYSIWYG", description: "Rich text editor with visual formatting" },
-  { value: "code", label: "Code Snippets", description: "Optimized for code with syntax highlighting and copy button" },
+  { value: 'markdown', label: 'Markdown', description: 'Plain text with markdown syntax and live preview' },
+  { value: 'wysiwyg', label: 'WYSIWYG', description: 'Rich text editor with visual formatting' },
+  { value: 'code', label: 'Code Snippets', description: 'Optimized for code with syntax highlighting and copy button' },
 ] as const;
 
 export function AdminNotesSettingsPage(): React.JSX.Element {
@@ -43,7 +43,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
 
   const handleResetToDefaults = (): void => {
     resetToDefaults();
-    toast("Settings reset to defaults", { variant: "success" });
+    toast('Settings reset to defaults', { variant: 'success' });
   };
 
   const isDefault = (key: keyof NoteSettings): boolean => {
@@ -85,14 +85,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <div>
               <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Sort By</span>
-                {!isDefault("sortBy") && (
+                {!isDefault('sortBy') && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
               </Label>
               <Select
                 value={settings.sortBy}
                 onValueChange={(value: string): void =>
-                  updateSettings({ sortBy: value as NoteSettings["sortBy"] })
+                  updateSettings({ sortBy: value as NoteSettings['sortBy'] })
                 }
               >
                 <SelectTrigger>
@@ -111,14 +111,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <div>
               <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Sort Order</span>
-                {!isDefault("sortOrder") && (
+                {!isDefault('sortOrder') && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
               </Label>
               <Select
                 value={settings.sortOrder}
                 onValueChange={(value: string): void =>
-                  updateSettings({ sortOrder: value as NoteSettings["sortOrder"] })
+                  updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
                 }
               >
                 <SelectTrigger>
@@ -143,7 +143,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.showTimestamps} onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                  checked={settings.showTimestamps} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ showTimestamps: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -157,7 +157,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   </p>
                 </div>
               </div>
-              {!isDefault("showTimestamps") && (
+              {!isDefault('showTimestamps') && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
             </Label>
@@ -165,7 +165,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.showBreadcrumbs} onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                  checked={settings.showBreadcrumbs} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ showBreadcrumbs: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -179,7 +179,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   </p>
                 </div>
               </div>
-              {!isDefault("showBreadcrumbs") && (
+              {!isDefault('showBreadcrumbs') && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
             </Label>
@@ -192,14 +192,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           <div>
             <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
               <span>Default Search Scope</span>
-              {!isDefault("searchScope") && (
+              {!isDefault('searchScope') && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
             </Label>
             <Select
               value={settings.searchScope}
               onValueChange={(value: string): void =>
-                updateSettings({ searchScope: value as NoteSettings["searchScope"] })
+                updateSettings({ searchScope: value as NoteSettings['searchScope'] })
               }
             >
               <SelectTrigger>
@@ -223,7 +223,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <div>
               <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Default Editor Mode</span>
-                {!isDefault("editorMode") && (
+                {!isDefault('editorMode') && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
               </Label>
@@ -231,7 +231,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 <RadioGroup
                   value={settings.editorMode}
                   onValueChange={(value: string): void =>
-                    updateSettings({ editorMode: value as NoteSettings["editorMode"] })
+                    updateSettings({ editorMode: value as NoteSettings['editorMode'] })
                   }
                   className="space-y-2"
                 >
@@ -243,8 +243,8 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                         key={option.value}
                         className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
                           isSelected
-                            ? "border-blue-500 bg-blue-500/10"
-                            : "border hover:border-border/60"
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border hover:border-border/60'
                         }`}
                       >
                         <RadioGroupItem
@@ -268,7 +268,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.autoformatOnPaste} onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                  checked={settings.autoformatOnPaste} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ autoformatOnPaste: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -283,7 +283,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   </p>
                 </div>
               </div>
-              {!isDefault("autoformatOnPaste") && (
+              {!isDefault('autoformatOnPaste') && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
             </Label>
@@ -304,7 +304,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   (even after clearing cache or on a different device), it will open to your last selected folder.
                 </p>
               </div>
-              {!isDefault("selectedFolderId") && (
+              {!isDefault('selectedFolderId') && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-green-400">Saved to database</span>
                   <Button
@@ -343,15 +343,15 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <span>Sort:</span>
             <span className="text-gray-300">
               {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
-              {settings.sortOrder === "desc" ? "Descending" : "Ascending"})
+              {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
             </span>
             <span>Timestamps:</span>
             <span className="text-gray-300">
-              {settings.showTimestamps ? "Visible" : "Hidden"}
+              {settings.showTimestamps ? 'Visible' : 'Hidden'}
             </span>
             <span>Breadcrumbs:</span>
             <span className="text-gray-300">
-              {settings.showBreadcrumbs ? "Visible" : "Hidden"}
+              {settings.showBreadcrumbs ? 'Visible' : 'Hidden'}
             </span>
             <span>Search Scope:</span>
             <span className="text-gray-300">
@@ -359,11 +359,11 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             </span>
             <span>Selected Folder:</span>
             <span className="text-gray-300">
-              {settings.selectedFolderId ? "Saved" : "All Notes (default)"}
+              {settings.selectedFolderId ? 'Saved' : 'All Notes (default)'}
             </span>
             <span>Autoformat on Paste:</span>
             <span className="text-gray-300">
-              {settings.autoformatOnPaste ? "Enabled" : "Disabled"}
+              {settings.autoformatOnPaste ? 'Enabled' : 'Disabled'}
             </span>
             <span>Editor Mode:</span>
             <span className="text-gray-300">

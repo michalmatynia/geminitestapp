@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-
-import { Button, Tooltip } from "@/shared/ui";
+import React from 'react';
 
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
+import { Button, Tooltip } from '@/shared/ui';
+
 
 type TimelineItem = {
   id: string;
@@ -16,11 +16,11 @@ type TimelineItem = {
   label: string;
   description?: string;
   status?: string | null;
-  kind: "run" | "node";
+  kind: 'run' | 'node';
   meta?: string | undefined;
 };
 
-type TimelineFilter = "run" | "node" | "event";
+type TimelineFilter = 'run' | 'node' | 'event';
 
 type NodeDurationRow = {
   id: string;
@@ -30,26 +30,26 @@ type NodeDurationRow = {
   durationLabel: string | null;
 };
 
-const STATUS_SORT_STORAGE_KEY = "ai-paths-run-timeline-status-sort";
-const FILTERS_STORAGE_KEY = "ai-paths-run-timeline-filters";
+const STATUS_SORT_STORAGE_KEY = 'ai-paths-run-timeline-status-sort';
+const FILTERS_STORAGE_KEY = 'ai-paths-run-timeline-filters';
 
 const statusBadgeStyles: Record<string, string> = {
-  queued: "border-slate-500/40 bg-slate-500/10 text-slate-200",
-  running: "border-sky-500/40 bg-sky-500/10 text-sky-200",
-  paused: "border-amber-500/40 bg-amber-500/10 text-amber-200",
-  completed: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200",
-  failed: "border-rose-500/40 bg-rose-500/10 text-rose-200",
-  canceled: "border-orange-500/40 bg-orange-500/10 text-orange-200",
-  dead_lettered: "border-purple-500/40 bg-purple-500/10 text-purple-200",
-  pending: "border-slate-500/40 bg-slate-500/10 text-slate-200",
-  skipped: "border-zinc-500/40 bg-zinc-500/10 text-zinc-200",
-  blocked: "border-amber-500/40 bg-amber-500/10 text-amber-200",
+  queued: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
+  running: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
+  paused: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+  completed: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
+  failed: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+  canceled: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
+  dead_lettered: 'border-purple-500/40 bg-purple-500/10 text-purple-200',
+  pending: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
+  skipped: 'border-zinc-500/40 bg-zinc-500/10 text-zinc-200',
+  blocked: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
 };
 
 const levelBadgeStyles: Record<string, string> = {
-  info: "border-sky-500/40 bg-sky-500/10 text-sky-200",
-  warning: "border-amber-500/40 bg-amber-500/10 text-amber-200",
-  error: "border-rose-500/40 bg-rose-500/10 text-rose-200",
+  info: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
+  warning: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+  error: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
 };
 
 const toDate = (value?: Date | string | null): Date | null => {
@@ -105,10 +105,10 @@ const buildTimelineItems = (
     items.push({
       id: `run-created-${run.id}`,
       timestamp: createdAt,
-      label: "Run queued",
-      description: run.pathName ?? run.pathId ?? "AI Path",
-      status: "queued",
-      kind: "run",
+      label: 'Run queued',
+      description: run.pathName ?? run.pathId ?? 'AI Path',
+      status: 'queued',
+      kind: 'run',
     });
   }
   const startedAt = toDate(run.startedAt);
@@ -116,10 +116,10 @@ const buildTimelineItems = (
     items.push({
       id: `run-started-${run.id}`,
       timestamp: startedAt,
-      label: "Run started",
-      description: run.pathName ?? run.pathId ?? "AI Path",
-      status: "running",
-      kind: "run",
+      label: 'Run started',
+      description: run.pathName ?? run.pathId ?? 'AI Path',
+      status: 'running',
+      kind: 'run',
     });
   }
 
@@ -131,10 +131,10 @@ const buildTimelineItems = (
       items.push({
         id: `node-start-${node.id}`,
         timestamp: startAt,
-        label: "Node started",
+        label: 'Node started',
         description: nodeMeta,
-        status: "running",
-        kind: "node",
+        status: 'running',
+        kind: 'node',
       });
     }
     const finishAt = toDate(node.finishedAt);
@@ -147,7 +147,7 @@ const buildTimelineItems = (
         label: `Node ${node.status}`,
         description: finishDescription,
         status: node.status,
-        kind: "node",
+        kind: 'node',
         meta: node.errorMessage ? `Error: ${node.errorMessage}` : undefined,
       });
     }
@@ -159,9 +159,9 @@ const buildTimelineItems = (
       id: `run-finished-${run.id}`,
       timestamp: finishedAt,
       label: `Run ${run.status}`,
-      description: run.pathName ?? run.pathId ?? "AI Path",
+      description: run.pathName ?? run.pathId ?? 'AI Path',
       status: run.status,
-      kind: "run",
+      kind: 'run',
       meta: run.errorMessage ? `Error: ${run.errorMessage}` : undefined,
     });
   }
@@ -208,7 +208,7 @@ export function RunTimeline({
 
   const [visibleSections, setVisibleSections] = React.useState<Record<TimelineFilter, boolean>>(
     (): Record<TimelineFilter, boolean> => {
-      if (typeof window === "undefined") {
+      if (typeof window === 'undefined') {
         return { run: true, node: true, event: true };
       }
       try {
@@ -226,7 +226,7 @@ export function RunTimeline({
   );
 
   React.useEffect((): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(visibleSections));
   }, [visibleSections]);
 
@@ -236,12 +236,12 @@ export function RunTimeline({
   );
 
   const runEntryCount = React.useMemo(
-    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === "run").length,
+    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === 'run').length,
     [timelineItems]
   );
 
   const nodeEntryCount = React.useMemo(
-    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === "node").length,
+    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === 'node').length,
     [timelineItems]
   );
 
@@ -265,7 +265,7 @@ export function RunTimeline({
   const durationStats = React.useMemo((): { total: number; average: number | null; min: number | null; max: number | null; timedCount: number; totalCount: number } => {
     const durations = nodeDurationRows
       .map((row: NodeDurationRow): number | null => row.durationMs)
-      .filter((duration: number | null): duration is number => typeof duration === "number");
+      .filter((duration: number | null): duration is number => typeof duration === 'number');
     const total = durations.reduce((acc: number, value: number): number => acc + value, 0);
     const average = durations.length > 0 ? Math.round(total / durations.length) : null;
     const min = durations.length > 0 ? Math.min(...durations) : null;
@@ -286,11 +286,11 @@ export function RunTimeline({
       { count: number; timedCount: number; totalMs: number; min: NodeDurationRow | null; max: NodeDurationRow | null }
     >();
     nodeDurationRows.forEach((row: NodeDurationRow): void => {
-      const key = row.status ?? "unknown";
+      const key = row.status ?? 'unknown';
       const bucket =
         buckets.get(key) ?? { count: 0, timedCount: 0, totalMs: 0, min: null, max: null };
       bucket.count += 1;
-      if (typeof row.durationMs === "number") {
+      if (typeof row.durationMs === 'number') {
         bucket.timedCount += 1;
         bucket.totalMs += row.durationMs;
         if (!bucket.min || row.durationMs < (bucket.min.durationMs ?? Infinity)) {
@@ -314,25 +314,25 @@ export function RunTimeline({
     }));
   }, [nodeDurationRows]);
 
-  const [statusSort, setStatusSort] = React.useState<"count" | "avg" | "total" | "alpha">(
-    (): "count" | "avg" | "total" | "alpha" => {
-      if (typeof window === "undefined") return "count";
+  const [statusSort, setStatusSort] = React.useState<'count' | 'avg' | 'total' | 'alpha'>(
+    (): 'count' | 'avg' | 'total' | 'alpha' => {
+      if (typeof window === 'undefined') return 'count';
       const saved = window.localStorage.getItem(STATUS_SORT_STORAGE_KEY);
-      if (saved === "count" || saved === "avg" || saved === "total" || saved === "alpha") {
+      if (saved === 'count' || saved === 'avg' || saved === 'total' || saved === 'alpha') {
         return saved;
       }
-      return "count";
+      return 'count';
     }
   );
 
   React.useEffect((): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(STATUS_SORT_STORAGE_KEY, statusSort);
   }, [statusSort]);
 
   const sortedDurationByStatus = React.useMemo((): Array<{ status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }> => {
     const list = [...durationByStatus];
-    if (statusSort === "count") {
+    if (statusSort === 'count') {
       list.sort((a: { count: number; status: string }, b: { count: number; status: string }): number => {
         if (b.count !== a.count) return b.count - a.count;
         return a.status.localeCompare(b.status);
@@ -340,10 +340,10 @@ export function RunTimeline({
       return list;
     }
     list.sort((a: { averageMs: number | null; totalMs: number; count: number; status: string }, b: { averageMs: number | null; totalMs: number; count: number; status: string }): number => {
-      if (statusSort === "alpha") {
+      if (statusSort === 'alpha') {
         return a.status.localeCompare(b.status);
       }
-      if (statusSort === "total") {
+      if (statusSort === 'total') {
         if (b.totalMs !== a.totalMs) return b.totalMs - a.totalMs;
         if (b.count !== a.count) return b.count - a.count;
         return a.status.localeCompare(b.status);
@@ -359,7 +359,7 @@ export function RunTimeline({
 
   const minMaxNodeDuration = React.useMemo((): { min: NodeDurationRow | null; max: NodeDurationRow | null } => {
     const timed = nodeDurationRows.filter(
-      (row: NodeDurationRow): boolean => typeof row.durationMs === "number"
+      (row: NodeDurationRow): boolean => typeof row.durationMs === 'number'
     );
     if (timed.length === 0) {
       return { min: null, max: null };
@@ -390,7 +390,7 @@ export function RunTimeline({
             className="rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
             onClick={() => {
               setVisibleSections({ run: true, node: true, event: true });
-              setStatusSort("count");
+              setStatusSort('count');
             }}
           >
             Restore defaults
@@ -403,9 +403,9 @@ export function RunTimeline({
             Filters only
           </Button>
           {[
-            { id: "run", label: `Run (${runEntryCount})` },
-            { id: "node", label: `Nodes (${nodeEntryCount})` },
-            { id: "event", label: `Events (${sortedEvents.length})` },
+            { id: 'run', label: `Run (${runEntryCount})` },
+            { id: 'node', label: `Nodes (${nodeEntryCount})` },
+            { id: 'event', label: `Events (${sortedEvents.length})` },
           ].map((filter: { id: string; label: string }): React.JSX.Element => {
             const active = visibleSections[filter.id as TimelineFilter];
             return (
@@ -414,8 +414,8 @@ export function RunTimeline({
                 type="button"
                 className={`rounded-md border px-2 py-1 text-[10px] ${
                   active
-                    ? "border-emerald-500/50 text-emerald-200"
-                    : "text-gray-300 hover:bg-muted/60"
+                    ? 'border-emerald-500/50 text-emerald-200'
+                    : 'text-gray-300 hover:bg-muted/60'
                 }`}
                 onClick={() => toggleSection(filter.id as TimelineFilter)}
               >
@@ -433,8 +433,8 @@ export function RunTimeline({
             <span>{nodeDurationRows.length} nodes</span>
           </div>
           <div className="mt-1 text-[11px] text-gray-500">
-            Total {formatDurationMs(durationStats.total) ?? "—"} · Avg{" "}
-            {formatDurationMs(durationStats.average) ?? "—"} ·{" "}
+            Total {formatDurationMs(durationStats.total) ?? '—'} · Avg{' '}
+            {formatDurationMs(durationStats.average) ?? '—'} ·{' '}
             {minMaxNodeDuration.min ? (
               <Tooltip
                 content={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
@@ -442,13 +442,13 @@ export function RunTimeline({
                 )}`}
               >
                 <span className="cursor-help">
-                  Min {formatDurationMs(durationStats.min) ?? "—"}
+                  Min {formatDurationMs(durationStats.min) ?? '—'}
                 </span>
               </Tooltip>
             ) : (
               <span>Min —</span>
-            )}{" "}
-            ·{" "}
+            )}{' '}
+            ·{' '}
             {minMaxNodeDuration.max ? (
               <Tooltip
                 content={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
@@ -456,12 +456,12 @@ export function RunTimeline({
                 )}`}
               >
                 <span className="cursor-help">
-                  Max {formatDurationMs(durationStats.max) ?? "—"}
+                  Max {formatDurationMs(durationStats.max) ?? '—'}
                 </span>
               </Tooltip>
             ) : (
               <span>Max —</span>
-            )}{" "}
+            )}{' '}
             · Timed {durationStats.timedCount}/{durationStats.totalCount}
           </div>
           {sortedDurationByStatus.length > 0 ? (
@@ -469,11 +469,11 @@ export function RunTimeline({
               <div className="flex flex-wrap items-center gap-2 text-gray-500">
                 <span className="uppercase">Sort by</span>
                 {([
-                  { id: "count", label: "Count" },
-                  { id: "avg", label: "Avg duration" },
-                  { id: "total", label: "Total duration" },
-                  { id: "alpha", label: "A-Z" },
-                ] as const).map((option: { id: "count" | "total" | "avg" | "alpha"; label: string }): React.JSX.Element => {
+                  { id: 'count', label: 'Count' },
+                  { id: 'avg', label: 'Avg duration' },
+                  { id: 'total', label: 'Total duration' },
+                  { id: 'alpha', label: 'A-Z' },
+                ] as const).map((option: { id: 'count' | 'total' | 'avg' | 'alpha'; label: string }): React.JSX.Element => {
                   const active = statusSort === option.id;
                   return (
                     <Button
@@ -481,8 +481,8 @@ export function RunTimeline({
                       type="button"
                       className={`rounded-md border px-2 py-1 text-[10px] ${
                         active
-                          ? "border-emerald-500/50 text-emerald-200"
-                          : "text-gray-300 hover:bg-muted/60"
+                          ? 'border-emerald-500/50 text-emerald-200'
+                          : 'text-gray-300 hover:bg-muted/60'
                       }`}
                       onClick={() => setStatusSort(option.id)}
                     >
@@ -495,21 +495,21 @@ export function RunTimeline({
                 {sortedDurationByStatus.map((bucket: { status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }): React.JSX.Element => {
                   const badgeClass =
                     statusBadgeStyles[bucket.status] ??
-                    "border-border bg-card/40 text-gray-200";
+                    'border-border bg-card/40 text-gray-200';
                   const tooltipContent =
                     bucket.min || bucket.max
                       ? [
-                          bucket.min
-                            ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
-                                bucket.min.durationMs
-                              )}`
-                            : "Fastest: —",
-                          bucket.max
-                            ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
-                                bucket.max.durationMs
-                              )}`
-                            : "Slowest: —",
-                        ].join("\n")
+                        bucket.min
+                          ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
+                            bucket.min.durationMs
+                          )}`
+                          : 'Fastest: —',
+                        bucket.max
+                          ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
+                            bucket.max.durationMs
+                          )}`
+                          : 'Slowest: —',
+                      ].join('\n')
                       : null;
                   const chip = (
                     <div
@@ -520,16 +520,16 @@ export function RunTimeline({
                         {bucket.status}
                       </span>
                       <span>
-                        Avg {formatDurationMs(bucket.averageMs) ?? "—"}
+                        Avg {formatDurationMs(bucket.averageMs) ?? '—'}
                       </span>
                       <span>
-                        Total {formatDurationMs(bucket.totalMs) ?? "—"}
+                        Total {formatDurationMs(bucket.totalMs) ?? '—'}
                       </span>
                       <span>
-                        Min {formatDurationMs(bucket.min?.durationMs ?? null) ?? "—"}
+                        Min {formatDurationMs(bucket.min?.durationMs ?? null) ?? '—'}
                       </span>
                       <span>
-                        Max {formatDurationMs(bucket.max?.durationMs ?? null) ?? "—"}
+                        Max {formatDurationMs(bucket.max?.durationMs ?? null) ?? '—'}
                       </span>
                       <span>
                         Timed {bucket.timedCount}/{bucket.count}
@@ -555,8 +555,8 @@ export function RunTimeline({
             <div className="mt-2 max-h-[200px] overflow-auto space-y-2">
               {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
                 const badgeClass =
-                  statusBadgeStyles[row.status ?? ""] ??
-                  "border-border bg-card/40 text-gray-200";
+                  statusBadgeStyles[row.status ?? ''] ??
+                  'border-border bg-card/40 text-gray-200';
                 return (
                   <div
                     key={row.id}
@@ -567,9 +567,9 @@ export function RunTimeline({
                     </div>
                     <div className="flex items-center gap-2 text-[11px] text-gray-400">
                       <span className={`rounded-full border px-2 py-0.5 ${badgeClass}`}>
-                        {row.status ?? "unknown"}
+                        {row.status ?? 'unknown'}
                       </span>
-                      <span>{row.durationLabel ?? "—"}</span>
+                      <span>{row.durationLabel ?? '—'}</span>
                     </div>
                   </div>
                 );
@@ -595,8 +595,8 @@ export function RunTimeline({
             <div className="relative border-l border-border/60 pl-4">
               {filteredTimelineItems.map((item: TimelineItem, index: number): React.JSX.Element => {
                 const badgeClass =
-                  statusBadgeStyles[item.status ?? ""] ??
-                  "border-border bg-card/40 text-gray-200";
+                  statusBadgeStyles[item.status ?? ''] ??
+                  'border-border bg-card/40 text-gray-200';
                 return (
                   <div key={`${item.id}-${index}`} className="relative pb-4">
                     <div className="absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400" />
@@ -634,7 +634,7 @@ export function RunTimeline({
             <div className="text-[11px] uppercase text-gray-500">Logs</div>
             {eventsOverflow ? (
               <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
-                Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ""}
+                Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ''}
               </span>
             ) : null}
           </div>
@@ -648,7 +648,7 @@ export function RunTimeline({
                 {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
                   const badgeClass =
                     levelBadgeStyles[event.level] ??
-                    "border-border bg-card/40 text-gray-200";
+                    'border-border bg-card/40 text-gray-200';
                   const metadata = formatMetadata(event.metadata);
                   return (
                     <div key={event.id} className="p-3">

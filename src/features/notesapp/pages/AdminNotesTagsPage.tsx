@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-
-import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
-import { useNotebooks, useNoteTags } from "@/features/notesapp/api/useNoteQueries";
-import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from "@/features/notesapp/api/useNoteMutations";
-import type { TagRecord } from "@/shared/types/notes";
+import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features/notesapp/api/useNoteMutations';
+import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
+import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
+import { logClientError } from '@/features/observability';
+import type { TagRecord } from '@/shared/types/notes';
+import { Button, useToast, Input, Label, SectionHeader, SectionPanel, SearchInput } from '@/shared/ui';
 
 
 
@@ -17,12 +17,12 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#3b82f6");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('#3b82f6');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
-  const [editingColor, setEditingColor] = useState("#3b82f6");
+  const [editingName, setEditingName] = useState('');
+  const [editingColor, setEditingColor] = useState('#3b82f6');
   const notebooksQuery = useNotebooks();
   const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
   const createTag = useCreateNoteTag();
@@ -44,46 +44,46 @@ export function AdminNotesTagsPage(): React.JSX.Element {
 
   const handleCreate = async (): Promise<void> => {
     if (!name.trim()) {
-      toast("Tag name is required", { variant: "error" });
+      toast('Tag name is required', { variant: 'error' });
       return;
     }
     try {
       if (!selectedNotebookId) return;
       await createTag.mutateAsync({ name: name.trim(), color, notebookId: selectedNotebookId });
-      setName("");
-      toast("Tag created", { variant: "success" });
+      setName('');
+      toast('Tag created', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to create tag:", error);
-      toast("Failed to create tag", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'createTag', name, notebookId: selectedNotebookId } });
+      toast('Failed to create tag', { variant: 'error' });
     }
   };
 
   const handleDelete = async (tagId: string): Promise<void> => {
-    if (!confirm("Delete this tag? It will be removed from all notes.")) return;
+    if (!confirm('Delete this tag? It will be removed from all notes.')) return;
     try {
       await deleteTag.mutateAsync(tagId);
-      toast("Tag deleted", { variant: "success" });
+      toast('Tag deleted', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to delete tag:", error);
-      toast("Failed to delete tag", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'deleteTag', tagId } });
+      toast('Failed to delete tag', { variant: 'error' });
     }
   };
 
   const handleEditStart = (tag: TagRecord): void => {
     setEditingId(tag.id);
     setEditingName(tag.name);
-    setEditingColor(tag.color || "#3b82f6");
+    setEditingColor(tag.color || '#3b82f6');
   };
 
   const handleEditCancel = (): void => {
     setEditingId(null);
-    setEditingName("");
-    setEditingColor("#3b82f6");
+    setEditingName('');
+    setEditingColor('#3b82f6');
   };
 
   const handleUpdate = async (tagId: string): Promise<void> => {
     if (!editingName.trim()) {
-      toast("Tag name is required", { variant: "error" });
+      toast('Tag name is required', { variant: 'error' });
       return;
     }
     try {
@@ -91,11 +91,11 @@ export function AdminNotesTagsPage(): React.JSX.Element {
         id: tagId,
         data: { name: editingName.trim(), color: editingColor },
       });
-      toast("Tag updated", { variant: "success" });
+      toast('Tag updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      console.error("Failed to update tag:", error);
-      toast("Failed to update tag", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'updateTag', tagId } });
+      toast('Failed to update tag', { variant: 'error' });
     }
   };
 
@@ -115,10 +115,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       <div className="max-w-3xl space-y-6">
         <SectionPanel className="p-6">
           <SectionHeader title="Search" size="sm" className="mb-4" />
-          <Input
-            type="text"
+          <SearchInput
             value={searchQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+            onClear={() => setSearchQuery('')}
             placeholder="Search tags..."
             className="w-full"
           />
@@ -150,7 +150,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               />
             </div>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
-              {createTag.isPending ? "Saving..." : "Create"}
+              {createTag.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
         </SectionPanel>
@@ -175,14 +175,15 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               {filteredTags.map((tag: TagRecord) => {
                 const isEditing = editingId === tag.id;
                 return (
-                  <div
+                  <SectionPanel
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
+                    variant="subtle"
+                    className="flex items-center justify-between gap-3 px-4 py-3"
                   >
                     <div className="flex flex-1 items-center gap-3">
                       <span
                         className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: tag.color || "#3b82f6" }}
+                        style={{ backgroundColor: tag.color || '#3b82f6' }}
                       />
                       {isEditing ? (
                         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
@@ -240,7 +241,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                         <Trash2 size={16} />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 );
               })}
             </div>

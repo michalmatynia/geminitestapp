@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useToast, Textarea } from "@/shared/ui";
+import React from 'react';
+
+import { useToast, Textarea } from '@/shared/ui';
 
 
-import { renderMarkdownToHtml } from "../../utils";
+import { renderMarkdownToHtml } from '../../utils';
 
 interface MarkdownEditorProps {
   content: string;
@@ -44,7 +45,7 @@ export function MarkdownEditor({
   isCodeMode = false,
 }: MarkdownEditorProps): React.JSX.Element {
   const { toast } = useToast();
-  const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>("");
+  const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>('');
 
   React.useEffect((): void | (() => void) => {
     if (!showPreview) return;
@@ -75,29 +76,29 @@ export function MarkdownEditor({
     const handlePointerUp = (): void => {
       setIsDraggingSplitter(false);
     };
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
     return (): void => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [isDraggingSplitter, editorSplitRef, setIsDraggingSplitter, setEditorWidth]);
 
   return (
     <div
       ref={editorSplitRef}
-      className={`flex ${showPreview ? "gap-0" : ""}`}
+      className={`flex ${showPreview ? 'gap-0' : ''}`}
     >
       <div
-        className={showPreview ? "flex-shrink-0" : "flex-1"}
+        className={showPreview ? 'flex-shrink-0' : 'flex-1'}
         style={showPreview && editorWidth ? { width: editorWidth } : undefined}
       >
         <div className="relative">
           <Textarea
             ref={contentRef}
             placeholder={isCodeMode
-              ? "Enter code snippets using ```language blocks (e.g., ```javascript)"
-              : "Enter note content (paste images directly!)"}
+              ? 'Enter code snippets using ```language blocks (e.g., ```javascript)'
+              : 'Enter note content (paste images directly!)'}
             value={content}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setContent(e.target.value)}
             onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void onPaste(e); }}
@@ -140,7 +141,7 @@ export function MarkdownEditor({
             style={{ backgroundColor: contentBackground, color: contentTextColor }}
           >
             <div className="mb-2 text-xs uppercase tracking-wide text-gray-400">
-              {isCodeMode ? "Code Preview" : "Preview"}
+              {isCodeMode ? 'Code Preview' : 'Preview'}
             </div>
             <div
               className="prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80"
@@ -149,38 +150,38 @@ export function MarkdownEditor({
               onMouseOver={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
-                const wrapper = target.closest("[data-code]");
-                const button = wrapper?.querySelector("[data-copy-code]");
-                if (button instanceof HTMLElement) button.style.opacity = "1";
+                const wrapper = target.closest('[data-code]');
+                const button = wrapper?.querySelector('[data-copy-code]');
+                if (button instanceof HTMLElement) button.style.opacity = '1';
               }}
               onMouseOut={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
-                const wrapper = target.closest("[data-code]");
-                const button = wrapper?.querySelector("[data-copy-code]");
-                if (button instanceof HTMLElement) button.style.opacity = "0";
+                const wrapper = target.closest('[data-code]');
+                const button = wrapper?.querySelector('[data-copy-code]');
+                if (button instanceof HTMLElement) button.style.opacity = '0';
               }}
               onClick={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
-                const copyButton = target.closest("[data-copy-code]");
+                const copyButton = target.closest('[data-copy-code]');
                 if (copyButton instanceof HTMLButtonElement) {
-                  const wrapper = copyButton.closest("[data-code]");
-                  const encoded = wrapper?.getAttribute("data-code");
+                  const wrapper = copyButton.closest('[data-code]');
+                  const encoded = wrapper?.getAttribute('data-code');
                   if (!encoded) return;
                   const originalLabel = copyButton.textContent;
                   navigator.clipboard
                     .writeText(decodeURIComponent(encoded))
                     .then((): void => {
-                      copyButton.textContent = "Copied";
+                      copyButton.textContent = 'Copied';
                       window.setTimeout((): void => {
-                        copyButton.textContent = originalLabel ?? "Copy";
+                        copyButton.textContent = originalLabel ?? 'Copy';
                       }, 1500);
                     })
-                    .catch((): void => { void toast("Failed to copy code"); });
+                    .catch((): void => { void toast('Failed to copy code'); });
                   return;
                 }
-                if (target instanceof HTMLImageElement && target.tagName === "IMG") {
+                if (target instanceof HTMLImageElement && target.tagName === 'IMG') {
                   const imgSrc = target.src;
                   setLightboxImage(imgSrc);
                 }

@@ -1,7 +1,6 @@
-"use client";
+'use client';
 
-import { Button, Input, Checkbox, Label } from "@/shared/ui";
-import Link from "next/link";
+import Link from 'next/link';
 
 import type {
   InventoryOption,
@@ -9,13 +8,13 @@ import type {
   WarehouseOption,
   DebugWarehouses,
   ImageRetryPreset,
-} from "@/features/data-import-export/types/imports";
-import type { IntegrationConnectionBasic } from "@/features/integrations";
-
+} from '@/features/data-import-export/types/imports';
 import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,
-} from "@/features/data-import-export/utils/image-retry-presets";
+} from '@/features/data-import-export/utils/image-retry-presets';
+import type { IntegrationConnectionBasic } from '@/features/integrations';
+import { Button, Input, Checkbox, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 type ExportTabProps = {
   baseConnections: IntegrationConnectionBasic[];
@@ -28,7 +27,7 @@ type ExportTabProps = {
   setExportActiveTemplateId: (value: string) => void;
   exportTemplates: Template[];
   loadingExportTemplates: boolean;
-  applyTemplate: (template: Template, scope: "import" | "export") => void;
+  applyTemplate: (template: Template, scope: 'import' | 'export') => void;
   exportWarehouseId: string;
   setExportWarehouseId: (value: string) => void;
   warehouseOptions: WarehouseOption[];
@@ -102,7 +101,7 @@ export function ExportTab({
 }: ExportTabProps): React.JSX.Element {
   const updateImageRetryPreset = (
     presetId: string,
-    update: Partial<ImageRetryPreset["transform"]>,
+    update: Partial<ImageRetryPreset['transform']>,
   ): void => {
     setImageRetryPresets((prev: ImageRetryPreset[]) =>
       prev.map((preset: ImageRetryPreset) => {
@@ -124,7 +123,7 @@ export function ExportTab({
   };
 
   return (
-    <div className="rounded-md border border-border bg-gray-900 p-4">
+    <SectionPanel variant="subtle" className="p-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">
@@ -146,62 +145,38 @@ export function ExportTab({
             <Label className="text-xs text-gray-400">
               Base connection for inventories/warehouses
             </Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={selectedBaseConnectionId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                setSelectedBaseConnectionId(event.target.value)
-              }
-              disabled={baseConnections.length === 0}
-            >
-              {baseConnections.length === 0 ? (
-                <option value="">No connections loaded</option>
-              ) : (
-                <>
-                  <option value="">Select a connection...</option>
-                  {baseConnections.map(
-                    (connection: IntegrationConnectionBasic) => (
-                      <option key={connection.id} value={connection.id}>
-                        {connection.name}
-                      </option>
-                    ),
-                  )}
-                </>
-              )}
-            </select>
+            <div className="mt-2">
+              <UnifiedSelect
+                value={selectedBaseConnectionId || '__none__'}
+                onValueChange={(v: string): void => setSelectedBaseConnectionId(v === '__none__' ? '' : v)}
+                disabled={baseConnections.length === 0}
+                options={[
+                  { value: '__none__', label: 'Select a connection...' },
+                  ...baseConnections.map((connection: IntegrationConnectionBasic) => ({ value: connection.id, label: connection.name }))
+                ]}
+                placeholder={baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'}
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Used for loading inventories/warehouses and debug output.
             </p>
           </div>
           <div>
             <Label className="text-xs text-gray-400">Default Inventory</Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={exportInventoryId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                setExportInventoryId(event.target.value)
-              }
-              disabled={inventories.length === 0}
-            >
-              {inventories.length === 0 ? (
-                exportInventoryId ? (
-                  <option value={exportInventoryId}>
-                    Saved inventory ({exportInventoryId})
-                  </option>
-                ) : (
-                  <option value="">No inventories loaded</option>
-                )
-              ) : (
-                <>
-                  <option value="">Select default inventory...</option>
-                  {inventories.map((inv: InventoryOption) => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.name}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
+            <div className="mt-2">
+              <UnifiedSelect
+                value={exportInventoryId || '__none__'}
+                onValueChange={(v: string): void => setExportInventoryId(v === '__none__' ? '' : v)}
+                disabled={inventories.length === 0 && !exportInventoryId}
+                options={[
+                  { value: '__none__', label: 'Select default inventory...' },
+                  ...inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name }))
+                ]}
+                placeholder={inventories.length === 0 ? (exportInventoryId ? `Saved inventory (${exportInventoryId})` : 'No inventories loaded') : 'Select default inventory...'}
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Default inventory for product exports
             </p>
@@ -211,29 +186,29 @@ export function ExportTab({
             <Label className="text-xs text-gray-400">
               Default Export Template
             </Label>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              value={exportActiveTemplateId}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-                const nextId = event.target.value;
-                const selected = exportTemplates.find(
-                  (template: Template) => template.id === nextId,
-                );
-                if (selected) {
-                  applyTemplate(selected, "export");
-                } else {
-                  setExportActiveTemplateId(nextId);
-                }
-              }}
-              disabled={loadingExportTemplates || exportTemplates.length === 0}
-            >
-              <option value="">No template (use defaults)</option>
-              {exportTemplates.map((tpl: Template) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
+            <div className="mt-2">
+              <UnifiedSelect
+                value={exportActiveTemplateId || '__none__'}
+                onValueChange={(nextId: string): void => {
+                  const val = nextId === '__none__' ? '' : nextId;
+                  const selected = exportTemplates.find(
+                    (template: Template) => template.id === val,
+                  );
+                  if (selected) {
+                    applyTemplate(selected, 'export');
+                  } else {
+                    setExportActiveTemplateId(val);
+                  }
+                }}
+                disabled={loadingExportTemplates || exportTemplates.length === 0}
+                options={[
+                  { value: '__none__', label: 'No template (use defaults)' },
+                  ...exportTemplates.map((tpl: Template) => ({ value: tpl.id, label: tpl.name }))
+                ]}
+                placeholder="No template (use defaults)"
+                triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+              />
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Template for field mapping on export
             </p>
@@ -242,31 +217,22 @@ export function ExportTab({
 
         <div>
           <Label className="text-xs text-gray-400">Default Warehouse ID</Label>
-          <select
-            className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-            value={exportWarehouseId}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-              setExportWarehouseId(event.target.value)
-            }
-            disabled={warehouseOptions.length === 0}
-          >
-            {warehouseOptions.length === 0 ? (
-              <option value="">Load warehouses first</option>
-            ) : (
-              <>
-                <option value="">Skip stock export</option>
-                {warehouseOptions.map((warehouse: WarehouseOption) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name} ({warehouse.id})
-                    {showAllWarehouses &&
-                    !inventoryWarehouseIds.has(warehouse.id)
-                      ? " (not in inventory)"
-                      : ""}
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
+          <div className="mt-2">
+            <UnifiedSelect
+              value={exportWarehouseId || '__none__'}
+              onValueChange={(v: string): void => setExportWarehouseId(v === '__none__' ? '' : v)}
+              disabled={warehouseOptions.length === 0}
+              options={[
+                { value: '__none__', label: 'Skip stock export' },
+                ...warehouseOptions.map((warehouse: WarehouseOption) => ({
+                  value: warehouse.id,
+                  label: `${warehouse.name} (${warehouse.id})${showAllWarehouses && !inventoryWarehouseIds.has(warehouse.id) ? ' (not in inventory)' : ''}`
+                }))
+              ]}
+              placeholder={warehouseOptions.length === 0 ? 'Load warehouses first' : 'Skip stock export'}
+              triggerClassName="w-full bg-gray-900 border-border text-sm text-white h-9"
+            />
+          </div>
           <p className="mt-1 text-xs text-gray-500">
             Used for exporting stock quantities to Base.com. Leave blank to skip
             stock.
@@ -275,7 +241,7 @@ export function ExportTab({
             <Checkbox
               id="exportStockFallback"
               checked={exportStockFallbackEnabled}
-              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                 setExportStockFallbackEnabled(Boolean(checked))
               }
               disabled={!exportStockFallbackLoaded}
@@ -287,24 +253,24 @@ export function ExportTab({
           </div>
           {allWarehouses.length > 0 &&
           allWarehouses.length > warehouses.length ? (
-            <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-              <Checkbox
-                id="showAllWarehouses"
-                checked={showAllWarehouses}
-                onCheckedChange={(checked: boolean | "indeterminate"): void =>
-                  setShowAllWarehouses(Boolean(checked))
-                }
-                className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
-              />
-              <Label htmlFor="showAllWarehouses">
+              <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                <Checkbox
+                  id="showAllWarehouses"
+                  checked={showAllWarehouses}
+                  onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                    setShowAllWarehouses(Boolean(checked))
+                  }
+                  className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
+                />
+                <Label htmlFor="showAllWarehouses">
                 Show all warehouses (may include ones not assigned to the
                 inventory)
-              </Label>
-            </div>
-          ) : null}
+                </Label>
+              </div>
+            ) : null}
         </div>
 
-        <div className="rounded-md border border-border bg-card p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-white">
@@ -330,9 +296,10 @@ export function ExportTab({
           ) : (
             <div className="mt-3 space-y-3">
               {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                <div
+                <SectionPanel
                   key={preset.id}
-                  className="rounded-md border border-border bg-card/60 p-3"
+                  variant="subtle-compact"
+                  className="p-3"
                 >
                   <div className="text-xs font-semibold text-gray-200">
                     {preset.label}
@@ -348,7 +315,7 @@ export function ExportTab({
                       <Input
                         type="number"
                         min={1}
-                        value={preset.transform.maxDimension ?? ""}
+                        value={preset.transform.maxDimension ?? ''}
                         onChange={(
                           event: React.ChangeEvent<HTMLInputElement>,
                         ): void => {
@@ -368,7 +335,7 @@ export function ExportTab({
                         type="number"
                         min={10}
                         max={100}
-                        value={preset.transform.jpegQuality ?? ""}
+                        value={preset.transform.jpegQuality ?? ''}
                         onChange={(
                           event: React.ChangeEvent<HTMLInputElement>,
                         ): void => {
@@ -385,7 +352,7 @@ export function ExportTab({
                     <Checkbox
                       checked={preset.transform.forceJpeg ?? true}
                       onCheckedChange={(
-                        checked: boolean | "indeterminate",
+                        checked: boolean | 'indeterminate',
                       ): void =>
                         updateImageRetryPreset(preset.id, {
                           forceJpeg: Boolean(checked),
@@ -395,13 +362,13 @@ export function ExportTab({
                     />
                     <span>Force JPEG conversion</span>
                   </div>
-                </div>
+                </SectionPanel>
               ))}
             </div>
           )}
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
+        <SectionPanel variant="subtle-compact" className="border-blue-900/50 bg-blue-900/20 p-4">
           <h3 className="text-sm font-semibold text-blue-200">
             Export Guidelines
           </h3>
@@ -423,19 +390,19 @@ export function ExportTab({
               Products → Select Base.com
             </li>
             <li>
-              • Track export jobs in the{" "}
+              • Track export jobs in the{' '}
               <Link
                 href="/admin/products/jobs?tab=export"
                 className="text-blue-400 underline"
               >
                 Export Jobs
-              </Link>{" "}
+              </Link>{' '}
               tab
             </li>
           </ul>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-md border border-border bg-card p-4">
+        <SectionPanel variant="subtle" className="p-4">
           <h3 className="text-sm font-semibold text-white mb-3">
             Quick Actions
           </h3>
@@ -449,7 +416,7 @@ export function ExportTab({
               size="sm"
               className="border"
             >
-              {loadingInventories ? "Loading..." : "Load Inventories"}
+              {loadingInventories ? 'Loading...' : 'Load Inventories'}
             </Button>
             <Button
               onClick={(): void => {
@@ -460,7 +427,7 @@ export function ExportTab({
               size="sm"
               className="border"
             >
-              {loadingWarehouses ? "Loading..." : "Load Warehouses"}
+              {loadingWarehouses ? 'Loading...' : 'Load Warehouses'}
             </Button>
             <Button
               onClick={(): void => {
@@ -471,13 +438,13 @@ export function ExportTab({
               size="sm"
               className="border"
             >
-              {loadingDebugWarehouses ? "Debugging..." : "Debug Warehouses"}
+              {loadingDebugWarehouses ? 'Debugging...' : 'Debug Warehouses'}
             </Button>
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <Checkbox
                 id="includeAllWarehouses"
                 checked={includeAllWarehouses}
-                onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                   setIncludeAllWarehouses(Boolean(checked))
                 }
                 className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
@@ -493,7 +460,7 @@ export function ExportTab({
               disabled={savingExportSettings}
               size="sm"
             >
-              {savingExportSettings ? "Saving..." : "Save Export Settings"}
+              {savingExportSettings ? 'Saving...' : 'Save Export Settings'}
             </Button>
             <Link href="/admin/products/jobs?tab=export">
               <Button variant="outline" size="sm" className="border">
@@ -506,7 +473,7 @@ export function ExportTab({
               </Button>
             </Link>
           </div>
-        </div>
+        </SectionPanel>
         {debugWarehouses ? (
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -533,7 +500,7 @@ export function ExportTab({
                       Status: {debugWarehouses.inventoriesRaw.statusCode}
                     </div>
                     <div>
-                      Ok: {debugWarehouses.inventoriesRaw.ok ? "true" : "false"}
+                      Ok: {debugWarehouses.inventoriesRaw.ok ? 'true' : 'false'}
                     </div>
                     {debugWarehouses.inventoriesRaw.error ? (
                       <div>Error: {debugWarehouses.inventoriesRaw.error}</div>
@@ -542,18 +509,18 @@ export function ExportTab({
                       const payload = debugWarehouses.inventoriesRaw
                         ?.payload as Record<string, unknown> | null | undefined;
                       const inventories = payload
-                        ? payload["inventories"]
+                        ? payload['inventories']
                         : null;
                       if (!Array.isArray(inventories)) return null;
                       const match = (
                         inventories as Array<Record<string, unknown>>
                       ).find((inv: Record<string, unknown>) => {
-                        if (!inv || typeof inv !== "object") return false;
-                        const inventoryId = inv["inventory_id"];
+                        if (!inv || typeof inv !== 'object') return false;
+                        const inventoryId = inv['inventory_id'];
                         return (
                           exportInventoryId &&
-                          (typeof inventoryId === "string" ||
-                            typeof inventoryId === "number") &&
+                          (typeof inventoryId === 'string' ||
+                            typeof inventoryId === 'number') &&
                           String(inventoryId) === exportInventoryId
                         );
                       });
@@ -586,11 +553,11 @@ export function ExportTab({
                 </div>
                 {debugWarehouses.inventoryRaw ? (
                   <div className="mt-1 space-y-1 text-[11px] text-gray-400">
-                    <div>Inventory ID: {exportInventoryId || "—"}</div>
+                    <div>Inventory ID: {exportInventoryId || '—'}</div>
                     <div>Method: {debugWarehouses.inventoryRaw.method}</div>
                     <div>Status: {debugWarehouses.inventoryRaw.statusCode}</div>
                     <div>
-                      Ok: {debugWarehouses.inventoryRaw.ok ? "true" : "false"}
+                      Ok: {debugWarehouses.inventoryRaw.ok ? 'true' : 'false'}
                     </div>
                     {debugWarehouses.inventoryRaw.error ? (
                       <div>Error: {debugWarehouses.inventoryRaw.error}</div>
@@ -598,11 +565,11 @@ export function ExportTab({
                     <pre className="mt-2 max-h-64 overflow-auto rounded border border-border bg-card p-2 text-[10px] text-gray-300">
                       {debugWarehouses.inventoryRaw.payload
                         ? JSON.stringify(
-                            debugWarehouses.inventoryRaw.payload,
-                            null,
-                            2,
-                          )
-                        : "No payload returned."}
+                          debugWarehouses.inventoryRaw.payload,
+                          null,
+                          2,
+                        )
+                        : 'No payload returned.'}
                     </pre>
                   </div>
                 ) : (
@@ -613,6 +580,6 @@ export function ExportTab({
           </div>
         ) : null}
       </div>
-    </div>
+    </SectionPanel>
   );
 }

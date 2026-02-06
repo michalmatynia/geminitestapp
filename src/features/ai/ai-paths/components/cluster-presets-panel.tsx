@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 
 
-import { Button, Input, Label, Textarea } from "@/shared/ui";
+import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Textarea } from '@/shared/ui';
 
-import type { ClusterPreset } from "@/features/ai/ai-paths/lib";
 
 export type ClusterPresetDraft = {
   name: string;
@@ -111,7 +111,7 @@ export function ClusterPresetsPanel({
           type="button"
           onClick={onSavePreset}
         >
-          {editingPresetId ? "Update Preset" : "Save Preset"}
+          {editingPresetId ? 'Update Preset' : 'Save Preset'}
         </Button>
       </div>
       <div className="mt-4 space-y-2 text-xs text-gray-400">

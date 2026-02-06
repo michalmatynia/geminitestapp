@@ -1,29 +1,11 @@
-"use client";
+'use client';
 
-import { useToast, ConfirmDialog } from "@/shared/ui";
-import { useEffect, useState, Suspense, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 
-import {
-  Integration,
-  IntegrationConnection,
-  TestLogEntry,
-  TestStatus,
-  TestConnectionResponse,
-  integrationDefinitions,
-} from "@/features/integrations/types/integrations-ui";
-import { defaultPlaywrightSettings } from "@/features/playwright";
-import type { PlaywrightPersona } from "@/features/playwright";
-import { normalizeSteps } from "@/features/integrations/utils/connections";
-import { IntegrationList } from "@/features/integrations/components/connections/IntegrationList";
-import { IntegrationModal } from "@/features/integrations/components/connections/IntegrationModal";
-import {
-  useConnectionSession,
-  useIntegrationConnections,
-  useIntegrations,
-  usePlaywrightPersonas,
-} from "@/features/integrations/hooks/useIntegrationQueries";
+import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
+import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import {
   useCreateIntegration,
   useDeleteConnection,
@@ -32,7 +14,26 @@ import {
   useTestConnection,
   useBaseApiRequest,
   useAllegroApiRequest,
-} from "@/features/integrations/hooks/useIntegrationMutations";
+} from '@/features/integrations/hooks/useIntegrationMutations';
+import {
+  useConnectionSession,
+  useIntegrationConnections,
+  useIntegrations,
+  usePlaywrightPersonas,
+} from '@/features/integrations/hooks/useIntegrationQueries';
+import {
+  Integration,
+  IntegrationConnection,
+  TestLogEntry,
+  TestStatus,
+  TestConnectionResponse,
+  integrationDefinitions,
+} from '@/features/integrations/types/integrations-ui';
+import { normalizeSteps } from '@/features/integrations/utils/connections';
+import { logClientError } from '@/features/observability';
+import { defaultPlaywrightSettings } from '@/features/playwright';
+import type { PlaywrightPersona } from '@/features/playwright';
+import { useToast, ConfirmDialog } from '@/shared/ui';
 
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
@@ -71,9 +72,9 @@ function IntegrationsContent(): React.JSX.Element {
   );
   const [connectionToDelete, setConnectionToDelete] = useState<IntegrationConnection | null>(null);
   const [connectionForm, setConnectionForm] = useState({
-    name: "",
-    username: "",
-    password: "",
+    name: '',
+    username: '',
+    password: '',
   });
 
   const [testLog, setTestLog] = useState<TestLogEntry[]>([]);
@@ -94,16 +95,16 @@ function IntegrationsContent(): React.JSX.Element {
   const [showPlaywrightSaved, setShowPlaywrightSaved] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [savingAllegroSandbox, setSavingAllegroSandbox] = useState(false);
-  const [baseApiMethod, setBaseApiMethod] = useState("getInventories");
-  const [baseApiParams, setBaseApiParams] = useState("{}");
+  const [baseApiMethod, setBaseApiMethod] = useState('getInventories');
+  const [baseApiParams, setBaseApiParams] = useState('{}');
   const [baseApiResponse, setBaseApiResponse] = useState<{ 
     data: unknown;
   } | null>(null);
   const [baseApiError, setBaseApiError] = useState<string | null>(null);
   const [baseApiLoading, setBaseApiLoading] = useState(false);
-  const [allegroApiMethod, setAllegroApiMethod] = useState("GET");
-  const [allegroApiPath, setAllegroApiPath] = useState("/sale/categories");
-  const [allegroApiBody, setAllegroApiBody] = useState("{}");
+  const [allegroApiMethod, setAllegroApiMethod] = useState('GET');
+  const [allegroApiPath, setAllegroApiPath] = useState('/sale/categories');
+  const [allegroApiBody, setAllegroApiBody] = useState('{}');
   const [allegroApiResponse, setAllegroApiResponse] = useState<{ 
     status: number;
     statusText: string;
@@ -114,8 +115,8 @@ function IntegrationsContent(): React.JSX.Element {
   const [allegroApiLoading, setAllegroApiLoading] = useState(false);
 
   const [selectedStep, setSelectedStep] = useState< 
-    (TestLogEntry & { status: Exclude<TestStatus, "pending"> }) | null
-  >(null);
+    (TestLogEntry & { status: Exclude<TestStatus, 'pending'> }) | null
+      >(null);
 
   const [playwrightSettings, setPlaywrightSettings] = useState(
     defaultPlaywrightSettings
@@ -149,22 +150,22 @@ function IntegrationsContent(): React.JSX.Element {
   const sessionError = sessionQuery.isError
     ? sessionQuery.error instanceof Error
       ? sessionQuery.error.message
-      : "Failed to load session cookies."
+      : 'Failed to load session cookies.'
     : sessionPayload?.error ?? null;
 
   useEffect(() => {
-    const status = searchParams.get("allegro");
+    const status = searchParams.get('allegro');
     if (!status) return;
-    if (status === "connected") {
-      toast("Allegro connected.", { variant: "success" });
+    if (status === 'connected') {
+      toast('Allegro connected.', { variant: 'success' });
     } else {
-      const reason = searchParams.get("reason");
+      const reason = searchParams.get('reason');
       const message = reason
         ? `Allegro authorization failed: ${reason}`
-        : "Allegro authorization failed.";
-      toast(message, { variant: "error" });
+        : 'Allegro authorization failed.';
+      toast(message, { variant: 'error' });
     }
-    router.replace("/admin/integrations");
+    router.replace('/admin/integrations');
   }, [router, searchParams, toast]);
 
   useEffect((): void => {
@@ -172,8 +173,8 @@ function IntegrationsContent(): React.JSX.Element {
     const message =
       integrationsQuery.error instanceof Error
         ? integrationsQuery.error.message
-        : "Failed to load integrations.";
-    toast(message, { variant: "error" });
+        : 'Failed to load integrations.';
+    toast(message, { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   useEffect((): void => {
@@ -181,8 +182,8 @@ function IntegrationsContent(): React.JSX.Element {
     const message =
       connectionsQuery.error instanceof Error
         ? connectionsQuery.error.message
-        : "Failed to load connections.";
-    toast(message, { variant: "error" });
+        : 'Failed to load connections.';
+    toast(message, { variant: 'error' });
   }, [connectionsQuery.error, connectionsQuery.isError, toast]);
 
   useEffect(() => {
@@ -199,14 +200,14 @@ function IntegrationsContent(): React.JSX.Element {
 
   const refreshConnections = (integrationId: string): void => {
     void queryClient.invalidateQueries({
-      queryKey: ["integration-connections", integrationId],
+      queryKey: ['integration-connections', integrationId],
     });
   };
 
   useEffect(() => {
     if (connections.length === 0) {
       setEditingConnectionId(null);
-      setConnectionForm({ name: "", username: "", password: "" });
+      setConnectionForm({ name: '', username: '', password: '' });
       return;
     }
     if (!editingConnectionId) {
@@ -217,7 +218,7 @@ function IntegrationsContent(): React.JSX.Element {
       setConnectionForm({
         name: connection.name,
         username: connection.username,
-        password: "",
+        password: '',
       });
       setPlaywrightSettings({
         headless:
@@ -261,7 +262,7 @@ function IntegrationsContent(): React.JSX.Element {
         proxyUsername:
           connection.playwrightProxyUsername ??
           defaultPlaywrightSettings.proxyUsername,
-        proxyPassword: "",
+        proxyPassword: '',
         emulateDevice:
           connection.playwrightEmulateDevice ??
           defaultPlaywrightSettings.emulateDevice,
@@ -278,7 +279,7 @@ function IntegrationsContent(): React.JSX.Element {
         setPlaywrightPersonaId(null);
         return;
       }
-      const { findPlaywrightPersonaMatch } = await import("@/features/playwright");
+      const { findPlaywrightPersonaMatch } = await import('@/features/playwright');
       const match = findPlaywrightPersonaMatch(
         playwrightSettings,
         playwrightPersonas
@@ -311,7 +312,7 @@ function IntegrationsContent(): React.JSX.Element {
         error instanceof Error
           ? error.message
           : `Failed to add ${definition.name}`;
-      toast(message, { variant: "error" });
+      toast(message, { variant: 'error' });
       return null;
     }
   };
@@ -329,13 +330,13 @@ function IntegrationsContent(): React.JSX.Element {
   const handleSaveConnection = async (): Promise<void> => {
     if (!activeIntegration) return;
     if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
-      toast("Connection name and username are required.", {
-        variant: "error",
+      toast('Connection name and username are required.', {
+        variant: 'error',
       });
       return;
     }
     if (!editingConnectionId && !connectionForm.password.trim()) {
-      toast("Password/Token is required.", { variant: "error" });
+      toast('Password/Token is required.', { variant: 'error' });
       return;
     }
     const payload = {
@@ -351,18 +352,18 @@ function IntegrationsContent(): React.JSX.Element {
         ...(editingConnectionId ? { connectionId: editingConnectionId } : {}),
         payload,
       });
-      setConnectionForm({ name: "", username: "", password: "" });
+      setConnectionForm({ name: '', username: '', password: '' });
       setEditingConnectionId(null);
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to save connection.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save connection.';
+      toast(message, { variant: 'error' });
     }
   };
 
   const handleAllegroAuthorize = (): void => {
     if (!activeIntegration || !activeConnection) {
-      toast("Create an Allegro connection first.", { variant: "error" });
+      toast('Create an Allegro connection first.', { variant: 'error' });
       return;
     }
     window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
@@ -375,10 +376,10 @@ function IntegrationsContent(): React.JSX.Element {
         integrationId: activeIntegration.id,
         connectionId: activeConnection.id,
       });
-      toast("Allegro disconnected.", { variant: "success" });
+      toast('Allegro disconnected.', { variant: 'success' });
     } catch (error: unknown) {
-      console.error("Failed to disconnect Allegro:", error);
-      toast("Failed to disconnect Allegro.", { variant: "error" });
+      logClientError(error, { context: { source: 'ConnectionsPage', action: 'disconnectAllegro' } });
+      toast('Failed to disconnect Allegro.', { variant: 'error' });
     }
   };
 
@@ -395,12 +396,12 @@ function IntegrationsContent(): React.JSX.Element {
       });
       if (editingConnectionId === connectionToDelete.id) {
         setEditingConnectionId(null);
-        setConnectionForm({ name: "", username: "", password: "" });
+        setConnectionForm({ name: '', username: '', password: '' });
       }
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete connection.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to delete connection.';
+      toast(message, { variant: 'error' });
     } finally {
       setConnectionToDelete(null);
     }
@@ -408,7 +409,7 @@ function IntegrationsContent(): React.JSX.Element {
 
   const handleConnectionTest = async (
     connection: IntegrationConnection,
-    type: "test" | "base/test" | "allegro/test",
+    type: 'test' | 'base/test' | 'allegro/test',
     title: string
   ): Promise<void> => {
     if (!activeIntegration) return;
@@ -441,12 +442,12 @@ function IntegrationsContent(): React.JSX.Element {
 
       const durationMs = Math.round(performance.now() - startedAt);
       
-      let extraInfo = "";
-      if (type === "base/test" && payload.inventoryCount !== undefined) {
+      let extraInfo = '';
+      if (type === 'base/test' && payload.inventoryCount !== undefined) {
         extraInfo = `\nInventories found: ${payload.inventoryCount}`;
-      } else if (type === "allegro/test" && payload.profile) {
-        const login = typeof payload.profile.login === "string" ? payload.profile.login : "";
-        const name = typeof payload.profile.name === "string" ? payload.profile.name : "";
+      } else if (type === 'allegro/test' && payload.profile) {
+        const login = typeof payload.profile.login === 'string' ? payload.profile.login : '';
+        const name = typeof payload.profile.name === 'string' ? payload.profile.name : '';
         const identifier = name || login;
         if (identifier) {
           extraInfo = `\nAccount: ${identifier}`;
@@ -461,7 +462,7 @@ function IntegrationsContent(): React.JSX.Element {
       refreshConnections(activeIntegration.id);
     } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : 'Unknown error';
       
       const err = error as Error & { data?: TestConnectionResponse };
       const data = err.data;
@@ -472,28 +473,28 @@ function IntegrationsContent(): React.JSX.Element {
         const normalizedSteps = normalizeSteps(data.steps || []);
         
         const failedStepDetail =
-          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
-          "";
+          normalizedSteps.find((step: TestLogEntry) => step.status === 'failed')?.detail ||
+          '';
 
         const errorBody =
-          data.error || failedStepDetail || "No response body";
+          data.error || failedStepDetail || 'No response body';
         
         errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
 
         const steps: TestLogEntry[] = normalizedSteps.length
           ? normalizedSteps.map((step: TestLogEntry) =>
-              step.status === "failed" && !step.detail
-                ? { ...step, detail: errorMessage }
-                : step
-            )
+            step.status === 'failed' && !step.detail
+              ? { ...step, detail: errorMessage }
+              : step
+          )
           : [
-              {
-                step: `${title} failed`,
-                status: "failed",
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ];
+            {
+              step: `${title} failed`,
+              status: 'failed',
+              timestamp: new Date().toISOString(),
+              detail: errorMessage,
+            },
+          ];
           
         setTestLog(steps);
         setTestErrorMeta({
@@ -503,14 +504,14 @@ function IntegrationsContent(): React.JSX.Element {
         });
       } else {
         // Fallback log if no structured data
-         setTestLog([
-              {
-                step: `${title} failed`,
-                status: "failed",
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ]);
+        setTestLog([
+          {
+            step: `${title} failed`,
+            status: 'failed',
+            timestamp: new Date().toISOString(),
+            detail: errorMessage,
+          },
+        ]);
       }
 
       setTestError(errorMessage);
@@ -522,15 +523,15 @@ function IntegrationsContent(): React.JSX.Element {
   };
 
   const handleBaselinkerTest = (connection: IntegrationConnection): Promise<void> => {
-    return handleConnectionTest(connection, "base/test", "Baselinker connection test");
+    return handleConnectionTest(connection, 'base/test', 'Baselinker connection test');
   };
 
   const handleAllegroTest = (connection: IntegrationConnection): Promise<void> => {
-    return handleConnectionTest(connection, "allegro/test", "Allegro connection test");
+    return handleConnectionTest(connection, 'allegro/test', 'Allegro connection test');
   };
 
   const handleTestConnection = (connection: IntegrationConnection): Promise<void> => {
-    return handleConnectionTest(connection, "test", "Connection test");
+    return handleConnectionTest(connection, 'test', 'Connection test');
   };
 
   const handleOpenSessionModal = (): void => {
@@ -545,10 +546,10 @@ function IntegrationsContent(): React.JSX.Element {
     }
     const persona = playwrightPersonas.find((item: PlaywrightPersona) => item.id === personaId);
     if (!persona) return;
-    const { buildPlaywrightSettings } = await import("@/features/playwright");
+    const { buildPlaywrightSettings } = await import('@/features/playwright');
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
-    toast(`Applied persona "${persona.name}".`, { variant: "success" });
+    toast(`Applied persona "${persona.name}".`, { variant: 'success' });
   };
 
   const handleSavePlaywrightSettings = async (): Promise<void> => {
@@ -587,8 +588,8 @@ function IntegrationsContent(): React.JSX.Element {
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to save Playwright settings.";
-      toast(message, { variant: "error" });
+          : 'Failed to save Playwright settings.';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -606,13 +607,13 @@ function IntegrationsContent(): React.JSX.Element {
           allegroUseSandbox: value,
         },
       });
-      toast("Allegro sandbox setting updated.", { variant: "success" });
+      toast('Allegro sandbox setting updated.', { variant: 'success' });
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to update Allegro sandbox setting.";
-      toast(message, { variant: "error" });
+          : 'Failed to update Allegro sandbox setting.';
+      toast(message, { variant: 'error' });
     } finally {
       setSavingAllegroSandbox(false);
     }
@@ -620,7 +621,7 @@ function IntegrationsContent(): React.JSX.Element {
 
   const handleAllegroSandboxConnect = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
-      toast("Create an Allegro connection first.", { variant: "error" });
+      toast('Create an Allegro connection first.', { variant: 'error' });
       return;
     }
     if (savingAllegroSandbox) return;
@@ -638,8 +639,8 @@ function IntegrationsContent(): React.JSX.Element {
       window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to enable Allegro sandbox.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to enable Allegro sandbox.';
+      toast(message, { variant: 'error' });
     } finally {
       setSavingAllegroSandbox(false);
     }
@@ -647,34 +648,34 @@ function IntegrationsContent(): React.JSX.Element {
 
   const handleBaseApiRequest = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
-      toast("Create a Base.com connection first.", { variant: "error" });
+      toast('Create a Base.com connection first.', { variant: 'error' });
       return;
     }
     const methodInput = baseApiMethod.trim();
-    const normalizedMethodKey = methodInput.toLowerCase().replace(/\s+/g, "");
+    const normalizedMethodKey = methodInput.toLowerCase().replace(/\s+/g, '');
     const methodAliases: Record<string, string> = {
-      orderlog: "getOrdersLog",
-      orderslog: "getOrdersLog",
-      getorderslog: "getOrdersLog",
-      detailedproductlist: "getInventoryProductsDetailed",
-      detailedproducts: "getInventoryProductsDetailed",
-      getinventoryproductsdetailed: "getInventoryProductsDetailed",
-      detailedproduct: "getInventoryProductDetailed",
-      getinventoryproductdetailed: "getInventoryProductDetailed",
-      orders: "getOrders",
-      getorders: "getOrders",
-      inventories: "getInventories",
-      getinventories: "getInventories",
-      inventoryproducts: "getInventoryProductsList",
-      getinventoryproductslist: "getInventoryProductsList",
-      productslist: "getProductsList",
-      getproductslist: "getProductsList",
-      orderstatuses: "getOrderStatusList",
-      getorderstatuslist: "getOrderStatusList",
+      orderlog: 'getOrdersLog',
+      orderslog: 'getOrdersLog',
+      getorderslog: 'getOrdersLog',
+      detailedproductlist: 'getInventoryProductsDetailed',
+      detailedproducts: 'getInventoryProductsDetailed',
+      getinventoryproductsdetailed: 'getInventoryProductsDetailed',
+      detailedproduct: 'getInventoryProductDetailed',
+      getinventoryproductdetailed: 'getInventoryProductDetailed',
+      orders: 'getOrders',
+      getorders: 'getOrders',
+      inventories: 'getInventories',
+      getinventories: 'getInventories',
+      inventoryproducts: 'getInventoryProductsList',
+      getinventoryproductslist: 'getInventoryProductsList',
+      productslist: 'getProductsList',
+      getproductslist: 'getProductsList',
+      orderstatuses: 'getOrderStatusList',
+      getorderstatuslist: 'getOrderStatusList',
     };
     const method = methodAliases[normalizedMethodKey] ?? methodInput;
     if (!method) {
-      toast("Base API method is required.", { variant: "error" });
+      toast('Base API method is required.', { variant: 'error' });
       return;
     }
     if (method !== methodInput) {
@@ -685,32 +686,32 @@ function IntegrationsContent(): React.JSX.Element {
       try {
         params = JSON.parse(baseApiParams);
       } catch {
-        toast("Parameters must be valid JSON.", { variant: "error" });
+        toast('Parameters must be valid JSON.', { variant: 'error' });
         return;
       }
     }
     const normalizedParams = 
-      params && typeof params === "object" && !Array.isArray(params)
+      params && typeof params === 'object' && !Array.isArray(params)
         ? { ...(params as Record<string, unknown>) }
         : {};
     const inventoryMethods = new Set([
-      "getInventoryProductsList",
-      "getInventoryProductsData",
-      "getInventoryProductsDetailed",
+      'getInventoryProductsList',
+      'getInventoryProductsData',
+      'getInventoryProductsDetailed',
     ]);
-    const storageMethods = new Set(["getProductsList", "getProductsData"]);
+    const storageMethods = new Set(['getProductsList', 'getProductsData']);
     if (inventoryMethods.has(method)) {
       const inventoryValue = normalizedParams.inventory_id;
       const hasInventoryId =
-        (typeof inventoryValue === "string" && inventoryValue.trim() !== "") ||
-        (typeof inventoryValue === "number" && Number.isFinite(inventoryValue));
+        (typeof inventoryValue === 'string' && inventoryValue.trim() !== '') ||
+        (typeof inventoryValue === 'number' && Number.isFinite(inventoryValue));
       const looksEmpty =
-        !hasInventoryId || inventoryValue === 0 || inventoryValue === "0";
+        !hasInventoryId || inventoryValue === 0 || inventoryValue === '0';
       if (looksEmpty && activeConnection.baseLastInventoryId) {
         normalizedParams.inventory_id = activeConnection.baseLastInventoryId;
       } else if (looksEmpty) {
-        toast("Inventory ID is required. Run getInventories first.", {
-          variant: "error",
+        toast('Inventory ID is required. Run getInventories first.', {
+          variant: 'error',
         });
         return;
       }
@@ -718,15 +719,15 @@ function IntegrationsContent(): React.JSX.Element {
     if (storageMethods.has(method)) {
       const storageValue = normalizedParams.storage_id;
       const hasStorageId =
-        (typeof storageValue === "string" && storageValue.trim() !== "") ||
-        (typeof storageValue === "number" && Number.isFinite(storageValue));
+        (typeof storageValue === 'string' && storageValue.trim() !== '') ||
+        (typeof storageValue === 'number' && Number.isFinite(storageValue));
       const looksEmpty =
-        !hasStorageId || storageValue === 0 || storageValue === "0";
+        !hasStorageId || storageValue === 0 || storageValue === '0';
       if (looksEmpty && activeConnection.baseLastInventoryId) {
         normalizedParams.storage_id = activeConnection.baseLastInventoryId;
       } else if (looksEmpty) {
-        toast("Storage ID is required. Run getInventories first.", {
-          variant: "error",
+        toast('Storage ID is required. Run getInventories first.', {
+          variant: 'error',
         });
         return;
       }
@@ -748,7 +749,7 @@ function IntegrationsContent(): React.JSX.Element {
       setBaseApiResponse({ data: payload.data });
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to send request.";
+        error instanceof Error ? error.message : 'Failed to send request.';
       setBaseApiError(message);
     } finally {
       setBaseApiLoading(false);
@@ -757,20 +758,20 @@ function IntegrationsContent(): React.JSX.Element {
 
   const handleAllegroApiRequest = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
-      toast("Select an integration connection first.", { variant: "error" });
+      toast('Select an integration connection first.', { variant: 'error' });
       return;
     }
     const path = allegroApiPath.trim();
-    if (!path.startsWith("/")) {
-      toast("Allegro API path must start with /", { variant: "error" });
+    if (!path.startsWith('/')) {
+      toast('Allegro API path must start with /', { variant: 'error' });
       return;
     }
     let body: unknown = undefined;
-    if (allegroApiMethod !== "GET" && allegroApiBody.trim()) {
+    if (allegroApiMethod !== 'GET' && allegroApiBody.trim()) {
       try {
         body = JSON.parse(allegroApiBody);
       } catch {
-        toast("Request body must be valid JSON.", { variant: "error" });
+        toast('Request body must be valid JSON.', { variant: 'error' });
         return;
       }
     }
@@ -793,7 +794,7 @@ function IntegrationsContent(): React.JSX.Element {
       });
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to send request.";
+        error instanceof Error ? error.message : 'Failed to send request.';
       setAllegroApiError(message);
     } finally {
       setAllegroApiLoading(false);
@@ -834,8 +835,8 @@ function IntegrationsContent(): React.JSX.Element {
           testLog={testLog}
           onShowLog={(step: TestLogEntry): void => {
             setSelectedStep(
-              step.status !== "pending"
-                ? (step as TestLogEntry & { status: "ok" | "failed" })
+              step.status !== 'pending'
+                ? (step as TestLogEntry & { status: 'ok' | 'failed' })
                 : null
             );
             setShowTestLogModal(true);

@@ -1,5 +1,4 @@
-
-import { ProductAiJobsPanelSuspense } from "@/features/jobs";
+import { ProductAiJobsPanelSuspense } from '@/features/jobs/components/ProductAiJobsPanel';
 
 export function AdminAiPathsJobsPage(): React.JSX.Element {
   return (

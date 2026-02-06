@@ -1,11 +1,11 @@
-const defaultErrorMessage = "Request failed.";
+const defaultErrorMessage = 'Request failed.';
 
 export const readErrorResponse = async (res: Response): Promise<{ message: string; errorId?: string }> => {
   try {
     const data = (await res.json()) as { error?: string; errorId?: string };
     return {
       message: data.error || defaultErrorMessage,
-      ...(typeof data.errorId === "string" ? { errorId: data.errorId } : {}),
+      ...(typeof data.errorId === 'string' ? { errorId: data.errorId } : {}),
     };
   } catch (_error) {
     try {
@@ -40,7 +40,7 @@ export const readErrorMessage = async (
     error.message && error.message !== defaultErrorMessage
       ? error.message
       : fallbackMessage;
-  const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+  const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : '';
   return `${message}${suffix}`;
 };
 

@@ -18,9 +18,9 @@ export const registerUser = async (input: {
   name?: string | undefined;
   emailVerified?: boolean | undefined;
 }): Promise<{ ok: boolean; payload: RegisterResponse }> => {
-  const res = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   const payload = await safeJson<RegisterResponse>(res);

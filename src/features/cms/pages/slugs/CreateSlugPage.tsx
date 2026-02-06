@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, SectionHeader } from "@/shared/ui";
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 
 
-import { useCreateSlug } from "@/features/cms/hooks/useCmsQueries";
-import { SLUG_REGEX } from "@/features/cms/validations/slug";
+
+import { useCreateSlug } from '@/features/cms/hooks/useCmsQueries';
+import { SLUG_REGEX } from '@/features/cms/validations/slug';
+import { Button, Input, Label, SectionHeader } from '@/shared/ui';
 
 export default function CreateSlugPage(): React.JSX.Element {
-  const [slug, setSlug] = useState("");
-  const [error, setError] = useState("");
+  const [slug, setSlug] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const domainId = searchParams.get("domainId") ?? undefined;
+  const domainId = searchParams.get('domainId') ?? undefined;
   const createSlug = useCreateSlug();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!SLUG_REGEX.test(slug)) {
       setError(
-        "Invalid slug format. Use only lowercase letters, numbers, and hyphens."
+        'Invalid slug format. Use only lowercase letters, numbers, and hyphens.'
       );
       return;
     }
@@ -32,10 +32,10 @@ export default function CreateSlugPage(): React.JSX.Element {
       const createData: { slug: string; domainId?: string | null } = { slug };
       if (domainId) createData.domainId = domainId;
       await createSlug.mutateAsync(createData);
-      const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";
+      const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : '/admin/cms/slugs';
       router.push(next);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     }
   };
 

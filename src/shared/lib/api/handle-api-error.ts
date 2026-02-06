@@ -1,9 +1,11 @@
-import "server-only";
+import 'server-only';
 
-import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { resolveError } from "@/shared/errors/resolve-error";
-import { validationError } from "@/shared/errors/app-error";
+import { randomUUID } from 'crypto';
+
+import { NextResponse } from 'next/server';
+
+import { validationError } from '@/shared/errors/app-error';
+import { resolveError } from '@/shared/errors/resolve-error';
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
@@ -26,14 +28,28 @@ type ErrorFingerprintParams = {
 };
 
 // Stub implementations to avoid features layer dependency
-const logSystemEvent = (params: LogSystemEventParams): void => {
-  // Implementation would be injected or moved to shared layer
-  console.log('System event:', params);
+const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+  try {
+    // Dynamically import to avoid circular dependency (shared -> features -> shared)
+    // eslint-disable-next-line import/no-restricted-paths
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+     
+    await realLogSystemEvent(params as any);
+  } catch (error) {
+    console.error('Failed to log system event via observability feature:', error);
+    console.log('System event (fallback):', params);
+  }
 };
 
-const getErrorFingerprint = (params: ErrorFingerprintParams): string => {
-  // Simple fingerprint generation
-  return `${params.source}-${params.statusCode}-${Date.now()}`;
+const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
+  try {
+    // eslint-disable-next-line import/no-restricted-paths
+    const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
+    return realGetFingerprint(params as any);
+  } catch (error) {
+    console.error('Failed to get error fingerprint via observability feature:', error);
+    return `${params.source}-${params.statusCode}-${Date.now()}`;
+  }
 };
 
 type ApiErrorOptions = {
@@ -56,35 +72,35 @@ type ApiErrorOptions = {
  * - Sets appropriate headers (x-request-id, x-error-id, Retry-After)
  * - Differentiates between expected (user) and unexpected (server) errors
  */
-export const createErrorResponse = (
+export const createErrorResponse = async (
   error: unknown,
   options?: ApiErrorOptions
-): NextResponse => {
+): Promise<NextResponse> => {
   const resolved = resolveError(error, {
     ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}),
   });
 
   const requestId =
     options?.requestId ??
-    options?.request?.headers.get("x-request-id") ??
+    options?.request?.headers.get('x-request-id') ??
     randomUUID();
 
-  const fingerprint = getErrorFingerprint({
+  const fingerprint = await getErrorFingerprint({
     message: resolved.message,
-    source: options?.source ?? "api",
+    source: options?.source ?? 'api',
     ...(options?.request ? { request: options.request } : {}),
     statusCode: resolved.httpStatus,
     error,
   });
 
   // Determine log level based on error type
-  const level = resolved.critical ? "error" : resolved.expected ? "warn" : "error";
+  const level = resolved.critical ? 'error' : resolved.expected ? 'warn' : 'error';
 
   // Log the error
   void logSystemEvent({
     level,
     message: resolved.message,
-    source: options?.source ?? "api",
+    source: options?.source ?? 'api',
     error,
     ...(options?.request ? { request: options.request } : {}),
     requestId,
@@ -131,15 +147,18 @@ export const createErrorResponse = (
   const response = NextResponse.json(payload, { status: resolved.httpStatus });
 
   // Set tracking headers
-  response.headers.set("x-request-id", requestId);
-  response.headers.set("x-error-id", resolved.errorId);
-  response.headers.set("x-error-fingerprint", fingerprint);
+  response.headers.set('x-request-id', requestId);
+  response.headers.set('x-error-id', resolved.errorId);
+  response.headers.set('x-error-fingerprint', fingerprint);
+  if (!response.headers.has('Cache-Control')) {
+    response.headers.set('Cache-Control', 'no-store');
+  }
 
   // Set Retry-After header for retryable errors
   if (resolved.retryable && resolved.retryAfterMs) {
     // Convert to seconds for HTTP header
     const retryAfterSeconds = Math.ceil(resolved.retryAfterMs / 1000);
-    response.headers.set("Retry-After", String(retryAfterSeconds));
+    response.headers.set('Retry-After', String(retryAfterSeconds));
   }
 
   return response;
@@ -154,22 +173,26 @@ export const createSimpleErrorResponse = (
   status: number,
   code?: string
 ): NextResponse => {
-  return NextResponse.json(
+  const response = NextResponse.json(
     {
       error: message,
-      code: code ?? "ERROR",
+      code: code ?? 'ERROR',
     },
     { status }
   );
+  if (!response.headers.has('Cache-Control')) {
+    response.headers.set('Cache-Control', 'no-store');
+  }
+  return response;
 };
 
 /**
  * Creates a validation error response from field errors.
  */
-export const createValidationErrorResponse = (
+export const createValidationErrorResponse = async (
   fieldErrors: Record<string, string[]>,
-  options?: Pick<ApiErrorOptions, "request" | "source" | "requestId">
-): NextResponse => {
-  const error = validationError("Validation failed", { fields: fieldErrors });
-  return createErrorResponse(error, options);
+  options?: Pick<ApiErrorOptions, 'request' | 'source' | 'requestId'>
+): Promise<NextResponse> => {
+  const error = validationError('Validation failed', { fields: fieldErrors });
+  return await createErrorResponse(error, options);
 };

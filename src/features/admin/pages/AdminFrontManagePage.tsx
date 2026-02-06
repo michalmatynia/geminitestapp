@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { Button, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import { SaveIcon } from "lucide-react";
-import Link from "next/link";
+import { SaveIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 
-import { cn } from "@/shared/utils";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+type FrontAppOption = 'products' | 'chatbot' | 'notes';
 
-
-type FrontAppOption = "products" | "chatbot" | "notes";
-
-const FRONT_PAGE_SETTING_KEY = "front_page_app";
+const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 
 export function AdminFrontManagePage(): React.ReactNode {
   const settingsQuery = useSettingsMap();
@@ -27,9 +27,9 @@ export function AdminFrontManagePage(): React.ReactNode {
 
   const current = settingsQuery.data.get(FRONT_PAGE_SETTING_KEY);
   const initialSelected: FrontAppOption =
-    current === "products" || current === "chatbot" || current === "notes"
+    current === 'products' || current === 'chatbot' || current === 'notes'
       ? current
-      : "products";
+      : 'products';
 
   return <AdminFrontManageContent initialSelected={initialSelected} />;
 }
@@ -46,22 +46,22 @@ function AdminFrontManageContent({
   const options = useMemo(
     () => [
       {
-        id: "products" as const,
-        title: "Products",
-        description: "Show the public product listing when visitors open the site.",
-        route: "/",
+        id: 'products' as const,
+        title: 'Products',
+        description: 'Show the public product listing when visitors open the site.',
+        route: '/',
       },
       {
-        id: "chatbot" as const,
-        title: "Chatbot",
-        description: "Open the admin chatbot workspace on the home page.",
-        route: "/admin/chatbot",
+        id: 'chatbot' as const,
+        title: 'Chatbot',
+        description: 'Open the admin chatbot workspace on the home page.',
+        route: '/admin/chatbot',
       },
       {
-        id: "notes" as const,
-        title: "Notes",
-        description: "Open the admin notes workspace on the home page.",
-        route: "/admin/notes",
+        id: 'notes' as const,
+        title: 'Notes',
+        description: 'Open the admin notes workspace on the home page.',
+        route: '/admin/notes',
       },
     ],
     []
@@ -73,10 +73,10 @@ function AdminFrontManageContent({
         key: FRONT_PAGE_SETTING_KEY,
         value: selected,
       });
-      toast("Front page updated", { variant: "success" });
+      toast('Front page updated', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save front page setting:", error);
-      toast("Failed to save front page setting", { variant: "error" });
+      logClientError(error, { context: { source: 'AdminFrontManagePage', action: 'saveSettings' } });
+      toast('Failed to save front page setting', { variant: 'error' });
     }
   };
 
@@ -108,10 +108,10 @@ function AdminFrontManageContent({
                 type="button"
                 onClick={() => setSelected(option.id)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors",
+                  'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors',
                   selected === option.id
-                    ? "border-blue-500/60 bg-blue-500/10 text-white"
-                    : "border-border bg-card/40 text-gray-200 hover:border"
+                    ? 'border-blue-500/60 bg-blue-500/10 text-white'
+                    : 'border-border bg-card/40 text-gray-200 hover:border'
                 )}
               >
                 <div>
@@ -120,10 +120,10 @@ function AdminFrontManageContent({
                 </div>
                 <div
                   className={cn(
-                    "rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide",
+                    'rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide',
                     selected === option.id
-                      ? "border-blue-500/60 text-blue-200"
-                      : "border text-gray-400"
+                      ? 'border-blue-500/60 text-blue-200'
+                      : 'border text-gray-400'
                   )}
                 >
                   {option.route}
@@ -138,7 +138,7 @@ function AdminFrontManageContent({
               disabled={updateSetting.isPending}
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
             >
-              {updateSetting.isPending ? "Saving..." : (
+              {updateSetting.isPending ? 'Saving...' : (
                 <>
                   <SaveIcon className="mr-2 size-4" />
                   Save Selection

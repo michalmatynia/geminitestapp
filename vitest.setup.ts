@@ -16,7 +16,7 @@ vi.mock("@/shared/lib/db/app-db-provider", () => ({
 
 // Define model defaults to prevent "map of undefined" errors
 const MODEL_DEFAULTS: Record<string, any> = {
-  product: { images: [], catalogs: [], categories: [], tags: [] },
+  product: { images: [], catalogs: [], categories: [], tags: [], producers: [] },
   note: { tags: [], categories: [], files: [], relationsFrom: [], relationsTo: [] },
   catalog: { products: [], languages: [], categories: [], tags: [] },
   page: { slugs: [], components: [] },
@@ -24,6 +24,76 @@ const MODEL_DEFAULTS: Record<string, any> = {
   country: { languages: [], currencies: [] },
   category: { notes: [], children: [] },
   imageFile: { products: [] },
+  systemLog: {}, // Add systemLog default
+};
+
+const RELATION_MAP: Record<string, Record<string, { model: string; junction?: { table: string; field: string; foreignKey: string; }; }>> = {
+  product: {
+    images: { model: "productImage" },
+    catalogs: { model: "catalog", junction: { table: "productCatalog", field: "catalog", foreignKey: "catalogId" } },
+    categories: { model: "category", junction: { table: "productCategoryAssignment", field: "category", foreignKey: "categoryId" } },
+    tags: { model: "productTag", junction: { table: "productTagAssignment", field: "productTag", foreignKey: "productTagId" } },
+    producers: { model: "productProducer", junction: { table: "productProducerAssignment", field: "productProducer", foreignKey: "productProducerId" } },
+    variants: { model: "productVariant" },
+  },
+  note: {
+    tags: { model: "tag", junction: { table: "noteTag", field: "tag", foreignKey: "tagId" } },
+    categories: { model: "category", junction: { table: "noteCategory", field: "category", foreignKey: "categoryId" } },
+    files: { model: "imageFile", junction: { table: "noteFile", field: "imageFile", foreignKey: "imageFileId" } },
+    relationsFrom: { model: "noteRelation" },
+    relationsTo: { model: "noteRelation" },
+    notebook: { model: "notebook" },
+  },
+  catalog: {
+    products: { model: "product", junction: { table: "productCatalog", field: "product", foreignKey: "productId" } },
+    languages: { model: "language", junction: { table: "catalogLanguage", field: "language", foreignKey: "languageId" } },
+    categories: { model: "category", junction: { table: "productCategory", field: "category", foreignKey: "categoryId" } },
+    tags: { model: "productTag" },
+    priceGroups: { model: "priceGroup" },
+  },
+  page: {
+    slugs: { model: "slug", junction: { table: "pageSlug", field: "slug", foreignKey: "slugId" } },
+    components: { model: "pageComponent" },
+    theme: { model: "cmsTheme" },
+  },
+  language: {
+    countries: { model: "country", junction: { table: "languageCountry", field: "country", foreignKey: "countryId" } },
+    catalogs: { model: "catalog", junction: { table: "catalogLanguage", field: "catalog", foreignKey: "catalogId" } },
+  },
+  country: {
+    languages: { model: "language", junction: { table: "languageCountry", field: "language", foreignKey: "languageId" } },
+    currencies: { model: "currency", junction: { table: "countryCurrency", field: "currency", foreignKey: "currencyId" } },
+  },
+  category: {
+    notes: { model: "note", junction: { table: "noteCategory", field: "note", foreignKey: "noteId" } },
+    products: { model: "product", junction: { table: "productCategoryAssignment", field: "product", foreignKey: "productId" } },
+    children: { model: "category" },
+    parent: { model: "category" },
+  },
+  imageFile: {
+    products: { model: "productImage" },
+    notes: { model: "noteFile" },
+  },
+  systemLog: {},
+  user: {
+    accounts: { model: "account" },
+    sessions: { model: "session" },
+    securityProfile: { model: "authSecurityProfile" },
+    preferences: { model: "userPreferences" },
+  },
+  chatbotSession: {
+    messages: { model: "chatbotMessage" },
+  },
+  chatbotAgentRun: {
+    logs: { model: "agentBrowserLog" },
+    audits: { model: "agentAuditLog" },
+    memoryItems: { model: "agentMemoryItem" },
+  },
+  asset3D: {
+    tags: { model: "tag" },
+    categories: { model: "category" },
+    files: { model: "imageFile" },
+  },
 };
 
 // Mock Prisma client for all tests with simple in-memory state
@@ -108,56 +178,90 @@ vi.mock("@/shared/lib/db/prisma", () => {
     });
   };
 
-  const applyInclude = (item: any, include: any, modelName: string) => {
-      if (!include || !item) return item;
-      const newItem = { ...item };
-      
-      Object.keys(include).forEach(key => {
-          if (include[key]) {
-              // Category.notes -> noteCategory -> note
-              if (modelName === 'category' && key === 'notes') {
-                  const junctionData = getStore('noteCategory').filter(nc => nc.categoryId === item.id);
-                  newItem.notes = junctionData.map(junc => {
-                      const note = getStore('note').find(n => n.id === junc.noteId);
-                      const noteWithDefaults = { ...(MODEL_DEFAULTS['note'] || {}), ...note };
-                      if (include.notes.include?.note?.include) {
-                          return { ...junc, note: applyInclude(noteWithDefaults, include.notes.include.note.include, 'note') };
-                      }
-                      return { ...junc, note: noteWithDefaults };
-                  });
-                  return;
-              }
+  const applyInclude = (item: any, include: any, modelName: string, getStore: (name: string) => any[]) => {
+  if (!include || !item) return item;
+  const newItem = { ...(MODEL_DEFAULTS[modelName] || {}), ...item };
 
-              // Page.slugs -> pageSlug -> slug
-              if (modelName === 'page' && key === 'slugs') {
-                  const junctionData = getStore('pageSlug').filter(ps => ps.pageId === item.id);
-                  newItem.slugs = junctionData.map(junc => {
-                      const slug = getStore('slug').find(s => s.id === junc.slugId);
-                      return { ...junc, slug: { ...(MODEL_DEFAULTS['slug'] || {}), ...slug } };
-                  });
-                  return;
-              }
+  Object.keys(include).forEach(key => {
+    if (include[key]) {
+      const relationConfig = RELATION_MAP[modelName]?.[key];
 
-              // Note.categories -> noteCategory -> category
-              if (modelName === 'note' && key === 'categories') {
-                  const junctionData = getStore('noteCategory').filter(nc => nc.noteId === item.id);
-                  newItem.categories = junctionData.map(junc => {
-                      const category = getStore('category').find(c => c.id === junc.categoryId);
-                      return { ...junc, category: { ...(MODEL_DEFAULTS['category'] || {}), ...category } };
-                  });
-                  return;
-              }
-
-              // General case
-              const relatedStoreName = key;
-              const fk = modelName + 'Id';
-              if (store.has(relatedStoreName)) {
-                  newItem[key] = getStore(relatedStoreName).filter(relItem => relItem[fk] === item.id);
-              }
+      if (relationConfig) {
+        if (relationConfig.junction) {
+          // Handle junction table relations (many-to-many)
+          const junctionStore = getStore(relationConfig.junction.table);
+          const relatedItems = junctionStore
+            .filter(junc => junc[`${modelName}Id`] === item.id)
+            .map(junc => {
+              const relatedModelItem = getStore(relationConfig.model).find(relItem => relItem.id === junc[relationConfig.junction!.foreignKey]);
+              // Recursively apply includes to the related model item
+              return relatedModelItem ? applyInclude(relatedModelItem, include[key].include, relationConfig.model, getStore) : null;
+            })
+            .filter(Boolean); // Filter out nulls if related item not found
+          newItem[key] = relatedItems;
+        } else {
+          // Handle direct relations (one-to-many, one-to-one)
+          let relatedData;
+          if (Array.isArray(newItem[key])) { // If it's a one-to-many
+            relatedData = getStore(relationConfig.model).filter(relItem => relItem[`${modelName}Id`] === item.id);
+            if (include[key].include) {
+              relatedData = relatedData.map(relItem => applyInclude(relItem, include[key].include, relationConfig.model, getStore));
+            }
+          } else if (typeof newItem[key] === 'object' && newItem[key] !== null) { // If it's a one-to-one (already embedded or connected)
+            relatedData = getStore(relationConfig.model).find(relItem => relItem.id === newItem[key].id || relItem.id === newItem[`${key}Id`]);
+            if (relatedData && include[key].include) {
+              relatedData = applyInclude(relatedData, include[key].include, relationConfig.model, getStore);
+            }
+          } else { // Fallback for simple ID-based relation (e.g., `product.catalogId`)
+            relatedData = getStore(relationConfig.model).find(relItem => relItem.id === item[`${key}Id`]);
+            if (relatedData && include[key].include) {
+              relatedData = applyInclude(relatedData, include[key].include, relationConfig.model, getStore);
+            }
           }
-      });
-      return newItem;
-  };
+          newItem[key] = relatedData !== undefined ? relatedData : (Array.isArray(include[key]) ? [] : null); // Default to empty array or null
+        }
+      } else if (modelName === 'note' && key === 'relationsFrom') {
+        newItem.relationsFrom = getStore('noteRelation').filter(nr => nr.sourceNoteId === item.id);
+        if (include.relationsFrom.include) {
+          newItem.relationsFrom = newItem.relationsFrom.map((rel: Record<string, unknown>) =>
+            applyInclude(rel, include.relationsFrom.include, 'noteRelation', getStore)
+          );
+        }
+      } else if (modelName === 'note' && key === 'relationsTo') {
+        newItem.relationsTo = getStore('noteRelation').filter(nr => nr.targetNoteId === item.id);
+        if (include.relationsTo.include) {
+          newItem.relationsTo = newItem.relationsTo.map((rel: Record<string, unknown>) =>
+            applyInclude(rel, include.relationsTo.include, 'noteRelation', getStore)
+          );
+        }
+      } else if (modelName === 'category' && key === 'notes') {
+        // Specific handling for category.notes (many-to-many through noteCategory)
+        const junctionData = getStore('noteCategory').filter(nc => nc.categoryId === item.id);
+        newItem.notes = junctionData.map(junc => {
+            const note = getStore('note').find(n => n.id === junc.noteId);
+            return note ? applyInclude(note, include.notes.include, 'note', getStore) : null;
+        }).filter(Boolean);
+      } else {
+        // If no specific relation config, assume it's a direct relation or simple field and try to include if it exists in store
+        // Or it's a direct ID that should be resolved to a full object.
+        const relatedModel = getStore(key); // e.g., getStore('tag') for 'tag' include
+        if (relatedModel && relatedModel.length > 0) {
+          // This might be a 'has many' or 'has one' relationship where the foreign key is on the *other* table.
+          // For simplicity, for generic relations, we'll try to find an ID match if available.
+          // This part is less robust and might need more specific RELATION_MAP entries.
+          const fk = `${modelName}Id`;
+          if (item[fk]) {
+            const relatedItem = relatedModel.find(rel => rel.id === item[fk]);
+            if (relatedItem) {
+              newItem[key] = applyInclude(relatedItem, include[key].include, key, getStore);
+            }
+          }
+        }
+      }
+    }
+  });
+  return newItem;
+};
 
   // Helper to create a basic mock model with in-memory persistence
   const createMockModel = (name: string) => ({
@@ -182,7 +286,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       return data.map(item => {
           const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-          return applyInclude(withDefaults, args?.include, name);
+          return applyInclude(withDefaults, args?.include, name, getStore);
       });
     }),
     findUnique: vi.fn().mockImplementation(async (args) => {
@@ -190,7 +294,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       const item = data.find(item => matches(item, args.where)) || null;
       if (!item) return null;
       const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-      return applyInclude(withDefaults, args?.include, name);
+      return applyInclude(withDefaults, args?.include, name, getStore);
     }),
     findFirst: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -200,26 +304,34 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       if (!item) return null;
       const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
-      return applyInclude(withDefaults, args?.include, name);
+      return applyInclude(withDefaults, args?.include, name, getStore);
     }),
     create: vi.fn().mockImplementation(async (args) => {
+      const data = { ...args?.data };
+      // Strip nested prisma objects to prevent "map of undefined" errors in convert functions
+      Object.keys(data).forEach(key => {
+        if (data[key] && typeof data[key] === 'object' && ('create' in data[key] || 'connect' in data[key] || 'createMany' in data[key] || 'connectOrCreate' in data[key])) {
+          delete data[key];
+        }
+      });
+
       const newItem = {
-        id: args?.data?.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: data.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...(MODEL_DEFAULTS[name] || {}),
-        ...args?.data,
+        ...data,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       
-      // Handle nested connects
+      // Handle nested connects (simplified)
       Object.entries(args?.data || {}).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null && 'connect' in (value as any)) {
+          if (value && typeof value === 'object' && 'connect' in (value as any)) {
               newItem[key + 'Id'] = (value as any).connect.id;
           }
       });
 
       getStore(name).push(newItem);
-      return applyInclude(newItem, args?.include, name);
+      return applyInclude(newItem, args?.include, name, getStore);
     }),
     createMany: vi.fn().mockImplementation(async (args) => {
       const data = Array.isArray(args?.data) ? args.data : [args?.data];
@@ -240,20 +352,18 @@ vi.mock("@/shared/lib/db/prisma", () => {
       
       const updateData = { ...args.data };
       Object.entries(updateData).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null) {
+          if (value && typeof value === 'object') {
               if ('connect' in (value as any)) {
                   updateData[key + 'Id'] = (value as any).connect.id;
                   delete updateData[key];
-              } else if ('deleteMany' in (value as any)) {
-                  delete updateData[key];
-              } else if ('create' in (value as any)) {
+              } else if ('deleteMany' in (value as any) || 'create' in (value as any) || 'createMany' in (value as any) || 'connectOrCreate' in (value as any)) {
                   delete updateData[key];
               }
           }
       });
 
       data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-      return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
+      return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name, getStore);
     }),
     updateMany: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -296,7 +406,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       if (index !== -1) {
         const updateData = { ...args.update };
         data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-        return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
+        return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name, getStore);
       } else {
         const createData = { ...args.create };
         if (args.where) {
@@ -315,7 +425,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
           updatedAt: new Date(),
         };
         data.push(newItem);
-        return applyInclude(newItem, args?.include, name);
+        return applyInclude(newItem, args?.include, name, getStore);
       }
     }),
     count: vi.fn().mockImplementation(async (args) => {

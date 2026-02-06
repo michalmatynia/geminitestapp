@@ -12,11 +12,11 @@ import {
 } from "@/features/auth/server";
 import { getAuthSecurityProfile } from "@/features/auth/server";
 import { getAuthUserPageSettings } from "@/features/auth/server";
-import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { internalError } from "@/shared/errors/app-error";
+import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ type MongoUserDoc = {
   emailVerified?: Date | null;
 };
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -43,21 +43,34 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         { status: 401 }
       );
     }
-    const parsed = await parseJsonBody(req, payloadSchema, {
-      logPrefix: "auth.mock-signin.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
+    const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
+    if (!data) {
+      throw badRequestError("Invalid payload");
     }
+    await logAuthEvent({
+      req,
+      action: "auth.mock-signin",
+      stage: "start",
+      userId: session?.user?.id ?? null,
+      body: { email: data.email },
+    });
 
     if (!process.env.MONGODB_URI) {
       throw internalError("MongoDB is not configured.");
     }
 
-    const email = normalizeAuthEmail(parsed.data.email);
+    const email = normalizeAuthEmail(data.email);
     const ip = extractClientIp(req);
     const allowed = await checkLoginAllowed({ email, ip });
     if (!allowed.allowed) {
+      await logAuthEvent({
+        req,
+        action: "auth.mock-signin",
+        stage: "failure",
+        outcome: "rate_limited",
+        body: { email },
+        status: 429,
+      });
       return NextResponse.json(
         {
           ok: false,
@@ -73,6 +86,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (!user?.passwordHash) {
       await recordLoginFailure({ email, ip, request: req });
+      await logAuthEvent({
+        req,
+        action: "auth.mock-signin",
+        stage: "failure",
+        outcome: "invalid_credentials",
+        body: { email },
+        status: 200,
+      });
       return NextResponse.json({
         ok: false,
         message: "User not found or password is not set.",
@@ -84,15 +105,39 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (security.bannedAt) {
       await recordLoginFailure({ email, ip, request: req });
+      await logAuthEvent({
+        req,
+        action: "auth.mock-signin",
+        stage: "failure",
+        outcome: "account_banned",
+        body: { email },
+        status: 200,
+      });
       return NextResponse.json({ ok: false, message: "Account is banned." });
     }
     if (security.disabledAt) {
       await recordLoginFailure({ email, ip, request: req });
+      await logAuthEvent({
+        req,
+        action: "auth.mock-signin",
+        stage: "failure",
+        outcome: "account_disabled",
+        body: { email },
+        status: 200,
+      });
       return NextResponse.json({ ok: false, message: "Account is disabled." });
     }
     if (settings.requireEmailVerification) {
       if (!user.emailVerified) {
         await recordLoginFailure({ email, ip, request: req });
+        await logAuthEvent({
+          req,
+          action: "auth.mock-signin",
+          stage: "failure",
+          outcome: "email_unverified",
+          body: { email },
+          status: 200,
+        });
         return NextResponse.json({ ok: false, message: "Email verification required." });
       }
     }
@@ -100,19 +145,43 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const allowedSet = new Set(security.allowedIps);
       if (!allowedSet.has(ip)) {
         await recordLoginFailure({ email, ip, request: req });
+        await logAuthEvent({
+          req,
+          action: "auth.mock-signin",
+          stage: "failure",
+          outcome: "ip_not_allowed",
+          body: { email },
+          status: 200,
+        });
         return NextResponse.json({ ok: false, message: "IP not allowed." });
       }
     }
     if (security.mfaEnabled) {
+      await logAuthEvent({
+        req,
+        action: "auth.mock-signin",
+        stage: "failure",
+        outcome: "mfa_required",
+        body: { email },
+        status: 200,
+      });
       return NextResponse.json({ ok: false, message: "MFA is enabled. Use MFA login." });
     }
 
-    const isValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+    const isValid = await bcrypt.compare(data.password, user.passwordHash);
     if (!isValid) {
       await recordLoginFailure({ email, ip, request: req });
     } else {
       await recordLoginSuccess({ email, ip, request: req });
     }
+    await logAuthEvent({
+      req,
+      action: "auth.mock-signin",
+      stage: isValid ? "success" : "failure",
+      outcome: isValid ? "ok" : "invalid_credentials",
+      body: { email },
+      status: 200,
+    });
     return NextResponse.json({
       ok: isValid,
       message: isValid ? "Credentials are valid." : "Invalid credentials.",
@@ -128,4 +197,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "auth.mock-signin.POST" });
+ {
+   source: "auth.mock-signin.POST",
+   parseJsonBody: true,
+   bodySchema: payloadSchema,
+   rateLimitKey: "auth",
+   maxBodyBytes: 20_000,
+   allowedMethods: ["POST"],
+   requireCsrf: false,
+ });

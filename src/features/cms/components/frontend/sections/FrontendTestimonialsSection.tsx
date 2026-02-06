@@ -1,7 +1,8 @@
 
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendTestimonialsSectionProps {
   settings: Record<string, unknown>;
@@ -12,7 +13,7 @@ interface FrontendTestimonialsSectionProps {
 
 export function FrontendTestimonialsSection({ settings, blocks, colorSchemes, layout }: FrontendTestimonialsSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
-  const columns = (settings["columns"] as number) || 3;
+  const columns = (settings['columns'] as number) || 3;
 
   if (blocks.length === 0) {
     return (

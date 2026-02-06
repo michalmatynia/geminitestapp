@@ -1,10 +1,12 @@
-"use client";
-import { Button } from "@/shared/ui";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import ProductForm from "@/features/products/components/ProductForm";
+'use client';
+import { Button } from '@/shared/ui';
 
-const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+
+import ProductForm from '@/features/products/components/ProductForm';
+
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>
 });
@@ -12,8 +14,8 @@ const FileManager = dynamic(() => import("@/features/files/components/FileManage
 import {
   ProductFormProvider,
   useProductFormContext,
-} from "@/features/products/context/ProductFormContext";
-import { ProductWithImages } from "@/features/products/types";
+} from '@/features/products/context/ProductFormContext';
+import { ProductWithImages } from '@/features/products/types';
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
   return (
@@ -48,10 +50,10 @@ function EditProductForm(): React.JSX.Element {
           aria-disabled={uploading}
           className="min-w-[100px] text-foreground"
         >
-          {uploading ? "Saving..." : "Update"}
+          {uploading ? 'Saving...' : 'Update'}
         </Button>
         <Button
-          onClick={() => router.push("/admin/products")}
+          onClick={() => router.push('/admin/products')}
           className="min-w-[100px] text-foreground"
           aria-label="Back to products"
         >

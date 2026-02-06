@@ -1,20 +1,20 @@
-import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
-import {
-  addAgentMemory,
-  listAgentLongTermMemory,
-  listAgentMemory,
-} from "@/features/ai/agent-runtime/memory";
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import {
   DEFAULT_OLLAMA_MODEL,
   resolveAgentPlanSettings,
   resolveAgentPreferences,
-} from "@/features/ai/agent-runtime/core/config";
+} from '@/features/ai/agent-runtime/core/config';
 import {
   buildSelfImprovementPlaybook,
   jsonValueToRecord,
-} from "@/features/ai/agent-runtime/core/utils";
-import { getBrowserContextSummary } from "@/features/ai/agent-runtime/browsing/context";
+} from '@/features/ai/agent-runtime/core/utils';
+import {
+  addAgentMemory,
+  listAgentLongTermMemory,
+  listAgentMemory,
+} from '@/features/ai/agent-runtime/memory';
+import prisma from '@/shared/lib/db/prisma';
 
 type AgentRunContextInput = {
   id: string;
@@ -52,29 +52,29 @@ export async function prepareRunContext(
   }
   await addAgentMemory({
     runId: run.id,
-    scope: "session",
+    scope: 'session',
     content: run.prompt,
-    metadata: { source: "user" },
+    metadata: { source: 'user' },
   });
 
-  const memory = await listAgentMemory({ runId: run.id, scope: "session" });
+  const memory = await listAgentMemory({ runId: run.id, scope: 'session' });
   const sessionContext = memory.map((item: { content: string }) => item.content).slice(-8);
   const longTermItems = memoryKey
     ? await listAgentLongTermMemory({ memoryKey, limit: 4 })
     : [];
   const longTermProblemItems = memoryKey
     ? await listAgentLongTermMemory({
-        memoryKey,
-        limit: 4,
-        tags: ["problem-solution"],
-      })
+      memoryKey,
+      limit: 4,
+      tags: ['problem-solution'],
+    })
     : [];
   const longTermImprovementItems = memoryKey
     ? await listAgentLongTermMemory({
-        memoryKey,
-        limit: 3,
-        tags: ["self-improvement"],
-      })
+      memoryKey,
+      limit: 3,
+      tags: ['self-improvement'],
+    })
     : [];
   const selfImprovementPlaybook = buildSelfImprovementPlaybook(
     longTermImprovementItems.map((item: { summary: string | null; content: string; metadata: unknown }) => ({
@@ -101,51 +101,51 @@ export async function prepareRunContext(
   const settings = resolveAgentPlanSettings(run.planState);
   const preferences = resolveAgentPreferences(run.planState);
   const memoryValidationModel =
-    typeof preferences.memoryValidationModel === "string" &&
+    typeof preferences.memoryValidationModel === 'string' &&
     preferences.memoryValidationModel.trim()
       ? preferences.memoryValidationModel.trim()
       : null;
   const plannerModel =
-    typeof preferences.plannerModel === "string" &&
+    typeof preferences.plannerModel === 'string' &&
     preferences.plannerModel.trim()
       ? preferences.plannerModel.trim()
       : resolvedModel;
   const selfCheckModel =
-    typeof preferences.selfCheckModel === "string" &&
+    typeof preferences.selfCheckModel === 'string' &&
     preferences.selfCheckModel.trim()
       ? preferences.selfCheckModel.trim()
       : plannerModel;
   const loopGuardModel =
-    typeof preferences.loopGuardModel === "string" &&
+    typeof preferences.loopGuardModel === 'string' &&
     preferences.loopGuardModel.trim()
       ? preferences.loopGuardModel.trim()
       : plannerModel;
   const approvalGateModel =
-    typeof preferences.approvalGateModel === "string" &&
+    typeof preferences.approvalGateModel === 'string' &&
     preferences.approvalGateModel.trim()
       ? preferences.approvalGateModel.trim()
       : null;
   const memorySummarizationModel =
-    typeof preferences.memorySummarizationModel === "string" &&
+    typeof preferences.memorySummarizationModel === 'string' &&
     preferences.memorySummarizationModel.trim()
       ? preferences.memorySummarizationModel.trim()
       : resolvedModel;
   const browserContext = await getBrowserContextSummary(run.id);
 
   if (longTermImprovementItems.length > 0) {
-    await logAgentAudit(run.id, "info", "Self-improvement memory loaded.", {
-      type: "self-improvement-context",
+    await logAgentAudit(run.id, 'info', 'Self-improvement memory loaded.', {
+      type: 'self-improvement-context',
       count: longTermImprovementItems.length,
     });
   }
   if (selfImprovementPlaybook) {
-    await logAgentAudit(run.id, "info", "Self-improvement playbook ready.", {
-      type: "self-improvement-playbook",
+    await logAgentAudit(run.id, 'info', 'Self-improvement playbook ready.', {
+      type: 'self-improvement-playbook',
     });
   }
-  await logAgentAudit(run.id, "info", "Planner context prepared.", {
-    type: "planner-context",
-    reason: "initial",
+  await logAgentAudit(run.id, 'info', 'Planner context prepared.', {
+    type: 'planner-context',
+    reason: 'initial',
     prompt: run.prompt,
     model: plannerModel,
     memory: memoryContext,

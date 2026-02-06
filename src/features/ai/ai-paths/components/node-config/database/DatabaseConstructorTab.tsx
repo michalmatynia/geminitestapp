@@ -1,8 +1,42 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from "@/shared/ui";
-import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
+import { ChevronUp, ChevronDown, LayoutGrid } from 'lucide-react';
+import React from 'react';
+
+import {
+  TEMPLATE_SNIPPETS,
+  PRISMA_TEMPLATE_SNIPPETS,
+  SORT_PRESETS,
+  PRISMA_SORT_PRESETS,
+  PROJECTION_PRESETS,
+  PRISMA_PROJECTION_PRESETS,
+  READ_QUERY_TYPES,
+  PRISMA_READ_QUERY_TYPES,
+  QUERY_OPERATOR_GROUPS,
+  PRISMA_QUERY_OPERATOR_GROUPS,
+  UPDATE_OPERATOR_GROUPS,
+  PRISMA_UPDATE_OPERATOR_GROUPS,
+  AGGREGATION_STAGE_SNIPPETS,
+  PRISMA_AGGREGATION_STAGE_SNIPPETS,
+} from '@/features/ai/ai-paths/config/query-presets';
+import type {
+  AiNode,
+  DatabaseConfig,
+  DatabaseOperation,
+  DbQueryConfig,
+  Edge,
+  NodeConfig,
+  RuntimeState,
+  UpdaterMapping,
+  UpdaterSampleState,
+} from '@/features/ai/ai-paths/lib';
+import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from '@/shared/ui';
+
+import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
+
+import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema, SchemaData } from './types';
 
 
 /** Extract code blocks from markdown-style ``` delimiters */
@@ -17,23 +51,48 @@ function extractCodeSnippets(text: string): string[] {
   return snippets;
 }
 
+const toTitleCase = (value: string): string =>
+  value
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 
+const singularize = (value: string): string => {
+  if (value.endsWith('ies') && value.length > 3) {
+    return `${value.slice(0, -3)}y`;
+  }
+  if (value.endsWith('ses') && value.length > 3) {
+    return value.slice(0, -2);
+  }
+  if (value.endsWith('s') && !value.endsWith('ss') && value.length > 1) {
+    return value.slice(0, -1);
+  }
+  return value;
+};
 
+const normalizeSchemaType = (value: string): string => {
+  const normalized = value.trim();
+  const lower = normalized.toLowerCase();
+  if (lower === 'string') return 'string';
+  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number') return 'number';
+  if (lower === 'boolean' || lower === 'bool') return 'boolean';
+  if (lower === 'datetime' || lower === 'date') return 'string';
+  if (lower === 'json') return 'Record<string, unknown>';
+  return normalized || 'unknown';
+};
 
-import type {
-  AiNode,
-  DatabaseConfig,
-  DatabaseOperation,
-  DbQueryConfig,
-  Edge,
-  NodeConfig,
-  RuntimeState,
-  UpdaterMapping,
-  UpdaterSampleState,
-} from "@/features/ai/ai-paths/lib";
-import { formatPortLabel } from "@/features/ai/ai-paths/utils/ui-utils";
-import { TEMPLATE_SNIPPETS, SORT_PRESETS, PROJECTION_PRESETS, READ_QUERY_TYPES, QUERY_OPERATOR_GROUPS, UPDATE_OPERATOR_GROUPS, AGGREGATION_STAGE_SNIPPETS } from "@/features/ai/ai-paths/config/query-presets";
-import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema, SchemaData } from "./types";
+const formatCollectionSchema = (collectionName: string, fields: FieldSchema[]): string => {
+  const interfaceName = toTitleCase(singularize(collectionName));
+  if (!fields || fields.length === 0) {
+    return `interface ${interfaceName} {}`;
+  }
+  const lines = fields.map((field: FieldSchema) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
+};
 
 type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;
@@ -64,6 +123,9 @@ type DatabaseConstructorTabProps = {
   connectedPlaceholders: string[];
   hasSchemaConnection: boolean;
   fetchedDbSchema: SchemaData | null;
+  schemaMatrix: SchemaData | null;
+  onSyncSchema?: () => void;
+  schemaSyncing?: boolean;
   schemaLoading: boolean;
   nodes: AiNode[];
   edges: Edge[];
@@ -73,7 +135,7 @@ type DatabaseConstructorTabProps = {
   sendingToAi?: boolean | undefined;
   mapInputsToTargets: () => void;
   bundleKeys: Set<string>;
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
   aiPromptRef?: React.RefObject<HTMLTextAreaElement | null>;
   mappings: UpdaterMapping[];
   updateMapping: (index: number, patch: Partial<UpdaterMapping>) => void;
@@ -110,6 +172,9 @@ export function DatabaseConstructorTab({
   connectedPlaceholders,
   hasSchemaConnection,
   fetchedDbSchema,
+  schemaMatrix,
+  onSyncSchema,
+  schemaSyncing,
   schemaLoading,
   nodes,
   edges,
@@ -129,11 +194,24 @@ export function DatabaseConstructorTab({
   uniqueTargetPathOptions,
 }: DatabaseConstructorTabProps): React.JSX.Element {
   const isUpdateAction =
-    databaseConfig.useMongoActions && databaseConfig.actionCategory === "update";
+    databaseConfig.useMongoActions && databaseConfig.actionCategory === 'update';
+  const isPrismaProvider = queryConfig.provider === 'prisma';
+  const providerLabel = isPrismaProvider ? 'Prisma' : 'MongoDB';
+  const templateSnippets = isPrismaProvider ? PRISMA_TEMPLATE_SNIPPETS : TEMPLATE_SNIPPETS;
+  const readQueryTypes = isPrismaProvider ? PRISMA_READ_QUERY_TYPES : READ_QUERY_TYPES;
+  const queryOperatorGroups = isPrismaProvider ? PRISMA_QUERY_OPERATOR_GROUPS : QUERY_OPERATOR_GROUPS;
+  const updateOperatorGroups = isPrismaProvider ? PRISMA_UPDATE_OPERATOR_GROUPS : UPDATE_OPERATOR_GROUPS;
+  const aggregationStageSnippets = isPrismaProvider
+    ? PRISMA_AGGREGATION_STAGE_SNIPPETS
+    : AGGREGATION_STAGE_SNIPPETS;
+  const sortPresets = isPrismaProvider ? PRISMA_SORT_PRESETS : SORT_PRESETS;
+  const projectionPresets = isPrismaProvider ? PRISMA_PROJECTION_PRESETS : PROJECTION_PRESETS;
   // State for code snippet navigation in AI responses
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   // State for template snippets modal
   const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);
+  const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
+  const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('query');
 
   // Extract code snippets from pending AI query
   const codeSnippets = React.useMemo((): string[] => {
@@ -156,37 +234,37 @@ export function DatabaseConstructorTab({
       });
       return;
     }
-    const currentPresetId = databaseConfig.presetId ?? "custom";
+    const currentPresetId = databaseConfig.presetId ?? 'custom';
     const currentAiQueryId = selectedAiQueryId;
 
-    if (currentPresetId !== "custom" || currentAiQueryId) {
-      setSelectedAiQueryId("");
+    if (currentPresetId !== 'custom' || currentAiQueryId) {
+      setSelectedAiQueryId('');
       updateSelectedNodeConfig({
         database: {
           ...databaseConfig,
-          presetId: "custom",
+          presetId: 'custom',
           query: {
             ...queryConfig,
-            mode: "custom",
+            mode: 'custom',
             queryTemplate: nextQuery,
           },
         },
       });
     } else {
       updateQueryConfig({
-        mode: "custom",
+        mode: 'custom',
         queryTemplate: nextQuery,
       });
     }
   };
 
   const insertQueryPlaceholder = (placeholder: string): void => {
-    const currentTemplate = queryTemplateValue ?? "";
+    const currentTemplate = queryTemplateValue ?? '';
     const textArea = queryTemplateRef?.current;
     const selectionStart =
-      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentTemplate.length;
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
     const selectionEnd =
-      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentTemplate.length;
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
     const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
     const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
     const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
@@ -202,13 +280,40 @@ export function DatabaseConstructorTab({
     }, 0);
   };
 
+  const insertAiPromptPlaceholder = (placeholder: string): void => {
+    const currentValue = databaseConfig.aiPrompt ?? '';
+    const textArea = aiPromptRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentValue.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentValue.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
+    const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
+
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        aiPrompt: nextValue,
+      },
+    });
+
+    window.setTimeout(() => {
+      const node = aiPromptRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  };
+
   const insertTemplateSnippet = (snippet: string): void => {
-    const currentTemplate = queryTemplateValue ?? "";
+    const currentTemplate = queryTemplateValue ?? '';
     const textArea = queryTemplateRef?.current;
     const selectionStart =
-      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentTemplate.length;
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
     const selectionEnd =
-      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentTemplate.length;
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
     const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
     const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
     const nextTemplate = `${currentTemplate.slice(0, rangeStart)}${snippet}${currentTemplate.slice(rangeEnd)}`;
@@ -224,6 +329,127 @@ export function DatabaseConstructorTab({
     }, 0);
   };
 
+  const handleInsertPlaceholder = (placeholder: string, target: PlaceholderTarget): void => {
+    if (target === 'aiPrompt') {
+      insertAiPromptPlaceholder(placeholder);
+      return;
+    }
+    insertQueryPlaceholder(placeholder);
+  };
+
+  const placeholderGroups = React.useMemo((): PlaceholderGroup[] => {
+    const groups: PlaceholderGroup[] = [];
+    const connectedEntries = connectedPlaceholders.map((token: string, index: number) => {
+      const raw = token.replace(/^\{\{|\}\}$/g, '').trim();
+      let description = 'Connected input placeholder.';
+      if (raw.startsWith('bundle.')) {
+        description = `Bundle key: ${raw.replace('bundle.', '')}`;
+      } else if (raw.startsWith('context.')) {
+        description = `Context value: ${raw.replace('context.', '')}`;
+      } else if (raw.startsWith('meta.')) {
+        description = `Meta value: ${raw.replace('meta.', '')}`;
+      }
+      return {
+        id: `connected-${index}-${raw}`,
+        label: raw || token,
+        token,
+        resolvesTo: description,
+      };
+    });
+    if (connectedEntries.length > 0) {
+      groups.push({
+        id: 'connected',
+        title: 'Connected Inputs',
+        description: 'Placeholders derived from currently wired inputs.',
+        entries: connectedEntries,
+      });
+    }
+
+    const activeEntries: PlaceholderGroup = {
+      id: 'active',
+      title: 'Active Query Context',
+      description: 'Current operation & selection placeholders.',
+      entries: [
+        {
+          id: `operation-${operation}`,
+          label: `Operation: ${operation}`,
+          token: `{{operation:${operation}}}`,
+          resolvesTo: operation,
+        },
+        {
+          id: `collection-${queryConfig.collection}`,
+          label: `Collection: ${queryConfig.collection}`,
+          token: `{{collection:${queryConfig.collection}}}`,
+          resolvesTo: queryConfig.collection,
+        },
+        {
+          id: `provider-${queryConfig.provider}`,
+          label: `Provider: ${queryConfig.provider === 'auto' ? 'auto' : queryConfig.provider}`,
+          token: `{{provider:${queryConfig.provider === 'auto' ? 'auto-detect' : queryConfig.provider}}}`,
+          resolvesTo: queryConfig.provider === 'auto' ? 'auto-detect' : queryConfig.provider,
+        },
+      ],
+    };
+    groups.push(activeEntries);
+
+    const providerEntries = DB_PROVIDER_PLACEHOLDERS.map((provider: string) => ({
+      id: `db-provider-${provider}`,
+      label: provider,
+      token: `{{DB Provider: ${provider}}}`,
+      resolvesTo: provider,
+    }));
+    if (providerEntries.length > 0) {
+      groups.push({
+        id: 'providers',
+        title: 'Database Providers',
+        description: 'Static provider placeholders.',
+        entries: providerEntries,
+      });
+    }
+
+    const dateEntry = {
+      id: 'date-current',
+      label: 'Date: Current',
+      token: '{{Date: Current}}',
+      resolvesTo: new Date().toISOString(),
+      dynamic: true,
+    };
+    groups.push({
+      id: 'dates',
+      title: 'Dynamic Dates',
+      description: 'Runtime date placeholders.',
+      entries: [dateEntry],
+    });
+
+    const schemaEntries: PlaceholderGroup['entries'] = [];
+    if (schemaMatrix?.collections?.length) {
+      schemaMatrix.collections.forEach((collection: CollectionSchema, index: number) => {
+        const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+        const displayName = toTitleCase(singularize(collection.name));
+        const nameSet = new Set<string>([collection.name, displayName]);
+        Array.from(nameSet).forEach((name: string) => {
+          schemaEntries.push({
+            id: `schema-${index}-${name}`,
+            label: `Collection: ${name}`,
+            token: `{{Collection: ${name}}}`,
+            resolvesTo: schemaText,
+            dynamic: true,
+          });
+        });
+      });
+    }
+    if (schemaEntries.length > 0) {
+      groups.push({
+        id: 'schemas',
+        title: 'Collection Schemas',
+        description: 'Synchronized schema snapshots for use in prompts or queries.',
+        entries: schemaEntries,
+      });
+    }
+
+    return groups;
+  }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaMatrix]);
+
   const pendingAiQuerySection = pendingAiQuery ? (
     <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
       <div className="flex items-center justify-between">
@@ -232,7 +458,7 @@ export function DatabaseConstructorTab({
           <span className="text-xs text-purple-100">AI query ready for review</span>
           {codeSnippets.length > 0 && (
             <span className="text-[10px] text-purple-300">
-              ({codeSnippets.length} code snippet{codeSnippets.length > 1 ? "s" : ""})
+              ({codeSnippets.length} code snippet{codeSnippets.length > 1 ? 's' : ''})
             </span>
           )}
         </div>
@@ -257,30 +483,30 @@ export function DatabaseConstructorTab({
                   ...databaseConfig,
                   query: {
                     ...queryConfig,
-                    mode: "custom",
+                    mode: 'custom',
                     queryTemplate: queryToAccept,
                   },
                 },
               });
-              setPendingAiQuery("");
+              setPendingAiQuery('');
               toast(
                 selectedSnippetIndex >= 0 && codeSnippets[selectedSnippetIndex]
                   ? `Code snippet ${selectedSnippetIndex + 1} accepted.`
-                  : "AI query accepted and saved.",
-                { variant: "success" }
+                  : 'AI query accepted and saved.',
+                { variant: 'success' }
               );
             }}
           >
             {selectedSnippetIndex >= 0 && codeSnippets.length > 0
               ? `Accept Snippet ${selectedSnippetIndex + 1}`
-              : "Accept"}
+              : 'Accept'}
           </Button>
           <Button
             type="button"
             className="h-7 rounded-md border border-rose-700 bg-rose-500/10 px-3 text-[10px] text-rose-200 hover:bg-rose-500/20"
             onClick={(): void => {
-              setPendingAiQuery("");
-              toast("AI query rejected.", { variant: "success" });
+              setPendingAiQuery('');
+              toast('AI query rejected.', { variant: 'success' });
             }}
           >
             Reject
@@ -340,7 +566,9 @@ export function DatabaseConstructorTab({
 
   return (
     <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
-      {queryInputControls}
+      <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
+        {queryInputControls}
+      </div>
 
       {pendingAiQuerySection}
 
@@ -355,7 +583,7 @@ export function DatabaseConstructorTab({
             Save As Preset
           </Button>
           <Select
-            value={databaseConfig.presetId ?? "custom"}
+            value={databaseConfig.presetId ?? 'custom'}
             onValueChange={(value: string): void => applyDatabasePreset(value)}
           >
             <SelectTrigger className="h-7 w-[180px] border-border bg-card/70 text-xs text-white">
@@ -370,10 +598,10 @@ export function DatabaseConstructorTab({
             </SelectContent>
           </Select>
           <Select
-            value={selectedAiQueryId || "none"}
+            value={selectedAiQueryId || 'none'}
             onValueChange={(value: string): void => {
-              if (value === "none") {
-                setSelectedAiQueryId("");
+              if (value === 'none') {
+                setSelectedAiQueryId('');
                 return;
               }
               const aiQuery = aiQueries.find((q: AiQuery) => q.id === value);
@@ -384,7 +612,7 @@ export function DatabaseConstructorTab({
                     ...databaseConfig,
                     query: {
                       ...queryConfig,
-                      mode: "custom",
+                      mode: 'custom',
                       queryTemplate: aiQuery.query,
                     },
                   },
@@ -414,8 +642,8 @@ export function DatabaseConstructorTab({
               setAiQueries((prev: AiQuery[]): AiQuery[] =>
                 prev.filter((query: AiQuery): boolean => query.id !== targetId)
               );
-              setSelectedAiQueryId("");
-              toast("AI query removed.", { variant: "success" });
+              setSelectedAiQueryId('');
+              toast('AI query removed.', { variant: 'success' });
             }}
             title="Remove selected AI query"
           >
@@ -424,30 +652,33 @@ export function DatabaseConstructorTab({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-400">Connected Placeholders</Label>
-        <div className="flex flex-wrap items-center gap-2">
-          {connectedPlaceholders.length > 0 ? (
-            <>
-              {connectedPlaceholders.map((chip: string): React.JSX.Element => (
-                <Button
-                  key={chip}
-                  type="button"
-                  className="rounded-md border border-emerald-700/50 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
-                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => event.preventDefault()}
-                  onClick={(): void => insertQueryPlaceholder(chip)}
-                >
-                  {chip}
-                </Button>
-              ))}
-            </>
-          ) : (
-            <span className="text-[10px] text-gray-500 italic">
-              Connect inputs to see available placeholders
-            </span>
-          )}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2">
+        <div>
+          <div className="text-xs font-medium text-gray-200">Placeholders</div>
+          <div className="text-[10px] text-gray-400">
+            Open the matrix to insert any placeholder into queries or prompts.
+          </div>
         </div>
+        <Button
+          type="button"
+          className="h-7 rounded-md border border-sky-500/40 px-3 text-[10px] text-sky-100 hover:bg-sky-500/10"
+          onClick={(): void => setPlaceholderMatrixOpen(true)}
+        >
+          <LayoutGrid className="mr-2 h-3.5 w-3.5" />
+          Placeholders
+        </Button>
       </div>
+
+      <PlaceholderMatrixDialog
+        open={placeholderMatrixOpen}
+        onOpenChange={setPlaceholderMatrixOpen}
+        groups={placeholderGroups}
+        target={placeholderTarget}
+        onTargetChange={setPlaceholderTarget}
+        onInsert={handleInsertPlaceholder}
+        onSync={onSyncSchema}
+        syncing={schemaSyncing}
+      />
 
       {hasSchemaConnection && (
         <div className="rounded-md border border-purple-800/50 bg-purple-950/20 p-3">
@@ -466,8 +697,8 @@ export function DatabaseConstructorTab({
               </div>
               <div className="flex flex-wrap gap-1">
                 {fetchedDbSchema.collections.map((coll: CollectionSchema): React.JSX.Element => {
-                  const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(", ") ?? "";
-                  const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || "unknown"}}}`;
+                  const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(', ') ?? '';
+                  const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || 'unknown'}}}`;
                   return (
                     <Tooltip
                       key={coll.name}
@@ -480,10 +711,10 @@ export function DatabaseConstructorTab({
                         className="rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20"
                         onClick={(): void => {
                           updateQueryConfig({
-                            mode: "custom",
+                            mode: 'custom',
                             collection: coll.name,
                           });
-                          toast(`Collection set to: ${coll.name}`, { variant: "success" });
+                          toast(`Collection set to: ${coll.name}`, { variant: 'success' });
                         }}
                       >
                         {coll.name}
@@ -512,14 +743,14 @@ export function DatabaseConstructorTab({
                             const fieldQuery = `"${field.name}": "{{value}}"`;
                             const current = queryTemplateValue.trim();
                             let newQuery: string;
-                            if (!current || current === "{}") {
+                            if (!current || current === '{}') {
                               newQuery = `{\n  ${fieldQuery}\n}`;
-                            } else if (current.endsWith("}")) {
-                              const insertPos = current.lastIndexOf("}");
+                            } else if (current.endsWith('}')) {
+                              const insertPos = current.lastIndexOf('}');
                               const before = current.slice(0, insertPos).trimEnd();
                               const needsComma =
-                                before.length > 1 && !before.endsWith("{") && !before.endsWith(",");
-                              newQuery = `${before}${needsComma ? "," : ""}\n  ${fieldQuery}\n}`;
+                                before.length > 1 && !before.endsWith('{') && !before.endsWith(',');
+                              newQuery = `${before}${needsComma ? ',' : ''}\n  ${fieldQuery}\n}`;
                             } else {
                               newQuery = `${current}\n  ${fieldQuery}`;
                             }
@@ -574,19 +805,19 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Templates</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {TEMPLATE_SNIPPETS.map((snippet: { label: string; value: string }): React.JSX.Element => (
+                {templateSnippets.map((snippet: { label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
                     type="button"
                     className="h-auto flex-col items-start gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/10 p-3 text-left hover:bg-emerald-500/20"
                     onClick={(): void => {
-                      setSelectedAiQueryId("");
+                      setSelectedAiQueryId('');
                       updateQueryConfig({
-                        mode: "custom",
+                        mode: 'custom',
                         queryTemplate: snippet.value,
                       });
                       setSnippetsModalOpen(false);
-                      toast(`Applied: ${snippet.label}`, { variant: "success" });
+                      toast(`Applied: ${snippet.label}`, { variant: 'success' });
                     }}
                   >
                     <span className="text-[11px] font-medium text-emerald-200">{snippet.label}</span>
@@ -600,20 +831,20 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Read Query Types</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {READ_QUERY_TYPES.map((snippet: { label: string; value: string; disabled?: boolean; note?: string }): React.JSX.Element => (
+                {readQueryTypes.map((snippet: { label: string; value: string; disabled?: boolean; note?: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
                     type="button"
                     disabled={snippet.disabled}
                     className={`h-auto flex-col items-start gap-1 rounded-md border p-3 text-left ${
                       snippet.disabled
-                        ? "border-gray-700 bg-gray-800/30 text-gray-500"
-                        : "border-indigo-600/50 bg-indigo-500/10 hover:bg-indigo-500/20"
+                        ? 'border-gray-700 bg-gray-800/30 text-gray-500'
+                        : 'border-indigo-600/50 bg-indigo-500/10 hover:bg-indigo-500/20'
                     }`}
                     onClick={(): void => {
                       if (snippet.disabled) return;
                       insertTemplateSnippet(snippet.value);
-                      toast(`Inserted: ${snippet.label}`, { variant: "success" });
+                      toast(`Inserted: ${snippet.label}`, { variant: 'success' });
                     }}
                     title={snippet.note ?? undefined}
                   >
@@ -630,7 +861,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Operators</Label>
               <div className="space-y-3">
-                {QUERY_OPERATOR_GROUPS.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
+                {queryOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
                   <div key={group.label} className="space-y-1">
                     <div className="text-[10px] text-gray-500">{group.label}</div>
                     <div className="flex flex-wrap gap-2">
@@ -641,7 +872,7 @@ export function DatabaseConstructorTab({
                           className="h-6 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
                           onClick={(): void => {
                             insertTemplateSnippet(item.value);
-                            toast(`Inserted ${item.label}`, { variant: "success" });
+                            toast(`Inserted ${item.label}`, { variant: 'success' });
                           }}
                         >
                           {item.label}
@@ -657,7 +888,7 @@ export function DatabaseConstructorTab({
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Update Operators</Label>
               <div className="space-y-3">
-                {UPDATE_OPERATOR_GROUPS.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
+                {updateOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
                   <div key={group.label} className="space-y-1">
                     <div className="text-[10px] text-gray-500">{group.label}</div>
                     <div className="flex flex-wrap gap-2">
@@ -668,7 +899,7 @@ export function DatabaseConstructorTab({
                           className="h-6 rounded-md border border-sky-600/50 bg-sky-500/10 px-2 text-[10px] text-sky-200 hover:bg-sky-500/20"
                           onClick={(): void => {
                             insertTemplateSnippet(item.value);
-                            toast(`Inserted ${item.label}`, { variant: "success" });
+                            toast(`Inserted ${item.label}`, { variant: 'success' });
                           }}
                         >
                           {item.label}
@@ -683,39 +914,47 @@ export function DatabaseConstructorTab({
             {/* Aggregation Stages */}
             <div className="space-y-2">
               <Label className="text-xs text-gray-400 uppercase tracking-wide">Aggregation Stages</Label>
-              <div className="flex flex-wrap gap-2">
-                {AGGREGATION_STAGE_SNIPPETS.map((stage: { label: string; value: string }): React.JSX.Element => (
-                  <Button
-                    key={stage.label}
-                    type="button"
-                    className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
-                    onClick={(): void => {
-                      insertTemplateSnippet(stage.value);
-                      toast(`Inserted ${stage.label}`, { variant: "success" });
-                    }}
-                  >
-                    {stage.label}
-                  </Button>
-                ))}
-              </div>
+              {aggregationStageSnippets.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {aggregationStageSnippets.map((stage: { label: string; value: string }): React.JSX.Element => (
+                    <Button
+                      key={stage.label}
+                      type="button"
+                      className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
+                      onClick={(): void => {
+                        insertTemplateSnippet(stage.value);
+                        toast(`Inserted ${stage.label}`, { variant: 'success' });
+                      }}
+                    >
+                      {stage.label}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[10px] text-amber-200/80">
+                  Aggregation pipelines are MongoDB-only.
+                </div>
+              )}
             </div>
 
             {/* Sort Presets */}
             <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Sort Options</Label>
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+                {isPrismaProvider ? 'Order By Options' : 'Sort Options'}
+              </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {SORT_PRESETS.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
+                {sortPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
                     type="button"
                     className="h-auto flex-col items-start gap-1 rounded-md border border-sky-600/50 bg-sky-500/10 p-3 text-left hover:bg-sky-500/20"
                     onClick={(): void => {
                       updateQueryConfig({
-                        mode: "custom",
+                        mode: 'custom',
                         sort: preset.value,
                       });
                       setSnippetsModalOpen(false);
-                      toast(`Applied sort: ${preset.label}`, { variant: "success" });
+                      toast(`Applied sort: ${preset.label}`, { variant: 'success' });
                     }}
                   >
                     <span className="text-[11px] font-medium text-sky-200">{preset.label}</span>
@@ -727,20 +966,22 @@ export function DatabaseConstructorTab({
 
             {/* Projection Presets */}
             <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Projection (Fields)</Label>
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+                {isPrismaProvider ? 'Select (Fields)' : 'Projection (Fields)'}
+              </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {PROJECTION_PRESETS.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
+                {projectionPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
                     type="button"
                     className="h-auto flex-col items-start gap-1 rounded-md border border-amber-600/50 bg-amber-500/10 p-3 text-left hover:bg-amber-500/20"
                     onClick={(): void => {
                       updateQueryConfig({
-                        mode: "custom",
+                        mode: 'custom',
                         projection: preset.value,
                       });
                       setSnippetsModalOpen(false);
-                      toast(`Applied projection: ${preset.label}`, { variant: "success" });
+                      toast(`Applied projection: ${preset.label}`, { variant: 'success' });
                     }}
                   >
                     <span className="text-[11px] font-medium text-amber-200">{preset.label}</span>
@@ -758,7 +999,8 @@ export function DatabaseConstructorTab({
         <Textarea
           ref={aiPromptRef}
           className="min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-          value={databaseConfig.aiPrompt ?? ""}
+          value={databaseConfig.aiPrompt ?? ''}
+          onFocus={(): void => setPlaceholderTarget('aiPrompt')}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               database: {
@@ -769,123 +1011,25 @@ export function DatabaseConstructorTab({
           }
           onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
             // Send on Ctrl+Enter or Cmd+Enter
-            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
               event.preventDefault();
               if (onSendToAi && selectedNode?.id && databaseConfig.aiPrompt?.trim() && !sendingToAi) {
                 void onSendToAi(selectedNode.id, databaseConfig.aiPrompt);
               }
             }
           }}
-          placeholder="Write a MongoDB query that finds products where... (Ctrl+Enter to send)"
+          placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
         />
-        <div className="flex flex-wrap gap-2">
-          <div className="text-[11px] text-gray-400">Context placeholders:</div>
-          <Tooltip
-            content={`{{operation:${operation}}}`}
-            side="bottom"
-          >
-            <Button
-              type="button"
-              className="rounded-md border border-emerald-700 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
-              onClick={(): void => {
-                const placeholder = `{{operation:${operation}}}`;
-                const currentValue = databaseConfig.aiPrompt ?? "";
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    aiPrompt: currentValue + placeholder,
-                  },
-                });
-              }}
-            >
-              Operation: {operation}
-            </Button>
-          </Tooltip>
-          {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
-            fetchedDbSchema.collections.map((coll: CollectionSchema): React.JSX.Element => {
-              const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(", ") ?? "";
-              const resolvedPlaceholder = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || "unknown"}}}`;
-              return (
-                <Tooltip
-                  key={coll.name}
-                  content={resolvedPlaceholder}
-                  side="bottom"
-                  maxWidth="500px"
-                >
-                  <Button
-                    type="button"
-                    className="rounded-md border border-cyan-700 bg-cyan-500/10 px-2 py-1 text-[10px] text-cyan-200 hover:bg-cyan-500/20"
-                    onClick={(): void => {
-                      const placeholder = `{{ schema: ${coll.name} }}`;
-                      const currentValue = databaseConfig.aiPrompt ?? "";
-                      updateSelectedNodeConfig({
-                        database: {
-                          ...databaseConfig,
-                          aiPrompt: currentValue + placeholder,
-                        },
-                      });
-                    }}
-                  >
-                    Schema: {coll.name}
-                  </Button>
-                </Tooltip>
-              );
-            })
-          ) : (
-            <Tooltip
-              content={`{{collection:${queryConfig.collection}}}`}
-              side="bottom"
-            >
-              <Button
-                type="button"
-                className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
-                              onClick={(): void => {
-                                const placeholder = `{{collection:${queryConfig.collection}}}`;
-                                const currentValue = databaseConfig.aiPrompt ?? "";
-                                updateSelectedNodeConfig({
-                                  database: {
-                                    ...databaseConfig,
-                                    aiPrompt: currentValue + placeholder,
-                                  },
-                                });
-                              }}              >
-                Collection: {queryConfig.collection}
-              </Button>
-            </Tooltip>
-          )}
-          <Tooltip
-            content={`{{provider:${queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider}}}`}
-            side="bottom"
-          >
-            <Button
-              type="button"
-              className="rounded-md border border-purple-700 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-200 hover:bg-purple-500/20"
-              onClick={(): void => {
-                const providerName = queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider;
-                const placeholder = `{{provider:${providerName}}}`;
-                const currentValue = databaseConfig.aiPrompt ?? "";
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    aiPrompt: currentValue + placeholder,
-                  },
-                });
-              }}
-            >
-              Provider: {queryConfig.provider === "auto" ? "auto" : queryConfig.provider}
-            </Button>
-          </Tooltip>
-        </div>
         {((): React.JSX.Element => {
           const aiPromptEdges = edges.filter(
-            (edge: Edge): boolean => edge.from === selectedNode.id && edge.fromPort === "aiPrompt"
+            (edge: Edge): boolean => edge.from === selectedNode.id && edge.fromPort === 'aiPrompt'
           );
           const callbackEdges = edges.filter(
-            (edge: Edge): boolean => edge.to === selectedNode.id && edge.toPort === "queryCallback"
+            (edge: Edge): boolean => edge.to === selectedNode.id && edge.toPort === 'queryCallback'
           );
 
           const aiNode = aiPromptEdges.length > 0
-            ? nodes.find((n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === "model")
+            ? nodes.find((n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === 'model')
             : null;
 
           const aiModelId = aiNode?.config?.model?.modelId;
@@ -893,7 +1037,7 @@ export function DatabaseConstructorTab({
 
           const callbackValue = runtimeState.inputs[selectedNode.id]?.queryCallback
             ?? runtimeState.outputs[selectedNode.id]?.queryCallback;
-          const hasAiResponse = typeof callbackValue === "string" && callbackValue.trim().length > 0;
+          const hasAiResponse = typeof callbackValue === 'string' && callbackValue.trim().length > 0;
 
           return (
             <div className="space-y-2">
@@ -902,7 +1046,7 @@ export function DatabaseConstructorTab({
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
                     <span className="text-[11px] text-emerald-100">
-                      Connected to AI Model: <span className="font-medium text-emerald-200">{aiModelId || "Unknown"}</span>
+                      Connected to AI Model: <span className="font-medium text-emerald-200">{aiModelId || 'Unknown'}</span>
                     </span>
                   </div>
                   {hasAiResponse && (
@@ -911,10 +1055,10 @@ export function DatabaseConstructorTab({
                       className="mt-2 rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
                       onClick={(): void => {
                         updateQueryConfig({
-                          mode: "custom",
+                          mode: 'custom',
                           queryTemplate: callbackValue,
                         });
-                        toast("AI response injected into query.", { variant: "success" });
+                        toast('AI response injected into query.', { variant: 'success' });
                       }}
                     >
                       Inject AI Response into Query
@@ -931,7 +1075,7 @@ export function DatabaseConstructorTab({
                         }
                       }}
                     >
-                      {sendingToAi ? "Sending..." : "Send to AI Model"}
+                      {sendingToAi ? 'Sending...' : 'Send to AI Model'}
                     </Button>
                   )}
                 </div>
@@ -941,17 +1085,17 @@ export function DatabaseConstructorTab({
                     <div className="h-2 w-2 rounded-full bg-amber-400"></div>
                     <span className="text-[11px] text-amber-100">
                       {aiNode && !callbackEdges.length
-                        ? "AI node connected, but callback not wired"
+                        ? 'AI node connected, but callback not wired'
                         : !aiNode && callbackEdges.length > 0
-                        ? "Callback wired, but no AI node connected"
-                        : "Not connected to AI node"}
+                          ? 'Callback wired, but no AI node connected'
+                          : 'Not connected to AI node'}
                     </span>
                   </div>
                 </div>
               )}
               <p className="text-[11px] text-gray-500">
                 Connect this node&apos;s <span className="text-gray-300">aiPrompt</span> output to an AI Node, then connect
-                the AI&apos;s <span className="text-gray-300">result</span> back to this node&apos;s{" "}
+                the AI&apos;s <span className="text-gray-300">result</span> back to this node&apos;s{' '}
                 <span className="text-gray-300">queryCallback</span> input.
               </p>
             </div>
@@ -959,7 +1103,7 @@ export function DatabaseConstructorTab({
         })()}
       </div>
 
-      {operation === "update" && (
+      {operation === 'update' && (
         <div className="space-y-3 rounded-md border border-border bg-card/40 p-3">
           <Label className="text-xs text-gray-400">Sample JSON (fetch to enable Field Mapping)</Label>
           <div className="flex flex-wrap gap-2 items-center">
@@ -975,7 +1119,7 @@ export function DatabaseConstructorTab({
                     },
                   }));
                   // Auto-fetch first document from selected collection
-                  void onFetchUpdaterSample(selectedNodeId, value, "");
+                  void onFetchUpdaterSample(selectedNodeId, value, '');
                 }}
               >
                 <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
@@ -1016,7 +1160,7 @@ export function DatabaseConstructorTab({
                 )
               }
             >
-              {updaterSampleLoading ? "Loading..." : "Fetch sample"}
+              {updaterSampleLoading ? 'Loading...' : 'Fetch sample'}
             </Button>
           </div>
           {hasSchemaConnection && !fetchedDbSchema?.collections?.length && !schemaLoading && (
@@ -1067,8 +1211,8 @@ export function DatabaseConstructorTab({
               type="button"
               className={`rounded-md border px-3 text-[10px] ${
                 sampleState.includeContainers
-                  ? "text-emerald-200 hover:bg-emerald-500/10"
-                  : "text-gray-300 hover:bg-muted/60"
+                  ? 'text-emerald-200 hover:bg-emerald-500/10'
+                  : 'text-gray-300 hover:bg-muted/60'
               }`}
               onClick={(): void =>
                 setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
@@ -1080,160 +1224,160 @@ export function DatabaseConstructorTab({
                 }))
               }
             >
-              {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
+              {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
             </Button>
           </div>
         </div>
       )}
 
       {/* Field Mapping: Show for query operations always, for update only after sample is fetched */}
-      {(operation !== "update" || sampleState.json.trim().length > 0) && (
-      <div className="space-y-3 border-t border-border pt-4">
-        <Label className="text-xs text-gray-400">Parameter Mapping</Label>
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Button
-            type="button"
-            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-            onClick={(): void => mapInputsToTargets()}
-          >
+      {(operation !== 'update' || sampleState.json.trim().length > 0) && (
+        <div className="space-y-3 border-t border-border pt-4">
+          <Label className="text-xs text-gray-400">Parameter Mapping</Label>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <Button
+              type="button"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              onClick={(): void => mapInputsToTargets()}
+            >
             Auto-map inputs
-          </Button>
-          {bundleKeys.size > 0 && (
-            <span className="text-[11px] text-gray-500">
-              Bundle keys:{" "}
-              {Array.from(bundleKeys)
-                .map((key: string): string => formatPortLabel(key))
-                .join(", ")}
-            </span>
-          )}
-        </div>
+            </Button>
+            {bundleKeys.size > 0 && (
+              <span className="text-[11px] text-gray-500">
+              Bundle keys:{' '}
+                {Array.from(bundleKeys)
+                  .map((key: string): string => formatPortLabel(key))
+                  .join(', ')}
+              </span>
+            )}
+          </div>
 
-        <div className="space-y-3">
-          {mappings.map((mapping: UpdaterMapping, index: number): React.JSX.Element => {
-            const targetValue = mapping.targetPath ?? "";
-            const customValue = mapping.sourcePath ?? "";
-            // Schema selection = targetValue matches a schema option
-            const hasSchemaSelection = uniqueTargetPathOptions.some((opt: { label: string; value: string }): boolean => opt.value === targetValue) && targetValue.trim().length > 0;
-            const sourcePort = mapping.sourcePort ?? "";
-            const sourcePortOptions =
+          <div className="space-y-3">
+            {mappings.map((mapping: UpdaterMapping, index: number): React.JSX.Element => {
+              const targetValue = mapping.targetPath ?? '';
+              const customValue = mapping.sourcePath ?? '';
+              // Schema selection = targetValue matches a schema option
+              const hasSchemaSelection = uniqueTargetPathOptions.some((opt: { label: string; value: string }): boolean => opt.value === targetValue) && targetValue.trim().length > 0;
+              const sourcePort = mapping.sourcePort ?? '';
+              const sourcePortOptions =
               sourcePort && !availablePorts.includes(sourcePort)
                 ? [sourcePort, ...availablePorts]
                 : availablePorts;
 
-            return (
-              <div
-                key={`mapping-${index}`}
-                className="flex flex-wrap gap-2 items-start"
-              >
-                {/* "Pick from schema" dropdown - ALWAYS visible */}
-                <div className="space-y-2 min-w-[180px]">
-                  <Select
-                    value={hasSchemaSelection ? targetValue : ""}
-                    onValueChange={(value: string): void => {
-                      if (value && value !== "__empty__") {
-                        updateMapping(index, { targetPath: value } as Partial<UpdaterMapping>);
-                      } else {
-                        updateMapping(index, { targetPath: "" } as Partial<UpdaterMapping>);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Pick from schema" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-gray-900">
-                      <SelectItem value="__empty__">— None —</SelectItem>
-                      {uniqueTargetPathOptions.map((option: { label: string; value: string }): React.JSX.Element => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Source port selector */}
-                <div className="space-y-2 min-w-[160px]">
-                  <Select
-                    value={sourcePort}
-                    onValueChange={(value: string): void =>
-                      updateMapping(index, {
-                        sourcePort: value,
-                        sourcePath: mapping.sourcePath ?? "",
-                      } as Partial<UpdaterMapping>)
-                    }
-                  >
-                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Select input" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-gray-900">
-                      {sourcePortOptions.map((port: string): React.JSX.Element => (
-                        <SelectItem key={port} value={port}>
-                          {formatPortLabel(port)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Source path input */}
-                {hasSchemaSelection && sourcePort && (
-                  <div className="space-y-2 min-w-[140px]">
-                    {sourcePort === "bundle" && bundleKeys.size > 0 ? (
-                      <Select
-                        value={customValue}
-                        onValueChange={(value: string): void =>
-                          updateMapping(index, {
-                            sourcePath: value,
-                          } as Partial<UpdaterMapping>)
-                        }
-                      >
-                        <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                          <SelectValue placeholder="Pick bundle key" />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-gray-900">
-                          {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
-                            <SelectItem key={key} value={key}>
-                              {formatPortLabel(key)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                        value={customValue}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                          updateMapping(index, {
-                            sourcePath: event.target.value,
-                          } as Partial<UpdaterMapping>)
-                        }
-                        placeholder="Source path (optional)"
-                      />
-                    )}
-                  </div>
-                )}
-
-                <Button
-                  type="button"
-                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start"
-                  disabled={mappings.length <= 1}
-                  onClick={(): void => removeMapping(index)}
+              return (
+                <div
+                  key={`mapping-${index}`}
+                  className="flex flex-wrap gap-2 items-start"
                 >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                  {/* "Pick from schema" dropdown - ALWAYS visible */}
+                  <div className="space-y-2 min-w-[180px]">
+                    <Select
+                      value={hasSchemaSelection ? targetValue : ''}
+                      onValueChange={(value: string): void => {
+                        if (value && value !== '__empty__') {
+                          updateMapping(index, { targetPath: value } as Partial<UpdaterMapping>);
+                        } else {
+                          updateMapping(index, { targetPath: '' } as Partial<UpdaterMapping>);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                        <SelectValue placeholder="Pick from schema" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        <SelectItem value="__empty__">— None —</SelectItem>
+                        {uniqueTargetPathOptions.map((option: { label: string; value: string }): React.JSX.Element => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        <Button
-          type="button"
-          className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
-          onClick={(): void => addMapping()}
-        >
+                  {/* Source port selector */}
+                  <div className="space-y-2 min-w-[160px]">
+                    <Select
+                      value={sourcePort}
+                      onValueChange={(value: string): void =>
+                        updateMapping(index, {
+                          sourcePort: value,
+                          sourcePath: mapping.sourcePath ?? '',
+                        } as Partial<UpdaterMapping>)
+                      }
+                    >
+                      <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                        <SelectValue placeholder="Select input" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900">
+                        {sourcePortOptions.map((port: string): React.JSX.Element => (
+                          <SelectItem key={port} value={port}>
+                            {formatPortLabel(port)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Source path input */}
+                  {hasSchemaSelection && sourcePort && (
+                    <div className="space-y-2 min-w-[140px]">
+                      {sourcePort === 'bundle' && bundleKeys.size > 0 ? (
+                        <Select
+                          value={customValue}
+                          onValueChange={(value: string): void =>
+                            updateMapping(index, {
+                              sourcePath: value,
+                            } as Partial<UpdaterMapping>)
+                          }
+                        >
+                          <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                            <SelectValue placeholder="Pick bundle key" />
+                          </SelectTrigger>
+                          <SelectContent className="border-border bg-gray-900">
+                            {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
+                              <SelectItem key={key} value={key}>
+                                {formatPortLabel(key)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                          value={customValue}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                            updateMapping(index, {
+                              sourcePath: event.target.value,
+                            } as Partial<UpdaterMapping>)
+                          }
+                          placeholder="Source path (optional)"
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start"
+                    disabled={mappings.length <= 1}
+                    onClick={(): void => removeMapping(index)}
+                  >
+                  Remove
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+
+          <Button
+            type="button"
+            className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
+            onClick={(): void => addMapping()}
+          >
           Add mapping
-        </Button>
-      </div>
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -9,11 +9,12 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsActionRateLimit, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
 
 const updateSchema = z.object({
-  provider: z.enum(["auto", "mongodb"]).optional(),
+  provider: z.enum(["auto", "mongodb", "prisma"]).optional(),
   collection: z.string().trim().min(1),
   query: z.record(z.string(), z["unknown"]()).optional(),
   updates: z.record(z.string(), z["unknown"]()).optional(),
@@ -49,6 +50,39 @@ const ALLOWED_COLLECTIONS = new Set([
   "auth_login_challenges",
 ]);
 
+const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
+  products: "product",
+  product_drafts: "productDraft",
+  product_categories: "productCategory",
+  product_tags: "productTag",
+  catalogs: "catalog",
+  image_files: "imageFile",
+  product_listings: "productListing",
+  product_ai_jobs: "productAiJob",
+  integrations: "integration",
+  integration_connections: "integrationConnection",
+  settings: "setting",
+  users: "user",
+  user_preferences: "userPreferences",
+  languages: "language",
+  system_logs: "systemLog",
+  notes: "note",
+  tags: "tag",
+  categories: "category",
+  notebooks: "notebook",
+  noteFiles: "noteFile",
+  note_files: "noteFile",
+  themes: "theme",
+  chatbot_sessions: "chatbotSession",
+  auth_security_attempts: "authSecurityAttempt",
+  auth_security_profiles: "authSecurityProfile",
+  auth_login_challenges: "authLoginChallenge",
+};
+
+type PrismaDelegate = {
+  updateMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+};
+
 const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
   if (typeof value === "string") {
@@ -75,23 +109,25 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Rec
   return next;
 };
 
+const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
+  const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
+  if (!delegateName) return null;
+  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
+  return delegate ?? null;
+};
+
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const access = await requireAiPathsAccess();
-    enforceAiPathsActionRateLimit(access, "db-update");
+    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+    if (!isInternal) {
+      enforceAiPathsActionRateLimit(access, "db-update");
+    }
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",
     });
     if (!parsed.ok) return parsed.response;
-    if (!process.env.MONGODB_URI) {
-      return createErrorResponse(internalError("MongoDB is not configured"), {
-        request: req,
-        source: "ai-paths.db-update",
-      });
-    }
-
     const data = parsed.data;
-    const { collection, query, updates, single = true, idType } = data;
+    const { provider: requestedProvider, collection, query, updates, single = true, idType } = data;
 
     if (!ALLOWED_COLLECTIONS.has(collection)) {
       return createErrorResponse(internalError("Collection not allowlisted"), {
@@ -104,6 +140,45 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       updates && typeof updates === "object" ? updates : {};
     if (Object.keys(normalizedUpdates).length === 0) {
       throw badRequestError("No updates provided");
+    }
+    const provider = requestedProvider === "prisma" ? "prisma" : "mongodb";
+
+    if (provider === "prisma") {
+      if (!process.env.DATABASE_URL) {
+        return createErrorResponse(internalError("Prisma is not configured"), {
+          request: req,
+          source: "ai-paths.db-update",
+        });
+      }
+      const delegate = getPrismaDelegate(collection);
+      if (!delegate) {
+        return createErrorResponse(badRequestError("Collection not available for Prisma"), {
+          request: req,
+          source: "ai-paths.db-update",
+        });
+      }
+      const where = coerceQuery(query);
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Update requires a query filter");
+      }
+      const result = await delegate.updateMany({
+        where,
+        data: normalizedUpdates,
+      });
+      return NextResponse.json({
+        ok: true,
+        collection,
+        single,
+        matchedCount: result.count,
+        modifiedCount: result.count,
+      });
+    }
+
+    if (!process.env.MONGODB_URI) {
+      return createErrorResponse(internalError("MongoDB is not configured"), {
+        request: req,
+        source: "ai-paths.db-update",
+      });
     }
 
     const filter = normalizeObjectId(coerceQuery(query), idType);

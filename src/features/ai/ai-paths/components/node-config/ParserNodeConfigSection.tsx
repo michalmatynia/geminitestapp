@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import React from 'react';
+
 
 
 
@@ -14,7 +14,7 @@ import type {
   ParserConfig,
   ParserSampleState,
   RuntimeState,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
 import {
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
@@ -24,7 +24,8 @@ import {
   extractJsonPathEntries,
   inferImageMappingPath,
   safeParseJson,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Textarea, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 type ParserNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -33,10 +34,10 @@ type ParserNodeConfigSectionProps = {
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;
-  updateSelectedNode: (patch: Partial<AiNode>) => void;
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  toast: (message: string, options?: { variant?: "success" | "error" }) => void;
+  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
 };
 
 export function ParserNodeConfigSection({
@@ -55,7 +56,7 @@ export function ParserNodeConfigSection({
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
 
-  const isParserNode = selectedNode.type === "parser";
+  const isParserNode = selectedNode.type === 'parser';
 
   React.useEffect((): void | (() => void) => {
     if (!isParserNode) return;
@@ -79,8 +80,8 @@ export function ParserNodeConfigSection({
 
   const parserConfig: ParserConfig = selectedNode.config?.parser ?? {
     mappings: createParserMappings(selectedNode.outputs),
-    outputMode: "individual",
-    presetId: PARSER_PRESETS[0]?.id ?? "custom",
+    outputMode: 'individual',
+    presetId: PARSER_PRESETS[0]?.id ?? 'custom',
   };
   const mappings = React.useMemo(
     () => parserConfig.mappings ?? createParserMappings(selectedNode.outputs),
@@ -88,15 +89,15 @@ export function ParserNodeConfigSection({
   );
   const draftMappings =
     parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
-  const outputMode = parserConfig.outputMode ?? "individual";
+  const outputMode = parserConfig.outputMode ?? 'individual';
   const presetId =
-    parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? "custom";
+    parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? 'custom';
   const presetOptions = [
     ...PARSER_PRESETS,
     {
-      id: "custom",
-      label: "Custom",
-      description: "Use manual mappings.",
+      id: 'custom',
+      label: 'Custom',
+      description: 'Use manual mappings.',
       mappings: {},
     },
   ];
@@ -104,27 +105,27 @@ export function ParserNodeConfigSection({
     presetOptions.find((preset: { id: string }) => preset.id === presetId) ?? null;
   const sampleState =
     parserSamples[selectedNode.id] ?? {
-      entityType: "product",
-      entityId: "",
-      simulationId: "",
-      json: "",
-      mappingMode: "top",
+      entityType: 'product',
+      entityId: '',
+      simulationId: '',
+      json: '',
+      mappingMode: 'top',
       depth: 2,
-      keyStyle: "path",
+      keyStyle: 'path',
       includeContainers: false,
     };
   const simulationOptions = React.useMemo(
     () =>
       nodes
-        .filter((node: AiNode): boolean => node.type === "simulation")
+        .filter((node: AiNode): boolean => node.type === 'simulation')
         .map((node: AiNode) => {
           const simConfig = node.config?.simulation;
           const entityId =
-            simConfig?.entityId?.trim() || simConfig?.productId?.trim() || "";
-          const entityType = simConfig?.entityType?.trim() || "product";
+            simConfig?.entityId?.trim() || simConfig?.productId?.trim() || '';
+          const entityType = simConfig?.entityType?.trim() || 'product';
           return {
             id: node.id,
-            label: `${node.title} · ${entityType}:${entityId || "missing id"}`,
+            label: `${node.title} · ${entityType}:${entityId || 'missing id'}`,
             entityId,
             entityType,
           };
@@ -139,11 +140,11 @@ export function ParserNodeConfigSection({
   const sampleValue = parsedSample.value;
   const sampleMappings = React.useMemo(() => {
     if (!sampleValue) return {};
-    if (sampleState.mappingMode === "flatten") {
+    if (sampleState.mappingMode === 'flatten') {
       return buildFlattenedMappings(
         sampleValue,
         sampleState.depth ?? 2,
-        sampleState.keyStyle ?? "path",
+        sampleState.keyStyle ?? 'path',
         sampleState.includeContainers ?? false
       );
     }
@@ -167,7 +168,7 @@ export function ParserNodeConfigSection({
       sampleEntries
         .filter((entry: { type: string }) => {
           if (sampleState.includeContainers) return true;
-          return entry.type === "value" || entry.type === "array";
+          return entry.type === 'value' || entry.type === 'array';
         })
         .map((entry: { path: string }) => entry.path),
     [sampleEntries, sampleState.includeContainers]
@@ -175,14 +176,14 @@ export function ParserNodeConfigSection({
   const samplePathOptions = React.useMemo(
     () =>
       samplePaths.map((path: string) => {
-        const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
+        const value = path.startsWith('[') ? `$${path}` : `$.${path}`;
         return { label: `Sample: ${path}`, value };
       }),
     [samplePaths]
   );
   const parserRuntimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
   const parserContext =
-    parserRuntimeInputs.context && typeof parserRuntimeInputs.context === "object"
+    parserRuntimeInputs.context && typeof parserRuntimeInputs.context === 'object'
       ? (parserRuntimeInputs.context as Record<string, unknown>)
       : null;
   const parserContextEntity =
@@ -191,12 +192,12 @@ export function ParserNodeConfigSection({
     parserContext?.product ||
     null;
   const parserSourceLabel = parserRuntimeInputs.entityJson
-    ? "entityJson input"
+    ? 'entityJson input'
     : parserContextEntity
-      ? "context entity"
+      ? 'context entity'
       : parserRuntimeInputs.context
-        ? "context (no entity)"
-        : "no runtime input yet";
+        ? 'context (no entity)'
+        : 'no runtime input yet';
   const suggestedPathOptions = React.useMemo(
     () =>
       samplePathOptions.length
@@ -219,7 +220,7 @@ export function ParserNodeConfigSection({
   const entries = React.useMemo(() => Object.entries(draftMappings), [draftMappings]);
   const commitMappingsDebounced = (
     nextMappings: Record<string, string>,
-    nextMode: "individual" | "bundle" = outputMode,
+    nextMode: 'individual' | 'bundle' = outputMode,
     nextPresetId: string = presetId
   ): void => {
     setParserDraftNodeId(selectedNode.id);
@@ -233,7 +234,7 @@ export function ParserNodeConfigSection({
   };
   const commitMappingsImmediate = (
     nextMappings: Record<string, string>,
-    nextMode: "individual" | "bundle" = outputMode,
+    nextMode: 'individual' | 'bundle' = outputMode,
     nextPresetId: string = presetId
   ): void => {
     setParserDraftNodeId(selectedNode.id);
@@ -246,18 +247,18 @@ export function ParserNodeConfigSection({
   };
   const commitMappings = (
     nextMappings: Record<string, string>,
-    nextMode: "individual" | "bundle" = outputMode,
+    nextMode: 'individual' | 'bundle' = outputMode,
     nextPresetId: string = presetId
   ): void => {
     const keys = Object.keys(nextMappings)
       .map((key: string) => key.trim())
       .filter(Boolean);
     const hasImagesOutput = keys.some(
-      (key: string) => key.toLowerCase() === "images"
+      (key: string) => key.toLowerCase() === 'images'
     );
     const nextOutputs =
-      nextMode === "bundle"
-        ? ["bundle", ...(hasImagesOutput ? ["images"] : [])]
+      nextMode === 'bundle'
+        ? ['bundle', ...(hasImagesOutput ? ['images'] : [])]
         : keys;
     updateSelectedNode({
       outputs: nextOutputs.length ? nextOutputs : selectedNode.outputs,
@@ -314,9 +315,9 @@ export function ParserNodeConfigSection({
     });
     commitMappingsImmediate(nextMappings);
   };
-  const applyPreset = (mode: "replace" | "merge"): void => {
-    if (!activePreset || activePreset.id === "custom") return;
-    if (mode === "replace") {
+  const applyPreset = (mode: 'replace' | 'merge'): void => {
+    if (!activePreset || activePreset.id === 'custom') return;
+    if (mode === 'replace') {
       commitMappingsImmediate(
         activePreset.mappings as Record<string, string>,
         outputMode,
@@ -332,24 +333,24 @@ export function ParserNodeConfigSection({
     });
     commitMappingsImmediate(merged, outputMode, activePreset.id);
   };
-  const applySampleMappings = (mode: "replace" | "merge"): void => {
+  const applySampleMappings = (mode: 'replace' | 'merge'): void => {
     const keys = Object.keys(sampleMappings);
     if (keys.length === 0) return;
-    if (mode === "replace") {
-      commitMappingsImmediate(sampleMappings, outputMode, "custom");
+    if (mode === 'replace') {
+      commitMappingsImmediate(sampleMappings, outputMode, 'custom');
       return;
     }
     const merged: Record<string, string> = { ...draftMappings };
     keys.forEach((key: string) => {
       if (!(key in merged)) {
-        merged[key] = sampleMappings[key] ?? "";
+        merged[key] = sampleMappings[key] ?? '';
       }
     });
-    commitMappingsImmediate(merged, outputMode, "custom");
+    commitMappingsImmediate(merged, outputMode, 'custom');
   };
   const handleDetectImages = (): void => {
     if (!sampleValue) {
-      toast("Provide sample JSON to detect image fields.", { variant: "error" });
+      toast('Provide sample JSON to detect image fields.', { variant: 'error' });
       return;
     }
     const detected = inferImageMappingPath(
@@ -357,7 +358,7 @@ export function ParserNodeConfigSection({
       sampleState.depth ?? 2
     );
     if (!detected) {
-      toast("No image-like field detected in the sample.", { variant: "error" });
+      toast('No image-like field detected in the sample.', { variant: 'error' });
       return;
     }
     if (imageEntryIndex >= 0) {
@@ -370,60 +371,47 @@ export function ParserNodeConfigSection({
         nextMappings[key.trim()] = path;
       });
       commitMappingsImmediate(nextMappings);
-      toast(`Image field detected: ${detected}`, { variant: "success" });
+      toast(`Image field detected: ${detected}`, { variant: 'success' });
       return;
     }
     commitMappingsImmediate({ ...draftMappings, images: detected });
-    toast(`Image field detected: ${detected}`, { variant: "success" });
+    toast(`Image field detected: ${detected}`, { variant: 'success' });
   };
   if (!isParserNode) return null;
 
   const imageEntryIndex = entries.findIndex(([key]: [string, string]) =>
-    key.toLowerCase().includes("image")
+    key.toLowerCase().includes('image')
   );
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-[11px] text-gray-300">
+      <SectionPanel variant="subtle-compact" className="px-3 py-2 text-[11px] text-gray-300">
         <div className="text-gray-400">Input source</div>
         <div className="mt-1 text-sm text-gray-200">{parserSourceLabel}</div>
-      </div>
+      </SectionPanel>
       <div>
         <Label className="text-xs text-gray-400">Preset</Label>
-        <Select
+        <UnifiedSelect
           value={presetId}
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select preset" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            {presetOptions.map((preset: { id: string; label: string }) => (
-              <SelectItem key={preset.id} value={preset.id}>
-                {preset.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {activePreset && (
-          <p className="mt-2 text-[11px] text-gray-500">
-            {activePreset.description}
-          </p>
-        )}
+          options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({ value: p.id, label: p.label, description: (p as { description?: string }).description }))}
+          placeholder="Select preset"
+          className="mt-2"
+        />
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             type="button"
             className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-            onClick={() => applyPreset("replace")}
+            onClick={() => applyPreset('replace')}
           >
             Replace mappings
           </Button>
           <Button
             type="button"
             className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-            onClick={() => applyPreset("merge")}
+            onClick={() => applyPreset('merge')}
           >
             Add missing fields
           </Button>
@@ -433,7 +421,7 @@ export function ParserNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Sample JSON</Label>
         <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
-          <Select
+          <UnifiedSelect
             value={sampleState.entityType}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -444,16 +432,13 @@ export function ParserNodeConfigSection({
                 },
               }))
             }
-          >
-            <SelectTrigger className="border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Entity type" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="product">Product</SelectItem>
-              <SelectItem value="note">Note</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'product', label: 'Product' },
+              { value: 'note', label: 'Note' },
+              { value: 'custom', label: 'Custom' },
+            ]}
+            placeholder="Entity type"
+          />
           <div className="space-y-2">
             <Input
               className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
@@ -464,15 +449,15 @@ export function ParserNodeConfigSection({
                   [selectedNode.id]: {
                     ...sampleState,
                     entityId: event.target.value,
-                    simulationId: "",
+                    simulationId: '',
                   },
                 }))
               }
               placeholder="Entity ID"
             />
             {simulationOptions.length > 0 && (
-              <Select
-                value={sampleState.simulationId ?? ""}
+              <UnifiedSelect
+                value={sampleState.simulationId ?? ''}
                 onValueChange={(value: string) => {
                   const option = simulationOptions.find(
                     (item: { id: string }) => item.id === value
@@ -488,18 +473,10 @@ export function ParserNodeConfigSection({
                     },
                   }));
                 }}
-              >
-                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                  <SelectValue placeholder="Use simulation ID" />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  {simulationOptions.map((option: { id: string; label: string }) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label }))}
+                placeholder="Use simulation ID"
+                triggerClassName="text-[10px] h-8"
+              />
             )}
           </div>
           <Button
@@ -514,7 +491,7 @@ export function ParserNodeConfigSection({
               )
             }
           >
-            {parserSampleLoading ? "Loading..." : "Fetch sample"}
+            {parserSampleLoading ? 'Loading...' : 'Fetch sample'}
           </Button>
         </div>
         <Textarea
@@ -532,27 +509,24 @@ export function ParserNodeConfigSection({
           placeholder='{ "id": "123", "title": "Sample" }'
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Select
+          <UnifiedSelect
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
                 ...prev,
                 [selectedNode.id]: {
                   ...sampleState,
-                  mappingMode: value as "top" | "flatten",
+                  mappingMode: value as 'top' | 'flatten',
                 },
               }))
             }
-          >
-            <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Mapping mode" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="top">Top-level fields</SelectItem>
-              <SelectItem value="flatten">Flatten nested</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
+            options={[
+              { value: 'top', label: 'Top-level fields' },
+              { value: 'flatten', label: 'Flatten nested' },
+            ]}
+            className="w-[180px]"
+          />
+          <UnifiedSelect
             value={String(sampleState.depth)}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -563,24 +537,15 @@ export function ParserNodeConfigSection({
                 },
               }))
             }
-          >
-            <SelectTrigger className="w-[160px] border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Depth" />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              {[1, 2, 3, 4].map((depth: number) => (
-                <SelectItem key={depth} value={String(depth)}>
-                  Depth {depth}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
+            className="w-[160px]"
+          />
           <Button
             type="button"
             className={`rounded-md border px-3 text-[10px] ${
               sampleState.includeContainers
-                ? "text-emerald-200 hover:bg-emerald-500/10"
-                : "text-gray-300 hover:bg-muted/60"
+                ? 'text-emerald-200 hover:bg-emerald-500/10'
+                : 'text-gray-300 hover:bg-muted/60'
             }`}
             onClick={() =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -592,29 +557,26 @@ export function ParserNodeConfigSection({
               }))
             }
           >
-            {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
+            {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
           </Button>
-          {sampleState.mappingMode === "flatten" && (
-            <Select
+          {sampleState.mappingMode === 'flatten' && (
+            <UnifiedSelect
               value={sampleState.keyStyle}
               onValueChange={(value: string) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
                   ...prev,
                   [selectedNode.id]: {
                     ...sampleState,
-                    keyStyle: value as "path" | "leaf",
+                    keyStyle: value as 'path' | 'leaf',
                   },
                 }))
               }
-            >
-              <SelectTrigger className="w-[170px] border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Key style" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="path">Path keys</SelectItem>
-                <SelectItem value="leaf">Leaf keys</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'path', label: 'Path keys' },
+                { value: 'leaf', label: 'Leaf keys' },
+              ]}
+              className="w-[170px]"
+            />
           )}
         </div>
         {parsedSample.error ? (
@@ -628,14 +590,14 @@ export function ParserNodeConfigSection({
               <Button
                 type="button"
                 className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-                onClick={() => applySampleMappings("replace")}
+                onClick={() => applySampleMappings('replace')}
               >
                 Auto-map from sample
               </Button>
               <Button
                 type="button"
                 className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-                onClick={() => applySampleMappings("merge")}
+                onClick={() => applySampleMappings('merge')}
               >
                 Add missing from sample
               </Button>
@@ -653,25 +615,22 @@ export function ParserNodeConfigSection({
 
       <div>
         <Label className="text-xs text-gray-400">Output Mode</Label>
-        <Select
+        <UnifiedSelect
           value={outputMode}
           onValueChange={(value: string) =>
             commitMappingsImmediate(
               draftMappings,
-              value as "individual" | "bundle"
+              value as 'individual' | 'bundle'
             )
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select output mode" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="individual">Individual outputs</SelectItem>
-            <SelectItem value="bundle">Single bundle output</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: 'individual', label: 'Individual outputs' },
+            { value: 'bundle', label: 'Single bundle output' },
+          ]}
+          className="mt-2"
+        />
         <p className="mt-2 text-[11px] text-gray-500">
-          Bundle mode emits a single <span className="text-gray-300">bundle</span>{" "}
+          Bundle mode emits a single <span className="text-gray-300">bundle</span>{' '}
           port and uses mapping keys as placeholders for Prompt templates.
         </p>
       </div>
@@ -680,35 +639,35 @@ export function ParserNodeConfigSection({
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => addMapping("title", "$.title")}
+          onClick={() => addMapping('title', '$.title')}
         >
           Add title
         </Button>
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => addMapping("images", "$.images")}
+          onClick={() => addMapping('images', '$.images')}
         >
           Add images
         </Button>
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => addMapping("productId", "$.id")}
+          onClick={() => addMapping('productId', '$.id')}
         >
           Add id
         </Button>
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => addMapping("sku", "$.sku")}
+          onClick={() => addMapping('sku', '$.sku')}
         >
           Add sku
         </Button>
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => addMapping("price", "$.price")}
+          onClick={() => addMapping('price', '$.price')}
         >
           Add price
         </Button>
@@ -737,18 +696,13 @@ export function ParserNodeConfigSection({
                 }
                 placeholder="$.path.to.value"
               />
-              <Select onValueChange={(value: string) => updateMappingPath(index, value)}>
-                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                  <SelectValue placeholder="Pick a suggested path" />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                {uniqueSuggestedPathOptions.map((option: { value: string; label: string }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                onValueChange={(value: string) => updateMappingPath(index, value)}
+                options={uniqueSuggestedPathOptions}
+                placeholder="Pick a suggested path"
+                triggerClassName="text-[10px] h-8"
+                value=""
+              />
             </div>
             <Button
               type="button"
@@ -767,7 +721,7 @@ export function ParserNodeConfigSection({
           type="button"
           className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
           onClick={() =>
-            addMapping(`field_${entries.length + 1}`, "")
+            addMapping(`field_${entries.length + 1}`, '')
           }
         >
           Add mapping
@@ -784,20 +738,20 @@ export function ParserNodeConfigSection({
           type="button"
           className="w-full rounded-md border border-rose-400/50 text-xs text-rose-100 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={entries.length === 0}
-          onClick={() => commitMappingsImmediate({}, outputMode, "custom")}
+          onClick={() => commitMappingsImmediate({}, outputMode, 'custom')}
         >
           Clear mappings
         </Button>
       </div>
       {imageEntryIndex >= 0 && (
-        <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
+        <SectionPanel variant="subtle-compact" className="p-3 text-[11px] text-gray-400">
           <div className="text-gray-300">Image helpers</div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               type="button"
               className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
-                updateMappingPath(imageEntryIndex, "$.images")
+                updateMappingPath(imageEntryIndex, '$.images')
               }
             >
               Use $.images
@@ -806,7 +760,7 @@ export function ParserNodeConfigSection({
               type="button"
               className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
-                updateMappingPath(imageEntryIndex, "$.imageLinks")
+                updateMappingPath(imageEntryIndex, '$.imageLinks')
               }
             >
               Use $.imageLinks
@@ -815,19 +769,19 @@ export function ParserNodeConfigSection({
               type="button"
               className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
-                updateMappingPath(imageEntryIndex, "$.media")
+                updateMappingPath(imageEntryIndex, '$.media')
               }
             >
               Use $.media
             </Button>
           </div>
-        </div>
+        </SectionPanel>
       )}
       <p className="text-[11px] text-gray-500">
-        Use JSON paths like{" "}
-        <span className="text-gray-300">{`$.images`}</span>,{" "}
-        <span className="text-gray-300">{`$.imageLinks`}</span>, or{" "}
-        <span className="text-gray-300">{`$.media`}</span> for image arrays.
+        Use JSON paths like{' '}
+        <span className="text-gray-300">{'$.images'}</span>,{' '}
+        <span className="text-gray-300">{'$.imageLinks'}</span>, or{' '}
+        <span className="text-gray-300">{'$.media'}</span> for image arrays.
       </p>
     </div>
   );

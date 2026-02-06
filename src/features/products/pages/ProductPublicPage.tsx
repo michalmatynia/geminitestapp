@@ -1,10 +1,10 @@
-import { MissingImagePlaceholder } from "@/shared/ui";
-import { productService } from "@/features/products/services/productService";
-import Image from "next/image";
+import Image from 'next/image';
+import { notFound } from 'next/navigation';
 
-import { notFound } from "next/navigation";
+import { productService } from '@/features/products/services/productService';
+import { MissingImagePlaceholder } from '@/shared/ui';
 
-import type { JSX } from "react";
+import type { JSX } from 'react';
 
 export async function ProductPublicPage({
   params,
@@ -19,7 +19,7 @@ export async function ProductPublicPage({
   }
 
   const title =
-    product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
+    product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
 
   const imageUrl =
     product.images && product.images.length > 0
@@ -27,18 +27,18 @@ export async function ProductPublicPage({
       : null;
 
   const priceLabel =
-    typeof product.price === "number"
-      ? new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(product.price)
-      : "—";
+    typeof product.price === 'number'
+      ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(product.price)
+      : '—';
 
   const description =
     product.description_en ??
     product.description_pl ??
     product.description_de ??
-    "";
+    '';
 
   return (
     <div className="container mx-auto py-12">

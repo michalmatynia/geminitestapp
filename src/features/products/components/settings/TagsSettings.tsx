@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useToast, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
-import { useState, useCallback } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
 
-import type { Catalog, ProductTag } from "@/features/products/types";
-import { useSaveTagMutation, useDeleteTagMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import type { Catalog, ProductTag } from '@/features/products/types';
+import { useToast, Button, UnifiedSelect, Input, Label, SharedModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -34,9 +34,9 @@ export function TagsSettings({
   const [showModal, setShowModal] = useState(false);
   const [editingTag, setEditingTag] = useState<ProductTag | null>(null);
   const [formData, setFormData] = useState<TagFormData>({
-    name: "",
-    color: "#38bdf8",
-    catalogId: "",
+    name: '',
+    color: '#38bdf8',
+    catalogId: '',
   });
   const [tagToDelete, setTagToDelete] = useState<ProductTag | null>(null);
 
@@ -45,13 +45,13 @@ export function TagsSettings({
 
   const openCreateModal = (): void => {
     if (!selectedCatalogId) {
-      toast("Please select a catalog first.", { variant: "error" });
+      toast('Please select a catalog first.', { variant: 'error' });
       return;
     }
     setEditingTag(null);
     setFormData({
-      name: "",
-      color: "#38bdf8",
+      name: '',
+      color: '#38bdf8',
       catalogId: selectedCatalogId,
     });
     setShowModal(true);
@@ -61,7 +61,7 @@ export function TagsSettings({
     setEditingTag(tag);
     setFormData({
       name: tag.name,
-      color: tag.color ?? "#38bdf8",
+      color: tag.color ?? '#38bdf8',
       catalogId: tag.catalogId,
     });
     setShowModal(true);
@@ -69,11 +69,11 @@ export function TagsSettings({
 
   const handleSave = async (): Promise<void> => {
     if (!formData.name.trim()) {
-      toast("Tag name is required.", { variant: "error" });
+      toast('Tag name is required.', { variant: 'error' });
       return;
     }
     if (!formData.catalogId) {
-      toast("Catalog is required.", { variant: "error" });
+      toast('Catalog is required.', { variant: 'error' });
       return;
     }
 
@@ -89,15 +89,15 @@ export function TagsSettings({
         data: payload,
       });
 
-      toast(editingTag ? "Tag updated." : "Tag created.", {
-        variant: "success",
+      toast(editingTag ? 'Tag updated.' : 'Tag created.', {
+        variant: 'success',
       });
       setShowModal(false);
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to save tag.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to save tag.';
+      toast(message, { variant: 'error' });
     }
   };
 
@@ -109,12 +109,12 @@ export function TagsSettings({
     if (!tagToDelete) return;
     try {
       await deleteTagMutation.mutateAsync({ id: tagToDelete.id, catalogId: selectedCatalogId });
-      toast("Tag deleted.", { variant: "success" });
+      toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete tag.";
-      toast(message, { variant: "error" });
+        error instanceof Error ? error.message : 'Failed to delete tag.';
+      toast(message, { variant: 'error' });
     } finally {
       setTagToDelete(null);
     }
@@ -124,30 +124,23 @@ export function TagsSettings({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Tags are managed per catalog.
         </p>
         <div className="w-full max-w-xs">
-          <Select
-            value={selectedCatalogId || ""}
+          <UnifiedSelect
+            value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
-          >
-            <SelectTrigger suppressHydrationWarning>
-              <SelectValue placeholder="Select a catalog..." />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogs.map((catalog: Catalog) => (
-                <SelectItem key={catalog.id} value={catalog.id}>
-                  {catalog.name}
-                  {catalog.isDefault ? " (Default)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={catalogs.map((catalog: Catalog) => ({
+              value: catalog.id,
+              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+            }))}
+            placeholder="Select a catalog..."
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {selectedCatalogId && (
         <>
@@ -161,7 +154,7 @@ export function TagsSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-border bg-card/60 p-4">
+          <SectionPanel variant="subtle" className="p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Tags for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -184,18 +177,17 @@ export function TagsSettings({
             ) : (
               <div className="space-y-2">
                 {tags.map((tag: ProductTag) => (
-                  <div
+                  <SectionPanel
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
+                    variant="subtle-compact"
+                    className="flex items-center justify-between gap-3 bg-gray-900"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className="size-3 rounded-full border border"
-                        style={{ backgroundColor: tag.color || "#38bdf8" }}
+                      <UiTag
+                        label={tag.name}
+                        color={tag.color || '#38bdf8'}
+                        dot
                       />
-                      <span className="text-sm text-gray-100 truncate">
-                        {tag.name}
-                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -214,11 +206,11 @@ export function TagsSettings({
                         <Trash2 className="size-3" />
                       </Button>
                     </div>
-                  </div>
+                  </SectionPanel>
                 ))}
               </div>
             )}
-          </div>
+          </SectionPanel>
         </>
       )}
 
@@ -243,7 +235,7 @@ export function TagsSettings({
         <SharedModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
-          title={editingTag ? "Edit Tag" : "Create Tag"}
+          title={editingTag ? 'Edit Tag' : 'Create Tag'}
           size="md"
         >
           <div className="space-y-4">
@@ -261,23 +253,22 @@ export function TagsSettings({
 
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
-              <select
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                value={formData.catalogId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  setFormData((prev: TagFormData) => ({
-                    ...prev,
-                    catalogId: e.target.value,
-                  }))
-                }
-              >
-                {catalogs.map((catalog: Catalog) => (
-                  <option key={catalog.id} value={catalog.id}>
-                    {catalog.name}
-                    {catalog.isDefault ? " (Default)" : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <UnifiedSelect
+                  value={formData.catalogId}
+                  onValueChange={(value: string): void =>
+                    setFormData((prev: TagFormData) => ({
+                      ...prev,
+                      catalogId: value,
+                    }))
+                  }
+                  options={catalogs.map((catalog: Catalog) => ({
+                    value: catalog.id,
+                    label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+                  }))}
+                  placeholder="Select catalog"
+                />
+              </div>
             </div>
 
             <div>
@@ -317,7 +308,7 @@ export function TagsSettings({
                 onClick={(): void => { void handleSave(); }}
                 disabled={saveTagMutation.isPending}
               >
-                {saveTagMutation.isPending ? "Saving..." : "Save"}
+                {saveTagMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </div>

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 
 
 
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, CompareConfig, NodeConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, CompareConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 type CompareNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -16,13 +16,13 @@ export function CompareNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: CompareNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "compare") return null;
+  if (selectedNode.type !== 'compare') return null;
 
   const compareConfig = selectedNode.config?.compare ?? {
-    operator: "eq",
-    compareTo: "",
+    operator: 'eq',
+    compareTo: '',
     caseSensitive: false,
-    message: "Comparison failed",
+    message: 'Comparison failed',
   };
 
   return (
@@ -35,7 +35,7 @@ export function CompareNodeConfigSection({
             updateSelectedNodeConfig({
               compare: {
                 ...compareConfig,
-                operator: value as CompareConfig["operator"],
+                operator: value as CompareConfig['operator'],
               },
             })
           }
@@ -79,8 +79,8 @@ export function CompareNodeConfigSection({
           type="button"
           className={`rounded border px-3 py-1 text-xs ${
             compareConfig.caseSensitive
-              ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-muted/50"
+              ? 'text-emerald-200 hover:bg-emerald-500/10'
+              : 'text-gray-300 hover:bg-muted/50'
           }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
@@ -91,14 +91,14 @@ export function CompareNodeConfigSection({
             })
           }
         >
-          {compareConfig.caseSensitive ? "Enabled" : "Disabled"}
+          {compareConfig.caseSensitive ? 'Enabled' : 'Disabled'}
         </Button>
       </div>
       <div>
         <Label className="text-xs text-gray-400">Error Message</Label>
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-          value={compareConfig.message ?? "Comparison failed"}
+          value={compareConfig.message ?? 'Comparison failed'}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               compare: {

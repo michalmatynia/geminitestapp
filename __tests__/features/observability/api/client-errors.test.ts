@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { POST } from '@/app/api/client-errors/route';
 import { ErrorSystem } from '@/features/observability/server';
 

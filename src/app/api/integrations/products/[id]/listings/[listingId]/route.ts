@@ -10,7 +10,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const updateListingSchema = z.object({
-  inventoryId: z.string().trim().min(1).nullable(),
+  inventoryId: z.string().trim().min(1).nullable()
 });
 
 /**
@@ -45,7 +45,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.[id].listings.[listingId].DELETE",
-      fallbackMessage: "Failed to delete listing",
+      fallbackMessage: "Failed to delete listing"
     });
   }
 }
@@ -68,7 +68,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
 
     const parsed = await parseJsonBody(req, updateListingSchema, {
-      logPrefix: "integrations.products.listings.PATCH",
+      logPrefix: "integrations.products.listings.PATCH"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -80,10 +80,16 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.[id].listings.[listingId].PATCH",
-      fallbackMessage: "Failed to update listing",
+      fallbackMessage: "Failed to update listing"
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(DELETE_handler, { source: "integrations.products.[id].listings.[listingId].DELETE" });
-export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(PATCH_handler, { source: "integrations.products.[id].listings.[listingId].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(
+  DELETE_handler,
+  { source: "integrations.products.[id].listings.[listingId].DELETE", requireCsrf: false }
+);
+export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(
+  PATCH_handler,
+  { source: "integrations.products.[id].listings.[listingId].PATCH", requireCsrf: false }
+);

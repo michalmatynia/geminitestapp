@@ -1,8 +1,8 @@
-/* eslint-disable */
-"use client";
+ 
+'use client';
 
-import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 interface RealtimeConfig {
   queryKey?: readonly unknown[];
@@ -53,7 +53,7 @@ export function useRealtimeQuery<TData>(
         console.log('WebSocket failed, using polling fallback');
       };
 
-    } catch (error) {
+    } catch (_error) {
       // WebSocket not available, use polling
       console.log('WebSocket not available, using polling');
     }

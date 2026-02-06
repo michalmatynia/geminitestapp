@@ -1,12 +1,15 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { randomUUID } from 'crypto';
+
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from "@/shared/types/ai-paths";
+} from '@/shared/types/ai-paths';
+import type { AiNode } from '@/shared/types/ai-paths';
+
 import {
   AiPathRunEventCreateInput,
   AiPathRunListOptions,
@@ -14,12 +17,11 @@ import {
   AiPathRunRepository,
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
-} from "../../types/path-run-repository";
-import type { AiNode } from "@/shared/types/ai-paths";
+} from '../../types/path-run-repository';
 
-const RUNS_COLLECTION = "ai_path_runs";
-const NODES_COLLECTION = "ai_path_run_nodes";
-const EVENTS_COLLECTION = "ai_path_run_events";
+const RUNS_COLLECTION = 'ai_path_runs';
+const NODES_COLLECTION = 'ai_path_run_nodes';
+const EVENTS_COLLECTION = 'ai_path_run_events';
 
 type MongoIndexSpec = {
   collection: string;
@@ -119,12 +121,12 @@ const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   pathId: doc.pathId ?? null,
   pathName: doc.pathName ?? null,
   prompt: null,
-  status: doc.status as AiPathRunRecord["status"],
+  status: doc.status as AiPathRunRecord['status'],
   triggerEvent: doc.triggerEvent ?? null,
   triggerNodeId: doc.triggerNodeId ?? null,
   triggerContext: doc.triggerContext ?? null,
-  graph: (doc.graph as AiPathRunRecord["graph"]) ?? null,
-  runtimeState: (doc.runtimeState as AiPathRunRecord["runtimeState"]) ?? null,
+  graph: (doc.graph as AiPathRunRecord['graph']) ?? null,
+  runtimeState: (doc.runtimeState as AiPathRunRecord['runtimeState']) ?? null,
   meta: doc.meta ?? null,
   entityId: doc.entityId ?? null,
   entityType: doc.entityType ?? null,
@@ -145,10 +147,10 @@ const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
   nodeId: doc.nodeId,
   nodeType: doc.nodeType,
   nodeTitle: doc.nodeTitle ?? null,
-  status: doc.status as AiPathRunNodeRecord["status"],
+  status: doc.status as AiPathRunNodeRecord['status'],
   attempt: doc.attempt ?? 0,
-  inputs: (doc.inputs as AiPathRunNodeRecord["inputs"]) ?? null,
-  outputs: (doc.outputs as AiPathRunNodeRecord["outputs"]) ?? null,
+  inputs: (doc.inputs as AiPathRunNodeRecord['inputs']) ?? null,
+  outputs: (doc.outputs as AiPathRunNodeRecord['outputs']) ?? null,
   errorMessage: doc.errorMessage ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt ?? null,
@@ -159,13 +161,13 @@ const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
 const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   id: doc._id,
   runId: doc.runId,
-  level: doc.level as AiPathRunEventRecord["level"],
+  level: doc.level as AiPathRunEventRecord['level'],
   message: doc.message,
   metadata: doc.metadata ?? null,
   createdAt: doc.createdAt,
 });
 
-const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {
@@ -179,7 +181,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       userId: input.userId ?? null,
       pathId: input.pathId,
       pathName: input.pathName ?? null,
-      status: "queued",
+      status: 'queued',
       triggerEvent: input.triggerEvent ?? null,
       triggerNodeId: input.triggerNodeId ?? null,
       triggerContext: input.triggerContext ?? null,
@@ -207,16 +209,16 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const updateData = { ...data, updatedAt: now } as Record<string, unknown>;
-    if (updateData.nextRetryAt && typeof updateData.nextRetryAt === "string") {
+    if (updateData.nextRetryAt && typeof updateData.nextRetryAt === 'string') {
       updateData.nextRetryAt = new Date(updateData.nextRetryAt);
     }
-    if (updateData.deadLetteredAt && typeof updateData.deadLetteredAt === "string") {
+    if (updateData.deadLetteredAt && typeof updateData.deadLetteredAt === 'string') {
       updateData.deadLetteredAt = new Date(updateData.deadLetteredAt);
     }
-    if (updateData.startedAt && typeof updateData.startedAt === "string") {
+    if (updateData.startedAt && typeof updateData.startedAt === 'string') {
       updateData.startedAt = new Date(updateData.startedAt);
     }
-    if (updateData.finishedAt && typeof updateData.finishedAt === "string") {
+    if (updateData.finishedAt && typeof updateData.finishedAt === 'string') {
       updateData.finishedAt = new Date(updateData.finishedAt);
     }
     const result = await db
@@ -224,10 +226,10 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: runId }, { id: runId }] },
         { $set: updateData },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
     if (!result) {
-      throw new Error("Run not found");
+      throw new Error('Run not found');
     }
     return toRunRecord(result);
   },
@@ -244,52 +246,84 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
-    const filter: Record<string, unknown> = {};
+    const andFilters: Record<string, unknown>[] = [];
     if (options.userId) {
-      filter.userId = options.userId;
+      andFilters.push({ userId: options.userId });
     }
     if (options.pathId) {
-      filter.pathId = options.pathId;
+      andFilters.push({ pathId: options.pathId });
     }
     const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
     if (statuses.length > 0) {
-      filter.status = { $in: statuses };
+      andFilters.push({ status: { $in: statuses } });
     } else if (options.status) {
-      filter.status = options.status;
+      andFilters.push({ status: options.status });
+    }
+    const source = options.source?.trim();
+    const sourceMode = options.sourceMode ?? 'include';
+    if (source) {
+      const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+      const aiPathsTabs = ['product', 'note'];
+      if (sourceMode === 'exclude') {
+        if (source === 'ai_paths_ui') {
+          andFilters.push({ 'meta.source': { $nin: aiPathsSources } });
+          andFilters.push({ 'meta.source.tab': { $nin: aiPathsTabs } });
+          andFilters.push({ 'meta.source': { $exists: true } });
+        } else {
+          andFilters.push({ 'meta.source': { $ne: source } });
+          andFilters.push({ 'meta.source': { $exists: true } });
+        }
+      } else if (source === 'ai_paths_ui') {
+        andFilters.push({
+          $or: [
+            { 'meta.source': { $in: aiPathsSources } },
+            { 'meta.source.tab': { $in: aiPathsTabs } },
+            { meta: { $exists: false } },
+            { meta: null },
+          ],
+        });
+      } else {
+        andFilters.push({ 'meta.source': source });
+      }
     }
     const query = options.query?.trim();
     if (query) {
-      const regex = new RegExp(escapeRegex(query), "i");
-      filter.$or = [
-        { id: { $regex: regex } },
-        { _id: { $regex: regex } },
-        { pathId: { $regex: regex } },
-        { pathName: { $regex: regex } },
-        { entityId: { $regex: regex } },
-        { errorMessage: { $regex: regex } },
-      ];
+      const regex = new RegExp(escapeRegex(query), 'i');
+      andFilters.push({
+        $or: [
+          { id: { $regex: regex } },
+          { _id: { $regex: regex } },
+          { pathId: { $regex: regex } },
+          { pathName: { $regex: regex } },
+          { entityId: { $regex: regex } },
+          { errorMessage: { $regex: regex } },
+        ],
+      });
     }
     const parseDate = (value: Date | string | null | undefined): Date | null => {
       if (!value) return null;
-      const date = typeof value === "string" ? new Date(value) : value;
+      const date = typeof value === 'string' ? new Date(value) : value;
       return Number.isNaN(date.getTime()) ? null : date;
     };
     const createdAfter = parseDate(options.createdAfter);
     const createdBefore = parseDate(options.createdBefore);
     if (createdAfter || createdBefore) {
-      filter.createdAt = {
-        ...(createdAfter ? { $gte: createdAfter } : {}),
-        ...(createdBefore ? { $lte: createdBefore } : {}),
-      };
+      andFilters.push({
+        createdAt: {
+          ...(createdAfter ? { $gte: createdAfter } : {}),
+          ...(createdBefore ? { $lte: createdBefore } : {}),
+        },
+      });
     }
+    const filter = andFilters.length > 0 ? { $and: andFilters } : {};
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter)
       .sort({ createdAt: -1 });
-    if (typeof options.offset === "number") {
+    if (typeof options.offset === 'number') {
       cursor.skip(options.offset);
     }
-    if (typeof options.limit === "number") {
+    if (typeof options.limit === 'number') {
       cursor.limit(options.limit);
     }
     const [docs, total] = await Promise.all([
@@ -306,12 +340,32 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const result = await db
       .collection<RunDocument>(RUNS_COLLECTION)
       .findOneAndUpdate(
-        { status: "queued", $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-        { $set: { status: "running", startedAt: now, updatedAt: now } },
-        { sort: { createdAt: 1 }, returnDocument: "after" }
+        { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+        { $set: { status: 'running', startedAt: now, updatedAt: now } },
+        { sort: { createdAt: 1 }, returnDocument: 'after' }
       );
     if (!result) return null;
     return toRunRecord(result);
+  },
+
+  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const now = new Date();
+    const filter = {
+      status: 'queued',
+      $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }],
+    };
+    const [queuedCount, oldest] = await Promise.all([
+      db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
+      db
+        .collection<RunDocument>(RUNS_COLLECTION)
+        .find(filter, { projection: { createdAt: 1 } })
+        .sort({ createdAt: 1 })
+        .limit(1)
+        .next(),
+    ]);
+    return { queuedCount, oldestQueuedAt: oldest?.createdAt ?? null };
   },
 
   async createRunNodes(runId: string, nodes: AiNode[]) {
@@ -325,7 +379,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       nodeId: node.id,
       nodeType: node.type,
       nodeTitle: node.title ?? null,
-      status: "pending",
+      status: 'pending',
       attempt: 0,
       createdAt: now,
       updatedAt: now,
@@ -352,10 +406,10 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       .findOneAndUpdate(
         { runId, nodeId },
         { $set: updateData, $setOnInsert: { _id: randomUUID(), runId, nodeId, createdAt: now } },
-        { returnDocument: "after", upsert: true }
+        { returnDocument: 'after', upsert: true }
       );
     if (!result) {
-      throw new Error("Run node not found");
+      throw new Error('Run node not found');
     }
     return toNodeRecord(result);
   },
@@ -407,7 +461,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       .collection<EventDocument>(EVENTS_COLLECTION)
       .find(filter)
       .sort({ createdAt: 1 });
-    if (typeof options.limit === "number") {
+    if (typeof options.limit === 'number') {
       cursor.limit(options.limit);
     }
     const docs = await cursor.toArray();
@@ -421,12 +475,12 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const result = await db
       .collection<RunDocument>(RUNS_COLLECTION)
       .updateMany(
-        { status: "running", startedAt: { $lt: cutoff } },
+        { status: 'running', startedAt: { $lt: cutoff } },
         {
           $set: {
-            status: "failed",
+            status: 'failed',
             finishedAt: new Date(),
-            errorMessage: "Run marked failed due to stale running state.",
+            errorMessage: 'Run marked failed due to stale running state.',
           },
         }
       );

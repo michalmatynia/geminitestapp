@@ -1,4 +1,4 @@
-import type { CatalogRecord } from "@/features/products/types";
+import type { CatalogRecord } from '@/features/products/types';
 
 export type { CatalogRecord };
 

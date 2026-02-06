@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import React from "react";
-import { Button, Label, SectionHeader, SectionPanel, Textarea, useToast } from "@/shared/ui";
-import type { ChatMessage } from "@/shared/types/chatbot";
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
-import { useTeachingAgents, useTeachingCollections } from "../hooks/useAgentTeaching";
+import Link from 'next/link';
+import React from 'react';
+
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import type { ChatMessage } from '@/shared/types/chatbot';
+import { Button, Label, SectionHeader, SectionPanel, Textarea, useToast } from '@/shared/ui';
+
+import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeaching';
 
 type ChatResponse = { message: string; sources: AgentTeachingChatSource[] };
 
@@ -14,8 +16,8 @@ export function AgentTeachingChatPage(): React.JSX.Element {
   const { data: agents = [], isLoading: loadingAgents } = useTeachingAgents();
   const { data: collections = [] } = useTeachingCollections();
 
-  const [selectedAgentId, setSelectedAgentId] = React.useState<string>("");
-  const [input, setInput] = React.useState("");
+  const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
+  const [input, setInput] = React.useState('');
   const [sending, setSending] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [lastSources, setLastSources] = React.useState<AgentTeachingChatSource[]>([]);
@@ -32,34 +34,34 @@ export function AgentTeachingChatPage(): React.JSX.Element {
 
   const handleSend = async (): Promise<void> => {
     if (!selectedAgentId) {
-      toast("Select a learner agent first.", { variant: "error" });
+      toast('Select a learner agent first.', { variant: 'error' });
       return;
     }
     const content = input.trim();
     if (!content) return;
 
     setSending(true);
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", content }];
+    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }];
     setMessages(nextMessages);
-    setInput("");
+    setInput('');
     setLastSources([]);
 
     try {
-      const res = await fetch("/api/agentcreator/teaching/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/agentcreator/teaching/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agentId: selectedAgentId, messages: nextMessages }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Chat failed.");
+        throw new Error(data?.error || 'Chat failed.');
       }
       const data = (await res.json()) as ChatResponse;
-      setMessages((prev: ChatMessage[]) => [...prev, { role: "assistant", content: data.message }]);
+      setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Chat failed.", { variant: "error" });
-      setMessages((prev: ChatMessage[]) => [...prev, { role: "assistant", content: "Error: failed to generate response." }]);
+      toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
+      setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: 'Error: failed to generate response.' }]);
     } finally {
       setSending(false);
     }
@@ -94,8 +96,8 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                   type="button"
                   className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
                     agent.id === selectedAgentId
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100"
-                      : "border-border bg-card/40 text-gray-200 hover:bg-card/60"
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+                      : 'border-border bg-card/40 text-gray-200 hover:bg-card/60'
                   }`}
                   onClick={(): void => {
                     setSelectedAgentId(agent.id);
@@ -108,7 +110,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                     LLM: {agent.llmModel} • Embed: {agent.embeddingModel}
                   </div>
                   <div className="mt-1 text-[11px] text-gray-500">
-                    Collections: {(agent.collectionIds ?? []).map(resolveCollectionName).join(", ") || "—"}
+                    Collections: {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
                   </div>
                 </button>
               ))}
@@ -121,7 +123,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             <div>
               <div className="text-sm font-semibold text-white">Chat</div>
               <div className="text-[11px] text-gray-500">
-                {selectedAgent ? `Agent: ${selectedAgent.name}` : "Select an agent to start"}
+                {selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
               </div>
             </div>
             <Button
@@ -165,7 +167,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             />
             <div className="flex justify-end gap-2">
               <Button type="button" onClick={() => void handleSend()} disabled={sending || !selectedAgentId || !input.trim()}>
-                {sending ? "Thinking…" : "Send"}
+                {sending ? 'Thinking…' : 'Send'}
               </Button>
             </div>
           </div>

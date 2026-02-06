@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Button, Input, Textarea, Label, Alert } from "@/shared/ui";
-import React from "react";
+import React from 'react';
+
+import { Button, Input, Textarea, Label, Alert, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -34,7 +35,7 @@ interface ApiConsoleProps {
   isConnected?: boolean;
   connectionWarning?: string;
   baseUrl?: string;
-  methodType?: "select" | "input";
+  methodType?: 'select' | 'input';
 }
 
 export function ApiConsole({
@@ -55,7 +56,7 @@ export function ApiConsole({
   isConnected = true,
   connectionWarning,
   baseUrl,
-  methodType = "select",
+  methodType = 'select',
 }: ApiConsoleProps): React.JSX.Element {
   return (
     <div className="rounded-lg border border-border bg-card/60 p-4">
@@ -63,78 +64,84 @@ export function ApiConsole({
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         <p className="text-xs text-gray-400">{description}</p>
       </div>
-              <div className="mb-3 flex flex-wrap gap-2">
-                {presets.map((preset: ApiPreset) => (
-                  <Button
-                    key={preset.label}
-                    type="button"
-                    className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
-                    onClick={() => {
-                      setMethod(preset.method);
-                      if (setPath && preset.path) setPath(preset.path);
-                      const val = preset.body || (typeof preset.params === 'object' ? JSON.stringify(preset.params, null, 2) : preset.params);
-                      if (val) setBodyOrParams(val);
-                      else setBodyOrParams("{}");
-                    }}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
-              {(!isConnected && connectionWarning) && (
-                <Alert variant="warning" className="mb-3 text-xs">
-                  {connectionWarning}
-                </Alert>
-              )}
-              <div className={setPath ? "grid gap-3 md:grid-cols-[120px_1fr]" : ""}>
-                <div>
-                  <Label className="text-xs text-gray-400">Method</Label>
-                  {methodType === "select" ? (
-                    <select
-                      className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
-                      value={method}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMethod(e.target.value)}
-                    >
-                      {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m: string) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Input
-                      className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
-                      value={method}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMethod(e.target.value)}
-                    />
-                  )}
-                </div>
-                {setPath && (
-                  <div>
-                    <Label className="text-xs text-gray-400">Endpoint path</Label>
-                    <Input
-                      className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
-                      value={path || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPath(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="mt-3">
-                <Label className="text-xs text-gray-400">{bodyOrParamsLabel}</Label>
-                <Textarea
-                  className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
-                  value={bodyOrParams}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
-                />
-              </div>      <div className="mt-3 flex items-center gap-3">
+      <div className="mb-3 flex flex-wrap gap-2">
+        {presets.map((preset: ApiPreset) => (
+          <Button
+            key={preset.label}
+            type="button"
+            className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
+            onClick={() => {
+              setMethod(preset.method);
+              if (setPath && preset.path) setPath(preset.path);
+              const val = preset.body || (typeof preset.params === 'object' ? JSON.stringify(preset.params, null, 2) : preset.params);
+              if (val) setBodyOrParams(val);
+              else setBodyOrParams('{}');
+            }}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+      {(!isConnected && connectionWarning) && (
+        <Alert variant="warning" className="mb-3 text-xs">
+          {connectionWarning}
+        </Alert>
+      )}
+      <div className={setPath ? 'grid gap-3 md:grid-cols-[120px_1fr]' : ''}>
+        <div>
+          <Label className="text-xs text-gray-400">Method</Label>
+          {methodType === 'select' ? (
+            <div className="mt-2">
+              <Select
+                value={method}
+                onValueChange={setMethod}
+              >
+                <SelectTrigger className="w-full border border-border bg-card px-3 py-2 text-sm text-white">
+                  <SelectValue placeholder="Method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m: string) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <Input
+              className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
+              value={method}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMethod(e.target.value)}
+            />
+          )}
+        </div>
+        {setPath && (
+          <div>
+            <Label className="text-xs text-gray-400">Endpoint path</Label>
+            <Input
+              className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
+              value={path || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPath(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+      <div className="mt-3">
+        <Label className="text-xs text-gray-400">{bodyOrParamsLabel}</Label>
+        <Textarea
+          className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
+          value={bodyOrParams}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
+        />
+      </div>      <div className="mt-3 flex items-center gap-3">
         <Button
           className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
           type="button"
           disabled={loading || !isConnected}
           onClick={onRequest}
         >
-          {loading ? "Sending..." : "Send request"}
+          {loading ? 'Sending...' : 'Send request'}
         </Button>
         {baseUrl && (
           <span className="text-xs text-gray-500">
@@ -151,7 +158,7 @@ export function ApiConsole({
         <div className="mt-3 rounded-md border border-border bg-card p-3">
           {(response.status || response.statusText) && (
             <div className="text-xs text-gray-400 mb-2">
-              Status:{" "}
+              Status:{' '}
               <span className="text-gray-200">
                 {response.status} {response.statusText}
               </span>

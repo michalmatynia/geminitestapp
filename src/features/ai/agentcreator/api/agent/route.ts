@@ -1,31 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
-import { startAgentQueue } from "@/features/jobs/server";
-import { logAgentAudit } from "@/features/ai/agent-runtime/server";
-import { promises as fs } from "fs";
-import path from "path";
-import type { AgentRunStatusType } from "@/features/ai/agent-runtime/types/agent";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { promises as fs } from 'fs';
+import path from 'path';
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { logAgentAudit } from '@/features/ai/agent-runtime/server';
+import type { AgentRunStatusType } from '@/features/ai/agent-runtime/types/agent';
+import { startAgentQueue } from '@/features/jobs/server';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     startAgentQueue();
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.GET" }
+        { request: req, source: 'chatbot.agent.GET' }
       );
     }
     const runs = await prisma.chatbotAgentRun.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       take: 20,
       select: {
         id: true,
@@ -50,7 +52,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       },
     });
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][GET] Runs loaded", {
+      console.info('[chatbot][agent][GET] Runs loaded', {
         count: runs.length,
         durationMs: Date.now() - requestStart,
       });
@@ -59,8 +61,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.GET",
-      fallbackMessage: "Failed to fetch agent runs.",
+      source: 'chatbot.agent.GET',
+      fallbackMessage: 'Failed to fetch agent runs.',
     });
   }
 }
@@ -68,12 +70,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.POST" }
+        { request: req, source: 'chatbot.agent.POST' }
       );
     }
     let body: {
@@ -110,16 +112,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     try {
       body = (await req.json()) as typeof body;
     } catch (_error) {
-      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+      return createErrorResponse(badRequestError('Invalid JSON payload'), {
         request: req,
-        source: "chatbot.agent.POST",
+        source: 'chatbot.agent.POST',
       });
     }
 
     if (!body.prompt?.trim()) {
-      return createErrorResponse(badRequestError("Prompt is required."), {
+      return createErrorResponse(badRequestError('Prompt is required.'), {
         request: req,
-        source: "chatbot.agent.POST",
+        source: 'chatbot.agent.POST',
       });
     }
     const normalizePlanSettings = (input?: {
@@ -140,9 +142,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         fallback: number
       ) => {
         const numeric =
-          typeof value === "number"
+          typeof value === 'number'
             ? value
-            : typeof value === "string"
+            : typeof value === 'string'
               ? Number(value)
               : NaN;
         if (!Number.isFinite(numeric)) return fallback;
@@ -163,7 +165,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const planSettings = normalizePlanSettings(body.planSettings);
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][POST] Request", {
+      console.info('[chatbot][agent][POST] Request', {
         promptLength: body.prompt.trim().length,
         model: body.model?.trim() || null,
         tools: body.tools ?? [],
@@ -213,63 +215,63 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         logLines: [`[${new Date().toISOString()}] Run queued.`],
         ...(shouldAttachPlanState
           ? {
-              planState: {
-                ...(planSettings ? { settings: planSettings } : {}),
-                preferences: {
-                  ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-                  requireHumanApproval: Boolean(body.requireHumanApproval),
-                  ...(body.memoryValidationModel?.trim()
-                    ? {
-                        memoryValidationModel:
+            planState: {
+              ...(planSettings ? { settings: planSettings } : {}),
+              preferences: {
+                ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+                requireHumanApproval: Boolean(body.requireHumanApproval),
+                ...(body.memoryValidationModel?.trim()
+                  ? {
+                    memoryValidationModel:
                           body.memoryValidationModel.trim(),
-                      }
-                    : {}),
-                  ...(body.plannerModel?.trim()
-                    ? { plannerModel: body.plannerModel.trim() }
-                    : {}),
-                  ...(body.selfCheckModel?.trim()
-                    ? { selfCheckModel: body.selfCheckModel.trim() }
-                    : {}),
-                  ...(body.extractionValidationModel?.trim()
-                    ? {
-                        extractionValidationModel:
+                  }
+                  : {}),
+                ...(body.plannerModel?.trim()
+                  ? { plannerModel: body.plannerModel.trim() }
+                  : {}),
+                ...(body.selfCheckModel?.trim()
+                  ? { selfCheckModel: body.selfCheckModel.trim() }
+                  : {}),
+                ...(body.extractionValidationModel?.trim()
+                  ? {
+                    extractionValidationModel:
                           body.extractionValidationModel.trim(),
-                      }
-                    : {}),
-                  ...(body.toolRouterModel?.trim()
-                    ? { toolRouterModel: body.toolRouterModel.trim() }
-                    : {}),
-                  ...(body.loopGuardModel?.trim()
-                    ? { loopGuardModel: body.loopGuardModel.trim() }
-                    : {}),
-                  ...(body.approvalGateModel?.trim()
-                    ? { approvalGateModel: body.approvalGateModel.trim() }
-                    : {}),
-                  ...(body.memorySummarizationModel?.trim()
-                    ? {
-                        memorySummarizationModel:
+                  }
+                  : {}),
+                ...(body.toolRouterModel?.trim()
+                  ? { toolRouterModel: body.toolRouterModel.trim() }
+                  : {}),
+                ...(body.loopGuardModel?.trim()
+                  ? { loopGuardModel: body.loopGuardModel.trim() }
+                  : {}),
+                ...(body.approvalGateModel?.trim()
+                  ? { approvalGateModel: body.approvalGateModel.trim() }
+                  : {}),
+                ...(body.memorySummarizationModel?.trim()
+                  ? {
+                    memorySummarizationModel:
                           body.memorySummarizationModel.trim(),
-                      }
-                    : {}),
-                  ...(body.selectorInferenceModel?.trim()
-                    ? {
-                        selectorInferenceModel:
+                  }
+                  : {}),
+                ...(body.selectorInferenceModel?.trim()
+                  ? {
+                    selectorInferenceModel:
                           body.selectorInferenceModel.trim(),
-                      }
-                    : {}),
-                  ...(body.outputNormalizationModel?.trim()
-                    ? {
-                        outputNormalizationModel:
+                  }
+                  : {}),
+                ...(body.outputNormalizationModel?.trim()
+                  ? {
+                    outputNormalizationModel:
                           body.outputNormalizationModel.trim(),
-                      }
-                    : {}),
-                },
+                  }
+                  : {}),
               },
-            }
+            },
+          }
           : {}),
       },
     });
-    await logAgentAudit(run.id, "info", "Agent run queued.", {
+    await logAgentAudit(run.id, 'info', 'Agent run queued.', {
       model: run.model,
       tools: run.tools,
       searchProvider: run.searchProvider,
@@ -279,7 +281,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     startAgentQueue();
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][POST] Queued", {
+      console.info('[chatbot][agent][POST] Queued', {
         runId: run.id,
         status: run.status,
         durationMs: Date.now() - requestStart,
@@ -290,8 +292,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.POST",
-      fallbackMessage: "Failed to enqueue agent run.",
+      source: 'chatbot.agent.POST',
+      fallbackMessage: 'Failed to enqueue agent run.',
     });
   }
 }
@@ -299,26 +301,26 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("chatbotAgentRun" in prisma)) {
+    if (!('chatbotAgentRun' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent runs not initialized. Run prisma generate/db push."
+          'Agent runs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.DELETE" }
+        { request: req, source: 'chatbot.agent.DELETE' }
       );
     }
     const url = new URL(req.url);
-    const scope = url.searchParams.get("scope") ?? "terminal";
+    const scope = url.searchParams.get('scope') ?? 'terminal';
     const terminalStatuses: AgentRunStatusType[] = [
-      "completed",
-      "failed",
-      "stopped",
-      "waiting_human",
+      'completed',
+      'failed',
+      'stopped',
+      'waiting_human',
     ];
-    if (scope !== "terminal") {
-      return createErrorResponse(badRequestError("Unsupported delete scope."), {
+    if (scope !== 'terminal') {
+      return createErrorResponse(badRequestError('Unsupported delete scope.'), {
         request: req,
-        source: "chatbot.agent.DELETE",
+        source: 'chatbot.agent.DELETE',
       });
     }
     const runs = await prisma.chatbotAgentRun.findMany({
@@ -334,14 +336,14 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     });
     await Promise.all(
       ids.map((runId) =>
-        fs.rm(path.join(process.cwd(), "tmp", "chatbot-agent", runId), {
+        fs.rm(path.join(process.cwd(), 'tmp', 'chatbot-agent', runId), {
           recursive: true,
           force: true,
         })
       )
     );
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][DELETE] Deleted", {
+      console.info('[chatbot][agent][DELETE] Deleted', {
         count: ids.length,
         durationMs: Date.now() - requestStart,
       });
@@ -350,12 +352,12 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.DELETE",
-      fallbackMessage: "Failed to delete agent runs.",
+      source: 'chatbot.agent.DELETE',
+      fallbackMessage: 'Failed to delete agent runs.',
     });
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "chatbot.agent.GET" });
-export const POST = apiHandler(POST_handler, { source: "chatbot.agent.POST" });
-export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.agent.DELETE" });
+export const GET = apiHandler(GET_handler, { source: 'chatbot.agent.GET' });
+export const POST = apiHandler(POST_handler, { source: 'chatbot.agent.POST' });
+export const DELETE = apiHandler(DELETE_handler, { source: 'chatbot.agent.DELETE' });

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 export interface AiConfig {
   imageAnalysisModel: string;
@@ -14,23 +14,23 @@ export interface AiConfig {
 
 // Query Keys
 export const aiConfigKeys = {
-  all: ["ai-config"] as const,
+  all: ['ai-config'] as const,
 };
 
 // API Functions
 async function fetchAiConfig(): Promise<AiConfig> {
-  const res = await fetch("/api/ai-config");
-  if (!res.ok) throw new Error("Failed to load AI configuration");
+  const res = await fetch('/api/ai-config');
+  if (!res.ok) throw new Error('Failed to load AI configuration');
   return (await res.json()) as AiConfig;
 }
 
 async function updateAiConfig(config: Partial<AiConfig>): Promise<AiConfig> {
-  const res = await fetch("/api/ai-config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch('/api/ai-config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
-  if (!res.ok) throw new Error("Failed to update AI configuration");
+  if (!res.ok) throw new Error('Failed to update AI configuration');
   return (await res.json()) as AiConfig;
 }
 

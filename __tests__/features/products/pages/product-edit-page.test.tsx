@@ -1,14 +1,16 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import EditProductPage from "@/features/products/components/EditProductForm";
-import { ToastProvider } from "@/shared/ui/toast";
-import { vi, describe, it, expect, beforeEach } from "vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+import EditProductPage from '@/features/products/components/EditProductForm';
+import { server } from '@/mocks/server';
+import { ToastProvider } from '@/shared/ui/toast';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,7 +21,7 @@ const queryClient = new QueryClient({
   },
 });
 
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
@@ -30,34 +32,34 @@ vi.mock("next/navigation", () => ({
 }));
 
 const mockProduct = {
-  id: "1",
-  name_en: "Test Product",
-  name_pl: "Produkt Testowy",
-  name_de: "Testprodukt",
-  sku: "TEST-123",
+  id: '1',
+  name_en: 'Test Product',
+  name_pl: 'Produkt Testowy',
+  name_de: 'Testprodukt',
+  sku: 'TEST-123',
   price: 100,
   stock: 10,
   images: [],
-  catalogs: [{ catalogId: "c1" }],
+  catalogs: [{ catalogId: 'c1' }],
   categories: [],
   tags: [],
 } as any;
 
-describe("EditProductForm", () => {
+describe('EditProductForm', () => {
   beforeEach(() => {
     queryClient.clear();
     server.use(
-      http.get("/api/languages", () => HttpResponse.json([
-        { id: "l1", code: "EN", name: "English" },
-        { id: "l2", code: "PL", name: "Polish" },
+      http.get('/api/languages', () => HttpResponse.json([
+        { id: 'l1', code: 'EN', name: 'English' },
+        { id: 'l2', code: 'PL', name: 'Polish' },
       ])),
-      http.get("/api/price-groups", () => HttpResponse.json([])),
-      http.get("/api/catalogs", () => HttpResponse.json([
-        { id: "c1", name: "Default", languageIds: ["l1", "l2"], priceGroupIds: [] }
+      http.get('/api/price-groups', () => HttpResponse.json([])),
+      http.get('/api/catalogs', () => HttpResponse.json([
+        { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] }
       ])),
-      http.get("/api/products/categories", () => HttpResponse.json([])),
-      http.get("/api/products/tags", () => HttpResponse.json([])),
-      http.get("/api/products/parameters", () => HttpResponse.json([])),
+      http.get('/api/products/categories', () => HttpResponse.json([])),
+      http.get('/api/products/tags', () => HttpResponse.json([])),
+      http.get('/api/products/parameters', () => HttpResponse.json([])),
     );
   });
 
@@ -71,27 +73,27 @@ describe("EditProductForm", () => {
     );
   };
 
-  it("renders the form with product data in the General tab", async () => {
+  it('renders the form with product data in the General tab', async () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
-    expect(await screen.findByText("Edit Product")).toBeInTheDocument();
+    expect(await screen.findByText('Edit Product')).toBeInTheDocument();
     
     // Check for English Name input - using role to be specific
-    const nameInput = await screen.findByRole("textbox", { name: /English Name/i });
-    expect(nameInput).toHaveValue("Test Product");
+    const nameInput = await screen.findByRole('textbox', { name: /English Name/i });
+    expect(nameInput).toHaveValue('Test Product');
     
-    expect(screen.getByLabelText(/SKU/i)).toHaveValue("TEST-123");
+    expect(screen.getByLabelText(/SKU/i)).toHaveValue('TEST-123');
   });
 
-  it("renders the price in the Other tab", async () => {
+  it('renders the price in the Other tab', async () => {
     const user = userEvent.setup();
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     // Wait for the form to load
-    await screen.findByText("Edit Product");
+    await screen.findByText('Edit Product');
 
     // Click on the 'Other' tab
-    const otherTab = screen.getByRole("tab", { name: /Other/i });
+    const otherTab = screen.getByRole('tab', { name: /Other/i });
     await user.click(otherTab);
 
     // Check for Base Price input
@@ -99,13 +101,13 @@ describe("EditProductForm", () => {
     expect(priceInput).toHaveValue(100);
   });
 
-  it("renders other tabs navigation", async () => {
+  it('renders other tabs navigation', async () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
-    expect(await screen.findByRole("tab", { name: /General/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Other/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Parameters/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Images/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Import Info/i })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /General/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Other/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Parameters/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Images/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Import Info/i })).toBeInTheDocument();
   });
 });

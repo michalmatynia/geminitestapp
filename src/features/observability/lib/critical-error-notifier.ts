@@ -1,23 +1,25 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/typedef */
-import "server-only";
+ 
+import 'server-only';
 
-import { createHash } from "crypto";
+import { createHash } from 'crypto';
+
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import type {
   SystemLogLevel,
   SystemLogRecord,
-} from "@/shared/types/system-logs";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { withTransientRecovery } from "./transient-recovery/with-recovery";
+} from '@/shared/types/system-logs';
 
-const SETTINGS_COLLECTION = "settings";
+import { withTransientRecovery } from './transient-recovery/with-recovery';
+
+const SETTINGS_COLLECTION = 'settings';
 
 const NOTIFICATION_SETTINGS_KEYS = {
-  enabled: "critical_notifications_enabled",
-  webhookUrl: "critical_notifications_webhook_url",
-  minLevel: "critical_notifications_min_level",
-  throttleSeconds: "critical_notifications_throttle_seconds",
+  enabled: 'critical_notifications_enabled',
+  webhookUrl: 'critical_notifications_webhook_url',
+  minLevel: 'critical_notifications_min_level',
+  throttleSeconds: 'critical_notifications_throttle_seconds',
 } as const;
 
 const DEFAULT_THROTTLE_SECONDS = 120;
@@ -32,7 +34,7 @@ type NotificationConfig = {
 type SettingRecord = { _id: string; key?: string; value?: string };
 
 const canUsePrismaSettings = () =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -53,33 +55,33 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const doc = await mongo
     .collection<SettingRecord>(SETTINGS_COLLECTION)
     .findOne({ $or: [{ _id: key }, { key }] });
-  return typeof doc?.value === "string" ? doc.value : null;
+  return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     return readMongoSetting(key);
   }
   return readPrismaSetting(key);
 };
 
-const parseBoolean = (value: string | null | undefined, fallback = false) => {
-  if (typeof value !== "string") return fallback;
-  return value.trim().toLowerCase() === "true";
+const parseBoolean = (value: string | null | undefined, fallback = false): boolean => {
+  if (typeof value !== 'string') return fallback;
+  return value.trim().toLowerCase() === 'true';
 };
 
-const parseNumber = (value: string | null | undefined, fallback: number) => {
-  if (typeof value !== "string") return fallback;
+const parseNumber = (value: string | null | undefined, fallback: number): number => {
+  if (typeof value !== 'string') return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const parseMinLevel = (value: string | null | undefined): SystemLogLevel => {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === "warn") return "warn";
-  if (normalized === "info") return "info";
-  return "error";
+  if (normalized === 'warn') return 'warn';
+  if (normalized === 'info') return 'info';
+  return 'error';
 };
 
 const levelPriority: Record<SystemLogLevel, number> = {
@@ -133,16 +135,16 @@ const getThrottleCache = (): Map<string, number> => {
   return globalAny.__criticalErrorNotificationCache;
 };
 
-const buildSignature = (log: SystemLogRecord) => {
-  const hash = createHash("sha256");
-  hash.update(log.message ?? "");
-  hash.update(String(log.source ?? ""));
-  hash.update(String(log.path ?? ""));
-  hash.update(String(log.statusCode ?? ""));
-  return hash.digest("hex");
+const buildSignature = (log: SystemLogRecord): string => {
+  const hash = createHash('sha256');
+  hash.update(log.message ?? '');
+  hash.update(String(log.source ?? ''));
+  hash.update(String(log.path ?? ''));
+  hash.update(String(log.statusCode ?? ''));
+  return hash.digest('hex');
 };
 
-const shouldThrottle = (signature: string, throttleSeconds: number) => {
+const shouldThrottle = (signature: string, throttleSeconds: number): boolean => {
   const cache = getThrottleCache();
   const now = Date.now();
   const previous = cache.get(signature);
@@ -153,8 +155,8 @@ const shouldThrottle = (signature: string, throttleSeconds: number) => {
   return false;
 };
 
-const buildPayload = (log: SystemLogRecord, critical: boolean) => ({
-  event: "critical_error",
+const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, unknown> => ({
+  event: 'critical_error',
   critical,
   level: log.level,
   message: log.message,
@@ -168,7 +170,7 @@ const buildPayload = (log: SystemLogRecord, critical: boolean) => ({
     log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
   context: log.context ?? null,
   stack: log.stack ?? null,
-  environment: process.env.NODE_ENV ?? "development",
+  environment: process.env.NODE_ENV ?? 'development',
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
 });
 
@@ -197,15 +199,15 @@ export const notifyCriticalError = async (
     const res = await withTransientRecovery(
       async () =>
         fetch(config.webhookUrl!, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "content-type": "application/json",
+            'content-type': 'application/json',
           },
           body: JSON.stringify(payload),
         }),
       {
-        source: "critical-error-webhook",
-        circuitId: "critical-error-webhook",
+        source: 'critical-error-webhook',
+        circuitId: 'critical-error-webhook',
         retry: {
           maxAttempts: 3,
           initialDelayMs: 1000,
@@ -215,7 +217,7 @@ export const notifyCriticalError = async (
       },
     );
     if (!res.ok) {
-      console.error("[critical-error-notifier] Webhook failed", {
+      console.error('[critical-error-notifier] Webhook failed', {
         status: res.status,
         statusText: res.statusText,
       });
@@ -223,7 +225,7 @@ export const notifyCriticalError = async (
     }
     return { delivered: true, throttled: false };
   } catch (error) {
-    console.error("[critical-error-notifier] Webhook error", error);
+    console.error('[critical-error-notifier] Webhook error', error);
     return { delivered: false, throttled: false };
   }
 };

@@ -5,10 +5,10 @@ import {
   ModelProfile,
   ModelTaskRule,
   TimelineEntry,
-} from "@/shared/types/chatbot";
+} from '@/shared/types/chatbot';
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === "object" && !Array.isArray(value);
+  !!value && typeof value === 'object' && !Array.isArray(value);
 
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
@@ -17,52 +17,52 @@ export const parseModelSize = (normalized: string): number | null => {
   }
   const sizeMatch: RegExpMatchArray | null = normalized.match(/(\d+(?:\.\d+)?)b/);
   if (sizeMatch) return Number(sizeMatch[1]);
-  if (normalized.includes("xxl")) return 34;
-  if (normalized.includes("xlarge") || normalized.includes("xl")) return 13;
-  if (normalized.includes("large")) return 13;
-  if (normalized.includes("medium")) return 7;
-  if (normalized.includes("small") || normalized.includes("mini")) return 3;
-  if (normalized.includes("tiny")) return 1.5;
+  if (normalized.includes('xxl')) return 34;
+  if (normalized.includes('xlarge') || normalized.includes('xl')) return 13;
+  if (normalized.includes('large')) return 13;
+  if (normalized.includes('medium')) return 7;
+  if (normalized.includes('small') || normalized.includes('mini')) return 3;
+  if (normalized.includes('tiny')) return 1.5;
   return null;
 };
 
 export const buildModelProfile = (name: string): ModelProfile => {
   const normalized: string = name.toLowerCase();
   const isEmbedding: boolean = [
-    "embed",
-    "embedding",
-    "text-embedding",
-    "nomic-embed",
-    "bge",
-    "e5",
-    "gte",
+    'embed',
+    'embedding',
+    'text-embedding',
+    'nomic-embed',
+    'bge',
+    'e5',
+    'gte',
   ].some((tag: string): boolean => normalized.includes(tag));
-  const isRerank: boolean = ["rerank", "reranker", "cross-encoder"].some((tag: string): boolean =>
+  const isRerank: boolean = ['rerank', 'reranker', 'cross-encoder'].some((tag: string): boolean =>
     normalized.includes(tag)
   );
   const isVision: boolean = [
-    "vision",
-    "llava",
-    "bakllava",
-    "minicpm",
-    "moondream",
-    "qwen-vl",
-    "cogvlm",
+    'vision',
+    'llava',
+    'bakllava',
+    'minicpm',
+    'moondream',
+    'qwen-vl',
+    'cogvlm',
   ].some((tag: string): boolean => normalized.includes(tag));
   const isCode: boolean = [
-    "code",
-    "coder",
-    "codestral",
-    "codeqwen",
-    "starcoder",
-    "codegen",
+    'code',
+    'coder',
+    'codestral',
+    'codeqwen',
+    'starcoder',
+    'codegen',
   ].some((tag: string): boolean => normalized.includes(tag));
-  const isInstruct: boolean = ["instruct", "assistant"].some((tag: string): boolean =>
+  const isInstruct: boolean = ['instruct', 'assistant'].some((tag: string): boolean =>
     normalized.includes(tag)
   );
-  const isChat: boolean = normalized.includes("chat");
+  const isChat: boolean = normalized.includes('chat');
   const isReasoning: boolean = 
-    normalized.includes("reasoner") ||
+    normalized.includes('reasoner') ||
     /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
   return {
     name,
@@ -159,9 +159,9 @@ export const readCachedMessages = (sessionId: string): ChatMessage[] => {
     return (parsed as unknown[]).filter(
       (message: unknown): message is ChatMessage => 
         !!message && 
-        typeof message === "object" && 
-        "content" in message && 
-        typeof (message as { content: unknown }).content === "string"
+        typeof message === 'object' && 
+        'content' in message && 
+        typeof (message as { content: unknown }).content === 'string'
     );
   } catch {
     return [];
@@ -172,7 +172,7 @@ export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]):
   try {
     const safeMessages: ChatMessage[] = messages.filter(
       (message: ChatMessage): boolean =>
-        message.role !== "system" && message.content.trim().length > 0
+        message.role !== 'system' && message.content.trim().length > 0
     );
     window.localStorage.setItem(
       `chatbotSessionCache:${sessionId}`,
@@ -184,17 +184,17 @@ export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]):
 };
 
 export const resolveIgnoreRobots = (planState?: Record<string, unknown> | null): boolean => {
-  if (!planState || typeof planState !== "object") return false;
+  if (!planState || typeof planState !== 'object') return false;
   const prefs: { ignoreRobotsTxt?: boolean } | undefined = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
     .preferences;
   return Boolean(prefs?.ignoreRobotsTxt);
 };
 
 export const resolveApprovalStepId = (planState?: Record<string, unknown> | null): string | null => {
-  if (!planState || typeof planState !== "object") return null;
+  if (!planState || typeof planState !== 'object') return null;
   const approval: string | null | undefined = (planState as { approvalRequestedStepId?: string | null })
     .approvalRequestedStepId;
-  return typeof approval === "string" ? approval : null;
+  return typeof approval === 'string' ? approval : null;
 };
 
 export const buildAgentResultMessage = (
@@ -207,7 +207,7 @@ export const buildAgentResultMessage = (
       (metadata: unknown): boolean =>
         !!metadata &&
         typeof (metadata as { plannerMeta?: { taskType?: string } }).plannerMeta
-          ?.taskType === "string"
+          ?.taskType === 'string'
     );
   const resolvedTaskType: string | null = 
     (taskType as { plannerMeta?: { taskType?: string } })?.plannerMeta
@@ -224,53 +224,53 @@ export const buildAgentResultMessage = (
         ? (extractionAudit.metadata.names as unknown[])
         : [];
     const items: string[] = extractionItems
-      .filter((name: unknown): name is string => typeof name === "string")
+      .filter((name: unknown): name is string => typeof name === 'string')
       .map((name: string): string => name.trim())
       .filter(Boolean);
     if (items.length > 0) {
       const url: string | null = 
-        typeof extractionAudit.metadata?.url === "string"
+        typeof extractionAudit.metadata?.url === 'string'
           ? extractionAudit.metadata.url
           : null;
       const extractionType: string | null = 
-        typeof extractionAudit.metadata?.extractionType === "string"
+        typeof extractionAudit.metadata?.extractionType === 'string'
           ? extractionAudit.metadata.extractionType
           : null;
       const label: string = 
-        extractionType === "emails"
-          ? "Extracted emails"
-          : extractionType === "product_names"
-            ? "Extracted product names"
-            : "Extracted information";
+        extractionType === 'emails'
+          ? 'Extracted emails'
+          : extractionType === 'product_names'
+            ? 'Extracted product names'
+            : 'Extracted information';
       const intro: string = url ? `${label} found on ${url}:` : `${label}:`;
-      return `${intro}\n${items.map((name: string): string => `- ${name}`).join("\n")}`;
+      return `${intro}\n${items.map((name: string): string => `- ${name}`).join('\n')}`;
     }
   }
   const emptyAudit: AgentAuditLog | undefined = audits.find(
     (audit: AgentAuditLog): boolean =>
-      audit.message === "No product names extracted."
+      audit.message === 'No product names extracted.'
   );
   if (emptyAudit) {
     const url: string | null = 
-      typeof emptyAudit.metadata?.url === "string"
+      typeof emptyAudit.metadata?.url === 'string'
         ? emptyAudit.metadata.url
         : null;
-    return `No information extracted${url ? ` from ${url}` : ""}.`;
+    return `No information extracted${url ? ` from ${url}` : ''}.`;
   }
-  if (status === "completed") {
-    if (resolvedTaskType === "extract_info") {
-      return "No information extracted.";
+  if (status === 'completed') {
+    if (resolvedTaskType === 'extract_info') {
+      return 'No information extracted.';
     }
-    if (resolvedTaskType === "web_task") {
-      return "Agent run completed. Actions executed in agent mode.";
+    if (resolvedTaskType === 'web_task') {
+      return 'Agent run completed. Actions executed in agent mode.';
     }
-    return "Agent run completed. No extractable results.";
+    return 'Agent run completed. No extractable results.';
   }
-  if (status === "failed") {
-    return "Agent run failed. Check the agent run details for errors.";
+  if (status === 'failed') {
+    return 'Agent run failed. Check the agent run details for errors.';
   }
-  if (status === "waiting_human") {
-    return "Agent run needs human input to continue.";
+  if (status === 'waiting_human') {
+    return 'Agent run needs human input to continue.';
   }
   return null;
 };
@@ -278,22 +278,22 @@ export const buildAgentResultMessage = (
 export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]): string | null => {
   const resumeAudit: AgentAuditLog | undefined = audits.find(
     (audit: AgentAuditLog): boolean =>
-      audit.message === "Resume summary prepared."
+      audit.message === 'Resume summary prepared.'
   );
   const autoResumeAudit: AgentAuditLog | undefined = audits.find(
-    (audit: AgentAuditLog): boolean => audit.message === "Auto-resume queued for stuck run."
+    (audit: AgentAuditLog): boolean => audit.message === 'Auto-resume queued for stuck run.'
   );
   if (!resumeAudit) {
     if (!autoResumeAudit) return null;
     const timestamp: string | null = autoResumeAudit.createdAt
       ? new Date(autoResumeAudit.createdAt).toLocaleString()
       : null;
-    return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ""}.`;
+    return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ''}.`;
   }
   const summary: string = 
-    typeof resumeAudit.metadata?.summary === "string"
+    typeof resumeAudit.metadata?.summary === 'string'
       ? resumeAudit.metadata.summary.trim()
-      : "";
+      : '';
   if (!summary) return null;
   return `Resume summary:\n${summary}`;
 };
@@ -310,14 +310,14 @@ export const buildToolTimeline = (
     )
     .map((audit: AgentAuditLog): TimelineEntry => ({
       id: `audit-${audit.id}`,
-      source: "audit" as const,
+      source: 'audit' as const,
       level: null,
       message: audit.message,
       createdAt: audit.createdAt,
     }));
   const logEntries: TimelineEntry[] = logs.map((log: AgentBrowserLog): TimelineEntry => ({
     id: `browser-${log.id}`,
-    source: "browser" as const,
+    source: 'browser' as const,
     level: log.level,
     message: log.message,
     createdAt: log.createdAt,
@@ -336,29 +336,29 @@ export const formatDependencies = (dependsOn?: string[] | null): string | null =
     if (!Number.isFinite(index)) return item;
     return `#${index + 1}`;
   });
-  return readable.join(", ");
+  return readable.join(', ');
 };
 
 export const getSelfCheckAudits = (audits: AgentAuditLog[]): AgentAuditLog[] =>
   audits.filter(
     (audit: AgentAuditLog): boolean =>
-      audit.message === "Self-check completed."
+      audit.message === 'Self-check completed.'
   );
 
 export const getAuditList = (value: unknown): string[] =>
   Array.isArray(value)
     ? value
-        .filter((item: unknown): item is string => typeof item === "string")
-        .map((item: string): string => item.trim())
-        .filter(Boolean)
+      .filter((item: unknown): item is string => typeof item === 'string')
+      .map((item: string): string => item.trim())
+      .filter(Boolean)
     : [];
 
 export const formatAdaptiveReason = (reason?: string | null): string => {
-  if (!reason) return "unspecified";
+  if (!reason) return 'unspecified';
   const trimmed: string = reason.trim();
-  if (!trimmed) return "unspecified";
-  if (trimmed.includes(" ")) return trimmed;
-  return trimmed.replace(/-/g, " ");
+  if (!trimmed) return 'unspecified';
+  if (trimmed.includes(' ')) return trimmed;
+  return trimmed.replace(/-/g, ' ');
 };
 
 export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): { 
@@ -388,22 +388,22 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): {
       } | null;
       const type: string | undefined = metadata?.type;
       if (
-        type !== "plan-replan" &&
-        type !== "plan-adapt" &&
-        type !== "self-check-replan"
+        type !== 'plan-replan' &&
+        type !== 'plan-adapt' &&
+        type !== 'self-check-replan'
       ) {
         return null;
       }
       const label: string = 
-        type === "plan-adapt"
-          ? "mid-run adaptation"
-          : type === "self-check-replan"
-            ? "self-check replan"
-            : "adaptive replan";
+        type === 'plan-adapt'
+          ? 'mid-run adaptation'
+          : type === 'self-check-replan'
+            ? 'self-check replan'
+            : 'adaptive replan';
       return {
         id: audit.id,
         createdAt: audit.createdAt,
-        reason: typeof metadata?.reason === "string" ? metadata.reason : null,
+        reason: typeof metadata?.reason === 'string' ? metadata.reason : null,
         label,
       };
     })
@@ -450,5 +450,5 @@ export const getLatestAuditByType = (
 };
 
 export const isAbortError = (error: unknown): boolean =>
-  (error instanceof Error && error.name === "AbortError") ||
-  (typeof error === "object" && error !== null && (error as { name?: string }).name === "AbortError");
+  (error instanceof Error && error.name === 'AbortError') ||
+  (typeof error === 'object' && error !== null && (error as { name?: string }).name === 'AbortError');

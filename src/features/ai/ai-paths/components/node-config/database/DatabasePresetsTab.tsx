@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from "@/shared/ui";
+import { Eye } from 'lucide-react';
+import React from 'react';
 
-import { Eye } from "lucide-react";
+import type { DbQueryPreset } from '@/features/ai/ai-paths/lib';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from '@/shared/ui';
 
-import type { DbQueryPreset } from "@/features/ai/ai-paths/lib";
-import type { DatabasePresetOption } from "./types";
+
+
+import type { DatabasePresetOption } from './types';
 
 type DatabasePresetsTabProps = {
   dbQueryPresets: DbQueryPreset[];
@@ -60,12 +62,12 @@ export function DatabasePresetsTab({
           <div className="flex items-center justify-between">
             <Label className="text-xs text-gray-400">Built-in Presets</Label>
             <span className="text-[10px] text-gray-500">
-              {builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== "custom").length} presets
+              {builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== 'custom').length} presets
             </span>
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {builtInPresets
-              .filter((p: DatabasePresetOption): boolean => p.id !== "custom")
+              .filter((p: DatabasePresetOption): boolean => p.id !== 'custom')
               .map((preset: DatabasePresetOption): React.JSX.Element => (
                 <div
                   key={preset.id}
@@ -123,7 +125,7 @@ export function DatabasePresetsTab({
                         }))
                       }
                       onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                        if (event.key === "Enter") {
+                        if (event.key === 'Enter') {
                           void handleRename(preset.id, draftName);
                         }
                       }}
@@ -170,7 +172,7 @@ export function DatabasePresetsTab({
         <DialogContent className="max-w-2xl border border-border bg-card text-white">
           <DialogHeader>
             <DialogTitle className="text-lg">
-              {activePreset?.name ?? "Query Preset"}
+              {activePreset?.name ?? 'Query Preset'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
@@ -178,7 +180,7 @@ export function DatabasePresetsTab({
               <Label className="text-xs text-gray-400">Filter Query</Label>
               <Textarea
                 className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-                value={activePreset?.queryTemplate ?? ""}
+                value={activePreset?.queryTemplate ?? ''}
                 readOnly
               />
             </div>
@@ -186,7 +188,7 @@ export function DatabasePresetsTab({
               <Label className="text-xs text-gray-400">Update Document</Label>
               <Textarea
                 className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-                value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : "// Not set"}
+                value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'}
                 readOnly
               />
             </div>

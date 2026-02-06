@@ -1,28 +1,31 @@
-"use client";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal } from "@/shared/ui";
-import { useState } from "react";
+'use client';
+import { useState } from 'react';
 
-import { ProductWithImages } from "@/features/products/types";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,
-} from "@/features/data-import-export";
-import { ExportLogViewer } from "./ExportLogViewer";
-import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
-import { useImageRetryPresets } from "./useImageRetryPresets";
-import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
-import { useBaseComSettings } from "./hooks/useBaseComSettings";
-
-import { isImageExportError } from "./utils";
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
-import { BaseListingSettings } from "./BaseListingSettings";
-import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
-
+} from '@/features/data-import-export';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
   type ExportToBaseVariables,
-} from "@/features/integrations/hooks/useProductListingMutations";
+} from '@/features/integrations/hooks/useProductListingMutations';
+import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/listings';
+import { logClientError } from '@/features/observability';
+import { ProductWithImages } from '@/features/products/types';
+import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal } from '@/shared/ui';
+
+import { BaseListingSettings } from './BaseListingSettings';
+import { ExportLogViewer } from './ExportLogViewer';
+import { useBaseComSettings } from './hooks/useBaseComSettings';
+import { useIntegrationSelection } from './hooks/useIntegrationSelection';
+import { IntegrationAccountSummary } from './IntegrationAccountSummary';
+import { useImageRetryPresets } from './useImageRetryPresets';
+import { isImageExportError } from './utils';
+
+
+
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -75,7 +78,7 @@ export function ListProductModal({
   const imageRetryPresets = useImageRetryPresets();
 
   const productName =
-    product.name_en || product.name_pl || product.name_de || "Unnamed Product";
+    product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
 
   const selectedConnection = (selectedIntegration?.connections as IntegrationConnectionBasic[] || []).find(
     (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
@@ -85,20 +88,20 @@ export function ListProductModal({
 
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
 
-      const exportToBase = async (options?: {
-        imageBase64Mode?: "base-only" | "full-data-uri";
+  const exportToBase = async (options?: {
+        imageBase64Mode?: 'base-only' | 'full-data-uri';
         imageTransform?: ImageTransformOptions | null;
       }): Promise<void> => {
-        const exportData: ExportToBaseVariables = {
-          connectionId: selectedConnectionId || "",
-          inventoryId: selectedInventoryId || "",
-          exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
-        };
-        if (selectedTemplateId && selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
-        if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
-        if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
+    const exportData: ExportToBaseVariables = {
+      connectionId: selectedConnectionId || '',
+      inventoryId: selectedInventoryId || '',
+      exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
+    };
+    if (selectedTemplateId && selectedTemplateId !== 'none') exportData.templateId = selectedTemplateId;
+    if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
+    if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
         
-        const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
+    const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
     }
@@ -106,12 +109,12 @@ export function ListProductModal({
 
   const handleSubmit = async (): Promise<void> => {
     if (!selectedIntegrationId || !selectedConnectionId) {
-      setError("Please select both a marketplace and an account");
+      setError('Please select both a marketplace and an account');
       return;
     }
 
     if (isBaseComIntegration && !selectedInventoryId) {
-      setError("Please select a Base.com inventory");
+      setError('Please select a Base.com inventory');
       return;
     }
 
@@ -134,7 +137,8 @@ export function ListProductModal({
         onSuccess();
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to list product");
+      logClientError(err, { context: { source: 'ListProductModal', action: 'submit', productId: product.id, integrationId: selectedIntegrationId } });
+      setError(err instanceof Error ? err.message : 'Failed to list product');
     }
   };
 
@@ -152,7 +156,8 @@ export function ListProductModal({
       });
       onSuccess();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to export product");
+      logClientError(err, { context: { source: 'ListProductModal', action: 'imageRetry', productId: product.id } });
+      setError(err instanceof Error ? err.message : 'Failed to export product');
     }
   };
 
@@ -161,44 +166,19 @@ export function ListProductModal({
   );
 
   return (
-    <SharedModal
-      open={true}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
       title={`List Product - ${productName}`}
+      onSave={(): void => { void handleSubmit(); }}
+      isSaving={submitting}
+      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Product'}
+      cancelText="Cancel"
       size="md"
-      showClose={false}
-      footer={
-        <>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-gray-800 text-white hover:bg-gray-700"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={(): void => { void handleSubmit(); }}
-            disabled={
-              submitting ||
-              !selectedIntegrationId ||
-              !selectedConnectionId ||
-              (isBaseComIntegration && !selectedInventoryId)
-            }
-          >
-            {submitting
-              ? isBaseComIntegration
-                ? "Exporting..."
-                : "Listing..."
-              : isBaseComIntegration
-              ? "Export to Base.com"
-              : "List Product"}
-          </Button>
-        </>
-      }
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <SectionPanel variant="subtle-compact" className="border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
             <div className="flex flex-col gap-3">
               <span>{error}</span>
               {isBaseComIntegration && isImageExportError(error) ? (
@@ -237,20 +217,20 @@ export function ListProductModal({
                 </div>
               ) : null}
             </div>
-          </div>
+          </SectionPanel>
         )}
 
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
         ) : integrationsWithConnections.length === 0 ? (
-          <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-6 text-center">
+          <SectionPanel variant="subtle" className="border-yellow-500/40 bg-yellow-500/10 p-6 text-center">
             <p className="text-sm text-yellow-200">
               No integrations with configured accounts found.
             </p>
             <p className="mt-2 text-xs text-yellow-300/70">
               Please set up an integration with at least one account first.
             </p>
-          </div>
+          </SectionPanel>
         ) : (
           <>
             {hasPresetSelection ? (
@@ -262,47 +242,35 @@ export function ListProductModal({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="integration">Marketplace / Integration</Label>
-                  <Select
+                  <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
-                  >
-                    <SelectTrigger id="integration">
-                      <SelectValue placeholder="Select a marketplace..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {integrationsWithConnections
-                        .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
-                        .map((integration: IntegrationWithConnections) => (
-                          <SelectItem key={integration.id} value={integration.id}>
-                            {integration.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                    options={integrationsWithConnections
+                      .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                      .map((integration: IntegrationWithConnections) => ({
+                        value: integration.id,
+                        label: integration.name
+                      }))}
+                    placeholder="Select a marketplace..."
+                  />
                 </div>
 
                 {selectedIntegration && (
                   <div className="space-y-2">
                     <Label htmlFor="connection">Account</Label>
-                    <Select
+                    <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
-                    >
-                      <SelectTrigger id="connection">
-                        <SelectValue placeholder="Select an account..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedIntegration.connections
-                          .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                          .map((connection: IntegrationConnectionBasic) => (
-                            <SelectItem key={connection.id} value={connection.id}>
-                              {connection.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                      options={selectedIntegration.connections
+                        .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                        .map((connection: IntegrationConnectionBasic) => ({
+                          value: connection.id,
+                          label: connection.name
+                        }))}
+                      placeholder="Select an account..."
+                    />
                     <p className="text-xs text-gray-500">
-                      Choose which account to use for listing this product on{" "}
+                      Choose which account to use for listing this product on{' '}
                       {selectedIntegration.name}.
                     </p>
                   </div>
@@ -335,7 +303,7 @@ export function ListProductModal({
           </div>
         )}
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }
 

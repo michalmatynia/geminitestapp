@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, SectionHeader, Checkbox, Switch } from "@/shared/ui";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
-import { CmsDomainSelector } from "@/features/cms";
-import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from "@/features/cms/hooks/useCmsQueries";
-import type { Slug } from "@/features/cms/types";
+import { CmsDomainSelector } from '@/features/cms';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
+import type { Slug } from '@/features/cms/types';
+import { Button, Input, Label, SectionHeader, Checkbox, Switch } from '@/shared/ui';
 
 export default function CreatePagePage(): React.JSX.Element {
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [slugIds, setSlugIds] = useState<string[]>([]);
   const router = useRouter();
   const { activeDomainId } = useCmsDomainSelection();
@@ -18,7 +18,7 @@ export default function CreatePagePage(): React.JSX.Element {
   const [includeAllZones, setIncludeAllZones] = useState(false);
   const allSlugsQuery = useCmsAllSlugs(includeAllZones);
   const createPage = useCreatePage();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = allSlugsQuery.data ?? [];
@@ -31,7 +31,7 @@ export default function CreatePagePage(): React.JSX.Element {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     await createPage.mutateAsync({ name, slugIds });
-    router.push("/admin/cms/pages");
+    router.push('/admin/cms/pages');
   };
 
   return (

@@ -5,6 +5,8 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { ObjectId } from "mongodb";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { ErrorSystem } from "@/features/observability/server";
 
 type BrowseParams = {
   collection: string;
@@ -140,7 +142,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
       skip,
     };
   } catch (error) {
-    console.error(`[browse] Error querying ${collection}:`, error);
+    void ErrorSystem.captureException(error, { service: "api/databases/browse", collection });
     return {
       provider: "prisma",
       collection,
@@ -182,10 +184,10 @@ export async function GET(request: NextRequest): Promise<Response> {
       return NextResponse.json(result);
     }
   } catch (error) {
-    console.error("[api/databases/browse] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to browse collection", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request,
+      source: "databases.browse.GET",
+      fallbackMessage: "Failed to browse collection",
+    });
   }
 }

@@ -1,21 +1,24 @@
-import "server-only";
+import 'server-only';
 
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
+
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ChatSession,
   CreateSessionInput,
   UpdateSessionInput,
   ChatSessionDocument,
-} from "@/shared/types/chatbot";
+} from '@/shared/types/chatbot';
 
-const COLLECTION_NAME = "chatbot_sessions";
+const COLLECTION_NAME = 'chatbot_sessions';
 
 function documentToSession(doc: ChatSessionDocument): ChatSession {
   return {
     id: doc._id.toString(),
     title: doc.title,
+    userId: null,
     messages: doc.messages,
+    messageCount: doc.messages.length,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     settings: doc.settings,
@@ -28,7 +31,7 @@ export interface ChatbotSessionRepository {
   create(input: CreateSessionInput): Promise<ChatSession>;
   update(id: string, input: UpdateSessionInput): Promise<ChatSession | null>;
   delete(id: string): Promise<boolean>;
-  addMessage(id: string, message: ChatSession["messages"][0]): Promise<ChatSession | null>;
+  addMessage(id: string, message: ChatSession['messages'][0]): Promise<ChatSession | null>;
 }
 
 export const chatbotSessionRepository: ChatbotSessionRepository = {
@@ -53,7 +56,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
   async create(input: CreateSessionInput): Promise<ChatSession> {
     const db = await getMongoDb();
     const now = new Date();
-    const doc: Omit<ChatSessionDocument, "_id"> = {
+    const doc: Omit<ChatSessionDocument, '_id'> = {
       title: input.title,
       messages: [],
       createdAt: now,
@@ -68,7 +71,9 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
     return {
       id: result.insertedId.toString(),
       title: doc.title,
+      userId: null,
       messages: doc.messages,
+      messageCount: doc.messages.length,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       settings: doc.settings,
@@ -93,7 +98,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
         { $set: updateDoc },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
 
     return result ? documentToSession(result) : null;
@@ -109,7 +114,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
 
   async addMessage(
     id: string,
-    message: ChatSession["messages"][0]
+    message: ChatSession['messages'][0]
   ): Promise<ChatSession | null> {
     const db = await getMongoDb();
     const result = await db
@@ -120,7 +125,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
           $push: { messages: message },
           $set: { updatedAt: new Date() },
         },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
 
     return result ? documentToSession(result) : null;

@@ -1,10 +1,4 @@
-import prisma from "@/shared/lib/db/prisma";
-import type {
-  LoopSignal,
-  PlanStep,
-  PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/features/ai/agent-runtime/core/config";
+import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -13,7 +7,13 @@ import {
   normalizePlannerMeta,
   normalizeStringList,
   parsePlanJson,
-} from "@/features/ai/agent-runtime/planning/utils";
+} from '@/features/ai/agent-runtime/planning/utils';
+import type {
+  LoopSignal,
+  PlanStep,
+  PlannerMeta,
+} from '@/features/ai/agent-runtime/types/agent';
+import prisma from '@/shared/lib/db/prisma';
 
 type PlanStepSpecInput = {
   title?: string;
@@ -50,7 +50,7 @@ const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[]
 export const detectLoopPattern = (
   recent: Array<{
     title: string;
-    status: PlanStep["status"];
+    status: PlanStep['status'];
     tool?: string | null;
     url: string | null;
   }>
@@ -61,13 +61,13 @@ export const detectLoopPattern = (
   const titlesThree = lastThree.map((item: { title: string }) => item.title);
   const titlesFour = lastFour.map((item: { title: string }) => item.title);
   const urlsThree = lastThree.map((item: { url: string | null }) => item.url);
-  const statusesThree = lastThree.map((item: { status: PlanStep["status"] }) => item.status);
+  const statusesThree = lastThree.map((item: { status: PlanStep['status'] }) => item.status);
   const sameTitle =
     new Set(titlesThree.map((title: string) => title.toLowerCase())).size === 1;
   if (sameTitle) {
     return {
-      reason: "Repeated the same step multiple times.",
-      pattern: "repeat-same-step",
+      reason: 'Repeated the same step multiple times.',
+      pattern: 'repeat-same-step',
       titles: titlesThree,
       urls: urlsThree,
       statuses: statusesThree,
@@ -77,22 +77,22 @@ export const detectLoopPattern = (
     const [a, b, c, d] = titlesFour.map((title: string) => title.toLowerCase());
     if (a === c && b === d && a !== b) {
       return {
-        reason: "Alternating between the same two steps.",
-        pattern: "alternate-two-steps",
+        reason: 'Alternating between the same two steps.',
+        pattern: 'alternate-two-steps',
         titles: titlesFour,
         urls: lastFour.map((item: { url: string | null }) => item.url),
-        statuses: lastFour.map((item: { status: PlanStep["status"] }) => item.status),
+        statuses: lastFour.map((item: { status: PlanStep['status'] }) => item.status),
       };
     }
   }
   const stableUrl =
     urlsThree[0] &&
     urlsThree.every((url: string | null) => url && url === urlsThree[0]) &&
-    statusesThree.filter((status: PlanStep["status"]) => status === "failed").length >= 2;
+    statusesThree.filter((status: PlanStep['status']) => status === 'failed').length >= 2;
   if (stableUrl) {
     return {
-      reason: "Repeated failures on the same URL.",
-      pattern: "same-url-failures",
+      reason: 'Repeated failures on the same URL.',
+      pattern: 'same-url-failures',
       titles: titlesThree,
       urls: urlsThree,
       statuses: statusesThree,
@@ -132,7 +132,7 @@ export async function buildLoopGuardReview({
   maxSteps: number;
   maxStepAttempts: number;
 }): Promise<{
-  action: "continue" | "replan" | "wait_human";
+  action: 'continue' | 'replan' | 'wait_human';
   reason?: string;
   questions?: string[];
   evidence?: string[];
@@ -142,19 +142,19 @@ export async function buildLoopGuardReview({
 }> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
         stream: false,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
-              "You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 2-4 questions that test whether the agent is looping. If action is 'replan', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.",
+              'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
           },
           {
-            role: "user",
+            role: 'user',
             content: JSON.stringify({
               prompt,
               memory,
@@ -182,7 +182,7 @@ export async function buildLoopGuardReview({
     const payload = (await response.json()) as {
       message?: { content?: string };
     };
-    const content = payload.message?.content?.trim() ?? "";
+    const content = payload.message?.content?.trim() ?? '';
     const parsed = parsePlanJson(content) as {
       action?: string;
       reason?: string;
@@ -216,26 +216,26 @@ export async function buildLoopGuardReview({
       }>;
       taskType?: string;
     } | null;
-    if (!parsed) return { action: "continue", steps: [] };
+    if (!parsed) return { action: 'continue', steps: [] };
     const action =
-      parsed.action === "replan" || parsed.action === "wait_human"
+      parsed.action === 'replan' || parsed.action === 'wait_human'
         ? parsed.action
-        : "continue";
+        : 'continue';
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     let steps =
-      action === "replan"
+      action === 'replan'
         ? buildPlanStepsFromSpecs(
-            normalizePlanStepSpecs(stepSpecs),
-            meta,
-            true,
-            maxStepAttempts
-          ).slice(0, maxSteps)
+          normalizePlanStepSpecs(stepSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
         : [];
-    if (action === "replan" && steps.length === 0) {
+    if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
         meta?.alternatives ?? undefined,
         maxStepAttempts,
@@ -245,12 +245,12 @@ export async function buildLoopGuardReview({
         steps = fallbackBranch;
       }
     }
-    if ("agentAuditLog" in prisma && runId) {
+    if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
         data: {
           runId,
-          level: "info",
-          message: "Loop guard completed.",
+          level: 'info',
+          message: 'Loop guard completed.',
           metadata: {
             action,
             reason: parsed.reason ?? null,
@@ -270,11 +270,11 @@ export async function buildLoopGuardReview({
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Loop guard failed", {
+      console.warn('[chatbot][agent][engine] Loop guard failed', {
         runId,
         error: error instanceof Error ? error.message : String(error),
       });
     }
-    return { action: "continue", steps: [] };
+    return { action: 'continue', steps: [] };
   }
 }

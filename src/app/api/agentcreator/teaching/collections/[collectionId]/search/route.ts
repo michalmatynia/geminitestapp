@@ -7,7 +7,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { AgentTeachingChatSource } from "@/shared/types/agent-teaching";
 import { getEmbeddingCollectionById } from "@/features/ai/agentcreator/teaching/server/repository";
 import { generateOllamaEmbedding } from "@/features/ai/agentcreator/teaching/server/embeddings";
@@ -30,7 +30,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
     const collection = await getEmbeddingCollectionById(collectionId);
     if (!collection) {
-      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+      return createErrorResponse(notFoundError("Collection not found"), { request: req, source: "agentcreator.teaching.collections.search.POST" });
     }
 
     const parsed = await parseJsonBody(req, searchSchema, {

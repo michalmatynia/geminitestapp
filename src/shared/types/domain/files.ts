@@ -1,5 +1,19 @@
 import { Entity } from '../base-types';
 
+import type { 
+  FileDto, 
+  ImageFileDto, 
+  UploadFileDto, 
+  UpdateFileDto 
+} from '../dtos';
+
+export type { 
+  FileDto, 
+  ImageFileDto, 
+  UploadFileDto, 
+  UpdateFileDto 
+};
+
 export type ImageFileRecord = Entity & {
   filename: string;
   filepath: string;
@@ -10,4 +24,4 @@ export type ImageFileRecord = Entity & {
   tags: string[];
 };
 
-export type ImageFileSelection = Pick<ImageFileRecord, "id" | "filepath">;
+export type ImageFileSelection = Pick<ImageFileRecord, 'id' | 'filepath'>;

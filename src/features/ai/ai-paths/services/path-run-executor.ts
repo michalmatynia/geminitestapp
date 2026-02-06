@@ -1,5 +1,10 @@
-import "server-only";
+import 'server-only';
 
+import { evaluateGraphWithIteratorAutoContinue, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { noteService } from '@/features/notesapp/server';
+import { ErrorSystem } from '@/features/observability/services/error-system';
+import { getProductRepository } from '@/features/products/services/product-repository';
 import type {
   AiNode,
   AiPathRunNodeRecord,
@@ -8,24 +13,19 @@ import type {
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
-} from "@/shared/types/ai-paths";
-import { evaluateGraphWithIteratorAutoContinue, normalizeNodes, sanitizeEdges } from "@/features/ai/ai-paths/lib";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { ErrorSystem } from "@/features/observability/services/error-system";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { noteService } from "@/features/notesapp/server";
+} from '@/shared/types/ai-paths';
 
 const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return { inputs: {}, outputs: {} };
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value) as RuntimeState;
-      return parsed && typeof parsed === "object" ? parsed : { inputs: {}, outputs: {} };
+      return parsed && typeof parsed === 'object' ? parsed : { inputs: {}, outputs: {} };
     } catch {
       return { inputs: {}, outputs: {} };
     }
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     return value as RuntimeState;
   }
   return { inputs: {}, outputs: {} };
@@ -34,15 +34,15 @@ const parseRuntimeState = (value: unknown): RuntimeState => {
 const toJsonSafe = (value: unknown): unknown => {
   const seen = new WeakSet();
   const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === "bigint") return val.toString();
+    if (typeof val === 'bigint') return val.toString();
     if (val instanceof Date) return val.toISOString();
     if (val instanceof Set) return Array.from(val.values()) as unknown[];
     if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
-    if (typeof val === "function" || typeof val === "symbol") return undefined;
-          if (val && typeof val === "object") {
-            if (seen.has(val)) return undefined;
-            seen.add(val);
-          }
+    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
+    if (val && typeof val === 'object') {
+      if (seen.has(val)) return undefined;
+      seen.add(val);
+    }
     
     return val;
   };
@@ -55,7 +55,7 @@ const toJsonSafe = (value: unknown): unknown => {
 
 const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   const safe = toJsonSafe(state);
-  if (safe && typeof safe === "object") {
+  if (safe && typeof safe === 'object') {
     return safe as RuntimeState;
   }
   return { inputs: {}, outputs: {} };
@@ -95,12 +95,12 @@ const resolveTriggerNodeId = (
   explicit?: string | null
 ): string | undefined => {
   if (explicit && nodes.some((node: AiNode) => node.id === explicit)) return explicit;
-  const triggerNodes = nodes.filter((node: AiNode) => node.type === "trigger");
+  const triggerNodes = nodes.filter((node: AiNode) => node.type === 'trigger');
   if (triggerNodes.length === 0) return undefined;
   const matching = triggerEvent
     ? triggerNodes.filter(
-        (node: AiNode) => (node.config?.trigger?.event ?? "").trim() === triggerEvent
-      )
+      (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
+    )
     : triggerNodes;
   const candidates = matching.length > 0 ? matching : triggerNodes;
   const connected = candidates.find((node: AiNode) =>
@@ -118,18 +118,18 @@ const buildSkipSet = (
     resumeMode?: string;
     retryNodeIds?: string[];
   };
-  const mode = meta.resumeMode ?? "replay";
-  if (mode === "replay") return new Set<string>();
+  const mode = meta.resumeMode ?? 'replay';
+  if (mode === 'replay') return new Set<string>();
 
   const completed = new Set(
     Array.from(nodeStatusMap.entries())
-      .filter(([, status]: [string, string]) => status === "completed")
+      .filter(([, status]: [string, string]) => status === 'completed')
       .map(([nodeId]: [string, string]) => nodeId)
   );
-  if (mode === "resume") {
+  if (mode === 'resume') {
     const failedNodes = new Set(
       Array.from(nodeStatusMap.entries())
-        .filter(([, status]: [string, string]) => status === "failed")
+        .filter(([, status]: [string, string]) => status === 'failed')
         .map(([nodeId]: [string, string]) => nodeId)
     );
     if (failedNodes.size === 0) {
@@ -138,7 +138,7 @@ const buildSkipSet = (
     const affected = computeDownstreamNodes(edges, failedNodes);
     return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
   }
-  if (mode === "retry") {
+  if (mode === 'retry') {
     const retryNodes = new Set(meta.retryNodeIds ?? []);
     const affected = computeDownstreamNodes(edges, retryNodes);
     return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
@@ -149,19 +149,19 @@ const buildSkipSet = (
 const normalizeEntityType = (value?: string | null): string | null => {
   const normalized = value?.trim().toLowerCase();
   if (!normalized) return null;
-  if (normalized === "product" || normalized === "products") return "product";
-  if (normalized === "note" || normalized === "notes") return "note";
+  if (normalized === 'product' || normalized === 'products') return 'product';
+  if (normalized === 'note' || normalized === 'notes') return 'note';
   return normalized;
 };
 
 const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = normalizeEntityType(entityType);
-  if (normalized === "product") {
+  if (normalized === 'product') {
     const repo = await getProductRepository();
     return (await repo.getProductById(entityId)) as Record<string, unknown> | null;
   }
-  if (normalized === "note") {
+  if (normalized === 'note') {
     return (await noteService.getById(entityId)) as Record<string, unknown> | null;
   }
   return null;
@@ -172,14 +172,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     await repo.updateRun(run.id, {
-      status: "failed",
-      errorMessage: "Run graph is missing or invalid.",
+      status: 'failed',
+      errorMessage: 'Run graph is missing or invalid.',
       finishedAt: new Date(),
     });
     await repo.createRunEvent({
       runId: run.id,
-      level: "error",
-      message: "Run graph is missing or invalid.",
+      level: 'error',
+      message: 'Run graph is missing or invalid.',
     });
     return;
   }
@@ -194,7 +194,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
 
   const runtimeState = parseRuntimeState(run.runtimeState);
-  const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? "", 10);
+  const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? '', 10);
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
   const nodeRecords = await repo.listRunNodes(run.id);
@@ -207,15 +207,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
   const reportAiPathsError = async (error: unknown, meta: Record<string, unknown>, summary?: string): Promise<void> => {
     await ErrorSystem.captureException(error, {
-      service: "ai-paths-runtime",
+      service: 'ai-paths-runtime',
       pathRunId: run.id,
       summary,
       ...meta,
     });
     await repo.createRunEvent({
       runId: run.id,
-      level: "error",
-      message: summary ?? "AI Paths runtime error",
+      level: 'error',
+      message: summary ?? 'AI Paths runtime error',
       metadata: {
         error: error instanceof Error ? error.message : String(error),
         ...meta,
@@ -250,7 +250,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
-          status: "running",
+          status: 'running',
           attempt: nextAttempt,
           inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
           outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
@@ -259,13 +259,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
         await repo.createRunEvent({
           runId: run.id,
-          level: "info",
+          level: 'info',
           message: `Node ${node.title ?? node.id} started.`,
           metadata: {
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
-            status: "running",
+            status: 'running',
             attempt: nextAttempt,
           },
         });
@@ -288,7 +288,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             await repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
-              status: "completed",
+              status: 'completed',
               attempt: nodeAttemptMap.get(node.id) ?? 0,
               inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
               outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
@@ -297,13 +297,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             });
             await repo.createRunEvent({
               runId: run.id,
-              level: "info",
+              level: 'info',
               message: `Node ${node.title ?? node.id} reused cached outputs.`,
               metadata: {
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
-                status: "completed",
+                status: 'completed',
                 cached: true,
                 attempt: nodeAttemptMap.get(node.id) ?? 0,
               },
@@ -314,7 +314,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
-          status: "completed",
+          status: 'completed',
           attempt: nodeAttemptMap.get(node.id) ?? 0,
           inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
           outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
@@ -323,13 +323,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
         await repo.createRunEvent({
           runId: run.id,
-          level: "info",
+          level: 'info',
           message: `Node ${node.title ?? node.id} completed.`,
           metadata: {
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
-            status: "completed",
+            status: 'completed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
           },
         });
@@ -338,7 +338,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
-          status: "failed",
+          status: 'failed',
           attempt: nodeAttemptMap.get(node.id) ?? 0,
           inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
           outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
@@ -347,13 +347,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
         await repo.createRunEvent({
           runId: run.id,
-          level: "error",
+          level: 'error',
           message: `Node ${node.title ?? node.id} failed.`,
           metadata: {
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
-            status: "failed",
+            status: 'failed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
             error: error instanceof Error ? error.message : String(error),
           },
@@ -379,31 +379,31 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     });
 
     await repo.updateRun(run.id, {
-      status: "completed",
+      status: 'completed',
       runtimeState: sanitizeRuntimeState(resultState),
       finishedAt: new Date(),
       errorMessage: null,
       meta: {
         ...(run.meta ?? {}),
-        resumeMode: "replay",
+        resumeMode: 'replay',
         retryNodeIds: [],
       },
     });
     await repo.createRunEvent({
       runId: run.id,
-      level: "info",
-      message: "Run completed successfully.",
+      level: 'info',
+      message: 'Run completed successfully.',
     });
   } catch (error) {
     await repo.updateRun(run.id, {
-      status: "failed",
+      status: 'failed',
       finishedAt: new Date(),
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     await repo.createRunEvent({
       runId: run.id,
-      level: "error",
-      message: "Run failed.",
+      level: 'error',
+      message: 'Run failed.',
       metadata: {
         error: error instanceof Error ? error.message : String(error),
       },

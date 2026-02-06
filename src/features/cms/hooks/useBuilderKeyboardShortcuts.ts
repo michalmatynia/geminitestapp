@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePageBuilder } from "./usePageBuilderContext";
-import type { PageBuilderAction } from "../types/page-builder";
+import { useEffect } from 'react';
+
+import { usePageBuilder } from './usePageBuilderContext';
+
+import type { PageBuilderAction } from '../types/page-builder';
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
   const tag = target.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || tag === "select";
+  return tag === 'input' || tag === 'textarea' || tag === 'select';
 }
 
 export function useBuilderKeyboardShortcuts(): void {
@@ -31,28 +33,28 @@ export function useBuilderKeyboardShortcuts(): void {
       const key = event.key.toLowerCase();
       const isMod = event.metaKey || event.ctrlKey;
 
-      if (isMod && key === "z") {
+      if (isMod && key === 'z') {
         event.preventDefault();
-        dispatch({ type: event.shiftKey ? "REDO" : "UNDO" });
+        dispatch({ type: event.shiftKey ? 'REDO' : 'UNDO' });
         return;
       }
 
-      if (isMod && key === "y") {
+      if (isMod && key === 'y') {
         event.preventDefault();
-        dispatch({ type: "REDO" });
+        dispatch({ type: 'REDO' });
         return;
       }
 
-      if (isMod && key === "c") {
+      if (isMod && key === 'c') {
         if (selectedSection) {
           event.preventDefault();
-          dispatch({ type: "COPY_SECTION", sectionId: selectedSection.id });
+          dispatch({ type: 'COPY_SECTION', sectionId: selectedSection.id });
           return;
         }
         if (selectedBlock && selectedParentSection) {
           event.preventDefault();
           dispatch({
-            type: "COPY_BLOCK",
+            type: 'COPY_BLOCK',
             sectionId: selectedParentSection.id,
             blockId: selectedBlock.id,
             ...(selectedParentColumn?.id && { columnId: selectedParentColumn.id }),
@@ -62,15 +64,15 @@ export function useBuilderKeyboardShortcuts(): void {
         return;
       }
 
-      if (isMod && key === "v") {
+      if (isMod && key === 'v') {
         if (!state.clipboard) return;
         event.preventDefault();
-        if (state.clipboard.type === "section") {
-          const zone = selectedSection?.zone ?? "template";
-          dispatch({ type: "PASTE_SECTION", zone });
+        if (state.clipboard.type === 'section') {
+          const zone = selectedSection?.zone ?? 'template';
+          dispatch({ type: 'PASTE_SECTION', zone });
           return;
         }
-        if (state.clipboard.type === "block") {
+        if (state.clipboard.type === 'block') {
           const targetSectionId =
             selectedParentSection?.id ??
             selectedColumnParentSection?.id ??
@@ -81,7 +83,7 @@ export function useBuilderKeyboardShortcuts(): void {
           const parentBlockId = selectedParentBlock?.id;
 
           const pasteAction: PageBuilderAction = {
-            type: "PASTE_BLOCK",
+            type: 'PASTE_BLOCK',
             sectionId: targetSectionId,
             ...(columnId && { columnId }),
             ...(parentBlockId && { parentBlockId }),
@@ -91,18 +93,18 @@ export function useBuilderKeyboardShortcuts(): void {
         return;
       }
 
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         if (state.selectedNodeId) {
           event.preventDefault();
-          dispatch({ type: "SELECT_NODE", nodeId: null });
+          dispatch({ type: 'SELECT_NODE', nodeId: null });
         }
         return;
       }
 
-      if (event.key === "Delete" || event.key === "Backspace") {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
         if (selectedSection) {
           event.preventDefault();
-          dispatch({ type: "REMOVE_SECTION", sectionId: selectedSection.id });
+          dispatch({ type: 'REMOVE_SECTION', sectionId: selectedSection.id });
           return;
         }
 
@@ -110,7 +112,7 @@ export function useBuilderKeyboardShortcuts(): void {
           event.preventDefault();
           if (selectedParentColumn && selectedParentBlock) {
             dispatch({
-              type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK",
+              type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK',
               sectionId: selectedParentSection.id,
               columnId: selectedParentColumn.id,
               parentBlockId: selectedParentBlock.id,
@@ -121,7 +123,7 @@ export function useBuilderKeyboardShortcuts(): void {
 
           if (selectedParentColumn) {
             dispatch({
-              type: "REMOVE_BLOCK_FROM_COLUMN",
+              type: 'REMOVE_BLOCK_FROM_COLUMN',
               sectionId: selectedParentSection.id,
               columnId: selectedParentColumn.id,
               blockId: selectedBlock.id,
@@ -129,13 +131,13 @@ export function useBuilderKeyboardShortcuts(): void {
             return;
           }
 
-          dispatch({ type: "REMOVE_BLOCK", sectionId: selectedParentSection.id, blockId: selectedBlock.id });
+          dispatch({ type: 'REMOVE_BLOCK', sectionId: selectedParentSection.id, blockId: selectedBlock.id });
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return (): void => { window.removeEventListener("keydown", handleKeyDown); };
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => { window.removeEventListener('keydown', handleKeyDown); };
   }, [
     dispatch,
     selectedSection,

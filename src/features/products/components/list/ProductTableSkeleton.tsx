@@ -1,4 +1,4 @@
-import { Skeleton, TableRow, TableCell } from "@/shared/ui";
+import { Skeleton, TableRow, TableCell } from '@/shared/ui';
 
 interface ProductTableSkeletonProps {
   rows?: number;

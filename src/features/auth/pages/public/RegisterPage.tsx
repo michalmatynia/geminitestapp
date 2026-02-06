@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { Button, Input, Label } from "@/shared/ui";
-import Link from "next/link";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
-import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
-import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useRegisterUser } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import Link from 'next/link';
+import { signIn } from 'next-auth/react';
+import { useState } from 'react';
+
+import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
+import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from '@/features/auth/utils/auth-user-pages';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { Button, Input, Label, Alert } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 
 
@@ -34,9 +35,9 @@ export default function RegisterPage(): React.JSX.Element {
 }
 
 function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Element {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -62,31 +63,31 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
         const payload = response.payload as
           | { error?: string; details?: { issues?: string[] } }
           | null;
-        const details = payload?.details?.issues?.join(" ") ?? "";
+        const details = payload?.details?.issues?.join(' ') ?? '';
         setError(
           payload?.error
-            ? `${payload.error}${details ? ` ${details}` : ""}`
-            : "Failed to create account."
+            ? `${payload.error}${details ? ` ${details}` : ''}`
+            : 'Failed to create account.'
         );
         return;
       }
 
       try {
-        await signIn("credentials", {
+        await signIn('credentials', {
           email,
           password,
-          callbackUrl: "/admin",
+          callbackUrl: '/admin',
         });
       } catch (error) {
         const message =
           error instanceof Error
             ? error.message
-            : "Sign-in failed. Please try again.";
+            : 'Sign-in failed. Please try again.';
         setError(message);
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to create account.";
+        error instanceof Error ? error.message : 'Failed to create account.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -103,14 +104,14 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
           </p>
         </div>
         {error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+          <Alert variant="error" className="p-3 text-xs">
             {error}
-          </div>
+          </Alert>
         ) : null}
         {!allowSignup ? (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+          <Alert variant="warning" className="p-3 text-xs">
             Self-service registration is disabled. Please contact an administrator.
-          </div>
+          </Alert>
         ) : null}
         <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">
@@ -163,11 +164,11 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
             type="submit"
             disabled={isSubmitting || !allowSignup}
           >
-            {isSubmitting ? "Creating..." : "Create account"}
+            {isSubmitting ? 'Creating...' : 'Create account'}
           </Button>
         </form>
         <p className="text-xs text-gray-400">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link href="/auth/signin" className="text-white hover:underline">
             Sign in
           </Link>

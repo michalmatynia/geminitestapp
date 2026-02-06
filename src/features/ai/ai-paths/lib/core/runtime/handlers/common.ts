@@ -1,26 +1,27 @@
-import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from "../../constants";
+import type { RuntimePortValues } from '@/shared/types/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+
+import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import {
   coerceInput,
   coerceInputArray,
   safeStringify,
-} from "../../utils";
-import type { RuntimePortValues } from "@/shared/types/ai-paths";
-import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
+} from '../../utils';
 
 export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): RuntimePortValues => {
   const constantConfig = node.config?.constant ?? {
-    valueType: "string",
-    value: "",
+    valueType: 'string',
+    value: '',
   };
-  let value: unknown = constantConfig.value ?? "";
-  if (constantConfig.valueType === "number") {
+  let value: unknown = constantConfig.value ?? '';
+  if (constantConfig.valueType === 'number') {
     value = Number(constantConfig.value ?? 0);
-  } else if (constantConfig.valueType === "boolean") {
-    value = String(constantConfig.value ?? "false") === "true";
-  } else if (constantConfig.valueType === "json") {
+  } else if (constantConfig.valueType === 'boolean') {
+    value = String(constantConfig.value ?? 'false') === 'true';
+  } else if (constantConfig.valueType === 'json') {
     // using a simple parse here as safeParseJson is in utils and we can't easily import everything
     try {
-      value = JSON.parse(String(constantConfig.value ?? "")) as unknown;
+      value = JSON.parse(String(constantConfig.value ?? '')) as unknown;
     } catch {
       value = null;
     }
@@ -31,32 +32,32 @@ export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): Runti
 export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const inputValue = coerceInput(nodeInputs.value);
   const numeric = Number(inputValue);
-  const mathConfig = node.config?.math ?? { operation: "add", operand: 0 };
+  const mathConfig = node.config?.math ?? { operation: 'add', operand: 0 };
   const operand = mathConfig.operand ?? 0;
   if (!Number.isFinite(numeric)) {
     return { value: inputValue };
   }
   let result = numeric;
   switch (mathConfig.operation) {
-    case "add":
+    case 'add':
       result = numeric + operand;
       break;
-    case "subtract":
+    case 'subtract':
       result = numeric - operand;
       break;
-    case "multiply":
+    case 'multiply':
       result = numeric * operand;
       break;
-    case "divide":
+    case 'divide':
       result = operand === 0 ? numeric : numeric / operand;
       break;
-    case "round":
+    case 'round':
       result = Math.round(numeric);
       break;
-    case "ceil":
+    case 'ceil':
       result = Math.ceil(numeric);
       break;
-    case "floor":
+    case 'floor':
       result = Math.floor(numeric);
       break;
     default:
@@ -67,51 +68,51 @@ export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext
 
 export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const compareConfig = node.config?.compare ?? {
-    operator: "eq",
-    compareTo: "",
+    operator: 'eq',
+    compareTo: '',
     caseSensitive: false,
-    message: "Comparison failed",
+    message: 'Comparison failed',
   };
   const currentValue = coerceInput(nodeInputs.value);
-  const compareTo = compareConfig.compareTo ?? "";
+  const compareTo = compareConfig.compareTo ?? '';
   const base = safeStringify(currentValue);
-  const target = String(compareTo ?? "");
+  const target = String(compareTo ?? '');
   const value = compareConfig.caseSensitive ? base : base.toLowerCase();
   const targetValue = compareConfig.caseSensitive ? target : target.toLowerCase();
   let valid = false;
   switch (compareConfig.operator) {
-    case "eq":
+    case 'eq':
       valid = value === targetValue;
       break;
-    case "neq":
+    case 'neq':
       valid = value !== targetValue;
       break;
-    case "gt":
+    case 'gt':
       valid = Number(value) > Number(targetValue);
       break;
-    case "gte":
+    case 'gte':
       valid = Number(value) >= Number(targetValue);
       break;
-    case "lt":
+    case 'lt':
       valid = Number(value) < Number(targetValue);
       break;
-    case "lte":
+    case 'lte':
       valid = Number(value) <= Number(targetValue);
       break;
-    case "contains":
+    case 'contains':
       valid = value.includes(targetValue);
       break;
-    case "startsWith":
+    case 'startsWith':
       valid = value.startsWith(targetValue);
       break;
-    case "endsWith":
+    case 'endsWith':
       valid = value.endsWith(targetValue);
       break;
-    case "isEmpty":
-      valid = value.trim() === "";
+    case 'isEmpty':
+      valid = value.trim() === '';
       break;
-    case "notEmpty":
-      valid = value.trim() !== "";
+    case 'notEmpty':
+      valid = value.trim() !== '';
       break;
     default:
       valid = false;
@@ -119,32 +120,32 @@ export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   return {
     value: currentValue,
     valid,
-    errors: valid ? [] : [compareConfig.message ?? "Comparison failed"],
+    errors: valid ? [] : [compareConfig.message ?? 'Comparison failed'],
   };
 };
 
 export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const config = node.config?.router ?? {
-    mode: "valid",
-    matchMode: "truthy",
-    compareTo: "",
+    mode: 'valid',
+    matchMode: 'truthy',
+    compareTo: '',
   };
   const valueCandidate =
-    config.mode === "valid" ? coerceInput(nodeInputs.valid) : coerceInput(nodeInputs.value);
-  const compareTarget = config.compareTo ?? "";
+    config.mode === 'valid' ? coerceInput(nodeInputs.valid) : coerceInput(nodeInputs.value);
+  const compareTarget = config.compareTo ?? '';
   const asString = safeStringify(valueCandidate);
   let shouldPass = false;
   switch (config.matchMode) {
-    case "truthy":
+    case 'truthy':
       shouldPass = Boolean(valueCandidate);
       break;
-    case "falsy":
+    case 'falsy':
       shouldPass = !valueCandidate;
       break;
-    case "equals":
+    case 'equals':
       shouldPass = asString === String(compareTarget);
       break;
-    case "contains":
+    case 'contains':
       shouldPass = asString.includes(String(compareTarget));
       break;
     default:
@@ -152,11 +153,11 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
   }
   const next: Record<string, unknown> = {
     valid: shouldPass,
-    errors: shouldPass ? [] : ["Router blocked"],
+    errors: shouldPass ? [] : ['Router blocked'],
   };
   if (shouldPass) {
     ROUTER_OUTPUT_PORTS.forEach((port: string) => {
-      if (port === "valid" || port === "errors") return;
+      if (port === 'valid' || port === 'errors') return;
       if (nodeInputs[port] !== undefined) {
         next[port] = nodeInputs[port];
       }
@@ -171,13 +172,13 @@ export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext
     | undefined;
   const validInput = coerceInput(nodeInputs.valid);
   const errorsInput = coerceInputArray(nodeInputs.errors);
-  const config = node.config?.gate ?? { mode: "block", failMessage: "Gate blocked" };
-  const isValid = typeof validInput === "boolean" ? validInput : Boolean(validInput);
-  if (!isValid && config.mode === "block") {
+  const config = node.config?.gate ?? { mode: 'block', failMessage: 'Gate blocked' };
+  const isValid = typeof validInput === 'boolean' ? validInput : Boolean(validInput);
+  if (!isValid && config.mode === 'block') {
     return {
       context: null,
       valid: false,
-      errors: errorsInput.length ? errorsInput : [config.failMessage ?? "Gate blocked"],
+      errors: errorsInput.length ? errorsInput : [config.failMessage ?? 'Gate blocked'],
     };
   }
   return {

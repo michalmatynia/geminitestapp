@@ -31,7 +31,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 
     return NextResponse.json({ session });
   } catch (error) {
-    console.error("[chatbot][sessions][GET:sessionId] Failed", error);
     return createErrorResponse(error, {
       request: req,
       source: "chatbot.sessions.[sessionId].GET",

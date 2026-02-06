@@ -1,22 +1,23 @@
-"use client";
-import { SharedModal, Button } from "@/shared/ui";
-import dynamic from "next/dynamic";
+'use client';
+import { AppModal, Button } from '@/shared/ui';
 
-const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+import dynamic from 'next/dynamic';
+
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>
 });
-import ProductForm from "@/features/products/components/ProductForm";
-import { ProductListingsModal } from "@/features/integrations/components/listings/ProductListingsModal";
-import { ListProductModal } from "@/features/integrations/components/listings/ListProductModal";
-import { MassListProductModal } from "@/features/integrations/components/listings/MassListProductModal";
+import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
+import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
+import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
+import ProductForm from '@/features/products/components/ProductForm';
 import {
   ProductFormProvider,
   useProductFormContext,
-} from "@/features/products/context/ProductFormContext";
-import type { ProductWithImages } from "@/features/products/types";
-import type { ProductDraft } from "@/features/products/types/drafts";
-import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
+} from '@/features/products/context/ProductFormContext';
+import type { ProductWithImages } from '@/features/products/types';
+import type { ProductDraft } from '@/features/products/types/drafts';
 
 interface ProductModalsProps {
   isCreateOpen: boolean;
@@ -24,10 +25,10 @@ interface ProductModalsProps {
   createDraft?: ProductDraft | null;
   initialCatalogId?: string | null;
   onCloseCreate: () => void;
-  onCreateSuccess: () => void;
+  onCreateSuccess: (info?: { queued?: boolean }) => void;
   editingProduct: ProductWithImages | null;
   onCloseEdit: () => void;
-  onEditSuccess: () => void;
+  onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   onCloseIntegrations: () => void;
@@ -77,7 +78,7 @@ export function ProductModals({
     <>
       {isCreateOpen && (
         <ProductFormProvider
-          key={createDraft?.id ?? "create"}
+          key={createDraft?.id ?? 'create'}
           onSuccess={onCreateSuccess}
           initialSku={initialSku}
           initialCatalogId={initialCatalogId ?? undefined}
@@ -88,6 +89,7 @@ export function ProductModals({
             onClose={onCloseCreate}
             title="Create Product"
             submitButtonText="Create"
+            closeOnSubmit
           />
         </ProductFormProvider>
       )}
@@ -103,11 +105,12 @@ export function ProductModals({
             onClose={onCloseEdit}
             title="Edit Product"
             submitButtonText="Update"
+            closeOnSubmit={false}
           />
         </ProductFormProvider>
       )}
 
-      <SharedModal
+      <AppModal
         open={!!integrationsProduct && !showListProductModal}
         onClose={onCloseIntegrations}
         title="Product Listings"
@@ -121,9 +124,9 @@ export function ProductModals({
             onListingsUpdated={onListingsUpdated}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!integrationsProduct && showListProductModal}
         onClose={onCloseListProduct}
         title="List Product"
@@ -138,9 +141,9 @@ export function ProductModals({
             initialConnectionId={listProductPreset?.connectionId ?? null}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!exportSettingsProduct && !!onCloseExportSettings}
         onClose={() => onCloseExportSettings?.()}
         title="Export Settings"
@@ -154,9 +157,9 @@ export function ProductModals({
             onListingsUpdated={onListingsUpdated}
           />
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
         onClose={() => onCloseMassList?.()}
         title="Mass List Products"
@@ -171,7 +174,7 @@ export function ProductModals({
             onSuccess={onMassListSuccess}
           />
         )}
-      </SharedModal>
+      </AppModal>
     </>
   );
 }
@@ -180,12 +183,14 @@ function ProductFormModal({
   open,
   onClose, 
   title, 
-  submitButtonText 
+  submitButtonText,
+  closeOnSubmit = false,
 }: { 
   open: boolean;
   onClose: () => void;
   title: string;
   submitButtonText: string;
+  closeOnSubmit?: boolean;
 }): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product } =
     useProductFormContext();
@@ -204,11 +209,16 @@ function ProductFormModal({
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => void handleSubmit()}
+          onClick={() => {
+            void handleSubmit();
+            if (closeOnSubmit) {
+              onClose();
+            }
+          }}
           disabled={uploading}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {uploading ? "Saving..." : submitButtonText}
+          {uploading ? 'Saving...' : submitButtonText}
         </Button>
         <h2 className="text-2xl font-bold text-white">{title}</h2>
       </div>
@@ -231,17 +241,18 @@ function ProductFormModal({
   );
 
   return (
-    <SharedModal 
+    <AppModal 
       open={open}
       onClose={onClose}
       title={title} 
       header={header}
+      className="md:min-w-[52rem] max-w-[55rem]"
     >
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm submitButtonText={submitButtonText} />
       )}
-    </SharedModal>
+    </AppModal>
   );
 }

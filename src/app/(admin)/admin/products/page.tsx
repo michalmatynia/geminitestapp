@@ -1,6 +1,6 @@
-import { JSX, Suspense } from "react";
+import { JSX, Suspense } from 'react';
 
-import { AdminProductsPage } from "@/features/products";
+import { AdminProductsPage } from '@/features/products';
 
 export default function Page(): JSX.Element {
   return (

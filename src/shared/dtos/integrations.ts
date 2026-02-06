@@ -1,45 +1,33 @@
+import { DtoBase, NamedDto } from '../types/base';
+
 // Integrations DTOs
-export interface IntegrationDto {
-  id: string;
-  name: string;
+export interface IntegrationDto extends NamedDto {
   type: string;
   config: Record<string, unknown>;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface IntegrationConnectionDto {
-  id: string;
+export interface IntegrationConnectionDto extends NamedDto {
   integrationId: string;
-  name: string;
   config: Record<string, unknown>;
   status: 'connected' | 'disconnected' | 'error';
   lastSync: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface ProductListingDto {
-  id: string;
+export interface ProductListingDto extends DtoBase {
   productId: string;
   connectionId: string;
   externalId: string;
   status: 'active' | 'inactive' | 'error';
   lastSync: string | null;
   syncData: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CategoryMappingDto {
-  id: string;
+export interface CategoryMappingDto extends DtoBase {
   localCategoryId: string;
   externalCategoryId: string;
   connectionId: string;
   mappingData: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateIntegrationDto {

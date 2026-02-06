@@ -3,9 +3,9 @@ const looksLikeImageUrl = (value: string): boolean =>
 
 const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>()): string[] => {
   if (!value) return [];
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed) as unknown;
         return extractImageUrls(parsed, seen);
@@ -18,24 +18,24 @@ const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>())
   if (Array.isArray(value)) {
     return Array.from(new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen))));
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     if (seen.has(value)) return [];
     seen.add(value);
     const record = value as Record<string, unknown>;
     const candidates = [
-      "url",
-      "src",
-      "thumbnail",
-      "thumb",
-      "imageUrl",
-      "image",
-      "imageFile",
-      "filepath",
-      "filePath",
-      "path",
-      "file",
-      "previewUrl",
-      "preview",
+      'url',
+      'src',
+      'thumbnail',
+      'thumb',
+      'imageUrl',
+      'image',
+      'imageFile',
+      'filepath',
+      'filePath',
+      'path',
+      'file',
+      'previewUrl',
+      'preview',
     ];
     const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
     if (urls.length) return Array.from(new Set(urls));
@@ -45,9 +45,19 @@ const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>())
   return [];
 };
 
-const formatPortLabel = (port: string): string => (port === "images" ? "images (urls)" : port);
+const formatPortLabel = (port: string): string => {
+  if (port === 'images') return 'images (urls)';
+  if (port === 'entityId') return 'entity id';
+  if (port === 'regexCallback') return 'ai regex reply';
+  if (port === 'queryCallback') return 'ai query reply';
+  return port;
+};
 
 const formatPlaceholderLabel = (port: string): string =>
-  port === "images" ? "{{images}} (urls)" : `{{${port}}}`;
+  port === 'images'
+    ? '{{images}} (urls)'
+    : port === 'entityId'
+      ? '{{entityId}} (entity id)'
+      : `{{${port}}}`;
 
 export { extractImageUrls, formatPortLabel, formatPlaceholderLabel };

@@ -20,8 +20,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       process.env.NODE_ENV !== "production";
 
     if (inlineJobs) {
-      processSingleJob(job.id).catch((error: unknown) => {
-        console.error("[integrations.images.sync-base.all] Failed to run base image sync job", error);
+      processSingleJob(job.id).catch(async (error: unknown) => {
+        try {
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[integrations.images.sync-base.all] Failed to run base image sync job",
+            error,
+            source: "api/integrations/images/sync-base/all",
+            context: { jobId: job.id }
+          });
+        } catch (logError) {
+          console.error("[integrations.images.sync-base.all] Failed to run base image sync job (and logging failed)", error, logError);
+        }
       });
     } else {
       startProductAiJobQueue();
@@ -32,7 +42,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "integrations.images.sync-base.all.POST",
-      fallbackMessage: "Failed to enqueue Base.com image sync job",
+      fallbackMessage: "Failed to enqueue Base.com image sync job"
     });
   }
 }
@@ -40,5 +50,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
     POST_handler(req, ctx),
-  { source: "integrations.images.sync-base.all.POST" }
+  { source: "integrations.images.sync-base.all.POST", requireCsrf: false }
 );

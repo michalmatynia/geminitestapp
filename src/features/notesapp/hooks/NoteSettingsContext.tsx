@@ -1,28 +1,35 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+
+import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
+import { logClientError } from '@/features/observability';
+import { fetchSettingsCached, invalidateSettingsCache } from '@/shared/api/settings-client';
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
-  sortBy: "created",
-  sortOrder: "desc",
+  sortBy: 'created',
+  sortOrder: 'desc',
   showTimestamps: true,
   showBreadcrumbs: true,
   showRelatedNotes: true,
-  searchScope: "both",
+  searchScope: 'both',
   selectedFolderId: null,
   selectedNotebookId: null,
-  viewMode: "grid",
+  viewMode: 'grid',
   gridDensity: 4,
   autoformatOnPaste: false,
-  editorMode: "markdown",
+  editorMode: 'markdown',
 };
 
-const STORAGE_KEY = "noteSettings";
-const DB_SETTING_KEY = "noteSettings:selectedFolderId";
-const DB_NOTEBOOK_KEY = "noteSettings:selectedNotebookId";
-const DB_AUTOFORMAT_KEY = "noteSettings:autoformatOnPaste";
-const DB_EDITOR_MODE_KEY = "noteSettings:editorMode";
+const STORAGE_KEY = 'noteSettings';
+const DB_SETTING_KEY = 'noteSettings:selectedFolderId';
+const DB_NOTEBOOK_KEY = 'noteSettings:selectedNotebookId';
+const DB_AUTOFORMAT_KEY = 'noteSettings:autoformatOnPaste';
+const DB_EDITOR_MODE_KEY = 'noteSettings:editorMode';
+
+const fetchNoteSettingsList = async (): Promise<Array<{ key: string; value: string }>> => {
+  return await fetchSettingsCached();
+};
 
 interface NoteSettingsContextType {
   settings: NoteSettings;
@@ -37,41 +44,40 @@ const NoteSettingsContext = createContext<NoteSettingsContextType | undefined>(
 // Helper to save selectedFolderId to database
 async function saveSelectedFolderToDb(folderId: string | null): Promise<void> {
   try {
-    await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         key: DB_SETTING_KEY,
-        value: folderId ?? "",
+        value: folderId ?? '',
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
-    console.error("Failed to save selectedFolderId to database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveSelectedFolderToDb', folderId } });
   }
 }
 
 async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void> {
   try {
-    await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         key: DB_NOTEBOOK_KEY,
-        value: notebookId ?? "",
+        value: notebookId ?? '',
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
-    console.error("Failed to save selectedNotebookId to database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveSelectedNotebookToDb', notebookId } });
   }
 }
 
 // Helper to load selectedFolderId from database
 async function loadSelectedFolderFromDb(): Promise<string | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_SETTING_KEY);
 
     if (setting && setting.value) {
@@ -79,17 +85,14 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load selectedFolderId from database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadSelectedFolderFromDb' } });
     return null;
   }
 }
 
 async function loadSelectedNotebookFromDb(): Promise<string | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
 
     if (setting && setting.value) {
@@ -97,73 +100,69 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load selectedNotebookId from database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadSelectedNotebookFromDb' } });
     return null;
   }
 }
 
 async function saveAutoformatToDb(enabled: boolean): Promise<void> {
   try {
-    await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         key: DB_AUTOFORMAT_KEY,
-        value: enabled ? "true" : "false",
+        value: enabled ? 'true' : 'false',
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
-    console.error("Failed to save autoformatOnPaste to database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveAutoformatToDb', enabled } });
   }
 }
 
 async function loadAutoformatFromDb(): Promise<boolean | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
 
     if (setting && setting.value) {
-      return setting.value === "true";
+      return setting.value === 'true';
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load autoformatOnPaste from database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadAutoformatFromDb' } });
     return null;
   }
 }
 
-async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promise<void> {
+async function saveEditorModeToDb(mode: 'markdown' | 'wysiwyg' | 'code'): Promise<void> {
   try {
-    await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         key: DB_EDITOR_MODE_KEY,
         value: mode,
       }),
     });
+    invalidateSettingsCache();
   } catch (error: unknown) {
-    console.error("Failed to save editorMode to database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveEditorModeToDb', mode } });
   }
 }
 
-async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" | null> {
+async function loadEditorModeFromDb(): Promise<'markdown' | 'wysiwyg' | 'code' | null> {
   try {
-    const response = await fetch("/api/settings");
-    if (!response.ok) return null;
-
-    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
 
-    if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {
+    if (setting && (setting.value === 'markdown' || setting.value === 'wysiwyg' || setting.value === 'code')) {
       return setting.value;
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load editorMode from database:", error);
+    logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadEditorModeFromDb' } });
     return null;
   }
 }
@@ -174,11 +173,11 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   const previousFolderIdRef = useRef<string | null>(null);
   const previousNotebookIdRef = useRef<string | null>(null);
   const previousAutoformatRef = useRef<boolean>(false);
-  const previousEditorModeRef = useRef<"markdown" | "wysiwyg" | "code">("markdown");
+  const previousEditorModeRef = useRef<'markdown' | 'wysiwyg' | 'code'>('markdown');
 
   // Load settings from localStorage first (fast), then from database (authoritative)
   useEffect((): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const loadSettings = async (): Promise<void> => {
       // First, load from localStorage for immediate UI
@@ -191,7 +190,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
           previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         }
       } catch (error: unknown) {
-        console.error("Failed to load note settings from localStorage:", error);
+        logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadSettingsFromLocalStorage' } });
       }
 
       // Then, load selectedFolderId from database (authoritative source)
@@ -208,7 +207,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, selectedFolderId: dbFolderId })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: 'NoteSettingsContext', action: 'updateLocalStorageCache', key: 'selectedFolderId' } });
         }
       }
 
@@ -227,7 +226,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, selectedNotebookId: dbNotebookId })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: 'NoteSettingsContext', action: 'updateLocalStorageCache', key: 'selectedNotebookId' } });
         }
       }
 
@@ -244,7 +243,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, autoformatOnPaste: dbAutoformat })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: 'NoteSettingsContext', action: 'updateLocalStorageCache', key: 'autoformatOnPaste' } });
         }
       }
 
@@ -261,7 +260,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, editorMode: dbEditorMode })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: 'NoteSettingsContext', action: 'updateLocalStorageCache', key: 'editorMode' } });
         }
       }
     };
@@ -271,12 +270,12 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 
   // Save settings to localStorage whenever they change
   useEffect((): void => {
-    if (!isInitialized || typeof window === "undefined") return;
+    if (!isInitialized || typeof window === 'undefined') return;
 
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
-      console.error("Failed to save note settings:", error);
+      logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveSettingsToLocalStorage' } });
     }
   }, [settings, isInitialized]);
 
@@ -327,7 +326,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     void saveSelectedFolderToDb(null);
     void saveSelectedNotebookToDb(null);
     void saveAutoformatToDb(false);
-    void saveEditorModeToDb("markdown");
+    void saveEditorModeToDb('markdown');
   };
 
   return (
@@ -342,7 +341,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 export function useNoteSettings(): NoteSettingsContextType {
   const context = useContext(NoteSettingsContext);
   if (context === undefined) {
-    throw new Error("useNoteSettings must be used within a NoteSettingsProvider");
+    throw new Error('useNoteSettings must be used within a NoteSettingsProvider');
   }
   return context;
 }

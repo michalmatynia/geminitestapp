@@ -1,129 +1,90 @@
-Test If I can Put the Block in and Out the same for the Block
-Non overflowing images option in CMSBuilder
+   - Regex Grouper manual-only AI suggestions path + output retention
+  - JSON Mapper node input/output changes
+  - Node state autosave (selections + UI)
+  - Node UI/UX improvements (modal, validation, extractor)
+
+  1. Regex node: proposal modal + accept/decline behavior
+  2. Extractor modal: validation/extraction controls + results UI
+  3. JSON Mapper node: input/output fields + result routing
+  4. Node config modal: layout/scroll/sections improvements
+  5. Validation patterns UI: lock/edit/export/import flows
+  
+  2. More customization controls (layout, typography, media, effects)
+  3. Animation/interaction upgrades
+
+ 
+  1. Add a one-click “Generate + Save scheme” button directly in the schemes
+     list.
+  2. Add a dedicated /api/cms/theme-ai/stream endpoint and persist AI prompts
+     per scheme.
+
+React error overlay ? 
+
+use Context !
+
+every element in CMS should have an uption to choose the type of backgroun, for image file background, Background lock is like a semi background later used in multiplanar din parallaxes
+
+Maybe my placeholder matrix is better-Node Schema Matrix for extracting Schemas for prompts
+
+There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings
+
+* Validator Extractor should be 
+
+* Regex grouper PReset (for the whole regex Persona)
+   
+* Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
+
+I need user profiles, that will store KEYS to user settings for each segment of the system
+
+AI Paths need to be tested, w IMage studio image upload nie chce cos dzialac i CMS widok obrazów jest nie teges
+
+* In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily
 
 
-When I click Generate PAth, the Connector inputs remain empty
- I also need a way of grouping paths.
 
-CMS Inspector is not working in the CMS Page Builder not working
-* I don't see me regex and interator nodes
-
-Admin Menu Favourites
-
-Attach itself to Background,  Backgroun Image Layering
+* Third I want an extractor, that will recognise the prompt pattern and assign the promper UI Element to each parameter value. Be it a dropdown a slider, checkbox, text field, set of buttons or a text field. If not sure, The extractor needs to have a suggestion pattern, where you can choose which aspect to map to UI or even choose the type of UI you want for a given parameter value.
 
 
-GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
-
-Reordering of Grids,
-
-App manager
-
-Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
-
-Draft list should be reordered the same way as mapping parameters
-
-In Notes Folder Tree, when I drag folders around I see two indicators as to where to drop it, they seem to overlapt
-
-LATER - Loader as a separate feature
-LATER - ANalytics
-
-Notes App , Importing Mmarkdowns with file attachments
-
-Custom fields in Product (to account for Excluded marketplaces field and Trader checkbox)
-
-Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
-
-In note app, If I drag the folder to the edge, it should be moved to root tree
-
-LATER-Massive import capability in Node App
-
-## Filters
-Add one button called Filter option that will hide show all available search fields and filter fields
-When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
-
-In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
+Regex Extractor Validator Formatter should be a separate Feature
 
 
-Deep ANalytics
-
-Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
-
-* String  to Array Node,
-Iterator Node (will take object list take one send somewhere and wait for the callback confirmation and the move to the next object)
-
-* For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
-
-* My AI Paths Trigger buttons has a dropdown for an Icon Selector, use the same icon selector as Drafter feature (a matrix of icons)
-
-* I need the button to lock the paths but also to activate or deactivate them.
-* When I create a product, when I upload an image and then resort it, the image starts flickering.
-* The image slot menu has become bloated with options, make ti more elegant and clear
-* When exporting Products to Base.com the Images are not getting exported.
-
-* Let’s develop the query management system. 
-
-* Move my Query Diagnostic into a Separate Admin Menu Link Called Analytics
+* When I run my model Nodes in AI Paths, I don't see any history entires of Inputs and output.
 
 
-* When the product is exported to Base or was imported from Base, generally has established a connection with base.com,
-I would like to be able to click on B (Base.com connection icon) and have a section images in SYNC CONFIGURATION, and with the click of the button, I would like to manually sync image URLS from Base into my own database. So that in the image slots I can have both Image file uploads and the links in case files go missing.
-
-* The syncing of image URLs from Base to Product is an amazing option, I would like to add is a Bulk Action for all my images and I want to be able to run it in runtime, with a job in queue.
-
-* When I click on Integrations Imports, I don’t want the imports to happen immediately, they should happen only when I load the import list. Import list should also have pagination and a Search by name and search by SKU fields in Import navigation.
-
-* I want yet another 4th way to view images in my Products section. The 4th way is when the Images are stored on another server. In that case, I want to be able to configure the external domain address, whereas the remainder of the path and file name should be reflection of what I have in my Uploaded file. 
-
-* I want All Jobs, AI Jobs, Export Jobs, Import Jobs, Chatbot Jobs, to be moved under one Link in Admin Menu called Jobs, where I have a centralized place to control and view all the Job Queues from Runtime. Currently Export Jobs has two links, one in Integrations and one Tab in AI Jobs. I only need one link per job queue. Also, move Dead letter queue Into Jobs as well.
-
-* Describe the functioning of AI Paths in detail in Docs
-
-* I would also like to add a 3rd option to hold my image files in my image slot. I want my product images to have BASE64 support and I need the conversion button. I need a BASE64 encoded image to appear in all of product slots. I would like to be able to create them on the fly in the image slot menu. I would also like a Bulk action to be able to do that on all of the products immediately.
-
-* In My Products List Settings, I would like to have a choice of what is the source of my image thumbnail, Link, File or BASE64encoding.
-
-* My File manager has overflowing file names, make them wrap within the File Card. When I click View on the File Card, I don’t see any information, I should see everything, size and metadata too. Also, when was the file added and modified. My 3D assets should also be in the File Manager, but under a different TAB
-
-* In my Databases, I am no longer Able to Preview Dump files from MongoDB
+* Develop the scope of my analytics even further I want to know everything including the IP of visitors
 
 
-* and it would be good if my AI-Paths worked as well (check connectivity issues etc in high AI)
-
-* My Notes APp, when I choose a notebook Obisidian, I don’t see my Folder tree, but I see the notes when I click All Notes.
-
-* I want Folder Tree folders to be alignerd to the left (that included All Notes Folder and Favourites Folder)
 
 
-* In My CMS, I am unable to switch Slugs between Zones. I should be able to add one slug to a number of zones. The same goes for pages, I should be able to add one Page to  a number of Slugs
+* The AI Replies should be retained in Regex Grouper History and Fields
+The same goes for my settings an selections in Model Node, also the History of my Model Node is constantly Empty and to Input and Outputs are being Saved
+All of the node settings and selections should be retained in Path Settings on Auto-Save.
 
-* In my E2E Test Path, when i Trigger the Trigger Node, The the trigger output gets an object, while it should get a Trigger signal (boolean), wheras the string from the Trigger ("path_generate_description”)
-, should go to a seperate output triggerName
+* In my CMS Builder Page, I need Event Effects (like what to do on Mouse hover or Mouse click) on Elements and Blocks
 
+* In the Grid, Row, Block Column I should be able to select Background colors as gradients or transparent gradients, consisting of 2 colors. I also want to be able to select the direction of the gradient.
 
-* When I trigger my node in E2E Test Paths in my AI Paths, I get [client-error-reporter] [AI Paths] Unexpected token 'i', "tio" is not valid JSON error
+In my CMS Builder Page, I can't add Slideshow into the Row, Column or Block
 
+* When I run my model Nodes in AI Paths, II don't see any history entires of Inputs and output in them
 
-* When in my AI Paths, I have a simulation node and provide an ID in the simulation node of a Product that has images attached, when I fire the simulation, the images are not visible in the context, the context only says “Sample Entity” and images are hardcoded as empty. I want my simulation node to be as realistic as possible and provide images where images are indeed attached to the entity of the simulation. 
+* CMS Builder - when I insert an image element into a Grid, Row Or column, I woul like an additional setting to apperar in my ImageElement. The one to attach the Image to a given Grid or Row or Column as Background Image, in that case, the Image becomes a background image of a given element and receives a different set of settings until it's unlocked from the Background image state.
 
+* Settings in my Admin Menu where I can style my Admin Menu color code, and also add pages to favourites
 
-* in My cMS Builder Page I can no longer move my elements “files” and “folders” around my folder tree
+* When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
 
+When a block or element has an animation effect applied to is, sllightly change the color of it's icon
 
-* In my Settings - Notifications, when I click on Notifications link I get Hydration error.
+* When I fire run trigger on Infer, the model is not remembering the history of inputs and outputs
 
-* in Auth, when I click on Users, I get an Error, t
+In CMS Builder Folder Tree, When I choose a Row, my pointer changes to Text Cursor, it should be a inger pointer instead
 
-* in Auth, when I click on  Settings I get an Error,
+I want to be able to apply GSAP Parallax effects unto my Blocks, elements, Images
 
-—
+check - GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
 
-LATER - noteapp, mass imports
-
-
-Late-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
-
-Background image
+* I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
 
 Per node Animation specs
 Element node: “animate me”
@@ -182,6 +143,150 @@ Recommended “best way” in one sentence
 Build registered preset effects + store data specs on nodes + compile them into a small set of page scenes (intro/scroll/interactions) with proper cleanup.
 
 ---
+
+--- AI - Paths
+AI-PAths result does not enter the prompt node
+
+--- Image Stuiod Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
+
+* In my Image Studio Feature, I want to add a Prompt Validator to the programmatic prompt that servers the extraction of parameters from the prompt into different silders, buttons dropdowns that can be easily manipulated by the user and as soon as the user selects all the values wanted, the prompt resolved the placeholders with the values entered in this friendly UI and send a proper prompt to AI for post-production. When I enter a programmatic prompt for paramters extraction, I want a Programmatic Validator feature that will validate the prompt if it has all the proper patterns inside and suggets corrections if similar patterns to the correct ones arise, but are not quite the same. In Image-Studio feature settings I want to have a complete list of these patterns, similarity patterns and suggestions and comments that come with them, I want to be able to add new patterns as well. The goal is to make the programmatic as easily assignable to different parametrs as possible, but at the same time, large chunks of explanatory prompt need to be ommited. I want my validator to have suggestion engine as well (like the one in Database Query Node) where I can move with arrows through different suggestion patterns and decide whether I want them to be added to Pattern list or not.
+
+* In my Image Stduio feature, Image upload doesn't work, I want to upload images from both the Drive and File Manager
+
+* In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily
+
+* Third I want an extractor, that will recognise the prompt pattern and assign the promper UI Element to each parameter value. Be it a dropdown a slider, checkbox, text field, set of buttons or a text field. If not sure, The extractor needs to have a suggestion pattern, where you can choose which aspect to map to UI or even choose the type of UI you want for a given parameter value.
+
+AI Based and programmatic, I also want ai to extract parameters but to teach  patterns for extraction to my formatter and validator. All of these patterns should be availabe to see in a separate Tabbed lists under Image studio sections
+AI Based mask creator ?
+GPT settings still not visible
+
+I don't need to see the root folder, I want a project list
+
+Address the draggable resortable list component from categories, make it a unifying component also for Trigger buttons
+Create a Category Modal should save on Enter keystroke
+I don't need a cancel Buttons in my Category List
+I want each project to have a separate folder tree
+
+Test If I can Put the Block in and Out the same for the Block
+Non overflowing images option in CMSBuilder
+
+
+LATER - My file uploader needs to go throgh runtime, so that I can check the upload progress
+
+When I click Generate PAth, the Connector inputs remain empty
+ I also need a way of grouping paths.
+
+CMS Inspector is not working in the CMS Page Builder not working
+* I don't see me regex and interator nodes
+
+Unify Form component and and complex ZOD vallidators
+
+LATER - Do I have caching issues ? I think I need proper cache management
+
+
+App manager
+
+Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
+
+Draft list should be reordered the same way as mapping parameters
+
+In Notes Folder Tree, when I drag folders around I see two indicators as to where to drop it, they seem to overlapt
+
+LATER - Loader as a separate feature
+LATER - ANalytics
+
+Notes App , Importing Mmarkdowns with file attachments
+
+Custom fields in Product (to account for Excluded marketplaces field and Trader checkbox)
+
+Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
+
+In note app, If I drag the folder to the edge, it should be moved to root tree
+
+LATER-Massive import capability in Node App
+
+## Filters
+Add one button called Filter option that will hide show all available search fields and filter fields
+When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
+
+In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
+
+
+Deep ANalytics
+
+
+* String  to Array Node,
+Iterator Node (will take object list take one send somewhere and wait for the callback confirmation and the move to the next object)
+
+* For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
+
+* My AI Paths Trigger buttons has a dropdown for an Icon Selector, use the same icon selector as Drafter feature (a matrix of icons)
+
+* I need the button to lock the paths but also to activate or deactivate them.
+* When I create a product, when I upload an image and then resort it, the image starts flickering.
+* The image slot menu has become bloated with options, make ti more elegant and clear
+* When exporting Products to Base.com the Images are not getting exported.
+
+* Let’s develop the query management system. 
+
+* Move my Query Diagnostic into a Separate Admin Menu Link Called Analytics
+
+LATER - Role base file upload Limiter, Develop File Feature more
+
+* When the product is exported to Base or was imported from Base, generally has established a connection with base.com,
+I would like to be able to click on B (Base.com connection icon) and have a section images in SYNC CONFIGURATION, and with the click of the button, I would like to manually sync image URLS from Base into my own database. So that in the image slots I can have both Image file uploads and the links in case files go missing.
+
+* The syncing of image URLs from Base to Product is an amazing option, I would like to add is a Bulk Action for all my images and I want to be able to run it in runtime, with a job in queue.
+
+* When I click on Integrations Imports, I don’t want the imports to happen immediately, they should happen only when I load the import list. Import list should also have pagination and a Search by name and search by SKU fields in Import navigation.
+
+* I want yet another 4th way to view images in my Products section. The 4th way is when the Images are stored on another server. In that case, I want to be able to configure the external domain address, whereas the remainder of the path and file name should be reflection of what I have in my Uploaded file. 
+
+* I want All Jobs, AI Jobs, Export Jobs, Import Jobs, Chatbot Jobs, to be moved under one Link in Admin Menu called Jobs, where I have a centralized place to control and view all the Job Queues from Runtime. Currently Export Jobs has two links, one in Integrations and one Tab in AI Jobs. I only need one link per job queue. Also, move Dead letter queue Into Jobs as well.
+
+* Describe the functioning of AI Paths in detail in Docs
+
+* I would also like to add a 3rd option to hold my image files in my image slot. I want my product images to have BASE64 support and I need the conversion button. I need a BASE64 encoded image to appear in all of product slots. I would like to be able to create them on the fly in the image slot menu. I would also like a Bulk action to be able to do that on all of the products immediately.
+
+* In My Products List Settings, I would like to have a choice of what is the source of my image thumbnail, Link, File or BASE64encoding.
+
+* My File manager has overflowing file names, make them wrap within the File Card. When I click View on the File Card, I don’t see any information, I should see everything, size and metadata too. Also, when was the file added and modified. My 3D assets should also be in the File Manager, but under a different TAB
+
+* In my Databases, I am no longer Able to Preview Dump files from MongoDB
+
+
+* and it would be good if my AI-Paths worked as well (check connectivity issues etc in high AI)
+
+* My Notes APp, when I choose a notebook Obisidian, I don’t see my Folder tree, but I see the notes when I click All Notes.
+
+* I want Folder Tree folders to be alignerd to the left (that included All Notes Folder and Favourites Folder)
+
+
+* In My CMS, I am unable to switch Slugs between Zones. I should be able to add one slug to a number of zones. The same goes for pages, I should be able to add one Page to  a number of Slugs
+
+* In my E2E Test Path, when i Trigger the Trigger Node, The the trigger output gets an object, while it should get a Trigger signal (boolean), wheras the string from the Trigger ("path_generate_description”)
+, should go to a seperate output triggerName
+
+
+* When I trigger my node in E2E Test Paths in my AI Paths, I get [client-error-reporter] [AI Paths] Unexpected token 'i', "tio" is not valid JSON error
+
+
+* When in my AI Paths, I have a simulation node and provide an ID in the simulation node of a Product that has images attached, when I fire the simulation, the images are not visible in the context, the context only says “Sample Entity” and images are hardcoded as empty. I want my simulation node to be as realistic as possible and provide images where images are indeed attached to the entity of the simulation. 
+
+
+* in My cMS Builder Page I can no longer move my elements “files” and “folders” around my folder tree
+
+
+* In my Settings - Notifications, when I click on Notifications link I get Hydration error.
+
+* in Auth, when I click on Users, I get an Error, t
+
+* in Auth, when I click on  Settings I get an Error,
+
+—
+
+LATER - noteapp, mass imports
 
 
 

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useCallback } from 'react';
 
 interface SyncConfig {
   queryKey: unknown[];

@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 
-import type { BlockInstance } from "../../../types/page-builder";
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { useMediaStyles } from "../media-styles-context";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useMediaStyles } from '../media-styles-context';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendHeroSectionProps {
   settings: Record<string, unknown>;
@@ -15,14 +16,14 @@ interface FrontendHeroSectionProps {
 
 export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: FrontendHeroSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
-  const image = settings["image"] as string | undefined;
-  const imageHeight = (settings["imageHeight"] as string) || "large";
+  const image = settings['image'] as string | undefined;
+  const imageHeight = (settings['imageHeight'] as string) || 'large';
   const mediaStyles = useMediaStyles();
 
   const heightClass =
-    imageHeight === "small" ? "min-h-[300px]"
-    : imageHeight === "large" ? "min-h-[600px]"
-    : "min-h-[450px]"; // medium or adapt
+    imageHeight === 'small' ? 'min-h-[300px]'
+      : imageHeight === 'large' ? 'min-h-[600px]'
+        : 'min-h-[450px]'; // medium or adapt
 
   return (
     <section
@@ -45,8 +46,8 @@ export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: 
       <div
         className={`relative z-10 ${getSectionContainerClass({
           fullWidth: layout?.fullWidth,
-          maxWidthClass: "max-w-3xl",
-          paddingClass: "px-6",
+          maxWidthClass: 'max-w-3xl',
+          paddingClass: 'px-6',
         })} text-center`}
       >
         <div className="space-y-4">

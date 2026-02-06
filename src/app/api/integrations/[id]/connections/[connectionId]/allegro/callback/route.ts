@@ -94,13 +94,13 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${Buffer.from(
           `${clientId}:${clientSecret}`
-        ).toString("base64")}`,
+        ).toString("base64")}`
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: redirectUri,
-      }),
+        redirect_uri: redirectUri
+      })
     });
 
     let payload: AllegroTokenResponse;
@@ -130,7 +130,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
       allegroExpiresAt: expiresAt,
-      allegroTokenUpdatedAt: new Date(),
+      allegroTokenUpdatedAt: new Date()
     });
 
     const successUrl = new URL("/admin/integrations", requestUrl.origin);
@@ -141,7 +141,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       name: `allegro_oauth_state_${connId}`,
       value: "",
       maxAge: 0,
-      path: "/",
+      path: "/"
     });
 
     return response;
@@ -163,10 +163,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
               httpStatus: mapped.httpStatus,
               expected: mapped.expected,
               critical: mapped.critical,
-              retryable: mapped.retryable,
+              retryable: mapped.retryable
             }
-          : {}),
-      },
+          : {})
+      }
     });
     return NextResponse.redirect(
       toErrorRedirect(requestUrl.origin, message)
@@ -174,4 +174,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(GET_handler, { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  GET_handler,
+  { source: "integrations.[id].connections.[connectionId].allegro.callback.GET", requireCsrf: false }
+);

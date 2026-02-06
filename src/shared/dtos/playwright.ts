@@ -1,25 +1,19 @@
+import { DtoBase, NamedDto } from '../types/base';
+
 // Playwright DTOs
-export interface PlaywrightTestDto {
-  id: string;
-  name: string;
-  description: string | null;
+export interface PlaywrightTestDto extends NamedDto {
   script: string;
   config: Record<string, unknown>;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface PlaywrightTestRunDto {
-  id: string;
+export interface PlaywrightTestRunDto extends DtoBase {
   testId: string;
   status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
   result: Record<string, unknown> | null;
   error: string | null;
   duration: number | null;
   screenshots: string[];
-  createdAt: string;
-  updatedAt: string;
   completedAt: string | null;
 }
 

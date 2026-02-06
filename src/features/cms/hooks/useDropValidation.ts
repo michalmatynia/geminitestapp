@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useCallback } from "react";
+import { useCallback } from 'react';
+
 import {
   COLUMN_ALLOWED_BLOCK_TYPES,
   ROW_ALLOWED_BLOCK_TYPES,
   getSectionDefinition,
   getBlockDefinition,
-} from "../components/page-builder/section-registry";
+} from '../components/page-builder/section-registry';
 
 export interface DropValidationResult {
   isValid: boolean;
@@ -14,18 +15,20 @@ export interface DropValidationResult {
 }
 
 // Block types that can be nested inside other blocks (container blocks)
-const CONTAINER_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom"]);
+const CONTAINER_BLOCK_TYPES = new Set(['ImageWithText', 'Hero', 'RichText', 'Block', 'TextAtom', 'Carousel', 'CarouselFrame', 'Slideshow', 'SlideshowFrame']);
 
 // Section types that can be converted to blocks
 const CONVERTIBLE_SECTION_TYPES = new Set([
-  "ImageWithText",
-  "Hero",
-  "RichText",
-  "Block",
-  "TextElement",
-  "ImageElement",
-  "TextAtom",
-  "ButtonElement",
+  'ImageWithText',
+  'Hero',
+  'RichText',
+  'Block',
+  'TextElement',
+  'ImageElement',
+  'TextAtom',
+  'ButtonElement',
+  'Model3DElement',
+  'Slideshow',
 ]);
 
 /**
@@ -39,7 +42,7 @@ export function useDropValidation(): {
   canDropInNestedBlock: (blockType: string, parentBlockType: string) => DropValidationResult;
   canConvertSectionToBlock: (sectionType: string) => DropValidationResult;
   isContainerBlock: (blockType: string) => boolean;
-} {
+  } {
   /**
    * Check if a block type can be dropped directly into a Row
    */
@@ -114,18 +117,18 @@ export function useDropValidation(): {
       }
 
       // For TextAtom, only TextAtomLetter is allowed
-      if (parentBlockType === "TextAtom") {
-        if (blockType === "TextAtomLetter") {
+      if (parentBlockType === 'TextAtom') {
+        if (blockType === 'TextAtomLetter') {
           return { isValid: true };
         }
         return {
           isValid: false,
-          reason: `TextAtom can only contain TextAtomLetter elements.`,
+          reason: 'TextAtom can only contain TextAtomLetter elements.',
         };
       }
 
       // Default container block types allow common elements
-      const commonAllowed = ["Heading", "Text", "TextElement", "ImageElement", "Button", "AppEmbed"];
+      const commonAllowed = ['Heading', 'Text', 'TextElement', 'ImageElement', 'Button', 'AppEmbed'];
       if (commonAllowed.includes(blockType)) {
         return { isValid: true };
       }

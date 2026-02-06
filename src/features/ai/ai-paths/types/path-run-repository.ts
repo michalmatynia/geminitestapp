@@ -7,7 +7,7 @@ export type {
   CreateAiPathDto,
   UpdateAiPathDto,
   ExecuteAiPathDto
-} from "@/shared/dtos";
+} from '@/shared/dtos';
 
 import type {
   AiNode,
@@ -18,7 +18,7 @@ import type {
   AiPathRunRecord,
   AiPathRunStatus,
   Edge,
-} from "@/shared/types/ai-paths";
+} from '@/shared/types/ai-paths';
 
 export type AiPathRunCreateInput = {
   userId?: string | null;
@@ -40,7 +40,7 @@ export type AiPathRunCreateInput = {
 export type AiPathRunUpdate = Partial<
   Omit<
     AiPathRunRecord,
-    "id" | "userId" | "pathId" | "createdAt" | "graph" | "triggerContext"
+    'id' | 'userId' | 'pathId' | 'createdAt' | 'graph' | 'triggerContext'
   >
 > & {
   status?: AiPathRunStatus;
@@ -49,7 +49,7 @@ export type AiPathRunUpdate = Partial<
 };
 
 export type AiPathRunNodeUpdate = Partial<
-  Omit<AiPathRunNodeRecord, "id" | "runId" | "nodeId" | "createdAt">
+  Omit<AiPathRunNodeRecord, 'id' | 'runId' | 'nodeId' | 'createdAt'>
 > & {
   status?: AiPathNodeStatus;
 };
@@ -69,6 +69,8 @@ export type AiPathRunEventListOptions = {
 export type AiPathRunListOptions = {
   userId?: string | null;
   pathId?: string;
+  source?: string;
+  sourceMode?: 'include' | 'exclude';
   status?: AiPathRunStatus;
   statuses?: AiPathRunStatus[];
   query?: string;
@@ -89,6 +91,7 @@ export type AiPathRunRepository = {
   findRunById(runId: string): Promise<AiPathRunRecord | null>;
   listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;
   claimNextQueuedRun(): Promise<AiPathRunRecord | null>;
+  getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
   createRunNodes(runId: string, nodes: AiNode[]): Promise<void>;
   upsertRunNode(
     runId: string,

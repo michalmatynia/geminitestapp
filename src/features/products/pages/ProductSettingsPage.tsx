@@ -1,33 +1,35 @@
-"use client";
+'use client';
 
-import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import {
   useEffect,
   useState,
-} from "react";
+} from 'react';
 
-import {
-  settingSections,
-} from "./ProductSettingsConstants"; // TODO: This is a bit awkward, maybe move constants to feature too
-import {
-  PriceGroup,
-  Catalog,
-} from "@/features/products/types";
-import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
 
-import { PriceGroupsSettings } from "@/features/products/components/settings/pricing/PriceGroupsSettings";
-import { CatalogsSettings } from "@/features/products/components/settings/catalogs/CatalogsSettings";
-import { CategoriesSettings } from "@/features/products/components/settings/CategoriesSettings";
-import { TagsSettings } from "@/features/products/components/settings/TagsSettings";
-import { InternationalizationSettings } from "@/features/internationalization";
+
+import { InternationalizationSettings } from '@/features/internationalization';
+import {
+  useDeleteCurrencyMutation,
+  useDeleteCountryMutation,
+  useDeleteLanguageMutation
+} from '@/features/internationalization/hooks/useInternationalizationMutations';
+import {
+  useCurrencies,
+  useCountries,
+  useLanguages,
+} from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { logClientError } from '@/features/observability';
+import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
+import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 
 // New Modals
-import { CatalogModal } from "@/features/products/components/settings/modals/CatalogModal";
-import { LanguageModal } from "@/features/products/components/settings/modals/LanguageModal";
-import { PriceGroupModal } from "@/features/products/components/settings/modals/PriceGroupModal";
-import { CurrencyModal } from "@/features/products/components/settings/modals/CurrencyModal";
-import { CountryModal } from "@/features/products/components/settings/modals/CountryModal";
-
+import { CatalogModal } from '@/features/products/components/settings/modals/CatalogModal';
+import { CountryModal } from '@/features/products/components/settings/modals/CountryModal';
+import { CurrencyModal } from '@/features/products/components/settings/modals/CurrencyModal';
+import { LanguageModal } from '@/features/products/components/settings/modals/LanguageModal';
+import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
+import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
+import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { 
   usePriceGroups, 
   useCatalogs, 
@@ -36,22 +38,22 @@ import {
   useUpdatePriceGroupMutation,
   useDeletePriceGroupMutation,
   useDeleteCatalogMutation
-} from "@/features/products/hooks/useProductSettingsQueries";
+} from '@/features/products/hooks/useProductSettingsQueries';
 import {
-  useCurrencies,
-  useCountries,
-  useLanguages,
-} from "@/features/internationalization/hooks/useInternationalizationQueries";
+  PriceGroup,
+  Catalog,
+} from '@/features/products/types';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
+
 import {
-  useDeleteCurrencyMutation,
-  useDeleteCountryMutation,
-  useDeleteLanguageMutation
-} from "@/features/internationalization/hooks/useInternationalizationMutations";
+  settingSections,
+} from './ProductSettingsConstants'; // TODO: This is a bit awkward, maybe move constants to feature too
 
 
 export function ProductSettingsPage(): React.JSX.Element {
   const [activeSection, setActiveSection] =
-    useState<(typeof settingSections)[number]>("Categories");
+    useState<(typeof settingSections)[number]>('Categories');
   
   // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -88,7 +90,7 @@ export function ProductSettingsPage(): React.JSX.Element {
   const deleteCountryMutation = useDeleteCountryMutation();
   const deleteLanguageMutation = useDeleteLanguageMutation();
 
-  const defaultGroupId = priceGroups.find((g: import("@/features/products/types").PriceGroup) => g.isDefault)?.id ?? "";
+  const defaultGroupId = priceGroups.find((g: import('@/features/products/types').PriceGroup) => g.isDefault)?.id ?? '';
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -114,9 +116,9 @@ export function ProductSettingsPage(): React.JSX.Element {
     if (!group) return;
     try {
       await updatePriceGroupMutation.mutateAsync({ ...group, isDefault: true });
-      toast("Default price group updated.", { variant: "success" });
+      toast('Default price group updated.', { variant: 'success' });
     } catch (error) {
-      console.error(error);
+      logClientError(error, { context: { source: 'ProductSettingsPage', action: 'handleSetDefaultGroup', groupId } });
     }
   };
 
@@ -124,18 +126,22 @@ export function ProductSettingsPage(): React.JSX.Element {
     if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
     try {
       await deleteCatalogMutation.mutateAsync(catalog.id);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteCatalog', catalogId: catalog.id } });
+    }
   };
 
   const handleDeleteGroup = async (group: PriceGroup): Promise<void> => {
     if (priceGroups.length <= 1) {
-      toast("At least one price group is required.", { variant: "error" });
+      toast('At least one price group is required.', { variant: 'error' });
       return;
     }
     if (!confirm(`Delete price group "${group.name}"?`)) return;
     try {
       await deletePriceGroupMutation.mutateAsync(group.id);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteGroup', groupId: group.id } });
+    }
   };
 
   return (
@@ -153,8 +159,8 @@ export function ProductSettingsPage(): React.JSX.Element {
                 onClick={() => setActiveSection(section)}
                 className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
                   activeSection === section
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-muted/50/60"
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-300 hover:bg-muted/50/60'
                 }`}
               >
                 {section}
@@ -163,7 +169,7 @@ export function ProductSettingsPage(): React.JSX.Element {
           </div>
         </SectionPanel>
         <SectionPanel className="p-6">
-          {activeSection === "Categories" && (
+          {activeSection === 'Categories' && (
             <CategoriesSettings
               loading={loadingCategories}
               categories={productCategories}
@@ -173,7 +179,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               onRefresh={() => void refetchCategories()}
             />
           )}
-          {activeSection === "Tags" && (
+          {activeSection === 'Tags' && (
             <TagsSettings
               loading={loadingTags}
               tags={productTags}
@@ -183,7 +189,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               onRefresh={() => void refetchTags()}
             />
           )}
-          {activeSection === "Price Groups" && (
+          {activeSection === 'Price Groups' && (
             <PriceGroupsSettings
               loadingGroups={loadingGroups}
               priceGroups={priceGroups}
@@ -195,7 +201,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               handleDeleteGroup={(g: PriceGroup): void => { void handleDeleteGroup(g); }}
             />
           )}
-          {activeSection === "Catalogs" && (
+          {activeSection === 'Catalogs' && (
             <CatalogsSettings
               loadingCatalogs={loadingCatalogs}
               catalogs={catalogs}
@@ -205,7 +211,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
             />
           )}
-          {activeSection === "Internationalization" && (
+          {activeSection === 'Internationalization' && (
             <InternationalizationSettings
               loadingCurrencies={loadingCurrencies}
               currencyOptions={currencies}

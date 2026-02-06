@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { validateProductCreate, validateProductUpdate, type ValidationError } from "./validators";
+import { useState, useCallback } from 'react';
+
+import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
 
 export type UseValidationOptions = {
   validateOnChange?: boolean;
@@ -54,7 +55,7 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
       ...prev,
       fieldErrors: {
         ...prev.fieldErrors,
-        [field]: result.success ? "" : result.errors.find((e: ValidationError) => e.field === field)?.message || ""
+        [field]: result.success ? '' : result.errors.find((e: ValidationError) => e.field === field)?.message || ''
       }
     }));
   }, []);

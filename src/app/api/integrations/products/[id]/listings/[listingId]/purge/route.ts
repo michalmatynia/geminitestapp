@@ -26,9 +26,12 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
     return createErrorResponse(error, {
       request: req,
       source: "integrations.products.listings.PURGE",
-      fallbackMessage: "Failed to purge listing",
+      fallbackMessage: "Failed to purge listing"
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(DELETE_handler, { source: "integrations.products.[id].listings.[listingId].purge.DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(
+  DELETE_handler,
+  { source: "integrations.products.[id].listings.[listingId].purge.DELETE", requireCsrf: false }
+);

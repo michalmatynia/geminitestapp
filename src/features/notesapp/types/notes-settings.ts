@@ -1,14 +1,14 @@
 export interface NoteSettings {
-  sortBy: "created" | "updated" | "name";
-  sortOrder: "asc" | "desc";
+  sortBy: 'created' | 'updated' | 'name';
+  sortOrder: 'asc' | 'desc';
   showTimestamps: boolean;
   showBreadcrumbs: boolean;
   showRelatedNotes: boolean;
-  searchScope: "both" | "title" | "content";
+  searchScope: 'both' | 'title' | 'content';
   selectedFolderId: string | null;
   selectedNotebookId: string | null;
-  viewMode: "grid" | "list";
+  viewMode: 'grid' | 'list';
   gridDensity: 4 | 8;
   autoformatOnPaste: boolean;
-  editorMode: "markdown" | "wysiwyg" | "code";
+  editorMode: 'markdown' | 'wysiwyg' | 'code';
 }

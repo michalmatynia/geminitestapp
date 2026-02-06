@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+
 import {
   CMS_THEME_SETTINGS_KEY,
   DEFAULT_THEME,
   normalizeThemeSettings,
   type ThemeSettings,
-} from "@/features/cms/types/theme-settings";
+} from '@/features/cms/types/theme-settings';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 interface ThemeSettingsContextValue {
   theme: ThemeSettings;
@@ -19,19 +21,21 @@ interface ThemeSettingsContextValue {
 const ThemeSettingsContext = createContext<ThemeSettingsContextValue | undefined>(undefined);
 
 export function ThemeSettingsProvider({ children }: { children: React.ReactNode }): React.ReactNode {
-  const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
+  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
+  const themeSettingsRaw = settingsStore.get(CMS_THEME_SETTINGS_KEY);
 
   const initialTheme = useMemo((): ThemeSettings => {
-    if (!settingsQuery.isFetched) return DEFAULT_THEME;
+    if (!settingsReady) return DEFAULT_THEME;
     const stored = parseJsonSetting<Partial<ThemeSettings> | null>(
-      settingsQuery.data?.get(CMS_THEME_SETTINGS_KEY),
+      themeSettingsRaw,
       null
     );
     return normalizeThemeSettings(stored);
-  }, [settingsQuery.data, settingsQuery.isFetched]);
+  }, [settingsReady, themeSettingsRaw]);
 
   const [userTheme, setUserTheme] = useState<ThemeSettings | null>(null);
   const theme = userTheme ?? initialTheme;
@@ -39,10 +43,10 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
   const lastSavedRef = useRef<string>(serializeSetting(initialTheme));
 
   useEffect((): void => {
-    if (settingsQuery.isFetched) {
+    if (settingsReady) {
       hasHydratedRef.current = true;
     }
-  }, [settingsQuery.isFetched]);
+  }, [settingsReady]);
 
   useEffect((): void => {
     if (!hasHydratedRef.current) return;
@@ -69,7 +73,7 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
   const setThemeProxy = useCallback((val: React.SetStateAction<ThemeSettings>): void => {
     setUserTheme((prev: ThemeSettings | null) => {
       const current = prev ?? initialTheme;
-      if (typeof val === "function") {
+      if (typeof val === 'function') {
         return (val as (prevState: ThemeSettings) => ThemeSettings)(current);
       }
       return val;
@@ -87,7 +91,7 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
 export function useThemeSettings(): ThemeSettingsContextValue {
   const ctx = useContext(ThemeSettingsContext);
   if (!ctx) {
-    throw new Error("useThemeSettings must be used within ThemeSettingsProvider");
+    throw new Error('useThemeSettings must be used within ThemeSettingsProvider');
   }
   return ctx;
 }

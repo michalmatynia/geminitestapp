@@ -1,12 +1,13 @@
-import "server-only";
+import 'server-only';
 
-import type { Prisma } from "@prisma/client";
 import {
   countryMappings,
   defaultCountries,
   defaultCurrencies,
   defaultLanguages,
-} from "@/features/internationalization/lib/internationalizationDefaults";
+} from '@/features/internationalization/lib/internationalizationDefaults';
+
+import type { Prisma } from '@prisma/client';
 
 export async function ensureInternationalizationDefaults(
   tx: Prisma.TransactionClient

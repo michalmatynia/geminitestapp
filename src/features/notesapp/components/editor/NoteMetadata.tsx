@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button, Input, Label, Checkbox } from "@/shared/ui";
+import { X } from 'lucide-react';
+import React from 'react';
 
-import { X } from "lucide-react";
-import type { TagRecord, NoteWithRelations, ThemeRecord } from "@/shared/types/notes";
+import type { TagRecord, NoteWithRelations, ThemeRecord } from '@/shared/types/notes';
+import { Button, Input, Label, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 
 
 
@@ -33,6 +34,7 @@ interface NoteMetadataProps {
   filteredTags: TagRecord[];
   onAddTag: (tag: TagRecord) => void;
   onCreateTag: () => Promise<void>;
+  onSaveCategory?: (categoryId: string) => void;
   onRemoveTag: (tagId: string) => void;
   onTagClick?: ((tagId: string) => void) | undefined;
   selectedRelatedNotes: Array<{ id: string; title: string; color: string | null; content: string }>;
@@ -115,19 +117,23 @@ export function NoteMetadata({
 
       <div>
         <Label className="mb-2 block text-sm font-medium text-white">Folder</Label>
-        <select
-          value={selectedFolderId}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedFolderId(e.target.value)}
-          className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
+        <Select
+          value={selectedFolderId || '__none__'}
+          onValueChange={(value: string): void => setSelectedFolderId(value === '__none__' ? '' : value)}
         >
-          <option value="">No Folder</option>
-          {flatFolders.map((folder: { id: string; name: string; level: number }) => (
-            <option key={folder.id} value={folder.id}>
-              {Array.from({ length: folder.level }).map(() => "- ").join("")}
-              {folder.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white">
+            <SelectValue placeholder="Select folder" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">No Folder</SelectItem>
+            {flatFolders.map((folder: { id: string; name: string; level: number }) => (
+              <SelectItem key={folder.id} value={folder.id}>
+                {'  '.repeat(folder.level)}
+                {folder.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
@@ -141,7 +147,7 @@ export function NoteMetadata({
           />
           <Button
             type="button"
-            onClick={(): void => setColor("#ffffff")}
+            onClick={(): void => setColor('#ffffff')}
             className="whitespace-nowrap rounded-lg border px-3 py-2 text-xs text-gray-200 hover:bg-muted/50"
             title="Use folder theme background"
           >
@@ -183,7 +189,7 @@ export function NoteMetadata({
             <Input
               ref={tagInputRef}
               type="text"
-              placeholder={selectedTagIds.length === 0 ? "Tags" : "Add tag..."}
+              placeholder={selectedTagIds.length === 0 ? 'Tags' : 'Add tag...'}
               value={tagInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                 setTagInput(e.target.value);
@@ -191,7 +197,7 @@ export function NoteMetadata({
               }}
               onFocus={(): void => setIsTagDropdownOpen(true)}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   if (tagInput.trim()) {
                     void onCreateTag();
@@ -218,13 +224,13 @@ export function NoteMetadata({
                   !filteredTags.find(
                     (t: TagRecord) => t.name.toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                    <li
-                      onClick={(): void => { void onCreateTag(); }}
-                      className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
-                    >
+                  <li
+                    onClick={(): void => { void onCreateTag(); }}
+                    className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
+                  >
                       Create &quot;{tagInput}&quot;
-                    </li>
-                  )}
+                  </li>
+                )}
               </ul>
             </div>
           )}
@@ -251,7 +257,7 @@ export function NoteMetadata({
               tabIndex={0}
               onClick={(): void => onSelectRelatedNote(related.id)}
               onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   onSelectRelatedNote(related.id);
                 }
@@ -261,7 +267,7 @@ export function NoteMetadata({
                 {related.title}
               </div>
               <div className="text-[11px] leading-snug max-h-8 overflow-hidden opacity-80">
-                {related.content ? related.content : "No content"}
+                {related.content ? related.content : 'No content'}
               </div>
               <Button
                 type="button"
@@ -323,10 +329,10 @@ export function NoteMetadata({
                             id: candidate.id,
                             title: candidate.title,
                             color: candidate.color ?? null,
-                            content: candidate.content ?? "",
+                            content: candidate.content ?? '',
                           },
                         ]);
-                        setRelatedNoteQuery("");
+                        setRelatedNoteQuery('');
                         setIsRelatedDropdownOpen(false);
                       }}
                       className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
@@ -345,8 +351,8 @@ export function NoteMetadata({
                         (selected: { id: string }) => selected.id === candidate.id
                       )
                   ).length === 0 && (
-                    <li className="px-4 py-2 text-gray-500">No matches</li>
-                  )}
+                  <li className="px-4 py-2 text-gray-500">No matches</li>
+                )}
               </ul>
             </div>
           )}
@@ -363,7 +369,7 @@ export function NoteMetadata({
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
             checked={isPinned} 
-            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsPinned(Boolean(checked))}
+            onCheckedChange={(checked: boolean | 'indeterminate'): void => setIsPinned(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Pinned</span>
@@ -371,7 +377,7 @@ export function NoteMetadata({
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
             checked={isArchived} 
-            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsArchived(Boolean(checked))}
+            onCheckedChange={(checked: boolean | 'indeterminate'): void => setIsArchived(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Archived</span>
@@ -379,7 +385,7 @@ export function NoteMetadata({
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
             checked={isFavorite} 
-            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsFavorite(Boolean(checked))}
+            onCheckedChange={(checked: boolean | 'indeterminate'): void => setIsFavorite(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Favorite</span>

@@ -60,7 +60,7 @@ export class AppError extends Error {
 
   constructor(message: string, options: AppErrorOptions) {
     super(message);
-    this.name = "AppError";
+    this.name = 'AppError';
     this.code = options.code;
     this.httpStatus = options.httpStatus;
     if (options.meta !== undefined) {
@@ -126,7 +126,7 @@ export const validationError = (
   });
 
 export const authError = (
-  message: string = "Unauthorized",
+  message: string = 'Unauthorized',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -137,7 +137,7 @@ export const authError = (
   });
 
 export const forbiddenError = (
-  message: string = "Forbidden",
+  message: string = 'Forbidden',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -148,7 +148,7 @@ export const forbiddenError = (
   });
 
 export const notFoundError = (
-  message: string = "Not found",
+  message: string = 'Not found',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -159,7 +159,7 @@ export const notFoundError = (
   });
 
 export const conflictError = (
-  message: string = "Conflict",
+  message: string = 'Conflict',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -170,7 +170,7 @@ export const conflictError = (
   });
 
 export const badRequestError = (
-  message: string = "Bad request",
+  message: string = 'Bad request',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -181,7 +181,7 @@ export const badRequestError = (
   });
 
 export const rateLimitedError = (
-  message: string = "Too many requests",
+  message: string = 'Too many requests',
   retryAfterMs?: number,
   meta?: Record<string, unknown>
 ): AppError =>
@@ -195,7 +195,7 @@ export const rateLimitedError = (
   });
 
 export const payloadTooLargeError = (
-  message: string = "Payload too large",
+  message: string = 'Payload too large',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -206,7 +206,7 @@ export const payloadTooLargeError = (
   });
 
 export const unprocessableEntityError = (
-  message: string = "Unprocessable entity",
+  message: string = 'Unprocessable entity',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -221,7 +221,7 @@ export const unprocessableEntityError = (
 // ============================================================================
 
 export const internalError = (
-  message: string = "Unexpected error occurred",
+  message: string = 'Unexpected error occurred',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -233,7 +233,7 @@ export const internalError = (
   });
 
 export const externalServiceError = (
-  message: string = "External service error",
+  message: string = 'External service error',
   meta?: Record<string, unknown>,
   options?: { retryable?: boolean; retryAfterMs?: number }
 ): AppError =>
@@ -247,7 +247,7 @@ export const externalServiceError = (
   });
 
 export const serviceUnavailableError = (
-  message: string = "Service temporarily unavailable",
+  message: string = 'Service temporarily unavailable',
   retryAfterMs?: number,
   meta?: Record<string, unknown>
 ): AppError =>
@@ -261,7 +261,7 @@ export const serviceUnavailableError = (
   });
 
 export const timeoutError = (
-  message: string = "Operation timed out",
+  message: string = 'Operation timed out',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -273,7 +273,7 @@ export const timeoutError = (
   });
 
 export const databaseError = (
-  message: string = "Database operation failed",
+  message: string = 'Database operation failed',
   cause?: unknown,
   meta?: Record<string, unknown>
 ): AppError =>
@@ -287,7 +287,7 @@ export const databaseError = (
   });
 
 export const configurationError = (
-  message: string = "Server configuration error",
+  message: string = 'Server configuration error',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -303,7 +303,7 @@ export const configurationError = (
 // ============================================================================
 
 export const duplicateEntryError = (
-  message: string = "Duplicate entry",
+  message: string = 'Duplicate entry',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -314,7 +314,7 @@ export const duplicateEntryError = (
   });
 
 export const invalidStateError = (
-  message: string = "Invalid state for this operation",
+  message: string = 'Invalid state for this operation',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -325,7 +325,7 @@ export const invalidStateError = (
   });
 
 export const operationFailedError = (
-  message: string = "Operation failed",
+  message: string = 'Operation failed',
   cause?: unknown,
   meta?: Record<string, unknown>
 ): AppError =>
@@ -338,7 +338,7 @@ export const operationFailedError = (
   });
 
 export const resourceLockedError = (
-  message: string = "Resource is locked",
+  message: string = 'Resource is locked',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -351,7 +351,7 @@ export const resourceLockedError = (
   });
 
 export const quotaExceededError = (
-  message: string = "Quota exceeded",
+  message: string = 'Quota exceeded',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -366,7 +366,7 @@ export const quotaExceededError = (
 // ============================================================================
 
 export const integrationError = (
-  message: string = "Integration error",
+  message: string = 'Integration error',
   integrationName?: string,
   cause?: unknown,
   meta?: Record<string, unknown>
@@ -381,7 +381,7 @@ export const integrationError = (
   });
 
 export const apiKeyInvalidError = (
-  message: string = "Invalid or expired API key",
+  message: string = 'Invalid or expired API key',
   integrationName?: string,
   meta?: Record<string, unknown>
 ): AppError =>
@@ -393,7 +393,7 @@ export const apiKeyInvalidError = (
   });
 
 export const webhookFailedError = (
-  message: string = "Webhook delivery failed",
+  message: string = 'Webhook delivery failed',
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
@@ -413,7 +413,7 @@ export const webhookFailedError = (
  */
 export const wrapError = (
   error: unknown,
-  fallbackMessage: string = "An error occurred"
+  fallbackMessage: string = 'An error occurred'
 ): AppError => {
   if (isAppError(error)) return error;
 

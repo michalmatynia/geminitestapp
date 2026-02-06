@@ -1,42 +1,48 @@
-"use client";
+'use client';
 
-import React, { useEffect, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
+import { useSession } from 'next-auth/react';
+import React, { useEffect, useMemo } from 'react';
 
-
-
-
+import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
+import type { AuthUserSummary } from '@/features/auth/types';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
   mergeDefaultRoles,
   type AuthRole,
   type AuthUserRoleMap,
-} from "@/features/auth/utils/auth-management";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useAuthUsers } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import type { AuthUserSummary } from "@/features/auth/types";
+} from '@/features/auth/utils/auth-management';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
-  const authUsersQuery = useAuthUsers();
+  const { data: session } = useSession();
+  const canReadUsers = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.read')
+  );
+  const authUsersQuery = useAuthUsers(canReadUsers);
   const settingsQuery = useSettingsMap();
 
   useEffect(() => {
-    if (!authUsersQuery.error) return;
-    console.error("Failed to load auth dashboard data:", authUsersQuery.error);
-    toast("Failed to load auth dashboard data", { variant: "error" });
-  }, [authUsersQuery.error, toast]);
+    if (!authUsersQuery.error || !canReadUsers) return;
+    logClientError(authUsersQuery.error, { context: { source: 'AuthDashboardPage', action: 'loadMetrics' } });
+    toast('Failed to load auth dashboard data', { variant: 'error' });
+  }, [authUsersQuery.error, toast, canReadUsers]);
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load auth settings:", settingsQuery.error);
-    toast("Failed to load auth settings", { variant: "error" });
+    logClientError(settingsQuery.error, { context: { source: 'AuthDashboardPage', action: 'loadRoles' } });
+    toast('Failed to load auth settings', { variant: 'error' });
   }, [settingsQuery.error, toast]);
 
-  const users = useMemo<AuthUserSummary[]>(() => (authUsersQuery.data?.users ?? []), [authUsersQuery.data?.users]);
-  const provider = authUsersQuery.data?.provider ?? "mongodb";
+  const users = useMemo<AuthUserSummary[]>(
+    () => (canReadUsers ? authUsersQuery.data?.users ?? [] : []),
+    [authUsersQuery.data?.users, canReadUsers]
+  );
+  const provider = authUsersQuery.data?.provider ?? 'mongodb';
   const roles = useMemo<AuthRole[]>(() => {
     const storedRoles = parseJsonSetting<AuthRole[]>(
       settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles),
@@ -72,6 +78,15 @@ export default function AuthDashboardPage(): React.JSX.Element {
     });
     return { total, verified, unverified, roleCounts, unassigned };
   }, [roles, userRoles, users]);
+
+  if (!canReadUsers) {
+    return (
+      <SectionPanel className="p-6 text-sm text-amber-300">
+        You don&apos;t have permission to view auth metrics. Ask an admin to grant
+        `auth.users.read` or elevate your account.
+      </SectionPanel>
+    );
+  }
 
   if (authUsersQuery.isPending || settingsQuery.isPending) {
     return (

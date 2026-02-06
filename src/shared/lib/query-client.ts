@@ -1,7 +1,7 @@
 import {
   QueryClient,
   QueryClientConfig,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query';
 
 const queryConfig: QueryClientConfig = {
   defaultOptions: {
@@ -22,7 +22,7 @@ export const createQueryClient = (): QueryClient => new QueryClient(queryConfig)
 let clientSingleton: QueryClient | undefined;
 
 export function getQueryClient(): QueryClient {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     // Server: always create a new client
     return createQueryClient();
   }

@@ -1,15 +1,16 @@
-import "server-only";
+import 'server-only';
 
-import { randomUUID } from "crypto";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { randomUUID } from 'crypto';
+
 import type {
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
-} from "@/features/jobs/types/product-ai-job-repository";
-import { notFoundError } from "@/shared/errors/app-error";
+} from '@/features/jobs/types/product-ai-job-repository';
+import { notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-const JOBS_COLLECTION = "product_ai_jobs";
+const JOBS_COLLECTION = 'product_ai_jobs';
 
 type JobDocument = {
   _id: string;
@@ -29,7 +30,7 @@ type JobDocument = {
 const toRecord = (doc: JobDocument): ProductAiJobRecord => ({
   id: doc.id || doc._id,
   productId: doc.productId,
-  status: doc.status as ProductAiJobRecord["status"],
+  status: doc.status as ProductAiJobRecord['status'],
   type: doc.type,
   payload: doc.payload,
   result: doc.result ?? null,
@@ -49,7 +50,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
       _id: id,
       id,
       productId,
-      status: "pending",
+      status: 'pending',
       type,
       payload,
       createdAt: now,
@@ -82,7 +83,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<JobDocument>(JOBS_COLLECTION)
-      .findOne({ status: "pending" }, { sort: { createdAt: 1 } });
+      .findOne({ status: 'pending' }, { sort: { createdAt: 1 } });
     return doc ? toRecord(doc) : null;
   },
 
@@ -90,7 +91,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<JobDocument>(JOBS_COLLECTION)
-      .findOne({ status: "pending" }, { sort: { createdAt: 1 } });
+      .findOne({ status: 'pending' }, { sort: { createdAt: 1 } });
     return doc ? toRecord(doc) : null;
   },
 
@@ -100,9 +101,9 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const result = await db
       .collection<JobDocument>(JOBS_COLLECTION)
       .findOneAndUpdate(
-        { status: "pending" },
-        { $set: { status: "running", startedAt: now, updatedAt: now } },
-        { sort: { createdAt: 1 }, returnDocument: "after" }
+        { status: 'pending' },
+        { $set: { status: 'running', startedAt: now, updatedAt: now } },
+        { sort: { createdAt: 1 }, returnDocument: 'after' }
       );
     if (!result) return null;
     return toRecord(result);
@@ -111,7 +112,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
   async updateJob(jobId: string, data: ProductAiJobUpdate) {
     const db = await getMongoDb();
     const now = new Date();
-    const idString = typeof jobId === "string" ? jobId : String(jobId);
+    const idString = typeof jobId === 'string' ? jobId : String(jobId);
     const { productId, type, payload, createdAt, ...rest } = data;
     const updateData = { ...rest, updatedAt: now };
     const filter = {
@@ -127,7 +128,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
       .findOneAndUpdate(
         filter,
         { $set: updateData },
-        { returnDocument: "after" }
+        { returnDocument: 'after' }
       );
 
     if (!result) {
@@ -140,7 +141,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
           .findOneAndUpdate(
             { _id: existing._id },
             { $set: updateData },
-            { returnDocument: "after" }
+            { returnDocument: 'after' }
           );
         if (retry) {
           return toRecord(retry);
@@ -151,7 +152,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
           _id: idString,
           id: idString,
           productId,
-          status: data.status ?? "pending",
+          status: data.status ?? 'pending',
           type,
           payload,
           result: data.result,
@@ -183,7 +184,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
           return toRecord(inserted);
         }
       }
-      throw notFoundError("Job not found", { jobId: idString });
+      throw notFoundError('Job not found', { jobId: idString });
     }
 
     return toRecord(result);
@@ -200,7 +201,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const db = await getMongoDb();
     const result = await db
       .collection<JobDocument>(JOBS_COLLECTION)
-      .deleteMany({ status: { $in: ["completed", "failed", "canceled"] } });
+      .deleteMany({ status: { $in: ['completed', 'failed', 'canceled'] } });
     return { count: result.deletedCount ?? 0 };
   },
 
@@ -218,12 +219,12 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const result = await db
       .collection<JobDocument>(JOBS_COLLECTION)
       .updateMany(
-        { status: "running", startedAt: { $lt: cutoff } },
+        { status: 'running', startedAt: { $lt: cutoff } },
         {
           $set: {
-            status: "failed",
+            status: 'failed',
             finishedAt: new Date(),
-            errorMessage: "Job marked failed due to stale running state.",
+            errorMessage: 'Job marked failed due to stale running state.',
           },
         }
       );

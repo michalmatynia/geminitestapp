@@ -38,13 +38,13 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     if (!connection) {
       throw notFoundError("Connection not found.", {
         connectionId: connId,
-        integrationId: id,
+        integrationId: id
       });
     }
 
     if (!connection.username?.trim()) {
       throw badRequestError("Allegro client ID is required.", {
-        connectionId: connId,
+        connectionId: connId
       });
     }
 
@@ -67,7 +67,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       sameSite: "lax",
       secure: callbackUrl.protocol === "https:",
       maxAge: 600,
-      path: "/",
+      path: "/"
     });
 
     return response;
@@ -78,9 +78,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       fallbackMessage: "Failed to start Allegro authorization.",
       ...(integrationId || connectionId
         ? { extra: { integrationId, connectionId } }
-        : {}),
+        : {})
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(GET_handler, { source: "integrations.[id].connections.[connectionId].allegro.authorize.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  GET_handler,
+  { source: "integrations.[id].connections.[connectionId].allegro.authorize.GET", requireCsrf: false }
+);

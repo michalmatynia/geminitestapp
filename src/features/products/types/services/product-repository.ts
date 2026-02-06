@@ -1,8 +1,8 @@
-import type { ProductWithImages, ProductRecord } from "@/features/products/types";
+import type { ProductWithImages, ProductRecord } from '@/features/products/types';
 import type {
   ProductCreateData,
   ProductUpdateData,
-} from "@/features/products/validations";
+} from '@/features/products/validations';
 
 export type ProductFilters = {
   search?: string;
@@ -38,9 +38,9 @@ export type ProductRepository = {
     productId: string,
     catalogIds: string[]
   ): Promise<void>;
-  replaceProductCategories(
+  replaceProductCategory(
     productId: string,
-    categoryIds: string[]
+    categoryId: string | null
   ): Promise<void>;
   replaceProductTags(
     productId: string,

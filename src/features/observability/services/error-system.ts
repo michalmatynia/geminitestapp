@@ -1,9 +1,20 @@
+export enum ErrorCategory {
+  SYSTEM = 'SYSTEM',
+  USER = 'USER',
+  VALIDATION = 'VALIDATION',
+  EXTERNAL = 'EXTERNAL',
+  AI = 'AI',
+  DATABASE = 'DATABASE'
+}
+
 export interface ErrorContext {
-  service?: string;
-  runId?: string; // For agent runs
-  jobId?: string; // For background jobs
-  productId?: string;
-  errorId?: string;
+  service?: string | null | undefined;
+  runId?: string | null | undefined; // For agent runs
+  jobId?: string | null | undefined; // For background jobs
+  productId?: string | null | undefined;
+  errorId?: string | null | undefined;
+  category?: ErrorCategory | string | null | undefined;
+  userMessage?: string | null | undefined;
   [key: string]: unknown;
 }
 
@@ -20,13 +31,13 @@ export const ErrorSystem = {
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import("@/features/observability/server");
+      const { logSystemEvent } = await import('@/features/observability/server');
       const message = error instanceof Error ? error.message : String(error);
-      const service = context.service || "unknown";
+      const service = context.service || 'unknown';
 
       // 1. Log to System Log (DB + Console)
       await logSystemEvent({
-        level: "error",
+        level: 'error',
         message: `[${service}] ${message}`,
         source: service,
         error,
@@ -43,18 +54,18 @@ export const ErrorSystem = {
       // If it's an Agent Run, log to Agent Audit
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import("@/features/ai/agent-runtime/server");
-          await logAgentAudit(context.runId, "error", message, {
-            errorId: context.errorId || "unknown",
+          const { logAgentAudit } = await import('@/features/ai/agent-runtime/server');
+          await logAgentAudit(context.runId, 'error', message, {
+            errorId: context.errorId || 'unknown',
             ...context
           });
         } catch (auditError) {
           // Fallback to console if audit logging fails
-          console.error(`[ErrorSystem] Failed to log to Agent Audit:`, auditError);
+          console.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
         }
       }
     } catch (importError) {
-      console.error(`[ErrorSystem] Failed to import dependencies:`, importError);
+      console.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 
@@ -63,26 +74,26 @@ export const ErrorSystem = {
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import("@/features/observability/server");
-      const service = context.service || "unknown";
+      const { logSystemEvent } = await import('@/features/observability/server');
+      const service = context.service || 'unknown';
       
       await logSystemEvent({
-        level: "warn",
+        level: 'warn',
         message: `[${service}] ${message}`,
         source: service,
         context
       });
 
       if (context.runId) {
-         try {
-          const { logAgentAudit } = await import("@/features/ai/agent-runtime/server");
-          await logAgentAudit(context.runId, "warning", message, context);
+        try {
+          const { logAgentAudit } = await import('@/features/ai/agent-runtime/server');
+          await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
-          console.warn(`[ErrorSystem] Failed to log warning to Agent Audit:`, auditError);
+          console.warn('[ErrorSystem] Failed to log warning to Agent Audit:', auditError);
         }
       }
     } catch (importError) {
-      console.error(`[ErrorSystem] Failed to import dependencies:`, importError);
+      console.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 
@@ -91,17 +102,42 @@ export const ErrorSystem = {
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import("@/features/observability/server");
-      const service = context.service || "unknown";
+      const { logSystemEvent } = await import('@/features/observability/server');
+      const service = context.service || 'unknown';
       
       await logSystemEvent({
-        level: "info",
+        level: 'info',
         message: `[${service}] ${message}`,
         source: service,
         context
       });
     } catch (importError) {
-      console.error(`[ErrorSystem] Failed to import dependencies:`, importError);
+      console.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
+  },
+
+  /**
+   * Generate a structured error report for debugging or display.
+   */
+  generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    
+    return {
+      id: context.errorId || `err_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      category: context.category || ErrorCategory.SYSTEM,
+      message,
+      userMessage: context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
+      service: context.service || 'unknown',
+      context: {
+        ...context,
+        // Remove sensitive or redundant info
+        errorId: undefined,
+        userMessage: undefined,
+        category: undefined
+      },
+      debug: process.env.NODE_ENV !== 'production' ? { stack } : undefined
+    };
   }
 };

@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import type { BlockInstance } from "../../../types/page-builder";
-import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import React, { useMemo } from 'react';
+
+import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+
+import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendModel3DElementSectionProps {
   settings: Record<string, unknown>;
@@ -18,8 +20,8 @@ export function FrontendModel3DElementSection({
 
   const block = useMemo<BlockInstance>(
     () => ({
-      id: "model3d-element-section",
-      type: "Model3D",
+      id: 'model3d-element-section',
+      type: 'Model3D',
       settings: blockSettings,
     }),
     [blockSettings]

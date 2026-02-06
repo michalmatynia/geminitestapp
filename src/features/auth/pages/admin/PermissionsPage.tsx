@@ -1,13 +1,6 @@
-"use client";
+'use client';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
-
-
-
-
-
-
+import { useEffect, useMemo, useState } from 'react';
 
 
 import {
@@ -17,16 +10,18 @@ import {
   mergeDefaultRoles,
   type AuthPermission,
   type AuthRole,
-} from "@/features/auth/utils/auth-management";
-import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
+} from '@/features/auth/utils/auth-management';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 const slugify = (value: string): string =>
   value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 
 export default function AuthPermissionsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -34,8 +29,8 @@ export default function AuthPermissionsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load permissions settings:", settingsQuery.error);
-    toast("Failed to load permission settings", { variant: "error" });
+    logClientError(settingsQuery.error, { context: { source: 'AuthPermissionsPage', action: 'loadSettings' } });
+    toast('Failed to load permission settings', { variant: 'error' });
   }, [settingsQuery.error, toast]);
 
   if (settingsQuery.isPending || !settingsQuery.data) {
@@ -78,11 +73,11 @@ function AuthPermissionsForm({
   const [roles, setRoles] = useState<AuthRole[]>(initialRoles);
   const saveSettingsMutation = useUpdateSettingsBulk();
 
-  const [newPermissionId, setNewPermissionId] = useState("");
-  const [newPermissionName, setNewPermissionName] = useState("");
-  const [newPermissionDescription, setNewPermissionDescription] = useState("");
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const [newPermissionId, setNewPermissionId] = useState('');
+  const [newPermissionName, setNewPermissionName] = useState('');
+  const [newPermissionDescription, setNewPermissionDescription] = useState('');
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleDescription, setNewRoleDescription] = useState('');
 
   const permissionIds = useMemo(
     () => new Set(permissions.map((permission: AuthPermission) => permission.id)),
@@ -106,11 +101,11 @@ function AuthPermissionsForm({
   const handleAddPermission = (): void => {
     const id = newPermissionId.trim() || slugify(newPermissionName);
     if (!id || !newPermissionName.trim()) {
-      toast("Provide a permission name", { variant: "error" });
+      toast('Provide a permission name', { variant: 'error' });
       return;
     }
     if (permissionIds.has(id)) {
-      toast("Permission ID already exists", { variant: "error" });
+      toast('Permission ID already exists', { variant: 'error' });
       return;
     }
     setPermissions((prev: AuthPermission[]) => [
@@ -121,9 +116,9 @@ function AuthPermissionsForm({
         ...(newPermissionDescription.trim() ? { description: newPermissionDescription.trim() } : {}),
       },
     ]);
-    setNewPermissionId("");
-    setNewPermissionName("");
-    setNewPermissionDescription("");
+    setNewPermissionId('');
+    setNewPermissionName('');
+    setNewPermissionDescription('');
     setDirty(true);
   };
 
@@ -141,11 +136,11 @@ function AuthPermissionsForm({
   const handleAddRole = (): void => {
     const id = slugify(newRoleName);
     if (!id || !newRoleName.trim()) {
-      toast("Provide a role name", { variant: "error" });
+      toast('Provide a role name', { variant: 'error' });
       return;
     }
     if (roles.some((role: AuthRole) => role.id === id)) {
-      toast("Role ID already exists", { variant: "error" });
+      toast('Role ID already exists', { variant: 'error' });
       return;
     }
     setRoles((prev: AuthRole[]) => [
@@ -159,14 +154,14 @@ function AuthPermissionsForm({
         level: 10,
       },
     ]);
-    setNewRoleName("");
-    setNewRoleDescription("");
+    setNewRoleName('');
+    setNewRoleDescription('');
     setDirty(true);
   };
 
   const handleRemoveRole = (roleId: string): void => {
-    if (roleId === "admin") {
-      toast("Admin role cannot be removed", { variant: "error" });
+    if (roleId === 'admin') {
+      toast('Admin role cannot be removed', { variant: 'error' });
       return;
     }
     setRoles((prev: AuthRole[]) => prev.filter((role: AuthRole) => role.id !== roleId));
@@ -175,21 +170,21 @@ function AuthPermissionsForm({
 
   const handleRoleFieldChange = (
     roleId: string,
-    field: "name" | "description" | "level",
+    field: 'name' | 'description' | 'level',
     value: string
   ): void => {
     setRoles((prev: AuthRole[]) =>
       prev.map((role: AuthRole) =>
         role.id === roleId
           ? {
-              ...role,
-              [field]:
-                field === "level"
+            ...role,
+            [field]:
+                field === 'level'
                   ? Number.isNaN(Number(value))
                     ? role.level ?? 0
                     : Number(value)
                   : value,
-            }
+          }
           : role
       )
     );
@@ -209,10 +204,10 @@ function AuthPermissionsForm({
         },
       ]);
       setDirty(false);
-      toast("Permission settings saved", { variant: "success" });
+      toast('Permission settings saved', { variant: 'success' });
     } catch (error) {
-      console.error("Failed to save permission settings:", error);
-      toast("Failed to save permission settings", { variant: "error" });
+      logClientError(error, { context: { source: 'AuthPermissionsPage', action: 'saveSettings' } });
+      toast('Failed to save permission settings', { variant: 'error' });
     }
   };
 
@@ -332,14 +327,14 @@ function AuthPermissionsForm({
                     <Label className="text-xs text-gray-400">Role name</Label>
                     <Input
                       value={role.name}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleRoleFieldChange(role.id, "name", event.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleRoleFieldChange(role.id, 'name', event.target.value)}
                       className="bg-gray-900 border text-white"
                     />
                     <Label className="text-xs text-gray-400">Description</Label>
                     <Input
-                      value={role.description ?? ""}
+                      value={role.description ?? ''}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRoleFieldChange(role.id, "description", event.target.value)
+                        handleRoleFieldChange(role.id, 'description', event.target.value)
                       }
                       className="bg-gray-900 border text-white"
                     />
@@ -350,7 +345,7 @@ function AuthPermissionsForm({
                       max={100}
                       value={role.level ?? 0}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRoleFieldChange(role.id, "level", event.target.value)
+                        handleRoleFieldChange(role.id, 'level', event.target.value)
                       }
                       className="bg-gray-900 border text-white"
                     />
@@ -430,7 +425,7 @@ function AuthPermissionsForm({
           onClick={() => void handleSave()}
           disabled={!dirty || saveSettingsMutation.isPending}
         >
-          {saveSettingsMutation.isPending ? "Saving..." : "Save permissions"}
+          {saveSettingsMutation.isPending ? 'Saving...' : 'Save permissions'}
         </Button>
       </div>
     </div>

@@ -1,32 +1,70 @@
 export const SUPPORTED_3D_FORMATS = {
-  ".glb": { mimetype: "model/gltf-binary", description: "GL Transmission Format Binary" },
-  ".gltf": { mimetype: "model/gltf+json", description: "GL Transmission Format" },
+  '.glb': { mimetype: 'model/gltf-binary', description: 'GL Transmission Format Binary' },
+  '.gltf': { mimetype: 'model/gltf+json', description: 'GL Transmission Format' },
 } as const;
 
 export type Supported3DExtension = keyof typeof SUPPORTED_3D_FORMATS;
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
+const hasExternalGltfResources = async (file: File): Promise<boolean> => {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text) as {
+      buffers?: Array<{ uri?: string }>;
+      images?: Array<{ uri?: string }>;
+    };
+    const buffers = data.buffers ?? [];
+    const images = data.images ?? [];
+    const uris = [
+      ...buffers.map((item: { uri?: string }) => item.uri).filter((uri: string | undefined): uri is string => Boolean(uri)),
+      ...images.map((item: { uri?: string }) => item.uri).filter((uri: string | undefined): uri is string => Boolean(uri)),
+    ];
+    return uris.some((uri: string) => !uri.startsWith('data:'));
+  } catch {
+    return false;
+  }
+};
+
 export function validate3DFile(file: File): { valid: boolean; error?: string } {
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: `File too large. Maximum size: 100MB` };
+    return { valid: false, error: 'File too large. Maximum size: 100MB' };
   }
 
-  const ext = "." + file.name.toLowerCase().split(".").pop();
+  const ext = '.' + file.name.toLowerCase().split('.').pop();
   if (!Object.keys(SUPPORTED_3D_FORMATS).includes(ext)) {
     return {
       valid: false,
-      error: `Unsupported format. Supported: ${Object.keys(SUPPORTED_3D_FORMATS).join(", ")}`,
+      error: `Unsupported format. Supported: ${Object.keys(SUPPORTED_3D_FORMATS).join(', ')}`,
     };
   }
 
   return { valid: true };
 }
 
+export async function validate3DFileAsync(file: File): Promise<{ valid: boolean; error?: string }> {
+  const baseValidation = validate3DFile(file);
+  if (!baseValidation.valid) return baseValidation;
+
+  const ext = '.' + file.name.toLowerCase().split('.').pop();
+  if (ext === '.gltf') {
+    const hasExternal = await hasExternalGltfResources(file);
+    if (hasExternal) {
+      return {
+        valid: false,
+        error:
+          'This .gltf references external textures/buffers. Upload a .glb or a .gltf with embedded (data:) resources.',
+      };
+    }
+  }
+
+  return baseValidation;
+}
+
 export function isValid3DAsset(file: File): boolean {
-  const ext = "." + file.name.toLowerCase().split(".").pop();
+  const ext = '.' + file.name.toLowerCase().split('.').pop();
   const allowedExtensions = Object.keys(SUPPORTED_3D_FORMATS);
-  const allowedMimetypes = ["model/gltf-binary", "model/gltf+json", "application/octet-stream"];
+  const allowedMimetypes = ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'];
 
   return allowedExtensions.includes(ext) || allowedMimetypes.includes(file.type);
 }

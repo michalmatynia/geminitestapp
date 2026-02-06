@@ -1,34 +1,36 @@
-import "server-only";
+import 'server-only';
 
-import fs from "fs/promises";
-import path from "path";
+import fs from 'fs/promises';
+import path from 'path';
 
-import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
-import { SUPPORTED_3D_FORMATS, type Supported3DExtension } from "./validateAsset3d";
+import { Prisma } from '@prisma/client';
 
-const assets3dDiskDir = path.join(process.cwd(), "public", "uploads", "assets3d");
-const assets3dPublicDir = "/uploads/assets3d";
+import prisma from '@/shared/lib/db/prisma';
+
+import { SUPPORTED_3D_FORMATS, type Supported3DExtension } from './validateAsset3d';
+
+const assets3dDiskDir = path.join(process.cwd(), 'public', 'uploads', 'assets3d');
+const assets3dPublicDir = '/uploads/assets3d';
 
 const isSupported3DFile = (filename: string): filename is string => {
-  const ext = `.${filename.split(".").pop() ?? ""}`.toLowerCase() as Supported3DExtension;
+  const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
   return ext in SUPPORTED_3D_FORMATS;
 };
 
 const toTitleCase = (value: string): string =>
   value
-    .split(" ")
+    .split(' ')
     .filter(Boolean)
     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(' ');
 
 const deriveAssetName = (filename: string): string | null => {
   // Common uploader pattern: `${Date.now()}-${originalName}`
-  const withoutExt = filename.replace(/\.[^/.]+$/, "");
-  const withoutTimestampPrefix = withoutExt.replace(/^\d{10,}-/, "");
+  const withoutExt = filename.replace(/\.[^/.]+$/, '');
+  const withoutTimestampPrefix = withoutExt.replace(/^\d{10,}-/, '');
   const cleaned = withoutTimestampPrefix
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
   if (!cleaned) return null;
   return toTitleCase(cleaned);
@@ -42,8 +44,8 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   skipped: number;
   createdIds: string[];
 }> {
-  const entries: import("fs").Dirent[] = await fs.readdir(assets3dDiskDir, { withFileTypes: true }).catch(() => []);
-  const diskFiles: string[] = entries.filter((entry: import("fs").Dirent) => entry.isFile()).map((entry: import("fs").Dirent) => entry.name);
+  const entries: import('fs').Dirent[] = await fs.readdir(assets3dDiskDir, { withFileTypes: true }).catch(() => []);
+  const diskFiles: string[] = entries.filter((entry: import('fs').Dirent) => entry.isFile()).map((entry: import('fs').Dirent) => entry.name);
   const supported: string[] = diskFiles.filter(isSupported3DFile);
 
   if (supported.length === 0) {
@@ -79,7 +81,7 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   const created: number = await prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<number> => {
     let createdCount = 0;
     for (const filename of missing) {
-      const ext = `.${filename.split(".").pop() ?? ""}`.toLowerCase() as Supported3DExtension;
+      const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
       const format = SUPPORTED_3D_FORMATS[ext];
       const stat = await fs.stat(path.join(assets3dDiskDir, filename));
 
@@ -89,7 +91,7 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
           description: null,
           filename,
           filepath: `${assets3dPublicDir}/${filename}`,
-          mimetype: format?.mimetype ?? "application/octet-stream",
+          mimetype: format?.mimetype ?? 'application/octet-stream',
           size: stat.size,
           tags: [],
           category: null,

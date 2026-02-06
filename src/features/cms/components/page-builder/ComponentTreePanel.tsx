@@ -1,297 +1,50 @@
-"use client";
+'use client';
 
-import React, { useCallback, useState } from "react";
-import { ChevronRight, ChevronDown } from "lucide-react";
-import type { SectionInstance } from "../../types/page-builder";
-import type { PageZone } from "../../types/page-builder";
-import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { SectionNodeItem } from "./ComponentTreeNodeItem";
-import { SectionPicker } from "./SectionPicker";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
-import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from "./settings/PageBuilderSettingsPage";
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { FolderTreePanel, TreeHeader } from '@/shared/ui';
+
+import { SectionNodeItem } from './ComponentTreeNodeItem';
+import { SectionPicker } from './SectionPicker';
+import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from './settings/PageBuilderSettingsPage';
+import { useDragState } from '../../hooks/useDragStateContext';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
+import { readSectionDragData } from '../../utils/page-builder-dnd';
+
+import type { SectionInstance } from '../../types/page-builder';
+import type { PageZone } from '../../types/page-builder';
 
 const ZONE_LABELS: Record<PageZone, string> = {
-  header: "Header",
-  template: "Template",
-  footer: "Footer",
+  header: 'Header',
+  template: 'Template',
+  footer: 'Footer',
 };
 
-const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
+const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
+
+// Block types that can be promoted to standalone sections
+const PROMOTABLE_BLOCK_TYPES = ['ImageElement', 'TextElement', 'ButtonElement', 'Block', 'TextAtom', 'Model3DElement', 'Slideshow'];
 
 export function ComponentTreePanel(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
+  const { state } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
 
   // Get the settings for showing placeholders
-  const { data: settingsMap } = useSettingsMap();
-  const extractPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-  const sectionDropPlaceholderValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
-  // Show extract placeholder only when explicitly set to "true"
-  const showExtractPlaceholder = extractPlaceholderValue === "true";
-  // Show section drop placeholder by default (true unless explicitly set to "false")
-  const showSectionDropPlaceholder = sectionDropPlaceholderValue !== "false";
+  const settingsStore = useSettingsStore();
+  const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  const showExtractPlaceholder = extractPlaceholderValue === 'true';
+  const showSectionDropPlaceholder = sectionDropPlaceholderValue !== 'false';
 
-  // Drag-and-drop state for blocks
-  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
-  const [draggedBlockType, setDraggedBlockType] = useState<string | null>(null);
-  const [draggedFromSectionId, setDraggedFromSectionId] = useState<string | null>(null);
-  const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
-  const [draggedFromParentBlockId, setDraggedFromParentBlockId] = useState<string | null>(null);
+  // Ensure drag state context is available
+  useDragState();
 
-  const handleSelectNode = useCallback(
-    (nodeId: string) => {
-      dispatch({ type: "SELECT_NODE", nodeId });
-    },
-    [dispatch]
-  );
-
-  const handleAddSection = useCallback(
-    (sectionType: string, zone: PageZone) => {
-      dispatch({ type: "ADD_SECTION", sectionType, zone });
-    },
-    [dispatch]
-  );
-
-  const handleAddBlock = useCallback(
-    (sectionId: string, blockType: string) => {
-      dispatch({ type: "ADD_BLOCK", sectionId, blockType });
-      // Auto-expand the section when a block is added
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleDropBlock = useCallback(
-    (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => {
-      dispatch({
-        type: "MOVE_BLOCK",
-        blockId,
-        fromSectionId,
-        toSectionId,
-        toIndex,
-      });
-      // Auto-expand the target section
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleAddBlockToColumn = useCallback(
-    (sectionId: string, columnId: string, blockType: string) => {
-      dispatch({ type: "ADD_BLOCK_TO_COLUMN", sectionId, columnId, blockType });
-      // Auto-expand section and column
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        next.add(columnId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleDropBlockToColumn = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => {
-      dispatch({
-        type: "MOVE_BLOCK_TO_COLUMN",
-        blockId,
-        fromSectionId,
-        ...(fromColumnId && { fromColumnId }),
-        ...(fromParentBlockId && { fromParentBlockId }),
-        toSectionId,
-        toColumnId,
-        ...(toParentBlockId && { toParentBlockId }),
-        toIndex,
-      });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        next.add(toColumnId);
-        if (toParentBlockId) next.add(toParentBlockId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleDropBlockToSection = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => {
-      dispatch({
-        type: "MOVE_BLOCK_TO_SECTION",
-        blockId,
-        fromSectionId,
-        ...(fromColumnId && { fromColumnId }),
-        ...(fromParentBlockId && { fromParentBlockId }),
-        toSectionId,
-        toIndex,
-      });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleDropBlockToRow = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => {
-      dispatch({
-        type: "MOVE_BLOCK_TO_ROW",
-        blockId,
-        fromSectionId,
-        ...(fromColumnId && { fromColumnId }),
-        ...(fromParentBlockId && { fromParentBlockId }),
-        toSectionId,
-        toRowId,
-        toIndex,
-      });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        next.add(toRowId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleAddGridRow = useCallback(
-    (sectionId: string) => {
-      dispatch({ type: "ADD_GRID_ROW", sectionId });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleRemoveGridRow = useCallback(
-    (sectionId: string, rowId: string) => {
-      dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId });
-    },
-    [dispatch]
-  );
-
-  const handleAddColumnToRow = useCallback(
-    (sectionId: string, rowId: string) => {
-      dispatch({ type: "ADD_COLUMN_TO_ROW", sectionId, rowId });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        next.add(rowId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleRemoveColumnFromRow = useCallback(
-    (sectionId: string, columnId: string, rowId?: string) => {
-      dispatch({ 
-        type: "REMOVE_COLUMN_FROM_ROW", 
-        sectionId, 
-        columnId, 
-        ...(rowId && { rowId })
-      });
-    },
-    [dispatch]
-  );
-
-  const handleAddElementToNestedBlock = useCallback(
-    (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => {
-      dispatch({ type: "ADD_ELEMENT_TO_NESTED_BLOCK", sectionId, columnId, parentBlockId, elementType });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(sectionId);
-        next.add(columnId);
-        next.add(parentBlockId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleDropSectionToColumn = useCallback(
-    (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => {
-      dispatch({
-        type: "MOVE_SECTION_TO_COLUMN",
-        sectionId,
-        toSectionId,
-        toColumnId,
-        ...(toParentBlockId && { toParentBlockId }),
-        toIndex,
-      });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        next.add(toColumnId);
-        if (toParentBlockId) next.add(toParentBlockId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handleConvertSectionToBlock = useCallback(
-    (sectionId: string, toSectionId: string, toIndex: number) => {
-      dispatch({ type: "CONVERT_SECTION_TO_BLOCK", sectionId, toSectionId, toIndex });
-      setExpandedIds((prev: Set<string>) => {
-        const next = new Set(prev);
-        next.add(toSectionId);
-        return next;
-      });
-    },
-    [dispatch]
-  );
-
-  const handlePromoteBlockToSection = useCallback(
-    (
-      blockId: string,
-      fromSectionId: string,
-      fromColumnId: string | undefined,
-      fromParentBlockId: string | undefined,
-      toZone: PageZone,
-      toIndex: number
-    ) => {
-      dispatch({
-        type: "CONVERT_BLOCK_TO_SECTION",
-        blockId,
-        fromSectionId,
-        ...(fromColumnId && { fromColumnId }),
-        ...(fromParentBlockId && { fromParentBlockId }),
-        toZone,
-        toIndex,
-      });
-    },
-    [dispatch]
-  );
-
-  const handleToggleExpand = useCallback((nodeId: string) => {
-    setExpandedIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
-      } else {
-        next.add(nodeId);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleToggleZone = useCallback((zone: PageZone) => {
-    setCollapsedZones((prev: Set<PageZone>) => {
+  const handleToggleZone = (zone: PageZone) => {
+    setCollapsedZones((prev) => {
       const next = new Set(prev);
       if (next.has(zone)) {
         next.delete(zone);
@@ -300,71 +53,35 @@ export function ComponentTreePanel(): React.ReactNode {
       }
       return next;
     });
-  }, []);
-
-  const handlePasteSection = useCallback(
-    (zone: PageZone) => {
-      dispatch({ type: "PASTE_SECTION", zone });
-    },
-    [dispatch]
-  );
-
-  const handleToggleSectionVisibility = useCallback(
-    (sectionId: string, isHidden: boolean) => {
-      dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } });
-    },
-    [dispatch]
-  );
-
-  const handleRemoveSection = useCallback(
-    (sectionId: string) => {
-      dispatch({ type: "REMOVE_SECTION", sectionId });
-    },
-    [dispatch]
-  );
-
-
-  // Section drag-and-drop state
-  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
-  const [draggedSectionType, setDraggedSectionType] = useState<string | null>(null);
-  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
-  const [draggedSectionZone, setDraggedSectionZone] = useState<PageZone | null>(null);
-
-  const handleDropSectionInZone = useCallback(
-    (droppedSectionId: string, zone: PageZone, toIndex: number) => {
-      const section = state.sections.find((s: SectionInstance) => s.id === droppedSectionId);
-      if (!section) return;
-      if (section.zone === zone) {
-        // Reorder within same zone
-        const zoneSections = state.sections.filter((s: SectionInstance) => s.zone === zone);
-        const fromIndex = zoneSections.findIndex((s: SectionInstance) => s.id === droppedSectionId);
-        if (fromIndex === -1 || fromIndex === toIndex) return;
-        dispatch({ type: "REORDER_SECTIONS", zone, fromIndex, toIndex });
-      } else {
-        // Move to a different zone
-        dispatch({ type: "MOVE_SECTION_TO_ZONE", sectionId: droppedSectionId, toZone: zone, toIndex });
-      }
-    },
-    [state.sections, dispatch]
-  );
+  };
 
   // Group sections by zone
   const sectionsByZone = ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
-    (acc: Record<PageZone, SectionInstance[]>, zone: PageZone) => {
+    (acc, zone) => {
       acc[zone] = state.sections.filter((s: SectionInstance) => s.zone === zone);
       return acc;
     },
     { header: [], template: [], footer: [] }
   );
 
+  const sectionCount = state.sections.length;
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Zone groups */}
-      <div className="flex-1 overflow-y-auto">
+    <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
+      <FolderTreePanel
+        className="flex-1 min-h-0"
+        bodyClassName="flex-1 min-h-0 overflow-y-auto"
+        header={(
+          <TreeHeader
+            title="Structure"
+            subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
+          />
+        )}
+      >
         {!state.currentPage ? (
           <div className="p-4" />
         ) : (
-          ZONE_ORDER.map((zone: PageZone) => {
+          ZONE_ORDER.map((zone) => {
             const isCollapsed = collapsedZones.has(zone);
             const zoneSections = sectionsByZone[zone];
 
@@ -379,54 +96,14 @@ export function ComponentTreePanel(): React.ReactNode {
                 selectedNodeId={state.selectedNodeId}
                 currentPage={state.currentPage}
                 clipboard={state.clipboard}
-                onSelectNode={handleSelectNode}
-                onAddSection={handleAddSection}
-                onAddBlock={handleAddBlock}
-                onDropBlock={handleDropBlock}
-                onDropBlockToSection={handleDropBlockToSection}
-                onAddBlockToColumn={handleAddBlockToColumn}
-                onDropBlockToColumn={handleDropBlockToColumn}
-                onAddGridRow={handleAddGridRow}
-                onRemoveGridRow={handleRemoveGridRow}
-                onAddColumnToRow={handleAddColumnToRow}
-                onRemoveColumnFromRow={handleRemoveColumnFromRow}
-                onAddElementToNestedBlock={handleAddElementToNestedBlock}
-                onDropSectionInZone={handleDropSectionInZone}
-                onPasteSection={handlePasteSection}
-                onToggleSectionVisibility={handleToggleSectionVisibility}
-                onRemoveSection={handleRemoveSection}
-                expandedIds={expandedIds}
-                onToggleExpand={handleToggleExpand}
-                draggedBlockId={draggedBlockId}
-                setDraggedBlockId={setDraggedBlockId}
-                draggedBlockType={draggedBlockType}
-                setDraggedBlockType={setDraggedBlockType}
-                onDropBlockToRow={handleDropBlockToRow}
-                draggedFromSectionId={draggedFromSectionId}
-                setDraggedFromSectionId={setDraggedFromSectionId}
-                draggedFromColumnId={draggedFromColumnId}
-                setDraggedFromColumnId={setDraggedFromColumnId}
-                draggedFromParentBlockId={draggedFromParentBlockId}
-                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                draggedSectionId={draggedSectionId}
-                setDraggedSectionId={setDraggedSectionId}
-                draggedSectionType={draggedSectionType}
-                setDraggedSectionType={setDraggedSectionType}
-                draggedSectionIndex={draggedSectionIndex}
-                setDraggedSectionIndex={setDraggedSectionIndex}
-                draggedSectionZone={draggedSectionZone}
-                setDraggedSectionZone={setDraggedSectionZone}
-                onDropSectionToColumn={handleDropSectionToColumn}
-                onConvertSectionToBlock={handleConvertSectionToBlock}
-                onPromoteBlockToSection={handlePromoteBlockToSection}
                 showExtractPlaceholder={showExtractPlaceholder}
                 showSectionDropPlaceholder={showSectionDropPlaceholder}
               />
             );
           })
         )}
-      </div>
-    </div>
+      </FolderTreePanel>
+    </TreeActionsProvider>
   );
 }
 
@@ -442,47 +119,7 @@ interface ZoneGroupProps {
   zoneSections: SectionInstance[];
   selectedNodeId: string | null;
   currentPage: unknown;
-  clipboard: { type: "section" | "block"; data: unknown } | null;
-  onSelectNode: (nodeId: string) => void;
-  onAddSection: (sectionType: string, zone: PageZone) => void;
-  onAddBlock: (sectionId: string, blockType: string) => void;
-  onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
-  onDropBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
-  onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
-  onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
-  onAddGridRow: (sectionId: string) => void;
-  onRemoveGridRow: (sectionId: string, rowId: string) => void;
-  onAddColumnToRow: (sectionId: string, rowId: string) => void;
-  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
-  onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
-  onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
-  onPasteSection: (zone: PageZone) => void;
-  onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
-  onRemoveSection: (sectionId: string) => void;
-  expandedIds: Set<string>;
-  onToggleExpand: (nodeId: string) => void;
-  draggedBlockId: string | null;
-  setDraggedBlockId: (id: string | null) => void;
-  draggedBlockType: string | null;
-  setDraggedBlockType: (type: string | null) => void;
-  onDropBlockToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
-  draggedFromSectionId: string | null;
-  setDraggedFromSectionId: (id: string | null) => void;
-  draggedFromColumnId: string | null;
-  setDraggedFromColumnId: (id: string | null) => void;
-  draggedFromParentBlockId: string | null;
-  setDraggedFromParentBlockId: (id: string | null) => void;
-  draggedSectionId: string | null;
-  setDraggedSectionId: (id: string | null) => void;
-  draggedSectionType: string | null;
-  setDraggedSectionType: (type: string | null) => void;
-  draggedSectionIndex: number | null;
-  setDraggedSectionIndex: (index: number | null) => void;
-  draggedSectionZone: PageZone | null;
-  setDraggedSectionZone: (zone: PageZone | null) => void;
-  onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
-  onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
-  onPromoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
+  clipboard: { type: 'section' | 'block'; data: unknown } | null;
   showExtractPlaceholder: boolean;
   showSectionDropPlaceholder: boolean;
 }
@@ -496,50 +133,21 @@ function ZoneGroup({
   selectedNodeId,
   currentPage,
   clipboard,
-  onSelectNode,
-  onAddSection,
-  onAddBlock,
-  onDropBlock,
-  onDropBlockToSection,
-  onAddBlockToColumn,
-  onDropBlockToColumn,
-  onAddGridRow,
-  onRemoveGridRow,
-  onAddColumnToRow,
-  onRemoveColumnFromRow,
-  onAddElementToNestedBlock,
-  onDropSectionInZone,
-  onPasteSection,
-  onToggleSectionVisibility,
-  onRemoveSection,
-  expandedIds,
-  onToggleExpand,
-  draggedBlockId,
-  setDraggedBlockId,
-  draggedBlockType,
-  setDraggedBlockType,
-  onDropBlockToRow,
-  draggedFromSectionId,
-  setDraggedFromSectionId,
-  draggedFromColumnId,
-  setDraggedFromColumnId,
-  draggedFromParentBlockId,
-  setDraggedFromParentBlockId,
-  draggedSectionId,
-  setDraggedSectionId,
-  draggedSectionType,
-  setDraggedSectionType,
-  draggedSectionIndex,
-  setDraggedSectionIndex,
-  draggedSectionZone,
-  setDraggedSectionZone,
-  onDropSectionToColumn,
-  onConvertSectionToBlock,
-  onPromoteBlockToSection,
   showExtractPlaceholder,
   showSectionDropPlaceholder,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
+  const { state: dragState, endSectionDrag } = useDragState();
+  const {
+    selectNode,
+    toggleExpand,
+    expandedIds,
+    blockActions,
+    sectionActions,
+    gridActions,
+  } = useTreeActions();
+
+  const draggedSectionId = dragState.section.id;
 
   return (
     <div className="border-b border-border/50">
@@ -581,16 +189,16 @@ function ZoneGroup({
                 e.stopPropagation();
                 setIsZoneDragOver(false);
                 if (!draggedSectionId) return;
-                onDropSectionInZone(draggedSectionId, zone, 0);
-                setDraggedSectionId(null);
+                sectionActions.dropInZone(draggedSectionId, zone, 0);
+                endSectionDrag();
               }}
               className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
                 isZoneDragOver
-                  ? "border-purple-500/50 bg-purple-600/20 text-purple-300"
-                  : "border-border/30 text-gray-600"
+                  ? 'border-purple-500/50 bg-purple-600/20 text-purple-300'
+                  : 'border-border/30 text-gray-600'
               }`}
             >
-              {isZoneDragOver ? "Drop section here" : "No sections"}
+              {isZoneDragOver ? 'Drop section here' : 'No sections'}
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -599,22 +207,6 @@ function ZoneGroup({
                   <SectionDropTarget
                     zone={zone}
                     toIndex={index}
-                    draggedSectionId={draggedSectionId}
-                    draggedSectionZone={draggedSectionZone}
-                    draggedSectionIndex={draggedSectionIndex}
-                    setDraggedSectionId={setDraggedSectionId}
-                    onDropSectionInZone={onDropSectionInZone}
-                    draggedBlockId={draggedBlockId}
-                    draggedBlockType={draggedBlockType}
-                    draggedFromSectionId={draggedFromSectionId}
-                    draggedFromColumnId={draggedFromColumnId}
-                    draggedFromParentBlockId={draggedFromParentBlockId}
-                    setDraggedBlockId={setDraggedBlockId}
-                    setDraggedBlockType={setDraggedBlockType}
-                    setDraggedFromSectionId={setDraggedFromSectionId}
-                    setDraggedFromColumnId={setDraggedFromColumnId}
-                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                    onPromoteBlockToSection={onPromoteBlockToSection}
                     showExtractPlaceholder={showExtractPlaceholder}
                     showSectionDropPlaceholder={showSectionDropPlaceholder}
                   />
@@ -622,65 +214,35 @@ function ZoneGroup({
                     section={section}
                     sectionIndex={index}
                     selectedNodeId={selectedNodeId}
-                    onSelect={onSelectNode}
-                    onAddBlock={onAddBlock}
-                    onDropBlock={onDropBlock}
-                    onDropBlockToSection={onDropBlockToSection}
-                    onAddBlockToColumn={onAddBlockToColumn}
-                    onDropBlockToColumn={onDropBlockToColumn}
-                    onAddGridRow={onAddGridRow}
-                    onRemoveGridRow={onRemoveGridRow}
-                    onAddColumnToRow={onAddColumnToRow}
-                    onRemoveColumnFromRow={onRemoveColumnFromRow}
-                    onAddElementToNestedBlock={onAddElementToNestedBlock}
-                    onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
-                    onToggleSectionVisibility={onToggleSectionVisibility}
-                    onRemoveSection={onRemoveSection}
+                    onSelect={selectNode}
+                    onAddBlock={blockActions.add}
+                    onDropBlock={blockActions.drop}
+                    onDropBlockToSection={blockActions.dropToSection}
+                    onAddBlockToColumn={blockActions.addToColumn}
+                    onDropBlockToColumn={blockActions.dropToColumn}
+                    onAddGridRow={gridActions.addRow}
+                    onRemoveGridRow={gridActions.removeRow}
+                    onAddColumnToRow={gridActions.addColumn}
+                    onRemoveColumnFromRow={gridActions.removeColumn}
+                    onAddElementToNestedBlock={blockActions.addElementToNestedBlock}
+                    onAddElementToSectionBlock={blockActions.addElementToSectionBlock}
+                    onDropSection={(sectionId: string, toIndex: number) => sectionActions.dropInZone(sectionId, zone, toIndex)}
+                    onToggleSectionVisibility={sectionActions.toggleVisibility}
+                    onRemoveSection={sectionActions.remove}
                     expandedIds={expandedIds}
-                    onToggleExpand={onToggleExpand}
-                    draggedBlockId={draggedBlockId}
-                    setDraggedBlockId={setDraggedBlockId}
-                    draggedBlockType={draggedBlockType}
-                    setDraggedBlockType={setDraggedBlockType}
-                    onDropBlockToRow={onDropBlockToRow}
-                    draggedFromSectionId={draggedFromSectionId}
-                    setDraggedFromSectionId={setDraggedFromSectionId}
-                    draggedFromColumnId={draggedFromColumnId}
-                    setDraggedFromColumnId={setDraggedFromColumnId}
-                    draggedFromParentBlockId={draggedFromParentBlockId}
-                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                    draggedSectionId={draggedSectionId}
-                    setDraggedSectionId={setDraggedSectionId}
-                    draggedSectionType={draggedSectionType}
-                    setDraggedSectionType={setDraggedSectionType}
-                    draggedSectionIndex={draggedSectionIndex}
-                    setDraggedSectionIndex={setDraggedSectionIndex}
-                    draggedSectionZone={draggedSectionZone}
-                    setDraggedSectionZone={setDraggedSectionZone}
-                    onDropSectionToColumn={onDropSectionToColumn}
-                    onConvertSectionToBlock={onConvertSectionToBlock}
+                    onToggleExpand={toggleExpand}
+                    onDropBlockToRow={blockActions.dropToRow}
+                    onDropSectionToColumn={sectionActions.dropToColumn}
+                    onDropBlockToSlideshowFrame={blockActions.dropToSlideshowFrame}
+                    onDropSectionToSlideshowFrame={sectionActions.dropToSlideshowFrame}
+                    onConvertSectionToBlock={sectionActions.convertToBlock}
+                    onRemoveBlock={blockActions.remove}
                   />
                 </React.Fragment>
               ))}
               <SectionDropTarget
                 zone={zone}
                 toIndex={zoneSections.length}
-                draggedSectionId={draggedSectionId}
-                draggedSectionZone={draggedSectionZone}
-                draggedSectionIndex={draggedSectionIndex}
-                setDraggedSectionId={setDraggedSectionId}
-                onDropSectionInZone={onDropSectionInZone}
-                draggedBlockId={draggedBlockId}
-                draggedBlockType={draggedBlockType}
-                draggedFromSectionId={draggedFromSectionId}
-                draggedFromColumnId={draggedFromColumnId}
-                draggedFromParentBlockId={draggedFromParentBlockId}
-                setDraggedBlockId={setDraggedBlockId}
-                setDraggedBlockType={setDraggedBlockType}
-                setDraggedFromSectionId={setDraggedFromSectionId}
-                setDraggedFromColumnId={setDraggedFromColumnId}
-                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                onPromoteBlockToSection={onPromoteBlockToSection}
                 showExtractPlaceholder={showExtractPlaceholder}
                 showSectionDropPlaceholder={showSectionDropPlaceholder}
               />
@@ -688,10 +250,10 @@ function ZoneGroup({
           )}
           {/* Add section + paste always at the bottom of the zone */}
           <div className="mt-2 flex flex-wrap items-center gap-1">
-            {clipboard?.type === "section" && (
+            {clipboard?.type === 'section' && (
               <button
                 type="button"
-                onClick={() => onPasteSection(zone)}
+                onClick={() => sectionActions.paste(zone)}
                 className="rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-foreground/10 hover:text-gray-200 transition"
                 title="Paste section"
               >
@@ -701,7 +263,7 @@ function ZoneGroup({
             <SectionPicker
               disabled={!currentPage}
               zone={zone}
-              onSelect={(sectionType: string) => onAddSection(sectionType, zone)}
+              onSelect={(sectionType: string) => sectionActions.add(sectionType, zone)}
             />
           </div>
         </div>
@@ -714,36 +276,9 @@ function ZoneGroup({
 // Drop target between sections (visible when dragging a section or block)
 // ---------------------------------------------------------------------------
 
-// Block types that can be promoted to standalone sections
-const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "ButtonElement"];
-
 interface SectionDropTargetProps {
   zone: PageZone;
   toIndex: number;
-  draggedSectionId: string | null;
-  draggedSectionZone: PageZone | null;
-  draggedSectionIndex: number | null;
-  setDraggedSectionId: (id: string | null) => void;
-  onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
-  // Block drag state
-  draggedBlockId: string | null;
-  draggedBlockType: string | null;
-  draggedFromSectionId: string | null;
-  draggedFromColumnId: string | null;
-  draggedFromParentBlockId: string | null;
-  setDraggedBlockId: (id: string | null) => void;
-  setDraggedBlockType: (type: string | null) => void;
-  setDraggedFromSectionId: (id: string | null) => void;
-  setDraggedFromColumnId: (id: string | null) => void;
-  setDraggedFromParentBlockId: (id: string | null) => void;
-  onPromoteBlockToSection: (
-    blockId: string,
-    fromSectionId: string,
-    fromColumnId: string | undefined,
-    fromParentBlockId: string | undefined,
-    toZone: PageZone,
-    toIndex: number
-  ) => void;
   showExtractPlaceholder: boolean;
   showSectionDropPlaceholder: boolean;
 }
@@ -751,61 +286,47 @@ interface SectionDropTargetProps {
 function SectionDropTarget({
   zone,
   toIndex,
-  draggedSectionId,
-  draggedSectionZone,
-  draggedSectionIndex,
-  setDraggedSectionId,
-  onDropSectionInZone,
-  draggedBlockId,
-  draggedBlockType,
-  draggedFromSectionId,
-  draggedFromColumnId,
-  draggedFromParentBlockId,
-  setDraggedBlockId,
-  setDraggedBlockType,
-  setDraggedFromSectionId,
-  setDraggedFromColumnId,
-  setDraggedFromParentBlockId,
-  onPromoteBlockToSection,
   showExtractPlaceholder,
   showSectionDropPlaceholder,
 }: SectionDropTargetProps): React.ReactNode {
   const [isOver, setIsOver] = useState(false);
-  const isDraggingBlock = Boolean(draggedBlockId);
-  // Only show section drop placeholder if the setting is enabled
-  const isDraggingSection = showSectionDropPlaceholder && Boolean(draggedSectionId);
-  // Only show promotable block extract option if the setting is enabled
-  const canPromoteBlock = showExtractPlaceholder && isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? "");
-  const isDragging = isDraggingSection || canPromoteBlock;
+  const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
+  const { sectionActions } = useTreeActions();
 
-  const resolveDragIndex = (rawIndex: string): number | null => {
-    if (!rawIndex) return null;
-    const parsed = Number.parseInt(rawIndex, 10);
-    return Number.isNaN(parsed) ? null : parsed;
-  };
+  const draggedBlockId = dragState.block.id;
+  const draggedBlockType = dragState.block.type;
+  const draggedFromSectionId = dragState.block.fromSectionId;
+  const draggedFromColumnId = dragState.block.fromColumnId;
+  const draggedFromParentBlockId = dragState.block.fromParentBlockId;
+  const draggedSectionId = dragState.section.id;
+  const draggedSectionZone = dragState.section.zone;
+  const draggedSectionIndex = dragState.section.index;
+
+  const isDraggingBlock = Boolean(draggedBlockId);
+  const isDraggingSection = showSectionDropPlaceholder && Boolean(draggedSectionId);
+  const canPromoteBlock = showExtractPlaceholder && isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? '');
+  const isDragging = isDraggingSection || canPromoteBlock;
 
   if (!isDragging) return null;
 
   return (
     <div
       onDragOver={(e: React.DragEvent) => {
-        // Handle section drag
         if (isDraggingSection) {
-          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          const sectionDrag = readSectionDragData(e.dataTransfer, {
+            id: draggedSectionId,
+            zone: draggedSectionZone,
+            index: draggedSectionIndex,
+          });
+          const dragSectionId = sectionDrag.id;
           if (!dragSectionId) return;
-          const dragZone =
-            draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
-          const dragIndex =
-            draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+          const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
+          const dragIndex = sectionDrag.index;
           const isSamePosition =
             dragZone === zone &&
             dragIndex !== null &&
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
-        }
-        // Handle block drag (for promotable blocks)
-        if (canPromoteBlock) {
-          // Accept the drag
         }
         e.preventDefault();
         e.stopPropagation();
@@ -820,27 +341,28 @@ function SectionDropTarget({
         e.stopPropagation();
         setIsOver(false);
 
-        // Handle section drop
         if (isDraggingSection) {
-          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          const sectionDrag = readSectionDragData(e.dataTransfer, {
+            id: draggedSectionId,
+            zone: draggedSectionZone,
+            index: draggedSectionIndex,
+          });
+          const dragSectionId = sectionDrag.id;
           if (!dragSectionId) return;
-          const dragZone =
-            draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
-          const dragIndex =
-            draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+          const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
+          const dragIndex = sectionDrag.index;
           const isSamePosition =
             dragZone === zone &&
             dragIndex !== null &&
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
-          onDropSectionInZone(dragSectionId, zone, toIndex);
-          setDraggedSectionId(null);
+          sectionActions.dropInZone(dragSectionId, zone, toIndex);
+          endSectionDrag();
           return;
         }
 
-        // Handle block drop (promote to section)
         if (canPromoteBlock && draggedBlockId && draggedFromSectionId) {
-          onPromoteBlockToSection(
+          sectionActions.promoteBlockToSection(
             draggedBlockId,
             draggedFromSectionId,
             draggedFromColumnId ?? undefined,
@@ -848,36 +370,32 @@ function SectionDropTarget({
             zone,
             toIndex
           );
-          setDraggedBlockId(null);
-          setDraggedBlockType(null);
-          setDraggedFromSectionId(null);
-          setDraggedFromColumnId(null);
-          setDraggedFromParentBlockId(null);
+          endBlockDrag();
         }
       }}
       className={`relative z-10 overflow-hidden transition-[height] ${
-        isDragging ? "h-8" : "h-0"
+        isDragging ? 'h-8' : 'h-0'
       }`}
     >
       <div
         className={`absolute inset-x-1 top-1/2 -translate-y-1/2 rounded border-2 border-dashed transition flex items-center justify-center ${
           isOver
             ? canPromoteBlock
-              ? "border-emerald-500 bg-emerald-600/40 h-6"
-              : "border-purple-500 bg-purple-600/40 h-6"
+              ? 'border-emerald-500 bg-emerald-600/40 h-6'
+              : 'border-purple-500 bg-purple-600/40 h-6'
             : canPromoteBlock
-              ? "border-emerald-500/50 bg-emerald-600/20 h-5"
-              : "border-purple-500/50 bg-purple-600/20 h-5"
+              ? 'border-emerald-500/50 bg-emerald-600/20 h-5'
+              : 'border-purple-500/50 bg-purple-600/20 h-5'
         }`}
       >
         {canPromoteBlock && (
-          <span className={`text-[9px] font-medium ${isOver ? "text-emerald-200" : "text-emerald-400"}`}>
-            {isOver ? "Release to extract" : "Drop here to extract"}
+          <span className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}>
+            {isOver ? 'Release to extract' : 'Drop here to extract'}
           </span>
         )}
         {isDraggingSection && !canPromoteBlock && (
-          <span className={`text-[9px] font-medium ${isOver ? "text-purple-200" : "text-purple-400"}`}>
-            {isOver ? "Release to move" : "Drop here"}
+          <span className={`text-[9px] font-medium ${isOver ? 'text-purple-200' : 'text-purple-400'}`}>
+            {isOver ? 'Release to move' : 'Drop here'}
           </span>
         )}
       </div>

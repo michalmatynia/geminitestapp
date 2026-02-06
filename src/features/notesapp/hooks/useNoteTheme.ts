@@ -1,7 +1,9 @@
-import { useMemo, useCallback } from "react";
-import type { NoteWithRelations, NotebookRecord, ThemeRecord } from "@/shared/types/notes";
-import type { UseNoteThemeProps } from "@/features/notesapp/types/notes-hooks";
-import { findFolderById } from "@/features/foldertree";
+import { useMemo, useCallback } from 'react';
+
+import { findFolderById } from '@/features/foldertree';
+import type { UseNoteThemeProps } from '@/features/notesapp/types/notes-hooks';
+import { logClientError } from '@/features/observability';
+import type { NoteWithRelations, NotebookRecord, ThemeRecord } from '@/shared/types/notes';
 
 export function useNoteTheme({
   themes,
@@ -47,12 +49,12 @@ export function useNoteTheme({
 
   const selectedFolderThemeId: string = selectedFolderId
     ? ((): string => {
-        const folder = findFolderById(folderTree, selectedFolderId);
-        return folder?.themeId ? String(folder.themeId) : "";
-      })()
+      const folder = findFolderById(folderTree, selectedFolderId);
+      return folder?.themeId ? String(folder.themeId) : '';
+    })()
     : notebook?.defaultThemeId
       ? String(notebook.defaultThemeId)
-      : "";
+      : '';
 
   const getThemeForNote = useCallback(
     (note: NoteWithRelations | null | undefined): ThemeRecord | null => {
@@ -84,15 +86,15 @@ export function useNoteTheme({
       if (!selectedFolderId) return;
       try {
         const response = await fetch(`/api/notes/categories/${selectedFolderId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ themeId }),
         });
         if (response.ok) {
           await fetchFolderTree();
         }
       } catch (error: unknown) {
-        console.error("Failed to update folder theme:", error);
+        logClientError(error, { context: { source: 'useNoteTheme', action: 'updateFolderTheme', folderId: selectedFolderId, themeId } });
       }
     },
     [selectedFolderId, fetchFolderTree]
@@ -103,8 +105,8 @@ export function useNoteTheme({
       if (!selectedNotebookId) return;
       try {
         const response = await fetch(`/api/notes/notebooks/${selectedNotebookId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ defaultThemeId: themeId }),
         });
         if (response.ok) {
@@ -112,7 +114,7 @@ export function useNoteTheme({
           setNotebook(updated);
         }
       } catch (error: unknown) {
-        console.error("Failed to update notebook default theme:", error);
+        logClientError(error, { context: { source: 'useNoteTheme', action: 'updateNotebookDefaultTheme', notebookId: selectedNotebookId, themeId } });
       }
     },
     [selectedNotebookId, setNotebook]

@@ -1,24 +1,20 @@
+import { DtoBase } from '../types/base';
+
 // Agent Runtime DTOs
-export interface AgentRuntimeDto {
-  id: string;
+export interface AgentRuntimeDto extends DtoBase {
   name: string;
   status: 'idle' | 'running' | 'error' | 'stopped';
   config: Record<string, unknown>;
   lastActivity: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface AgentExecutionDto {
-  id: string;
+export interface AgentExecutionDto extends DtoBase {
   runtimeId: string;
   input: Record<string, unknown>;
   output: Record<string, unknown> | null;
   status: 'pending' | 'running' | 'completed' | 'failed';
   error: string | null;
   duration: number | null;
-  createdAt: string;
-  updatedAt: string;
   completedAt: string | null;
 }
 

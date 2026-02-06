@@ -1,68 +1,82 @@
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-"use client";
 
-import { useState, useRef, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { logger } from "@/shared/utils/logger";
-import type { Catalog } from "@/features/products/types";
-import type { PriceGroupWithDetails } from "@/features/products/types";
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { useState, useRef, useMemo } from 'react';
+
+import type { Catalog } from '@/features/products/types';
+import type { PriceGroupWithDetails } from '@/features/products/types';
+import { logger } from '@/shared/utils/logger';
 
 type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = {
-  value: "name_en" | "name_pl" | "name_de";
+  value: 'name_en' | 'name_pl' | 'name_de';
   label: string;
 };
 type CurrencyRecord = { code?: string | null };
 
 const supportedLanguageMap: Record<string, LanguageOption> = {
-  EN: { value: "name_en", label: "English" },
-  PL: { value: "name_pl", label: "Polish" },
-  DE: { value: "name_de", label: "German" },
+  EN: { value: 'name_en', label: 'English' },
+  PL: { value: 'name_pl', label: 'Polish' },
+  DE: { value: 'name_de', label: 'German' },
 };
 
 // Query keys for cache management
 const catalogSyncQueryKeys = {
-  catalogs: ["catalogs"] as const,
-  priceGroups: ["price-groups"] as const,
-  languages: ["languages"] as const,
-  currencies: ["currencies"] as const,
+  catalogs: ['catalogs'] as const,
+  priceGroups: ['price-groups'] as const,
+  languages: ['languages'] as const,
+  currencies: ['currencies'] as const,
 };
 
 // API fetch functions
 async function fetchCatalogs(): Promise<Catalog[]> {
-  const res = await fetch("/api/catalogs");
+  const res = await fetch('/api/catalogs');
   if (!res.ok) {
     const payload = (await res.json()) as { error?: string };
-    throw new Error(payload?.error || "Failed to load catalogs");
+    throw new Error(payload?.error || 'Failed to load catalogs');
   }
   return res.json() as Promise<Catalog[]>;
 }
 
 async function fetchPriceGroups(): Promise<PriceGroupWithDetails[]> {
-  const res = await fetch("/api/price-groups");
+  const res = await fetch('/api/price-groups');
   if (!res.ok) {
-    throw new Error("Failed to load price groups");
+    throw new Error('Failed to load price groups');
   }
   return res.json() as Promise<PriceGroupWithDetails[]>;
 }
 
 async function fetchLanguages(): Promise<LanguageRecord[]> {
-  const res = await fetch("/api/languages");
+  const res = await fetch('/api/languages');
   if (!res.ok) {
-    throw new Error("Failed to load languages");
+    throw new Error('Failed to load languages');
   }
   return res.json() as Promise<LanguageRecord[]>;
 }
 
 async function fetchCurrencies(): Promise<CurrencyRecord[]> {
-  const res = await fetch("/api/currencies");
+  const res = await fetch('/api/currencies');
   if (!res.ok) {
-    throw new Error("Failed to load currencies");
+    throw new Error('Failed to load currencies');
   }
   return res.json() as Promise<CurrencyRecord[]>;
 }
 
-export function useCatalogSync(catalogFilter: string) {
+export interface UseCatalogSyncResult {
+  catalogs: Catalog[];
+  catalogsLoading: boolean;
+  catalogsError: string | null;
+  currencyCode: string;
+  setCurrencyCode: (action: string | ((prev: string) => string)) => void;
+  currencyOptions: string[];
+  priceGroups: PriceGroupWithDetails[];
+  catalogFilterInitialized: React.MutableRefObject<boolean>;
+  languageOptions: LanguageOption[];
+  fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined;
+}
+
+export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
@@ -92,16 +106,16 @@ export function useCatalogSync(catalogFilter: string) {
 
   // Log errors
   if (catalogsQuery.error) {
-    logger.error("Failed to load catalogs:", catalogsQuery.error);
+    logger.error('Failed to load catalogs:', catalogsQuery.error);
   }
   if (priceGroupsQuery.error) {
-    logger.error("Failed to load price groups:", priceGroupsQuery.error);
+    logger.error('Failed to load price groups:', priceGroupsQuery.error);
   }
   if (languagesQuery.error) {
-    logger.error("Failed to load languages:", languagesQuery.error);
+    logger.error('Failed to load languages:', languagesQuery.error);
   }
   if (currenciesQuery.error) {
-    logger.error("Failed to load currencies:", currenciesQuery.error);
+    logger.error('Failed to load currencies:', currenciesQuery.error);
   }
 
   // Extract data with defaults
@@ -139,12 +153,12 @@ export function useCatalogSync(catalogFilter: string) {
   );
 
   // Memoize currency options to prevent unnecessary re-renders
-  const { codes, fallbackCode } = useMemo(() => {
+  const { codes, fallbackCode } = useMemo((): { codes: string[]; fallbackCode: string } => {
     if (currencyPriceGroups.length === 0)
-      return { codes: [] as string[], fallbackCode: "" };
+      return { codes: [] as string[], fallbackCode: '' };
 
     const isCatalogScoped =
-      catalogFilter !== "all" && catalogFilter !== "unassigned";
+      catalogFilter !== 'all' && catalogFilter !== 'unassigned';
     const catalog = isCatalogScoped
       ? catalogs.find((entry) => entry.id === catalogFilter)
       : undefined;
@@ -179,7 +193,7 @@ export function useCatalogSync(catalogFilter: string) {
       ? candidateGroups.find((group) => group.id === defaultGroupId)
       : candidateGroups.find((group) => group.isDefault);
 
-    const fallbackCode = defaultGroup?.currency?.code || codes[0] || "";
+    const fallbackCode = defaultGroup?.currency?.code || codes[0] || '';
 
     return { codes, fallbackCode };
   }, [catalogFilter, catalogs, currencyPriceGroups, allowedCurrencyCodes]);
@@ -201,9 +215,9 @@ export function useCatalogSync(catalogFilter: string) {
       ? userCurrencyCode
       : fallbackCode;
 
-  const setCurrencyCode = (action: string | ((prev: string) => string)) => {
+  const setCurrencyCode = (action: string | ((prev: string) => string)): void => {
     // Wrap the setter to handle functional updates correctly with the derived value
-    if (typeof action === "function") {
+    if (typeof action === 'function') {
       setUserCurrencyCode((_prev) => {
         // We use the *derived* currencyCode as the base for the update
         const newVal = action(currencyCode);
@@ -214,10 +228,10 @@ export function useCatalogSync(catalogFilter: string) {
     }
   };
 
-  const { languageOptions, fallbackNameLocale } = useMemo(() => {
+  const { languageOptions, fallbackNameLocale } = useMemo((): { languageOptions: LanguageOption[]; fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined } => {
     const options: LanguageOption[] = [];
     const isCatalogScoped =
-      catalogFilter !== "all" && catalogFilter !== "unassigned";
+      catalogFilter !== 'all' && catalogFilter !== 'unassigned';
     const catalog = isCatalogScoped
       ? catalogs.find((entry) => entry.id === catalogFilter)
       : undefined;
@@ -248,7 +262,7 @@ export function useCatalogSync(catalogFilter: string) {
       ? languages.find((lang) => lang.id === defaultLanguageId)
       : null;
     const defaultOption = defaultLang
-      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || ""]
+      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || '']
       : undefined;
     const fallbackNameLocale = defaultOption?.value ?? options[0]?.value;
 

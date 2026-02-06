@@ -1,10 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import path from "path";
-import { promises as fs } from "fs";
-import { execFile } from "child_process";
+import { execFile } from 'child_process';
+import { promises as fs } from 'fs';
+import path from 'path';
 
-export const backupsDir = path.join(process.cwd(), "prisma", "backups");
+export const backupsDir = path.join(process.cwd(), 'prisma', 'backups');
 
 export const ensureBackupsDir = async (): Promise<void> => {
   await fs.mkdir(backupsDir, { recursive: true });
@@ -13,7 +13,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 export const getDatabaseUrl = (): string => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    throw new Error("DATABASE_URL is not set.");
+    throw new Error('DATABASE_URL is not set.');
   }
   return databaseUrl;
 };
@@ -22,7 +22,7 @@ export const getPgConnectionUrl = (): string => {
   const databaseUrl = getDatabaseUrl();
   try {
     const url = new URL(databaseUrl);
-    url.searchParams.delete("schema");
+    url.searchParams.delete('schema');
     return url.toString();
   } catch {
     return databaseUrl;
@@ -32,17 +32,17 @@ export const getPgConnectionUrl = (): string => {
 export const getDatabaseName = (databaseUrl: string): string => {
   try {
     const url = new URL(databaseUrl);
-    return url.pathname.replace(/^\//, "") || "database";
+    return url.pathname.replace(/^\//, '') || 'database';
   } catch {
-    return "database";
+    return 'database';
   }
 };
 
 export const getPgDumpCommand = (): string =>
-  process.env.PG_DUMP_PATH ?? "pg_dump";
+  process.env.PG_DUMP_PATH ?? 'pg_dump';
 
 export const getPgRestoreCommand = (): string =>
-  process.env.PG_RESTORE_PATH ?? "pg_restore";
+  process.env.PG_RESTORE_PATH ?? 'pg_restore';
 
 export const execFileAsync = (
   command: string,
@@ -66,9 +66,9 @@ export const execFileAsync = (
 export const assertValidBackupName = (backupName: string): void => {
   const basename = path.basename(backupName);
   if (basename !== backupName) {
-    throw new Error("Invalid backup name.");
+    throw new Error('Invalid backup name.');
   }
-  if (path.extname(backupName) !== ".dump") {
-    throw new Error("Invalid backup file type.");
+  if (path.extname(backupName) !== '.dump') {
+    throw new Error('Invalid backup file type.');
   }
 };

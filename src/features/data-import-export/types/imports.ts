@@ -54,28 +54,25 @@ export type TemplateMapping = {
   targetField: string;
 };
 
+import type { 
+  ImageBase64Mode, 
+  ImageTransformOptions, 
+  ImageRetryPreset 
+} from '@/shared/types/domain/integrations';
+
+export type {
+  ImageBase64Mode,
+  ImageTransformOptions,
+  ImageRetryPreset,
+};
+
 export type Template = {
   id: string;
   name: string;
-  description?: string | null;
+  description?: string;
+  mapping?: TemplateMapping[];
   mappings?: TemplateMapping[];
   exportImagesAsBase64?: boolean;
-};
-
-export type ImageBase64Mode = "base-only" | "full-data-uri";
-
-export type ImageTransformOptions = {
-  forceJpeg?: boolean;
-  maxDimension?: number;
-  jpegQuality?: number;
-};
-
-export type ImageRetryPreset = {
-  id: string;
-  label: string;
-  description: string;
-  imageBase64Mode: ImageBase64Mode;
-  transform: ImageTransformOptions;
 };
 
 export type ExportParameterDoc = {

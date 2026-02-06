@@ -1,5 +1,6 @@
-import { useState } from "react";
-import type { NoteFileRecord } from "@/shared/types/notes";
+import { useState } from 'react';
+
+import type { NoteFileRecord } from '@/shared/types/notes';
 
 // Why: File attachment management has multiple interdependent states:
 // - Upload slots track in-progress uploads

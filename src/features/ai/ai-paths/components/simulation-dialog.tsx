@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
 
 
+import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Dialog,
@@ -11,9 +12,8 @@ import {
   DialogTitle,
   Input,
   Label,
-} from "@/shared/ui";
+} from '@/shared/ui';
 
-import type { AiNode } from "@/features/ai/ai-paths/lib";
 
 type SimulationDialogProps = {
   openNodeId: string | null;
@@ -50,11 +50,11 @@ export function SimulationDialog({
           </DialogDescription>
         </DialogHeader>
         {simulationNode ? ((): React.JSX.Element => {
-          const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
+          const simulationConfig = simulationNode.config?.simulation ?? { productId: '' };
           const simulationEntityValue =
             simulationConfig.entityId?.trim()
               ? simulationConfig.entityId
-              : simulationConfig.productId ?? "";
+              : simulationConfig.productId ?? '';
           return (
             <div className="space-y-4">
               <div>
@@ -69,16 +69,16 @@ export function SimulationDialog({
                       prev.map((node: AiNode): AiNode =>
                         node.id === simulationNode.id
                           ? {
-                              ...node,
-                              config: {
-                                ...node.config,
-                                simulation: {
-                                  productId: value,
-                                  entityId: value,
-                                  entityType: simulationConfig.entityType ?? "product",
-                                },
+                            ...node,
+                            config: {
+                              ...node.config,
+                              simulation: {
+                                productId: value,
+                                entityId: value,
+                                entityType: simulationConfig.entityType ?? 'product',
                               },
-                            }
+                            },
+                          }
                           : node
                       )
                     );
@@ -90,7 +90,7 @@ export function SimulationDialog({
                   </p>
                 ) : null}
                 <p className="mt-2 text-[11px] text-gray-500">
-                  Current entity type: {simulationConfig.entityType ?? "product"}
+                  Current entity type: {simulationConfig.entityType ?? 'product'}
                 </p>
               </div>
               <Button

@@ -1,35 +1,36 @@
-"use client";
+'use client';
 
 
-import { SectionHeader, SectionPanel } from "@/shared/ui";
-import Link from "next/link";
+import Link from 'next/link';
+
+import { SectionHeader, SectionPanel } from '@/shared/ui';
 
 
 const cards = [
   {
-    title: "Dashboard",
-    description: "Overview of auth activity, sign-ins, and health.",
-    href: "/admin/auth/dashboard",
+    title: 'Dashboard',
+    description: 'Overview of auth activity, sign-ins, and health.',
+    href: '/admin/auth/dashboard',
   },
   {
-    title: "Users",
-    description: "Manage users, profiles, and account states.",
-    href: "/admin/auth/users",
+    title: 'Users',
+    description: 'Manage users, profiles, and account states.',
+    href: '/admin/auth/users',
   },
   {
-    title: "Permissions",
-    description: "Roles, policies, and access controls.",
-    href: "/admin/auth/permissions",
+    title: 'Permissions',
+    description: 'Roles, policies, and access controls.',
+    href: '/admin/auth/permissions',
   },
   {
-    title: "Settings",
-    description: "Providers, sessions, and security settings.",
-    href: "/admin/auth/settings",
+    title: 'Settings',
+    description: 'Providers, sessions, and security settings.',
+    href: '/admin/auth/settings',
   },
   {
-    title: "User Pages",
-    description: "Login, signup, and account flows.",
-    href: "/admin/auth/user-pages",
+    title: 'User Pages',
+    description: 'Login, signup, and account flows.',
+    href: '/admin/auth/user-pages',
   },
 ];
 

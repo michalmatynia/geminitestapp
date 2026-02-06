@@ -1,34 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { internalError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { NextRequest, NextResponse } from 'next/server';
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+import { internalError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import prisma from '@/shared/lib/db/prisma';
+
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   try {
-    if (!("agentBrowserLog" in prisma)) {
+    if (!('agentBrowserLog' in prisma)) {
       return createErrorResponse(
         internalError(
-          "Agent logs not initialized. Run prisma generate/db push."
+          'Agent logs not initialized. Run prisma generate/db push.'
         ),
-        { request: req, source: "chatbot.agent.[runId].logs.GET" }
+        { request: req, source: 'chatbot.agent.[runId].logs.GET' }
       );
     }
     const { runId } = await params;
     const { searchParams } = new URL(req.url);
-    const stepId = searchParams.get("stepId");
+    const stepId = searchParams.get('stepId');
     const logs = await prisma.agentBrowserLog.findMany({
       where: stepId ? { runId, stepId } : { runId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       take: 50,
     });
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][agent][logs] Loaded", {
+      console.info('[chatbot][agent][logs] Loaded', {
         runId,
         stepId,
         count: logs.length,
@@ -39,13 +40,13 @@ async function GET_handler(req: NextRequest,
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.[runId].logs.GET",
-      fallbackMessage: "Failed to load agent logs.",
+      source: 'chatbot.agent.[runId].logs.GET',
+      fallbackMessage: 'Failed to load agent logs.',
     });
   }
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.agent.[runId].logs.GET" }
+  { source: 'chatbot.agent.[runId].logs.GET' }
 );

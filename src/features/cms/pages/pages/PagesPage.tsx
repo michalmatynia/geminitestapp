@@ -1,4 +1,14 @@
-"use client";
+'use client';
+import { Eye, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState, useCallback } from 'react';
+
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
+import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/useCmsQueries';
+import type { PageStatus, PageSummary, PageSlugLink, Slug } from '@/features/cms/types';
 import {
   Button,
   ListPanel,
@@ -11,28 +21,20 @@ import {
   ConfirmDialog,
   EmptyState,
   StatusBadge,
-} from "@/shared/ui";
-import Link from "next/link";
-
-import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
-import { useRouter } from "next/navigation";
-import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
-import { CmsDomainSelector } from "@/features/cms/components/CmsDomainSelector";
-import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms/types";
-import { useMemo, useState, useCallback } from "react";
-import { Eye, Plus } from "lucide-react";
+} from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 
-type StatusFilter = PageStatus | "all";
+
+type StatusFilter = PageStatus | 'all';
 type StatusFilterOption = { label: string; value: StatusFilter };
 
 const STATUS_FILTERS: StatusFilterOption[] = [
-  { label: "All", value: "all" },
-  { label: "Draft", value: "draft" },
-  { label: "Published", value: "published" },
-  { label: "Scheduled", value: "scheduled" },
+  { label: 'All', value: 'all' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Published', value: 'published' },
+  { label: 'Scheduled', value: 'scheduled' },
 ];
 
 export default function PagesPage(): React.ReactNode {
@@ -42,7 +44,7 @@ export default function PagesPage(): React.ReactNode {
   const pagesQuery = useCmsPages(activeDomainId);
   const slugsQuery = useCmsSlugs(activeDomainId);
   const deletePage = useDeletePage();
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
   const [pageToDelete, setPageToDelete] = useState<PageSummary | null>(null);
 
@@ -53,8 +55,8 @@ export default function PagesPage(): React.ReactNode {
     [domainSlugs]
   );
   const filteredPages = useMemo((): PageSummary[] => {
-    if (statusFilter === "all") return pages;
-    return pages.filter((page: PageSummary) => (page.status ?? "draft") === statusFilter);
+    if (statusFilter === 'all') return pages;
+    return pages.filter((page: PageSummary) => (page.status ?? 'draft') === statusFilter);
   }, [pages, statusFilter]);
 
   const handleDelete = useCallback((page: PageSummary): void => {
@@ -66,7 +68,7 @@ export default function PagesPage(): React.ReactNode {
     try {
       await deletePage.mutateAsync(pageToDelete.id);
     } catch (error) {
-      console.error("Failed to delete page:", error);
+      logClientError(error, { context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id } });
     } finally {
       setPageToDelete(null);
     }
@@ -75,18 +77,18 @@ export default function PagesPage(): React.ReactNode {
   const handleCreatePage = (): void => {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
-    router.push("/admin/cms/pages/create");
+    router.push('/admin/cms/pages/create');
   };
 
   const handlePreview = (slug: string): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     const protocol = window.location.protocol;
     const currentHost = window.location.host;
     const currentHostname = window.location.hostname;
     const targetHost = activeDomain?.domain ?? currentHostname;
     const resolvedHost = targetHost === currentHostname ? currentHost : targetHost;
-    const path = slug.startsWith("/") ? slug : `/${slug}`;
-    window.open(`${protocol}//${resolvedHost}${path}`, "_blank", "noopener,noreferrer");
+    const path = slug.startsWith('/') ? slug : `/${slug}`;
+    window.open(`${protocol}//${resolvedHost}${path}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -106,23 +108,24 @@ export default function PagesPage(): React.ReactNode {
       >
         <div className="mb-4 flex flex-wrap gap-2">
           {STATUS_FILTERS.map((filter: StatusFilterOption) => (
-            <button
+            <Button
               key={filter.value}
               type="button"
+              variant="ghost"
               onClick={() => setStatusFilter(filter.value)}
-              className={`rounded-md border px-3 py-1 text-xs font-medium transition ${
+              className={`h-auto rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-blue-500/20 ${
                 statusFilter === filter.value
-                  ? "border-blue-500 bg-blue-500/10 text-blue-300"
-                  : "border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60"
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-300'
+                  : 'border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60'
               }`}
             >
               {filter.label}
-            </button>
+            </Button>
           ))}
         </div>
         <ul>
           {filteredPages.map((page: PageSummary) => {
-            const status: PageStatus = page.status ?? "draft";
+            const status: PageStatus = page.status ?? 'draft';
             const slugValues = page.slugs.map((s: PageSlugLink) => s.slug.slug);
             const outOfZone = domainSlugSet
               ? slugValues.filter((value: string) => !domainSlugSet.has(value))
@@ -133,15 +136,15 @@ export default function PagesPage(): React.ReactNode {
             const selectedSlugCandidate = previewSelections[page.id];
             const previewSlug = zoneSlugs.length
               ? (selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
-                  ? selectedSlugCandidate
-                  : zoneSlugs[0])
+                ? selectedSlugCandidate
+                : zoneSlugs[0])
               : null;
-            const previewPath = previewSlug ? (previewSlug.startsWith("/") ? previewSlug : `/${previewSlug}`) : "";
+            const previewPath = previewSlug ? (previewSlug.startsWith('/') ? previewSlug : `/${previewSlug}`) : '';
             const previewTitle = slugsQuery.isLoading
-              ? "Loading zone slugs..."
+              ? 'Loading zone slugs...'
               : previewSlug
-                ? `Preview ${activeDomain?.domain ?? "current"}${previewPath}`
-                : "No slug in current zone";
+                ? `Preview ${activeDomain?.domain ?? 'current'}${previewPath}`
+                : 'No slug in current zone';
             return (
               <li key={page.id} className="flex justify-between items-center py-2 border-b border">
                 <div className="flex items-center gap-3">
@@ -151,7 +154,7 @@ export default function PagesPage(): React.ReactNode {
                   <StatusBadge status={status} />
                   {page.slugs.length > 0 && (
                     <span className="text-xs text-gray-500">
-                      {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(", ")}
+                      {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(', ')}
                       {outOfZone.length > 0 && (
                         <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
                           Cross-zone
@@ -163,12 +166,12 @@ export default function PagesPage(): React.ReactNode {
                 <div className="flex items-center gap-3">
                   {outOfZone.length > 0 && (
                     <span className="text-xs text-amber-400">
-                      Out of zone: {outOfZone.map((slug: string) => `/${slug}`).join(", ")}
+                      Out of zone: {outOfZone.map((slug: string) => `/${slug}`).join(', ')}
                     </span>
                   )}
                   {zoneSlugs.length > 1 ? (
                     <Select
-                      value={previewSlug ?? ""}
+                      value={previewSlug ?? ''}
                       onValueChange={(value: string): void =>
                         setPreviewSelections((prev: Record<string, string>): Record<string, string> => ({ ...prev, [page.id]: value }))
                       }
@@ -187,7 +190,7 @@ export default function PagesPage(): React.ReactNode {
                     </Select>
                   ) : zoneSlugs.length === 1 ? (
                     <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200">
-                      Preview: {activeDomain?.domain ?? "current"}/{zoneSlugs[0]}
+                      Preview: {activeDomain?.domain ?? 'current'}/{zoneSlugs[0]}
                     </div>
                   ) : null}
                   <Button
@@ -213,9 +216,9 @@ export default function PagesPage(): React.ReactNode {
             <li className="py-10">
               <EmptyState
                 title="No pages match this filter"
-                description={statusFilter === "all" ? "Create your first page to get started with CMS." : "Try changing the status filter or create a new page."}
+                description={statusFilter === 'all' ? 'Create your first page to get started with CMS.' : 'Try changing the status filter or create a new page.'}
                 action={
-                  statusFilter === "all" && (
+                  statusFilter === 'all' && (
                     <Button onClick={handleCreatePage} variant="outline">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Page
@@ -228,11 +231,11 @@ export default function PagesPage(): React.ReactNode {
         </ul>
       </ListPanel>
 
-              <ConfirmDialog
-                open={!!pageToDelete}
-                onOpenChange={(open: boolean) => !open && setPageToDelete(null)}
-                onConfirm={() => { void handleConfirmDelete(); }}
-                title="Delete Page"        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
+      <ConfirmDialog
+        open={!!pageToDelete}
+        onOpenChange={(open: boolean) => !open && setPageToDelete(null)}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Page"        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
       />

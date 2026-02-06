@@ -1,18 +1,18 @@
-import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
-import { addAgentMemory } from "@/features/ai/agent-runtime/memory";
-import { buildCheckpointState } from "@/features/ai/agent-runtime/memory/checkpoint";
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
+import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
+import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
 import {
   buildSelfImprovementReviewWithLLM,
   verifyPlanWithLLM,
-} from "@/features/ai/agent-runtime/planning/llm";
-import { getBrowserContextSummary } from "@/features/ai/agent-runtime/browsing/context";
+} from '@/features/ai/agent-runtime/planning/llm';
 import type {
   AgentPlanPreferences,
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/features/ai/agent-runtime/types/agent";
+} from '@/features/ai/agent-runtime/types/agent';
+import prisma from '@/shared/lib/db/prisma';
 
 type FinalizeRunInput = {
   run: {
@@ -20,7 +20,7 @@ type FinalizeRunInput = {
     prompt: string;
   };
   planSteps: PlanStep[];
-  taskType: PlannerMeta["taskType"] | null;
+  taskType: PlannerMeta['taskType'] | null;
   overallOk: boolean;
   requiresHuman: boolean;
   lastError: string | null;
@@ -51,7 +51,7 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     plannerModel,
     memorySummarizationModel,
   } = input;
-  const status = requiresHuman ? "waiting_human" : overallOk ? "completed" : "failed";
+  const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
 
   await prisma.chatbotAgentRun.update({
     where: { id: run.id },
@@ -59,7 +59,7 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
       status,
       requiresHumanIntervention: requiresHuman,
       finishedAt: new Date(),
-      errorMessage: status === "failed" ? lastError : null,
+      errorMessage: status === 'failed' ? lastError : null,
       activeStepId: null,
       planState: buildCheckpointState({
         steps: planSteps,
@@ -74,7 +74,7 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
       checkpointedAt: new Date(),
       logLines: {
         push: `[${new Date().toISOString()}] Playwright tool ${
-          status === "completed" ? "completed" : status === "waiting_human" ? "paused" : "failed"
+          status === 'completed' ? 'completed' : status === 'waiting_human' ? 'paused' : 'failed'
         }.`,
       },
     },
@@ -101,8 +101,8 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     runId: run.id,
   });
   if (improvementReview) {
-    await logAgentAudit(run.id, "info", "Self-improvement review completed.", {
-      type: "self-improvement",
+    await logAgentAudit(run.id, 'info', 'Self-improvement review completed.', {
+      type: 'self-improvement',
       summary: improvementReview.summary,
       mistakes: improvementReview.mistakes,
       improvements: improvementReview.improvements,
@@ -112,26 +112,26 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     });
     await addAgentMemory({
       runId: run.id,
-      scope: "session",
+      scope: 'session',
       content: [
-        "Self-improvement review",
+        'Self-improvement review',
         improvementReview.summary,
         improvementReview.mistakes.length
-          ? `Mistakes: ${improvementReview.mistakes.join(" | ")}`
+          ? `Mistakes: ${improvementReview.mistakes.join(' | ')}`
           : null,
         improvementReview.improvements.length
-          ? `Improvements: ${improvementReview.improvements.join(" | ")}`
+          ? `Improvements: ${improvementReview.improvements.join(' | ')}`
           : null,
         improvementReview.guardrails.length
-          ? `Guardrails: ${improvementReview.guardrails.join(" | ")}`
+          ? `Guardrails: ${improvementReview.guardrails.join(' | ')}`
           : null,
         improvementReview.toolAdjustments.length
-          ? `Tool adjustments: ${improvementReview.toolAdjustments.join(" | ")}`
+          ? `Tool adjustments: ${improvementReview.toolAdjustments.join(' | ')}`
           : null,
       ]
         .filter(Boolean)
-        .join("\n"),
-      metadata: { type: "self-improvement", confidence: improvementReview.confidence ?? null },
+        .join('\n'),
+      metadata: { type: 'self-improvement', confidence: improvementReview.confidence ?? null },
     });
   }
 

@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronRightIcon } from "lucide-react";
-import { useState } from "react";
-import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
-import { useRouter } from "next/navigation";
+import * as Collapsible from '@radix-ui/react-collapsible';
+import { ChevronRightIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 
 interface CollapsibleMenuProps {
   title: string;
@@ -43,13 +44,13 @@ export default function CollapsibleMenu({
         {!isMenuCollapsed && (
           <ChevronRightIcon
             className={`transition-transform duration-200 ${
-              isOpen ? "rotate-90" : ""
+              isOpen ? 'rotate-90' : ''
             }`}
           />
         )}
       </Collapsible.Trigger>
       <Collapsible.Content
-        className={`pl-4 ${isMenuCollapsed ? "hidden" : ""}`}
+        className={`pl-4 ${isMenuCollapsed ? 'hidden' : ''}`}
       >
         {children}
       </Collapsible.Content>

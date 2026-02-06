@@ -1,8 +1,8 @@
-import "server-only";
+import 'server-only';
 
-export * from "./services/database-backup";
-export * from "./services/database-sync";
-export * from "./types";
+export * from './services/database-backup';
+export * from './services/database-sync';
+export * from './types';
 
 export {
   backupsDir as pgBackupsDir,
@@ -14,7 +14,7 @@ export {
   getPgRestoreCommand,
   execFileAsync as pgExecFileAsync,
   assertValidBackupName as assertValidPgBackupName,
-} from "./utils/postgres";
+} from './utils/postgres';
 
 export {
   backupsDir as mongoBackupsDir,
@@ -25,4 +25,4 @@ export {
   getMongoRestoreCommand,
   execFileAsync as mongoExecFileAsync,
   assertValidBackupName as assertValidMongoBackupName,
-} from "./utils/mongo";
+} from './utils/mongo';

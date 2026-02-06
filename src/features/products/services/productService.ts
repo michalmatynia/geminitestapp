@@ -1,32 +1,37 @@
-import "server-only";
+import 'server-only';
 
-import { ErrorSystem } from "@/features/observability/server";
 // This service encapsulates all business logic for managing products.
 
-import fs from "fs/promises";
-import path from "path";
-import {
-  productCreateSchema,
-  productUpdateSchema,
-} from "@/features/products/validations";
-import { getDiskPathFromPublicPath, uploadFile } from "@/features/files/server";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import type {
-  ProductFilters,
-  ProductRepository,
-} from "@/features/products/types/services/product-repository";
-import { getImageFileRepository } from "@/features/files/server";
-import type { ImageFileRepository } from "@/features/files/types/services/image-file-repository";
-import { getCatalogRepository } from "@/features/products/services/catalog-repository";
-import { badRequestError } from "@/shared/errors/app-error";
+import fs from 'fs/promises';
+import path from 'path';
+
+import { getDiskPathFromPublicPath, uploadFile } from '@/features/files/server';
+import { getImageFileRepository } from '@/features/files/server';
+import type { ImageFileRepository } from '@/features/files/types/services/image-file-repository';
+import { ErrorSystem } from '@/features/observability/server';
+import { performanceMonitor } from '@/features/products/performance';
+import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
+import { getProductRepository } from '@/features/products/services/product-repository';
 import type {
   ProductWithImages,
   ProductImageRecord,
   ProductRecord,
-} from "@/features/products/types";
+} from '@/features/products/types';
+import type {
+  ProductFilters,
+  ProductRepository,
+} from '@/features/products/types/services/product-repository';
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from '@/features/products/validations';
+import { badRequestError } from '@/shared/errors/app-error';
 
-const resolveProductRepository = async (): Promise<ProductRepository> =>
-  getProductRepository();
+const resolveProductRepository = async (
+  providerOverride?: ProductDbProvider
+): Promise<ProductRepository> =>
+  getProductRepository(providerOverride);
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository();
 
@@ -35,13 +40,31 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
  * @param filters - The filter criteria.
  * @returns A list of products.
  */
+const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === 'true';
+
+type ProductQueryTimings = Record<string, number | null | undefined>;
+
 async function getProducts(
   filters: ProductFilters,
+  options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
 ): Promise<ProductWithImages[]> {
-  const productRepository = await resolveProductRepository();
-  const products = await productRepository.getProducts(filters);
+  const timings = options?.timings;
+  const totalStart = performance.now();
+  const provider = options?.provider ?? await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
 
-  return Promise.all(
+  const repoStart = performance.now();
+  const products = await productRepository.getProducts(filters);
+  const repoMs = performance.now() - repoStart;
+  if (timings) {
+    timings.repo = repoMs;
+  }
+  performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
+
+  const imagesStart = performance.now();
+  let fsChecks = 0;
+
+  const result = await Promise.all(
     products.map(
       async (product: ProductWithImages): Promise<ProductWithImages> => {
         if (!product.images?.length) {
@@ -63,6 +86,7 @@ async function getProducts(
               }
 
               try {
+                fsChecks += 1;
                 await fs.access(getDiskPathFromPublicPath(filepath));
                 return image;
               } catch {
@@ -82,6 +106,22 @@ async function getProducts(
       },
     ),
   );
+  const imagesMs = performance.now() - imagesStart;
+  if (timings) {
+    timings.images = imagesMs;
+    timings.fsChecks = fsChecks;
+    timings.total = performance.now() - totalStart;
+  }
+  if (shouldLogTiming()) {
+    console.log('[timing] productService.getProducts', {
+      provider,
+      repoMs: Math.round(repoMs),
+      imagesMs: Math.round(imagesMs),
+      fsChecks,
+      totalMs: Math.round(performance.now() - totalStart),
+    });
+  }
+  return result;
 }
 
 /**
@@ -119,22 +159,22 @@ async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
 async function createProduct(
   formData: FormData,
 ): Promise<ProductWithImages | null> {
-  await ErrorSystem.logInfo("Creating product...");
+  await ErrorSystem.logInfo('Creating product...');
   try {
     const validatedData = productCreateSchema.parse(
       Object.fromEntries(formData.entries()),
     );
-    await ErrorSystem.logInfo("Validated data", { validatedData });
+    await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const product = await productRepository.createProduct(validatedData);
 
-    const images = formData.getAll("images") as File[];
-    const imageFileIds = formData.getAll("imageFileIds") as string[];
-    const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
-    const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
-    const tagIds = normalizeTagIds(formData.getAll("tagIds"));
-    const producerIds = normalizeProducerIds(formData.getAll("producerIds"));
-    const noteIds = normalizeNoteIds(formData.getAll("noteIds"));
+    const images = formData.getAll('images') as File[];
+    const imageFileIds = formData.getAll('imageFileIds') as string[];
+    const catalogIds = normalizeCatalogIds(formData.getAll('catalogIds'));
+    const categoryId = normalizeCategoryId(formData);
+    const tagIds = normalizeTagIds(formData.getAll('tagIds'));
+    const producerIds = normalizeProducerIds(formData.getAll('producerIds'));
+    const noteIds = normalizeNoteIds(formData.getAll('noteIds'));
     await linkImagesToProduct(
       product.id,
       images,
@@ -142,7 +182,7 @@ async function createProduct(
       validatedData.sku,
     );
     await updateProductCatalogs(product.id, catalogIds);
-    await updateProductCategories(product.id, categoryIds);
+    await updateProductCategory(product.id, categoryId);
     await updateProductTags(product.id, tagIds);
     await updateProductProducers(product.id, producerIds);
     await updateProductNotes(product.id, noteIds);
@@ -150,8 +190,8 @@ async function createProduct(
     return await getProductById(product.id);
   } catch (error) {
     await ErrorSystem.captureException(error, {
-      service: "productService",
-      action: "createProduct",
+      service: 'productService',
+      action: 'createProduct',
     });
     throw error;
   }
@@ -172,7 +212,7 @@ async function updateProduct(
     const validatedData = productUpdateSchema.parse(
       Object.fromEntries(formData.entries()),
     );
-    await ErrorSystem.logInfo("Validated data", { validatedData });
+    await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const updatedProduct = await productRepository.updateProduct(
       id,
@@ -180,40 +220,40 @@ async function updateProduct(
     );
     if (!updatedProduct) return null;
 
-    const images = formData.getAll("images") as File[];
-    const imageFileIds = formData.getAll("imageFileIds") as string[];
+    const images = formData.getAll('images') as File[];
+    const imageFileIds = formData.getAll('imageFileIds') as string[];
     await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
     if (validatedData.sku) {
       await moveLinkedTempImagesToSku(id, validatedData.sku);
     }
 
     // Only update catalogs/categories/tags if explicitly provided in formData
-    if (formData.has("catalogIds")) {
-      const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+    if (formData.has('catalogIds')) {
+      const catalogIds = normalizeCatalogIds(formData.getAll('catalogIds'));
       await updateProductCatalogs(id, catalogIds);
     }
-    if (formData.has("categoryIds")) {
-      const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
-      await updateProductCategories(id, categoryIds);
+    if (formData.has('categoryId') || formData.has('categoryIds')) {
+      const categoryId = normalizeCategoryId(formData);
+      await updateProductCategory(id, categoryId);
     }
-    if (formData.has("tagIds")) {
-      const tagIds = normalizeTagIds(formData.getAll("tagIds"));
+    if (formData.has('tagIds')) {
+      const tagIds = normalizeTagIds(formData.getAll('tagIds'));
       await updateProductTags(id, tagIds);
     }
-    if (formData.has("producerIds")) {
-      const producerIds = normalizeProducerIds(formData.getAll("producerIds"));
+    if (formData.has('producerIds')) {
+      const producerIds = normalizeProducerIds(formData.getAll('producerIds'));
       await updateProductProducers(id, producerIds);
     }
-    if (formData.has("noteIds")) {
-      const noteIds = normalizeNoteIds(formData.getAll("noteIds"));
+    if (formData.has('noteIds')) {
+      const noteIds = normalizeNoteIds(formData.getAll('noteIds'));
       await updateProductNotes(id, noteIds);
     }
 
     return await getProductById(updatedProduct.id);
   } catch (error) {
     await ErrorSystem.captureException(error, {
-      service: "productService",
-      action: "updateProduct",
+      service: 'productService',
+      action: 'updateProduct',
       productId: id,
     });
     throw error;
@@ -232,8 +272,8 @@ async function deleteProduct(id: string): Promise<ProductRecord | null> {
     return await productRepository.deleteProduct(id);
   } catch (error) {
     await ErrorSystem.captureException(error, {
-      service: "productService",
-      action: "deleteProduct",
+      service: 'productService',
+      action: 'deleteProduct',
       productId: id,
     });
     throw error;
@@ -255,11 +295,11 @@ async function duplicateProduct(
     const trimmedSku = sku.trim();
     const skuPattern = /^[A-Z0-9]+$/;
     if (!trimmedSku) {
-      throw badRequestError("SKU is required", { field: "sku" });
+      throw badRequestError('SKU is required', { field: 'sku' });
     }
     if (!skuPattern.test(trimmedSku)) {
-      throw badRequestError("SKU must use uppercase letters and numbers only", {
-        field: "sku",
+      throw badRequestError('SKU must use uppercase letters and numbers only', {
+        field: 'sku',
         value: trimmedSku,
       });
     }
@@ -273,8 +313,8 @@ async function duplicateProduct(
     return await getProductById(duplicatedProduct.id);
   } catch (error) {
     await ErrorSystem.captureException(error, {
-      service: "productService",
-      action: "duplicateProduct",
+      service: 'productService',
+      action: 'duplicateProduct',
       productId: id,
       newSku: sku,
     });
@@ -313,7 +353,7 @@ async function unlinkImageFromProduct(
         } catch (error: unknown) {
           if (
             error instanceof Error &&
-            (error as NodeJS.ErrnoException).code !== "ENOENT"
+            (error as NodeJS.ErrnoException).code !== 'ENOENT'
           ) {
             throw error;
           }
@@ -328,7 +368,7 @@ async function unlinkImageFromProduct(
         );
         if (
           folderDiskPath.startsWith(
-            path.join(process.cwd(), "public", "uploads", "products"),
+            path.join(process.cwd(), 'public', 'uploads', 'products'),
           )
         ) {
           try {
@@ -339,7 +379,7 @@ async function unlinkImageFromProduct(
           } catch (error: unknown) {
             if (
               error instanceof Error &&
-              (error as NodeJS.ErrnoException).code !== "ENOENT"
+              (error as NodeJS.ErrnoException).code !== 'ENOENT'
             ) {
               throw error;
             }
@@ -372,7 +412,7 @@ async function linkImagesToProduct(
       // Filter out empty file inputs
       if (image.size > 0) {
         const uploadedImage = await uploadFile(image, {
-          category: "products",
+          category: 'products',
           sku: productSku,
         });
         allImageFileIds.push(uploadedImage.id);
@@ -389,7 +429,7 @@ async function linkImagesToProduct(
   }
 }
 
-const tempProductPathPrefix = "/uploads/products/temp/";
+const tempProductPathPrefix = '/uploads/products/temp/';
 
 // Why: HTML form's getAll("catalogIds") returns entries for EACH selected item.
 // Normalize to trim whitespace (user selection artifacts) and filter empty strings
@@ -397,23 +437,31 @@ const tempProductPathPrefix = "/uploads/products/temp/";
 function normalizeCatalogIds(entries: FormDataEntryValue[]): string[] {
   return entries
     .map((entry: FormDataEntryValue): string =>
-      typeof entry === "string" ? entry.trim() : "",
+      typeof entry === 'string' ? entry.trim() : '',
     )
     .filter((entry: string): boolean => entry.length > 0);
 }
 
-function normalizeCategoryIds(entries: FormDataEntryValue[]): string[] {
-  return entries
+function normalizeCategoryId(formData: FormData): string | null {
+  const direct = formData.get('categoryId');
+  if (typeof direct === 'string') {
+    const trimmed = direct.trim();
+    if (trimmed) return trimmed;
+    return null;
+  }
+  const legacyEntries = formData.getAll('categoryIds');
+  const normalized = legacyEntries
     .map((entry: FormDataEntryValue): string =>
-      typeof entry === "string" ? entry.trim() : "",
+      typeof entry === 'string' ? entry.trim() : '',
     )
     .filter((entry: string): boolean => entry.length > 0);
+  return normalized[0] ?? null;
 }
 
 function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
   return entries
     .map((entry: FormDataEntryValue): string =>
-      typeof entry === "string" ? entry.trim() : "",
+      typeof entry === 'string' ? entry.trim() : '',
     )
     .filter((entry: string): boolean => entry.length > 0);
 }
@@ -421,7 +469,7 @@ function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
 function normalizeProducerIds(entries: FormDataEntryValue[]): string[] {
   return entries
     .map((entry: FormDataEntryValue): string =>
-      typeof entry === "string" ? entry.trim() : "",
+      typeof entry === 'string' ? entry.trim() : '',
     )
     .filter((entry: string): boolean => entry.length > 0);
 }
@@ -429,7 +477,7 @@ function normalizeProducerIds(entries: FormDataEntryValue[]): string[] {
 function normalizeNoteIds(entries: FormDataEntryValue[]): string[] {
   return entries
     .map((entry: FormDataEntryValue): string =>
-      typeof entry === "string" ? entry.trim() : "",
+      typeof entry === 'string' ? entry.trim() : '',
     )
     .filter((entry: string): boolean => entry.length > 0);
 }
@@ -459,12 +507,12 @@ async function updateProductCatalogs(
   }
 }
 
-async function updateProductCategories(
+async function updateProductCategory(
   productId: string,
-  categoryIds: string[],
+  categoryId: string | null,
 ): Promise<void> {
   const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductCategories(productId, categoryIds);
+  await productRepository.replaceProductCategory(productId, categoryId);
 }
 
 async function updateProductTags(
@@ -509,12 +557,12 @@ async function moveTempImageFilesToSku(
     }
 
     const filename = imageFile.filepath.slice(tempProductPathPrefix.length);
-    const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+    const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
     const targetPublicDir = `/uploads/products/${safeSku}`;
     const targetPublicPath = `${targetPublicDir}/${filename}`;
 
     await fs.mkdir(
-      path.join(process.cwd(), "public", "uploads", "products", safeSku),
+      path.join(process.cwd(), 'public', 'uploads', 'products', safeSku),
       { recursive: true },
     );
     await fs.rename(

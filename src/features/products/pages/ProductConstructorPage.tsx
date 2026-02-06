@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger, useToast } from "@/shared/ui";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from 'react';
 
-import { ParametersSettings } from "@/features/products/components/constructor/ParametersSettings";
-import { useCatalogs, useParameters } from "@/features/products/hooks/useProductSettingsQueries";
+import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
+import { useCatalogs, useParameters } from '@/features/products/hooks/useProductSettingsQueries';
+import { Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
 
 export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -16,7 +16,7 @@ export function ProductConstructorPage(): React.JSX.Element {
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (catalogs.length > 0 && !selectedCatalogId) {
-      const defaultCatalog = catalogs.find((catalog: import("@/features/products/types").CatalogRecord) => catalog.isDefault);
+      const defaultCatalog = catalogs.find((catalog: import('@/features/products/types').CatalogRecord) => catalog.isDefault);
       timer = setTimeout(() => {
         setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
       }, 0);
@@ -31,13 +31,13 @@ export function ProductConstructorPage(): React.JSX.Element {
 
   useEffect(() => {
     if (catalogsQuery.error) {
-      toast(catalogsQuery.error.message, { variant: "error" });
+      toast(catalogsQuery.error.message, { variant: 'error' });
     }
   }, [catalogsQuery.error, toast]);
 
   useEffect(() => {
     if (parametersQuery.error) {
-      toast(parametersQuery.error.message, { variant: "error" });
+      toast(parametersQuery.error.message, { variant: 'error' });
     }
   }, [parametersQuery.error, toast]);
 

@@ -24,7 +24,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
     if (!integration || integration.slug !== "allegro") {
       throw notFoundError("Allegro integration not found.", {
-        integrationId: id,
+        integrationId: id
       });
     }
 
@@ -34,7 +34,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       allegroTokenType: null,
       allegroScope: null,
       allegroExpiresAt: null,
-      allegroTokenUpdatedAt: null,
+      allegroTokenUpdatedAt: null
     });
 
     return NextResponse.json({ ok: true });
@@ -45,9 +45,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       fallbackMessage: "Failed to disconnect Allegro.",
       ...(integrationId || connectionId
         ? { extra: { integrationId, connectionId } }
-        : {}),
+        : {})
     });
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].allegro.disconnect.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].allegro.disconnect.POST", requireCsrf: false }
+);

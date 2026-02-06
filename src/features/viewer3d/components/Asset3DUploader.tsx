@@ -1,12 +1,16 @@
-"use client";
+'use client';
 
-import { Button, Input, Label } from "@/shared/ui";
-import { Upload, Loader2, Plus, X } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
-import { validate3DFile, SUPPORTED_3D_FORMATS } from "../utils/validateAsset3d";
-import { uploadAsset3DFile } from "../api";
-import type { Asset3DRecord } from "../types";
-import { cn } from "@/shared/utils";
+import { Upload, Loader2, Plus, X } from 'lucide-react';
+import { useState, useCallback } from 'react';
+
+import { Button, Input, Label, FileUploadTrigger } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { uploadAsset3DFile } from '../api';
+import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '../utils/validateAsset3d';
+
+import type { Asset3DRecord } from '../types';
+
 
 export interface Asset3DUploaderProps {
   onUpload: (asset: Asset3DRecord) => void;
@@ -24,21 +28,20 @@ export function Asset3DUploader({
   className,
 }: Asset3DUploaderProps): React.JSX.Element {
   const [file, setFile] = useState<File | null>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState("");
+  const [newTag, setNewTag] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = useCallback((selectedFile: File): void => {
-    const validation = validate3DFile(selectedFile);
+  const handleFileSelect = useCallback(async (selectedFile: File): Promise<void> => {
+    const validation = await validate3DFileAsync(selectedFile);
     if (!validation.valid) {
-      setError(validation.error ?? "Invalid file");
+      setError(validation.error ?? 'Invalid file');
       return;
     }
     setFile(selectedFile);
@@ -46,9 +49,9 @@ export function Asset3DUploader({
     // Auto-fill name from filename
     if (!name) {
       const cleanName = selectedFile.name
-        .replace(/\.[^/.]+$/, "")
-        .replace(/[-_]/g, " ")
-        .replace(/\s+/g, " ")
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
       setName(cleanName);
     }
@@ -59,7 +62,7 @@ export function Asset3DUploader({
       e.preventDefault();
       setIsDragOver(false);
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) handleFileSelect(droppedFile);
+      if (droppedFile) void handleFileSelect(droppedFile);
     },
     [handleFileSelect]
   );
@@ -68,7 +71,7 @@ export function Asset3DUploader({
     const trimmed = newTag.trim().toLowerCase();
     if (trimmed && !tags.includes(trimmed)) {
       setTags([...tags, trimmed]);
-      setNewTag("");
+      setNewTag('');
     }
   };
 
@@ -76,23 +79,27 @@ export function Asset3DUploader({
     setTags(tags.filter((t: string) => t !== tag));
   };
 
-  const handleUpload = async (): Promise<void> => {
+  const handleUpload = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     if (!file) return;
 
     setIsUploading(true);
     setError(null);
 
     try {
-      const uploaded = await uploadAsset3DFile(file, {
-        ...(name.trim() && { name: name.trim() }),
-        ...(description.trim() && { description: description.trim() }),
-        ...(category.trim() && { category: category.trim() }),
-        ...(tags.length > 0 && { tags }),
-        isPublic,
-      });
+      const uploaded = await uploadAsset3DFile(
+        file,
+        {
+          ...(name.trim() && { name: name.trim() }),
+          ...(description.trim() && { description: description.trim() }),
+          ...(category.trim() && { category: category.trim() }),
+          ...(tags.length > 0 && { tags }),
+          isPublic,
+        },
+        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      );
       onUpload(uploaded);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }
@@ -108,43 +115,40 @@ export function Asset3DUploader({
     <div className={className}>
       {/* File Drop Zone */}
       {!file ? (
-        <div
-          className={cn(
-            "relative flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors",
-            isDragOver
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-gray-600 bg-gray-800/50 hover:border-blue-500 hover:bg-gray-800"
-          )}
-          onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-            e.preventDefault();
-            setIsDragOver(true);
+        <FileUploadTrigger
+          accept=".glb,.gltf"
+          onFilesSelected={(files: File[]) => {
+            const selectedFile = files[0];
+            if (selectedFile) void handleFileSelect(selectedFile);
           }}
-          onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
-            e.preventDefault();
-            setIsDragOver(false);
-          }}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          asChild
         >
-          <div className="flex flex-col items-center gap-2">
-            <Upload className="h-8 w-8 text-gray-500" />
-            <span className="text-sm text-gray-400">
-              Drop .glb or .gltf file here
-            </span>
-            <span className="text-xs text-gray-500">or click to browse</span>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".glb,.gltf"
-            className="hidden"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-              const selectedFile = e.target.files?.[0];
-              if (selectedFile) handleFileSelect(selectedFile);
-              e.target.value = "";
+          <div
+            className={cn(
+              'relative flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors',
+              isDragOver
+                ? 'border-blue-500 bg-blue-500/10'
+                : 'border-gray-600 bg-gray-800/50 hover:border-blue-500 hover:bg-gray-800'
+            )}
+            onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
+              e.preventDefault();
+              setIsDragOver(true);
             }}
-          />
-        </div>
+            onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
+              e.preventDefault();
+              setIsDragOver(false);
+            }}
+            onDrop={handleDrop}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <Upload className="h-8 w-8 text-gray-500" />
+              <span className="text-sm text-gray-400">
+              Drop .glb or .gltf file here
+              </span>
+              <span className="text-xs text-gray-500">or click to browse</span>
+            </div>
+          </div>
+        </FileUploadTrigger>
       ) : (
         <div className="space-y-4">
           {/* Selected File */}
@@ -228,7 +232,7 @@ export function Asset3DUploader({
                 value={newTag}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAddTag();
                   }
@@ -298,7 +302,7 @@ export function Asset3DUploader({
 
       {/* Format Info */}
       <p className="mt-2 text-xs text-gray-500">
-        Supported formats: {Object.keys(SUPPORTED_3D_FORMATS).join(", ")}. Max 100MB.
+        Supported formats: {Object.keys(SUPPORTED_3D_FORMATS).join(', ')}. Max 100MB.
       </p>
 
       {/* Actions */}

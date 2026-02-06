@@ -1,19 +1,15 @@
-"use client";
+'use client';
 
-import { Button } from "@/shared/ui";
-import React, { useEffect, useCallback, useRef } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import type { Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableCell } from "@tiptap/extension-table-cell";
-import { TableHeader } from "@tiptap/extension-table-header";
-
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import { Table } from '@tiptap/extension-table';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableRow } from '@tiptap/extension-table-row';
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import {
   Bold,
   Italic,
@@ -31,7 +27,13 @@ import {
   Table as TableIcon,
   Undo,
   Redo,
-} from "lucide-react";
+} from 'lucide-react';
+import React, { useEffect, useCallback, useRef } from 'react';
+
+import { logClientError } from '@/features/observability';
+import { Button } from '@/shared/ui';
+
+import type { Editor } from '@tiptap/react';
 
 interface WysiwygEditorProps {
   content: string;
@@ -62,9 +64,9 @@ const ToolbarButton = ({
     title={title}
     className={`rounded p-1.5 transition-colors ${
       isActive
-        ? "bg-blue-600 text-white"
-        : "bg-gray-800 text-gray-200 hover:bg-gray-700"
-    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        ? 'bg-blue-600 text-white'
+        : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
   </Button>
@@ -99,12 +101,12 @@ export function WysiwygEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-blue-400 underline hover:text-blue-300",
+          class: 'text-blue-400 underline hover:text-blue-300',
         },
       }),
       Image.configure({
         HTMLAttributes: {
-          class: "max-w-full rounded-lg",
+          class: 'max-w-full rounded-lg',
         },
       }),
       TaskList,
@@ -122,7 +124,7 @@ export function WysiwygEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none min-h-[200px] focus:outline-none px-4 py-3",
+          'prose prose-invert max-w-none min-h-[200px] focus:outline-none px-4 py-3',
       },
     },
     onUpdate: ({ editor }: { editor: Editor }): void => {
@@ -146,7 +148,7 @@ export function WysiwygEditor({
         lastContentRef.current = content;
         editor.commands.setContent(sanitized, { emitUpdate: false });
       } catch (error: unknown) {
-        console.error("Failed to set WYSIWYG content:", error);
+        logClientError(error, { context: { source: 'WysiwygEditor', action: 'setContent' } });
         // Try to recover by clearing and setting plain text
         try {
           editor.commands.clearContent();
@@ -154,7 +156,7 @@ export function WysiwygEditor({
             editor.commands.insertContent(sanitizeContent(content));
           }
         } catch (fallbackError: unknown) {
-          console.error("Failed to recover from WYSIWYG error:", fallbackError);
+          logClientError(fallbackError, { context: { source: 'WysiwygEditor', action: 'recoverContent' } });
         }
       }
     }
@@ -162,7 +164,7 @@ export function WysiwygEditor({
 
   const addLink = useCallback((): void => {
     if (!editor) return;
-    const url = window.prompt("Enter URL:");
+    const url = window.prompt('Enter URL:');
     if (url) {
       editor.chain().focus().setLink({ href: url }).run();
     }
@@ -170,7 +172,7 @@ export function WysiwygEditor({
 
   const addImage = useCallback((): void => {
     if (!editor) return;
-    const url = window.prompt("Enter image URL:");
+    const url = window.prompt('Enter image URL:');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
@@ -221,21 +223,21 @@ export function WysiwygEditor({
         {/* Text formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive("bold")}
+          isActive={editor.isActive('bold')}
           title="Bold"
         >
           <Bold className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive("italic")}
+          isActive={editor.isActive('italic')}
           title="Italic"
         >
           <Italic className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCode().run()}
-          isActive={editor.isActive("code")}
+          isActive={editor.isActive('code')}
           title="Inline Code"
         >
           <Code className="size-4" />
@@ -248,7 +250,7 @@ export function WysiwygEditor({
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
-          isActive={editor.isActive("heading", { level: 1 })}
+          isActive={editor.isActive('heading', { level: 1 })}
           title="Heading 1"
         >
           <Heading1 className="size-4" />
@@ -257,7 +259,7 @@ export function WysiwygEditor({
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
-          isActive={editor.isActive("heading", { level: 2 })}
+          isActive={editor.isActive('heading', { level: 2 })}
           title="Heading 2"
         >
           <Heading2 className="size-4" />
@@ -266,7 +268,7 @@ export function WysiwygEditor({
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
-          isActive={editor.isActive("heading", { level: 3 })}
+          isActive={editor.isActive('heading', { level: 3 })}
           title="Heading 3"
         >
           <Heading3 className="size-4" />
@@ -277,21 +279,21 @@ export function WysiwygEditor({
         {/* Lists */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive("bulletList")}
+          isActive={editor.isActive('bulletList')}
           title="Bullet List"
         >
           <List className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive("orderedList")}
+          isActive={editor.isActive('orderedList')}
           title="Numbered List"
         >
           <ListOrdered className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleTaskList().run()}
-          isActive={editor.isActive("taskList")}
+          isActive={editor.isActive('taskList')}
           title="Task List"
         >
           <CheckSquare className="size-4" />
@@ -302,7 +304,7 @@ export function WysiwygEditor({
         {/* Block elements */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive("blockquote")}
+          isActive={editor.isActive('blockquote')}
           title="Quote"
         >
           <Quote className="size-4" />
@@ -315,7 +317,7 @@ export function WysiwygEditor({
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          isActive={editor.isActive("codeBlock")}
+          isActive={editor.isActive('codeBlock')}
           title="Code Block"
         >
           <Code className="size-4" />
@@ -326,7 +328,7 @@ export function WysiwygEditor({
         {/* Insert elements */}
         <ToolbarButton
           onClick={addLink}
-          isActive={editor.isActive("link")}
+          isActive={editor.isActive('link')}
           title="Add Link"
         >
           <LinkIcon className="size-4" />

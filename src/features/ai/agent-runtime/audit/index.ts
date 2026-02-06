@@ -1,10 +1,11 @@
-import "server-only";
+import 'server-only';
 
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import prisma from '@/shared/lib/db/prisma';
 
-export type AuditLevel = "info" | "warning" | "error";
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+import type { Prisma } from '@prisma/client';
+
+export type AuditLevel = 'info' | 'warning' | 'error';
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
 /**
  * Convert "unknown-ish" objects into something Prisma JSON accepts.
@@ -22,7 +23,7 @@ function toPrismaJson(
   // - remove undefined/functions/symbols
   // - throw on BigInt unless we handle it
   const jsonString = JSON.stringify(value, (_key: string, v: unknown) => {
-    if (typeof v === "bigint") return v.toString();
+    if (typeof v === 'bigint') return v.toString();
     return v; // ✅ avoids returning `any`
   });
   // If value was something unstringifiable, JSON.stringify could return undefined
@@ -37,9 +38,9 @@ export async function logAgentAudit(
   message: string,
   metadata?: Record<string, unknown>
 ): Promise<void> {
-  if (!("agentAuditLog" in prisma)) {
+  if (!('agentAuditLog' in prisma)) {
     if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][audit] Audit table not initialized.");
+      console.warn('[chatbot][agent][audit] Audit table not initialized.');
     }
     return;
   }
@@ -56,13 +57,25 @@ export async function logAgentAudit(
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][audit] Failed to write audit log", {
-        runId,
-        level,
-        message,
-        error,
+    try {
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      void ErrorSystem.captureException(error, { 
+        service: 'agent-audit', 
+        action: 'logAgentAudit',
+        originalMessage: message,
+        auditLevel: level,
+        targetRunId: runId
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error('[chatbot][agent][audit] Failed to write audit log (and logging failed)', {
+          runId,
+          level,
+          message,
+          error,
+          logError
+        });
+      }
     }
   }
 }

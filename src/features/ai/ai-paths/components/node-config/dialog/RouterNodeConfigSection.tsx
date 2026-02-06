@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 
 
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, NodeConfig, RouterConfig } from "@/features/ai/ai-paths/lib";
+import type { AiNode, NodeConfig, RouterConfig } from '@/features/ai/ai-paths/lib';
+import { Input, Label, UnifiedSelect } from '@/shared/ui';
 
 type RouterNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -15,61 +15,57 @@ export function RouterNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: RouterNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "router") return null;
+  if (selectedNode.type !== 'router') return null;
 
   const routerConfig = selectedNode.config?.router ?? {
-    mode: "valid",
-    matchMode: "truthy",
-    compareTo: "",
+    mode: 'valid',
+    matchMode: 'truthy',
+    compareTo: '',
   };
 
   return (
     <div className="space-y-4">
       <div>
         <Label className="text-xs text-gray-400">Match Source</Label>
-        <Select
+        <UnifiedSelect
           value={routerConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               router: {
                 ...routerConfig,
-                mode: value as RouterConfig["mode"],
+                mode: value as RouterConfig['mode'],
               },
             })
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select mode" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="valid">Validator valid</SelectItem>
-            <SelectItem value="value">Value input</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: 'valid', label: 'Validator valid' },
+            { value: 'value', label: 'Value input' }
+          ]}
+          placeholder="Select mode"
+          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+        />
       </div>
       <div>
         <Label className="text-xs text-gray-400">Match Mode</Label>
-        <Select
+        <UnifiedSelect
           value={routerConfig.matchMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               router: {
                 ...routerConfig,
-                matchMode: value as RouterConfig["matchMode"],
+                matchMode: value as RouterConfig['matchMode'],
               },
             })
           }
-        >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select match mode" />
-          </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="truthy">Truthy</SelectItem>
-            <SelectItem value="falsy">Falsy</SelectItem>
-            <SelectItem value="equals">Equals</SelectItem>
-            <SelectItem value="contains">Contains</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: 'truthy', label: 'Truthy' },
+            { value: 'falsy', label: 'Falsy' },
+            { value: 'equals', label: 'Equals' },
+            { value: 'contains', label: 'Contains' }
+          ]}
+          placeholder="Select match mode"
+          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+        />
       </div>
       <div>
         <Label className="text-xs text-gray-400">Compare To</Label>

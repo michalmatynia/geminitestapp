@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   deleteImportTemplate,
   getImportTemplate,
-  updateImportTemplate,
+  updateImportTemplate
 } from "@/features/integrations/server";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -16,13 +16,13 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1),
+  targetField: z.string().trim().min(1)
 });
 
 const templateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional(),
-  mappings: z.array(mappingSchema).optional(),
+  mappings: z.array(mappingSchema).optional()
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
@@ -40,7 +40,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return createErrorResponse(error, {
       request: req,
       source: "products.import-templates.[id].GET",
-      fallbackMessage: "Failed to fetch template.",
+      fallbackMessage: "Failed to fetch template."
     });
   }
 }
@@ -52,7 +52,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       throw badRequestError("Template id is required");
     }
     const parsed = await parseJsonBody(req, templateSchema, {
-      logPrefix: "import-templates.PUT",
+      logPrefix: "import-templates.PUT"
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -61,7 +61,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     const template = await updateImportTemplate(id, removeUndefined({
       name: data.name,
       description: data.description,
-      mappings: data.mappings,
+      mappings: data.mappings
     }));
     if (!template) {
       throw notFoundError("Template not found.", { templateId: id });
@@ -71,7 +71,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return createErrorResponse(error, {
       request: req,
       source: "products.import-templates.[id].PUT",
-      fallbackMessage: "Failed to update template.",
+      fallbackMessage: "Failed to update template."
     });
   }
 }
@@ -91,11 +91,20 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
     return createErrorResponse(error, {
       request: req,
       source: "products.import-templates.[id].DELETE",
-      fallbackMessage: "Failed to delete template.",
+      fallbackMessage: "Failed to delete template."
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "products.import-templates.[id].GET" });
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "products.import-templates.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "products.import-templates.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  GET_handler,
+  { source: "products.import-templates.[id].GET", requireCsrf: false }
+);
+export const PUT = apiHandlerWithParams<{ id: string }>(
+  PUT_handler,
+  { source: "products.import-templates.[id].PUT", requireCsrf: false }
+);
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  DELETE_handler,
+  { source: "products.import-templates.[id].DELETE", requireCsrf: false }
+);

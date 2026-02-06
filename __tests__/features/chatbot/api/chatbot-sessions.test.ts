@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
-import { GET, POST, DELETE, PATCH } from "@/app/api/chatbot/sessions/route";
-import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
+import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock("@/features/ai/chatbot/server", () => ({
+import { GET, POST, DELETE, PATCH } from '@/app/api/chatbot/sessions/route';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+
+vi.mock('@/features/ai/chatbot/server', () => ({
   chatbotSessionRepository: {
     create: vi.fn(),
     findAll: vi.fn(),
@@ -12,20 +13,20 @@ vi.mock("@/features/ai/chatbot/server", () => ({
   },
 }));
 
-vi.mock("@/shared/lib/api/api-handler", () => ({
+vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: (handler: any) => handler,
 }));
 
-describe("Chatbot Sessions API", () => {
+describe('Chatbot Sessions API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("GET: returns all sessions", async () => {
-    const mockSessions = [{ id: "s1", title: "Session 1" }];
+  it('GET: returns all sessions', async () => {
+    const mockSessions = [{ id: 's1', title: 'Session 1' }];
     vi.mocked(chatbotSessionRepository.findAll).mockResolvedValue(mockSessions as any);
 
-    const req = new NextRequest("http://localhost/api/chatbot/sessions");
+    const req = new NextRequest('http://localhost/api/chatbot/sessions');
     const res = await GET(req);
     const data = await res.json();
 
@@ -33,47 +34,47 @@ describe("Chatbot Sessions API", () => {
     expect(data.sessions).toEqual(mockSessions);
   });
 
-  it("POST: creates a new session", async () => {
-    const mockSession = { id: "new-id", title: "New Session" };
+  it('POST: creates a new session', async () => {
+    const mockSession = { id: 'new-id', title: 'New Session' };
     vi.mocked(chatbotSessionRepository.create).mockResolvedValue(mockSession as any);
 
-    const req = new NextRequest("http://localhost/api/chatbot/sessions", {
-      method: "POST",
-      body: JSON.stringify({ title: "New Session" }),
+    const req = new NextRequest('http://localhost/api/chatbot/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'New Session' }),
     });
 
     const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(201);
-    expect(data.sessionId).toBe("new-id");
+    expect(data.sessionId).toBe('new-id');
     expect(chatbotSessionRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-      title: "New Session"
+      title: 'New Session'
     }));
   });
 
-  it("PATCH: updates a session title", async () => {
-    const mockSession = { id: "s1", title: "Updated Title" };
+  it('PATCH: updates a session title', async () => {
+    const mockSession = { id: 's1', title: 'Updated Title' };
     vi.mocked(chatbotSessionRepository.update).mockResolvedValue(mockSession as any);
 
-    const req = new NextRequest("http://localhost/api/chatbot/sessions", {
-      method: "PATCH",
-      body: JSON.stringify({ sessionId: "s1", title: "Updated Title" }),
+    const req = new NextRequest('http://localhost/api/chatbot/sessions', {
+      method: 'PATCH',
+      body: JSON.stringify({ sessionId: 's1', title: 'Updated Title' }),
     });
 
     const res = await PATCH(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.session.title).toBe("Updated Title");
+    expect(data.session.title).toBe('Updated Title');
   });
 
-  it("DELETE: deletes a session", async () => {
+  it('DELETE: deletes a session', async () => {
     vi.mocked(chatbotSessionRepository.delete).mockResolvedValue(true);
 
-    const req = new NextRequest("http://localhost/api/chatbot/sessions", {
-      method: "DELETE",
-      body: JSON.stringify({ sessionId: "s1" }),
+    const req = new NextRequest('http://localhost/api/chatbot/sessions', {
+      method: 'DELETE',
+      body: JSON.stringify({ sessionId: 's1' }),
     });
 
     const res = await DELETE(req);
@@ -83,12 +84,12 @@ describe("Chatbot Sessions API", () => {
     expect(data.success).toBe(true);
   });
 
-  it("DELETE: returns 404 if session not found", async () => {
+  it('DELETE: returns 404 if session not found', async () => {
     vi.mocked(chatbotSessionRepository.delete).mockResolvedValue(false);
 
-    const req = new NextRequest("http://localhost/api/chatbot/sessions", {
-      method: "DELETE",
-      body: JSON.stringify({ sessionId: "missing" }),
+    const req = new NextRequest('http://localhost/api/chatbot/sessions', {
+      method: 'DELETE',
+      body: JSON.stringify({ sessionId: 'missing' }),
     });
 
     const res = await DELETE(req);

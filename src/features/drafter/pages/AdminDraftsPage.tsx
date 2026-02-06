@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
-import { ModalShell, Button, AppModal, SectionHeader } from "@/shared/ui";
-import { useRef, useState } from "react";
-import { DraftList } from "../components/DraftList";
-import { DraftCreator } from "../components/DraftCreator";
+import { useRef, useState } from 'react';
+
+import { AppModal, Button, SectionHeader } from '@/shared/ui';
+
+import { DraftCreator } from '../components/DraftCreator';
+import { DraftList } from '../components/DraftList';
 
 
 
@@ -33,8 +35,8 @@ export function AdminDraftsPage(): React.JSX.Element {
     setIsCreatorOpen(false);
   };
 
-  const title = editingDraftId ? "Edit Draft" : "Create Draft";
-  const submitText = editingDraftId ? "Update" : "Create";
+  const title = editingDraftId ? 'Edit Draft' : 'Create Draft';
+  const submitText = editingDraftId ? 'Update' : 'Create';
 
   const header = (
     <div className="flex items-center justify-between">
@@ -76,17 +78,16 @@ export function AdminDraftsPage(): React.JSX.Element {
 
       <AppModal
         open={isCreatorOpen}
-        onOpenChange={(open: boolean): void => { if (!open) handleCloseCreator(); }}
+        onClose={handleCloseCreator}
         title={title}
+        header={header}
       >
-        <ModalShell title={title} onClose={handleCloseCreator} header={header}>
-          <DraftCreator
-            formRef={formRef}
-            draftId={editingDraftId}
-            onSaveSuccess={handleSaveSuccess}
-            onCancel={handleCloseCreator}
-          />
-        </ModalShell>
+        <DraftCreator
+          formRef={formRef}
+          draftId={editingDraftId}
+          onSaveSuccess={handleSaveSuccess}
+          onCancel={handleCloseCreator}
+        />
       </AppModal>
     </div>
   );

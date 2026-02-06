@@ -1,8 +1,8 @@
-import { productService } from "@/features/products/server";
-import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
-import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
-import type { ProductAiJobRecord, ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
-import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from "@/shared/types/jobs";
+import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
+import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/features/jobs/types/product-ai-job-repository';
+import { productService } from '@/features/products/server';
+import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/types/jobs';
 
 type ProductSummary = {
   name_en: string | null;
@@ -10,7 +10,7 @@ type ProductSummary = {
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object";
+  value !== null && typeof value === 'object';
 
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
@@ -25,7 +25,7 @@ const toIsoString = (value?: Date | null): string | null => {
 const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   id: record.id,
   productId: record.productId,
-  status: record.status === "canceled" ? "cancelled" : record.status,
+  status: record.status === 'canceled' ? 'cancelled' : record.status,
   type: record.type,
   payload: record.payload,
   result: toJobResult(record.result),
@@ -39,29 +39,51 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
 const toProductSummary = (product: Record<string, unknown> | null): ProductSummary | null => {
   if (!product) return null;
   const record = product;
-  const name = typeof record.name_en === "string" ? record.name_en : null;
-  const sku = typeof record.sku === "string" ? record.sku : null;
+  const name = typeof record.name_en === 'string' ? record.name_en : null;
+  const sku = typeof record.sku === 'string' ? record.sku : null;
   return { name_en: name, sku };
 };
 
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
-  console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
+  try {
+    const { ErrorSystem } = await import('@/features/observability/services/error-system');
+    void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
+      service: 'product-ai-service',
+      productId,
+      context: { type, payload: typeof payload === 'object' ? payload : undefined }
+    });
+  } catch {
+    // Fallback to console if logging fails
+    console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
+  }
   const jobRepository = await getProductAiJobRepository();
   const jobRecord = await jobRepository.createJob(productId, type, payload);
-  console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+  
+  try {
+    const { ErrorSystem } = await import('@/features/observability/services/error-system');
+    void ErrorSystem.logInfo('[enqueueProductAiJob] Job created', {
+      service: 'product-ai-service',
+      productId,
+      jobId: jobRecord.id,
+      context: { type }
+    });
+  } catch {
+    console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+  }
+  
   return toProductAiJob(jobRecord);
 }
 
 export async function getProductAiJobs(
   productId?: string
-): Promise<Array<Omit<ProductAiJob, "product"> & { product: ProductSummary | null }>> {
+): Promise<Array<Omit<ProductAiJob, 'product'> & { product: ProductSummary | null }>> {
   const jobRepository = await getProductAiJobRepository();
   const jobRecords = await jobRepository.findJobs(productId);
   const jobs = jobRecords.map(toProductAiJob);
 
   const shouldFetchProduct = (job: { productId: string; payload: unknown }): boolean => {
     const payload =
-      job.payload && typeof job.payload === "object"
+      job.payload && typeof job.payload === 'object'
         ? (job.payload as Record<string, unknown>)
         : null;
     const entityType =
@@ -71,9 +93,9 @@ export async function getProductAiJobs(
         | undefined);
     const source = payload?.source as string | undefined;
     const graph = payload?.graph as Record<string, unknown> | undefined;
-    if (entityType && entityType !== "product") return false;
-    if (source === "ai_paths" && graph) return false;
-    if (job.productId.startsWith("path_")) return false;
+    if (entityType && entityType !== 'product') return false;
+    if (source === 'ai_paths' && graph) return false;
+    if (job.productId.startsWith('path_')) return false;
     return true;
   };
 
@@ -89,7 +111,17 @@ export async function getProductAiJobs(
         const product = await productService.getProductById(id);
         return { id, product: isRecord(product) ? product : null };
       } catch (error: unknown) {
-        console.error(`[getProductAiJobs] Failed to fetch product ${id}:`, error);
+        try {
+          const { logSystemError } = await import('@/features/observability/server');
+          await logSystemError({ 
+            message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
+            error,
+            source: 'product-ai-service',
+            context: { action: 'getProductAiJobs', productId: id }
+          });
+        } catch (logError) {
+          console.error(`[getProductAiJobs] Failed to fetch product ${id} (and logging failed):`, error, logError);
+        }
         return { id, product: null };
       }
     })
@@ -112,7 +144,7 @@ export async function getProductAiJobs(
 
 export async function getProductAiJob(
   jobId: string
-): Promise<(Omit<ProductAiJob, "product"> & { product: Record<string, unknown> | null }) | null> {
+): Promise<(Omit<ProductAiJob, 'product'> & { product: Record<string, unknown> | null }) | null> {
   const jobRepository = await getProductAiJobRepository();
   const jobRecord = await jobRepository.findJobById(jobId);
   if (!jobRecord) return null;
@@ -120,7 +152,7 @@ export async function getProductAiJob(
 
   let product: Record<string, unknown> | null = null;
   const payload =
-    job.payload && typeof job.payload === "object"
+    job.payload && typeof job.payload === 'object'
       ? (job.payload as Record<string, unknown>)
       : null;
   const entityType =
@@ -131,18 +163,28 @@ export async function getProductAiJob(
   const source = payload?.source as string | undefined;
   const graph = payload?.graph as Record<string, unknown> | undefined;
   const shouldFetch =
-    !job.productId.startsWith("path_") &&
-    entityType !== "note" &&
-    entityType !== "user" &&
-    entityType !== "system" &&
-    !(source === "ai_paths" && graph) &&
-    (entityType ? entityType === "product" : true);
+    !job.productId.startsWith('path_') &&
+    entityType !== 'note' &&
+    entityType !== 'user' &&
+    entityType !== 'system' &&
+    !(source === 'ai_paths' && graph) &&
+    (entityType ? entityType === 'product' : true);
   if (shouldFetch) {
     try {
       const result = await productService.getProductById(job.productId);
       product = isRecord(result) ? result : null;
     } catch (error: unknown) {
-      console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
+      try {
+        const { logSystemError } = await import('@/features/observability/server');
+        await logSystemError({ 
+          message: '[product-ai-service] Failed to fetch product in getProductAiJob',
+          error,
+          source: 'product-ai-service',
+          context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id }
+        });
+      } catch (logError) {
+        console.error(`[getProductAiJob] Failed to fetch product ${job.productId} (and logging failed):`, error, logError);
+      }
       // Continue without product details if it fails
     }
   }
@@ -162,16 +204,16 @@ export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate
 export async function cancelProductAiJob(jobId: string): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
   const jobRecord = await jobRepository.findJobById(jobId);
-  if (!jobRecord) throw notFoundError("Job not found", { jobId });
-  if (jobRecord.status !== "pending" && jobRecord.status !== "running") {
-    throw invalidStateError("Only pending or running jobs can be canceled", {
+  if (!jobRecord) throw notFoundError('Job not found', { jobId });
+  if (jobRecord.status !== 'pending' && jobRecord.status !== 'running') {
+    throw invalidStateError('Only pending or running jobs can be canceled', {
       jobId,
       status: jobRecord.status,
     });
   }
 
   const updated = await jobRepository.updateJob(jobId, {
-    status: "canceled",
+    status: 'canceled',
     finishedAt: new Date(),
   });
   return toProductAiJob(updated);

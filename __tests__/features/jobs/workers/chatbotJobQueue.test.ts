@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { chatbotJobRepository } from "@/features/ai/chatbot/services/chatbot-job-repository";
-import { chatbotSessionRepository } from "@/features/ai/chatbot/services/chatbot-session-repository";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 
 // Mock the module where pollQueue resides, exporting pollQueue for testing.
 // stopChatbotJobQueue is explicitly exported from the real module, so it's not mocked here.
 const mockPollQueue = vi.fn();
-vi.mock("@/features/jobs/workers/chatbotJobQueue", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/features/jobs/workers/chatbotJobQueue")>();
+vi.mock('@/features/jobs/workers/chatbotJobQueue', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/jobs/workers/chatbotJobQueue')>();
   return {
     ...actual,
     pollQueue: mockPollQueue, // Export the mock pollQueue
@@ -14,9 +15,9 @@ vi.mock("@/features/jobs/workers/chatbotJobQueue", async (importOriginal) => {
 });
 
 // Import after the mock to ensure the mocked version is used
-import { stopChatbotJobQueue } from "@/features/jobs/workers/chatbotJobQueue";
+import { stopChatbotJobQueue } from '@/features/jobs/workers/chatbotJobQueue';
 
-vi.mock("@/features/ai/chatbot/services/chatbot-job-repository", () => ({
+vi.mock('@/features/ai/chatbot/services/chatbot-job-repository', () => ({
   chatbotJobRepository: {
     findById: vi.fn(),
     findNextPending: vi.fn(),
@@ -24,7 +25,7 @@ vi.mock("@/features/ai/chatbot/services/chatbot-job-repository", () => ({
   },
 }));
 
-vi.mock("@/features/ai/chatbot/services/chatbot-session-repository", () => ({
+vi.mock('@/features/ai/chatbot/services/chatbot-session-repository', () => ({
   chatbotSessionRepository: {
     addMessage: vi.fn(),
   },
@@ -32,7 +33,7 @@ vi.mock("@/features/ai/chatbot/services/chatbot-session-repository", () => ({
 
 const globalFetch = global.fetch;
 
-describe("Chatbot Job Queue Worker", () => {
+describe('Chatbot Job Queue Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPollQueue.mockClear(); // Clear mock calls for pollQueue as well
@@ -45,21 +46,21 @@ describe("Chatbot Job Queue Worker", () => {
     global.fetch = globalFetch;
   });
 
-  it("processes a pending job successfully", async () => {
+  it('processes a pending job successfully', async () => {
     const mockJob = {
-      id: "j1",
-      sessionId: "s1",
-      status: "pending",
-      payload: { model: "llama3", messages: [{ role: "user", content: "hi" }] },
+      id: 'j1',
+      sessionId: 's1',
+      status: 'pending',
+      payload: { model: 'llama3', messages: [{ role: 'user', content: 'hi' }] },
     };
     
     vi.mocked(chatbotJobRepository.findNextPending).mockResolvedValue(mockJob as any);
-    vi.mocked(chatbotJobRepository.update).mockResolvedValue({ ...mockJob, status: "running" } as any);
-    vi.mocked(chatbotJobRepository.findById).mockResolvedValue({ ...mockJob, status: "running" } as any);
+    vi.mocked(chatbotJobRepository.update).mockResolvedValue({ ...mockJob, status: 'running' } as any);
+    vi.mocked(chatbotJobRepository.findById).mockResolvedValue({ ...mockJob, status: 'running' } as any);
 
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ message: { content: "hello from ai" } }),
+      json: () => Promise.resolve({ message: { content: 'hello from ai' } }),
     } as any);
 
     // Call the original, un-mocked pollQueue logic within the test context
@@ -98,38 +99,38 @@ describe("Chatbot Job Queue Worker", () => {
     await mockPollQueue(); // Call the mocked version
 
     expect(chatbotJobRepository.findNextPending).toHaveBeenCalled();
-    expect(chatbotJobRepository.update).toHaveBeenCalledWith("j1", expect.objectContaining({ status: "running" }));
+    expect(chatbotJobRepository.update).toHaveBeenCalledWith('j1', expect.objectContaining({ status: 'running' }));
     expect(global.fetch).toHaveBeenCalled();
-    expect(chatbotSessionRepository.addMessage).toHaveBeenCalledWith("s1", expect.objectContaining({
-      role: "assistant",
-      content: "hello from ai",
+    expect(chatbotSessionRepository.addMessage).toHaveBeenCalledWith('s1', expect.objectContaining({
+      role: 'assistant',
+      content: 'hello from ai',
     }));
     expect(mockPollQueue).toHaveBeenCalledOnce(); // Assert that the mock was called
   });
 
-  it("marks job as failed if fetch fails", async () => {
+  it('marks job as failed if fetch fails', async () => {
     const mockJob = {
-      id: "j1",
-      sessionId: "s1",
-      status: "pending",
-      payload: { model: "llama3", messages: [] },
+      id: 'j1',
+      sessionId: 's1',
+      status: 'pending',
+      payload: { model: 'llama3', messages: [] },
     };
     
     vi.mocked(chatbotJobRepository.findNextPending).mockResolvedValue(mockJob as any);
-    vi.mocked(chatbotJobRepository.update).mockResolvedValueOnce({ ...mockJob, status: "running" } as any);
-    vi.mocked(chatbotJobRepository.findById).mockResolvedValue({ ...mockJob, status: "running" } as any);
+    vi.mocked(chatbotJobRepository.update).mockResolvedValueOnce({ ...mockJob, status: 'running' } as any);
+    vi.mocked(chatbotJobRepository.findById).mockResolvedValue({ ...mockJob, status: 'running' } as any);
 
     vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
-      statusText: "Internal Server Error",
-      text: () => Promise.resolve("AI server down"),
+      statusText: 'Internal Server Error',
+      text: () => Promise.resolve('AI server down'),
     } as any);
 
     await mockPollQueue(); // Call the mocked version
 
-    expect(chatbotJobRepository.update).toHaveBeenCalledWith("j1", expect.objectContaining({
-      status: "failed",
-      errorMessage: "AI server down",
+    expect(chatbotJobRepository.update).toHaveBeenCalledWith('j1', expect.objectContaining({
+      status: 'failed',
+      errorMessage: 'AI server down',
     }));
     expect(mockPollQueue).toHaveBeenCalledOnce(); // Assert that the mock was called
   });

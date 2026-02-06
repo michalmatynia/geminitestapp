@@ -8,6 +8,7 @@ export * from './domain/files';
 export * from './domain/settings';
 export * from './domain/internationalization';
 export * from './domain/user-preferences';
+export * from './domain/integrations';
 
 // API types
 export * from './api/api';
@@ -21,6 +22,7 @@ export * from './ai-paths-runtime';
 export * from './chatbot';
 export * from './agent-teaching';
 export * from './analytics';
+export * from './ai-insights';
 
 // System types
 export * from './system';

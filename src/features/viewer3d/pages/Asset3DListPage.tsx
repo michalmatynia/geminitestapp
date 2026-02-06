@@ -1,9 +1,17 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import {
+  Box,
+  Loader2,
+  RefreshCw,
+  Grid,
+  List,
+  Eye,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 import {
   Button,
-  Input,
   ListPanel,
   SectionHeader,
   SectionPanel,
@@ -13,29 +21,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/ui";
-import {
-  Box,
-  Loader2,
-  RefreshCw,
-  Search,
-  Grid,
-  List,
-  Eye,
-} from "lucide-react";
-import { Asset3DPreviewModal } from "../components/Asset3DPreviewModal";
-import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from "../hooks/useAsset3dQueries";
-import type { Asset3DRecord } from "../types";
-import { cn } from "@/shared/utils";
+  UnifiedSelect,
+  SearchInput,
+  Alert,
+} from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
-type ViewMode = "grid" | "list";
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from '../hooks/useAsset3dQueries';
+
+import type { Asset3DRecord } from '../types';
+
+
+type ViewMode = 'grid' | 'list';
 
 export function Asset3DListPage(): React.JSX.Element {
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -66,18 +71,18 @@ export function Asset3DListPage(): React.JSX.Element {
   };
 
   const formatDate = (date: Date | string): string => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   const stats =
     !loading && assets.length > 0 ? (
       <div className="text-sm text-muted-foreground">
-        {assets.length} asset{assets.length !== 1 ? "s" : ""}
-        {searchQuery || selectedCategory || selectedTags.length > 0 ? " (filtered)" : ""}
+        {assets.length} asset{assets.length !== 1 ? 's' : ''}
+        {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
       </div>
     ) : null;
 
@@ -95,7 +100,7 @@ export function Asset3DListPage(): React.JSX.Element {
               disabled={loading}
               className="gap-2"
             >
-              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+              <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
               Refresh
             </Button>
           }
@@ -103,37 +108,39 @@ export function Asset3DListPage(): React.JSX.Element {
       }
       alerts={
         error ? (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <Alert variant="error">
             {error}
-          </div>
+          </Alert>
         ) : null
       }
       filters={
         <SectionPanel>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-                placeholder="Search assets..."
-                className="h-8 pl-9 text-sm"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              placeholder="Search assets..."
+              className="h-8"
+              containerClassName="flex-1 min-w-[200px] max-w-md"
+            />
 
             {categories.length > 0 && (
-              <select
-                value={selectedCategory ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
-                className="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              >
-                <option value="">All categories</option>
-                {categories.map((cat: string) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div className="w-[180px]">
+                <UnifiedSelect
+                  value={selectedCategory ?? '__all__'}
+                  onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
+                  options={[
+                    { value: '__all__', label: 'All categories' },
+                    ...categories.map((cat: string) => ({
+                      value: cat,
+                      label: cat,
+                    })),
+                  ]}
+                  placeholder="All categories"
+                  triggerClassName="h-8"
+                />
+              </div>
             )}
 
             {allTags.length > 0 && (
@@ -141,7 +148,7 @@ export function Asset3DListPage(): React.JSX.Element {
                 {allTags.slice(0, 5).map((tag: string) => (
                   <Button
                     key={tag}
-                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                    variant={selectedTags.includes(tag) ? 'default' : 'outline'}
                     size="sm"
                     onClick={() =>
                       setSelectedTags((prev: string[]) =>
@@ -158,18 +165,18 @@ export function Asset3DListPage(): React.JSX.Element {
 
             <div className="ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20">
               <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="icon"
                 className="h-8 w-8 rounded-none"
-                onClick={() => setViewMode("grid")}
+                onClick={() => setViewMode('grid')}
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="icon"
                 className="h-8 w-8 rounded-none"
-                onClick={() => setViewMode("list")}
+                onClick={() => setViewMode('list')}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -191,8 +198,8 @@ export function Asset3DListPage(): React.JSX.Element {
           <p className="text-base font-medium text-foreground">No assets found</p>
           <p className="text-sm text-muted-foreground">
             {searchQuery || selectedCategory || selectedTags.length > 0
-              ? "Try adjusting your filters"
-              : "No 3D assets available"}
+              ? 'Try adjusting your filters'
+              : 'No 3D assets available'}
           </p>
 
           {!searchQuery && !selectedCategory && selectedTags.length === 0 ? (
@@ -207,13 +214,13 @@ export function Asset3DListPage(): React.JSX.Element {
                   .catch(() => {})
               }
             >
-              {reindexMutation.isPending ? "Reindexing..." : "Reindex local uploads"}
+              {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
             </Button>
           ) : null}
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === "grid" && (
+      {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {assets.map((asset: Asset3DRecord) => (
             <div
@@ -248,7 +255,7 @@ export function Asset3DListPage(): React.JSX.Element {
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === "list" && (
+      {!loading && assets.length > 0 && viewMode === 'list' && (
         <Table className="text-sm text-foreground">
           <TableHeader>
             <TableRow>

@@ -1,39 +1,35 @@
-"use client";
+'use client';
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, SectionHeader, SectionPanel, Checkbox } from "@/shared/ui";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
-
-
+import { useMutation } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useEffect, useMemo, useState } from 'react';
 
 
-import { useSession } from "next-auth/react";
-
-
+import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
+import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
   mergeDefaultRoles,
   type AuthRole,
-} from "@/features/auth/utils/auth-management";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
-
+} from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
-} from "@/features/auth/utils/auth-security";
-import { useAuthUserSecurity } from "@/features/auth/hooks/useAuthQueries";
-import { disableMfa, setupMfa, verifyMfa } from "@/features/auth/api/mfa";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
-import { useMutation } from "@tanstack/react-query";
+} from '@/features/auth/utils/auth-security';
+import { logClientError } from '@/features/observability';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, SectionHeader, SectionPanel, Checkbox } from '@/shared/ui';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+
 
 export default function AuthSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { data: session } = useSession();
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
-  const [defaultRole, setDefaultRole] = useState<string>("viewer");
+  const [defaultRole, setDefaultRole] = useState<string>('viewer');
   const [securityPolicy, setSecurityPolicy] = useState<AuthSecurityPolicy>(
     DEFAULT_AUTH_SECURITY_POLICY
   );
@@ -42,8 +38,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaSecret, setMfaSecret] = useState<string | null>(null);
   const [mfaOtpAuth, setMfaOtpAuth] = useState<string | null>(null);
-  const [mfaToken, setMfaToken] = useState("");
-  const [mfaDisableCode, setMfaDisableCode] = useState("");
+  const [mfaToken, setMfaToken] = useState('');
+  const [mfaDisableCode, setMfaDisableCode] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const settingsQuery = useSettingsMap();
   const updateDefaultRole = useUpdateSetting();
@@ -55,8 +51,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load auth settings:", settingsQuery.error);
-    toast("Failed to load auth settings.", { variant: "error" });
+    logClientError(settingsQuery.error, { context: { source: 'AuthSettingsPage', action: 'loadSettings' } });
+    toast('Failed to load auth settings.', { variant: 'error' });
   }, [settingsQuery.error, toast]);
 
   const roleOptions = useMemo(
@@ -81,9 +77,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
     const nextDefault =
       storedDefault && storedRoles.some((role: AuthRole) => role.id === storedDefault)
         ? storedDefault
-        : storedRoles.find((role: AuthRole) => role.id === "viewer")?.id ??
+        : storedRoles.find((role: AuthRole) => role.id === 'viewer')?.id ??
           storedRoles[0]?.id ??
-          "viewer";
+          'viewer';
     setDefaultRole(nextDefault);
     setDefaultDirty(false);
 
@@ -107,11 +103,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
         value: defaultRole,
       });
       setDefaultDirty(false);
-      toast("Default role saved.", { variant: "success" });
+      toast('Default role saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveDefaultRole' } });
       toast(
-        error instanceof Error ? error.message : "Failed to save settings.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to save settings.',
+        { variant: 'error' }
       );
     }
   };
@@ -123,11 +120,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
         value: JSON.stringify(securityPolicy),
       });
       setSecurityDirty(false);
-      toast("Security policy saved.", { variant: "success" });
+      toast('Security policy saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveSecurityPolicy' } });
       toast(
-        error instanceof Error ? error.message : "Failed to save security policy.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to save security policy.',
+        { variant: 'error' }
       );
     }
   };
@@ -138,46 +136,48 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
       const res = await mfaSetupMutation.mutateAsync();
-      if (!res.ok) throw new Error("Failed to start MFA setup.");
+      if (!res.ok) throw new Error('Failed to start MFA setup.');
       const payload = res.payload;
       setMfaSecret(payload.secret ?? null);
       setMfaOtpAuth(payload.otpauthUrl ?? null);
-      toast("MFA setup started. Enter the code from your authenticator app.", {
-        variant: "success",
+      toast('MFA setup started. Enter the code from your authenticator app.', {
+        variant: 'success',
       });
     } catch (error) {
+      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaSetup' } });
       toast(
-        error instanceof Error ? error.message : "Failed to start MFA setup.",
-        { variant: "error" }
+        error instanceof Error ? error.message : 'Failed to start MFA setup.',
+        { variant: 'error' }
       );
     }
   };
 
   const handleMfaVerify = async (): Promise<void> => {
     if (!mfaToken.trim()) {
-      toast("Enter the MFA code from your authenticator app.", { variant: "error" });
+      toast('Enter the MFA code from your authenticator app.', { variant: 'error' });
       return;
     }
     try {
       const res = await mfaVerifyMutation.mutateAsync(mfaToken.trim());
       const payload = res.payload;
       if (!res.ok) {
-        throw new Error(payload.message ?? "Failed to verify MFA.");
+        throw new Error(payload.message ?? 'Failed to verify MFA.');
       }
       setRecoveryCodes(payload.recoveryCodes ?? []);
       setMfaEnabled(true);
-      setMfaToken("");
-      toast("MFA enabled. Save your recovery codes.", { variant: "success" });
+      setMfaToken('');
+      toast('MFA enabled. Save your recovery codes.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to verify MFA.", {
-        variant: "error",
+      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaVerify' } });
+      toast(error instanceof Error ? error.message : 'Failed to verify MFA.', {
+        variant: 'error',
       });
     }
   };
 
   const handleMfaDisable = async (): Promise<void> => {
     if (!mfaDisableCode.trim()) {
-      toast("Enter a code to disable MFA.", { variant: "error" });
+      toast('Enter a code to disable MFA.', { variant: 'error' });
       return;
     }
     try {
@@ -187,17 +187,18 @@ export default function AuthSettingsPage(): React.JSX.Element {
       });
       const payload = res.payload;
       if (!res.ok) {
-        throw new Error(payload.message ?? "Failed to disable MFA.");
+        throw new Error(payload.message ?? 'Failed to disable MFA.');
       }
       setMfaEnabled(false);
       setMfaSecret(null);
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
-      setMfaDisableCode("");
-      toast("MFA disabled.", { variant: "success" });
+      setMfaDisableCode('');
+      toast('MFA disabled.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to disable MFA.", {
-        variant: "error",
+      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaDisable' } });
+      toast(error instanceof Error ? error.message : 'Failed to disable MFA.', {
+        variant: 'error',
       });
     }
   };
@@ -239,7 +240,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
             onClick={() => void saveDefaultRole()}
             disabled={!defaultDirty || updateDefaultRole.isPending}
           >
-            {updateDefaultRole.isPending ? "Saving..." : "Save"}
+            {updateDefaultRole.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </div>
@@ -273,7 +274,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
             <Label className="text-xs text-gray-300">Require strong password</Label>
             <div className="flex items-center gap-3">
               <Checkbox
-                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked: boolean | "indeterminate") => {
+                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked: boolean | 'indeterminate') => {
                   setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                     ...prev,
                     requireStrongPassword: Boolean(checked),
@@ -292,15 +293,15 @@ export default function AuthSettingsPage(): React.JSX.Element {
             <div className="flex flex-wrap gap-4 text-xs text-gray-400">
               {(
                 [
-                  ["requireUppercase", "Uppercase"],
-                  ["requireLowercase", "Lowercase"],
-                  ["requireNumber", "Number"],
-                  ["requireSymbol", "Symbol"],
+                  ['requireUppercase', 'Uppercase'],
+                  ['requireLowercase', 'Lowercase'],
+                  ['requireNumber', 'Number'],
+                  ['requireSymbol', 'Symbol'],
                 ] as const
-              ).map(([key, label]: readonly ["requireUppercase" | "requireLowercase" | "requireNumber" | "requireSymbol", string]) => (
+              ).map(([key, label]: readonly ['requireUppercase' | 'requireLowercase' | 'requireNumber' | 'requireSymbol', string]) => (
                 <Label key={key} className="flex items-center gap-2">
                   <Checkbox
-                    checked={securityPolicy[key]} onCheckedChange={(checked: boolean | "indeterminate") => {
+                    checked={securityPolicy[key]} onCheckedChange={(checked: boolean | 'indeterminate') => {
                       setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                         ...prev,
                         [key]: Boolean(checked),
@@ -422,7 +423,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
             onClick={() => void saveSecurityPolicy()}
             disabled={!securityDirty || updateSecurityPolicy.isPending}
           >
-            {updateSecurityPolicy.isPending ? "Saving..." : "Save security policy"}
+            {updateSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
           </Button>
         </div>
       </div>
@@ -435,12 +436,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
           </p>
         </div>
         <div className="text-xs text-gray-400">
-          Status: {mfaEnabled ? "Enabled" : "Disabled"}
+          Status: {mfaEnabled ? 'Enabled' : 'Disabled'}
         </div>
         {!mfaEnabled ? (
           <div className="space-y-3">
             <Button onClick={() => void handleMfaSetup()} disabled={mfaSetupMutation.isPending}>
-              {mfaSetupMutation.isPending ? "Starting..." : "Start MFA setup"}
+              {mfaSetupMutation.isPending ? 'Starting...' : 'Start MFA setup'}
             </Button>
             {mfaSecret ? (
               <div className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2">
@@ -458,7 +459,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
                   placeholder="123456"
                 />
                 <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifyMutation.isPending}>
-                  {mfaVerifyMutation.isPending ? "Verifying..." : "Verify & enable"}
+                  {mfaVerifyMutation.isPending ? 'Verifying...' : 'Verify & enable'}
                 </Button>
               </div>
             ) : null}
@@ -487,7 +488,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
               onClick={() => void handleMfaDisable()}
               disabled={mfaDisableMutation.isPending}
             >
-              {mfaDisableMutation.isPending ? "Disabling..." : "Disable MFA"}
+              {mfaDisableMutation.isPending ? 'Disabling...' : 'Disable MFA'}
             </Button>
           </div>
         )}

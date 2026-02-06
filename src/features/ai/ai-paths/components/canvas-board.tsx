@@ -22,9 +22,9 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { Button, Tooltip, SectionPanel } from '@/shared/ui';
 
-import { formatPortLabel } from '../utils/ui-utils';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
+import { formatPortLabel } from '../utils/ui-utils';
 
 export type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
 const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';

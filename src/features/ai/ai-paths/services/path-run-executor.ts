@@ -201,6 +201,25 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
 
   const runtimeState = parseRuntimeState(run.runtimeState);
+
+  // Accumulated state: tracks per-node inputs/outputs for intermediate DB saves.
+  // This lets the SSE stream deliver per-node progress to the client.
+  const accInputs: Record<string, RuntimePortValues> = { ...(runtimeState.inputs ?? {}) };
+  const accOutputs: Record<string, RuntimePortValues> = { ...(runtimeState.outputs ?? {}) };
+  let resolvedRunId = run.id;
+  let resolvedRunStartedAt = runStartedAt;
+
+  const saveIntermediateState = async (): Promise<void> => {
+    await repo.updateRun(run.id, {
+      runtimeState: sanitizeRuntimeState({
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
+        inputs: accInputs,
+        outputs: accOutputs,
+      }),
+    });
+  };
+
   const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? '', 10);
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
@@ -256,33 +275,43 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         void reportAiPathsError(error, meta, summary);
       },
       toast,
-      onNodeStart: async ({ node, nodeInputs, prevOutputs, iteration, runStartedAt }) => {
+      onNodeStart: async ({ node, nodeInputs, prevOutputs, iteration, runStartedAt: cbRunStartedAt }) => {
+        resolvedRunId = run.id;
+        resolvedRunStartedAt = cbRunStartedAt;
         const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
         nodeAttemptMap.set(node.id, nextAttempt);
-        await repo.upsertRunNode(run.id, node.id, {
-          nodeType: node.type,
-          nodeTitle: node.title ?? null,
-          status: 'running',
-          attempt: nextAttempt,
-          inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-          outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
-          startedAt: new Date(),
-          errorMessage: null,
-        });
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'info',
-          message: `Node ${node.title ?? node.id} started.`,
-          metadata: {
-            nodeId: node.id,
+
+        // Track intermediate state so SSE stream can deliver per-node progress
+        accInputs[node.id] = toJsonSafe(nodeInputs) as RuntimePortValues;
+        accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
+
+        await Promise.all([
+          repo.upsertRunNode(run.id, node.id, {
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'running',
             attempt: nextAttempt,
-            iteration,
-            runStartedAt,
-          },
-        });
+            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
+            outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
+            startedAt: new Date(),
+            errorMessage: null,
+          }),
+          repo.createRunEvent({
+            runId: run.id,
+            level: 'info',
+            message: `Node ${node.title ?? node.id} started.`,
+            metadata: {
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: 'running',
+              attempt: nextAttempt,
+              iteration,
+              runStartedAt: cbRunStartedAt,
+            },
+          }),
+          saveIntermediateState(),
+        ]);
       },
       onNodeFinish: async ({
         node,
@@ -290,7 +319,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         nextOutputs,
         cached,
         iteration,
-        runStartedAt,
+        runStartedAt: cbRunStartedAt,
         runId: _runId,
       }: {
         node: AiNode;
@@ -301,91 +330,106 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runStartedAt: string;
         runId: string;
       }) => {
+        // Update accumulated state with completed outputs
+        accInputs[node.id] = toJsonSafe(nodeInputs) as RuntimePortValues;
+        accOutputs[node.id] = { ...(toJsonSafe(nextOutputs) as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
+
         if (cached) {
           if (iteration === 0) {
-            await repo.upsertRunNode(run.id, node.id, {
-              nodeType: node.type,
-              nodeTitle: node.title ?? null,
-              status: 'completed',
-              attempt: nodeAttemptMap.get(node.id) ?? 0,
-              inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-              outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
-              finishedAt: new Date(),
-              errorMessage: null,
-            });
-            await repo.createRunEvent({
-              runId: run.id,
-              level: 'info',
-              message: `Node ${node.title ?? node.id} reused cached outputs.`,
-              metadata: {
-                nodeId: node.id,
+            await Promise.all([
+              repo.upsertRunNode(run.id, node.id, {
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 status: 'completed',
-                cached: true,
                 attempt: nodeAttemptMap.get(node.id) ?? 0,
-                iteration,
-                runStartedAt,
-              },
-            });
+                inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
+                outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
+                finishedAt: new Date(),
+                errorMessage: null,
+              }),
+              repo.createRunEvent({
+                runId: run.id,
+                level: 'info',
+                message: `Node ${node.title ?? node.id} reused cached outputs.`,
+                metadata: {
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  nodeTitle: node.title ?? null,
+                  status: 'completed',
+                  cached: true,
+                  attempt: nodeAttemptMap.get(node.id) ?? 0,
+                  iteration,
+                  runStartedAt: cbRunStartedAt,
+                },
+              }),
+              saveIntermediateState(),
+            ]);
           }
           return;
         }
-        await repo.upsertRunNode(run.id, node.id, {
-          nodeType: node.type,
-          nodeTitle: node.title ?? null,
-          status: 'completed',
-          attempt: nodeAttemptMap.get(node.id) ?? 0,
-          inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-          outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
-          finishedAt: new Date(),
-          errorMessage: null,
-        });
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'info',
-          message: `Node ${node.title ?? node.id} completed.`,
-          metadata: {
-            nodeId: node.id,
+        await Promise.all([
+          repo.upsertRunNode(run.id, node.id, {
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'completed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
-            iteration,
-            runStartedAt,
-          },
-        });
+            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
+            outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
+            finishedAt: new Date(),
+            errorMessage: null,
+          }),
+          repo.createRunEvent({
+            runId: run.id,
+            level: 'info',
+            message: `Node ${node.title ?? node.id} completed.`,
+            metadata: {
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: 'completed',
+              attempt: nodeAttemptMap.get(node.id) ?? 0,
+              iteration,
+              runStartedAt: cbRunStartedAt,
+            },
+          }),
+          saveIntermediateState(),
+        ]);
       },
-      onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt }) => {
-        await repo.upsertRunNode(run.id, node.id, {
-          nodeType: node.type,
-          nodeTitle: node.title ?? null,
-          status: 'failed',
-          attempt: nodeAttemptMap.get(node.id) ?? 0,
-          inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-          outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
-          finishedAt: new Date(),
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'error',
-          message: `Node ${node.title ?? node.id} failed.`,
-          metadata: {
-            nodeId: node.id,
+      onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
+        accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
+
+        await Promise.all([
+          repo.upsertRunNode(run.id, node.id, {
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'failed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
-            error: error instanceof Error ? error.message : String(error),
-            iteration,
-            runStartedAt,
-          },
-        });
+            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
+            outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
+            finishedAt: new Date(),
+            errorMessage: error instanceof Error ? error.message : String(error),
+          }),
+          repo.createRunEvent({
+            runId: run.id,
+            level: 'error',
+            message: `Node ${node.title ?? node.id} failed.`,
+            metadata: {
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: 'failed',
+              attempt: nodeAttemptMap.get(node.id) ?? 0,
+              error: error instanceof Error ? error.message : String(error),
+              iteration,
+              runStartedAt: cbRunStartedAt,
+            },
+          }),
+          saveIntermediateState(),
+        ]);
       },
       onIterationEnd: async ({
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
+        runId: cbRunId,
+        runStartedAt: cbRunStartedAt,
         iteration: _iteration,
         inputs,
         outputs,
@@ -400,10 +444,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         hashes?: Record<string, string> | undefined;
         history?: Record<string, RuntimeHistoryEntry[]> | undefined;
       }) => {
+        // Sync accumulated state with the full engine state
+        Object.assign(accInputs, inputs);
+        Object.assign(accOutputs, outputs);
+        resolvedRunId = cbRunId;
+        resolvedRunStartedAt = cbRunStartedAt;
+
         await repo.updateRun(run.id, {
           runtimeState: sanitizeRuntimeState({
-            runId: resolvedRunId,
-            runStartedAt: resolvedRunStartedAt,
+            runId: cbRunId,
+            runStartedAt: cbRunStartedAt,
             inputs,
             outputs,
             hashes,

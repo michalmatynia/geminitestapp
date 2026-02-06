@@ -146,36 +146,39 @@ export const enforceAiPathsRunRateLimit = async (
   const repo = getPathRunRepository();
   const now = Date.now();
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
+  const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
 
-  if (RUN_RATE_MAX > 0) {
-    const recent = await repo.listRuns({
-      userId: access.userId,
-      createdAfter: new Date(now - windowMs),
-      limit: 1,
-      offset: 0,
-    });
-    if (recent.total >= RUN_RATE_MAX) {
-      throw rateLimitedError(
-        'Too many runs queued. Please wait before trying again.',
-        windowMs
-      );
-    }
+  // Run both rate-limit queries in parallel
+  const [recent, active] = await Promise.all([
+    RUN_RATE_MAX > 0
+      ? repo.listRuns({
+        userId: access.userId,
+        createdAfter: new Date(now - windowMs),
+        limit: 1,
+        offset: 0,
+      })
+      : null,
+    RUN_ACTIVE_MAX > 0
+      ? repo.listRuns({
+        userId: access.userId,
+        statuses: activeStatuses,
+        limit: 1,
+        offset: 0,
+      })
+      : null,
+  ]);
+
+  if (recent && recent.total >= RUN_RATE_MAX) {
+    throw rateLimitedError(
+      'Too many runs queued. Please wait before trying again.',
+      windowMs
+    );
   }
-
-  if (RUN_ACTIVE_MAX > 0) {
-    const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
-    const active = await repo.listRuns({
-      userId: access.userId,
-      statuses: activeStatuses,
-      limit: 1,
-      offset: 0,
-    });
-    if (active.total >= RUN_ACTIVE_MAX) {
-      throw rateLimitedError(
-        'Too many active runs. Wait for one to finish before starting another.',
-        windowMs
-      );
-    }
+  if (active && active.total >= RUN_ACTIVE_MAX) {
+    throw rateLimitedError(
+      'Too many active runs. Wait for one to finish before starting another.',
+      windowMs
+    );
   }
 };
 

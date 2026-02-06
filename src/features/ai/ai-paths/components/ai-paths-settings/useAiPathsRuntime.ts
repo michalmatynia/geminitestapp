@@ -388,13 +388,48 @@ export function useAiPathsRuntime({
         // ignore parse errors
       }
     });
+    source.addEventListener('nodes', (event: Event) => {
+      try {
+        const nodes = JSON.parse((event as MessageEvent).data) as Array<{
+          nodeId: string;
+          status: string;
+          inputs?: RuntimePortValues | null;
+          outputs?: RuntimePortValues | null;
+        }>;
+        // Apply per-node status to runtimeState for immediate UI feedback
+        setRuntimeState((prev: RuntimeState) => {
+          const nextOutputs = { ...(prev.outputs ?? {}) };
+          const nextInputs = { ...(prev.inputs ?? {}) };
+          let changed = false;
+          for (const node of nodes) {
+            const prevOut = (nextOutputs[node.nodeId] ?? {}) as Record<string, unknown>;
+            if (prevOut.status !== node.status) {
+              nextOutputs[node.nodeId] = { ...prevOut, status: node.status } as RuntimePortValues;
+              changed = true;
+            }
+            if (node.inputs) {
+              nextInputs[node.nodeId] = node.inputs;
+              changed = true;
+            }
+            if (node.outputs) {
+              nextOutputs[node.nodeId] = { ...(nextOutputs[node.nodeId] as Record<string, unknown> ?? {}), ...node.outputs, status: node.status } as RuntimePortValues;
+              changed = true;
+            }
+          }
+          if (!changed) return prev;
+          return { ...prev, inputs: nextInputs, outputs: nextOutputs };
+        });
+      } catch {
+        // ignore parse errors
+      }
+    });
     source.addEventListener('done', () => {
       stopServerRunStream();
     });
     source.addEventListener('error', () => {
       stopServerRunStream();
     });
-  }, [applyServerRunUpdate, stopServerRunStream]);
+  }, [applyServerRunUpdate, setRuntimeState, stopServerRunStream]);
 
   useEffect(() => {
     if (executionMode !== 'server') {
@@ -1614,6 +1649,7 @@ export function useAiPathsRuntime({
     triggerNode: AiNode,
     event?: React.MouseEvent
   ): Promise<void> => {
+    toast('Queuing run…', { variant: 'info' });
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === 'scheduled_run';
     const adjacency = new Map<string, Set<string>>();

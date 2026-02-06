@@ -137,7 +137,7 @@ async function GET_handler(
           break;
         }
 
-        await sleep(1000);
+        await sleep(500);
       }
 
       controller.close();

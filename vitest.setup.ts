@@ -550,7 +550,7 @@ vi.mock("next/server", () => ({
     constructor(body?: BodyInit | null, init?: ResponseInit) {
       super(body, init);
     }
-    static json = vi.fn((data: any, init?: ResponseInit) => {
+    static override json = vi.fn((data: any, init?: ResponseInit) => {
       return new NextResponse(JSON.stringify(data), {
         ...init,
         headers: {
@@ -573,7 +573,7 @@ vi.mock("next/server.js", () => ({
     constructor(body?: BodyInit | null, init?: ResponseInit) {
       super(body, init);
     }
-    static json = vi.fn((data: any, init?: ResponseInit) => {
+    static override json = vi.fn((data: any, init?: ResponseInit) => {
       return new NextResponse(JSON.stringify(data), {
         ...init,
         headers: {

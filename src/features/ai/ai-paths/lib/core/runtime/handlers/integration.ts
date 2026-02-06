@@ -1991,7 +1991,7 @@ type CollectionSchema = {
 };
 
 type LocalSchemaResponse = {
-  provider: 'mongodb' | 'prisma';
+  provider: 'mongodb' | 'prisma' | 'multi';
   collections: CollectionSchema[];
 };
 

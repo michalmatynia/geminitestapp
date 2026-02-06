@@ -51,13 +51,16 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     meta,
     maxAttempts: input.maxAttempts ?? null,
   });
-  await repo.createRunNodes(run.id, nodes);
-  await repo.createRunEvent({
-    runId: run.id,
-    level: 'info',
-    message: 'Run queued.',
-    metadata: { pathId: run.pathId, runStartedAt: resolveRunStartedAt(run) },
-  });
+  // Run node records + event log in parallel, then dispatch to queue
+  await Promise.all([
+    repo.createRunNodes(run.id, nodes),
+    repo.createRunEvent({
+      runId: run.id,
+      level: 'info',
+      message: 'Run queued.',
+      metadata: { pathId: run.pathId, runStartedAt: resolveRunStartedAt(run) },
+    }),
+  ]);
 
   // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
   await enqueuePathRunJob(run.id);

@@ -59,7 +59,12 @@
       "Bash(xargs:*)",
       "Bash(sort:*)",
       "Bash(pkill:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(redis-server:*)",
+      "Bash(brew install:*)",
+      "Bash(brew services:*)",
+      "Bash(redis-cli ping:*)",
+      "Bash(redis-cli:*)"
     ]
   }
 }

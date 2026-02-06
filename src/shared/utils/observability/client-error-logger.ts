@@ -60,9 +60,9 @@ const safeSerialize = (value: unknown): SerializedContext => {
 const buildPayload = (
   error: unknown,
   extra?: {
-    digest?: string;
-    componentStack?: string | null;
-    context?: ClientErrorContext | null;
+    digest?: string | null | undefined;
+    componentStack?: string | null | undefined;
+    context?: ClientErrorContext | null | undefined;
   }
 ): ClientErrorPayload => {
   const payload: ClientErrorPayload = {
@@ -103,9 +103,9 @@ const buildPayload = (
 export const logClientError = (
   error: unknown,
   extra?: {
-    digest?: string;
-    componentStack?: string | null;
-    context?: ClientErrorContext | null;
+    digest?: string | null | undefined;
+    componentStack?: string | null | undefined;
+    context?: ClientErrorContext | null | undefined;
   }
 ): void => {
   if (typeof window === 'undefined') return;

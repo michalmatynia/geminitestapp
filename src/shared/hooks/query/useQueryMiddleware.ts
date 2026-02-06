@@ -103,12 +103,18 @@ export const cacheOptimizationMiddleware: QueryMiddleware = {
 export const errorRecoveryMiddleware: QueryMiddleware = {
   name: 'errorRecovery',
   onQueryError: (query: Query, error: Error): void => {
-    // Auto-retry network errors after delay
-    if (error.message.includes('fetch') || error.message.includes('network')) {
-      setTimeout((): void => {
-        void query.fetch();
-      }, 5000);
-    }
+    // Auto-retry only genuine network errors after delay.
+    // Avoid retrying application errors (e.g. 429/4xx) which can trigger rate-limit loops.
+    const message = (error?.message ?? '').toLowerCase();
+    const isNetworkError =
+      error?.name === 'TypeError' ||
+      message === 'failed to fetch' ||
+      message.includes('networkerror') ||
+      message.includes('network request failed');
+    if (!isNetworkError) return;
+    setTimeout((): void => {
+      void query.fetch();
+    }, 5000);
   },
 };
 

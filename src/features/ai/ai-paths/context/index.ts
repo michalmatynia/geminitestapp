@@ -126,6 +126,9 @@ export {
   useLegacySyncAll,
 } from './hooks/useLegacySync';
 
+// Derived hooks
+export { useCanvasInteractions } from './hooks/useCanvasInteractions';
+
 export type {
   LegacySyncSelectionProps,
   LegacySyncCanvasProps,

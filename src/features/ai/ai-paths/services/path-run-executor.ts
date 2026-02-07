@@ -2,6 +2,10 @@ import 'server-only';
 
 import { evaluateGraphWithIteratorAutoContinue, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import {
+  recordRuntimeNodeStatus,
+  recordRuntimeRunFinished,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import { getProductRepository } from '@/features/products/services/product-repository';
@@ -312,6 +316,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           }),
           saveIntermediateState(),
         ]);
+        await recordRuntimeNodeStatus({
+          runId: run.id,
+          nodeId: node.id,
+          status: 'running',
+        });
       },
       onNodeFinish: async ({
         node,
@@ -364,6 +373,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               }),
               saveIntermediateState(),
             ]);
+            await recordRuntimeNodeStatus({
+              runId: run.id,
+              nodeId: node.id,
+              status: 'cached',
+            });
           }
           return;
         }
@@ -394,6 +408,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           }),
           saveIntermediateState(),
         ]);
+        await recordRuntimeNodeStatus({
+          runId: run.id,
+          nodeId: node.id,
+          status: 'completed',
+        });
       },
       onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
         accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
@@ -426,6 +445,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           }),
           saveIntermediateState(),
         ]);
+        await recordRuntimeNodeStatus({
+          runId: run.id,
+          nodeId: node.id,
+          status: 'failed',
+        });
       },
       onIterationEnd: async ({
         runId: cbRunId,
@@ -463,10 +487,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
     });
 
+    const finishedAt = new Date();
     await repo.updateRun(run.id, {
       status: 'completed',
       runtimeState: sanitizeRuntimeState(resultState),
-      finishedAt: new Date(),
+      finishedAt,
       errorMessage: null,
       meta: {
         ...(run.meta ?? {}),
@@ -480,10 +505,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       message: 'Run completed successfully.',
       metadata: { runStartedAt },
     });
+    const startedAtMs = Date.parse(runStartedAt);
+    const durationMs = Number.isFinite(startedAtMs)
+      ? Math.max(0, finishedAt.getTime() - startedAtMs)
+      : null;
+    await recordRuntimeRunFinished({
+      runId: run.id,
+      status: 'completed',
+      durationMs,
+      timestamp: finishedAt,
+    });
   } catch (error) {
+    const finishedAt = new Date();
     await repo.updateRun(run.id, {
       status: 'failed',
-      finishedAt: new Date(),
+      finishedAt,
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     await repo.createRunEvent({
@@ -494,6 +530,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         error: error instanceof Error ? error.message : String(error),
         runStartedAt,
       },
+    });
+    const startedAtMs = Date.parse(runStartedAt);
+    const durationMs = Number.isFinite(startedAtMs)
+      ? Math.max(0, finishedAt.getTime() - startedAtMs)
+      : null;
+    await recordRuntimeRunFinished({
+      runId: run.id,
+      status: 'failed',
+      durationMs,
+      timestamp: finishedAt,
     });
     throw error;
   }

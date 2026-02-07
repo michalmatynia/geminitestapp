@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
@@ -12,6 +13,7 @@ import type {
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   Button,
+  ConfirmDialog,
   Input,
   Label,
   Select,
@@ -20,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  useToast,
 } from '@/shared/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';
@@ -61,9 +64,27 @@ type QueueStatus = {
   avgRuntimeMs: number | null;
   p50RuntimeMs: number | null;
   p95RuntimeMs: number | null;
+  brainQueue: {
+    running: boolean;
+    healthy: boolean;
+    processing: boolean;
+    activeJobs: number;
+    waitingJobs: number;
+    failedJobs: number;
+    completedJobs: number;
+  };
+  brainAnalytics24h: {
+    analyticsReports: number;
+    logReports: number;
+    totalReports: number;
+    warningReports: number;
+    errorReports: number;
+  };
 };
 
 type StreamMessageEvent = Event & { data: string };
+type RunOrigin = 'node' | 'external' | 'unknown';
+type RunExecutionKind = 'server' | 'local' | 'other' | 'unknown';
 
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -80,6 +101,13 @@ const STATUS_FILTERS = [
   { id: 'canceled', label: 'Canceled' },
   { id: 'dead_lettered', label: 'Dead-lettered' },
 ] as const;
+const AI_PATHS_RUN_SOURCES = new Set([
+  'ai_paths_ui',
+  'ai_paths_direct',
+  'trigger_button',
+  'product_panel',
+]);
+const AI_PATHS_SOURCE_TABS = new Set(['product', 'note']);
 
 const formatDate = (value?: Date | string | null): string => {
   if (!value) return '-';
@@ -119,11 +147,159 @@ const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null 
   return max > 0 ? new Date(max).toISOString() : null;
 };
 
+const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  return meta as Record<string, unknown>;
+};
+
+const readStringValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveRunSource = (run: AiPathRunRecord): string | null => {
+  const meta = readMetaRecord(run.meta);
+  if (!meta) return null;
+
+  const sourceRaw = meta.source;
+  const directSource = readStringValue(sourceRaw);
+  if (directSource) return directSource.toLowerCase();
+
+  if (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)) {
+    const sourceTab = readStringValue((sourceRaw as Record<string, unknown>).tab);
+    if (sourceTab) return `tab:${sourceTab.toLowerCase()}`;
+  }
+
+  const sourceInfoRaw = meta.sourceInfo;
+  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
+    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>).tab);
+    if (sourceInfoTab) return `tab:${sourceInfoTab.toLowerCase()}`;
+  }
+
+  return null;
+};
+
+const resolveRunOrigin = (run: AiPathRunRecord): RunOrigin => {
+  const source = resolveRunSource(run);
+  if (!source) return 'node';
+  if (source.startsWith('tab:')) {
+    const tab = source.slice(4);
+    return AI_PATHS_SOURCE_TABS.has(tab) ? 'node' : 'external';
+  }
+  return AI_PATHS_RUN_SOURCES.has(source) ? 'node' : 'external';
+};
+
+const resolveExecutionCandidate = (raw: unknown): RunExecutionKind | null => {
+  const value = readStringValue(raw)?.toLowerCase();
+  if (!value) return null;
+  if (
+    value === 'server' ||
+    value.includes('server') ||
+    value === 'queue' ||
+    value === 'worker' ||
+    value === 'remote'
+  ) {
+    return 'server';
+  }
+  if (
+    value === 'local' ||
+    value.includes('local') ||
+    value === 'client' ||
+    value === 'browser'
+  ) {
+    return 'local';
+  }
+  if (value === 'unknown') return 'unknown';
+  return 'other';
+};
+
+const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind => {
+  const meta = readMetaRecord(run.meta);
+  if (!meta) return 'server';
+
+  const runtimeMeta =
+    meta.runtime && typeof meta.runtime === 'object' && !Array.isArray(meta.runtime)
+      ? (meta.runtime as Record<string, unknown>)
+      : null;
+  const sourceInfoMeta =
+    meta.sourceInfo && typeof meta.sourceInfo === 'object' && !Array.isArray(meta.sourceInfo)
+      ? (meta.sourceInfo as Record<string, unknown>)
+      : null;
+
+  const candidates: unknown[] = [
+    meta.executionMode,
+    meta.execution_mode,
+    meta.runMode,
+    meta.run_mode,
+    meta.mode,
+    runtimeMeta?.executionMode,
+    runtimeMeta?.mode,
+    sourceInfoMeta?.executionMode,
+    sourceInfoMeta?.mode,
+  ];
+  for (const candidate of candidates) {
+    const resolved = resolveExecutionCandidate(candidate);
+    if (resolved) return resolved;
+  }
+
+  return 'server';
+};
+
+const getPanelLabel = (
+  sourceFilter?: string | null,
+  sourceMode?: 'include' | 'exclude'
+): string => {
+  if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') return 'External Runs';
+  if (sourceFilter === 'ai_paths_ui') return 'Node Runs';
+  return 'Job Runs';
+};
+
+const getPanelDescription = (
+  sourceFilter?: string | null,
+  sourceMode?: 'include' | 'exclude'
+): string => {
+  if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') {
+    return 'Runs that do not originate from the AI Paths node system.';
+  }
+  if (sourceFilter === 'ai_paths_ui') {
+    return 'Runs that originate from the AI Paths node system.';
+  }
+  return 'Full run payloads and queue snapshots.';
+};
+
+const getOriginLabel = (origin: RunOrigin): string => {
+  if (origin === 'node') return 'Node';
+  if (origin === 'external') return 'External';
+  return 'Unknown';
+};
+
+const getOriginBadgeClass = (origin: RunOrigin): string => {
+  if (origin === 'node') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
+  if (origin === 'external') return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
+  return 'border-border/60 bg-card/60 text-gray-300';
+};
+
+const getExecutionLabel = (execution: RunExecutionKind): string => {
+  if (execution === 'server') return 'Server';
+  if (execution === 'local') return 'Local';
+  if (execution === 'other') return 'Other';
+  return 'Unknown';
+};
+
+const getExecutionBadgeClass = (execution: RunExecutionKind): string => {
+  if (execution === 'server') return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
+  if (execution === 'local') return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200';
+  if (execution === 'other') return 'border-violet-500/40 bg-violet-500/10 text-violet-200';
+  return 'border-border/60 bg-card/60 text-gray-300';
+};
+
 export function JobQueuePanel({
   activePathId,
   sourceFilter,
   sourceMode,
 }: JobQueuePanelProps): React.JSX.Element {
+  const { toast } = useToast();
   const [pathFilter, setPathFilter] = React.useState(activePathId ?? '');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
@@ -143,6 +319,8 @@ export function JobQueuePanel({
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
+  const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
+  const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const heavyMap = heavySettings.data ?? new Map<string, string>();
 
@@ -227,6 +405,113 @@ export function JobQueuePanel({
     refetchInterval: autoRefreshEnabled ? autoRefreshInterval : false,
   });
 
+  const clearRunsMutation = useMutation({
+    mutationFn: async (scope: 'terminal' | 'all'): Promise<{ deleted: number; scope: 'all' | 'terminal' }> => {
+      const response = await runsApi.clear({
+        scope,
+        ...(normalizedPathFilter ? { pathId: normalizedPathFilter } : {}),
+        ...(normalizedSourceFilter ? { source: normalizedSourceFilter, sourceMode: sourceMode ?? 'include' } : {}),
+      });
+      if (!response.ok) {
+        throw new Error(response.error || 'Failed to clear runs.');
+      }
+      return response.data as { deleted: number; scope: 'all' | 'terminal' };
+    },
+    onSuccess: (result: { deleted: number; scope: 'all' | 'terminal' }) => {
+      toast(
+        result.scope === 'all'
+          ? `Cleared ${result.deleted} run(s).`
+          : `Cleared ${result.deleted} finished run(s).`,
+        { variant: 'success' }
+      );
+      setClearScope(null);
+      void runsQuery.refetch();
+      void queueStatusQuery.refetch();
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to clear runs.', { variant: 'error' });
+    },
+  });
+
+  const cancelRunMutation = useMutation({
+    mutationFn: async (runId: string): Promise<void> => {
+      const response = await runsApi.cancel(runId);
+      if (!response.ok) {
+        throw new Error(response.error || 'Failed to cancel run.');
+      }
+    },
+    onSuccess: () => {
+      toast('Run canceled.', { variant: 'success' });
+      void runsQuery.refetch();
+      void queueStatusQuery.refetch();
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to cancel run.', { variant: 'error' });
+    },
+  });
+
+  const clearRunFromLocalState = React.useCallback((runId: string): void => {
+    const source = streamSourcesRef.current.get(runId);
+    if (source) {
+      source.close();
+      streamSourcesRef.current.delete(runId);
+    }
+    setExpandedRunIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(runId);
+      return next;
+    });
+    setRunDetails((prev: Record<string, RunDetail | null>) => {
+      const next = { ...prev };
+      delete next[runId];
+      return next;
+    });
+    setRunDetailErrors((prev: Record<string, string>) => {
+      const next = { ...prev };
+      delete next[runId];
+      return next;
+    });
+    setRunDetailLoading((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(runId);
+      return next;
+    });
+    setHistorySelection((prev: Record<string, string>) => {
+      const next = { ...prev };
+      delete next[runId];
+      return next;
+    });
+    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
+      const next = { ...prev };
+      delete next[runId];
+      return next;
+    });
+    setPausedStreams((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(runId);
+      return next;
+    });
+  }, []);
+
+  const deleteRunMutation = useMutation({
+    mutationFn: async (runId: string): Promise<void> => {
+      const response = await runsApi.remove(runId);
+      if (!response.ok) {
+        throw new Error(response.error || 'Failed to delete run.');
+      }
+    },
+    onSuccess: (_data: void, runId: string) => {
+      clearRunFromLocalState(runId);
+      setRunToDelete(null);
+      toast('Run deleted.', { variant: 'success' });
+      void runsQuery.refetch();
+      void queueStatusQuery.refetch();
+    },
+    onError: (error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to delete run.', { variant: 'error' });
+    },
+  });
+
   const total = runsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = runsQuery.data?.runs ?? [];
@@ -239,6 +524,14 @@ export function JobQueuePanel({
     const parsed = raw ? Number(raw) : Number.NaN;
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 60_000;
   }, [lagThresholdRaw]);
+  const panelLabel = React.useMemo(
+    (): string => getPanelLabel(sourceFilter, sourceMode),
+    [sourceFilter, sourceMode]
+  );
+  const panelDescription = React.useMemo(
+    (): string => getPanelDescription(sourceFilter, sourceMode),
+    [sourceFilter, sourceMode]
+  );
 
   React.useEffect(() => {
     if (!queueStatus) return;
@@ -466,17 +759,39 @@ export function JobQueuePanel({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-white">Job Queue</div>
-          <div className="text-xs text-gray-400">Full run payloads and queue snapshots.</div>
+          <div className="text-sm font-semibold text-white">{panelLabel}</div>
+          <div className="text-xs text-gray-400">{panelDescription}</div>
         </div>
-        <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() => { void runsQuery.refetch(); }}
-          disabled={runsQuery.isFetching}
-        >
-          {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            onClick={() => { void runsQuery.refetch(); }}
+            disabled={runsQuery.isFetching}
+          >
+            {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            className="rounded-md border px-2 py-1 text-[10px]"
+            onClick={() => setClearScope('terminal')}
+            disabled={clearRunsMutation.isPending}
+          >
+            <Trash2 className="mr-1 size-3" />
+            Clear Finished
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            className="rounded-md border px-2 py-1 text-[10px]"
+            onClick={() => setClearScope('all')}
+            disabled={clearRunsMutation.isPending}
+          >
+            <Trash2 className="mr-1 size-3" />
+            Clear All
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-400">
@@ -527,7 +842,7 @@ export function JobQueuePanel({
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Worker</div>
           <div className="mt-1 text-sm text-white">
@@ -607,6 +922,24 @@ export function JobQueuePanel({
             <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
             <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
             <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+          </div>
+        </div>
+        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
+          <div className="text-[10px] uppercase text-gray-500">Brain Analytics Queue</div>
+          <div className="mt-1 text-sm text-white">
+            {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
+          </div>
+          <div className="mt-1 text-[11px] text-gray-400">
+            Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
+          </div>
+          <div className="mt-2 text-[10px] text-gray-400">
+            Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
+          </div>
+          <div className="mt-1 text-[10px] text-gray-400">
+            Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs {queueStatus?.brainAnalytics24h?.logReports ?? 0}
+          </div>
+          <div className="mt-1 text-[10px] text-amber-200/90">
+            Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
           </div>
         </div>
       </div>
@@ -793,6 +1126,14 @@ export function JobQueuePanel({
             const streamStatus = pausedStreams.has(run.id)
               ? 'paused'
               : streamStatuses[run.id] ?? 'stopped';
+            const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
+            const isCancellingThisRun =
+              cancelRunMutation.isPending && cancelRunMutation.variables === run.id;
+            const isDeletingThisRun =
+              deleteRunMutation.isPending && deleteRunMutation.variables === run.id;
+            const runOrigin = resolveRunOrigin(detailRun);
+            const runExecution = resolveRunExecutionKind(detailRun);
+            const runSource = resolveRunSource(detailRun) ?? 'unknown';
             const nodes = detail?.nodes ?? [];
             const events = detail?.events ?? [];
             const history = (detailRun.runtimeState?.history ?? undefined);
@@ -820,6 +1161,21 @@ export function JobQueuePanel({
                         Scheduled
                       </div>
                     ) : null}
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <span
+                        className={`rounded-full border px-2 py-[1px] text-[9px] uppercase ${getOriginBadgeClass(runOrigin)}`}
+                      >
+                        Origin: {getOriginLabel(runOrigin)}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2 py-[1px] text-[9px] uppercase ${getExecutionBadgeClass(runExecution)}`}
+                      >
+                        Run: {getExecutionLabel(runExecution)}
+                      </span>
+                      <span className="rounded-full border border-border/60 bg-card/60 px-2 py-[1px] text-[9px] uppercase text-gray-300">
+                        Source: {runSource}
+                      </span>
+                    </div>
                     <div className="text-sm text-white">{detailRun.pathName ?? 'AI Path'}</div>
                     <div className="text-[11px] text-gray-400">
                       Run ID: <span className="font-mono">{detailRun.id}</span>
@@ -865,6 +1221,24 @@ export function JobQueuePanel({
                     >
                       {detailLoading ? 'Loading...' : 'Refresh detail'}
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
+                      onClick={() => cancelRunMutation.mutate(run.id)}
+                      disabled={!canCancel || isCancellingThisRun}
+                    >
+                      {isCancellingThisRun ? 'Canceling...' : 'Cancel'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="rounded-md border px-2 py-1 text-[10px]"
+                      onClick={() => setRunToDelete(detailRun)}
+                      disabled={isDeletingThisRun}
+                    >
+                      {isDeletingThisRun ? 'Deleting...' : 'Delete'}
+                    </Button>
                   </div>
                 </div>
 
@@ -896,6 +1270,18 @@ export function JobQueuePanel({
                           <div>
                             <span className="uppercase text-gray-500">Trigger</span>
                             <div className="text-white">{detailRun.triggerEvent ?? '-'}</div>
+                          </div>
+                          <div>
+                            <span className="uppercase text-gray-500">Origin</span>
+                            <div className="text-white">{getOriginLabel(runOrigin)}</div>
+                          </div>
+                          <div>
+                            <span className="uppercase text-gray-500">Run type</span>
+                            <div className="text-white">{getExecutionLabel(runExecution)}</div>
+                          </div>
+                          <div>
+                            <span className="uppercase text-gray-500">Source</span>
+                            <div className="text-white">{runSource}</div>
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Started</span>
@@ -1143,6 +1529,42 @@ export function JobQueuePanel({
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={clearScope === 'terminal'}
+        onOpenChange={(open: boolean): void => setClearScope(open ? 'terminal' : null)}
+        onConfirm={() => clearRunsMutation.mutate('terminal')}
+        title="Clear finished AI Path runs"
+        description="Delete completed, failed, canceled, and dead-lettered runs from this queue list."
+        confirmText="Clear Finished"
+        variant="destructive"
+        loading={clearRunsMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={clearScope === 'all'}
+        onOpenChange={(open: boolean): void => setClearScope(open ? 'all' : null)}
+        onConfirm={() => clearRunsMutation.mutate('all')}
+        title="Clear all AI Path runs"
+        description="Delete all runs in this queue list, including queued, running, and paused entries."
+        confirmText="Clear All"
+        variant="destructive"
+        loading={clearRunsMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={runToDelete !== null}
+        onOpenChange={(open: boolean): void => setRunToDelete(open ? runToDelete : null)}
+        onConfirm={() => {
+          if (!runToDelete) return;
+          deleteRunMutation.mutate(runToDelete.id);
+        }}
+        title="Delete AI Path run"
+        description={`Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`}
+        confirmText="Delete Run"
+        variant="destructive"
+        loading={deleteRunMutation.isPending}
+      />
     </div>
   );
 }

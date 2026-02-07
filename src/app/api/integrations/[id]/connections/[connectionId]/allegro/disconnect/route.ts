@@ -2,12 +2,11 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   const { id, connectionId: connId } = params;
   if (!id || !connId) {
     throw badRequestError("Integration id and connection id are required.");

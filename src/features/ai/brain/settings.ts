@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
+export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';
 
 export type AiBrainProvider = 'model' | 'agent';
 export type AiBrainFeature =
@@ -27,6 +28,15 @@ export type AiBrainAssignment = {
 export type AiBrainSettings = {
   defaults: AiBrainAssignment;
   assignments: Partial<Record<AiBrainFeature, AiBrainAssignment>>;
+};
+
+export type AiBrainProviderCatalog = {
+  modelPresets: string[];
+  paidModels: string[];
+  ollamaModels: string[];
+  agentModels: string[];
+  deepthinkingAgents: string[];
+  playwrightPersonas: string[];
 };
 
 const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
@@ -67,6 +77,17 @@ const settingsSchema = z.object({
     .default({}),
 });
 
+const providerListSchema = z.array(z.string().trim().min(1)).default([]);
+
+const providerCatalogSchema = z.object({
+  modelPresets: providerListSchema,
+  paidModels: providerListSchema,
+  ollamaModels: providerListSchema,
+  agentModels: providerListSchema,
+  deepthinkingAgents: providerListSchema,
+  playwrightPersonas: providerListSchema,
+});
+
 export const defaultBrainAssignment: AiBrainAssignment = {
   enabled: true,
   provider: 'model',
@@ -82,11 +103,58 @@ export const defaultBrainSettings: AiBrainSettings = {
   assignments: {},
 };
 
+export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
+  modelPresets: [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'gpt-4.1-mini',
+    'gpt-4.1',
+    'o1-mini',
+    'claude-3-5-sonnet-20241022',
+    'claude-3-5-haiku-20241022',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+  ],
+  paidModels: [],
+  ollamaModels: [],
+  agentModels: [],
+  deepthinkingAgents: [],
+  playwrightPersonas: [],
+};
+
+const sanitizeProviderList = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const next: string[] = [];
+  values.forEach((value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    next.push(trimmed);
+  });
+  return next;
+};
+
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
   const parsed = parseJsonSetting<unknown>(raw, null);
   const result = settingsSchema.safeParse(parsed ?? defaultBrainSettings);
   if (!result.success) return defaultBrainSettings;
   return result.data as AiBrainSettings;
+};
+
+export const parseBrainProviderCatalog = (
+  raw: string | null | undefined
+): AiBrainProviderCatalog => {
+  const parsed = parseJsonSetting<unknown>(raw, null);
+  const result = providerCatalogSchema.safeParse(parsed ?? defaultBrainProviderCatalog);
+  if (!result.success) return defaultBrainProviderCatalog;
+  return {
+    modelPresets: sanitizeProviderList(result.data.modelPresets),
+    paidModels: sanitizeProviderList(result.data.paidModels),
+    ollamaModels: sanitizeProviderList(result.data.ollamaModels),
+    agentModels: sanitizeProviderList(result.data.agentModels),
+    deepthinkingAgents: sanitizeProviderList(result.data.deepthinkingAgents),
+    playwrightPersonas: sanitizeProviderList(result.data.playwrightPersonas),
+  };
 };
 
 export const resolveBrainAssignment = (
@@ -108,4 +176,15 @@ export const sanitizeBrainAssignment = (
   modelId: assignment.modelId?.trim() ?? '',
   agentId: assignment.agentId?.trim() ?? '',
   notes: assignment.notes?.trim() || null,
+});
+
+export const sanitizeBrainProviderCatalog = (
+  catalog: AiBrainProviderCatalog
+): AiBrainProviderCatalog => ({
+  modelPresets: sanitizeProviderList(catalog.modelPresets),
+  paidModels: sanitizeProviderList(catalog.paidModels),
+  ollamaModels: sanitizeProviderList(catalog.ollamaModels),
+  agentModels: sanitizeProviderList(catalog.agentModels),
+  deepthinkingAgents: sanitizeProviderList(catalog.deepthinkingAgents),
+  playwrightPersonas: sanitizeProviderList(catalog.playwrightPersonas),
 });

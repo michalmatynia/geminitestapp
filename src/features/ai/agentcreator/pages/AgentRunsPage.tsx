@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AiPathRunRecord } from '@/shared/types/ai-paths';
 import {
@@ -11,61 +11,30 @@ import {
 } from '@/shared/types/chatbot';
 import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal, Input } from '@/shared/ui';
 
-import {
-  useAgentRuns,
-  useAgentSnapshots,
-  useAgentLogs,
-  useAgentAudits,
-} from '../hooks/useAgentRunsQueries';
+import { useAgentRunContext } from '../context/AgentRunContext';
 
 
 export default function AgentRunsPage(): React.ReactElement {
   const [query, setQuery] = useState('');
-  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
-    null
-  );
+  const {
+    selectedAgentRunId,
+    setSelectedAgentRunId,
+    selectedAgentRun: contextSelectedAgentRun,
+    agentRuns,
+    agentSnapshots,
+    agentBrowserLogs,
+    agentAuditLogs,
+    agentStreamStatus,
+    isLoadingRuns: loading,
+    refetchRuns: loadAgentRuns,
+  } = useAgentRunContext();
+
   const [expandedAuditIds, setExpandedAuditIds] = useState<
     Record<string, boolean>
   >({});
-  const [agentStreamStatus, setAgentStreamStatus] = useState<
-    'idle' | 'connecting' | 'live' | 'error'
-  >('idle');
-
-  // Queries
-  const { data: agentRuns = [], isLoading: loading, error: queryError, refetch: loadAgentRuns } = useAgentRuns();
-  
-  const { data: agentSnapshots = [] } = useAgentSnapshots(selectedAgentRunId);
-  const { data: agentBrowserLogs = [] } = useAgentLogs(selectedAgentRunId, { refetchInterval: 5000 });
-  const { data: agentAuditLogs = [] } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
 
   const agentSnapshot = agentSnapshots[0] ?? null;
-
-  const error = queryError instanceof Error ? queryError.message : (queryError || null);
-
-  useEffect(() => {
-    if (!selectedAgentRunId) return;
-     
-    setExpandedAuditIds({});
-    setAgentStreamStatus('connecting');
-    const source = new EventSource(
-      `/api/agentcreator/agent/${selectedAgentRunId}/stream`
-    );
-    source.onmessage = (): void => {
-      try {
-        setAgentStreamStatus('live');
-      } catch {
-        setAgentStreamStatus('error');
-      }
-    };
-    source.onerror = (): void => {
-      setAgentStreamStatus('error');
-      source.close();
-    };
-
-    return (): void => {
-      source.close();
-    };
-  }, [selectedAgentRunId]);
+  const error = null;
 
   const filteredRuns = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -81,10 +50,7 @@ export default function AgentRunsPage(): React.ReactElement {
     );
   }, [agentRuns, query]);
 
-  const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
-    [agentRuns, selectedAgentRunId]
-  );
+  const selectedAgentRun = contextSelectedAgentRun;
   const sessionContextLogs = useMemo(
     () =>
       agentBrowserLogs.filter((log: AgentBrowserLog) => log.message === 'Captured session context.'),

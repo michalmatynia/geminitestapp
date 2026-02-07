@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { AgentTeachingChatSource } from "@/shared/types/agent-teaching";
@@ -23,43 +22,35 @@ const searchSchema = z.object({
 type Params = { collectionId: string };
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const params = ctx.params as unknown as Params | undefined;
-    const collectionId = params?.collectionId;
-    if (!collectionId) throw badRequestError("Missing collectionId.");
+  const params = ctx.params as unknown as Params | undefined;
+  const collectionId = params?.collectionId;
+  if (!collectionId) throw badRequestError("Missing collectionId.");
 
-    const collection = await getEmbeddingCollectionById(collectionId);
-    if (!collection) {
-      return createErrorResponse(notFoundError("Collection not found"), { request: req, source: "agentcreator.teaching.collections.search.POST" });
-    }
-
-    const parsed = await parseJsonBody(req, searchSchema, {
-      logPrefix: "agentcreator.teaching.collections.search.POST",
-    });
-    if (!parsed.ok) return parsed.response;
-
-    const queryEmbedding = await generateOllamaEmbedding({
-      model: collection.embeddingModel,
-      text: parsed.data.queryText,
-    });
-
-    const sources: AgentTeachingChatSource[] = await retrieveTopContext({
-      queryEmbedding,
-      collectionIds: [collectionId],
-      topK: parsed.data.topK,
-      minScore: parsed.data.minScore,
-      embeddingModel: collection.embeddingModel,
-      maxDocsPerCollection: parsed.data.maxDocsPerCollection,
-    });
-
-    return NextResponse.json({ sources });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.collections.search.POST",
-      fallbackMessage: "Failed to search collection.",
-    });
+  const collection = await getEmbeddingCollectionById(collectionId);
+  if (!collection) {
+    throw notFoundError("Collection not found");
   }
+
+  const parsed = await parseJsonBody(req, searchSchema, {
+    logPrefix: "agentcreator.teaching.collections.search.POST",
+  });
+  if (!parsed.ok) return parsed.response;
+
+  const queryEmbedding = await generateOllamaEmbedding({
+    model: collection.embeddingModel,
+    text: parsed.data.queryText,
+  });
+
+  const sources: AgentTeachingChatSource[] = await retrieveTopContext({
+    queryEmbedding,
+    collectionIds: [collectionId],
+    topK: parsed.data.topK,
+    minScore: parsed.data.minScore,
+    embeddingModel: collection.embeddingModel,
+    maxDocsPerCollection: parsed.data.maxDocsPerCollection,
+  });
+
+  return NextResponse.json({ sources });
 }
 
 export const POST = apiHandler(

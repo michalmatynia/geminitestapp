@@ -105,7 +105,7 @@ export default function AdminAiInsightsPage(): React.JSX.Element {
         description="Aggregated AI summaries for analytics and system logs."
         className="mb-6"
         actions={(
-          <Button variant="outline" size="sm" onClick={() => window.location.assign('/admin/settings/ai')}>
+          <Button variant="outline" size="sm" onClick={() => window.location.assign('/admin/settings/brain')}>
             Settings
           </Button>
         )}

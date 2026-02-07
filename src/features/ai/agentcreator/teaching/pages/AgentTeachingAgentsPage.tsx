@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
 import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from '@/shared/ui';
 
-import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
+import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 

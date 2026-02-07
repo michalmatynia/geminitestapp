@@ -100,3 +100,4 @@ export {
 
 // Derived hooks
 export { useEdgePaths, type EdgePath } from './useEdgePaths';
+export { useCanvasInteractions } from './useCanvasInteractions';

@@ -16,6 +16,13 @@ import { mapStatusToAppError } from "@/shared/errors/error-mapper";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
+type TestLogEntry = {
+  step: string;
+  status: "pending" | "ok" | "failed";
+  timestamp: string;
+  detail: string;
+};
+
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test
  * Performs a lightweight credential check for the integration connection.
@@ -23,12 +30,8 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let integrationConnectionId: string | null = null;
-  const steps: {
-    step: string;
-    status: "pending" | "ok" | "failed";
-    timestamp: string;
-    detail: string;
-  }[] = [];
+  const steps: TestLogEntry[] = [];
+  
   const pushStep = (
     step: string,
     status: "pending" | "ok" | "failed",
@@ -46,29 +49,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
     
-    const { createErrorResponse } = await import("@/shared/lib/api/handle-api-error");
-    return createErrorResponse(mapStatusToAppError(safeDetail, status), {
-      request: req,
-      source: "integrations.[id].connections.[connectionId].test.POST",
-      fallbackMessage: safeDetail,
-      extra: {
-        steps,
-        integrationId,
-        connectionId: integrationConnectionId
-      }
-    });
+    throw mapStatusToAppError(safeDetail, status);
   };
 
   const { id, connectionId } = params;
   integrationId = id;
   integrationConnectionId = connectionId;
   if (!integrationId || !integrationConnectionId) {
-    return fail(
-      "Loading connection",
-      "Integration id and connection id are required",
-      400
-    );
+    return fail("Loading connection", "Integration id and connection id are required", 400);
   }
+
   pushStep("Loading connection", "pending", "Fetching stored credentials");
   const repo = await getIntegrationRepository();
   const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
@@ -113,7 +103,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   const decryptedPassword = decryptSecret(connection.password);
   pushStep("Decrypting credentials", "ok", "Password decrypted successfully");
 
-  const storedState: null = null;
+  const storedState = null;
 
   if (connection.playwrightStorageState) {
     pushStep(
@@ -214,49 +204,52 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   let context: BrowserContext | null = null;
   let page: Page | null = null;
   try {
-    pushStep(
-      "Launching Playwright",
-      "pending",
-      `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
-    );
-    browser = await chromium.launch({
-      headless,
-      slowMo,
-      ...(proxyEnabled && proxyServer
-        ? {
-            proxy: {
-              server: proxyServer,
-              ...(proxyUsername && { username: proxyUsername }),
-              ...(proxyPassword && { password: proxyPassword })
+    try {
+      pushStep(
+        "Launching Playwright",
+        "pending",
+        `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
+      );
+      browser = await chromium.launch({
+        headless,
+        slowMo,
+        ...(proxyEnabled && proxyServer
+          ? {
+              proxy: {
+                server: proxyServer,
+                ...(proxyUsername && { username: proxyUsername }),
+                ...(proxyPassword && { password: proxyPassword })
+              }
             }
           : {})
-    });
+      });
 
-    const deviceContextOptions: BrowserContextOptions = deviceProfile
-      ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
-      : {};
+      const deviceContextOptions: BrowserContextOptions = deviceProfile
+        ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
+        : {};
 
-    const contextOptions: BrowserContextOptions = {
-      ...deviceContextOptions,
-      ...(storedState ? { storageState: storedState } : {})
-    };
+      const contextOptions: BrowserContextOptions = {
+        ...deviceContextOptions,
+        ...(storedState ? { storageState: storedState } : {})
+      };
 
-    context = await browser.newContext(contextOptions);
-    context.setDefaultTimeout(defaultTimeout);
-    context.setDefaultNavigationTimeout(navigationTimeout);
-    page = await context.newPage();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return fail("Launching Playwright", message);
-  }
-  try {
+      context = await browser.newContext(contextOptions);
+      context.setDefaultTimeout(defaultTimeout);
+      context.setDefaultNavigationTimeout(navigationTimeout);
+      page = await context.newPage();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return fail("Launching Playwright", message);
+    }
+    
     const randomBetween = (min: number, max: number) =>
       Math.floor(Math.random() * (max - min + 1)) + min;
     const safeWaitForSelector = async (
       selector: string,
-      options: Parameters<typeof page.waitForSelector>[1],
+      options: Parameters<NonNullable<typeof page>["waitForSelector"]>[1],
       label: string
     ) => {
+      if (!page) throw new Error("Browser page not initialized");
       try {
         return await page.waitForSelector(selector, options);
       } catch (error) {
@@ -266,8 +259,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const safeWaitFor = async (
-      locator: ReturnType<typeof page.locator>,
-      options: Parameters<ReturnType<typeof page.locator>["waitFor"]>[0],
+      locator: ReturnType<NonNullable<typeof page>["locator"]>,
+      options: Parameters<ReturnType<NonNullable<typeof page>["locator"]>["waitFor"]>[0],
       label: string
     ) => {
       try {
@@ -279,7 +272,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const safeCount = async (
-      locator: ReturnType<typeof page.locator>,
+      locator: ReturnType<NonNullable<typeof page>["locator"]>,
       label: string
     ) => {
       try {
@@ -291,7 +284,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const safeIsVisible = async (
-      locator: ReturnType<typeof page.locator>,
+      locator: ReturnType<NonNullable<typeof page>["locator"]>,
       label: string
     ) => {
       try {
@@ -303,7 +296,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const safeInnerText = async (
-      locator: ReturnType<typeof page.locator>,
+      locator: ReturnType<NonNullable<typeof page>["locator"]>,
       label: string
     ) => {
       try {
@@ -316,9 +309,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     };
     const safeGoto = async (
       url: string,
-      options: Parameters<typeof page.goto>[1],
+      options: Parameters<NonNullable<typeof page>["goto"]>[1],
       label: string
     ) => {
+      if (!page) throw new Error("Browser page not initialized");
       try {
         return await page.goto(url, options);
       } catch (error) {
@@ -328,10 +322,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const safeWaitForLoadState = async (
-      state: Parameters<typeof page.waitForLoadState>[0],
-      options: Parameters<typeof page.waitForLoadState>[1],
+      state: Parameters<NonNullable<typeof page>["waitForLoadState"]>[0],
+      options: Parameters<NonNullable<typeof page>["waitForLoadState"]>[1],
       label: string
     ) => {
+      if (!page) throw new Error("Browser page not initialized");
       try {
         return await page.waitForLoadState(state, options);
       } catch (error) {
@@ -341,6 +336,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       }
     };
     const captureDebugArtifacts = async (label: string) => {
+      if (!page) return "";
       try {
         const now = new Date().toISOString().replace(/[:.]/g, "-");
         const safeLabel = label
@@ -394,16 +390,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       min = actionDelayMin,
       max = actionDelayMax
     ) => {
-      if (!humanizeMouse) return;
+      if (!humanizeMouse || !page) return;
       const delay = randomBetween(min, max);
       if (delay > 0) {
         await page.waitForTimeout(delay);
       }
     };
     const humanizedClick = async (
-      locator: ReturnType<typeof page.locator>
+      locator: ReturnType<NonNullable<typeof page>["locator"]>
     ) => {
       if (!humanizeMouse) {
+        await locator.click();
+        return;
+      }
+      if (!page) {
         await locator.click();
         return;
       }
@@ -422,11 +422,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       await page.mouse.click(targetX, targetY, { delay });
     };
     const humanizedFill = async (
-      locator: ReturnType<typeof page.locator>,
+      locator: ReturnType<NonNullable<typeof page>["locator"]>,
       value: string
     ) => {
       await locator.fill(value);
-      if (!humanizeMouse) return;
+      if (!humanizeMouse || !page) return;
       const delay = randomBetween(inputDelayMin, inputDelayMax);
       if (delay > 0) {
         await page.waitForTimeout(delay);
@@ -466,6 +466,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           "Session check"
         );
         await humanizedPause();
+        if (!page) throw new Error("Page not found");
         const loggedIn = await safeIsVisible(
           page.locator(successSelector).first(),
           "Session check"
@@ -493,6 +494,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       "https://www.tradera.com/en"
     ];
     const openLoginPage = async () => {
+      if (!page) throw new Error("Page not found");
       for (const url of loginUrls) {
         pushStep("Opening login page", "pending", url);
         try {
@@ -522,9 +524,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           );
         }
       }
-      return loginUrls[loginUrls.length - 1];
+      return loginUrls[loginUrls.length - 1]!;
     };
-    const loginUrl = sessionReused ? loginUrls[0] : await openLoginPage();
+    const loginUrl = sessionReused ? loginUrls[0]! : await openLoginPage();
 
     const formSelector = [
       "#sign-in-form",
@@ -535,8 +537,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const passwordSelector =
       '#password, input[name="password"], input[type="password"]';
 
-    let form = page.locator(formSelector).first();
     const findInput = async (selectors: string[]) => {
+      if (!page) throw new Error("Page not found");
       for (const selector of selectors) {
         const locator = page.locator(selector).first();
         if ((await safeCount(locator, `Find input ${selector}`)) > 0) {
@@ -560,6 +562,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           { state: "attached", timeout: 15000 },
           "Login form"
         );
+        if (!page) throw new Error("Page not found");
         const formLocator = page.locator(formSelector).first();
         const isVisible = await safeIsVisible(
           formLocator,
@@ -576,6 +579,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           "failed",
           `Form not ready: ${message}`
         );
+        if (!page) throw new Error("Page not found");
         const signInTrigger = page
           .locator(
             [
@@ -628,6 +632,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         }
       }
       try {
+        if (!page) throw new Error("Page not found");
         await safeWaitFor(
           page.locator(emailSelector).first(),
           { state: "visible", timeout: 15000 },
@@ -646,7 +651,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           `Input fields not visible: ${message}`
         );
       }
-      form = page.locator(formSelector).first();
       pushStep("Locating login form", "ok", "Sign-in form detected");
 
       pushStep("Filling credentials", "pending", "Locating login fields");
@@ -662,8 +666,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       ];
 
       const findInputInForm = async (selectors: string[]) => {
+        if (!page) throw new Error("Page not found");
         for (const selector of selectors) {
-          const locator = form.locator(selector).first();
+          const locator = page.locator(formSelector).first().locator(selector).first();
           if ((await safeCount(locator, `Find form input ${selector}`)) > 0) {
             const visible = await safeIsVisible(
               locator,
@@ -706,6 +711,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
     if (!sessionReused) {
       pushStep("Submitting login", "pending", "Attempting to submit form");
+      if (!page) throw new Error("Page not found");
       const stayLoggedIn = page
         .locator('input[name="keepMeLoggedIn"]')
         .first();
@@ -760,6 +766,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       pushStep("Submitting login", "ok", `Clicked ${submitButton.selector}`);
 
       try {
+        if (!page) throw new Error("Page not found");
         await page.waitForTimeout(1000);
         const postSubmitUrl = page.url();
         const postSubmitError = await safeInnerText(
@@ -785,6 +792,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         "captcha:n"
       ];
       try {
+        if (!page) throw new Error("Page not found");
         const postSubmitErrorLower = (
           await safeInnerText(
             page.locator(errorSelector).first(),
@@ -807,7 +815,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
               "Captcha success"
             ).then(() => "success"),
             safeWaitFor(
-              form,
+              page.locator(formSelector).first(),
               { state: "hidden", timeout: 120000 },
               "Captcha form hide"
             ).then(() => "form-hidden")
@@ -837,6 +845,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         "Checking for logged-in state"
       );
       try {
+        if (!page) throw new Error("Page not found");
         const formLocator = page.locator(formSelector).first();
         const result = await Promise.race([
           safeWaitFor(
@@ -896,9 +905,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       "Storing Playwright session cookies"
     );
     try {
-      const storageState = await page.context().storageState();
+      if (!page) throw new Error("Page not found");
+      const storageStateResult = await page.context().storageState();
       await repo.updateConnection(connection.id, {
-        playwrightStorageState: encryptSecret(JSON.stringify(storageState)),
+        playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
         playwrightStorageStateUpdatedAt: new Date()
       });
       pushStep("Saving session", "ok", "Session stored for reuse");
@@ -920,38 +930,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 
   return NextResponse.json({ ok: true, steps });
-} catch (error: unknown) {
-    if (error instanceof Error) {
-      pushStep("Unexpected error", "failed", error.message);
-      const appError = createAppError(error.message, {
-        code: AppErrorCodes.badRequest,
-        httpStatus: 400,
-        expected: false
-      });
-      return createErrorResponse(appError, {
-        request: req,
-        source: "integrations.[id].connections.[connectionId].test.POST",
-        fallbackMessage: "Failed to test connection",
-        extra: {
-          steps,
-          integrationId,
-          connectionId: integrationConnectionId
-        }
-      });
-    }
-    pushStep("Unexpected error", "failed", "Failed to test connection");
-    return createErrorResponse(error, {
-      request: req,
-      source: "integrations.[id].connections.[connectionId].test.POST",
-      fallbackMessage: "Failed to test connection",
-      extra: {
-        steps,
-        integrationId,
-        connectionId: integrationConnectionId
-      }
-    });
-  }
 }
+
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  POST_handler,
+  { source: "integrations.[id].connections.[connectionId].test.POST", requireCsrf: false }
+);
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,

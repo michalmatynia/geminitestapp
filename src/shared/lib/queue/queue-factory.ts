@@ -74,6 +74,7 @@ export function createManagedQueue<TJobData>(
         return config.processor(data, job.id ?? 'unknown');
       },
       {
+        ...config.workerOptions,
         connection,
         concurrency: config.concurrency,
         removeOnComplete: { count: 0 },

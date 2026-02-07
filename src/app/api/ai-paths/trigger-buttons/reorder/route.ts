@@ -9,7 +9,6 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError } from "@/shared/errors/app-error";
 import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
@@ -201,30 +200,22 @@ const applyReorder = (existing: AiTriggerButtonRecord[], orderedIds: string[]): 
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    await requireAiPathsAccess();
-    const parsed = await parseJsonBody(req, reorderSchema, {
-      logPrefix: "ai-paths.trigger-buttons.reorder.POST",
-    });
-    if (!parsed.ok) return parsed.response;
+  await requireAiPathsAccess();
+  const parsed = await parseJsonBody(req, reorderSchema, {
+    logPrefix: "ai-paths.trigger-buttons.reorder.POST",
+  });
+  if (!parsed.ok) return parsed.response;
 
-    const orderedIds = parsed.data.orderedIds ?? [];
-    if (!Array.isArray(orderedIds)) {
-      throw badRequestError("orderedIds must be an array.");
-    }
-
-    const raw = await readTriggerButtonsRaw();
-    const existing = parseTriggerButtons(raw);
-    const next = applyReorder(existing, orderedIds);
-    await writeTriggerButtonsRaw(JSON.stringify(next));
-    return NextResponse.json(next);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.trigger-buttons.reorder.POST",
-      fallbackMessage: "Failed to reorder trigger buttons",
-    });
+  const orderedIds = parsed.data.orderedIds ?? [];
+  if (!Array.isArray(orderedIds)) {
+    throw badRequestError("orderedIds must be an array.");
   }
+
+  const raw = await readTriggerButtonsRaw();
+  const existing = parseTriggerButtons(raw);
+  const next = applyReorder(existing, orderedIds);
+  await writeTriggerButtonsRaw(JSON.stringify(next));
+  return NextResponse.json(next);
 }
 
 export const POST = apiHandler(

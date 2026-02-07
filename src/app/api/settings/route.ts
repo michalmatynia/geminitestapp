@@ -326,7 +326,7 @@ async function GET_handler(
     const refreshPromise = fetchAndCacheSettings(scope, timings)
       .catch((error) => {
         // Log refresh error but return stale data to keep app running
-        console.error("[settings] stale refresh failed", error);
+        void ErrorSystem.captureException(error, { service: "api/settings", action: "stale_refresh" });
         return stale;
       })
       .finally(() => {

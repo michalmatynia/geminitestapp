@@ -613,6 +613,45 @@ export type AiPathRuntimeEvent = {
   metadata?: Record<string, unknown> | null | undefined;
 };
 
+export type AiPathRuntimeAnalyticsRange = '1h' | '24h' | '7d' | '30d';
+
+export type AiPathRuntimeAnalyticsSummary = {
+  from: string;
+  to: string;
+  range: AiPathRuntimeAnalyticsRange | 'custom';
+  storage: 'redis' | 'disabled';
+  runs: {
+    total: number;
+    queued: number;
+    started: number;
+    completed: number;
+    failed: number;
+    canceled: number;
+    successRate: number;
+    failureRate: number;
+    avgDurationMs: number | null;
+    p95DurationMs: number | null;
+  };
+  nodes: {
+    started: number;
+    completed: number;
+    failed: number;
+    queued: number;
+    running: number;
+    polling: number;
+    cached: number;
+    waitingCallback: number;
+  };
+  brain: {
+    analyticsReports: number;
+    logReports: number;
+    totalReports: number;
+    warningReports: number;
+    errorReports: number;
+  };
+  generatedAt: string;
+};
+
 export type PathMeta = {
   id: string;
   name: string;

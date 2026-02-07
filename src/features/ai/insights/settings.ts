@@ -2,12 +2,14 @@ export const AI_INSIGHTS_SETTINGS_KEYS = {
   analyticsProvider: 'ai_analytics_provider',
   analyticsModel: 'ai_analytics_model',
   analyticsAgentId: 'ai_analytics_agent_id',
+  analyticsPromptSystem: 'ai_analytics_prompt_system',
   analyticsScheduleEnabled: 'ai_analytics_schedule_enabled',
   analyticsScheduleMinutes: 'ai_analytics_schedule_minutes',
 
   logsProvider: 'ai_logs_provider',
   logsModel: 'ai_logs_model',
   logsAgentId: 'ai_logs_agent_id',
+  logsPromptSystem: 'ai_logs_prompt_system',
   logsScheduleEnabled: 'ai_logs_schedule_enabled',
   logsScheduleMinutes: 'ai_logs_schedule_minutes',
   logsAutoOnError: 'ai_logs_autorun_on_error',
@@ -19,3 +21,11 @@ export const AI_INSIGHTS_SETTINGS_KEYS = {
   logsLastErrorSeenAt: 'ai_insights_logs_last_error_seen_at',
   notifications: 'ai_insights_notifications',
 } as const;
+
+export const DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT =
+  'You are a monitoring analyst reviewing product analytics snapshots. ' +
+  'Identify meaningful changes, anomalies, and opportunities with practical next actions.';
+
+export const DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT =
+  'You are a production reliability analyst reviewing system and error logs. ' +
+  'Prioritize root-cause clues, likely regressions, and immediate remediation actions.';

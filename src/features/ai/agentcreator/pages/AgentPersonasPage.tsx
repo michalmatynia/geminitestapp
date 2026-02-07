@@ -1,36 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
 
 import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
-import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
 import { ItemLibrary, useToast } from '@/shared/ui';
-
-const dedupeModels = (models: string[]): string[] => {
-  const seen = new Set<string>();
-  return models.filter((model: string) => {
-    if (!model) return false;
-    if (seen.has(model)) return false;
-    seen.add(model);
-    return true;
-  });
-};
 
 export function AgentPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const { data: personas = [], isLoading: loading } = useAgentPersonas();
   const { mutateAsync: savePersonas, isPending: saving } = useSaveAgentPersonasMutation();
-  const { modelOptions } = useAgentCreatorSettings();
-
-  const mergedModels = useMemo((): string[] => {
-    return dedupeModels([...(modelOptions ?? []), ...DEFAULT_MODELS]);
-  }, [modelOptions]);
 
   const handleSavePersona = async (draft: Partial<AgentPersona>): Promise<void> => {
     const name = draft.name?.trim();

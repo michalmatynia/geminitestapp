@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 
 const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
@@ -36,33 +35,24 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
-  try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
 
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = createFolderSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
-    }
-
-    const safeFolder = sanitizeFolderPath(parsed.data.folder);
-    if (!safeFolder) {
-      throw badRequestError("Folder name is required");
-    }
-
-    const folderPath = path.join(projectsRoot, projectId, safeFolder);
-    await fs.mkdir(folderPath, { recursive: true });
-
-    return NextResponse.json({ folder: safeFolder }, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].folders.POST",
-      fallbackMessage: "Failed to create folder",
-      extra: { projectId: params.projectId },
-    });
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = createFolderSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
   }
+
+  const safeFolder = sanitizeFolderPath(parsed.data.folder);
+  if (!safeFolder) {
+    throw badRequestError("Folder name is required");
+  }
+
+  const folderPath = path.join(projectsRoot, projectId, safeFolder);
+  await fs.mkdir(folderPath, { recursive: true });
+
+  return NextResponse.json({ folder: safeFolder }, { status: 201 });
 }
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(

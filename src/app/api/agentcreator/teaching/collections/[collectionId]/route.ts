@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
@@ -20,50 +19,34 @@ const updateCollectionSchema = z.object({
 type Params = { collectionId: string };
 
 async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const params = ctx.params as unknown as Params | undefined;
-    const collectionId = params?.collectionId;
-    if (!collectionId) throw badRequestError("Missing collectionId.");
-    const existing = await getEmbeddingCollectionById(collectionId);
-    if (!existing) {
-      return createErrorResponse(notFoundError("Not found"), { request: req, source: "agentcreator.teaching.collections.PATCH" });
-    }
-    const parsed = await parseJsonBody(req, updateCollectionSchema, {
-      logPrefix: "agentcreator.teaching.collections.PATCH",
-    });
-    if (!parsed.ok) return parsed.response;
-    const data = parsed.data;
-    const collection: AgentTeachingEmbeddingCollectionRecord = await upsertEmbeddingCollection({
-      ...existing,
-      id: collectionId,
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.description !== undefined ? { description: data.description ?? null } : {}),
-      ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
-    });
-    return NextResponse.json({ collection });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.collections.PATCH",
-      fallbackMessage: "Failed to update embedding collection.",
-    });
+  const params = ctx.params as unknown as Params | undefined;
+  const collectionId = params?.collectionId;
+  if (!collectionId) throw badRequestError("Missing collectionId.");
+  const existing = await getEmbeddingCollectionById(collectionId);
+  if (!existing) {
+    throw notFoundError("Not found");
   }
+  const parsed = await parseJsonBody(req, updateCollectionSchema, {
+    logPrefix: "agentcreator.teaching.collections.PATCH",
+  });
+  if (!parsed.ok) return parsed.response;
+  const data = parsed.data;
+  const collection: AgentTeachingEmbeddingCollectionRecord = await upsertEmbeddingCollection({
+    ...existing,
+    id: collectionId,
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.description !== undefined ? { description: data.description ?? null } : {}),
+    ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
+  });
+  return NextResponse.json({ collection });
 }
 
-async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const params = ctx.params as unknown as Params | undefined;
-    const collectionId = params?.collectionId;
-    if (!collectionId) throw badRequestError("Missing collectionId.");
-    const result = await deleteEmbeddingCollection(collectionId);
-    return NextResponse.json({ ok: true, ...result });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.collections.DELETE",
-      fallbackMessage: "Failed to delete embedding collection.",
-    });
-  }
+async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const params = ctx.params as unknown as Params | undefined;
+  const collectionId = params?.collectionId;
+  if (!collectionId) throw badRequestError("Missing collectionId.");
+  const result = await deleteEmbeddingCollection(collectionId);
+  return NextResponse.json({ ok: true, ...result });
 }
 
 export const PATCH = apiHandler(

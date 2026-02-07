@@ -1,29 +1,104 @@
-src/app/api/ai-config/route.ts(40,3): error TS6133: 'req' is declared but its value is never read.
-src/app/api/ai-paths/runs/[runId]/stream/route.ts(6,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/assets3d/[id]/file/route.ts(8,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/assets3d/reindex/route.ts(7,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
-src/app/api/databases/browse/route.ts(8,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/databases/schema/route.ts(9,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/databases/schema/route.ts(129,24): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-src/app/api/drafts/route.ts(56,28): error TS6133: 'req' is declared but its value is never read.
-src/app/api/files/route.ts(10,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
-src/app/api/health/route.ts(2,23): error TS6133: 'NextResponse' is declared but its value is never read.
-src/app/api/health/route.ts(3,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/health/route.ts(10,28): error TS6133: 'req' is declared but its value is never read.
-src/app/api/integrations/imports/base/parameters/route.ts(12,1): error TS6133: 'createErrorResponse' is declared but its value is never read.
-src/app/api/integrations/imports/base/parameters/route.ts(350,28): error TS6133: 'req' is declared but its value is never read.
-src/app/api/notes/route.ts(11,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
-src/app/api/products/[id]/route.ts(12,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
-src/app/api/products/producers/route.ts(25,28): error TS6133: 'req' is declared but its value is never read.
-src/app/api/products/route.ts(38,9): error TS6133: 'requestStart' is declared but its value is never read.
-src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(2102,28): error TS2345: Argument of type 'SchemaResponse' is not assignable to parameter of type 'LocalSchemaResponse'.
-  Type '{ provider: "multi"; collections: SchemaCollection[]; sources?: Partial<Record<SchemaProvider, { provider: SchemaProvider; collections: SchemaCollection[]; }>>; }' is not assignable to type 'LocalSchemaResponse'.
-    Types of property 'provider' are incompatible.
-      Type '"multi"' is not assignable to type '"mongodb" | "prisma"'.
-src/shared/ui/QueryErrorBoundary.tsx(44,31): error TS2379: Argument of type '{ componentStack: string | null | undefined; context: { source: string; }; }' is not assignable to parameter of type '{ digest?: string; componentStack?: string | null; context?: ClientErrorContext | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'componentStack' are incompatible.
+__tests__/features/agent-runtime/services/finalize.test.ts(67,43): error TS2345: Argument of type '{ run: { id: string; prompt: string; }; planSteps: never[]; taskType: "web_task"; overallOk: boolean; requiresHuman: boolean; lastError: null; summaryCheckpoint: number; settings: any; preferences: any; memoryContext: never[]; plannerModel: string; memorySummarizationModel: string; }' is not assignable to parameter of type 'FinalizeRunInput'.
+  Property 'context' is missing in type '{ run: { id: string; prompt: string; }; planSteps: never[]; taskType: "web_task"; overallOk: boolean; requiresHuman: boolean; lastError: null; summaryCheckpoint: number; settings: any; preferences: any; memoryContext: never[]; plannerModel: string; memorySummarizationModel: string; }' but required in type 'FinalizeRunInput'.
+__tests__/features/agent-runtime/services/plan-init.test.ts(49,46): error TS2345: Argument of type '{ run: { id: string; prompt: string; }; checkpoint: null; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' is not assignable to parameter of type 'InitializePlanInput'.
+  Property 'context' is missing in type '{ run: { id: string; prompt: string; }; checkpoint: null; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' but required in type 'InitializePlanInput'.
+__tests__/features/agent-runtime/services/plan-init.test.ts(67,46): error TS2345: Argument of type '{ checkpoint: any; run: { id: string; prompt: string; }; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' is not assignable to parameter of type 'InitializePlanInput'.
+  Property 'context' is missing in type '{ checkpoint: any; run: { id: string; prompt: string; }; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' but required in type 'InitializePlanInput'.
+__tests__/features/agent-runtime/services/plan-init.test.ts(92,46): error TS2345: Argument of type '{ checkpoint: any; run: { id: string; prompt: string; }; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' is not assignable to parameter of type 'InitializePlanInput'.
+  Property 'context' is missing in type '{ checkpoint: any; run: { id: string; prompt: string; }; memoryContext: never[]; browserContext: null; settings: any; preferences: {}; plannerModel: string; loopGuardModel: string; memorySummarizationModel: string; }' but required in type 'InitializePlanInput'.
+__tests__/features/agent-runtime/services/step-runner.test.ts(97,42): error TS2345: Argument of type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' is not assignable to parameter of type 'StepLoopInput'.
+  Property 'context' is missing in type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' but required in type 'StepLoopInput'.
+__tests__/features/agent-runtime/services/step-runner.test.ts(110,42): error TS2345: Argument of type '{ preferences: any; run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; ... 12 more ...; browserContext: { ...; }; }' is not assignable to parameter of type 'StepLoopInput'.
+  Property 'context' is missing in type '{ preferences: any; run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; ... 12 more ...; browserContext: { ...; }; }' but required in type 'StepLoopInput'.
+__tests__/features/agent-runtime/services/step-runner.test.ts(130,42): error TS2345: Argument of type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' is not assignable to parameter of type 'StepLoopInput'.
+  Property 'context' is missing in type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' but required in type 'StepLoopInput'.
+__tests__/features/agent-runtime/services/step-runner.test.ts(146,42): error TS2345: Argument of type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' is not assignable to parameter of type 'StepLoopInput'.
+  Property 'context' is missing in type '{ run: { id: string; prompt: string; }; sharedBrowser: null; sharedContext: null; planSteps: { id: string; title: string; tool: "playwright"; status: "pending"; }[]; stepIndex: number; taskType: "web_task"; ... 12 more ...; browserContext: { ...; }; }' but required in type 'StepLoopInput'.
+src/app/api/chatbot/jobs/[jobId]/route.ts(23,3): error TS6133: 'ctx' is declared but its value is never read.
+src/app/api/cms/css-ai/stream/route.ts(13,14): error TS2304: Cannot find name 'ChatMessage'.
+src/app/api/cms/css-ai/stream/route.ts(16,36): error TS2304: Cannot find name 'ChatMessage'.
+src/app/api/cms/css-ai/stream/route.ts(19,15): error TS2304: Cannot find name 'ChatMessage'.
+src/app/api/cms/css-ai/stream/route.ts(25,34): error TS2304: Cannot find name 'NextRequest'.
+src/app/api/cms/css-ai/stream/route.ts(28,11): error TS2304: Cannot find name 'badRequestError'.
+src/app/api/cms/css-ai/stream/route.ts(34,11): error TS2304: Cannot find name 'badRequestError'.
+src/app/api/cms/css-ai/stream/route.ts(52,32): error TS2304: Cannot find name 'runTeachingChat'.
+src/app/api/countries/route.ts(251,5): error TS2375: Type '{ currencies?: { createMany: { data: { countryId: any; }[]; }; }; code: CountryCode; name: string; }' is not assignable to type '(Without<CountryCreateInput, CountryUncheckedCreateInput> & CountryUncheckedCreateInput) | (Without<...> & CountryCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ currencies?: { createMany: { data: { countryId: any; }[]; }; }; code: CountryCode; name: string; }' is not assignable to type 'Without<CountryUncheckedCreateInput, CountryCreateInput> & CountryCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ currencies?: { createMany: { data: { countryId: any; }[]; }; }; code: CountryCode; name: string; }' is not assignable to type 'CountryCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      The types of 'currencies.createMany.data' are incompatible between these types.
+        Type '{ countryId: any; }[]' is not assignable to type 'CountryCurrencyCreateManyCountryInput | CountryCurrencyCreateManyCountryInput[]'.
+          Type '{ countryId: any; }[]' is not assignable to type 'CountryCurrencyCreateManyCountryInput[]'.
+            Property 'currencyId' is missing in type '{ countryId: any; }' but required in type 'CountryCurrencyCreateManyCountryInput'.
+src/app/api/countries/route.ts(257,36): error TS6133: 'currencyId' is declared but its value is never read.
+src/app/api/countries/route.ts(257,62): error TS2552: Cannot find name 'countryId'. Did you mean 'country'?
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts(45,31): error TS2304: Cannot find name 'req'.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts(37,38): error TS2304: Cannot find name 'req'.
+src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts(31,29): error TS6133: 'req' is declared but its value is never read.
+src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts(36,38): error TS2304: Cannot find name 'req'.
+src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(22,29): error TS6133: 'req' is declared but its value is never read.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(30,29): error TS6133: 'req' is declared but its value is never read.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(249,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(253,22): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(261,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(262,45): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(274,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(286,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(298,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(311,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(315,22): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(323,32): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(324,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(328,22): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(362,15): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(365,28): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(392,15): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(396,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(412,13): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(414,13): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(417,34): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(424,15): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(502,31): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(532,25): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts(656,27): error TS18047: 'page' is possibly 'null'.
+src/app/api/integrations/[id]/connections/route.ts(125,31): error TS2339: Property 'slowMo' does not exist on type 'IntegrationConnectionRecord'.
+src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts(30,38): error TS2304: Cannot find name 'req'.
+src/app/api/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts(25,38): error TS2304: Cannot find name 'req'.
+src/app/api/languages/route.ts(103,28): error TS6133: 'req' is declared but its value is never read.
+src/features/admin/pages/AdminSettingsHomePage.tsx(5,3): error TS6133: 'SparklesIcon' is declared but its value is never read.
+src/features/ai/agent-runtime/execution/context.ts(144,5): error TS2375: Type '{ id: string; prompt: string; agentBrowser: string | null | undefined; runHeadless: boolean | null | undefined; }' is not assignable to type '{ id: string; prompt: string; agentBrowser?: string | null; runHeadless?: boolean | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'agentBrowser' are incompatible.
     Type 'string | null | undefined' is not assignable to type 'string | null'.
       Type 'undefined' is not assignable to type 'string | null'.
-vitest.setup.ts(553,12): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Response'.
-vitest.setup.ts(576,12): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Response'.
+src/features/ai/agent-runtime/execution/plan.ts(175,7): error TS2322: Type '{ url?: string | null; title?: string | null; domTextSample?: string; logs?: { level: string; message: string; }[]; uiInventory?: unknown; } | null' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; } | null'.
+  Type '{ url?: string | null; title?: string | null; domTextSample?: string; logs?: { level: string; message: string; }[]; uiInventory?: unknown; }' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; }'.
+    Types of property 'url' are incompatible.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/features/ai/agentcreator/api/agent/[runId]/assets/[file]/route.ts(18,28): error TS6133: 'req' is declared but its value is never read.
+src/features/ai/agentcreator/api/agent/snapshots/[snapshotId]/route.ts(9,28): error TS6133: 'req' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(6,1): error TS6133: 'useAgentCreatorSettings' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentRunsPage.tsx(142,5): error TS2304: Cannot find name 'setAgentStreamStatus'.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(3,1): error TS6133: 'useQuery' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(10,3): error TS6196: 'AiPathRuntimeAnalyticsSummary' is declared but never used.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(46,7): error TS6133: 'formatDurationMs' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(56,7): error TS6133: 'formatPercent' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(576,17): error TS2322: Type '{ palette: NodeDefinition[]; onDragStart: (e: DragEvent<HTMLDivElement>, node: NodeDefinition) => void; onFireTrigger: (node: AiNode) => undefined; ... 10 more ...; onCancelRun: () => void; }' is not assignable to type 'IntrinsicAttributes & CanvasSidebarWrapperProps'.
+  Property 'onUpdateSelectedNode' does not exist on type 'IntrinsicAttributes & CanvasSidebarWrapperProps'.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(607,17): error TS2322: Type '{ flowIntensity: PathFlowIntensity; runtimeNodeStatuses: AiPathRuntimeNodeStatusMap; runtimeEvents: AiPathRuntimeEvent[]; ... 17 more ...; onResetView: () => void; }' is not assignable to type 'IntrinsicAttributes & CanvasBoardMigratedProps'.
+  Property 'flowIntensity' does not exist on type 'IntrinsicAttributes & CanvasBoardMigratedProps'.
+src/features/ai/ai-paths/components/canvas-board.tsx(74,3): error TS6133: 'runtimeNodeStatuses' is declared but its value is never read.
+src/features/ai/ai-paths/components/canvas-board.tsx(131,9): error TS6133: 'draggingNodeId' is declared but its value is never read.
+src/features/ai/ai-paths/components/canvas-board.tsx(440,21): error TS2304: Cannot find name 'Edge'.
+src/features/ai/ai-paths/components/canvas-board.tsx(444,33): error TS2304: Cannot find name 'Edge'.
+src/features/ai/ai-paths/components/canvas-board.tsx(455,33): error TS2304: Cannot find name 'Edge'.
+src/features/ai/ai-paths/components/canvas-sidebar.tsx(48,11): error TS6133: 'selectNode' is declared but its value is never read.
+src/features/ai/ai-paths/components/canvas-sidebar.tsx(48,75): error TS2339: Property 'deleteSelectedNode' does not exist on type 'SelectionActions'.
+src/features/ai/ai-paths/components/examples/CanvasSidebarWrapper.tsx(55,6): error TS2375: Type '{ palette: NodeDefinition[]; onDragStart: (event: DragEvent<HTMLDivElement>, node: NodeDefinition) => void; onFireTrigger: (node: AiNode, event?: MouseEvent<...> | undefined) => void; ... 6 more ...; onClearWires: () => void; }' is not assignable to type 'CanvasSidebarProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onFireTriggerPersistent' are incompatible.
+    Type '((node: AiNode, event?: MouseEvent<HTMLButtonElement, MouseEvent> | undefined) => void) | undefined' is not assignable to type '(node: AiNode, event?: MouseEvent<HTMLButtonElement, MouseEvent> | undefined) => void'.
+      Type 'undefined' is not assignable to type '(node: AiNode, event?: MouseEvent<HTMLButtonElement, MouseEvent> | undefined) => void'.
+src/features/ai/ai-paths/components/examples/ClusterPresetsPanelMigrated.tsx(77,7): error TS2322: Type '{ presetDraft: ClusterPresetDraft; setPresetDraft: (draft: ClusterPresetDraft | ((prev: ClusterPresetDraft) => ClusterPresetDraft)) => void; ... 8 more ...; onExportPresets: () => void; }' is not assignable to type 'IntrinsicAttributes & ClusterPresetsPanelProps'.
+  Property 'presetDraft' does not exist on type 'IntrinsicAttributes & ClusterPresetsPanelProps'.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(3,41): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(22,3): error TS6133: 'sanitizeEdges' is declared but its value is never read.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(62,11): error TS2339: Property 'pruneRuntimeInputs' does not exist on type 'RuntimeActions'.

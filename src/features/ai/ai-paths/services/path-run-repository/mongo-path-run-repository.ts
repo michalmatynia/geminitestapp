@@ -169,6 +169,80 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const parseFilterDate = (value: Date | string | null | undefined): Date | null => {
+  if (!value) return null;
+  const date = typeof value === 'string' ? new Date(value) : value;
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unknown> => {
+  const andFilters: Record<string, unknown>[] = [];
+  if (options.userId) {
+    andFilters.push({ userId: options.userId });
+  }
+  if (options.pathId) {
+    andFilters.push({ pathId: options.pathId });
+  }
+  const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+  if (statuses.length > 0) {
+    andFilters.push({ status: { $in: statuses } });
+  } else if (options.status) {
+    andFilters.push({ status: options.status });
+  }
+  const source = options.source?.trim();
+  const sourceMode = options.sourceMode ?? 'include';
+  if (source) {
+    const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+    const aiPathsTabs = ['product', 'note'];
+    if (sourceMode === 'exclude') {
+      if (source === 'ai_paths_ui') {
+        andFilters.push({ 'meta.source': { $nin: aiPathsSources } });
+        andFilters.push({ 'meta.source.tab': { $nin: aiPathsTabs } });
+        andFilters.push({ 'meta.source': { $exists: true } });
+      } else {
+        andFilters.push({ 'meta.source': { $ne: source } });
+        andFilters.push({ 'meta.source': { $exists: true } });
+      }
+    } else if (source === 'ai_paths_ui') {
+      andFilters.push({
+        $or: [
+          { 'meta.source': { $in: aiPathsSources } },
+          { 'meta.source.tab': { $in: aiPathsTabs } },
+          { meta: { $exists: false } },
+          { meta: null },
+        ],
+      });
+    } else {
+      andFilters.push({ 'meta.source': source });
+    }
+  }
+  const query = options.query?.trim();
+  if (query) {
+    const regex = new RegExp(escapeRegex(query), 'i');
+    andFilters.push({
+      $or: [
+        { id: { $regex: regex } },
+        { _id: { $regex: regex } },
+        { pathId: { $regex: regex } },
+        { pathName: { $regex: regex } },
+        { entityId: { $regex: regex } },
+        { errorMessage: { $regex: regex } },
+      ],
+    });
+  }
+  const createdAfter = parseFilterDate(options.createdAfter);
+  const createdBefore = parseFilterDate(options.createdBefore);
+  if (createdAfter || createdBefore) {
+    andFilters.push({
+      createdAt: {
+        ...(createdAfter ? { $gte: createdAfter } : {}),
+        ...(createdBefore ? { $lte: createdBefore } : {}),
+      },
+    });
+  }
+  return andFilters.length > 0 ? { $and: andFilters } : {};
+};
+
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {
     await ensureIndexes();
@@ -243,79 +317,25 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return doc ? toRunRecord(doc) : null;
   },
 
+  async deleteRun(runId: string): Promise<boolean> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const existing = await db
+      .collection<RunDocument>(RUNS_COLLECTION)
+      .findOneAndDelete({ $or: [{ _id: runId }, { id: runId }] });
+    if (!existing) return false;
+    const effectiveRunId = existing.id || existing._id;
+    await Promise.all([
+      db.collection<NodeDocument>(NODES_COLLECTION).deleteMany({ runId: effectiveRunId }),
+      db.collection<EventDocument>(EVENTS_COLLECTION).deleteMany({ runId: effectiveRunId }),
+    ]);
+    return true;
+  },
+
   async listRuns(options: AiPathRunListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
-    const andFilters: Record<string, unknown>[] = [];
-    if (options.userId) {
-      andFilters.push({ userId: options.userId });
-    }
-    if (options.pathId) {
-      andFilters.push({ pathId: options.pathId });
-    }
-    const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
-    if (statuses.length > 0) {
-      andFilters.push({ status: { $in: statuses } });
-    } else if (options.status) {
-      andFilters.push({ status: options.status });
-    }
-    const source = options.source?.trim();
-    const sourceMode = options.sourceMode ?? 'include';
-    if (source) {
-      const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
-      const aiPathsTabs = ['product', 'note'];
-      if (sourceMode === 'exclude') {
-        if (source === 'ai_paths_ui') {
-          andFilters.push({ 'meta.source': { $nin: aiPathsSources } });
-          andFilters.push({ 'meta.source.tab': { $nin: aiPathsTabs } });
-          andFilters.push({ 'meta.source': { $exists: true } });
-        } else {
-          andFilters.push({ 'meta.source': { $ne: source } });
-          andFilters.push({ 'meta.source': { $exists: true } });
-        }
-      } else if (source === 'ai_paths_ui') {
-        andFilters.push({
-          $or: [
-            { 'meta.source': { $in: aiPathsSources } },
-            { 'meta.source.tab': { $in: aiPathsTabs } },
-            { meta: { $exists: false } },
-            { meta: null },
-          ],
-        });
-      } else {
-        andFilters.push({ 'meta.source': source });
-      }
-    }
-    const query = options.query?.trim();
-    if (query) {
-      const regex = new RegExp(escapeRegex(query), 'i');
-      andFilters.push({
-        $or: [
-          { id: { $regex: regex } },
-          { _id: { $regex: regex } },
-          { pathId: { $regex: regex } },
-          { pathName: { $regex: regex } },
-          { entityId: { $regex: regex } },
-          { errorMessage: { $regex: regex } },
-        ],
-      });
-    }
-    const parseDate = (value: Date | string | null | undefined): Date | null => {
-      if (!value) return null;
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return Number.isNaN(date.getTime()) ? null : date;
-    };
-    const createdAfter = parseDate(options.createdAfter);
-    const createdBefore = parseDate(options.createdBefore);
-    if (createdAfter || createdBefore) {
-      andFilters.push({
-        createdAt: {
-          ...(createdAfter ? { $gte: createdAfter } : {}),
-          ...(createdBefore ? { $lte: createdBefore } : {}),
-        },
-      });
-    }
-    const filter = andFilters.length > 0 ? { $and: andFilters } : {};
+    const filter = buildRunFilter(options);
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter)
@@ -331,6 +351,35 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
     ]);
     return { runs: docs.map(toRunRecord), total };
+  },
+
+  async deleteRuns(options: AiPathRunListOptions = {}): Promise<{ count: number }> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const filter = buildRunFilter(options);
+    const runDocs = await db
+      .collection<RunDocument>(RUNS_COLLECTION)
+      .find(filter, { projection: { _id: 1, id: 1 } })
+      .toArray();
+    if (runDocs.length === 0) {
+      return { count: 0 };
+    }
+    const runIds = runDocs
+      .map((doc: RunDocument) => doc.id || doc._id)
+      .filter((value: string | undefined | null): value is string => Boolean(value));
+    if (runIds.length === 0) {
+      return { count: 0 };
+    }
+
+    const [runDelete] = await Promise.all([
+      db.collection<RunDocument>(RUNS_COLLECTION).deleteMany({
+        $or: [{ _id: { $in: runIds } }, { id: { $in: runIds } }],
+      }),
+      db.collection<NodeDocument>(NODES_COLLECTION).deleteMany({ runId: { $in: runIds } }),
+      db.collection<EventDocument>(EVENTS_COLLECTION).deleteMany({ runId: { $in: runIds } }),
+    ]);
+
+    return { count: runDelete.deletedCount ?? 0 };
   },
 
   async claimNextQueuedRun() {

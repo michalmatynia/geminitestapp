@@ -82,7 +82,7 @@ function extractJson(text: string): unknown {
       }
     }
     
-    throw new Error(`Failed to extract valid JSON from response: ${text.substring(0, 100)}...`);
+    throw operationFailedError(`Failed to extract valid JSON from response: ${text.substring(0, 100)}...`);
   }
 }
 

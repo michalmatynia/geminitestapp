@@ -8,8 +8,8 @@ import React from 'react';
 import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 
-import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments } from '../hooks/useAgentTeaching';
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
+import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments } from '../hooks/useAgentTeaching';
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { toast } = useToast();

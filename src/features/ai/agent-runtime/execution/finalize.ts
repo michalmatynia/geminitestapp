@@ -7,29 +7,20 @@ import {
   verifyPlanWithLLM,
 } from '@/features/ai/agent-runtime/planning/llm';
 import type {
-  AgentPlanPreferences,
-  AgentPlanSettings,
+  AgentExecutionContext,
   PlanStep,
   PlannerMeta,
 } from '@/features/ai/agent-runtime/types/agent';
 import prisma from '@/shared/lib/db/prisma';
 
 type FinalizeRunInput = {
-  run: {
-    id: string;
-    prompt: string;
-  };
+  context: AgentExecutionContext;
   planSteps: PlanStep[];
   taskType: PlannerMeta['taskType'] | null;
   overallOk: boolean;
   requiresHuman: boolean;
   lastError: string | null;
   summaryCheckpoint: number;
-  settings: AgentPlanSettings;
-  preferences: AgentPlanPreferences;
-  memoryContext: string[];
-  plannerModel: string;
-  memorySummarizationModel: string;
 };
 
 export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
@@ -38,19 +29,22 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
   improvementReview: Awaited<ReturnType<typeof buildSelfImprovementReviewWithLLM>>;
 }> {
   const {
-    run,
+    context,
     planSteps,
     taskType,
     overallOk,
     requiresHuman,
     lastError,
     summaryCheckpoint,
+  } = input;
+  const {
+    run,
     settings,
     preferences,
     memoryContext,
     plannerModel,
     memorySummarizationModel,
-  } = input;
+  } = context;
   const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
 
   await prisma.chatbotAgentRun.update({

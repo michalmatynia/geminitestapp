@@ -6,7 +6,6 @@ import {
   getExportWarehouseId,
   setExportWarehouseId
 } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -16,15 +15,15 @@ const requestSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable().optional()
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const url = new URL(req.url);
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const url = new URL(_req.url);
   const inventoryId = url.searchParams.get("inventoryId")?.trim() || null;
   const warehouseId = await getExportWarehouseId(inventoryId);
   return NextResponse.json({ warehouseId });
 }
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, requestSchema, {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const parsed = await parseJsonBody(_req, requestSchema, {
     logPrefix: "imports.base.export-warehouse.POST"
   });
   if (!parsed.ok) {

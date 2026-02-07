@@ -89,7 +89,9 @@ export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
   updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
   findRunById(runId: string): Promise<AiPathRunRecord | null>;
+  deleteRun(runId: string): Promise<boolean>;
   listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;
+  deleteRuns(options?: AiPathRunListOptions): Promise<{ count: number }>;
   claimNextQueuedRun(): Promise<AiPathRunRecord | null>;
   getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
   createRunNodes(runId: string, nodes: AiNode[]): Promise<void>;

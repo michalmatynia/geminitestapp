@@ -3051,7 +3051,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               />
             </div>
             <div className="text-[11px] text-gray-500">
-              Tip: store your API key at <span className="text-gray-300">/admin/settings/ai</span>.
+              Tip: store your API key at <span className="text-gray-300">/admin/settings/brain</span>.
             </div>
           </div>
 
@@ -3436,7 +3436,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               AI extraction is not wired yet. Selected model:{' '}
                     <span className="text-gray-200">{studioSettings.promptExtraction.gpt.model}</span>. Configure at
                     {' '}
-                    <span className="text-gray-200">/admin/settings/ai</span>.
+                    <span className="text-gray-200">/admin/settings/brain</span>.
                   </div>
                 ) : null}
 
@@ -3449,7 +3449,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       if (!extractDraftPrompt.trim()) return;
                       if (studioSettings.promptExtraction.mode !== 'programmatic') {
                         toast(
-                          `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
+                          `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/brain)`,
                           { variant: 'info' }
                         );
                         return;

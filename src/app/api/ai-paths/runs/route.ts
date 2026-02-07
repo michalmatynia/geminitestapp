@@ -6,12 +6,19 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import type { AiPathRunStatus } from "@/shared/types/ai-paths";
-import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 
 const RUN_STATUSES: AiPathRunStatus[] = [
   "queued",
   "running",
   "paused",
+  "completed",
+  "failed",
+  "canceled",
+  "dead_lettered",
+];
+
+const TERMINAL_STATUSES: AiPathRunStatus[] = [
   "completed",
   "failed",
   "canceled",
@@ -51,6 +58,32 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   return NextResponse.json(result);
 }
 
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const access = await requireAiPathsAccess();
+  enforceAiPathsActionRateLimit(access, "runs-clear");
+  const url = new URL(req.url);
+  const scopeRaw = url.searchParams.get("scope")?.trim().toLowerCase() || "terminal";
+  const scope = scopeRaw === "all" ? "all" : "terminal";
+  const pathId = url.searchParams.get("pathId")?.trim() || undefined;
+  const source = url.searchParams.get("source")?.trim() || undefined;
+  const sourceModeParam = url.searchParams.get("sourceMode")?.trim() || "";
+  const sourceMode = sourceModeParam === "exclude" ? "exclude" : "include";
+
+  const repo = getPathRunRepository();
+  const result = await repo.deleteRuns({
+    ...(!access.isElevated ? { userId: access.userId } : {}),
+    ...(pathId ? { pathId } : {}),
+    ...(source ? { source, sourceMode } : {}),
+    ...(scope === "terminal" ? { statuses: TERMINAL_STATUSES } : {}),
+  });
+
+  return NextResponse.json({ deleted: result.count, scope });
+}
+
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
  { source: "ai-paths.runs.list" });
+
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "ai-paths.runs.clear" });

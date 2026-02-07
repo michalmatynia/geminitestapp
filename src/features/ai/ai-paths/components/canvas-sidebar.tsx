@@ -1,71 +1,76 @@
+import React, { useMemo } from 'react';
 
-
-
-
-
-import type { AiNode, Edge, NodeDefinition, PathExecutionMode } from '@/features/ai/ai-paths/lib';
+import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
 
+import { useGraphState, useGraphActions, usePresetsState, usePresetsActions, useSelectionState, useSelectionActions } from '../context';
 import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
 type CanvasSidebarProps = {
+  /** Palette node definitions - still passed as prop for flexibility */
   palette: NodeDefinition[];
-  paletteCollapsed: boolean;
-  onTogglePaletteCollapsed: () => void;
-  expandedPaletteGroups: Set<string>;
-  onTogglePaletteGroup: (group: string) => void;
+  /** Callback when dragging a node from palette */
   onDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
-  selectedNode: AiNode | null;
-  nodes: AiNode[];
-  edges: Edge[];
-  selectedEdgeId: string | null;
-  onSelectEdge: (edgeId: string | null) => void;
+  /** Callback to fire a trigger */
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  /** Callback to fire a persistent trigger */
   onFireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  onOpenSimulation: (nodeId: string) => void;
-  onUpdateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  onOpenNodeConfig: () => void;
-  onDeleteSelectedNode: () => void;
-  onRemoveEdge: (edgeId: string) => void;
-  onClearWires: () => void;
-  executionMode: PathExecutionMode;
+  
+  onUpdateSelectedNode?: (node: AiNode, meta: { nodeId: string }) => void;
+  onDeleteSelectedNode?: () => void;
+  onRemoveEdge?: (edgeId: string) => void;
+  executionMode?: 'local' | 'server';
+
+  /** Current run status */
   runStatus: 'idle' | 'running' | 'paused' | 'stepping';
+  /** Run control callbacks */
   onPauseRun?: () => void;
   onResumeRun?: () => void;
   onStepRun?: (triggerNode?: AiNode) => void;
   onCancelRun?: () => void;
+  /** Callback to clear all wires */
+  onClearWires: () => void;
 };
 
 export function CanvasSidebar({
   palette,
-  paletteCollapsed,
-  onTogglePaletteCollapsed,
-  expandedPaletteGroups,
-  onTogglePaletteGroup,
   onDragStart,
-  selectedNode,
-  nodes,
-  edges,
-  selectedEdgeId,
-  onSelectEdge,
   onFireTrigger,
   onFireTriggerPersistent,
-  onOpenSimulation,
   onUpdateSelectedNode,
-  onOpenNodeConfig,
   onDeleteSelectedNode,
   onRemoveEdge,
-  onClearWires,
-  executionMode,
+  executionMode: executionModeProp,
   runStatus,
   onPauseRun,
   onResumeRun,
   onStepRun,
   onCancelRun,
+  onClearWires,
 }: CanvasSidebarProps): React.JSX.Element {
+  // --- Context Hooks ---
+  const { nodes, edges, executionMode: executionModeContext } = useGraphState();
+  const executionMode = executionModeProp ?? executionModeContext;
+  const { updateNode, removeEdge } = useGraphActions();
+  const { paletteCollapsed, expandedPaletteGroups } = usePresetsState();
+  const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
+  const { selectedNodeId, selectedEdgeId } = useSelectionState();
+  const { selectNode, selectEdge, setConfigOpen, setSimulationOpenNodeId, setNodeConfigDirty, setNodeConfigDraft, clearSelection } = useSelectionActions();
+  const { handleDeleteSelectedNode: deleteSelectedNodeContext, handleRemoveEdge: removeEdgeContext } = useCanvasInteractions();
+
+  const updateSelectedNode = onUpdateSelectedNode ?? updateSelectedNodeContext;
+  const deleteSelectedNode = onDeleteSelectedNode ?? deleteSelectedNodeContext;
+  const handleRemoveEdge = onRemoveEdge ?? removeEdgeContext;
+
+  // --- Derived ---
+  const selectedNode = useMemo(() => 
+    selectedNodeId ? nodes.find(n => n.id === selectedNodeId) ?? null : null
+  , [nodes, selectedNodeId]);
+
   const selectedIsScheduledTrigger =
     selectedNode?.type === 'trigger' && selectedNode.config?.trigger?.event === 'scheduled_run';
+  
   const showRunControls = executionMode === 'local';
   const runStatusLabel =
     runStatus === 'running'
@@ -88,7 +93,7 @@ export function CanvasSidebar({
           <button
             type="button"
             className="rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
-            onClick={onTogglePaletteCollapsed}
+            onClick={() => setPaletteCollapsed(!paletteCollapsed)}
           >
             {paletteCollapsed ? 'Expand' : 'Collapse'}
           </button>
@@ -122,15 +127,15 @@ export function CanvasSidebar({
               },
               { title: 'Agents', types: ['agent'], icon: '🧠' },
               { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
-            ].map((group: { title: string; types: string[]; icon: string }): React.JSX.Element | null => {
-              const items = palette.filter((node: NodeDefinition) => group.types.includes(node.type));
+            ].map((group) => {
+              const items = palette.filter((node) => group.types.includes(node.type));
               if (items.length === 0) return null;
               const isExpanded = expandedPaletteGroups.has(group.title);
               return (
                 <div key={group.title} className="rounded-md border border-border/60">
                   <button
                     type="button"
-                    onClick={() => onTogglePaletteGroup(group.title)}
+                    onClick={() => togglePaletteGroup(group.title)}
                     className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40"
                   >
                     <div className="flex items-center gap-2">
@@ -153,12 +158,12 @@ export function CanvasSidebar({
                   </button>
                   {isExpanded && (
                     <div className="space-y-2 px-3 pb-3">
-                      {items.map((node: NodeDefinition) => (
+                      {items.map((node) => (
                         <SectionPanel
                           key={node.title}
                           variant="subtle-compact"
                           draggable
-                          onDragStart={(event: React.DragEvent<HTMLDivElement>) => onDragStart(event, node)}
+                          onDragStart={(event) => onDragStart(event, node)}
                           className="cursor-grab text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
                           {((): React.JSX.Element => {
@@ -221,7 +226,7 @@ export function CanvasSidebar({
                   <Button
                     className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
-                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTrigger(selectedNode, event)}
+                    onClick={(event) => onFireTrigger(selectedNode, event)}
                   >
                     Fire Trigger
                   </Button>
@@ -229,7 +234,7 @@ export function CanvasSidebar({
                     <Button
                       className="w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10"
                       type="button"
-                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTriggerPersistent(selectedNode, event)}
+                      onClick={(event) => onFireTriggerPersistent(selectedNode, event)}
                     >
                       Queue Persistent Run
                     </Button>
@@ -240,7 +245,7 @@ export function CanvasSidebar({
                 <Button
                   className="w-full rounded-md border border-cyan-500/40 text-xs text-cyan-200 hover:bg-cyan-500/10"
                   type="button"
-                  onClick={() => onOpenSimulation(selectedNode.id)}
+                  onClick={() => setSimulationOpenNodeId(selectedNode.id)}
                 >
                   Open Simulation
                 </Button>
@@ -250,7 +255,7 @@ export function CanvasSidebar({
                 <Input
                   className="mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white"
                   value={selectedNode.title}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => onUpdateSelectedNode({ title: event.target.value })}
+                  onChange={(event) => updateNode(selectedNode.id, { title: event.target.value })}
                 />
               </div>
               <div>
@@ -258,42 +263,42 @@ export function CanvasSidebar({
                 <Textarea
                   className="mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white"
                   value={selectedNode.description}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    onUpdateSelectedNode({ description: event.target.value })
+                  onChange={(event) =>
+                    updateNode(selectedNode.id, { description: event.target.value })
                   }
                 />
               </div>
               <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
                 Inputs:{' '}
-                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                {selectedNode.inputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
                 <br />
                 Outputs:{' '}
-                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
+                {selectedNode.outputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}
               </SectionPanel>
               {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
-                const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
+                const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
-                  .map((edge: Edge) => edge.toPort)
+                  .map((edge) => edge.toPort)
                   .filter((port: string | undefined): port is string => Boolean(port));
                 const bundleKeys = new Set<string>();
-                incomingEdges.forEach((edge: Edge) => {
+                incomingEdges.forEach((edge) => {
                   if (edge.toPort !== 'bundle') return;
-                  const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
+                  const fromNode = nodes.find((node) => node.id === edge.from);
                   if (!fromNode) return;
                   if (fromNode.type === 'parser') {
                     const mappings =
                       fromNode.config?.parser?.mappings ??
                       createParserMappings(fromNode.outputs);
-                    Object.keys(mappings).forEach((key: string) => {
+                    Object.keys(mappings).forEach((key) => {
                       const trimmed = key.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                     return;
                   }
                   if (fromNode.type === 'bundle') {
-                    fromNode.inputs.forEach((port: string) => {
+                    fromNode.inputs.forEach((port) => {
                       const trimmed = port.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -301,20 +306,20 @@ export function CanvasSidebar({
                   if (fromNode.type === 'mapper') {
                     const mapperOutputs =
                       fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                    mapperOutputs.forEach((output: string) => {
+                    mapperOutputs.forEach((output) => {
                       const trimmed = output.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                   }
                 });
-                const directPlaceholders = inputPorts.filter((port: string) => port !== 'bundle');
+                const directPlaceholders = inputPorts.filter((port) => port !== 'bundle');
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
                   <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {Array.from(bundleKeys).map((key: string) => (
+                        {Array.from(bundleKeys).map((key) => (
                           <span
                             key={key}
                             className="rounded-full border px-2 py-0.5 text-[10px] text-gray-200"
@@ -328,7 +333,7 @@ export function CanvasSidebar({
                       <div className="mt-2 text-[11px] text-gray-500">
                         Direct inputs:{' '}
                         {directPlaceholders
-                          .map((port: string) => formatPlaceholderLabel(port))
+                          .map((port) => formatPlaceholderLabel(port))
                           .join(', ')}
                       </div>
                     )}
@@ -337,14 +342,14 @@ export function CanvasSidebar({
               })()}
               <Button
                 className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
-                onClick={onOpenNodeConfig}
+                onClick={() => setConfigOpen(true)}
               >
                 Open Node Config
               </Button>
               <Button
                 className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                 type="button"
-                onClick={onDeleteSelectedNode}
+                onClick={() => handleDeleteSelectedNode()}
               >
                 Remove Node
               </Button>
@@ -431,9 +436,9 @@ export function CanvasSidebar({
         <div className="space-y-2 text-xs text-gray-400">
           <div>Active wires: {edges.length}</div>
           {selectedEdgeId ? ((): React.JSX.Element | null => {
-            const selectedEdge = edges.find((edge: Edge) => edge.id === selectedEdgeId);
-            const fromNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.from) : null;
-            const toNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.to) : null;
+            const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+            const fromNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.from) : null;
+            const toNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.to) : null;
             return selectedEdge ? (
               <SectionPanel variant="subtle-compact" className="space-y-3 border-blue-500/30 bg-blue-500/5 p-3">
                 <div className="text-xs font-medium text-blue-300">Selected Wire</div>
@@ -480,14 +485,14 @@ export function CanvasSidebar({
                   <Button
                     className="flex-1 rounded-md border text-xs text-muted-foreground hover:bg-muted/50"
                     type="button"
-                    onClick={() => onSelectEdge(null)}
+                    onClick={() => selectEdge(null)}
                   >
                     Deselect
                   </Button>
                   <Button
                     className="flex-1 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                     type="button"
-                    onClick={() => onRemoveEdge(selectedEdgeId)}
+                    onClick={() => removeEdge(selectedEdgeId)}
                   >
                     Remove
                   </Button>
@@ -507,9 +512,9 @@ export function CanvasSidebar({
         </div>
         {edges.length > 0 && (
           <div className="mt-3 space-y-2 text-[11px] text-gray-500">
-            {edges.map((edge: Edge): React.JSX.Element => {
-              const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
-              const toNode = nodes.find((node: AiNode) => node.id === edge.to);
+            {edges.map((edge): React.JSX.Element => {
+              const fromNode = nodes.find((node) => node.id === edge.from);
+              const toNode = nodes.find((node) => node.id === edge.to);
               const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? '?'} → ${toNode?.title ?? edge.to}.${edge.toPort ?? '?'}`;
               const isSelected = edge.id === selectedEdgeId;
               return (
@@ -526,7 +531,7 @@ export function CanvasSidebar({
                   <button
                     type="button"
                     className="rounded border px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50"
-                    onClick={() => onSelectEdge(edge.id)}
+                    onClick={() => selectEdge(edge.id)}
                   >
                     Select
                   </button>

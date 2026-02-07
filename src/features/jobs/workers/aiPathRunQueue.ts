@@ -1,7 +1,9 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun } from '@/features/jobs/processors/ai-path-run-processor';
+import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 const DEFAULT_CONCURRENCY = Number(process.env.AI_PATHS_RUN_CONCURRENCY ?? '1');
@@ -34,6 +36,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
         status: 'running',
         startedAt: new Date(),
       });
+      await recordRuntimeRunStarted({ runId: run.id });
     }
     await processRun({ ...run, status: 'running' });
   },
@@ -70,11 +73,35 @@ export const getAiPathRunQueueStatus = async (): Promise<{
   avgRuntimeMs: number | null;
   p50RuntimeMs: number | null;
   p95RuntimeMs: number | null;
+  brainQueue: {
+    running: boolean;
+    healthy: boolean;
+    processing: boolean;
+    activeJobs: number;
+    waitingJobs: number;
+    failedJobs: number;
+    completedJobs: number;
+  };
+  brainAnalytics24h: {
+    analyticsReports: number;
+    logReports: number;
+    totalReports: number;
+    warningReports: number;
+    errorReports: number;
+  };
 }> => {
   const now = Date.now();
   const health = await queue.getHealthStatus();
   const repo = getPathRunRepository();
-  const stats = await repo.getQueueStats();
+  const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
+    repo.getQueueStats(),
+    getAiInsightsQueueStatus(),
+    getRuntimeAnalyticsSummary({
+      from: new Date(now - 24 * 60 * 60 * 1000),
+      to: new Date(now),
+      range: '24h',
+    }),
+  ]);
   const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
   const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
 
@@ -94,24 +121,54 @@ export const getAiPathRunQueueStatus = async (): Promise<{
     avgRuntimeMs: null, // BullMQ doesn't track this natively; can be added via QueueEvents
     p50RuntimeMs: null,
     p95RuntimeMs: null,
+    brainQueue: {
+      running: insightsQueueHealth.running,
+      healthy: insightsQueueHealth.healthy,
+      processing: insightsQueueHealth.processing,
+      activeJobs: insightsQueueHealth.activeJobs,
+      waitingJobs: insightsQueueHealth.waitingJobs,
+      failedJobs: insightsQueueHealth.failedJobs,
+      completedJobs: insightsQueueHealth.completedJobs,
+    },
+    brainAnalytics24h: {
+      analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
+      logReports: runtimeAnalyticsSummary.brain.logReports,
+      totalReports: runtimeAnalyticsSummary.brain.totalReports,
+      warningReports: runtimeAnalyticsSummary.brain.warningReports,
+      errorReports: runtimeAnalyticsSummary.brain.errorReports,
+    },
   };
 };
 
 export const processSingleRun = async (runId: string): Promise<void> => {
-  const repo = getPathRunRepository();
-  const run = await repo.findRunById(runId);
-  if (!run) {
-    throw new Error('Run not found');
+  try {
+    const repo = getPathRunRepository();
+    const run = await repo.findRunById(runId);
+    if (!run) {
+      throw new Error('Run not found');
+    }
+    if (run.status !== 'queued') {
+      return;
+    }
+    await repo.updateRun(run.id, {
+      status: 'running',
+      startedAt: new Date(),
+    });
+    await recordRuntimeRunStarted({ runId: run.id });
+    const { executePathRun } = await import('@/features/ai/ai-paths/services/path-run-executor');
+    await executePathRun({ ...run, status: 'running' });
+  } catch (error) {
+    try {
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      void ErrorSystem.captureException(error, {
+        service: 'ai-path-run-queue-single',
+        runId,
+      });
+    } catch {
+      console.error('[aiPathRunQueue] Fatal inline execution error', error);
+    }
+    throw error;
   }
-  if (run.status !== 'queued') {
-    return;
-  }
-  await repo.updateRun(run.id, {
-    status: 'running',
-    startedAt: new Date(),
-  });
-  const { executePathRun } = await import('@/features/ai/ai-paths/services/path-run-executor');
-  await executePathRun({ ...run, status: 'running' });
 };
 
 export const enqueuePathRunJob = async (runId: string): Promise<void> => {

@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { getImageFileRepository } from "@/features/files/server";
 
@@ -78,84 +77,75 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
-  try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
 
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = moveSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
-    }
-
-    const targetFolder = parsed.data.targetFolder ? sanitizeFolderPath(parsed.data.targetFolder) : "";
-    const targetDiskDir = targetFolder
-      ? path.join(projectsRoot, projectId, targetFolder)
-      : path.join(projectsRoot, projectId);
-    const targetPublicDir = targetFolder
-      ? `/uploads/studio/${projectId}/${targetFolder}`
-      : `/uploads/studio/${projectId}`;
-
-    const assetId = parsed.data.id?.trim() ?? "";
-    const isDiskOnly = assetId.startsWith("disk:");
-    let sourceFilepath = parsed.data.filepath?.trim() ?? "";
-    let repoRecord: Awaited<ReturnType<Awaited<ReturnType<typeof getImageFileRepository>>["getImageFileById"]>> | null = null;
-
-    if (assetId && !isDiskOnly) {
-      const repo = await getImageFileRepository();
-      repoRecord = await repo.getImageFileById(assetId);
-      if (!repoRecord) {
-        throw notFoundError("Asset not found");
-      }
-      sourceFilepath = repoRecord.filepath;
-    } else if (isDiskOnly && !sourceFilepath) {
-      sourceFilepath = assetId.replace(/^disk:/, "");
-    }
-
-    const normalizedSource = normalizePublicPath(sourceFilepath);
-    if (!normalizedSource) {
-      throw badRequestError("Source filepath is required");
-    }
-    if (!normalizedSource.startsWith(`/uploads/studio/${projectId}/`)) {
-      throw badRequestError("Source file must be inside the project uploads folder");
-    }
-
-    const sourceDiskPath = resolveDiskPathFromPublicUploadPath(normalizedSource);
-    if (!sourceDiskPath) {
-      throw notFoundError("Source file not found");
-    }
-    const sourceStat = await fs.stat(sourceDiskPath).catch(() => null);
-    if (!sourceStat || !sourceStat.isFile()) {
-      throw notFoundError("Source file not found");
-    }
-
-    await fs.mkdir(targetDiskDir, { recursive: true });
-    let filename = path.basename(normalizedSource);
-    const targetDiskPath = path.join(targetDiskDir, filename);
-    const exists = await fs.stat(targetDiskPath).catch(() => null);
-    if (exists) {
-      filename = `${Date.now()}-${filename}`;
-    }
-    const finalDiskPath = path.join(targetDiskDir, filename);
-    const finalPublicPath = `${targetPublicDir}/${filename}`.replace(/\\/g, "/");
-
-    await fs.rename(sourceDiskPath, finalDiskPath);
-
-    if (repoRecord) {
-      const repo = await getImageFileRepository();
-      const updated = await repo.updateImageFilePath(repoRecord.id, finalPublicPath);
-      return NextResponse.json({ asset: updated ?? repoRecord, filepath: finalPublicPath });
-    }
-
-    return NextResponse.json({ asset: null, filepath: finalPublicPath });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].assets.move.POST",
-      fallbackMessage: "Failed to move asset",
-      extra: { projectId: params.projectId },
-    });
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = moveSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
   }
+
+  const targetFolder = parsed.data.targetFolder ? sanitizeFolderPath(parsed.data.targetFolder) : "";
+  const targetDiskDir = targetFolder
+    ? path.join(projectsRoot, projectId, targetFolder)
+    : path.join(projectsRoot, projectId);
+  const targetPublicDir = targetFolder
+    ? `/uploads/studio/${projectId}/${targetFolder}`
+    : `/uploads/studio/${projectId}`;
+
+  const assetId = parsed.data.id?.trim() ?? "";
+  const isDiskOnly = assetId.startsWith("disk:");
+  let sourceFilepath = parsed.data.filepath?.trim() ?? "";
+  let repoRecord: Awaited<ReturnType<Awaited<ReturnType<typeof getImageFileRepository>>["getImageFileById"]>> | null = null;
+
+  if (assetId && !isDiskOnly) {
+    const repo = await getImageFileRepository();
+    repoRecord = await repo.getImageFileById(assetId);
+    if (!repoRecord) {
+      throw notFoundError("Asset not found");
+    }
+    sourceFilepath = repoRecord.filepath;
+  } else if (isDiskOnly && !sourceFilepath) {
+    sourceFilepath = assetId.replace(/^disk:/, "");
+  }
+
+  const normalizedSource = normalizePublicPath(sourceFilepath);
+  if (!normalizedSource) {
+    throw badRequestError("Source filepath is required");
+  }
+  if (!normalizedSource.startsWith(`/uploads/studio/${projectId}/`)) {
+    throw badRequestError("Source file must be inside the project uploads folder");
+  }
+
+  const sourceDiskPath = resolveDiskPathFromPublicUploadPath(normalizedSource);
+  if (!sourceDiskPath) {
+    throw notFoundError("Source file not found");
+  }
+  const sourceStat = await fs.stat(sourceDiskPath).catch(() => null);
+  if (!sourceStat || !sourceStat.isFile()) {
+    throw notFoundError("Source file not found");
+  }
+
+  await fs.mkdir(targetDiskDir, { recursive: true });
+  let filename = path.basename(normalizedSource);
+  const targetDiskPath = path.join(targetDiskDir, filename);
+  const exists = await fs.stat(targetDiskPath).catch(() => null);
+  if (exists) {
+    filename = `${Date.now()}-${filename}`;
+  }
+  const finalDiskPath = path.join(targetDiskDir, filename);
+  const finalPublicPath = `${targetPublicDir}/${filename}`.replace(/\\/g, "/");
+
+  await fs.rename(sourceDiskPath, finalDiskPath);
+
+  if (repoRecord) {
+    const repo = await getImageFileRepository();
+    const updated = await repo.updateImageFilePath(repoRecord.id, finalPublicPath);
+    return NextResponse.json({ asset: updated ?? repoRecord, filepath: finalPublicPath });
+  }
+
+  return NextResponse.json({ asset: null, filepath: finalPublicPath });
 }
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(

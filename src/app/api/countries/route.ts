@@ -187,99 +187,87 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Creates a country.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, countrySchema, {
-      logPrefix: "countries.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-
-    const { currencyIds, ...countryData } = data;
-
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const db = await getMongoDb();
-      const existing = await db
-        .collection<CountryDoc>(COUNTRIES_COLLECTION)
-        .findOne({ id: countryData.code });
-      if (existing) {
-        throw conflictError("Country code already exists.", {
-          code: countryData.code,
-        });
-      }
-      const requestedCurrencyIds = Array.from(
-        new Set(currencyIds ?? [])
-      );
-      const currencyDocs = requestedCurrencyIds.length
-        ? await db
-            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-            .find({ id: { $in: requestedCurrencyIds } })
-            .toArray()
-        : [];
-      const validCurrencyIds = new Set(
-        currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
-      );
-      const now = new Date();
-      const country: CountryDoc = {
-        id: countryData.code,
-        code: countryData.code,
-        name: countryData.name,
-        currencyIds: requestedCurrencyIds.filter((id: string) =>
-          validCurrencyIds.has(id)
-        ),
-        createdAt: now,
-        updatedAt: now,
-      };
-      await db.collection<CountryDoc>(COUNTRIES_COLLECTION).insertOne(country);
-      const currencyMap = new Map(
-        currencyDocs.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
-      );
-      return NextResponse.json(
-        normalizeCountryResponse(country, currencyMap)
-      );
-    }
-
-    if (!process.env.DATABASE_URL) {
-      throw internalError("Postgres product store is not configured.");
-    }
-
-    const country = await prisma.country.create({
-      data: {
-        // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
-        ...(countryData as unknown as { code: CountryCode; name: string }),
-        ...(currencyIds?.length ? {
-          currencies: {
-            createMany: {
-              data: currencyIds.map((currencyId: string) => ({ currencyId })),
-            },
-          },
-        } : {}),
-      },
-      include: {
-        currencies: {
-          include: { currency: true },
-        },
-      },
-    });
-
-    return NextResponse.json(country);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "countries.POST",
-      fallbackMessage: "Failed to create country",
-    });
+  const parsed = await parseJsonBody(req, countrySchema, {
+    logPrefix: "countries.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+
+  const { currencyIds, ...countryData } = data;
+
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
+    }
+    const db = await getMongoDb();
+    const existing = await db
+      .collection<CountryDoc>(COUNTRIES_COLLECTION)
+      .findOne({ id: countryData.code });
+    if (existing) {
+      throw conflictError("Country code already exists.", {
+        code: countryData.code,
+      });
+    }
+    const requestedCurrencyIds = Array.from(
+      new Set(currencyIds ?? [])
+    );
+    const currencyDocs = requestedCurrencyIds.length
+      ? await db
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: requestedCurrencyIds } })
+          .toArray()
+      : [];
+    const validCurrencyIds = new Set(
+      currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
+    );
+    const now = new Date();
+    const country: CountryDoc = {
+      id: countryData.code,
+      code: countryData.code,
+      name: countryData.name,
+      currencyIds: requestedCurrencyIds.filter((id: string) =>
+        validCurrencyIds.has(id)
+      ),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.collection<CountryDoc>(COUNTRIES_COLLECTION).insertOne(country);
+    const currencyMap = new Map(
+      currencyDocs.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
+    );
+    return NextResponse.json(
+      normalizeCountryResponse(country, currencyMap)
+    );
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw internalError("Postgres product store is not configured.");
+  }
+
+  const country = await prisma.country.create({
+    data: {
+      // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
+      ...(countryData as unknown as { code: CountryCode; name: string }),
+      ...(currencyIds?.length ? {
+        currencies: {
+          createMany: {
+            data: currencyIds.map((currencyId: string) => ({ currencyId })),
+          },
+        },
+      } : {}),
+    },
+    include: {
+      currencies: {
+        include: { currency: true },
+      },
+    },
+  });
+
+  return NextResponse.json(country);
 }
 
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "countries.GET" });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "countries.POST" });
+export const GET = apiHandler(GET_handler, { source: "countries.GET" });
+export const POST = apiHandler(POST_handler, { source: "countries.POST" });

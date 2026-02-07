@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { getImageFileRepository } from "@/features/files/server";
 import { getImageStudioSlotById, updateImageStudioSlot } from "@/features/ai/image-studio/server/slot-repository";
@@ -44,57 +43,48 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  try {
-    const slotId = params.slotId?.trim() ?? "";
-    if (!slotId) throw badRequestError("Slot id is required");
+  const slotId = params.slotId?.trim() ?? "";
+  if (!slotId) throw badRequestError("Slot id is required");
 
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = payloadSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
-    }
-
-    const slot = await getImageStudioSlotById(slotId);
-    if (!slot) throw notFoundError("Slot not found");
-
-    const parsedData = parseDataUrl(parsed.data.dataUrl);
-    if (!parsedData) {
-      throw badRequestError("Invalid data URL");
-    }
-
-    const ext = guessExtension(parsedData.mime);
-    const filename = parsed.data.filename?.trim() || `screenshot-${Date.now()}${ext}`;
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const diskDir = path.join(uploadsRoot, slotId);
-    const diskPath = path.join(diskDir, safeName);
-    const publicPath = `/uploads/studio/screenshots/${slotId}/${safeName}`;
-
-    await fs.mkdir(diskDir, { recursive: true });
-    await fs.writeFile(diskPath, parsedData.buffer);
-
-    const repo = await getImageFileRepository();
-    const imageFile = await repo.createImageFile({
-      filename: safeName,
-      filepath: publicPath,
-      mimetype: parsedData.mime,
-      size: parsedData.buffer.length,
-    });
-
-    const updated = await updateImageStudioSlot(slotId, {
-      screenshotFileId: imageFile.id,
-      ...(slot.asset3dId && !slot.imageBase64 ? { imageBase64: parsed.data.dataUrl } : {}),
-    });
-    if (!updated) throw notFoundError("Slot not found");
-
-    return NextResponse.json({ slot: updated, screenshot: imageFile });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.slots.[slotId].screenshot.POST",
-      fallbackMessage: "Failed to save screenshot",
-      extra: { slotId: params.slotId },
-    });
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = payloadSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
   }
+
+  const slot = await getImageStudioSlotById(slotId);
+  if (!slot) throw notFoundError("Slot not found");
+
+  const parsedData = parseDataUrl(parsed.data.dataUrl);
+  if (!parsedData) {
+    throw badRequestError("Invalid data URL");
+  }
+
+  const ext = guessExtension(parsedData.mime);
+  const filename = parsed.data.filename?.trim() || `screenshot-${Date.now()}${ext}`;
+  const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const diskDir = path.join(uploadsRoot, slotId);
+  const diskPath = path.join(diskDir, safeName);
+  const publicPath = `/uploads/studio/screenshots/${slotId}/${safeName}`;
+
+  await fs.mkdir(diskDir, { recursive: true });
+  await fs.writeFile(diskPath, parsedData.buffer);
+
+  const repo = await getImageFileRepository();
+  const imageFile = await repo.createImageFile({
+    filename: safeName,
+    filepath: publicPath,
+    mimetype: parsedData.mime,
+    size: parsedData.buffer.length,
+  });
+
+  const updated = await updateImageStudioSlot(slotId, {
+    screenshotFileId: imageFile.id,
+    ...(slot.asset3dId && !slot.imageBase64 ? { imageBase64: parsed.data.dataUrl } : {}),
+  });
+  if (!updated) throw notFoundError("Slot not found");
+
+  return NextResponse.json({ slot: updated, screenshot: imageFile });
 }
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(

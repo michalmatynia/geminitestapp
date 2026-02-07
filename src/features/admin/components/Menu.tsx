@@ -834,7 +834,6 @@ export const buildAdminNav = (handlers: {
         children: [
           { id: 'system/settings/overview', label: 'Overview', href: '/admin/settings' },
           { id: 'system/settings/brain', label: 'Brain', href: '/admin/settings/brain' },
-          { id: 'system/settings/ai', label: 'AI API Settings', href: '/admin/settings/ai' },
           { id: 'system/settings/typography', label: 'Typography', href: '/admin/settings/typography' },
           { id: 'system/settings/notifications', label: 'Notifications', href: '/admin/settings/notifications' },
           { id: 'system/settings/playwright', label: 'Playwright Personas', href: '/admin/settings/playwright' },

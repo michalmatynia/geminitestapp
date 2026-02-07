@@ -4,11 +4,9 @@ import React from 'react';
 import type {
   AiNode,
   AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
-  Edge,
   PathFlowIntensity,
-  RuntimeState,
+  Edge,
 } from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
@@ -26,9 +24,11 @@ import {
   getValueTypeLabel,
   isValueCompatibleWithTypes,
   type PortDataType,
+  hashRuntimeValue,
 } from '@/features/ai/ai-paths/lib';
 import { Button, Tooltip, SectionPanel } from '@/shared/ui';
 
+import { useCanvasState, useCanvasRefs, useCanvasInteractions, useGraphState, useRuntimeState, useSelectionState, useSelectionActions } from '../context';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
 import { formatPortLabel } from '../utils/ui-utils';
@@ -58,97 +58,93 @@ type ConnectorInfo = {
   hasMismatch: boolean;
 };
 
+type RuntimeHashes = {
+  inputs: Record<string, Record<string, string>>;
+  outputs: Record<string, Record<string, string>>;
+};
+
 type CanvasBoardProps = {
-  viewportRef: React.RefObject<HTMLDivElement | null>;
-  canvasRef: React.RefObject<HTMLDivElement | null>;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
+  /** Runtime events passed from parent (TODO: move to context) */
   runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
+  /** Runtime events passed from parent (TODO: move to context) */
   runtimeEvents?: AiPathRuntimeEvent[] | undefined;
-  flowIntensity?: PathFlowIntensity | undefined;
-  edgePaths: EdgePath[];
-  view: { x: number; y: number; scale: number };
-  panState: { startX: number; startY: number; originX: number; originY: number } | null;
-  lastDrop: { x: number; y: number } | null;
-  connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null;
-  connectingPos: { x: number; y: number } | null;
-  connectingFromNode: AiNode | null;
-  selectedNodeId: string | null;
-  draggingNodeId: string | null;
-  selectedEdgeId: string | null;
+  /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
-  onSelectEdgeId: (edgeId: string | null) => void;
-  onRemoveEdge: (edgeId: string) => void;
-  onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
-  onReconnectInput: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
-  onSelectNode: (nodeId: string) => void;
-  onOpenNodeConfig: (nodeId: string) => void;
+  /** Callback to fire a trigger (TODO: move to context) */
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  onPointerDownNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onPointerMoveNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onPointerUpNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onStartConnection: (
-    event: React.PointerEvent<HTMLButtonElement>,
-    node: AiNode,
-    port: string
-  ) => void;
-  onCompleteConnection: (
-    event: React.PointerEvent<HTMLButtonElement>,
-    node: AiNode,
-    port: string
-  ) => void;
-  onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
-  onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
-  onPanStart: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPanMove: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPanEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onZoomTo: (scale: number) => void;
-  onFitToNodes: () => void;
-  onResetView: () => void;
+
+  fitToNodes?: () => void;
+  resetView?: () => void;
+};
+
+const formatRuntimeStatusLabel = (status: string): string =>
+  status
+    .split('_')
+    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+    .join(' ');
+
+const runtimeStatusBadgeClassName = (status: string): string => {
+  if (status === 'completed' || status === 'cached') {
+    return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200';
+  }
+  if (status === 'failed' || status === 'canceled' || status === 'timeout') {
+    return 'border-rose-500/60 bg-rose-500/15 text-rose-200';
+  }
+  if (status === 'queued') {
+    return 'border-amber-500/60 bg-amber-500/15 text-amber-200';
+  }
+  if (
+    status === 'running' ||
+    status === 'polling' ||
+    status === 'paused' ||
+    status === 'waiting_callback' ||
+    status === 'advance_pending'
+  ) {
+    return 'border-sky-500/60 bg-sky-500/15 text-sky-200';
+  }
+  return 'border-border bg-card/60 text-gray-200';
 };
 
 export function CanvasBoard({
-  viewportRef,
-  canvasRef,
-  nodes,
-  edges,
-  runtimeState,
   runtimeNodeStatuses,
   runtimeEvents,
-  flowIntensity = 'medium',
-  edgePaths,
-  view,
-  panState,
-  lastDrop,
-  connecting,
-  connectingPos,
-  connectingFromNode,
-  selectedNodeId,
-  draggingNodeId,
-  selectedEdgeId,
   viewportClassName,
-  onSelectEdgeId,
-  onRemoveEdge,
-  onDisconnectPort,
-  onReconnectInput,
-  onSelectNode,
-  onOpenNodeConfig,
   onFireTrigger,
-  onPointerDownNode,
-  onPointerMoveNode,
-  onPointerUpNode,
-  onStartConnection,
-  onCompleteConnection,
-  onDrop,
-  onDragOver,
-  onPanStart,
-  onPanMove,
-  onPanEnd,
-  onZoomTo,
-  onFitToNodes,
-  onResetView,
+  fitToNodes: fitToNodesProp,
+  resetView: resetViewProp,
 }: CanvasBoardProps): React.JSX.Element {
+  // --- Context Hooks ---
+  const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
+  const { viewportRef, canvasRef } = useCanvasRefs();
+  const { nodes, edges, flowIntensity } = useGraphState();
+  const { runtimeState } = useRuntimeState();
+  const { selectedNodeId, selectedEdgeId } = useSelectionState();
+  const { selectEdge, setConfigOpen } = useSelectionActions();
+  const {
+    edgePaths,
+    handlePointerDownNode,
+    handlePointerMoveNode,
+    handlePointerUpNode,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
+    handleRemoveEdge,
+    handleDisconnectPort,
+    handleStartConnection,
+    handleCompleteConnection,
+    handleReconnectInput,
+    handleSelectNode,
+    handleDrop,
+    handleDragOver,
+    zoomTo,
+    fitToNodes: fitToNodesContext,
+    resetView: resetViewContext,
+  } = useCanvasInteractions();
+
+  const fitToNodes = fitToNodesProp ?? fitToNodesContext;
+  const resetView = resetViewProp ?? resetViewContext;
+
+  // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
   const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
@@ -159,11 +155,21 @@ export function CanvasBoard({
   const edgePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const flowActiveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRuntimeEventIdRef = React.useRef<string | null>(null);
+
+  // --- Constants & Derived ---
   const FLOW_ANIMATION_MS = 1600;
   const NODE_PULSE_MS = 1400;
   const FLOW_ACTIVE_WINDOW_MS = Math.max(900, FLOW_ANIMATION_MS * 2);
   const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
   const flowEnabled = resolvedFlowIntensity !== 'off';
+
+  // --- Derived from Context ---
+  const connectingFromNode = React.useMemo<AiNode | null>(() => {
+    if (!connecting?.fromNodeId) return null;
+    return nodes.find((node) => node.id === connecting.fromNodeId) ?? null;
+  }, [nodes, connecting?.fromNodeId]);
+
   const flowStyle = React.useMemo<React.CSSProperties>(() => {
     switch (resolvedFlowIntensity) {
       case 'off':
@@ -285,9 +291,9 @@ export function CanvasBoard({
   ): ConnectionTypeMismatch[] => {
     const relevantEdges =
       direction === 'input'
-        ? edges.filter((edge: Edge) => edge.to === nodeId && edge.toPort === port)
-        : edges.filter((edge: Edge) => edge.from === nodeId && edge.fromPort === port);
-    return relevantEdges.flatMap((edge: Edge) => {
+        ? edges.filter((edge) => edge.to === nodeId && edge.toPort === port)
+        : edges.filter((edge) => edge.from === nodeId && edge.fromPort === port);
+    return relevantEdges.flatMap((edge) => {
       if (!edge.fromPort || !edge.toPort) return [];
       const fromTypes = getPortDataTypes(edge.fromPort);
       const toTypes = getPortDataTypes(edge.toPort);
@@ -381,7 +387,7 @@ export function CanvasBoard({
         ) : null}
         {info.connectionMismatches.length > 0 ? (
           <div className="space-y-1 text-[10px] text-rose-300">
-            {info.connectionMismatches.map((mismatch: ConnectionTypeMismatch, index: number) => {
+            {info.connectionMismatches.map((mismatch, index) => {
               const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
               const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? 'unknown';
               return (
@@ -404,7 +410,7 @@ export function CanvasBoard({
           <div className="mt-2">
             <div className="text-[10px] text-gray-400">Diff (last two passes)</div>
             <div className="mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-              {diff.lines.map((line: { type: 'add' | 'remove' | 'same'; text: string }, index: number) => {
+              {diff.lines.map((line, index) => {
                 const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
                 const colorClass =
                   line.type === 'add'
@@ -433,10 +439,10 @@ export function CanvasBoard({
   };
 
   const triggerConnected = React.useMemo((): Set<string> => {
-    const triggerIds = nodes.filter((node: AiNode) => node.type === 'trigger').map((node: AiNode) => node.id);
+    const triggerIds = nodes.filter((node) => node.type === 'trigger').map((node) => node.id);
     if (triggerIds.length === 0) return new Set<string>();
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge: Edge) => {
+    edges.forEach((edge) => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -447,13 +453,13 @@ export function CanvasBoard({
     });
     const visited = new Set<string>();
     const queue = [...triggerIds];
-    triggerIds.forEach((id: string) => visited.add(id));
+    triggerIds.forEach((id) => visited.add(id));
     while (queue.length) {
       const current = queue.shift();
       if (!current) continue;
       const neighbors = adjacency.get(current);
       if (!neighbors) continue;
-      neighbors.forEach((neighbor: string) => {
+      neighbors.forEach((neighbor) => {
         if (visited.has(neighbor)) return;
         visited.add(neighbor);
         queue.push(neighbor);
@@ -461,17 +467,18 @@ export function CanvasBoard({
     }
     return visited;
   }, [nodes, edges]);
+
   const hasTriggers = React.useMemo(
-    (): boolean => nodes.some((node: AiNode) => node.type === 'trigger'),
+    (): boolean => nodes.some((node) => node.type === 'trigger'),
     [nodes]
   );
   const edgeMetaMap = React.useMemo(
-    (): Map<string, Edge> => new Map(edges.map((edge: Edge) => [edge.id, edge])),
+    (): Map<string, Edge> => new Map(edges.map((edge) => [edge.id, edge])),
     [edges]
   );
   const edgesByFromPort = React.useMemo(() => {
     const map = new Map<string, Edge[]>();
-    edges.forEach((edge: Edge) => {
+    edges.forEach((edge) => {
       if (!edge.from || !edge.fromPort) return;
       const key = buildEdgePortKey(edge.from, edge.fromPort);
       const list = map.get(key) ?? [];
@@ -482,7 +489,7 @@ export function CanvasBoard({
   }, [edges, buildEdgePortKey]);
   const edgesByToPort = React.useMemo(() => {
     const map = new Map<string, Edge[]>();
-    edges.forEach((edge: Edge) => {
+    edges.forEach((edge) => {
       if (!edge.to || !edge.toPort) return;
       const key = buildEdgePortKey(edge.to, edge.toPort);
       const list = map.get(key) ?? [];
@@ -491,16 +498,33 @@ export function CanvasBoard({
     });
     return map;
   }, [edges, buildEdgePortKey]);
+  const incomingEdgeIdsByNode = React.useMemo((): Map<string, string[]> => {
+    const map = new Map<string, string[]>();
+    edges.forEach((edge) => {
+      if (!edge.to) return;
+      const list = map.get(edge.to) ?? [];
+      list.push(edge.id);
+      map.set(edge.to, list);
+    });
+    return map;
+  }, [edges]);
+  const outgoingEdgeIdsByNode = React.useMemo((): Map<string, string[]> => {
+    const map = new Map<string, string[]>();
+    edges.forEach((edge) => {
+      if (!edge.from) return;
+      const list = map.get(edge.from) ?? [];
+      list.push(edge.id);
+      map.set(edge.from, list);
+    });
+    return map;
+  }, [edges]);
 
-  // While a "blocker" node is waiting (polling / queued / running), keep the incoming wires animated
-  // to show where the signal is currently stuck. Wires *after* the blocker won't animate until the
-  // blocker emits its downstream outputs.
   const blockingFlowEdgeIds = React.useMemo((): Set<string> => {
     const result = new Set<string>();
     const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
     const blockerTypes = new Set<string>(['poll', 'model', 'agent', 'delay']);
     const outputs = runtimeState.outputs ?? {};
-    nodes.forEach((node: AiNode) => {
+    nodes.forEach((node) => {
       if (!blockerTypes.has(node.type)) return;
       const nodeOutputs = outputs[node.id] as Record<string, unknown> | undefined;
       const rawStatus = nodeOutputs?.status;
@@ -509,7 +533,7 @@ export function CanvasBoard({
       if (!status) return;
       if (status === 'completed' || status === 'failed') return;
 
-      edges.forEach((edge: Edge) => {
+      edges.forEach((edge) => {
         if (edge.to !== node.id) return;
         if (!edge.from || !edge.to) return;
         if (!edge.fromPort || !edge.toPort) return;
@@ -517,7 +541,6 @@ export function CanvasBoard({
           return;
         }
 
-        // Mark the edge as "flowing" if it is currently feeding meaningful inputs into the blocker.
         const inputVal = getPortValue('input', edge.to, edge.toPort);
         const outputVal = getPortValue('output', edge.from, edge.fromPort);
         if (inputVal === undefined && outputVal === undefined) return;
@@ -530,7 +553,7 @@ export function CanvasBoard({
   const signalEdgeIds = React.useMemo((): Set<string> => {
     const result = new Set<string>();
     const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
-    edges.forEach((edge: Edge) => {
+    edges.forEach((edge) => {
       if (!edge.from || !edge.to) return;
       if (!edge.fromPort || !edge.toPort) return;
       if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
@@ -548,14 +571,14 @@ export function CanvasBoard({
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
     const outputHashes: Record<string, Record<string, string>> = {};
-    nodes.forEach((node: AiNode) => {
+    nodes.forEach((node) => {
       if (node.inputs?.length) {
         const nodeInputs = (runtimeState.inputs?.[node.id] ?? {}) as Record<
           string,
           unknown
         >;
         const hashed: Record<string, string> = {};
-        node.inputs.forEach((port: string) => {
+        node.inputs.forEach((port) => {
           hashed[port] = hashRuntimeValue(nodeInputs[port]);
         });
         inputHashes[node.id] = hashed;
@@ -566,7 +589,7 @@ export function CanvasBoard({
           unknown
         >;
         const hashed: Record<string, string> = {};
-        node.outputs.forEach((port: string) => {
+        node.outputs.forEach((port) => {
           hashed[port] = hashRuntimeValue(nodeOutputs[port]);
         });
         outputHashes[node.id] = hashed;
@@ -577,7 +600,7 @@ export function CanvasBoard({
 
   const scheduleEdgePulse = React.useCallback(
     (edgeId: string): void => {
-      setActiveEdgeIds((prev: Set<string>) => {
+      setActiveEdgeIds((prev) => {
         if (prev.has(edgeId)) return prev;
         const next = new Set(prev);
         next.add(edgeId);
@@ -586,7 +609,7 @@ export function CanvasBoard({
       const existing = edgePulseTimeouts.current.get(edgeId);
       if (existing) clearTimeout(existing);
       const timeout = setTimeout(() => {
-        setActiveEdgeIds((prev: Set<string>) => {
+        setActiveEdgeIds((prev) => {
           if (!prev.has(edgeId)) return prev;
           const next = new Set(prev);
           next.delete(edgeId);
@@ -603,7 +626,7 @@ export function CanvasBoard({
     (nodeId: string, direction: 'input' | 'output'): void => {
       const setState = direction === 'input' ? setInputPulseNodes : setOutputPulseNodes;
       const key = `${direction}:${nodeId}`;
-      setState((prev: Set<string>) => {
+      setState((prev) => {
         if (prev.has(nodeId)) return prev;
         const next = new Set(prev);
         next.add(nodeId);
@@ -612,7 +635,7 @@ export function CanvasBoard({
       const existing = nodePulseTimeouts.current.get(key);
       if (existing) clearTimeout(existing);
       const timeout = setTimeout(() => {
-        setState((prev: Set<string>) => {
+        setState((prev) => {
           if (!prev.has(nodeId)) return prev;
           const next = new Set(prev);
           next.delete(nodeId);
@@ -638,25 +661,102 @@ export function CanvasBoard({
   }, [FLOW_ACTIVE_WINDOW_MS]);
 
   React.useEffect(() => {
+    if (!runtimeEvents || runtimeEvents.length === 0) {
+      lastRuntimeEventIdRef.current = null;
+      return;
+    }
+    const lastSeenId = lastRuntimeEventIdRef.current;
+    const fallbackStart = Math.max(0, runtimeEvents.length - 40);
+    const startIndex = lastSeenId
+      ? runtimeEvents.findIndex((event: AiPathRuntimeEvent) => event.id === lastSeenId) + 1
+      : fallbackStart;
+    const nextEvents = runtimeEvents.slice(
+      startIndex >= 0 ? startIndex : fallbackStart
+    );
+    if (nextEvents.length === 0) return;
+
+    nextEvents.forEach((event: AiPathRuntimeEvent) => {
+      const normalizedStatus =
+        typeof event.status === 'string'
+          ? event.status.trim().toLowerCase()
+          : '';
+      const nodeId = event.nodeId?.trim() ?? '';
+      if (!nodeId) {
+        if (
+          event.kind === 'run_started' ||
+          event.kind === 'run_completed' ||
+          event.kind === 'run_failed' ||
+          event.kind === 'run_canceled'
+        ) {
+          markFlowActive();
+        }
+        return;
+      }
+
+      const isStartSignal =
+        event.kind === 'node_started' ||
+        normalizedStatus === 'running' ||
+        normalizedStatus === 'queued' ||
+        normalizedStatus === 'polling' ||
+        normalizedStatus === 'waiting_callback';
+      const isFinishSignal =
+        event.kind === 'node_finished' ||
+        normalizedStatus === 'completed' ||
+        normalizedStatus === 'cached';
+      const isFailureSignal =
+        event.kind === 'node_failed' ||
+        normalizedStatus === 'failed' ||
+        normalizedStatus === 'timeout' ||
+        normalizedStatus === 'canceled';
+
+      if (isStartSignal || isFinishSignal || isFailureSignal) {
+        markFlowActive();
+      }
+      if (isStartSignal || isFailureSignal) {
+        scheduleNodePulse(nodeId, 'input');
+        (incomingEdgeIdsByNode.get(nodeId) ?? []).forEach((edgeId: string) => {
+          scheduleEdgePulse(edgeId);
+        });
+      }
+      if (isFinishSignal) {
+        scheduleNodePulse(nodeId, 'output');
+        (outgoingEdgeIdsByNode.get(nodeId) ?? []).forEach((edgeId: string) => {
+          scheduleEdgePulse(edgeId);
+        });
+      }
+    });
+
+    lastRuntimeEventIdRef.current = runtimeEvents[runtimeEvents.length - 1]?.id ?? null;
+  }, [
+    incomingEdgeIdsByNode,
+    markFlowActive,
+    outgoingEdgeIdsByNode,
+    runtimeEvents,
+    scheduleEdgePulse,
+    scheduleNodePulse,
+  ]);
+
+  React.useEffect(() => {
+    if ((runtimeEvents?.length ?? 0) > 0) return;
     const nextHashes = buildRuntimeHashes();
     const prevHashes = prevHashesRef.current;
     prevHashesRef.current = nextHashes;
     if (!prevHashes) return;
     const outputChanges: Array<{ nodeId: string; port: string }> = [];
     const inputChanges: Array<{ nodeId: string; port: string }> = [];
-    Object.entries(nextHashes.outputs).forEach(([nodeId, ports]: [string, Record<string, string>]) => {
+    Object.entries(nextHashes.outputs).forEach(([nodeId, ports]) => {
       const prevPorts = prevHashes.outputs[nodeId];
       if (!prevPorts) return;
-      Object.entries(ports).forEach(([port, nextHash]: [string, string]) => {
+      Object.entries(ports).forEach(([port, nextHash]) => {
         const prevHash = prevPorts[port];
         if (prevHash === undefined) return;
         if (prevHash !== nextHash) outputChanges.push({ nodeId, port });
       });
     });
-    Object.entries(nextHashes.inputs).forEach(([nodeId, ports]: [string, Record<string, string>]) => {
+    Object.entries(nextHashes.inputs).forEach(([nodeId, ports]) => {
       const prevPorts = prevHashes.inputs[nodeId];
       if (!prevPorts) return;
-      Object.entries(ports).forEach(([port, nextHash]: [string, string]) => {
+      Object.entries(ports).forEach(([port, nextHash]) => {
         const prevHash = prevPorts[port];
         if (prevHash === undefined) return;
         if (prevHash !== nextHash) inputChanges.push({ nodeId, port });
@@ -667,7 +767,7 @@ export function CanvasBoard({
     const edgeIds = new Set<string>();
     const inputNodes = new Set<string>();
     const outputNodes = new Set<string>();
-    outputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
+    outputChanges.forEach(({ nodeId, port }) => {
       const value = getPortValue('output', nodeId, port);
       if (value === undefined) return;
       outputNodes.add(nodeId);
@@ -677,7 +777,7 @@ export function CanvasBoard({
         if (edge.to) inputNodes.add(edge.to);
       });
     });
-    inputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
+    inputChanges.forEach(({ nodeId, port }) => {
       const value = getPortValue('input', nodeId, port);
       if (value === undefined) return;
       inputNodes.add(nodeId);
@@ -687,10 +787,7 @@ export function CanvasBoard({
       });
     });
 
-    // Special case: Trigger fires a boolean `trigger` signal that often stays `true` across runs.
-    // To still communicate "a run started", pulse all outgoing edges from Trigger nodes whenever
-    // any of their outputs change (meta/context usually changes every run).
-    outputNodes.forEach((nodeId: string) => {
+    outputNodes.forEach((nodeId) => {
       const node = nodeById.get(nodeId);
       if (node?.type !== 'trigger') return;
       edges.forEach((edge: Edge) => {
@@ -699,9 +796,9 @@ export function CanvasBoard({
         if (edge.to) inputNodes.add(edge.to);
       });
     });
-    edgeIds.forEach((edgeId: string) => scheduleEdgePulse(edgeId));
-    outputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, 'output'));
-    inputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, 'input'));
+    edgeIds.forEach((edgeId) => scheduleEdgePulse(edgeId));
+    outputNodes.forEach((nodeId) => scheduleNodePulse(nodeId, 'output'));
+    inputNodes.forEach((nodeId) => scheduleNodePulse(nodeId, 'input'));
   }, [
     buildRuntimeHashes,
     buildEdgePortKey,
@@ -711,6 +808,7 @@ export function CanvasBoard({
     getPortValue,
     markFlowActive,
     nodeById,
+    runtimeEvents,
     scheduleEdgePulse,
     scheduleNodePulse,
   ]);
@@ -719,8 +817,8 @@ export function CanvasBoard({
     const epTimeouts = edgePulseTimeouts.current;
     const npTimeouts = nodePulseTimeouts.current;
     return (): void => {
-      epTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
-      npTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+      epTimeouts.forEach((timeout) => clearTimeout(timeout));
+      npTimeouts.forEach((timeout) => clearTimeout(timeout));
       if (flowActiveTimeoutRef.current) {
         clearTimeout(flowActiveTimeoutRef.current);
         flowActiveTimeoutRef.current = null;
@@ -737,12 +835,12 @@ export function CanvasBoard({
         panState ? 'cursor-grabbing' : 'cursor-grab'
       } ${viewportClassName ?? ''}`}
       style={flowStyle}
-      onDrop={onDrop}
-      onDragOver={onDragOver}
-      onPointerDown={onPanStart}
-      onPointerMove={onPanMove}
-      onPointerUp={onPanEnd}
-      onPointerLeave={onPanEnd}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onPointerDown={handlePanStart}
+      onPointerMove={handlePanMove}
+      onPointerUp={handlePanEnd}
+      onPointerLeave={handlePanEnd}
     >
       <SectionPanel variant="subtle-compact" className="absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400">
         Nodes: {nodes.length}
@@ -755,7 +853,7 @@ export function CanvasBoard({
           <Button
             className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
             type="button"
-            onClick={() => onZoomTo(view.scale - 0.1)}
+            onClick={() => zoomTo(view.scale - 0.1)}
           >
             -
           </Button>
@@ -765,21 +863,21 @@ export function CanvasBoard({
           <Button
             className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
             type="button"
-            onClick={() => onZoomTo(view.scale + 0.1)}
+            onClick={() => zoomTo(view.scale + 0.1)}
           >
             +
           </Button>
           <Button
             className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
             type="button"
-            onClick={onFitToNodes}
+            onClick={fitToNodes}
           >
             Fit
           </Button>
           <Button
             className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
             type="button"
-            onClick={onResetView}
+            onClick={resetView}
           >
             Reset
           </Button>
@@ -788,8 +886,8 @@ export function CanvasBoard({
       <div
         ref={canvasRef}
         className="absolute left-0 top-0"
-        onDrop={onDrop}
-        onDragOver={onDragOver}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         style={{
           width: CANVAS_WIDTH,
           height: CANVAS_HEIGHT,
@@ -828,7 +926,7 @@ export function CanvasBoard({
               </feMerge>
             </filter>
           </defs>
-          {edgePaths.map((edge: EdgePath): React.JSX.Element => {
+          {(edgePaths as EdgePath[]).map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
             const allowSignalFlow =
@@ -839,9 +937,8 @@ export function CanvasBoard({
               (allowSignalFlow && signalEdgeIds.has(edge.id));
             const isManualConnector =
               edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
-            // Check if this is a schema connection (db_schema -> database)
-            const fromNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.from) : null;
-            const toNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.to) : null;
+            const fromNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.from) : null;
+            const toNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.to) : null;
             const isSchemaConnection =
               fromNode?.type === 'db_schema' && toNode?.type === 'database';
             const isActivePath =
@@ -868,14 +965,14 @@ export function CanvasBoard({
                   strokeWidth="14"
                   fill="none"
                   style={{ pointerEvents: 'stroke' }}
-                  onContextMenu={(event: React.MouseEvent<SVGPathElement>) => {
+                  onContextMenu={(event) => {
                     event.preventDefault();
-                    onRemoveEdge(edge.id);
+                    handleRemoveEdge(edge.id);
                   }}
-                  onClick={(event: React.MouseEvent<SVGPathElement>) => {
+                  onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
-                    onSelectEdgeId(edge.id);
+                    selectEdge(edge.id);
                   }}
                 />
                 <path
@@ -933,51 +1030,20 @@ export function CanvasBoard({
           })() : null}
         </svg>
 
-        {nodes.map((node: AiNode) => {
+        {nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
-          const modelStatus =
-            node.type === 'model'
-              ? (runtimeState.outputs[node.id]?.status as string | undefined)
-              : undefined;
-          const modelStatusLabel =
-            modelStatus === 'completed'
-              ? 'Completed'
-              : modelStatus === 'failed'
-                ? 'Failed'
-                : modelStatus === 'queued'
-                  ? 'Queued'
-                  : modelStatus
-                    ? 'Pending'
-                    : null;
-          const modelStatusClasses =
-            modelStatus === 'completed'
-              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
-              : modelStatus === 'failed'
-                ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
-                : 'border-sky-500/60 bg-sky-500/15 text-sky-200';
-          const pollStatus =
-            node.type === 'poll'
-              ? (runtimeState.outputs[node.id]?.status as string | undefined)
-              : undefined;
-          const pollStatusLabel =
-            pollStatus === 'completed'
-              ? 'Completed'
-              : pollStatus === 'failed'
-                ? 'Failed'
-                : pollStatus === 'timeout'
-                  ? 'Timed Out'
-                  : pollStatus === 'polling'
-                    ? 'Polling'
-                    : pollStatus
-                      ? 'Pending'
-                      : null;
-          const pollStatusClasses =
-            pollStatus === 'completed'
-              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
-              : pollStatus === 'failed' || pollStatus === 'timeout'
-                ? 'border-rose-500/60 bg-rose-500/15 text-rose-200'
-                : 'border-sky-500/60 bg-sky-500/15 text-sky-200';
+          const statusFromRuntimeState = runtimeState.outputs[node.id]?.status;
+          const runtimeNodeStatusRaw =
+            runtimeNodeStatuses?.[node.id] ??
+            (typeof statusFromRuntimeState === 'string' ? statusFromRuntimeState : null);
+          const runtimeNodeStatus =
+            typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0
+              ? runtimeNodeStatusRaw.trim().toLowerCase()
+              : null;
+          const runtimeNodeStatusLabel = runtimeNodeStatus
+            ? formatRuntimeStatusLabel(runtimeNodeStatus)
+            : null;
           const iteratorOutput =
             node.type === 'iterator'
               ? (runtimeState.outputs[node.id] as
@@ -1005,15 +1071,20 @@ export function CanvasBoard({
                 : iteratorStatus === 'waiting_callback'
                   ? 'border-sky-500/60 bg-sky-500/15 text-sky-200'
                   : 'border-border bg-card/60 text-gray-200';
-          // Determine if this blocker node is actively processing (for signal dots)
           const blockerNodeStatus =
-            (node.type === 'model' || node.type === 'agent' || node.type === 'learner_agent' || node.type === 'poll' || node.type === 'delay')
-              ? (runtimeState.outputs[node.id]?.status as string | undefined)
+            node.type === 'model' ||
+            node.type === 'agent' ||
+            node.type === 'learner_agent' ||
+            node.type === 'poll' ||
+            node.type === 'delay'
+              ? runtimeNodeStatus
               : undefined;
           const isBlockerProcessing =
             flowEnabled &&
             !!blockerNodeStatus &&
-            !['completed', 'failed'].includes(blockerNodeStatus.trim().toLowerCase());
+            !['completed', 'failed', 'canceled', 'timeout', 'cached', 'skipped'].includes(
+              blockerNodeStatus
+            );
           const noteConfig = node.config?.notes;
           const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
           const noteColor =
@@ -1025,22 +1096,24 @@ export function CanvasBoard({
             node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
           const isInputPulse = inputPulseNodes.has(node.id);
           const isOutputPulse = outputPulseNodes.has(node.id);
+          const isDragging = dragState?.nodeId === node.id;
+          
           return (
             <div
               key={node.id}
-              className={`absolute ${draggingNodeId === node.id ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`absolute ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               style={{
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
               }}
-              onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => onPointerDownNode(event, node.id)}
-              onPointerMove={(event: React.PointerEvent<HTMLDivElement>) => onPointerMoveNode(event, node.id)}
-              onPointerUp={(event: React.PointerEvent<HTMLDivElement>) => onPointerUpNode(event, node.id)}
-              onClick={() => onSelectNode(node.id)}
-              onDoubleClick={(event: React.MouseEvent<HTMLDivElement>) => {
+              onPointerDown={(event) => handlePointerDownNode(event, node.id)}
+              onPointerMove={(event) => handlePointerMoveNode(event, node.id)}
+              onPointerUp={(event) => handlePointerUpNode(event, node.id)}
+              onClick={() => handleSelectNode(node.id)}
+              onDoubleClick={(event) => {
                 event.stopPropagation();
-                onSelectNode(node.id);
-                onOpenNodeConfig(node.id);
+                handleSelectNode(node.id);
+                setConfigOpen(true);
               }}
             >
               <div
@@ -1076,7 +1149,7 @@ export function CanvasBoard({
                 >
                   {node.id}
                 </div>
-                {node.inputs.map((input: string, index: number) => (
+                {node.inputs.map((input, index) => (
                   <div
                     key={`input-${node.id}-${input}`}
                     className="absolute flex items-center"
@@ -1086,7 +1159,7 @@ export function CanvasBoard({
                     }}
                     onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('input', node.id, input))}
                     onMouseLeave={() =>
-                      setHoveredConnectorKey((prev: string | null) =>
+                      setHoveredConnectorKey((prev) =>
                         prev === buildConnectorKey('input', node.id, input) ? null : prev
                       )
                     }
@@ -1103,7 +1176,7 @@ export function CanvasBoard({
                         : false;
                       const connectorInfo = buildConnectorInfo('input', node.id, input);
                       const hasIncomingEdge = edges.some(
-                        (edge: Edge): boolean =>
+                        (edge): boolean =>
                           edge.to === node.id && edge.toPort === input
                       );
                       const connectorKey = buildConnectorKey('input', node.id, input);
@@ -1137,29 +1210,29 @@ export function CanvasBoard({
                                   width: PORT_SIZE + 2,
                                   height: PORT_SIZE + 2,
                                 }}
-                                onPointerUp={(event: React.PointerEvent<HTMLButtonElement>) => {
+                                onPointerUp={(event) => {
                                   event.stopPropagation();
                                   if (connecting) {
-                                    onCompleteConnection(event, node, input);
+                                    handleCompleteConnection(event, node, input);
                                     return;
                                   }
                                 }}
-                                onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+                                onPointerDown={(event) => {
                                   event.stopPropagation();
                                   if (hasIncomingEdge) {
-                                    onReconnectInput(event, node.id, input);
+                                    handleReconnectInput(event, node.id, input);
                                   }
                                 }}
-                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                onClick={(event) => {
                                   event.stopPropagation();
-                                  setPinnedConnectorKey((prev: string | null) =>
+                                  setPinnedConnectorKey((prev) =>
                                     prev === connectorKey ? null : connectorKey
                                   );
                                 }}
-                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                onContextMenu={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
-                                  onDisconnectPort('input', node.id, input);
+                                  handleDisconnectPort('input', node.id, input);
                                 }}
                                 aria-label={`Connect to ${formatPortLabel(input)}`}
                                 title={`Input: ${formatPortLabel(input)}`}
@@ -1187,7 +1260,7 @@ export function CanvasBoard({
                     })()}
                   </div>
                 ))}
-                {node.outputs.map((output: string, index: number) => (
+                {node.outputs.map((output, index) => (
                   <div
                     key={`output-${node.id}-${output}`}
                     className="absolute flex items-center"
@@ -1197,7 +1270,7 @@ export function CanvasBoard({
                     }}
                     onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('output', node.id, output))}
                     onMouseLeave={() =>
-                      setHoveredConnectorKey((prev: string | null) =>
+                      setHoveredConnectorKey((prev) =>
                         prev === buildConnectorKey('output', node.id, output) ? null : prev
                       )
                     }
@@ -1238,18 +1311,18 @@ export function CanvasBoard({
                                   width: PORT_SIZE + 2,
                                   height: PORT_SIZE + 2,
                                 }}
-                                onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
-                                  onStartConnection(event, node, output)
+                                onPointerDown={(event) =>
+                                  handleStartConnection(event, node, output)
                                 }
-                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                onClick={(event) => {
                                   event.stopPropagation();
-                                  setPinnedConnectorKey((prev: string | null) =>
+                                  setPinnedConnectorKey((prev) =>
                                     prev === connectorKey ? null : connectorKey
                                   );
-                                }}                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                }}                                onContextMenu={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
-                                  onDisconnectPort('output', node.id, output);
+                                  handleDisconnectPort('output', node.id, output);
                                 }}
                                 aria-label={`Start connection from ${formatPortLabel(output)}`}
                                 title={`Output: ${formatPortLabel(output)}`}
@@ -1277,18 +1350,11 @@ export function CanvasBoard({
                     </span>
                   </div>
                 </div>
-                {node.type === 'model' && modelStatusLabel && (
+                {runtimeNodeStatusLabel && (
                   <div
-                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${modelStatusClasses}`}
+                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
                   >
-                    {modelStatusLabel}
-                  </div>
-                )}
-                {node.type === 'poll' && pollStatusLabel && (
-                  <div
-                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${pollStatusClasses}`}
-                  >
-                    {pollStatusLabel}
+                    {runtimeNodeStatusLabel}
                   </div>
                 )}
                 {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
@@ -1319,8 +1385,8 @@ export function CanvasBoard({
                   <Button
                     className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
-                    onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => event.stopPropagation()}
-                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTrigger(node, event)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => onFireTrigger(node, event)}
                   >
                     Fire Trigger
                   </Button>

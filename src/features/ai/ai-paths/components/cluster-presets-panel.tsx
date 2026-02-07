@@ -1,10 +1,9 @@
 'use client';
 
-
-
 import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea } from '@/shared/ui';
 
+import { usePresetsState, usePresetsActions } from '../context';
 
 export type ClusterPresetDraft = {
   name: string;
@@ -14,32 +13,37 @@ export type ClusterPresetDraft = {
 };
 
 type ClusterPresetsPanelProps = {
-  presetDraft: ClusterPresetDraft;
-  setPresetDraft: React.Dispatch<React.SetStateAction<ClusterPresetDraft>>;
-  editingPresetId: string | null;
-  onResetPresetDraft: () => void;
+  /** Callback to create preset from current selection */
   onPresetFromSelection: () => void;
+  /** Callback to save preset (involves API) */
   onSavePreset: () => void;
-  clusterPresets: ClusterPreset[];
-  onLoadPreset: (preset: ClusterPreset) => void;
+  /** Callback to apply preset to canvas */
   onApplyPreset: (preset: ClusterPreset) => void;
+  /** Callback to delete preset (involves API) */
   onDeletePreset: (presetId: string) => void;
+  /** Callback to open export modal */
   onExportPresets: () => void;
+
+  presetDraft?: ClusterPresetDraft;
+  setPresetDraft?: (draft: ClusterPresetDraft | ((prev: ClusterPresetDraft) => ClusterPresetDraft)) => void;
 };
 
 export function ClusterPresetsPanel({
-  presetDraft,
-  setPresetDraft,
-  editingPresetId,
-  onResetPresetDraft,
   onPresetFromSelection,
   onSavePreset,
-  clusterPresets,
-  onLoadPreset,
   onApplyPreset,
   onDeletePreset,
   onExportPresets,
+  presetDraft: presetDraftProp,
+  setPresetDraft: setPresetDraftProp,
 }: ClusterPresetsPanelProps): React.JSX.Element {
+  // --- Context Hooks ---
+  const { presetDraft: presetDraftContext, editingPresetId, clusterPresets } = usePresetsState();
+  const { setPresetDraft: setPresetDraftContext, resetPresetDraft, loadPresetIntoDraft } = usePresetsActions();
+
+  const presetDraft = presetDraftProp ?? presetDraftContext;
+  const setPresetDraft = setPresetDraftProp ?? setPresetDraftContext;
+
   return (
     <div className="rounded-lg border border-border bg-card/60 p-4">
       <div className="mb-3 flex items-center justify-between text-sm font-semibold text-white">
@@ -56,7 +60,7 @@ export function ClusterPresetsPanel({
             <Button
               type="button"
               className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-              onClick={onResetPresetDraft}
+              onClick={resetPresetDraft}
             >
               New
             </Button>
@@ -137,7 +141,7 @@ export function ClusterPresetsPanel({
                 <Button
                   type="button"
                   className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                  onClick={() => onLoadPreset(preset)}
+                  onClick={() => loadPresetIntoDraft(preset)}
                 >
                   Edit
                 </Button>

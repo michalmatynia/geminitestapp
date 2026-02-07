@@ -4,6 +4,7 @@ import { createHash } from 'crypto';
 
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getRedisConnection } from '@/shared/lib/queue';
 import type {
   AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
@@ -19,6 +20,10 @@ import type {
 import type { ObjectId } from 'mongodb';
 
 const COLLECTION_NAME = 'analytics_events';
+const ANALYTICS_CACHE_PREFIX = 'analytics:cache:v1';
+const ANALYTICS_CACHE_VERSION_KEY = `${ANALYTICS_CACHE_PREFIX}:version`;
+const ANALYTICS_SUMMARY_TTL_SECONDS = 20;
+const ANALYTICS_EVENTS_TTL_SECONDS = 15;
 
 type AnalyticsUtmDoc = {
   source?: string;
@@ -183,6 +188,19 @@ const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
   ...(doc.city ? { city: doc.city } : {}),
 });
 
+const getAnalyticsCacheVersion = async (): Promise<string> => {
+  const redis = getRedisConnection();
+  if (!redis) return '0';
+  const version = await redis.get(ANALYTICS_CACHE_VERSION_KEY);
+  return version ?? '0';
+};
+
+const bumpAnalyticsCacheVersion = async (): Promise<void> => {
+  const redis = getRedisConnection();
+  if (!redis) return;
+  await redis.incr(ANALYTICS_CACHE_VERSION_KEY);
+};
+
 export async function insertAnalyticsEvent(
   input: AnalyticsEventCreateInput,
   server?: {
@@ -244,6 +262,7 @@ export async function insertAnalyticsEvent(
   } as Omit<AnalyticsEventMongoDoc, '_id'>;
 
   const result = await col.insertOne(doc);
+  await bumpAnalyticsCacheVersion();
   return { id: result.insertedId.toString() };
 }
 
@@ -254,6 +273,20 @@ export async function listAnalyticsEvents(input: {
   limit: number;
   skip: number;
 }): Promise<{ events: AnalyticsEventDto[] }> {
+  const redis = getRedisConnection();
+  const version = await getAnalyticsCacheVersion();
+  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.limit}:${input.skip}`;
+  if (redis) {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached) as { events: AnalyticsEventDto[] };
+      } catch {
+        // ignore cache parse failures
+      }
+    }
+  }
+
   await ensureAnalyticsIndexes();
   const db = await getMongoDb();
   const col = db.collection<AnalyticsEventMongoDoc>(COLLECTION_NAME);
@@ -272,7 +305,11 @@ export async function listAnalyticsEvents(input: {
     .limit(input.limit)
     .toArray() as AnalyticsEventMongoDocWithId[];
 
-  return { events: docs.map(toEventDto) };
+  const payload = { events: docs.map(toEventDto) };
+  if (redis) {
+    await redis.set(cacheKey, JSON.stringify(payload), 'EX', ANALYTICS_EVENTS_TTL_SECONDS);
+  }
+  return payload;
 }
 
 export async function getAnalyticsSummary(input: {
@@ -280,6 +317,20 @@ export async function getAnalyticsSummary(input: {
   to: Date;
   scope?: AnalyticsScope | undefined;
 }): Promise<AnalyticsSummaryDto> {
+  const redis = getRedisConnection();
+  const version = await getAnalyticsCacheVersion();
+  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:summary:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}`;
+  if (redis) {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached) as AnalyticsSummaryDto;
+      } catch {
+        // ignore cache parse failures
+      }
+    }
+  }
+
   await ensureAnalyticsIndexes();
   const db = await getMongoDb();
   const col = db.collection<AnalyticsEventMongoDoc>(COLLECTION_NAME);
@@ -368,7 +419,7 @@ export async function getAnalyticsSummary(input: {
   const visitors = result?.visitors?.[0]?.count ?? 0;
   const sessions = result?.sessions?.[0]?.count ?? 0;
 
-  return {
+  const payload: AnalyticsSummaryDto = {
     from: input.from.toISOString(),
     to: input.to.toISOString(),
     scope: input.scope ?? 'all',
@@ -390,4 +441,8 @@ export async function getAnalyticsSummary(input: {
     topUtmCampaigns: [],
     recent: (result?.recent ?? []).map(toEventDto),
   };
+  if (redis) {
+    await redis.set(cacheKey, JSON.stringify(payload), 'EX', ANALYTICS_SUMMARY_TTL_SECONDS);
+  }
+  return payload;
 }

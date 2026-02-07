@@ -50,17 +50,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
     
-    const { createErrorResponse } = await import("@/shared/lib/api/handle-api-error");
-    return await createErrorResponse(mapStatusToAppError(safeDetail, status), {
-      request: req,
-      source: "integrations.[id].connections.[connectionId].allegro.test.POST",
-      fallbackMessage: safeDetail,
-      extra: {
-        steps,
-        integrationId,
-        connectionId: integrationConnectionId
-      }
-    });
+    throw mapStatusToAppError(safeDetail, status);
   };
 
   const { id, connectionId } = params;

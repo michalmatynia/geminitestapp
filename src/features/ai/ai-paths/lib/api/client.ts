@@ -658,8 +658,30 @@ export const runsApi = {
     );
   },
 
+  async remove(runId: string): Promise<ApiResponse<{ deleted: boolean; runId: string }>> {
+    return apiDelete<{ deleted: boolean; runId: string }>(
+      `/api/ai-paths/runs/${encodeURIComponent(runId)}`
+    );
+  },
+
   async queueStatus(): Promise<ApiResponse<{ status: unknown }>> {
     return apiFetch<{ status: unknown }>('/api/ai-paths/runs/queue-status');
+  },
+
+  async clear(options?: {
+    scope?: 'all' | 'terminal';
+    pathId?: string;
+    source?: string;
+    sourceMode?: 'include' | 'exclude';
+  }): Promise<ApiResponse<{ deleted: number; scope: 'all' | 'terminal' }>> {
+    const params = new URLSearchParams();
+    if (options?.scope) params.set('scope', options.scope);
+    if (options?.pathId) params.set('pathId', options.pathId);
+    if (options?.source) params.set('source', options.source);
+    if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
+    const query = params.toString();
+    const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
+    return apiDelete<{ deleted: number; scope: 'all' | 'terminal' }>(url);
   },
 
   async resume(runId: string, mode?: 'resume' | 'replay'): Promise<ApiResponse<{ run: unknown }>> {

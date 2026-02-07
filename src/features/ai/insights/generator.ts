@@ -3,6 +3,7 @@ import 'server-only';
 import OpenAI from 'openai';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
+import { recordBrainInsightAnalytics } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
 import { ErrorSystem } from '@/features/observability/server';
@@ -14,7 +15,11 @@ import type { ChatMessage } from '@/shared/types/chatbot';
 import { SystemLogRecord } from '@/shared/types/system-logs';
 
 import { appendAiInsight, appendAiInsightNotification, setAiInsightsMeta } from './repository';
-import { AI_INSIGHTS_SETTINGS_KEYS } from './settings';
+import {
+  AI_INSIGHTS_SETTINGS_KEYS,
+  DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
+  DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
+} from './settings';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
@@ -207,16 +212,30 @@ const parseInsightPayload = (raw: string): {
   }
 };
 
-const buildInsightMessages = (params: {
+const OUTPUT_FORMAT_INSTRUCTION =
+  'Return a JSON object with keys: status (ok|warning|error), summary (string), warnings (array of strings), recommendations (array of strings). ' +
+  'Be concise and actionable. If nothing looks wrong, status should be ok and warnings empty.';
+
+const resolveInsightSystemPrompt = async (type: AiInsightType): Promise<string> => {
+  const key =
+    type === 'analytics'
+      ? AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem
+      : AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem;
+  const configured = (await getSettingValue(key))?.trim();
+  if (configured) return configured;
+  return type === 'analytics'
+    ? DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT
+    : DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT;
+};
+
+const buildInsightMessages = async (params: {
   type: AiInsightType;
   payload: Record<string, unknown>;
-}): ChatMessage[] => {
-  const baseInstruction =
-    'Return a JSON object with keys: status (ok|warning|error), summary (string), warnings (array of strings), recommendations (array of strings). ' +
-    'Be concise and actionable. If nothing looks wrong, status should be ok and warnings empty.';
+}): Promise<ChatMessage[]> => {
+  const systemPrompt = await resolveInsightSystemPrompt(params.type);
   const title = params.type === 'analytics' ? 'Page analytics snapshot' : 'System log snapshot';
   return [
-    { role: 'system', content: `You are a monitoring analyst. ${baseInstruction}` },
+    { role: 'system', content: `${systemPrompt}\n\n${OUTPUT_FORMAT_INSTRUCTION}` },
     {
       role: 'user',
       content: `${title}:\n${JSON.stringify(params.payload, null, 2)}`,
@@ -313,7 +332,7 @@ export const generateAnalyticsInsight = async (params: {
     recentEvents: sanitizeEvents(events.events),
   };
 
-  const messages = buildInsightMessages({ type: 'analytics', payload });
+  const messages = await buildInsightMessages({ type: 'analytics', payload });
   const raw = await runInsightModel({ provider, modelId, agentId, messages });
   const parsed = parseInsightPayload(raw);
 
@@ -325,6 +344,10 @@ export const generateAnalyticsInsight = async (params: {
     source: params.source,
     model: { provider, modelId, agentId },
     window: { from: summary.from, to: summary.to, scope: summary.scope ?? 'all' },
+  });
+  await recordBrainInsightAnalytics({
+    type: 'analytics',
+    status: parsed.status,
   });
 
   await setAiInsightsMeta(
@@ -387,7 +410,7 @@ export const generateLogsInsight = async (params: {
     recentErrors: sanitizeLogs(logsResult.logs),
   };
 
-  const messages = buildInsightMessages({ type: 'logs', payload });
+  const messages = await buildInsightMessages({ type: 'logs', payload });
   const raw = await runInsightModel({ provider, modelId, agentId, messages });
   const parsed = parseInsightPayload(raw);
 
@@ -399,6 +422,10 @@ export const generateLogsInsight = async (params: {
     source: params.source,
     model: { provider, modelId, agentId },
     window: { from: payload.window.from, to: payload.window.to },
+  });
+  await recordBrainInsightAnalytics({
+    type: 'logs',
+    status: parsed.status,
   });
 
   await setAiInsightsMeta(
@@ -473,7 +500,7 @@ export const generateLogInterpretation = async (params: {
     },
   };
 
-  const messages = buildInsightMessages({ type: 'logs', payload });
+  const messages = await buildInsightMessages({ type: 'logs', payload });
   const raw = await runInsightModel({ provider, modelId, agentId, messages });
   const parsed = parseInsightPayload(raw);
 

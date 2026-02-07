@@ -2,6 +2,10 @@ import 'server-only';
 
 import { normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import {
+  recordRuntimeRunFinished,
+  recordRuntimeRunQueued,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/types/ai-paths';
 
@@ -60,6 +64,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       message: 'Run queued.',
       metadata: { pathId: run.pathId, runStartedAt: resolveRunStartedAt(run) },
     }),
+    recordRuntimeRunQueued({ runId: run.id }),
   ]);
 
   // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
@@ -94,6 +99,7 @@ export const resumePathRun = async (
     message: `Run resumed (${mode}).`,
     metadata: { runStartedAt: resolveRunStartedAt(updated) },
   });
+  await recordRuntimeRunQueued({ runId: updated.id });
   return updated;
 };
 
@@ -133,6 +139,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     message: `Retry node ${nodeId}.`,
     metadata: { runStartedAt: resolveRunStartedAt(updated) },
   });
+  await recordRuntimeRunQueued({ runId: updated.id });
   return updated;
 };
 
@@ -140,15 +147,31 @@ export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => 
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error('Run not found');
+  const finishedAt = new Date();
+  const startedAtMs =
+    typeof run.startedAt === 'string'
+      ? Date.parse(run.startedAt)
+      : run.startedAt instanceof Date
+        ? run.startedAt.getTime()
+        : Number.NaN;
+  const durationMs = Number.isFinite(startedAtMs)
+    ? Math.max(0, finishedAt.getTime() - startedAtMs)
+    : null;
   const updated = await repo.updateRun(runId, {
     status: 'canceled',
-    finishedAt: new Date(),
+    finishedAt,
   });
   await repo.createRunEvent({
     runId,
     level: 'warning',
     message: 'Run canceled.',
     metadata: { runStartedAt: resolveRunStartedAt(updated) },
+  });
+  await recordRuntimeRunFinished({
+    runId: updated.id,
+    status: 'canceled',
+    durationMs,
+    timestamp: finishedAt,
   });
   return updated;
 };

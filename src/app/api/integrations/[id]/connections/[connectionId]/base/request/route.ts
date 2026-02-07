@@ -5,7 +5,6 @@ import { z } from "zod";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { decryptSecret } from "@/features/integrations/server";
 import { callBaseApi, fetchBaseProducts } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -29,12 +28,12 @@ const requestSchema = z
  * POST /api/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
     throw badRequestError("Integration id and connection id are required");
   }
-  const parsed = await parseJsonBody(req, requestSchema, {
+  const parsed = await parseJsonBody(_req, requestSchema, {
     logPrefix: "integrations.base.request.POST"
   });
   if (!parsed.ok) {

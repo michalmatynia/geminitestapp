@@ -7,7 +7,6 @@ import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   configurationError,
   notFoundError,
@@ -71,138 +70,122 @@ const normalizeCountryResponse = (
  * Updates a country.
  */
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    const body = (await req.json()) as unknown;
-    const data = countrySchema.parse(body);
-    const { currencyIds, ...countryData } = data;
+  const { id } = params;
+  const body = (await req.json()) as unknown;
+  const data = countrySchema.parse(body);
+  const { currencyIds, ...countryData } = data;
 
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw configurationError("MongoDB is not configured");
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw configurationError("MongoDB is not configured");
+    }
+    const db = await getMongoDb();
+    const countries = db.collection<CountryDoc>(COUNTRIES_COLLECTION);
+    const existing = await countries.findOne({ id });
+    if (!existing) {
+      throw notFoundError("Country not found");
+    }
+    if (countryData.code !== id) {
+      const collision = await countries.findOne({ id: countryData.code });
+      if (collision) {
+        throw duplicateEntryError("Country code already exists");
       }
-      const db = await getMongoDb();
-      const countries = db.collection<CountryDoc>(COUNTRIES_COLLECTION);
-      const existing = await countries.findOne({ id });
-      if (!existing) {
-        throw notFoundError("Country not found");
-      }
-      if (countryData.code !== id) {
-        const collision = await countries.findOne({ id: countryData.code });
-        if (collision) {
-          throw duplicateEntryError("Country code already exists");
-        }
-      }
-      let nextCurrencyIds = existing.currencyIds ?? [];
-      let currencyDocs: (CurrencyDoc | WithId<CurrencyDoc>)[] = [];
-      if (currencyIds) {
-        const requestedCurrencyIds = Array.from(new Set(currencyIds));
-        currencyDocs = requestedCurrencyIds.length
-          ? await db
-              .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-              .find({ id: { $in: requestedCurrencyIds } })
-              .toArray()
-          : [];
-        const validCurrencyIds = new Set(
-          currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)
-        );
-        nextCurrencyIds = requestedCurrencyIds.filter((currencyId: string) =>
-          validCurrencyIds.has(currencyId)
-        );
-      } else if (nextCurrencyIds.length) {
-        currencyDocs = await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: nextCurrencyIds } })
-          .toArray();
-      }
-      const now = new Date();
-      const updated = await countries.findOneAndUpdate(
-        { id },
-        {
-          $set: {
-            id: countryData.code,
-            code: countryData.code,
-            name: countryData.name,
-            ...(currencyIds ? { currencyIds: nextCurrencyIds } : {}),
-            updatedAt: now,
-          },
+    }
+    let nextCurrencyIds = existing.currencyIds ?? [];
+    let currencyDocs: (CurrencyDoc | WithId<CurrencyDoc>)[] = [];
+    if (currencyIds) {
+      const requestedCurrencyIds = Array.from(new Set(currencyIds));
+      currencyDocs = requestedCurrencyIds.length
+        ? await db
+            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+            .find({ id: { $in: requestedCurrencyIds } })
+            .toArray()
+        : [];
+      const validCurrencyIds = new Set(
+        currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)
+      );
+      nextCurrencyIds = requestedCurrencyIds.filter((currencyId: string) =>
+        validCurrencyIds.has(currencyId)
+      );
+    } else if (nextCurrencyIds.length) {
+      currencyDocs = await db
+        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+        .find({ id: { $in: nextCurrencyIds } })
+        .toArray();
+    }
+    const now = new Date();
+    const updated = await countries.findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          id: countryData.code,
+          code: countryData.code,
+          name: countryData.name,
+          ...(currencyIds ? { currencyIds: nextCurrencyIds } : {}),
+          updatedAt: now,
         },
-        { returnDocument: "after" }
-      );
-      const currencyMap = new Map(
-        currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => [currency.id, currency])
-      );
-      return NextResponse.json(
-        updated ? normalizeCountryResponse(updated, currencyMap) : null
-      );
+      },
+      { returnDocument: "after" }
+    );
+    const currencyMap = new Map(
+      currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => [currency.id, currency])
+    );
+    return NextResponse.json(
+      updated ? normalizeCountryResponse(updated, currencyMap) : null
+    );
+  }
+
+  const country = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const updated = await tx.country.update({
+      where: { id },
+      data: {
+        ...countryData,
+      },
+    });
+
+    if (currencyIds) {
+      await tx.countryCurrency.deleteMany({ where: { countryId: id } });
+      if (currencyIds.length > 0) {
+        await tx.countryCurrency.createMany({
+          data: currencyIds.map((currencyId: string) => ({ countryId: id, currencyId })),
+        });
+      }
     }
 
-    const country = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.country.update({
-        where: { id },
-        data: {
-          ...countryData,
-        },
-      });
-
-      if (currencyIds) {
-        await tx.countryCurrency.deleteMany({ where: { countryId: id } });
-        if (currencyIds.length > 0) {
-          await tx.countryCurrency.createMany({
-            data: currencyIds.map((currencyId: string) => ({ countryId: id, currencyId })),
-          });
-        }
-      }
-
-      return tx.country.findUnique({
-        where: { id: updated.id },
-        include: {
-          currencies: {
-            include: {
-              currency: true,
-            },
+    return tx.country.findUnique({
+      where: { id: updated.id },
+      include: {
+        currencies: {
+          include: {
+            currency: true,
           },
         },
-      });
+      },
     });
-    return NextResponse.json(country);
-  } catch (error: unknown) {
-    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
-      request: req,
-      source: "countries.[id].PUT",
-      fallbackMessage: "Failed to update country",
-    });
-  }
+  });
+  return NextResponse.json(country);
 }
 
 /**
  * DELETE /api/countries/[id]
  * Deletes a country.
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
 
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw configurationError("MongoDB is not configured");
-      }
-      const db = await getMongoDb();
-      await db.collection(COUNTRIES_COLLECTION).deleteOne({ id });
-      return new Response(null, { status: 204 });
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw configurationError("MongoDB is not configured");
     }
-
-    await prisma.country.delete({ where: { id } });
+    const db = await getMongoDb();
+    await db.collection(COUNTRIES_COLLECTION).deleteOne({ id });
     return new Response(null, { status: 204 });
-  } catch (error: unknown) {
-    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
-      request: req,
-      source: "countries.[id].DELETE",
-      fallbackMessage: "Failed to delete country",
-    });
   }
+
+  await prisma.country.delete({ where: { id } });
+  return new Response(null, { status: 204 });
 }
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "countries.[id].PUT" });

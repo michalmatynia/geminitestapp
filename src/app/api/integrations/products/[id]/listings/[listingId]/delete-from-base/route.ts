@@ -6,7 +6,6 @@ import { getProductListingRepository } from "@/features/integrations/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { deleteBaseProduct } from "@/features/integrations/server";
 import { decryptSecret } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -16,7 +15,7 @@ const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional()
 });
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   const { id: productId, listingId } = params;
   if (!productId || !listingId) {
     throw badRequestError("Product id and listing id are required");
@@ -28,7 +27,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     throw notFoundError("Listing not found", { listingId, productId });
   }
 
-  const parsed = await parseJsonBody(req, deleteSchema, {
+  const parsed = await parseJsonBody(_req, deleteSchema, {
     logPrefix: "integrations.products.listings.DELETE_FROM_BASE",
     allowEmpty: true
   });

@@ -71,27 +71,24 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     sharedContext = await createBrowserContext(sharedBrowser, runDir);
 
     await logAgentAudit(run.id, 'info', 'Agent loop started.');
-    const {
-      memoryKey,
-      memoryContext: initialMemoryContext,
-      settings,
-      preferences: basePreferences,
-      resolvedModel,
-      memoryValidationModel,
-      plannerModel,
-      selfCheckModel,
-      loopGuardModel,
-      approvalGateModel,
-      memorySummarizationModel,
-      browserContext,
-    } = await prepareRunContext({
+    const context = await prepareRunContext({
       id: run.id,
       prompt: run.prompt,
       model: run.model ?? DEFAULT_OLLAMA_MODEL,
       memoryKey: run.memoryKey ?? null,
       planState: run.planState,
+      agentBrowser: run.agentBrowser,
+      runHeadless: run.runHeadless,
     });
-    let memoryContext = initialMemoryContext;
+    const {
+      settings,
+      preferences: basePreferences,
+      memoryValidationModel,
+      memorySummarizationModel,
+      memoryKey,
+      resolvedModel,
+    } = context;
+    let { memoryContext } = context;
     let planSteps: PlanStep[] = [];
     let taskType: PlannerMeta['taskType'] | null = null;
     let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
@@ -107,15 +104,8 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       summaryCheckpoint,
       preferences,
     } = await initializePlanState({
-      run: { id: run.id, prompt: run.prompt },
+      context,
       checkpoint,
-      memoryContext,
-      browserContext,
-      settings,
-      preferences,
-      plannerModel,
-      loopGuardModel,
-      memorySummarizationModel,
     }));
 
     await logAgentAudit(run.id, 'info', 'Decision made.', decision);
@@ -131,30 +121,13 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       let lastError: string | null = null;
       let requiresHuman = false;
       const stepRunResult = await runPlanStepLoop({
-        run: {
-          id: run.id,
-          prompt: run.prompt,
-          agentBrowser: run.agentBrowser,
-          runHeadless: run.runHeadless,
-        },
+        context,
         sharedBrowser,
         sharedContext,
         planSteps,
         stepIndex,
         taskType,
-        settings,
-        preferences,
-        memoryContext,
         summaryCheckpoint,
-        memoryKey,
-        memoryValidationModel,
-        memorySummarizationModel,
-        plannerModel,
-        selfCheckModel,
-        loopGuardModel,
-        approvalGateModel,
-        resolvedModel,
-        browserContext,
         checkpoint,
       });
       planSteps = stepRunResult.planSteps;
@@ -220,18 +193,13 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
 
       const { verificationContext, verification, improvementReview } =
         await finalizeAgentRun({
-          run: { id: run.id, prompt: run.prompt },
+          context,
           planSteps,
           taskType,
           overallOk,
           requiresHuman,
           lastError,
           summaryCheckpoint,
-          settings,
-          preferences,
-          memoryContext,
-          plannerModel,
-          memorySummarizationModel,
         });
       if (improvementReview && memoryKey) {
         const memoryResult = await validateAndAddAgentLongTermMemory({

@@ -9,7 +9,6 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
@@ -191,68 +190,52 @@ async function PATCH_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    await requireAiPathsAccess();
-    const id = params.id;
-    if (!id) throw badRequestError("Missing trigger button id.");
-    const parsed = await parseJsonBody(req, updateTriggerButtonSchema, {
-      logPrefix: "ai-paths.trigger-buttons.PATCH",
-    });
-    if (!parsed.ok) return parsed.response;
-    const raw = await readTriggerButtonsRaw();
-    const existing = parseTriggerButtons(raw);
-    const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
-    if (index === -1) {
-      throw notFoundError("Trigger button not found.", { id });
-    }
-    const current = existing[index]!;
-    const now = new Date().toISOString();
-    const nextRecord: AiTriggerButtonRecord = {
-      ...current,
-      ...(parsed.data.name ? { name: parsed.data.name.trim() } : {}),
-      ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
-      ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
-      ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
-      ...(parsed.data.display ? { display: parsed.data.display } : {}),
-      updatedAt: now,
-    };
-    const next = existing.slice();
-    next[index] = nextRecord;
-    await writeTriggerButtonsRaw(JSON.stringify(next));
-    return NextResponse.json(nextRecord);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.trigger-buttons.PATCH",
-      fallbackMessage: "Failed to update trigger button",
-    });
+  await requireAiPathsAccess();
+  const id = params.id;
+  if (!id) throw badRequestError("Missing trigger button id.");
+  const parsed = await parseJsonBody(req, updateTriggerButtonSchema, {
+    logPrefix: "ai-paths.trigger-buttons.PATCH",
+  });
+  if (!parsed.ok) return parsed.response;
+  const raw = await readTriggerButtonsRaw();
+  const existing = parseTriggerButtons(raw);
+  const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
+  if (index === -1) {
+    throw notFoundError("Trigger button not found.", { id });
   }
+  const current = existing[index]!;
+  const now = new Date().toISOString();
+  const nextRecord: AiTriggerButtonRecord = {
+    ...current,
+    ...(parsed.data.name ? { name: parsed.data.name.trim() } : {}),
+    ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
+    ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
+    ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
+    ...(parsed.data.display ? { display: parsed.data.display } : {}),
+    updatedAt: now,
+  };
+  const next = existing.slice();
+  next[index] = nextRecord;
+  await writeTriggerButtonsRaw(JSON.stringify(next));
+  return NextResponse.json(nextRecord);
 }
 
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  try {
-    await requireAiPathsAccess();
-    const id = params.id;
-    if (!id) throw badRequestError("Missing trigger button id.");
-    const raw = await readTriggerButtonsRaw();
-    const existing = parseTriggerButtons(raw);
-    const next = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
-    if (next.length === existing.length) {
-      throw notFoundError("Trigger button not found.", { id });
-    }
-    await writeTriggerButtonsRaw(JSON.stringify(next));
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.trigger-buttons.DELETE",
-      fallbackMessage: "Failed to delete trigger button",
-    });
+  await requireAiPathsAccess();
+  const id = params.id;
+  if (!id) throw badRequestError("Missing trigger button id.");
+  const raw = await readTriggerButtonsRaw();
+  const existing = parseTriggerButtons(raw);
+  const next = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
+  if (next.length === existing.length) {
+    throw notFoundError("Trigger button not found.", { id });
   }
+  await writeTriggerButtonsRaw(JSON.stringify(next));
+  return NextResponse.json({ ok: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {

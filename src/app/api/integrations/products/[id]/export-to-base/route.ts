@@ -29,7 +29,6 @@ import { decryptSecret } from "@/features/integrations/server";
 import { LogCapture } from "@/features/integrations/server";
 import { parseJsonBody } from "@/features/products/server";
 import { ErrorSystem } from "@/features/observability/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   conflictError,
@@ -124,13 +123,13 @@ const logImageDiagnostics = async ({
  * POST /api/integrations/products/[id]/export-to-base
  * Exports a product to Base.com using optional template
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const logCapture = new LogCapture();
   logCapture.start();
 
   try {
     const { id: productId } = params;
-    const parsed = await parseJsonBody(req, exportSchema, {
+    const parsed = await parseJsonBody(_req, exportSchema, {
       logPrefix: "export-to-base"
     });
     if (!parsed.ok) {
@@ -139,18 +138,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     }
     const data = parsed.data;
     const requestId =
-      req.headers.get("idempotency-key") ??
-      req.headers.get("x-idempotency-key") ??
-      req.headers.get("x-request-id") ??
+      _req.headers.get("idempotency-key") ??
+      _req.headers.get("x-idempotency-key") ??
+      _req.headers.get("x-request-id") ??
       undefined;
     const imagesOnly = data.imagesOnly ?? false;
     const forwardedHost =
-      req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+      _req.headers.get("x-forwarded-host") ?? _req.headers.get("host");
     const forwardedProto =
-      req.headers.get("x-forwarded-proto") ?? "http";
+      _req.headers.get("x-forwarded-proto") ?? "http";
     const imageBaseUrl = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
-      : new URL(req.url).origin;
+      : new URL(_req.url).origin;
     const defaultInventoryId = await getExportDefaultInventoryId();
     const resolvedInventoryId = defaultInventoryId || data.inventoryId;
 

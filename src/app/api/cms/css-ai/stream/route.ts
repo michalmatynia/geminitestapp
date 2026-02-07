@@ -1,5 +1,9 @@
+import { NextRequest } from "next/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ChatMessage } from "@/shared/types/chatbot";
+import { badRequestError } from "@/shared/errors/app-error";
+import { runTeachingChat } from "@/features/ai/agentcreator/teaching/server/chat";
 
 export const runtime = "nodejs";
 

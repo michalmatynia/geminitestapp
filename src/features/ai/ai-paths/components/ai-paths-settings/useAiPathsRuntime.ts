@@ -226,37 +226,6 @@ export function useAiPathsRuntime({
     runStatusRef.current = runStatus;
   }, [runStatus]);
 
-  useEffect((): void => {
-    const validNodeIds = new Set(normalizedNodes.map((node: AiNode): string => node.id));
-    const current = runtimeNodeStatusesRef.current;
-    let changed = false;
-    const next: AiPathRuntimeNodeStatusMap = {};
-    Object.entries(current).forEach(([nodeId, status]: [string, AiPathRuntimeNodeStatus]) => {
-      if (!validNodeIds.has(nodeId)) {
-        changed = true;
-        return;
-      }
-      next[nodeId] = status;
-    });
-    if (!changed) return;
-    resetRuntimeNodeStatuses(next);
-  }, [normalizedNodes, resetRuntimeNodeStatuses]);
-
-  useEffect((): void => {
-    Object.entries(runtimeState.outputs ?? {}).forEach(([nodeId, nodeOutputs]: [string, RuntimePortValues]) => {
-      const status = (nodeOutputs as Record<string, unknown>)?.status;
-      if (typeof status !== 'string') return;
-      const node = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
-      setNodeStatus({
-        nodeId,
-        status,
-        source: executionMode === 'server' ? 'server' : 'local',
-        nodeType: node?.type,
-        nodeTitle: node?.title ?? null,
-      });
-    });
-  }, [executionMode, normalizedNodes, runtimeState.outputs, setNodeStatus]);
-
   const updateRunStatus = useCallback(
     (status: 'idle' | 'running' | 'paused' | 'stepping'): void => {
       runStatusRef.current = status;
@@ -356,6 +325,37 @@ export function useAiPathsRuntime({
     },
     [appendRuntimeEvent, formatStatusLabel, normalizeNodeStatus]
   );
+
+  useEffect((): void => {
+    const validNodeIds = new Set(normalizedNodes.map((node: AiNode): string => node.id));
+    const current = runtimeNodeStatusesRef.current;
+    let changed = false;
+    const next: AiPathRuntimeNodeStatusMap = {};
+    Object.entries(current).forEach(([nodeId, status]: [string, AiPathRuntimeNodeStatus]) => {
+      if (!validNodeIds.has(nodeId)) {
+        changed = true;
+        return;
+      }
+      next[nodeId] = status;
+    });
+    if (!changed) return;
+    resetRuntimeNodeStatuses(next);
+  }, [normalizedNodes, resetRuntimeNodeStatuses]);
+
+  useEffect((): void => {
+    Object.entries(runtimeState.outputs ?? {}).forEach(([nodeId, nodeOutputs]: [string, RuntimePortValues]) => {
+      const status = (nodeOutputs as Record<string, unknown>)?.status;
+      if (typeof status !== 'string') return;
+      const node = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
+      setNodeStatus({
+        nodeId,
+        status,
+        source: executionMode === 'server' ? 'server' : 'local',
+        nodeType: node?.type,
+        nodeTitle: node?.title ?? null,
+      });
+    });
+  }, [executionMode, normalizedNodes, runtimeState.outputs, setNodeStatus]);
 
   const fetchProductById = useCallback(
     async (productId: string): Promise<Record<string, unknown> | null> => {

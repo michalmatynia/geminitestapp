@@ -1,10 +1,16 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { triggers } from '@/features/ai/ai-paths/lib';
-import type { AiNode, ClusterPreset, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  AiPathRuntimeAnalyticsSummary,
+  ClusterPreset,
+  NodeDefinition,
+} from '@/features/ai/ai-paths/lib';
 import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
 import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
 
@@ -35,6 +41,34 @@ type AiPathsSettingsViewProps = {
   isFocusMode?: boolean | undefined;
   onFocusModeChange?: ((next: boolean) => void) | undefined;
   state: AiPathsSettingsState;
+};
+
+const formatDurationMs = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  if (value < 1000) return `${Math.round(value)}ms`;
+  const seconds = Math.round(value / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remaining = seconds % 60;
+  return `${minutes}m ${remaining}s`;
+};
+
+const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
+
+const formatStatusLabel = (status: string): string =>
+  status
+    .split('_')
+    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+    .join(' ');
+
+const statusBadgeClassName = (status: string): string => {
+  if (status === 'completed' || status === 'cached') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
+  if (status === 'failed' || status === 'canceled' || status === 'timeout') return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
+  if (status === 'queued') return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
+  if (status === 'running' || status === 'polling' || status === 'waiting_callback' || status === 'advance_pending' || status === 'paused') {
+    return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
+  }
+  return 'border-border/60 bg-card/60 text-gray-300';
 };
 
 export function AiPathsSettingsView({
@@ -90,26 +124,9 @@ export function AiPathsSettingsView({
     runtimeNodeStatuses,
     runtimeEvents,
     updateSelectedNode,
-    handleDeleteSelectedNode,
-    handleRemoveEdge,
     handleClearWires,
     handleClearConnectorData,
     handleClearHistory,
-    handleDisconnectPort,
-    handleReconnectInput,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleDrop,
-    handleDragOver,
-    handlePanStart,
-    handlePanMove,
-    handlePanEnd,
-    zoomTo,
-    fitToNodes,
-    resetView,
     handlePresetFromSelection,
     handleSavePreset,
     handleApplyPreset,
@@ -215,6 +232,74 @@ export function AiPathsSettingsView({
       { value: 'queue', label: 'Run: Queue' },
     ],
     []
+  );
+
+  const runtimeAnalyticsQuery = useQuery({
+    queryKey: ['ai-paths', 'runtime-analytics', '24h'],
+    queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
+      const res = await fetch('/api/ai-paths/runtime-analytics/summary?range=24h');
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Failed to fetch runtime analytics.');
+      }
+      const data = (await res.json()) as { summary?: AiPathRuntimeAnalyticsSummary };
+      if (!data.summary) throw new Error('Missing runtime analytics payload.');
+      return data.summary;
+    },
+    refetchInterval: 30_000,
+    enabled: activeTab === 'canvas',
+  });
+
+  const nodeTitleById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    nodes.forEach((node: AiNode) => {
+      map.set(node.id, node.title ?? node.id);
+    });
+    return map;
+  }, [nodes]);
+
+  const runtimeNodeStatusEntries = useMemo(
+    () =>
+      Object.entries(runtimeNodeStatuses ?? {}).filter(
+        ([, status]: [string, string]) => typeof status === 'string' && status.trim().length > 0
+      ),
+    [runtimeNodeStatuses]
+  );
+
+  const runtimeNodeStatusCounts = useMemo((): Record<string, number> => {
+    return runtimeNodeStatusEntries.reduce<Record<string, number>>(
+      (acc: Record<string, number>, [, status]: [string, string]) => {
+        const normalized = status.trim().toLowerCase();
+        acc[normalized] = (acc[normalized] ?? 0) + 1;
+        return acc;
+      },
+      {}
+    );
+  }, [runtimeNodeStatusEntries]);
+
+  const runtimeNodeLiveStates = useMemo(
+    (): Array<{ nodeId: string; title: string; status: string }> =>
+      runtimeNodeStatusEntries
+        .map(([nodeId, status]: [string, string]) => ({
+          nodeId,
+          title: nodeTitleById.get(nodeId) ?? nodeId,
+          status: status.trim().toLowerCase(),
+        }))
+        .filter(
+          (entry: { nodeId: string; title: string; status: string }) =>
+            entry.status === 'running' ||
+            entry.status === 'queued' ||
+            entry.status === 'polling' ||
+            entry.status === 'paused' ||
+            entry.status === 'waiting_callback'
+        )
+        .slice(0, 8),
+    [nodeTitleById, runtimeNodeStatusEntries]
+  );
+
+  const runtimeLogEvents = useMemo(
+    () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
+    [runtimeEvents]
   );
 
   const setNodesFromUser: React.Dispatch<React.SetStateAction<AiNode[]>> = (
@@ -533,9 +618,127 @@ export function AiPathsSettingsView({
           </SharedModal>
 
           {!isFocusMode ? (
-            <div className="flex flex-wrap items-start gap-6">
-              <div className="min-w-[240px] flex-1 space-y-4" />
-              <div className="min-w-[220px] space-y-4" />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-3 rounded-lg border border-border/60 bg-card/50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Runtime Analysis</div>
+                    <div className="text-xs text-gray-400">
+                      Live runtime state synced from node events plus Redis 24h analytics.
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    className="rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+                    onClick={() => {
+                      void runtimeAnalyticsQuery.refetch();
+                    }}
+                    disabled={runtimeAnalyticsQuery.isFetching}
+                  >
+                    {runtimeAnalyticsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
+                    <div className="text-[10px] uppercase text-gray-500">Run Status</div>
+                    <div className="mt-1 text-sm text-white">{formatStatusLabel(runtimeRunStatus)}</div>
+                  </div>
+                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
+                    <div className="text-[10px] uppercase text-gray-500">Live Nodes</div>
+                    <div className="mt-1 text-sm text-white">{runtimeNodeLiveStates.length}</div>
+                  </div>
+                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
+                    <div className="text-[10px] uppercase text-gray-500">Storage</div>
+                    <div className="mt-1 text-sm text-white">{runtimeAnalyticsQuery.data?.storage ?? '—'}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4">
+                  {(['running', 'queued', 'polling', 'completed', 'failed', 'cached'] as const).map((status) => (
+                    <div key={status} className="rounded-md border border-border/60 bg-card/60 px-2 py-1">
+                      <span className="text-gray-500">{formatStatusLabel(status)}:</span>{' '}
+                      <span className="text-gray-200">{runtimeNodeStatusCounts[status] ?? 0}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {runtimeNodeLiveStates.length > 0 ? (
+                  <div className="space-y-1">
+                    <div className="text-[10px] uppercase text-gray-500">Active Node States</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {runtimeNodeLiveStates.map((entry: { nodeId: string; title: string; status: string }) => (
+                        <span
+                          key={entry.nodeId}
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${statusBadgeClassName(entry.status)}`}
+                          title={entry.nodeId}
+                        >
+                          {entry.title} · {formatStatusLabel(entry.status)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-500">No active runtime node statuses right now.</div>
+                )}
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                    <div className="text-[10px] uppercase text-gray-500">Runs (24h)</div>
+                    <div className="mt-1 text-sm text-white">
+                      {runtimeAnalyticsQuery.data?.runs.total ?? 0}
+                    </div>
+                    <div className="mt-1 text-gray-400">
+                      Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
+                    <div className="text-[10px] uppercase text-gray-500">Run Runtime (24h)</div>
+                    <div className="mt-1 text-gray-200">
+                      Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
+                    </div>
+                    <div className="mt-1 text-gray-400">
+                      p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-lg border border-border/60 bg-card/50 p-4">
+                <div>
+                  <div className="text-sm font-semibold text-white">Live Runtime Log</div>
+                  <div className="text-xs text-gray-400">
+                    Last {runtimeLogEvents.length} runtime events from local + server execution.
+                  </div>
+                </div>
+                <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                  {runtimeLogEvents.length > 0 ? (
+                    runtimeLogEvents.map((event) => (
+                      <div key={event.id} className="rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className="text-gray-500">{new Date(event.timestamp).toLocaleTimeString()}</span>
+                          <span className={`rounded-full border px-1.5 py-0.5 ${event.level === 'error' ? 'border-rose-500/40 text-rose-200' : event.level === 'warning' ? 'border-amber-500/40 text-amber-200' : 'border-sky-500/40 text-sky-200'}`}>
+                            {event.level}
+                          </span>
+                          <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-gray-400">
+                            {event.source}
+                          </span>
+                          {event.status ? (
+                            <span className={`rounded-full border px-1.5 py-0.5 ${statusBadgeClassName(event.status)}`}>
+                              {formatStatusLabel(event.status)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-1 text-gray-200">{event.message}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-xs text-gray-500">
+                      Runtime log is empty. Fire a trigger to stream node/run events.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ) : null}
 
@@ -555,11 +758,7 @@ export function AiPathsSettingsView({
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
-                onUpdateSelectedNode={updateSelectedNode}
-                onDeleteSelectedNode={handleDeleteSelectedNode}
-                onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
-                executionMode={executionMode}
                 runStatus={runtimeRunStatus}
                 onPauseRun={handlePauseActiveRun}
                 onResumeRun={handleResumeActiveRun}
@@ -572,6 +771,8 @@ export function AiPathsSettingsView({
                 onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
                 onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
                 onExportPresets={handleExportPresets}
+                presetDraft={presetDraft}
+                setPresetDraft={setPresetDraft}
               />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
               <RunHistoryPanelMigrated
@@ -582,31 +783,20 @@ export function AiPathsSettingsView({
                 onResumeRun={(runId: string, mode: 'resume' | 'replay') => void handleResumeRun(runId, mode)}
                 onCancelRun={(runId: string) => void handleCancelRun(runId)}
                 onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
+                runFilter={runFilter}
+                setRunFilter={setRunFilter}
+                expandedRunHistory={expandedRunHistory}
+                setExpandedRunHistory={setExpandedRunHistory}
+                runHistorySelection={runHistorySelection}
+                setRunHistorySelection={setRunHistorySelection}
               />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
               <CanvasBoardMigrated
-                flowIntensity={flowIntensity}
                 runtimeNodeStatuses={runtimeNodeStatuses}
                 runtimeEvents={runtimeEvents}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
-                onRemoveEdge={handleRemoveEdge}
-                onDisconnectPort={handleDisconnectPort}
-                onReconnectInput={handleReconnectInput}
                 onFireTrigger={(node) => void handleFireTrigger(node)}
-                onPointerDownNode={handlePointerDown}
-                onPointerMoveNode={handlePointerMove}
-                onPointerUpNode={handlePointerUp}
-                onStartConnection={handleStartConnection}
-                onCompleteConnection={handleCompleteConnection}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onPanStart={handlePanStart}
-                onPanMove={handlePanMove}
-                onPanEnd={handlePanEnd}
-                onZoomTo={zoomTo}
-                onFitToNodes={fitToNodes}
-                onResetView={resetView}
               />
             </div>
           </div>
@@ -670,7 +860,6 @@ export function AiPathsSettingsView({
       <NodeConfigDialogMigrated
         modelOptions={modelOptions}
         updateSelectedNode={updateSelectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={(node) => void handleRunSimulation(node)}
@@ -691,6 +880,10 @@ export function AiPathsSettingsView({
       <SimulationDialogMigrated
         setNodes={setNodesFromUser}
         onRunSimulation={(node) => void handleRunSimulation(node)}
+        openNodeId={simulationOpenNodeId}
+        onClose={() => setSimulationOpenNodeId(null)}
+        nodes={nodes}
+        isPathLocked={isPathLocked}
       />
     </div>
   );

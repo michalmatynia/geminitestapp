@@ -4,13 +4,12 @@ import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
 
-import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
+import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
@@ -22,6 +21,14 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
     () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
     [modelOptions]
   );
+
+  const { mutateAsync: upsert, isPending: saving } = useUpsertEmbeddingCollectionMutation();
+  const { mutateAsync: remove, isPending: deleting } = useDeleteEmbeddingCollectionMutation();
+
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
+  const [draft, setDraft] = React.useState<Partial<AgentTeachingEmbeddingCollectionRecord>>({});
+  const [itemToDelete, setItemToDelete] = React.useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
 
   const openCreate = (): void => {
     setEditing(null);

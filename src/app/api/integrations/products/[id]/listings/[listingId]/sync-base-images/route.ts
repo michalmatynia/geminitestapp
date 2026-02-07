@@ -5,7 +5,6 @@ import { z } from "zod";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { syncBaseImagesForListing } from "@/features/integrations/services/base-image-sync";
 
@@ -14,7 +13,7 @@ const syncSchema = z.object({
 });
 
 async function POST_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }
 ): Promise<Response> {
@@ -23,7 +22,7 @@ async function POST_handler(
     throw badRequestError("Product id and listing id are required");
   }
 
-  const parsed = await parseJsonBody(req, syncSchema, {
+  const parsed = await parseJsonBody(_req, syncSchema, {
     logPrefix: "integrations.products.listings.SYNC_BASE_IMAGES",
     allowEmpty: true
   });

@@ -46,17 +46,26 @@ export type SimulationDialogMigratedProps = {
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   /** Callback to run simulation */
   onRunSimulation: (node: AiNode) => void | Promise<void>;
+
+  openNodeId?: string | null;
+  onClose?: () => void;
+  nodes?: AiNode[];
+  isPathLocked?: boolean;
 };
 
 /**
  * SimulationDialogMigrated - Context-based wrapper.
  */
 export function SimulationDialogMigrated({
-  setNodes,
+  setNodes: setNodesProp,
   onRunSimulation,
+  openNodeId: openNodeIdProp,
+  onClose: onCloseProp,
+  nodes: nodesProp,
+  isPathLocked: isPathLockedProp,
 }: SimulationDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
-  const { nodes, isPathLocked } = useGraphState();
+  const { nodes: nodesContext, isPathLocked: isPathLockedContext, setNodes: setNodesContext } = useGraphState();
 
   // Read state from SelectionContext
   const { simulationOpenNodeId } = useSelectionState();
@@ -64,11 +73,11 @@ export function SimulationDialogMigrated({
 
   return (
     <SimulationDialog
-      openNodeId={simulationOpenNodeId}
-      onClose={() => setSimulationOpenNodeId(null)}
-      nodes={nodes}
-      setNodes={setNodes}
-      isPathLocked={isPathLocked}
+      openNodeId={openNodeIdProp ?? simulationOpenNodeId}
+      onClose={onCloseProp ?? (() => setSimulationOpenNodeId(null))}
+      nodes={nodesProp ?? nodesContext}
+      setNodes={setNodesProp ?? setNodesContext}
+      isPathLocked={isPathLockedProp ?? isPathLockedContext}
       onRunSimulation={onRunSimulation}
     />
   );

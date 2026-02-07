@@ -14,6 +14,7 @@ import {
   listAgentLongTermMemory,
   listAgentMemory,
 } from '@/features/ai/agent-runtime/memory';
+import type { AgentExecutionContext } from '@/features/ai/agent-runtime/types/agent';
 import prisma from '@/shared/lib/db/prisma';
 
 type AgentRunContextInput = {
@@ -22,26 +23,13 @@ type AgentRunContextInput = {
   model: string | null;
   memoryKey: string | null;
   planState: unknown;
-};
-
-type PlannerContext = {
-  memoryKey: string;
-  memoryContext: string[];
-  settings: ReturnType<typeof resolveAgentPlanSettings>;
-  preferences: ReturnType<typeof resolveAgentPreferences>;
-  resolvedModel: string;
-  memoryValidationModel: string | null;
-  plannerModel: string;
-  selfCheckModel: string;
-  loopGuardModel: string;
-  approvalGateModel: string | null;
-  memorySummarizationModel: string;
-  browserContext: Awaited<ReturnType<typeof getBrowserContextSummary>>;
+  agentBrowser?: string | null;
+  runHeadless?: boolean | null;
 };
 
 export async function prepareRunContext(
   run: AgentRunContextInput
-): Promise<PlannerContext> {
+): Promise<AgentExecutionContext> {
   let memoryKey = run.memoryKey;
   if (!memoryKey) {
     memoryKey = run.id;
@@ -153,6 +141,12 @@ export async function prepareRunContext(
   });
 
   return {
+    run: {
+      id: run.id,
+      prompt: run.prompt,
+      ...(run.agentBrowser !== undefined ? { agentBrowser: run.agentBrowser } : {}),
+      ...(run.runHeadless !== undefined ? { runHeadless: run.runHeadless } : {}),
+    },
     memoryKey,
     memoryContext,
     settings,

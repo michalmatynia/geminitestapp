@@ -122,7 +122,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     baseLastInventoryId: created.baseLastInventoryId,
     allegroUseSandbox: created.allegroUseSandbox ?? false,
     playwrightHeadless: created.playwrightHeadless,
-    playwrightSlowMo: created.slowMo ?? created.playwrightSlowMo,
+    playwrightSlowMo: created.playwrightSlowMo,
     playwrightTimeout: created.playwrightTimeout,
     playwrightNavigationTimeout: created.playwrightNavigationTimeout,
     playwrightHumanizeMouse: created.playwrightHumanizeMouse,

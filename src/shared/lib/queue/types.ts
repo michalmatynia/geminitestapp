@@ -1,4 +1,4 @@
-import type { JobsOptions } from 'bullmq';
+import type { JobsOptions, WorkerOptions } from 'bullmq';
 
 export type QueueName =
   | 'product-ai'
@@ -23,6 +23,7 @@ export type QueueConfig<TJobData = unknown> = {
   name: QueueName;
   concurrency: number;
   defaultJobOptions?: Omit<JobsOptions, 'connection'>;
+  workerOptions?: Omit<WorkerOptions, 'connection' | 'concurrency'>;
   processor: (data: TJobData, jobId: string) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
   onFailed?: (jobId: string, error: Error, data: TJobData) => Promise<void>;

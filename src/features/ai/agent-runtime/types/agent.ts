@@ -162,3 +162,30 @@ export type AgentAuditLogRecord = {
   metadata: unknown;
   createdAt: Date;
 };
+
+export interface AgentExecutionContext {
+  run: {
+    id: string;
+    prompt: string;
+    agentBrowser?: string | null;
+    runHeadless?: boolean | null;
+  };
+  memoryKey: string | null;
+  memoryContext: string[];
+  settings: AgentPlanSettings;
+  preferences: AgentPlanPreferences;
+  resolvedModel: string;
+  memoryValidationModel: string | null;
+  memorySummarizationModel: string;
+  plannerModel: string;
+  selfCheckModel: string;
+  loopGuardModel: string;
+  approvalGateModel: string | null;
+  browserContext: {
+    url?: string | null;
+    title?: string | null;
+    domTextSample?: string;
+    logs?: Array<{ level: string; message: string }>;
+    uiInventory?: unknown;
+  } | null;
+}

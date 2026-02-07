@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
@@ -28,63 +27,47 @@ const updateAgentSchema = z.object({
 type Params = { agentId: string };
 
 async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const params = ctx.params as unknown as Params | undefined;
-    const agentId = params?.agentId;
-    if (!agentId) {
-      throw badRequestError("Missing agentId.");
-    }
-    const existing = await getTeachingAgentById(agentId);
-    if (!existing) {
-      return createErrorResponse(notFoundError("Not found"), { request: req, source: "agentcreator.teaching.agents.PATCH" });
-    }
-    const parsed = await parseJsonBody(req, updateAgentSchema, {
-      logPrefix: "agentcreator.teaching.agents.PATCH",
-    });
-    if (!parsed.ok) return parsed.response;
-
-    const data = parsed.data;
-    const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
-      ...existing,
-      id: agentId,
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.description !== undefined ? { description: data.description ?? null } : {}),
-      ...(data.llmModel !== undefined ? { llmModel: data.llmModel } : {}),
-      ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
-      ...(data.systemPrompt !== undefined ? { systemPrompt: data.systemPrompt } : {}),
-      ...(data.collectionIds !== undefined ? { collectionIds: data.collectionIds } : {}),
-      ...(data.temperature !== undefined ? { temperature: data.temperature } : {}),
-      ...(data.maxTokens !== undefined ? { maxTokens: data.maxTokens } : {}),
-      ...(data.retrievalTopK !== undefined ? { retrievalTopK: data.retrievalTopK } : {}),
-      ...(data.retrievalMinScore !== undefined ? { retrievalMinScore: data.retrievalMinScore } : {}),
-      ...(data.maxDocsPerCollection !== undefined ? { maxDocsPerCollection: data.maxDocsPerCollection } : {}),
-    });
-    return NextResponse.json({ agent });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.agents.PATCH",
-      fallbackMessage: "Failed to update learner agent.",
-    });
+  const params = ctx.params as unknown as Params | undefined;
+  const agentId = params?.agentId;
+  if (!agentId) {
+    throw badRequestError("Missing agentId.");
   }
+  const existing = await getTeachingAgentById(agentId);
+  if (!existing) {
+    throw notFoundError("Not found");
+  }
+  const parsed = await parseJsonBody(req, updateAgentSchema, {
+    logPrefix: "agentcreator.teaching.agents.PATCH",
+  });
+  if (!parsed.ok) return parsed.response;
+
+  const data = parsed.data;
+  const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
+    ...existing,
+    id: agentId,
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.description !== undefined ? { description: data.description ?? null } : {}),
+    ...(data.llmModel !== undefined ? { llmModel: data.llmModel } : {}),
+    ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
+    ...(data.systemPrompt !== undefined ? { systemPrompt: data.systemPrompt } : {}),
+    ...(data.collectionIds !== undefined ? { collectionIds: data.collectionIds } : {}),
+    ...(data.temperature !== undefined ? { temperature: data.temperature } : {}),
+    ...(data.maxTokens !== undefined ? { maxTokens: data.maxTokens } : {}),
+    ...(data.retrievalTopK !== undefined ? { retrievalTopK: data.retrievalTopK } : {}),
+    ...(data.retrievalMinScore !== undefined ? { retrievalMinScore: data.retrievalMinScore } : {}),
+    ...(data.maxDocsPerCollection !== undefined ? { maxDocsPerCollection: data.maxDocsPerCollection } : {}),
+  });
+  return NextResponse.json({ agent });
 }
 
-async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const params = ctx.params as unknown as Params | undefined;
-    const agentId = params?.agentId;
-    if (!agentId) {
-      throw badRequestError("Missing agentId.");
-    }
-    const deleted = await deleteTeachingAgent(agentId);
-    return NextResponse.json({ ok: true, deleted });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.agents.DELETE",
-      fallbackMessage: "Failed to delete learner agent.",
-    });
+async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const params = ctx.params as unknown as Params | undefined;
+  const agentId = params?.agentId;
+  if (!agentId) {
+    throw badRequestError("Missing agentId.");
   }
+  const deleted = await deleteTeachingAgent(agentId);
+  return NextResponse.json({ ok: true, deleted });
 }
 
 export const PATCH = apiHandler(

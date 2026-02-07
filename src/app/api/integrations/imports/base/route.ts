@@ -11,7 +11,6 @@ import { getProductRepository } from "@/features/products/services/product-repos
 import { getImportTemplate } from "@/features/integrations/services/import-template-repository";
 import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
 import { decryptSecret } from "@/features/integrations/utils/encryption";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import {
   fetchBaseAllWarehouses,
@@ -73,8 +72,8 @@ type MappedItem = {
   image: string | null;
 };
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body: unknown = await req.json();
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const body: unknown = await _req.json();
   const data = requestSchema.parse(body);
   let token = data.token;
 

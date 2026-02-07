@@ -8,7 +8,6 @@ import {
 import { createFullDatabaseBackup } from "@/features/database/server";
 import { parseJsonBody } from "@/features/products/server";
 import { removeUndefined } from "@/shared/utils";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -25,55 +24,39 @@ const migrationSchema = z.object({
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { searchParams } = new URL(req.url);
-    const parsedDirection = migrationDirectionSchema.safeParse(
-      searchParams.get("direction")
-    );
-    if (!parsedDirection.success) {
-      throw badRequestError("Invalid migration direction.");
-    }
-    const total = await getProductMigrationTotal(parsedDirection.data);
-    return NextResponse.json({ total });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.migrate.GET",
-      fallbackMessage: "Failed to load product migration totals.",
-    });
+  const { searchParams } = new URL(req.url);
+  const parsedDirection = migrationDirectionSchema.safeParse(
+    searchParams.get("direction")
+  );
+  if (!parsedDirection.success) {
+    throw badRequestError("Invalid migration direction.");
   }
+  const total = await getProductMigrationTotal(parsedDirection.data);
+  return NextResponse.json({ total });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, migrationSchema, {
-      logPrefix: "products.migrate.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const shouldBackup =
-      !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === "");
-    if (shouldBackup) {
-      const backupResult = await createFullDatabaseBackup();
-      if (!backupResult.mongo || !backupResult.postgres) {
-        throw new Error("Failed to create full database backup.");
-      }
-    }
-    const result = await migrateProductBatch(removeUndefined({
-      direction: parsed.data.direction,
-      dryRun: Boolean(parsed.data.dryRun),
-      cursor: parsed.data.cursor ?? null,
-      batchSize: parsed.data.batchSize,
-    }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
-    return NextResponse.json({ result, backup: shouldBackup });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.migrate.POST",
-      fallbackMessage: "Failed to run product migration.",
-    });
+  const parsed = await parseJsonBody(req, migrationSchema, {
+    logPrefix: "products.migrate.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const shouldBackup =
+    !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === "");
+  if (shouldBackup) {
+    const backupResult = await createFullDatabaseBackup();
+    if (!backupResult.mongo || !backupResult.postgres) {
+      throw new Error("Failed to create full database backup.");
+    }
+  }
+  const result = await migrateProductBatch(removeUndefined({
+    direction: parsed.data.direction,
+    dryRun: Boolean(parsed.data.dryRun),
+    cursor: parsed.data.cursor ?? null,
+    batchSize: parsed.data.batchSize,
+  }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
+  return NextResponse.json({ result, backup: shouldBackup });
 }
 
 export const GET = apiHandler(

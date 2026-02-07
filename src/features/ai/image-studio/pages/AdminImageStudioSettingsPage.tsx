@@ -712,7 +712,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
                 />
               </div>
               <div className="text-[11px] text-gray-500">
-                Tip: store your API key at <span className="text-gray-300">/admin/settings/ai</span>.
+                Tip: store your API key at <span className="text-gray-300">/admin/settings/brain</span>.
               </div>
             </div>
 

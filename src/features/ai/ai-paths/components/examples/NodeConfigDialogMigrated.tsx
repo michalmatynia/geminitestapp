@@ -75,7 +75,7 @@ export type NodeConfigDialogMigratedProps = {
 
   // Callbacks for node operations
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
+  updateSelectedNodeConfig: (patch: NodeConfig) => void;
 
   // Callbacks for sample fetching
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
@@ -126,6 +126,7 @@ export function NodeConfigDialogMigrated({
 }: NodeConfigDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
   const { nodes, edges, isPathLocked, activePathId } = useGraphState();
+  const { updateNode } = useGraphActions();
 
   // Read state from SelectionContext
   const { selectedNodeId, configOpen } = useSelectionState();
@@ -199,7 +200,9 @@ export function NodeConfigDialogMigrated({
       setDbNodePresets={setDbNodePresets}
       // Callback props passed through
       updateSelectedNode={updateSelectedNode}
-      updateSelectedNodeConfig={updateSelectedNodeConfig}
+      updateSelectedNodeConfig={(config: NodeConfig) => {
+        if (selectedNodeId) updateNode(selectedNodeId, { config });
+      }}
       handleFetchParserSample={handleFetchParserSample}
       handleFetchUpdaterSample={handleFetchUpdaterSample}
       handleRunSimulation={handleRunSimulation}

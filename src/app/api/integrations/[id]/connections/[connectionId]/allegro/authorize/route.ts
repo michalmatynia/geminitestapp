@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getIntegrationRepository } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -14,7 +13,7 @@ const SANDBOX_AUTH_URL =
   process.env.ALLEGRO_SANDBOX_AUTH_URL ??
   "https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize";
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   const { id, connectionId: connId } = params;
   if (!id || !connId) {
     throw badRequestError("Integration id and connection id are required.");
@@ -43,7 +42,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
 
   const state = randomUUID();
-  const callbackUrl = new URL(req.url);
+  const callbackUrl = new URL(_req.url);
   const redirectUri = `${callbackUrl.origin}/api/integrations/${id}/connections/${connId}/allegro/callback`;
 
   const authUrl = connection.allegroUseSandbox ? SANDBOX_AUTH_URL : PROD_AUTH_URL;

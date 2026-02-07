@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
+import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 
 type AgentCreatorSettingsContextType = {
@@ -67,7 +68,18 @@ export const useAgentCreatorSettingsContext = (): AgentCreatorSettingsContextTyp
 };
 
 export function AgentCreatorSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const { data: modelOptions = [], isLoading: modelsLoading } = useChatbotModels();
+  const { data: fetchedModels = [], isLoading: modelsLoading } = useChatbotModels();
+  
+  const modelOptions = useMemo(() => {
+    const combined = [...fetchedModels, ...DEFAULT_MODELS];
+    const seen = new Set<string>();
+    return combined.filter((m: string) => {
+      if (!m || seen.has(m)) return false;
+      seen.add(m);
+      return true;
+    });
+  }, [fetchedModels]);
+
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [agentBrowser, setAgentBrowser] = useState(
     DEFAULT_AGENT_SETTINGS.agentBrowser

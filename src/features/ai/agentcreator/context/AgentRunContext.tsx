@@ -16,6 +16,7 @@ interface AgentRunContextType {
   agentBrowserLogs: AgentBrowserLog[];
   agentAuditLogs: AgentAuditLog[];
   agentStreamStatus: 'idle' | 'connecting' | 'live' | 'error';
+  setAgentStreamStatus: (status: 'idle' | 'connecting' | 'live' | 'error') => void;
   isLoadingRuns: boolean;
   refetchRuns: () => Promise<unknown>;
 }
@@ -80,9 +81,10 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     agentBrowserLogs,
     agentAuditLogs,
     agentStreamStatus,
+    setAgentStreamStatus,
     isLoadingRuns,
     refetchRuns,
-  }), [selectedAgentRunId, selectedAgentRun, agentRuns, agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus, isLoadingRuns, refetchRuns]);
+  }), [selectedAgentRunId, selectedAgentRun, agentRuns, agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus, setAgentStreamStatus, isLoadingRuns, refetchRuns]);
 
   return (
     <AgentRunContext.Provider value={value}>

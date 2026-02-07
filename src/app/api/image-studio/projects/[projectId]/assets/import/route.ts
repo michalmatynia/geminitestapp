@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 
 import { getImageFileRepository } from "@/features/files/server";
@@ -157,75 +156,117 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
+
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = importSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+  }
+
+  const safeFolder =
+    parsed.data.folder && parsed.data.folder.trim()
+      ? sanitizeFolderPath(parsed.data.folder)
+      : "";
+
+  const diskDir = safeFolder
+    ? path.join(projectsRoot, projectId, safeFolder)
+    : path.join(projectsRoot, projectId);
+
+  const publicDir = safeFolder
+    ? `/uploads/studio/${projectId}/${safeFolder}`
+    : `/uploads/studio/${projectId}`;
+
+  await fs.mkdir(diskDir, { recursive: true });
+
+  const ids = parsed.data.files.map((item) => item.id).filter(Boolean) as string[];
+  let sourceById = new Map<string, ImageFileRecord>();
+  let repo: Awaited<ReturnType<typeof getImageFileRepository>> | null = null;
   try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
-
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = importSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    repo = await getImageFileRepository();
+    if (ids.length > 0) {
+      const records = await repo.findImageFilesByIds(ids);
+      sourceById = new Map(records.map((record) => [record.id, record]));
     }
+  } catch {
+    repo = null;
+    sourceById = new Map();
+  }
 
-    const safeFolder =
-      parsed.data.folder && parsed.data.folder.trim()
-        ? sanitizeFolderPath(parsed.data.folder)
-        : "";
+  const uploaded: ImageFileRecord[] = [];
+  const failures: Array<{ filepath: string; error: string }> = [];
 
-    const diskDir = safeFolder
-      ? path.join(projectsRoot, projectId, safeFolder)
-      : path.join(projectsRoot, projectId);
+  for (const item of parsed.data.files) {
+    const sourceRecord = item.id ? sourceById.get(item.id) ?? null : null;
+    const sourcePath = item.id ? sourceRecord?.filepath ?? item.filepath : item.filepath;
+    const rawSource = sourcePath ?? "";
 
-    const publicDir = safeFolder
-      ? `/uploads/studio/${projectId}/${safeFolder}`
-      : `/uploads/studio/${projectId}`;
-
-    await fs.mkdir(diskDir, { recursive: true });
-
-    const ids = parsed.data.files.map((item) => item.id).filter(Boolean) as string[];
-    let sourceById = new Map<string, ImageFileRecord>();
-    let repo: Awaited<ReturnType<typeof getImageFileRepository>> | null = null;
-    try {
-      repo = await getImageFileRepository();
-      if (ids.length > 0) {
-        const records = await repo.findImageFilesByIds(ids);
-        sourceById = new Map(records.map((record) => [record.id, record]));
+    if (isDataUrl(rawSource)) {
+      const parsedData = parseDataUrl(rawSource);
+      if (!parsedData) {
+        failures.push({ filepath: rawSource, error: "Invalid base64 data URL" });
+        continue;
       }
-    } catch {
-      repo = null;
-      sourceById = new Map();
+      if (parsedData.buffer.length > MAX_REMOTE_IMPORT_BYTES) {
+        failures.push({ filepath: rawSource, error: "Base64 data is too large" });
+        continue;
+      }
+      const mime = parsedData.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
+      const baseName = sourceRecord?.filename || item.filename || "base64-image";
+      const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
+      const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
+      const destDiskPath = path.join(diskDir, filename);
+      await fs.writeFile(destDiskPath, parsedData.buffer);
+
+      const recordInput = {
+        filename,
+        filepath: `${publicDir}/${filename}`,
+        mimetype: mime,
+        size: parsedData.buffer.length,
+        tags: [],
+      };
+
+      if (repo) {
+        try {
+          uploaded.push(await repo.createImageFile(recordInput));
+          continue;
+        } catch {
+          // fall through to orphan record
+        }
+      }
+
+      const now = new Date();
+      uploaded.push({
+        id: randomUUID(),
+        filename: recordInput.filename,
+        filepath: recordInput.filepath,
+        mimetype: recordInput.mimetype,
+        size: recordInput.size,
+        width: null,
+        height: null,
+        tags: [],
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      });
+      continue;
     }
 
-    const uploaded: ImageFileRecord[] = [];
-    const failures: Array<{ filepath: string; error: string }> = [];
-
-    for (const item of parsed.data.files) {
-      const sourceRecord = item.id ? sourceById.get(item.id) ?? null : null;
-      const sourcePath = item.id ? sourceRecord?.filepath ?? item.filepath : item.filepath;
-      const rawSource = sourcePath ?? "";
-
-      if (isDataUrl(rawSource)) {
-        const parsedData = parseDataUrl(rawSource);
-        if (!parsedData) {
-          failures.push({ filepath: rawSource, error: "Invalid base64 data URL" });
-          continue;
-        }
-        if (parsedData.buffer.length > MAX_REMOTE_IMPORT_BYTES) {
-          failures.push({ filepath: rawSource, error: "Base64 data is too large" });
-          continue;
-        }
-        const mime = parsedData.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
-        const baseName = sourceRecord?.filename || item.filename || "base64-image";
+    if (isHttpUrl(rawSource)) {
+      try {
+        const remote = await fetchRemoteFile(rawSource);
+        const mime = remote.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
+        const baseName = sourceRecord?.filename || item.filename || remote.filename || "remote-image";
         const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
         const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
         const destDiskPath = path.join(diskDir, filename);
-        await fs.writeFile(destDiskPath, parsedData.buffer);
+        await fs.writeFile(destDiskPath, remote.buffer);
 
         const recordInput = {
           filename,
           filepath: `${publicDir}/${filename}`,
           mimetype: mime,
-          size: parsedData.buffer.length,
+          size: remote.buffer.length,
           tags: [],
         };
 
@@ -252,119 +293,68 @@ async function POST_handler(
           updatedAt: now.toISOString(),
         });
         continue;
-      }
-
-      if (isHttpUrl(rawSource)) {
-        try {
-          const remote = await fetchRemoteFile(rawSource);
-          const mime = remote.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
-          const baseName = sourceRecord?.filename || item.filename || remote.filename || "remote-image";
-          const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
-          const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
-          const destDiskPath = path.join(diskDir, filename);
-          await fs.writeFile(destDiskPath, remote.buffer);
-
-          const recordInput = {
-            filename,
-            filepath: `${publicDir}/${filename}`,
-            mimetype: mime,
-            size: remote.buffer.length,
-            tags: [],
-          };
-
-          if (repo) {
-            try {
-              uploaded.push(await repo.createImageFile(recordInput));
-              continue;
-            } catch {
-              // fall through to orphan record
-            }
-          }
-
-          const now = new Date();
-          uploaded.push({
-            id: randomUUID(),
-            filename: recordInput.filename,
-            filepath: recordInput.filepath,
-            mimetype: recordInput.mimetype,
-            size: recordInput.size,
-            width: null,
-            height: null,
-            tags: [],
-            createdAt: now.toISOString(),
-            updatedAt: now.toISOString(),
-          });
-          continue;
-        } catch (error) {
-          failures.push({ filepath: rawSource, error: error instanceof Error ? error.message : "Failed to fetch remote file" });
-          continue;
-        }
-      }
-
-      const diskSource = resolveDiskPathFromPublicUploadPath(rawSource);
-      if (!diskSource) {
-        failures.push({ filepath: rawSource, error: "Unsupported file path (must be under /uploads/)" });
+      } catch (error) {
+        failures.push({ filepath: rawSource, error: error instanceof Error ? error.message : "Failed to fetch remote file" });
         continue;
       }
+    }
 
-      const stats = await fs.stat(diskSource).catch(() => null);
-      if (!stats || !stats.isFile()) {
-        failures.push({ filepath: rawSource, error: "File not found on disk" });
+    const diskSource = resolveDiskPathFromPublicUploadPath(rawSource);
+    if (!diskSource) {
+      failures.push({ filepath: rawSource, error: "Unsupported file path (must be under /uploads/)" });
+      continue;
+    }
+
+    const stats = await fs.stat(diskSource).catch(() => null);
+    if (!stats || !stats.isFile()) {
+      failures.push({ filepath: rawSource, error: "File not found on disk" });
+      continue;
+    }
+
+    const sourceName = sourceRecord?.filename || item.filename || path.basename(rawSource);
+    const safeName = sanitizeFilename(sourceName);
+    const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
+
+    const destDiskPath = path.join(diskDir, filename);
+    await fs.copyFile(diskSource, destDiskPath);
+
+    const recordInput = {
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: sourceRecord?.mimetype || item.mimetype || "application/octet-stream",
+      size: stats.size,
+      tags: [],
+    };
+
+    if (repo) {
+      try {
+        uploaded.push(await repo.createImageFile(recordInput));
         continue;
+      } catch {
+        // fall through to orphan record
       }
-
-      const sourceName = sourceRecord?.filename || item.filename || path.basename(rawSource);
-      const safeName = sanitizeFilename(sourceName);
-      const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
-
-      const destDiskPath = path.join(diskDir, filename);
-      await fs.copyFile(diskSource, destDiskPath);
-
-      const recordInput = {
-        filename,
-        filepath: `${publicDir}/${filename}`,
-        mimetype: sourceRecord?.mimetype || item.mimetype || "application/octet-stream",
-        size: stats.size,
-        tags: [],
-      };
-
-      if (repo) {
-        try {
-          uploaded.push(await repo.createImageFile(recordInput));
-          continue;
-        } catch {
-          // fall through to orphan record
-        }
-      }
-
-      const now = new Date();
-      uploaded.push({
-        id: randomUUID(),
-        filename: recordInput.filename,
-        filepath: recordInput.filepath,
-        mimetype: recordInput.mimetype,
-        size: recordInput.size,
-        width: null,
-        height: null,
-        tags: [],
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      });
     }
 
-    if (uploaded.length === 0) {
-      throw badRequestError("No files imported", { failures });
-    }
-
-    return NextResponse.json({ uploaded, failures }, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].assets.import.POST",
-      fallbackMessage: "Failed to import assets",
-      extra: { projectId: params.projectId },
+    const now = new Date();
+    uploaded.push({
+      id: randomUUID(),
+      filename: recordInput.filename,
+      filepath: recordInput.filepath,
+      mimetype: recordInput.mimetype,
+      size: recordInput.size,
+      width: null,
+      height: null,
+      tags: [],
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     });
   }
+
+  if (uploaded.length === 0) {
+    throw badRequestError("No files imported", { failures });
+  }
+
+  return NextResponse.json({ uploaded, failures }, { status: 201 });
 }
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(

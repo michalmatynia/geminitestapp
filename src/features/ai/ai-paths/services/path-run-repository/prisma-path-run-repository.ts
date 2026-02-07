@@ -22,10 +22,12 @@ const prismaAny = prisma as unknown as {
   aiPathRun?: {
     create: (args: unknown) => Promise<unknown>;
     update: (args: unknown) => Promise<unknown>;
+    delete: (args: unknown) => Promise<unknown>;
     findUnique: (args: unknown) => Promise<unknown>;
     findMany: (args: unknown) => Promise<unknown[]>;
     findFirst: (args: unknown) => Promise<unknown>;
     count: (args: unknown) => Promise<number>;
+    deleteMany: (args: unknown) => Promise<{ count: number }>;
     updateMany: (args: unknown) => Promise<{ count: number }>;
   };
   aiPathRunNode?: {
@@ -106,6 +108,98 @@ const ensureModels = (): void => {
   }
 };
 
+const parseFilterDate = (value: Date | string | null | undefined): Date | null => {
+  if (!value) return null;
+  const date = typeof value === 'string' ? new Date(value) : value;
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWhereInput => {
+  const query = options.query?.trim();
+  const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+  const source = options.source?.trim();
+  const sourceMode = options.sourceMode ?? 'include';
+  const createdAfter = parseFilterDate(options.createdAfter);
+  const createdBefore = parseFilterDate(options.createdBefore);
+  const andFilters: Prisma.AiPathRunWhereInput[] = [];
+
+  if (options.userId) {
+    andFilters.push({ userId: options.userId });
+  }
+  if (options.pathId) {
+    andFilters.push({ pathId: options.pathId });
+  }
+  if (statuses.length > 0) {
+    andFilters.push({ status: { in: statuses } });
+  } else if (options.status) {
+    andFilters.push({ status: options.status });
+  }
+  if (source) {
+    const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+    const aiPathsTabs = ['product', 'note'];
+    if (sourceMode === 'exclude') {
+      if (source === 'ai_paths_ui') {
+        andFilters.push({
+          AND: [
+            { NOT: { meta: { path: ['source'], equals: 'ai_paths_ui' } } },
+            { NOT: { meta: { path: ['source'], equals: 'trigger_button' } } },
+            { NOT: { meta: { path: ['source'], equals: 'product_panel' } } },
+            ...aiPathsTabs.map((tab) => ({
+              NOT: { meta: { path: ['source', 'tab'], equals: tab } },
+            })),
+            { NOT: { meta: { equals: Prisma.DbNull } } },
+            { NOT: { meta: { equals: Prisma.JsonNull } } },
+          ],
+        });
+      } else {
+        andFilters.push({
+          AND: [
+            { NOT: { meta: { path: ['source'], equals: source } } },
+            { NOT: { meta: { equals: Prisma.DbNull } } },
+            { NOT: { meta: { equals: Prisma.JsonNull } } },
+          ],
+        });
+      }
+    } else if (source === 'ai_paths_ui') {
+      andFilters.push({
+        OR: [
+          ...aiPathsSources.map((value) => ({
+            meta: { path: ['source'], equals: value },
+          })),
+          ...aiPathsTabs.map((tab) => ({
+            meta: { path: ['source', 'tab'], equals: tab },
+          })),
+          { meta: { equals: Prisma.DbNull } },
+          { meta: { equals: Prisma.JsonNull } },
+        ],
+      });
+    } else {
+      andFilters.push({ meta: { path: ['source'], equals: source } });
+    }
+  }
+  if (createdAfter || createdBefore) {
+    andFilters.push({
+      createdAt: {
+        ...(createdAfter ? { gte: createdAfter } : {}),
+        ...(createdBefore ? { lte: createdBefore } : {}),
+      },
+    });
+  }
+  if (query) {
+    andFilters.push({
+      OR: [
+        { id: { contains: query, mode: 'insensitive' } },
+        { pathId: { contains: query, mode: 'insensitive' } },
+        { pathName: { contains: query, mode: 'insensitive' } },
+        { entityId: { contains: query, mode: 'insensitive' } },
+        { errorMessage: { contains: query, mode: 'insensitive' } },
+      ],
+    });
+  }
+
+  return andFilters.length > 0 ? { AND: andFilters } : {};
+};
+
 export const prismaPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord> {
     ensureModels();
@@ -148,94 +242,19 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return run ? mapRun(run) : null;
   },
 
+  async deleteRun(runId: string): Promise<boolean> {
+    ensureModels();
+    try {
+      await prismaAny.aiPathRun!.delete({ where: { id: runId } });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     ensureModels();
-    const query = options.query?.trim();
-    const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
-    const source = options.source?.trim();
-    const sourceMode = options.sourceMode ?? 'include';
-    const parseDate = (value: Date | string | null | undefined): Date | null => {
-      if (!value) return null;
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return Number.isNaN(date.getTime()) ? null : date;
-    };
-    const createdAfter = parseDate(options.createdAfter);
-    const createdBefore = parseDate(options.createdBefore);
-    const andFilters: Prisma.AiPathRunWhereInput[] = [];
-    if (options.userId) {
-      andFilters.push({ userId: options.userId });
-    }
-    if (options.pathId) {
-      andFilters.push({ pathId: options.pathId });
-    }
-    if (statuses.length > 0) {
-      andFilters.push({ status: { in: statuses } });
-    } else if (options.status) {
-      andFilters.push({ status: options.status });
-    }
-    if (source) {
-      const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
-      const aiPathsTabs = ['product', 'note'];
-      if (sourceMode === 'exclude') {
-        if (source === 'ai_paths_ui') {
-          andFilters.push({
-            AND: [
-              { NOT: { meta: { path: ['source'], equals: 'ai_paths_ui' } } },
-              { NOT: { meta: { path: ['source'], equals: 'trigger_button' } } },
-              { NOT: { meta: { path: ['source'], equals: 'product_panel' } } },
-              ...aiPathsTabs.map((tab) => ({
-                NOT: { meta: { path: ['source', 'tab'], equals: tab } },
-              })),
-              { NOT: { meta: { equals: Prisma.DbNull } } },
-              { NOT: { meta: { equals: Prisma.JsonNull } } },
-            ],
-          });
-        } else {
-          andFilters.push({
-            AND: [
-              { NOT: { meta: { path: ['source'], equals: source } } },
-              { NOT: { meta: { equals: Prisma.DbNull } } },
-              { NOT: { meta: { equals: Prisma.JsonNull } } },
-            ],
-          });
-        }
-      } else if (source === 'ai_paths_ui') {
-        andFilters.push({
-          OR: [
-            ...aiPathsSources.map((value) => ({
-              meta: { path: ['source'], equals: value },
-            })),
-            ...aiPathsTabs.map((tab) => ({
-              meta: { path: ['source', 'tab'], equals: tab },
-            })),
-            { meta: { equals: Prisma.DbNull } },
-            { meta: { equals: Prisma.JsonNull } },
-          ],
-        });
-      } else {
-        andFilters.push({ meta: { path: ['source'], equals: source } });
-      }
-    }
-    if (createdAfter || createdBefore) {
-      andFilters.push({
-        createdAt: {
-          ...(createdAfter ? { gte: createdAfter } : {}),
-          ...(createdBefore ? { lte: createdBefore } : {}),
-        },
-      });
-    }
-    if (query) {
-      andFilters.push({
-        OR: [
-          { id: { contains: query, mode: 'insensitive' } },
-          { pathId: { contains: query, mode: 'insensitive' } },
-          { pathName: { contains: query, mode: 'insensitive' } },
-          { entityId: { contains: query, mode: 'insensitive' } },
-          { errorMessage: { contains: query, mode: 'insensitive' } },
-        ],
-      });
-    }
-    const where = andFilters.length > 0 ? { AND: andFilters } : {};
+    const where = buildRunWhere(options);
     const [runs, total] = await Promise.all([
       prismaAny.aiPathRun!.findMany({
         where,
@@ -246,6 +265,13 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       prismaAny.aiPathRun!.count({ where }),
     ]);
     return { runs: (runs).map(mapRun), total };
+  },
+
+  async deleteRuns(options: AiPathRunListOptions = {}): Promise<{ count: number }> {
+    ensureModels();
+    const where = buildRunWhere(options);
+    const result = await prismaAny.aiPathRun!.deleteMany({ where });
+    return { count: result.count ?? 0 };
   },
 
   async claimNextQueuedRun(): Promise<AiPathRunRecord | null> {

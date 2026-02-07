@@ -32,8 +32,7 @@ import {
 } from '@/features/ai/agent-runtime/planning/utils';
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
 import type {
-  AgentPlanPreferences,
-  AgentPlanSettings,
+  AgentExecutionContext,
   PlanStep,
   PlannerMeta,
 } from '@/features/ai/agent-runtime/types/agent';
@@ -43,30 +42,13 @@ import unknownToErrorMessage from '@/shared/utils/error-formatting';
 import type { Browser, BrowserContext } from 'playwright';
 
 type StepLoopInput = {
-  run: {
-    id: string;
-    prompt: string;
-    agentBrowser?: string | null;
-    runHeadless?: boolean | null;
-  };
+  context: AgentExecutionContext;
   sharedBrowser: Browser | null;
   sharedContext: BrowserContext | null;
   planSteps: PlanStep[];
   stepIndex: number;
   taskType: PlannerMeta['taskType'] | null;
-  settings: AgentPlanSettings;
-  preferences: AgentPlanPreferences;
-  memoryContext: string[];
   summaryCheckpoint: number;
-  memoryKey: string | null;
-  memoryValidationModel: string | null;
-  memorySummarizationModel: string;
-  plannerModel: string;
-  selfCheckModel: string;
-  loopGuardModel: string;
-  approvalGateModel: string | null;
-  resolvedModel: string;
-  browserContext?: { url?: string | null } | null;
   checkpoint?: {
     approvalRequestedStepId?: string | null;
     approvalGrantedStepId?: string | null;
@@ -90,9 +72,12 @@ export async function runPlanStepLoop(
   input: StepLoopInput
 ): Promise<StepLoopResult> {
   const {
-    run,
+    context,
     sharedBrowser,
     sharedContext,
+  } = input;
+  const {
+    run,
     settings,
     preferences,
     memoryKey,
@@ -103,9 +88,9 @@ export async function runPlanStepLoop(
     loopGuardModel,
     approvalGateModel,
     resolvedModel,
-  } = input;
-  let { planSteps, stepIndex, taskType, memoryContext, summaryCheckpoint } =
-    input;
+  } = context;
+  let { planSteps, stepIndex, taskType, summaryCheckpoint } = input;
+  let { memoryContext } = context;
 
   const summaryInterval = 5;
   const midRunInterval = 3;
@@ -115,7 +100,7 @@ export async function runPlanStepLoop(
   const branchedStepIds = new Set<string>();
   let replanCount = 0;
   let selfCheckCount = 0;
-  let lastContextUrl = input.browserContext?.url ?? null;
+  let lastContextUrl = context.browserContext?.url ?? null;
   let hasBrowserContext = Boolean(
     lastContextUrl && lastContextUrl !== 'about:blank'
   );

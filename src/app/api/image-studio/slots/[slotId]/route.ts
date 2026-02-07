@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { deleteImageStudioSlot, updateImageStudioSlot } from "@/features/ai/image-studio/server/slot-repository";
 
@@ -35,61 +34,43 @@ async function PATCH_handler(
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  try {
-    const slotId = params.slotId?.trim() ?? "";
-    if (!slotId) throw badRequestError("Slot id is required");
+  const slotId = params.slotId?.trim() ?? "";
+  if (!slotId) throw badRequestError("Slot id is required");
 
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = patchSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
-    }
-
-    const data = {
-      ...(parsed.data.name ? { name: parsed.data.name } : {}),
-      ...(parsed.data.folderPath !== undefined ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? "") } : {}),
-      ...(parsed.data.imageUrl !== undefined ? { imageUrl: parsed.data.imageUrl ?? null } : {}),
-      ...(parsed.data.imageBase64 !== undefined ? { imageBase64: parsed.data.imageBase64 ?? null } : {}),
-      ...(parsed.data.imageFileId !== undefined ? { imageFileId: parsed.data.imageFileId ?? null } : {}),
-      ...(parsed.data.asset3dId !== undefined ? { asset3dId: parsed.data.asset3dId ?? null } : {}),
-      ...(parsed.data.screenshotFileId !== undefined ? { screenshotFileId: parsed.data.screenshotFileId ?? null } : {}),
-      ...(parsed.data.metadata !== undefined ? { metadata: parsed.data.metadata ?? null } : {}),
-    };
-
-    const updated = await updateImageStudioSlot(slotId, data);
-    if (!updated) throw notFoundError("Slot not found");
-
-    return NextResponse.json({ slot: updated });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.slots.[slotId].PATCH",
-      fallbackMessage: "Failed to update slot",
-      extra: { slotId: params.slotId },
-    });
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
   }
+
+  const data = {
+    ...(parsed.data.name ? { name: parsed.data.name } : {}),
+    ...(parsed.data.folderPath !== undefined ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? "") } : {}),
+    ...(parsed.data.imageUrl !== undefined ? { imageUrl: parsed.data.imageUrl ?? null } : {}),
+    ...(parsed.data.imageBase64 !== undefined ? { imageBase64: parsed.data.imageBase64 ?? null } : {}),
+    ...(parsed.data.imageFileId !== undefined ? { imageFileId: parsed.data.imageFileId ?? null } : {}),
+    ...(parsed.data.asset3dId !== undefined ? { asset3dId: parsed.data.asset3dId ?? null } : {}),
+    ...(parsed.data.screenshotFileId !== undefined ? { screenshotFileId: parsed.data.screenshotFileId ?? null } : {}),
+    ...(parsed.data.metadata !== undefined ? { metadata: parsed.data.metadata ?? null } : {}),
+  };
+
+  const updated = await updateImageStudioSlot(slotId, data);
+  if (!updated) throw notFoundError("Slot not found");
+
+  return NextResponse.json({ slot: updated });
 }
 
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  try {
-    const slotId = params.slotId?.trim() ?? "";
-    if (!slotId) throw badRequestError("Slot id is required");
+  const slotId = params.slotId?.trim() ?? "";
+  if (!slotId) throw badRequestError("Slot id is required");
 
-    const deleted = await deleteImageStudioSlot(slotId);
-    if (!deleted) throw notFoundError("Slot not found");
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.slots.[slotId].DELETE",
-      fallbackMessage: "Failed to delete slot",
-      extra: { slotId: params.slotId },
-    });
-  }
+  const deleted = await deleteImageStudioSlot(slotId);
+  if (!deleted) throw notFoundError("Slot not found");
+  return NextResponse.json({ ok: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ slotId: string }>(

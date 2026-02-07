@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const FALLBACK_TEXTURE_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
@@ -41,6 +42,10 @@ class Model3DErrorBoundary extends Component<
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('3D Model Error:', error, errorInfo);
+    logClientError(error, {
+      componentStack: errorInfo.componentStack,
+      context: { source: 'Viewer3D-error-boundary' },
+    });
     this.props.onError?.(error);
   }
 

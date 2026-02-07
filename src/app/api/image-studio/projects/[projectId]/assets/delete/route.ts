@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { getImageFileRepository } from "@/features/files/server";
 
@@ -64,70 +63,61 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
-  try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
 
-    const body = (await req.json().catch(() => null)) as unknown;
-    const parsed = deleteSchema.safeParse(body);
-    if (!parsed.success) {
-      throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+  }
+
+  const assetId = parsed.data.id?.trim() ?? "";
+  const isDiskOnly = assetId.startsWith("disk:");
+  let filepath = parsed.data.filepath?.trim() ?? "";
+
+  if (assetId && !isDiskOnly) {
+    const repo = await getImageFileRepository();
+    const record = await repo.getImageFileById(assetId);
+    if (!record) {
+      throw notFoundError("Asset not found");
     }
-
-    const assetId = parsed.data.id?.trim() ?? "";
-    const isDiskOnly = assetId.startsWith("disk:");
-    let filepath = parsed.data.filepath?.trim() ?? "";
-
-    if (assetId && !isDiskOnly) {
-      const repo = await getImageFileRepository();
-      const record = await repo.getImageFileById(assetId);
-      if (!record) {
-        throw notFoundError("Asset not found");
-      }
-      filepath = record.filepath;
-      const normalized = normalizePublicPath(filepath);
-      if (!normalized || !normalized.startsWith(`/uploads/studio/${projectId}/`)) {
-        throw badRequestError("Asset not in this project");
-      }
-      const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
-      if (diskPath) {
-        await fs.unlink(diskPath).catch((error: unknown) => {
-          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
-            throw error;
-          }
-        });
-      }
-      await repo.deleteImageFile(assetId);
-      return new Response(null, { status: 204 });
-    }
-
-    if (isDiskOnly && !filepath) {
-      filepath = assetId.replace(/^disk:/, "");
-    }
-
+    filepath = record.filepath;
     const normalized = normalizePublicPath(filepath);
     if (!normalized || !normalized.startsWith(`/uploads/studio/${projectId}/`)) {
-      throw notFoundError("Asset not found");
+      throw badRequestError("Asset not in this project");
     }
     const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
-    if (!diskPath) {
-      throw notFoundError("Asset not found");
+    if (diskPath) {
+      await fs.unlink(diskPath).catch((error: unknown) => {
+        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw error;
+        }
+      });
     }
-    await fs.unlink(diskPath).catch((error: unknown) => {
-      if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
-        throw error;
-      }
-    });
-
+    await repo.deleteImageFile(assetId);
     return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].assets.delete.POST",
-      fallbackMessage: "Failed to delete asset",
-      extra: { projectId: params.projectId },
-    });
   }
+
+  if (isDiskOnly && !filepath) {
+    filepath = assetId.replace(/^disk:/, "");
+  }
+
+  const normalized = normalizePublicPath(filepath);
+  if (!normalized || !normalized.startsWith(`/uploads/studio/${projectId}/`)) {
+    throw notFoundError("Asset not found");
+  }
+  const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
+  if (!diskPath) {
+    throw notFoundError("Asset not found");
+  }
+  await fs.unlink(diskPath).catch((error: unknown) => {
+    if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  });
+
+  return new Response(null, { status: 204 });
 }
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(

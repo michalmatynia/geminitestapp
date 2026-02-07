@@ -8,7 +8,6 @@ import { getImageFileRepository } from "@/features/files/server";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 
 import type { ImageFileRecord } from "@/shared/types/files";
@@ -124,67 +123,58 @@ async function listStudioFoldersFromDisk(projectId: string): Promise<string[]> {
 }
 
 async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
+
+  const prefix = `/uploads/studio/${projectId}/`;
+  let repoAssets: ImageFileRecord[] = [];
   try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
-
-    const prefix = `/uploads/studio/${projectId}/`;
-    let repoAssets: ImageFileRecord[] = [];
-    try {
-      const imageFileRepository = await getImageFileRepository();
-      const files = await imageFileRepository.listImageFiles();
-      repoAssets = files
-        .map((file: ImageFileRecord) => {
-          const normalized = normalizeStudioPublicPath(file.filepath);
-          if (!normalized || !normalized.startsWith(prefix)) return null;
-          return normalized === file.filepath ? file : { ...file, filepath: normalized };
-        })
-        .filter(Boolean) as ImageFileRecord[];
-    } catch {
-      // If repository/DB is down, we still want to show disk assets.
-      repoAssets = [];
-    }
-
-    let diskAssets: ImageFileRecord[] = [];
-    let diskFolders: string[] = [];
-    try {
-      diskAssets = await listStudioAssetsFromDisk(projectId);
-    } catch {
-      diskAssets = [];
-    }
-    try {
-      diskFolders = await listStudioFoldersFromDisk(projectId);
-    } catch {
-      diskFolders = [];
-    }
-
-    const byFilepath = new Map<string, ImageFileRecord>();
-    repoAssets.forEach((asset) => {
-      if (typeof asset.filepath === "string" && asset.filepath.startsWith(prefix)) {
-        byFilepath.set(asset.filepath, asset);
-      }
-    });
-    diskAssets.forEach((asset) => {
-      if (!byFilepath.has(asset.filepath)) {
-        byFilepath.set(asset.filepath, asset);
-      }
-    });
-
-    const result = Array.from(byFilepath.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-    return NextResponse.json({ assets: result, folders: diskFolders });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].assets.GET",
-      fallbackMessage: "Failed to load project assets",
-      extra: { projectId: params.projectId },
-    });
+    const imageFileRepository = await getImageFileRepository();
+    const files = await imageFileRepository.listImageFiles();
+    repoAssets = files
+      .map((file: ImageFileRecord) => {
+        const normalized = normalizeStudioPublicPath(file.filepath);
+        if (!normalized || !normalized.startsWith(prefix)) return null;
+        return normalized === file.filepath ? file : { ...file, filepath: normalized };
+      })
+      .filter(Boolean) as ImageFileRecord[];
+  } catch {
+    // If repository/DB is down, we still want to show disk assets.
+    repoAssets = [];
   }
+
+  let diskAssets: ImageFileRecord[] = [];
+  let diskFolders: string[] = [];
+  try {
+    diskAssets = await listStudioAssetsFromDisk(projectId);
+  } catch {
+    diskAssets = [];
+  }
+  try {
+    diskFolders = await listStudioFoldersFromDisk(projectId);
+  } catch {
+    diskFolders = [];
+  }
+
+  const byFilepath = new Map<string, ImageFileRecord>();
+  repoAssets.forEach((asset) => {
+    if (typeof asset.filepath === "string" && asset.filepath.startsWith(prefix)) {
+      byFilepath.set(asset.filepath, asset);
+    }
+  });
+  diskAssets.forEach((asset) => {
+    if (!byFilepath.has(asset.filepath)) {
+      byFilepath.set(asset.filepath, asset);
+    }
+  });
+
+  const result = Array.from(byFilepath.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  return NextResponse.json({ assets: result, folders: diskFolders });
 }
 
 async function POST_handler(
@@ -192,51 +182,42 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
-  try {
-    const projectId = sanitizeProjectId(params.projectId);
-    if (!projectId) throw badRequestError("Project id is required");
+  const projectId = sanitizeProjectId(params.projectId);
+  if (!projectId) throw badRequestError("Project id is required");
 
-    const formData = await req.formData();
-    const folder = formData.get("folder");
-    const files = extractUploadedFiles(formData);
-    if (files.length === 0) {
-      throw badRequestError("No files provided");
-    }
-
-    const uploaded: ImageFileRecord[] = [];
-    const failures: Array<{ filename: string; error: string }> = [];
-
-    for (let index = 0; index < files.length; index += 1) {
-      const file = files[index]!;
-      const fileName = typeof (file as File).name === "string" ? (file as File).name : "upload.bin";
-      try {
-        const record = await uploadFile(file as File, {
-          category: "studio",
-          projectId,
-          folder: typeof folder === "string" ? folder : null,
-          allowOrphanRecord: true,
-          filenameOverride: fileName,
-        });
-        uploaded.push(record);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Upload failed";
-        failures.push({ filename: fileName, error: message });
-      }
-    }
-
-    if (uploaded.length === 0) {
-      throw badRequestError("Upload failed", { failures });
-    }
-
-    return NextResponse.json({ uploaded, failures }, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "image-studio.projects.[projectId].assets.POST",
-      fallbackMessage: "Failed to upload assets",
-      extra: { projectId: params.projectId },
-    });
+  const formData = await req.formData();
+  const folder = formData.get("folder");
+  const files = extractUploadedFiles(formData);
+  if (files.length === 0) {
+    throw badRequestError("No files provided");
   }
+
+  const uploaded: ImageFileRecord[] = [];
+  const failures: Array<{ filename: string; error: string }> = [];
+
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index]!;
+    const fileName = typeof (file as File).name === "string" ? (file as File).name : "upload.bin";
+    try {
+      const record = await uploadFile(file as File, {
+        category: "studio",
+        projectId,
+        folder: typeof folder === "string" ? folder : null,
+        allowOrphanRecord: true,
+        filenameOverride: fileName,
+      });
+      uploaded.push(record);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      failures.push({ filename: fileName, error: message });
+    }
+  }
+
+  if (uploaded.length === 0) {
+    throw badRequestError("Upload failed", { failures });
+  }
+
+  return NextResponse.json({ uploaded, failures }, { status: 201 });
 }
 
 export const GET = apiHandlerWithParams<{ projectId: string }>(

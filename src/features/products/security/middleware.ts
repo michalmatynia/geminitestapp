@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AppError } from '@/shared/errors/app-error';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import { withSecureFileUpload } from './file-upload';
 import { InputSanitizer, ProductSanitizationRules, validateProductInput, type SanitizationOptions } from './input-sanitization';
@@ -193,6 +192,7 @@ export function withSecurity(
       return addSecurityHeaders(response as NextResponse);
 
     } catch (error) {
+      const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {
         request: req,
         source: 'products.security.middleware',
@@ -226,6 +226,7 @@ export function withFileUploadSecurity(
       return addSecurityHeaders(response as NextResponse);
 
     } catch (error) {
+      const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {
         request: req,
         source: 'products.security.fileupload',

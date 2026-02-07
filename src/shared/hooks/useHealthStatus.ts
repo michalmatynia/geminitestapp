@@ -9,12 +9,12 @@ interface HealthStatus {
 export function useHealthStatus() {
   return useQuery<HealthStatus, Error>({
     queryKey: ['health-status'],
-    queryFn: async () => {
+    queryFn: async (): Promise<HealthStatus> => {
       const response = await fetch('/api/health');
       if (!response.ok) {
         throw new Error('Failed to fetch health status');
       }
-      return response.json();
+      return response.json() as Promise<HealthStatus>;
     },
     // Optional: add specific TanStack Query options for this hook
     staleTime: 1000 * 10, // data is fresh for 10 seconds

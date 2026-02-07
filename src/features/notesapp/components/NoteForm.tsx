@@ -9,9 +9,9 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
 import { logClientError } from '@/features/observability';
+import { useUndo } from '@/shared/hooks/use-undo';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useUndo } from '@/shared/hooks/use-undo';
 import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, ThemeRecord, RelatedNote } from '@/shared/types/notes';
 import { Button, useToast, Input, Label } from '@/shared/ui';
 

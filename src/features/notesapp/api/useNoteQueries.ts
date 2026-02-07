@@ -9,7 +9,8 @@ import type {
   TagRecord, 
   CategoryWithChildren, 
   ThemeRecord, 
-  NotebookRecord 
+  NotebookRecord,
+  RelatedNote
 } from '@/shared/types/notes';
 
 const NOTES_STALE_MS = 10_000;

@@ -88,7 +88,7 @@ export function NoteDetailView(): React.JSX.Element | null {
     [relatedNotes]
   );
 
-  const { data: linkedDetails, isLoading: loadingLinked } = useNotesLookup(relationIds);
+  const { data: linkedDetails } = useNotesLookup(relationIds);
 
   const relatedPreviewNotes = useMemo(() => {
     const map: Record<string, RelatedNote> = {};

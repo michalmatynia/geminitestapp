@@ -605,7 +605,7 @@ export function useCanvasInteractions() {
     let payload: NodeDefinition | null = null;
     try {
       payload = JSON.parse(raw) as NodeDefinition;
-    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast('Failed to add node. Invalid data.', { variant: 'error' });
       return;
     }

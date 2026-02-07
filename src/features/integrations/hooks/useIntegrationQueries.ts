@@ -2,8 +2,6 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Template, BaseInventory } from '@/features/data-import-export';
 import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
@@ -11,6 +9,8 @@ import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export function useIntegrations(): UseQueryResult<Integration[]> {

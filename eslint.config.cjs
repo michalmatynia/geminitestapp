@@ -74,7 +74,11 @@ module.exports = tseslint.config(
       'quotes': ['error', 'single'],
       'semi': ['error', 'always'],
       'no-unused-vars': 'off', // Prefer @typescript-eslint/no-unused-vars
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_', 
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
       'no-dupe-class-members': 'off',

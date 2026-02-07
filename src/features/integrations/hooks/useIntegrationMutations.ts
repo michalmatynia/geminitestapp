@@ -7,9 +7,9 @@ import {
   type UseMutationResult,
 } from '@tanstack/react-query';
 
+import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
 
 export function useCreateIntegration(): UseMutationResult<Integration, Error, { name: string; slug: string }> {
   const queryClient = useQueryClient();

@@ -1,4 +1,22 @@
 
+W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
+
+Some things are still connected to MongoDB, that's an issue, they have to respect the Provider
+
+Warning notification when Ollama is not present, no generation
+
+ GET /api/chatbot/sessions 200 in 464ms (compile: 56ms, proxy.ts: 121ms, render: 288ms)
+shouldn't start when I start product
+
+[7747:0x735400000]   905459 ms: Scavenge (interleaved) 3933.8 (4028.9) -> 3925.3 (4096.9) MB, pooled: 0 MB, 38.08 / 0.00 ms  (average mu = 0.399, current mu = 0.476) allocation failure; 
+[7747:0x735400000]   907563 ms: Mark-Compact (reduce) 3934.3 (4097.1) -> 3876.1 (3964.4) MB, pooled: 0 MB, 1611.46 / 6.00 ms  (+ 420.7 ms in 138 steps since start of marking, biggest step 7.0 ms, walltime since start of marking 2104 ms) (average mu = 0.30
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace ---
+
+I need another node, check if service (Ollama Server) is running if running pass if not notification
+
+CMS Builder PAge not loading after refactor
+
 , useAiPathsRuntime would ideally be refactored into a
   dedicated context provider
   

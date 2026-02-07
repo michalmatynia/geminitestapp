@@ -1,5 +1,5 @@
-import { api } from '@/shared/lib/api-client';
 import { ProductWithImages } from '@/features/products/types';
+import { api } from '@/shared/lib/api-client';
 
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
@@ -56,7 +56,7 @@ export async function countProducts(filters: {
       cache: 'no-store',
     });
     return data.count ?? 0;
-  } catch (error) {
+  } catch (_error) {
     return 0;
   }
 }
@@ -75,7 +75,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   try {
     await api.delete(`/api/products/${id}`);
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { success: false };
   }
 }

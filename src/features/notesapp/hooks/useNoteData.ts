@@ -3,9 +3,9 @@
 import { useQuery, useQueryClient, useMutation, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
-import { api } from '@/shared/lib/api-client';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { api } from '@/shared/lib/api-client';
 import type { DeleteResponse } from '@/shared/types/api';
 import type {
   NoteRecord,

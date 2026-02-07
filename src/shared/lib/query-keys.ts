@@ -13,9 +13,9 @@ export const QUERY_KEYS = {
   products: {
     all: ['products'] as const,
     lists: () => [...QUERY_KEYS.products.all, 'list'] as const,
-    list: (filters: any) => [...QUERY_KEYS.products.lists(), { filters }] as const,
+    list: (filters: unknown) => [...QUERY_KEYS.products.lists(), { filters }] as const,
     counts: () => [...QUERY_KEYS.products.all, 'count'] as const,
-    count: (filters: any) => [...QUERY_KEYS.products.counts(), { filters }] as const,
+    count: (filters: unknown) => [...QUERY_KEYS.products.counts(), { filters }] as const,
     details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     aiJobs: {
@@ -31,7 +31,7 @@ export const QUERY_KEYS = {
   notes: {
     all: ['notes'] as const,
     lists: () => [...QUERY_KEYS.notes.all, 'list'] as const,
-    list: (filters: any) => [...QUERY_KEYS.notes.lists(), { filters }] as const,
+    list: (filters: unknown) => [...QUERY_KEYS.notes.lists(), { filters }] as const,
     detail: (id: string) => [...QUERY_KEYS.notes.all, 'detail', id] as const,
     search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
     lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
@@ -81,7 +81,7 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.integrations.importExport.all, 'warehouses', { inventoryId, connectionId, includeAll }] as const,
       parameters: (inventoryId: string, productId: string) => 
         [...QUERY_KEYS.integrations.importExport.all, 'parameters', { inventoryId, productId }] as const,
-      importList: (inventoryId: string, params: any) =>
+      importList: (inventoryId: string, params: Record<string, unknown>) =>
         [...QUERY_KEYS.integrations.importExport.all, 'import-list', { inventoryId, ...params }] as const,
     }
   },
@@ -101,7 +101,7 @@ export const QUERY_KEYS = {
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
       runs: () => [...QUERY_KEYS.ai.aiPaths.all, 'runs'] as const,
       run: (id: string) => [...QUERY_KEYS.ai.aiPaths.runs(), id] as const,
-      deadLetter: (filters: any) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
+      deadLetter: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
       runtimeAnalytics: (range: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
     },
     insights: {
@@ -126,8 +126,8 @@ export const QUERY_KEYS = {
   system: {
     logs: {
       all: ['system', 'logs'] as const,
-      list: (filters: any) => [...QUERY_KEYS.system.logs.all, 'list', filters] as const,
-      metrics: (filters: any) => [...QUERY_KEYS.system.logs.all, 'metrics', filters] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.logs.all, 'list', filters] as const,
+      metrics: (filters: unknown) => [...QUERY_KEYS.system.logs.all, 'metrics', filters] as const,
       insights: (limit?: number) => [...QUERY_KEYS.system.logs.all, 'insights', { limit }] as const,
     },
     diagnostics: {
@@ -137,7 +137,7 @@ export const QUERY_KEYS = {
     databases: {
       all: ['system', 'databases'] as const,
       backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,
-      preview: (params: any) => [...QUERY_KEYS.system.databases.all, 'preview', params] as const,
+      preview: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'preview', params] as const,
     },
   },
   internationalization: {
@@ -151,7 +151,7 @@ export const QUERY_KEYS = {
   },
   viewer3d: {
     all: ['assets3d'] as const,
-    list: (filters: any) => [...QUERY_KEYS.viewer3d.all, 'list', filters] as const,
+    list: (filters: unknown) => [...QUERY_KEYS.viewer3d.all, 'list', filters] as const,
     detail: (id: string | null) => [...QUERY_KEYS.viewer3d.all, 'detail', id] as const,
     categories: ['assets3d', 'categories'] as const,
     tags: ['assets3d', 'tags'] as const,

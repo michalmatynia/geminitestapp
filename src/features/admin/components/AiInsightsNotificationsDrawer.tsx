@@ -1,11 +1,12 @@
 'use client';
 
+import { XIcon } from 'lucide-react';
+
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
   useAiInsightsNotifications,
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
-import { XIcon } from 'lucide-react';
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import type { AiInsightNotification } from '@/shared/types';
 import { Button } from '@/shared/ui';
 import { useToast } from '@/shared/ui';

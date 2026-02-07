@@ -5,9 +5,9 @@ import { useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
+import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',

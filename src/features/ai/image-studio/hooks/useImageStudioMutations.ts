@@ -4,7 +4,9 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/files';
+
 import { studioKeys } from './useImageStudioQueries';
+
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 export function useCreateStudioProject(): UseMutationResult<string, Error, string> {

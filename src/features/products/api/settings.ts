@@ -1,3 +1,5 @@
+import { api } from '@/shared/lib/api-client';
+
 import { 
   Catalog, 
   CatalogRecord,
@@ -8,7 +10,6 @@ import {
   ProductParameter 
 } from '../types';
 
-import { api } from '@/shared/lib/api-client';
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {

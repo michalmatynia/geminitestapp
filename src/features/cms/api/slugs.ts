@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api-client';
+
 import type { Slug } from '../types';
 
 export const fetchSlugs = async (domainId?: string | null): Promise<Slug[]> => {
@@ -33,7 +34,7 @@ export const createSlug = async (input: { slug: string; domainId?: string | null
       params: { domainId: input.domainId ?? undefined }
     });
     return { ok: true, payload };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false, payload: {} as Slug };
   }
 };
@@ -44,7 +45,7 @@ export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: st
       params: { domainId: domainId ?? undefined }
     });
     return { ok: true, payload };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false, payload: {} as Slug };
   }
 };
@@ -55,7 +56,7 @@ export const deleteSlug = async (id: string, domainId?: string | null): Promise<
       params: { domainId: domainId ?? undefined }
     });
     return { ok: true };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false };
   }
 };

@@ -48,10 +48,12 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
       const { productId, ...payload } = vars;
       try {
         return await api.post<ExportResponse>(`/api/integrations/products/${productId}/export-to-base`, payload);
-      } catch (error: any) {
-        const payloadRes = error?.data as ExportResponse | undefined;
-        if (payloadRes?.skuExists) {
-          throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'data' in error) {
+          const payloadRes = (error as { data: ExportResponse }).data;
+          if (payloadRes?.skuExists) {
+            throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+          }
         }
         throw error;
       }
@@ -228,7 +230,7 @@ export function useSyncBaseImagesMutation(productId: string): UseMutationResult<
 
   return useMutation({
     mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }): Promise<{ status: string; count: number; added: number }> => {
-      const payload = await api.post<any>(`/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`, { inventoryId });
+      const payload = await api.post<{ status?: string; count?: number; added?: number }>(`/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`, { inventoryId });
       return {
         status: payload.status ?? 'synced',
         count: payload.count ?? 0,
@@ -254,10 +256,12 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
       try {
         return await api.post<ExportResponse>(`/api/integrations/products/${productId}/export-to-base`, payload);
-      } catch (error: any) {
-        const payloadRes = error?.data as ExportResponse | undefined;
-        if (payloadRes?.skuExists) {
-          throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'data' in error) {
+          const payloadRes = (error as { data: ExportResponse }).data;
+          if (payloadRes?.skuExists) {
+            throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+          }
         }
         throw error;
       }

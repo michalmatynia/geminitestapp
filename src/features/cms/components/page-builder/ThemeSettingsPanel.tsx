@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from '@tiptap/extension-link';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -274,12 +273,6 @@ function MiniRichTextEditor({
 }
 
 // ---------------------------------------------------------------------------
-// Persistence
-// ---------------------------------------------------------------------------
-
-const userPreferencesQueryKey = ['user-preferences'] as const;
-
-// ---------------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------------
 
@@ -340,10 +333,12 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   // Accordion open-state persistence
   const hasHydratedRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
-  const queryClient = useQueryClient();
 
   const preferencesQuery = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferences();
+
+  const [userOpenSections, setUserOpenSections] = useState<Set<string> | null>(null);
+  const lastSavedRef = useRef<string | null>(null);
 
   const initialOpenSections = useMemo((): Set<string> => {
     if (!preferencesQuery.isFetched) return new Set<string>();
@@ -351,6 +346,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     const filtered = saved.filter((item: string): item is string => typeof item === 'string');
     return new Set(filtered);
   }, [preferencesQuery.data, preferencesQuery.isFetched]);
+
+  const openSections = userOpenSections ?? initialOpenSections;
 
   useEffect((): void => {
     if (preferencesQuery.isFetched) {

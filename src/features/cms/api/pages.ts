@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api-client';
+
 import type { Page, PageSummary } from '../types';
 
 export const fetchPages = async (domainId?: string | null): Promise<PageSummary[]> => {
@@ -18,7 +19,7 @@ export const createPage = async (input: {
   try {
     const payload = await api.post<Page>('/api/cms/pages', input);
     return { ok: true, payload };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false, payload: {} as Page };
   }
 };
@@ -27,7 +28,7 @@ export const updatePage = async (id: string, input: Page & { slugIds?: string[] 
   try {
     const payload = await api.put<Page>(`/api/cms/pages/${id}`, input);
     return { ok: true, payload };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false, payload: {} as Page };
   }
 };
@@ -36,7 +37,7 @@ export const deletePage = async (id: string): Promise<{ ok: boolean }> => {
   try {
     await api.delete(`/api/cms/pages/${id}`);
     return { ok: true };
-  } catch (error) {
+  } catch (_error) {
     return { ok: false };
   }
 };

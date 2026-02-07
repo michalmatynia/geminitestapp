@@ -4,7 +4,6 @@ import { useMutation, useQueryClient, type UseQueryResult, type UseMutationResul
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useStudioProjects, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { 
   useCreateStudioProject, 
   useDeleteStudioProject, 
@@ -14,6 +13,7 @@ import {
   useUploadStudioAssets, 
   useImportStudioAssetsFromDrive 
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { useStudioProjects, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -25,6 +25,7 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 import { type ParamUiControl } from '../utils/param-ui';
 import { IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings, defaultImageStudioSettings } from '../utils/studio-settings';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
+
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 export type StudioTab = 'studio' | 'projects' | 'settings' | 'validation';

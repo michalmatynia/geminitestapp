@@ -30,6 +30,7 @@ import { useQueuedProductIds } from '@/features/products/state/queued-product-op
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
+import { api } from '@/shared/lib/api-client';
 import { useToast, ConfirmDialog } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

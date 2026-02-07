@@ -7,8 +7,9 @@ import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from '@/shared/utils';
 
 import { useImageStudio } from '../context/ImageStudioContext';
-import type { ImageStudioSlotRecord } from '../types';
 import { normalizeFolderPaths } from '../utils/studio-tree';
+
+import type { ImageStudioSlotRecord } from '../types';
 
 type TreeNode = {
   id: string;

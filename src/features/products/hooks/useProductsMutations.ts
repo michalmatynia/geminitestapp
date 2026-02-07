@@ -139,7 +139,7 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, sku }) => {
+    mutationFn: async ({ id, sku }): Promise<{ id: string }> => {
       const res = await fetch(`/api/products/${id}/duplicate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +149,7 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || 'Failed to duplicate product');
       }
-      return res.json();
+      return res.json() as Promise<{ id: string }>;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -158,11 +158,11 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
   });
 }
 
-export function useUpdateProductField(): UseMutationResult<void, Error, { id: string; field: string; value: any }, unknown> {
+export function useUpdateProductField(): UseMutationResult<void, Error, { id: string; field: string; value: unknown }, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, field, value }) => {
+    mutationFn: async ({ id, field, value }): Promise<void> => {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

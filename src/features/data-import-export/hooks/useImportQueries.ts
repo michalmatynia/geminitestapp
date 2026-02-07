@@ -2,10 +2,10 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
-import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
 import type { IntegrationWithConnections } from '@/features/integrations';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export type { CatalogRecord };
 
@@ -147,7 +147,17 @@ export function useImportList(
     queryKey: importKeys.importList(inventoryId, params),
     queryFn: () => {
       const { limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
-      return api.post<any>('/api/integrations/imports/base', {
+      return api.post<{
+        products?: ImportListItem[];
+        total?: number;
+        filtered?: number;
+        available?: number;
+        existing?: number;
+        skuDuplicates?: number;
+        page?: number;
+        pageSize?: number;
+        totalPages?: number;
+      }>('/api/integrations/imports/base', {
         action: 'list',
         inventoryId,
         limit: limit === 'all' ? undefined : Number(limit),

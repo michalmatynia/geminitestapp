@@ -75,7 +75,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
 
   const ollamaModels = useMemo(() => 
     chatbotModels.map((name: string) => ({ value: name, label: name, description: 'Ollama' })),
-    [chatbotModels]
+  [chatbotModels]
   );
 
   useEffect(() => {
@@ -95,7 +95,15 @@ export function AiDescriptionSettings(): React.JSX.Element {
   // Handle job status updates
   useEffect(() => {
     if (jobStatus?.job?.status === 'completed') {
-      const data = jobStatus.job.result;
+      const data = jobStatus.job.result as {
+        analysisInitial?: string;
+        analysis?: string;
+        analysisFinal?: string;
+        descriptionInitial?: string;
+        description?: string;
+        descriptionFinal?: string;
+      } | undefined;
+      
       const newTestResult: TestResultData = {
         analysisInitial: data?.analysisInitial || data?.analysis || '',
         analysisFinal: data?.analysisFinal || '',

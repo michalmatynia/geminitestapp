@@ -23,7 +23,7 @@ export function AiTranslationSettings(): React.JSX.Element {
 
   const ollamaModels = useMemo(() => 
     chatbotModels.map((name: string) => ({ value: name, label: name, description: 'Ollama' })),
-    [chatbotModels]
+  [chatbotModels]
   );
 
   useEffect(() => {

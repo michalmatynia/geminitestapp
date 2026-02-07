@@ -1,5 +1,5 @@
-import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export interface ApiClientOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -62,14 +62,23 @@ export async function apiClient<T>(
       return {} as T;
     }
 
-    const data = await response.json().catch(() => null);
+    const data: unknown = await response.json().catch(() => null);
 
     if (response.ok) {
       return data as T;
     }
 
-    const errorMessage = data?.error || data?.message || response.statusText || 'Unknown API Error';
-    const errorId = data?.errorId;
+    let errorMessage = response.statusText || 'Unknown API Error';
+    let errorId: string | undefined;
+
+    if (data && typeof data === 'object') {
+      const dataObj = data as Record<string, unknown>;
+      errorMessage = String(dataObj.error || dataObj.message || errorMessage);
+      if (typeof dataObj.errorId === 'string') {
+        errorId = dataObj.errorId;
+      }
+    }
+
     const error = new ApiError(errorMessage, response.status, errorId);
 
     if (logError) {
@@ -100,11 +109,11 @@ export async function apiClient<T>(
 export const api = {
   get: <T>(endpoint: string, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
+  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  put: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
+  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'PUT', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  patch: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
+  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'PATCH', body: body instanceof FormData ? body : JSON.stringify(body) }),
   delete: <T>(endpoint: string, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),

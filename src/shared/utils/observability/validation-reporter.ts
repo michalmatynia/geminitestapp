@@ -1,4 +1,5 @@
 import type { ErrorContext } from '@/shared/types/observability';
+
 import { reportClientError } from './client-error-reporter';
 
 /**
@@ -12,7 +13,7 @@ export async function reportValidationError(
   const isServer = typeof window === 'undefined';
 
   if (isServer) {
-    // eslint-disable-next-line no-console
+     
     console.warn(`[ValidationReporter] ${message}`, { service: (context as Record<string, unknown>).service || 'validation', ...context });
   } else {
     try {
@@ -21,7 +22,7 @@ export async function reportValidationError(
         ...context
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[ValidationReporter] Failed to report client validation error:', err);
     }
   }

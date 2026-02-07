@@ -12,6 +12,7 @@ import {
   configurationError,
   operationFailedError,
 } from '@/shared/errors/app-error';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ImageFileRecord } from '@/shared/types/files';
@@ -36,23 +37,41 @@ const AI_SETTINGS_KEYS = new Set([
 
 interface MongoSetting {
   _id: string;
+  key?: string;
   value: string;
 }
 
-export async function getSettingValue(key: string): Promise<string | null> {
-  let value: string | null = null;
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
 
-  // For AI settings, prefer MongoDB if available
-  if (AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
+const readMongoSettingValue = async (key: string): Promise<string | null> => {
+  if (!process.env.MONGODB_URI) return null;
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<MongoSetting>('settings')
+    .findOne({ $or: [{ _id: key }, { key }] });
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
+
+const readPrismaSettingValue = async (key: string): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  const setting = await prisma.setting.findUnique({
+    where: { key },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
+export async function getSettingValue(key: string): Promise<string | null> {
+  const provider = await getAppDbProvider();
+  const preferMongo =
+    Boolean(process.env.MONGODB_URI) &&
+    (provider === 'mongodb' || AI_SETTINGS_KEYS.has(key));
+
+  if (preferMongo) {
     try {
-      const mongo = await getMongoDb();
-      const doc = await mongo
-        .collection<MongoSetting>('settings')
-        .findOne({ _id: key });
-      if (doc && typeof doc.value === 'string') {
-        value = doc.value;
-        return value; // Return immediately if found in MongoDB
-      }
+      const mongoValue = await readMongoSettingValue(key);
+      if (mongoValue !== null) return mongoValue;
     } catch (err) {
       void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
         service: 'ai-description-service',
@@ -60,16 +79,8 @@ export async function getSettingValue(key: string): Promise<string | null> {
         error: err
       });
     }
-  }
-
-  // Fall back to Prisma
-  if (!value && process.env.DATABASE_URL) {
     try {
-      const setting = await prisma.setting.findUnique({
-        where: { key },
-        select: { value: true },
-      });
-      if (setting) value = setting.value;
+      return await readPrismaSettingValue(key);
     } catch (err) {
       void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
         service: 'ai-description-service',
@@ -77,18 +88,23 @@ export async function getSettingValue(key: string): Promise<string | null> {
         error: err
       });
     }
+    return null;
   }
 
-  // If still not found and not an AI setting, try MongoDB as fallback
-  if (!value && !AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
+  try {
+    const prismaValue = await readPrismaSettingValue(key);
+    if (prismaValue !== null) return prismaValue;
+  } catch (err) {
+    void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+      service: 'ai-description-service',
+      key,
+      error: err
+    });
+  }
+
+  if (process.env.MONGODB_URI) {
     try {
-      const mongo = await getMongoDb();
-      const doc = await mongo
-        .collection<MongoSetting>('settings')
-        .findOne({ _id: key });
-      if (doc && typeof doc.value === 'string') {
-        value = doc.value;
-      }
+      return await readMongoSettingValue(key);
     } catch (err) {
       void ErrorSystem.logWarning(`Mongo fallback setting fetch failed for ${key}`, {
         service: 'ai-description-service',
@@ -98,7 +114,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     }
   }
 
-  return value;
+  return null;
 }
 
 function getClient(

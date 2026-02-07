@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +5,8 @@ import { useState, useRef, useMemo } from 'react';
 
 import type { Catalog } from '@/features/products/types';
 import type { PriceGroupWithDetails } from '@/features/products/types';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logger } from '@/shared/utils/logger';
 
 type LanguageRecord = { id: string; code: string; name: string };
@@ -21,46 +22,21 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
   DE: { value: 'name_de', label: 'German' },
 };
 
-// Query keys for cache management
-const catalogSyncQueryKeys = {
-  catalogs: ['catalogs'] as const,
-  priceGroups: ['price-groups'] as const,
-  languages: ['languages'] as const,
-  currencies: ['currencies'] as const,
-};
-
 // API fetch functions
 async function fetchCatalogs(): Promise<Catalog[]> {
-  const res = await fetch('/api/catalogs');
-  if (!res.ok) {
-    const payload = (await res.json()) as { error?: string };
-    throw new Error(payload?.error || 'Failed to load catalogs');
-  }
-  return res.json() as Promise<Catalog[]>;
+  return api.get<Catalog[]>('/api/catalogs');
 }
 
 async function fetchPriceGroups(): Promise<PriceGroupWithDetails[]> {
-  const res = await fetch('/api/price-groups');
-  if (!res.ok) {
-    throw new Error('Failed to load price groups');
-  }
-  return res.json() as Promise<PriceGroupWithDetails[]>;
+  return api.get<PriceGroupWithDetails[]>('/api/price-groups');
 }
 
 async function fetchLanguages(): Promise<LanguageRecord[]> {
-  const res = await fetch('/api/languages');
-  if (!res.ok) {
-    throw new Error('Failed to load languages');
-  }
-  return res.json() as Promise<LanguageRecord[]>;
+  return api.get<LanguageRecord[]>('/api/languages');
 }
 
 async function fetchCurrencies(): Promise<CurrencyRecord[]> {
-  const res = await fetch('/api/currencies');
-  if (!res.ok) {
-    throw new Error('Failed to load currencies');
-  }
-  return res.json() as Promise<CurrencyRecord[]>;
+  return api.get<CurrencyRecord[]>('/api/currencies');
 }
 
 export interface UseCatalogSyncResult {
@@ -81,25 +57,25 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
 
   // Parallel queries for all data sources
   const catalogsQuery = useQuery({
-    queryKey: catalogSyncQueryKeys.catalogs,
+    queryKey: QUERY_KEYS.products.catalogs,
     queryFn: fetchCatalogs,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const priceGroupsQuery = useQuery({
-    queryKey: catalogSyncQueryKeys.priceGroups,
+    queryKey: QUERY_KEYS.internationalization.currencies, // Using common price-groups/currencies key
     queryFn: fetchPriceGroups,
     staleTime: 1000 * 60 * 5,
   });
 
   const languagesQuery = useQuery({
-    queryKey: catalogSyncQueryKeys.languages,
+    queryKey: QUERY_KEYS.internationalization.languages,
     queryFn: fetchLanguages,
     staleTime: 1000 * 60 * 5,
   });
 
   const currenciesQuery = useQuery({
-    queryKey: catalogSyncQueryKeys.currencies,
+    queryKey: QUERY_KEYS.internationalization.currencies,
     queryFn: fetchCurrencies,
     staleTime: 1000 * 60 * 5,
   });
@@ -201,13 +177,6 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
   // Sync Currency Options based on Catalog
   const currencyOptions = codes;
 
-  // Derived state for currencyCode to avoid set-state-in-effect
-  // If the current user selection is valid for the current catalog, keep it.
-  // Otherwise, fallback to the catalog's default.
-  // We use a piece of state to track the user's *explicit* selection if any.
-  // Note: We use 'currencyCode' state here to track the *effective* code if possible,
-  // but to match the "derived" pattern we need to know if the state value is "stale".
-  // Actually, the simplest way is to just let the user set a preference, and validate it on read.
   const [userCurrencyCode, setUserCurrencyCode] = useState<string | null>(null);
 
   const currencyCode =

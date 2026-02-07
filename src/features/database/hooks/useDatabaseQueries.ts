@@ -138,8 +138,12 @@ export function useSqlQueryMutation(): UseMutationResult<
   });
 }
 
-export function useCreateCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
+export function useCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
+
   return useMutation({
+
     mutationFn: (input: CrudRequest) => executeCrudOperation(input),
+
   });
+
 }

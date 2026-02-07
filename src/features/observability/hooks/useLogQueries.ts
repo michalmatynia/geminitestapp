@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 
 export type LogFilters = {
@@ -15,13 +16,7 @@ export type LogFilters = {
   to?: string | null;
 };
 
-export const logKeys = {
-  all: ['system-logs'] as const,
-  list: (filters: LogFilters) => ['system-logs', 'list', filters] as const,
-  metrics: (filters: Omit<LogFilters, 'page' | 'pageSize'>) => ['system-logs', 'metrics', filters] as const,
-  diagnostics: ['mongo-index-diagnostics'] as const,
-  insights: () => ['system-logs', 'insights'] as const,
-};
+const logKeys = QUERY_KEYS.system.logs;
 
 export interface SystemLogsResponse {
   logs?: SystemLogRecord[];
@@ -70,14 +65,14 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
 
 export function useMongoDiagnostics(): UseQueryResult<unknown, Error> {
   return useQuery({
-    queryKey: logKeys.diagnostics,
+    queryKey: QUERY_KEYS.system.diagnostics.mongo,
     queryFn: () => api.get<unknown>('/api/system/diagnostics/mongo-indexes'),
   });
 }
 
 export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: logKeys.insights(),
+    queryKey: logKeys.insights(options.limit),
     queryFn: () => 
       api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
         params: { limit: options.limit ?? 5 }

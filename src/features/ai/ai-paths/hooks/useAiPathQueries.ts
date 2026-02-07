@@ -3,13 +3,10 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from '@/shared/types/ai-paths';
 
-export const aiPathKeys = {
-  all: ['ai-paths'] as const,
-  deadLetter: (filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }) => [...aiPathKeys.all, 'dead-letter', filters] as const,
-  run: (runId: string) => [...aiPathKeys.all, 'runs', runId] as const,
-};
+const aiPathKeys = QUERY_KEYS.ai.aiPaths;
 
 export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }): UseQueryResult<{ runs: AiPathRunRecord[]; total: number }, Error> {
   return useQuery({

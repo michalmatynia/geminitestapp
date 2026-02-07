@@ -21,7 +21,8 @@ export const QUERY_KEYS = {
     aiJobs: {
       all: ['products', 'ai-jobs'] as const,
       detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
-    }
+    },
+    catalogs: ['products', 'catalogs'] as const,
   },
   settings: {
     all: ['settings'] as const,
@@ -62,7 +63,25 @@ export const QUERY_KEYS = {
     all: ['integrations'] as const,
     connections: () => [...QUERY_KEYS.integrations.all, 'connections'] as const,
     marketplaces: () => [...QUERY_KEYS.integrations.all, 'marketplaces'] as const,
+    marketplace: {
+      all: ['marketplace'] as const,
+      categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'categories', connectionId] as const,
+      mappings: (connectionId: string, catalogId?: string | null) => [...QUERY_KEYS.integrations.marketplace.all, 'mappings', connectionId, catalogId ?? 'all'] as const,
+    },
     listings: (id: string) => [...QUERY_KEYS.integrations.all, 'listings', id] as const,
+    importExport: {
+      all: ['import-export'] as const,
+      templates: (scope: 'import' | 'export') => [...QUERY_KEYS.integrations.importExport.all, 'templates', scope] as const,
+      preferences: () => [...QUERY_KEYS.integrations.importExport.all, 'preferences'] as const,
+      pref: (key: string) => [...QUERY_KEYS.integrations.importExport.preferences(), key] as const,
+      inventories: (connectionId?: string) => [...QUERY_KEYS.integrations.importExport.all, 'inventories', { connectionId }] as const,
+      warehouses: (inventoryId: string, connectionId?: string, includeAll?: boolean) => 
+        [...QUERY_KEYS.integrations.importExport.all, 'warehouses', { inventoryId, connectionId, includeAll }] as const,
+      parameters: (inventoryId: string, productId: string) => 
+        [...QUERY_KEYS.integrations.importExport.all, 'parameters', { inventoryId, productId }] as const,
+      importList: (inventoryId: string, params: any) =>
+        [...QUERY_KEYS.integrations.importExport.all, 'import-list', { inventoryId, ...params }] as const,
+    }
   },
   ai: {
     all: ['ai'] as const,
@@ -79,16 +98,34 @@ export const QUERY_KEYS = {
       all: ['ai', 'ai-paths'] as const,
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
       runs: () => [...QUERY_KEYS.ai.aiPaths.all, 'runs'] as const,
+      run: (id: string) => [...QUERY_KEYS.ai.aiPaths.runs(), id] as const,
+      deadLetter: (filters: any) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
     }
   },
   auth: {
     user: ['auth', 'user'] as const,
     session: ['auth', 'session'] as const,
-    preferences: ['auth', 'preferences'] as const,
+    users: {
+      all: ['auth', 'users'] as const,
+      detail: (id: string) => [...QUERY_KEYS.auth.users.all, 'detail', id] as const,
+      security: (id: string) => [...QUERY_KEYS.auth.users.all, 'security', id] as const,
+    },
+    preferences: {
+      all: ['auth', 'preferences'] as const,
+      detail: (key: string) => [...QUERY_KEYS.auth.preferences.all, key] as const,
+    },
   },
   system: {
-    logs: ['system', 'logs'] as const,
-    diagnostics: ['system', 'diagnostics'] as const,
+    logs: {
+      all: ['system', 'logs'] as const,
+      list: (filters: any) => [...QUERY_KEYS.system.logs.all, 'list', filters] as const,
+      metrics: (filters: any) => [...QUERY_KEYS.system.logs.all, 'metrics', filters] as const,
+      insights: (limit?: number) => [...QUERY_KEYS.system.logs.all, 'insights', { limit }] as const,
+    },
+    diagnostics: {
+      all: ['system', 'diagnostics'] as const,
+      mongo: ['system', 'diagnostics', 'mongo'] as const,
+    },
     databases: {
       all: ['system', 'databases'] as const,
       backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,
@@ -103,5 +140,16 @@ export const QUERY_KEYS = {
   drafts: {
     all: ['drafts'] as const,
     detail: (id: string) => ['drafts', id] as const,
+  },
+  viewer3d: {
+    all: ['assets3d'] as const,
+    list: (filters: any) => [...QUERY_KEYS.viewer3d.all, 'list', filters] as const,
+    detail: (id: string | null) => [...QUERY_KEYS.viewer3d.all, 'detail', id] as const,
+    categories: ['assets3d', 'categories'] as const,
+    tags: ['assets3d', 'tags'] as const,
+  },
+  files: {
+    all: ['files'] as const,
+    list: (params: string) => [...QUERY_KEYS.files.all, 'list', params] as const,
   }
 } as const;

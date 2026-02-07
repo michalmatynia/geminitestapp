@@ -3,33 +3,27 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+const marketplaceKeys = QUERY_KEYS.integrations.marketplace;
 
 export function useExternalCategories(connectionId: string): UseQueryResult<ExternalCategory[]> {
   return useQuery({
-    queryKey: ['marketplace-categories', connectionId],
-    queryFn: async (): Promise<ExternalCategory[]> => {
-      const res = await fetch(`/api/marketplace/categories?connectionId=${connectionId}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch external categories');
-      }
-      return (await res.json()) as ExternalCategory[];
-    },
+    queryKey: marketplaceKeys.categories(connectionId),
+    queryFn: () => api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
     enabled: !!connectionId,
   });
 }
 
 export function useCategoryMappings(connectionId: string, catalogId?: string | null): UseQueryResult<CategoryMappingWithDetails[]> {
   return useQuery({
-    queryKey: ['category-mappings', connectionId, catalogId],
+    queryKey: marketplaceKeys.mappings(connectionId, catalogId),
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
       if (!catalogId) return [];
-      const res = await fetch(
+      return api.get<CategoryMappingWithDetails[]>(
         `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
       );
-      if (!res.ok) {
-        throw new Error('Failed to fetch mappings');
-      }
-      return (await res.json()) as CategoryMappingWithDetails[];
     },
     enabled: !!connectionId && !!catalogId,
   });
@@ -42,14 +36,8 @@ export function useCategoryMappingsByConnection(
   const isEnabled = options?.enabled ?? !!connectionId;
 
   return useQuery({
-    queryKey: ['category-mappings', connectionId, 'all'],
-    queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
-      const res = await fetch(`/api/marketplace/mappings?connectionId=${connectionId}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch mappings');
-      }
-      return (await res.json()) as CategoryMappingWithDetails[];
-    },
+    queryKey: marketplaceKeys.mappings(connectionId, 'all'),
+    queryFn: () => api.get<CategoryMappingWithDetails[]>(`/api/marketplace/mappings?connectionId=${connectionId}`),
     enabled: isEnabled && !!connectionId,
   });
 }

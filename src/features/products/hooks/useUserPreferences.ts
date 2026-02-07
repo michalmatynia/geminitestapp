@@ -1,8 +1,12 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
@@ -21,14 +25,10 @@ type PreferencesApiResponse = {
   productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
 };
 
-const userPreferencesQueryKey = ['user-preferences', 'product-list'] as const;
+const userPreferencesQueryKey = QUERY_KEYS.auth.preferences.detail('product-list');
 
 async function fetchUserPreferences(): Promise<ProductListPreferences> {
-  const res = await fetch('/api/user/preferences');
-  if (!res.ok) {
-    throw new Error('Failed to load preferences');
-  }
-  const data = (await res.json()) as PreferencesApiResponse;
+  const data = await api.get<PreferencesApiResponse>('/api/user/preferences');
   return {
     nameLocale: (data.productListNameLocale || 'name_en') as
       | 'name_en'
@@ -46,14 +46,7 @@ async function updateUserPreference(
   value: unknown,
 ): Promise<void> {
   const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-  const res = await fetch('/api/user/preferences', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ [apiKey]: value }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update preference: ${key}`);
-  }
+  await api.patch('/api/user/preferences', { [apiKey]: value });
 }
 
 function getLocalStorageFallback(): Partial<ProductListPreferences> {
@@ -108,14 +101,7 @@ async function updateUserPreferences(
     const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
     payload[apiKey] = value;
   }
-  const res = await fetch('/api/user/preferences', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    throw new Error('Failed to update preferences');
-  }
+  await api.patch('/api/user/preferences', payload);
 }
 
 export function useUpdateUserPreferencesMutation(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {

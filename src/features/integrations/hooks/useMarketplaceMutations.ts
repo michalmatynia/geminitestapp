@@ -2,6 +2,11 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+const marketplaceKeys = QUERY_KEYS.integrations.marketplace;
+
 export function useFetchExternalCategoriesMutation(): UseMutationResult<
   { fetched: number; message: string },
   Error,
@@ -10,22 +15,9 @@ export function useFetchExternalCategoriesMutation(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ connectionId }: { connectionId: string }): Promise<{ fetched: number; message: string }> => {
-      const res = await fetch('/api/marketplace/categories/fetch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ connectionId }),
-      });
-
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || 'Failed to fetch categories');
-      }
-
-      return (await res.json()) as { fetched: number; message: string };
-    },
+    mutationFn: (payload: { connectionId: string }) => api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
     onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['marketplace-categories', connectionId] });
+      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.categories(connectionId) });
     },
   });
 }
@@ -38,26 +30,10 @@ export function useSaveMappingsMutation(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ connectionId, catalogId, mappings }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }): Promise<{ upserted: number; message: string }> => {
-      const res = await fetch('/api/marketplace/mappings/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          connectionId,
-          catalogId,
-          mappings,
-        }),
-      });
-
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || 'Failed to save mappings');
-      }
-
-      return (await res.json()) as { upserted: number; message: string };
-    },
+    mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => 
+      api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
     onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => {
-      void queryClient.invalidateQueries({ queryKey: ['category-mappings', connectionId, catalogId] });
+      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.mappings(connectionId, catalogId) });
     },
   });
 }

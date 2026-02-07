@@ -3,22 +3,15 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export const listingKeys = {
-  all: ['integrations', 'listings'] as const,
-  product: (productId: string) => ['integrations', 'product-listings', productId] as const,
-};
+const listingKeys = QUERY_KEYS.integrations;
 
 export function useProductListings(productId: string): UseQueryResult<ProductListingWithDetails[], Error> {
   return useQuery<ProductListingWithDetails[], Error>({
-    queryKey: listingKeys.product(productId),
-    queryFn: async (): Promise<ProductListingWithDetails[]> => {
-      const res: Response = await fetch(`/api/integrations/products/${productId}/listings`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch listings');
-      }
-      return (await res.json()) as ProductListingWithDetails[];
-    },
+    queryKey: listingKeys.listings(productId),
+    queryFn: () => api.get<ProductListingWithDetails[]>(`/api/integrations/products/${productId}/listings`),
     enabled: Boolean(productId),
   });
 }

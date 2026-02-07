@@ -3,20 +3,15 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import type { ExpandedImageFile } from '@/features/products';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const fileKeys = {
-  all: ['files'] as const,
-  list: (params: string) => ['files', 'list', params] as const,
-};
+const fileKeys = QUERY_KEYS.files;
 
 export function useFiles(params: string = ''): UseQueryResult<ExpandedImageFile[]> {
   return useQuery({
     queryKey: fileKeys.list(params),
-    queryFn: async (): Promise<ExpandedImageFile[]> => {
-      const res = await fetch(`/api/files?${params}`);
-      if (!res.ok) throw new Error('Failed to load files');
-      return (await res.json()) as ExpandedImageFile[];
-    },
+    queryFn: () => api.get<ExpandedImageFile[]>(`/api/files?${params}`),
   });
 }
 
@@ -24,10 +19,7 @@ export function useDeleteFile(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (fileId: string): Promise<string> => {
-      const res = await fetch(`/api/files/${fileId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete file');
+      await api.delete(`/api/files/${fileId}`);
       return fileId;
     },
     onSuccess: (): void => {
@@ -39,15 +31,7 @@ export function useDeleteFile(): UseMutationResult<string, Error, string> {
 export function useUpdateFileTags(): UseMutationResult<ExpandedImageFile, Error, { id: string; tags: string[] }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tags }: { id: string; tags: string[] }): Promise<ExpandedImageFile> => {
-      const res = await fetch(`/api/files/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tags }),
-      });
-      if (!res.ok) throw new Error('Failed to update file tags');
-      return (await res.json()) as ExpandedImageFile;
-    },
+    mutationFn: ({ id, tags }: { id: string; tags: string[] }) => api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
     onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: fileKeys.all });
     },

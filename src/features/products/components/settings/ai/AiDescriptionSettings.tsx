@@ -1,14 +1,13 @@
 'use client';
 
 import { InfoIcon, PlayIcon, RefreshCcw, XCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
+import { useAiConfig, useUpdateAiConfigMutation } from '@/features/products/hooks/useAiConfigQueries';
+import { useAiJobStatus, useEnqueueAiJob, useBulkAiJobs } from '@/features/products/hooks/useProductAiJobs';
 import { ProductWithImages, ProductImageRecord } from '@/features/products/types';
-import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from '@/shared/api/settings-client';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, SettingsPageLayout, PromptGenerationSection } from '@/shared/ui';
 
 const STATIC_VISION_MODELS = [
@@ -25,7 +24,7 @@ const STATIC_TEXT_MODELS = [
 const AVAILABLE_PLACEHOLDERS = [
   { key: 'result', description: 'Result from the immediate previous step.' },
   { key: 'analysis', description: 'Final result from Signal Path 1 (Image Analysis).' },
-  { key: 'description', description: 'Initial result from Signal Path 2 (Description Generation).' },
+  { key: 'description', description: 'Final result from Signal Path 2 (Description Generation).' },
   { key: 'images', description: 'Product images. Only sent to AI if this placeholder is present.' },
   { key: 'sku', description: 'Product SKU' },
   { key: 'name_en', description: 'Product Name (English)' },
@@ -50,102 +49,67 @@ type TestResultData = {
   descriptionFinal?: string;
 };
 
-interface JobData {
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
-  result?: TestResultData & { analysis?: string; description?: string };
-  errorMessage?: string;
-}
-
 export function AiDescriptionSettings(): React.JSX.Element {
-  const [imageAnalysisModel, setImageAnalysisModel] = useState('');
+  const { toast } = useToast();
+  const { data: config, isLoading: configLoading } = useAiConfig();
+  const { mutateAsync: updateConfig } = useUpdateAiConfigMutation();
+  const { data: chatbotModels = [] } = useChatbotModels();
   
-  // Path 1
+  const [imageAnalysisModel, setImageAnalysisModel] = useState('');
   const [visionInputPrompt, setVisionInputPrompt] = useState('');
   const [visionOutputPrompt, setVisionOutputPrompt] = useState('');
   const [visionOutputEnabled, setVisionOutputEnabled] = useState(false);
 
   const [descriptionGenerationModel, setDescriptionGenerationModel] = useState('');
-  
-  // Path 2
   const [generationInputPrompt, setGenerationInputPrompt] = useState('');
   const [generationOutputPrompt, setGenerationOutputPrompt] = useState('');
   const [generationOutputEnabled, setGenerationOutputEnabled] = useState(false);
 
-  const [ollamaModels, setOllamaModels] = useState<{ value: string; label: string; description: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
-
   const [testProductId, setTestProductId] = useState('');
-  const [testing, setTesting] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestResultData | null>(null);
-  const [queuing, setQueuing] = useState(false);
 
-  // Use TanStack Query hooks
-  const settingsStore = useSettingsStore();
-  const settingsMap = settingsStore.map;
-  const settingsLoading = settingsStore.isLoading;
-  const { mutateAsync: updateSettingMutateAsync } = useUpdateSetting();
+  const { data: jobStatus } = useAiJobStatus(activeJobId);
+  const { mutateAsync: enqueueJob, isPending: enqueuing } = useEnqueueAiJob();
+  const { mutateAsync: bulkJob, isPending: bulkQueuing } = useBulkAiJobs();
+
+  const ollamaModels = useMemo(() => 
+    chatbotModels.map((name: string) => ({ value: name, label: name, description: 'Ollama' })),
+    [chatbotModels]
+  );
 
   useEffect(() => {
-    if (settingsMap && !settingsLoading) {
-      setImageAnalysisModel(settingsMap.get('ai_vision_model') || 'gpt-4o');
-      setVisionInputPrompt(settingsMap.get('ai_vision_user_prompt') || 'Analyze these product images...');
-      setVisionOutputPrompt(settingsMap.get('ai_vision_prompt') || '');
-      setVisionOutputEnabled(settingsMap.get('ai_vision_output_enabled') === 'true');
-      setDescriptionGenerationModel(settingsMap.get('ai_description_model') || 'gpt-4o');
-      setGenerationInputPrompt(settingsMap.get('ai_description_user_prompt') || 'Generate a product description...');
-      setGenerationOutputPrompt(settingsMap.get('ai_description_prompt') || '');
-      setGenerationOutputEnabled(settingsMap.get('ai_description_output_enabled') === 'true');
-      setLoading(false);
+    if (config) {
+      setImageAnalysisModel(config.imageAnalysisModel || 'gpt-4o');
+      setVisionInputPrompt(config.visionInputPrompt || 'Analyze these product images...');
+      setVisionOutputPrompt(config.visionOutputPrompt || '');
+      setVisionOutputEnabled(config.visionOutputEnabled ?? false);
+      setDescriptionGenerationModel(config.descriptionGenerationModel || 'gpt-4o');
+      setGenerationInputPrompt(config.generationInputPrompt || 'Generate description for [name_en] using [result]');
+      setGenerationOutputPrompt(config.generationOutputPrompt || '');
+      setGenerationOutputEnabled(config.generationOutputEnabled ?? false);
+      setTestProductId(config.testProductId || '');
     }
-  }, [settingsMap, settingsLoading]);
+  }, [config]);
 
+  // Handle job status updates
   useEffect(() => {
-    const loadData = async (): Promise<void> => {
-      try {
-        const data = await fetchSettingsCached();
-        const settingsMap = new Map(data.map((item: SettingRecord) => [item.key, item.value]));
-
-        setImageAnalysisModel(settingsMap.get('ai_vision_model') || 'gpt-4o');
-        setVisionInputPrompt(settingsMap.get('ai_vision_user_prompt') || 'Analyze these product images...');
-        setVisionOutputPrompt(settingsMap.get('ai_vision_prompt') || '');
-        setVisionOutputEnabled(settingsMap.get('ai_vision_output_enabled') === 'true');
-
-        setDescriptionGenerationModel(settingsMap.get('openai_model') || 'gpt-3.5-turbo');
-        setGenerationInputPrompt(settingsMap.get('description_generation_user_prompt') || 'Generate description for [name_en] using [result]');
-        setGenerationOutputPrompt(settingsMap.get('description_generation_prompt') || '');
-        setGenerationOutputEnabled(settingsMap.get('ai_generation_output_enabled') === 'true');
-        setTestProductId(settingsMap.get('ai_description_test_product_id') || '');
-
-        // Load last test result if exists
-        const testResultJson = settingsMap.get('ai_description_last_test_result');
-        if (testResultJson) {
-          try {
-            const parsed = JSON.parse(testResultJson) as TestResultData;
-            setTestResult(parsed);
-            console.log('Loaded previous test result from database');
-          } catch (err) {
-            console.warn('Failed to parse saved test result:', err);
-          }
-        }
-
-        const chatbotRes = await fetch('/api/chatbot');
-        if (chatbotRes.ok) {
-          const data = (await chatbotRes.json()) as { models?: string[] };
-          if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map((name: string) => ({ value: name, label: name, description: 'Ollama' })));
-          }
-        }
-      } catch (error) {
-        logClientError(error, { context: { source: 'AiDescriptionSettings', action: 'loadData' } });
-        toast('Failed to load configuration.', { variant: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadData();
-  }, [toast]);
+    if (jobStatus?.job?.status === 'completed') {
+      const data = jobStatus.job.result;
+      const newTestResult: TestResultData = {
+        analysisInitial: data?.analysisInitial || data?.analysis || '',
+        analysisFinal: data?.analysisFinal || '',
+        descriptionInitial: data?.descriptionInitial || data?.description || '',
+        descriptionFinal: data?.descriptionFinal || '',
+      };
+      setTestResult(newTestResult);
+      setActiveJobId(null);
+      toast('Test completed successfully.', { variant: 'success' });
+    } else if (jobStatus?.job?.status === 'failed') {
+      toast(jobStatus.job.errorMessage || 'Job failed.', { variant: 'error' });
+      setActiveJobId(null);
+    }
+  }, [jobStatus, toast]);
 
   const handleTest = async (): Promise<void> => {
     if (!testProductId) {
@@ -153,10 +117,10 @@ export function AiDescriptionSettings(): React.JSX.Element {
       return;
     }
 
-    setTesting(true);
-    setTestResult(null);
-
     try {
+      setTestResult(null);
+      
+      // First find the product
       let product: ProductWithImages | null = null;
       const productRes = await fetch(`/api/products/${testProductId}`);
       
@@ -182,155 +146,61 @@ export function AiDescriptionSettings(): React.JSX.Element {
       const externalImages = Array.isArray(product.imageLinks) ? product.imageLinks : [];
       const allImageUrls = [...externalImages, ...uploadedImages];
 
-      // Create a job for the test
-      const enqueueRes = await fetch('/api/products/ai-jobs/enqueue', {
-        method: 'POST',
-        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          productId: product.id,
-          type: 'description_generation',
-          payload: {
-            productData: product,
-            imageUrls: allImageUrls,
-            visionOutputEnabled,
-            generationOutputEnabled,
-            isTest: true
-          }
-        }),
+      const { jobId } = await enqueueJob({
+        productId: product.id,
+        type: 'description_generation',
+        payload: {
+          productData: product,
+          imageUrls: allImageUrls,
+          visionOutputEnabled,
+          generationOutputEnabled,
+          isTest: true
+        }
       });
 
-      const enqueueData = (await enqueueRes.json()) as { error?: string; jobId: string };
-      if (!enqueueRes.ok) {
-        throw new Error(enqueueData.error || 'Failed to enqueue test job.');
-      }
-      const jobId = enqueueData.jobId;
-
-      // Poll for completion
-      let completed = false;
-      let attempts = 0;
-      while (!completed && attempts < 60) { // 2 minutes max
-        await new Promise((r: (value: void) => void) => setTimeout(r, 2000));
-        const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
-        if (!statusRes.ok) break;
-        const { job } = (await statusRes.json()) as { job: JobData };
-        
-        if (job.status === 'completed') {
-          const data = job.result;
-
-          const newTestResult: TestResultData = {
-            analysisInitial: data?.analysisInitial || data?.analysis || '',
-            analysisFinal: data?.analysisFinal || '',
-            descriptionInitial: data?.descriptionInitial || data?.description || '',
-            descriptionFinal: data?.descriptionFinal || '',
-          };
-
-          setTestResult(newTestResult);
-
-          // Save test result to database so it persists across page navigations
-          try {
-            await fetch('/api/settings', {
-              method: 'POST',
-              headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-              body: JSON.stringify({
-                key: 'ai_description_last_test_result',
-                value: JSON.stringify(newTestResult)
-              }),
-            });
-            invalidateSettingsCache();
-          } catch (err) {
-            logClientError(err, { context: { source: 'AiDescriptionSettings', action: 'saveTestResult', jobId } });
-          }
-
-          toast('Test completed. Results saved.', { variant: 'success' });
-          completed = true;
-        } else if (job.status === 'failed') {
-          throw new Error(job.errorMessage || 'Job failed.');
-        } else if (job.status === 'canceled') {
-          throw new Error('Job was canceled.');
-        }
-        attempts++;
-      }
-
-      if (!completed) {
-        throw new Error('Test timed out. Check the Jobs page.');
-      }
+      setActiveJobId(jobId);
+      toast('Test job enqueued. Waiting for results...', { variant: 'info' });
 
     } catch (error) {
       logClientError(error, { context: { source: 'AiDescriptionSettings', action: 'handleTest', productId: testProductId } });
       toast(error instanceof Error ? error.message : 'Test failed.', { variant: 'error' });
-    } finally {
-      setTesting(false);
     }
   };
 
   const handleQueueAll = async (): Promise<void> => {
     if (!window.confirm('This will queue description generation for ALL products using the current configuration. Proceed?')) return;
-    setQueuing(true);
+    
     try {
-      const res = await fetch('/api/products/ai-jobs/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'description_generation',
-          config: {
-            visionOutputEnabled,
-            generationOutputEnabled
-          }
-        }),
+      const data = await bulkJob({
+        type: 'description_generation',
+        config: {
+          visionOutputEnabled,
+          generationOutputEnabled
+        }
       });
-      if (!res.ok) throw new Error('Failed to queue jobs.');
-      const data = (await res.json()) as { count: number };
       toast(`Queued ${data.count} products for generation.`, { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to queue jobs.', { variant: 'error' });
-    } finally {
-      setQueuing(false);
     }
   };
 
   const handleSave = async (): Promise<void> => {
-    setSaving(true);
     try {
-      const payloads = [
-        { key: 'ai_vision_model', value: imageAnalysisModel },
-        { key: 'ai_vision_user_prompt', value: visionInputPrompt },
-        { key: 'ai_vision_prompt', value: visionOutputPrompt },
-        { key: 'ai_vision_output_enabled', value: String(visionOutputEnabled) },
-        { key: 'openai_model', value: descriptionGenerationModel },
-        { key: 'description_generation_user_prompt', value: generationInputPrompt },
-        { key: 'description_generation_prompt', value: generationOutputPrompt },
-        { key: 'ai_generation_output_enabled', value: String(generationOutputEnabled) },
-        { key: 'ai_description_test_product_id', value: testProductId },
-      ];
-
-      // Use TanStack Query mutation for settings updates
-      for (const payload of payloads) {
-        await updateSettingMutateAsync(payload);
-      }
-
-      // Also save to dedicated MongoDB collection
-      await fetch('/api/ai-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageAnalysisModel,
-          visionInputPrompt,
-          visionOutputPrompt,
-          visionOutputEnabled,
-          descriptionGenerationModel,
-          generationInputPrompt,
-          generationOutputPrompt,
-          generationOutputEnabled,
-          testProductId,
-        }),
+      await updateConfig({
+        imageAnalysisModel,
+        visionInputPrompt,
+        visionOutputPrompt,
+        visionOutputEnabled,
+        descriptionGenerationModel,
+        generationInputPrompt,
+        generationOutputPrompt,
+        generationOutputEnabled,
+        testProductId,
       });
-
-      toast('Settings saved.', { variant: 'success' });
+      toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AiDescriptionSettings', action: 'handleSave' } });
-      toast('Failed to save.', { variant: 'error' });
-    } finally {
-      setSaving(false);
+      toast('Failed to save settings.', { variant: 'error' });
     }
   };
 
@@ -340,32 +210,21 @@ export function AiDescriptionSettings(): React.JSX.Element {
     toast('Result copied to clipboard.');
   };
 
-  const clearTestResults = async (): Promise<void> => {
+  const clearTestResults = (): void => {
     setTestResult(null);
-    try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: 'ai_description_last_test_result',
-          value: ''
-        }),
-      });
-      invalidateSettingsCache();
-      toast('Test results cleared.', { variant: 'success' });
-    } catch (err) {
-      console.warn('Failed to clear test results from database:', err);
-    }
+    toast('Test results cleared.');
   };
 
-  if (loading) return <div className="text-sm text-gray-400">Loading settings...</div>;
+  if (configLoading) return <div className="text-sm text-gray-400">Loading settings...</div>;
+
+  const testing = !!activeJobId;
 
   return (
     <SettingsPageLayout
       title="AI Description Configuration"
       description="Configure multi-step generation flow for product descriptions."
       onSave={handleSave}
-      isSaving={saving}
+      isSaving={false}
       actions={
         <>
           <Input
@@ -374,21 +233,21 @@ export function AiDescriptionSettings(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestProductId(e.target.value)}
             className="w-[180px] bg-gray-900 border text-white h-9 text-sm"
           />
-          <Button variant="secondary" onClick={() => void handleTest()} disabled={testing} className="gap-2 h-9">
-            <PlayIcon className="size-3.5" />
+          <Button variant="secondary" onClick={() => void handleTest()} disabled={testing || enqueuing} className="gap-2 h-9">
+            <PlayIcon className={`size-3.5 ${testing ? 'animate-pulse' : ''}`} />
             {testing ? 'Testing...' : 'Test on Product'}
           </Button>
 
           {testResult && (
-            <Button variant="ghost" onClick={() => void clearTestResults()} className="gap-2 h-9 text-red-400 hover:text-red-300">
+            <Button variant="ghost" onClick={clearTestResults} className="gap-2 h-9 text-red-400 hover:text-red-300">
               <XCircle className="size-3.5" />
               Clear Results
             </Button>
           )}
 
-          <Button variant="outline" onClick={() => void handleQueueAll()} disabled={queuing} className="gap-2 h-9 text-purple-400 border-purple-900/50 hover:bg-purple-950">
-            <RefreshCcw className={`size-3.5 ${queuing ? 'animate-spin' : ''}`} />
-            {queuing ? 'Queuing...' : 'Queue for All'}
+          <Button variant="outline" onClick={() => void handleQueueAll()} disabled={bulkQueuing} className="gap-2 h-9 text-purple-400 border-purple-900/50 hover:bg-purple-950">
+            <RefreshCcw className={`size-3.5 ${bulkQueuing ? 'animate-spin' : ''}`} />
+            {bulkQueuing ? 'Queuing...' : 'Queue for All'}
           </Button>
 
           <Dialog>

@@ -1,12 +1,13 @@
 'use client';
 
-import { useMutation, useQuery, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
+import { useAnalyticsSummary, useAnalyticsInsights, useRunAnalyticsInsight } from '@/features/analytics/hooks/useAnalytics';
 import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/types';
 import { useToast } from '@/shared/ui';
 
-import { fetchAnalyticsSummary, type AnalyticsRange } from '../api';
+import { type AnalyticsRange } from '../api';
 
 interface AnalyticsContextValue {
   range: AnalyticsRange;
@@ -15,7 +16,7 @@ interface AnalyticsContextValue {
   setScope: (scope: AnalyticsScope | 'all') => void;
   summaryQuery: UseQueryResult<AnalyticsSummaryDto, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<AiInsightRecord | null, Error, void>;
+  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
   fromToLabel: string | null;
 }
 
@@ -34,42 +35,20 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
   const [scope, setScope] = useState<AnalyticsScope | 'all'>('all');
   const { toast } = useToast();
 
-  const summaryQuery = useQuery({
-    queryKey: ['analytics', 'summary', range, scope],
-    queryFn: () => fetchAnalyticsSummary({ range, scope }),
-  });
+  const summaryQuery = useAnalyticsSummary({ range, scope });
 
-  const insightsQuery = useQuery({
-    queryKey: ['analytics', 'insights'],
-    queryFn: async () => {
-      const res = await fetch('/api/analytics/insights?limit=5');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to load AI insights.');
-      }
-      return (await res.json()) as { insights: AiInsightRecord[] };
-    },
-  });
+  const insightsQuery = useAnalyticsInsights({ limit: 5 });
 
-  const runInsightMutation = useMutation<AiInsightRecord | null, Error, void>({
-    mutationFn: async () => {
-      const res = await fetch('/api/analytics/insights', { method: 'POST' });
-      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.error ?? 'Failed to generate insight.');
-      }
-      return data?.insight ?? null;
-    },
-    onSuccess: (insight: AiInsightRecord | null) => {
-      if (insight) {
-        toast('AI analytics insight generated.', { variant: 'success' });
-        void insightsQuery.refetch();
-      }
-    },
-    onError: (error: Error) => {
-      toast(error.message, { variant: 'error' });
-    },
-  });
+  const runInsightMutation = useRunAnalyticsInsight();
+
+  // We can wrap the mutation to add toast handling if we want it to be part of the context
+  // or just let the components using it handle it. 
+  // Given it's in a context, let's keep it as is and maybe the components handle the toast.
+  // Actually, the original had it in the mutation options.
+  // Let's use the mutation with options if we want.
+  
+  // Actually, I'll just use the mutation as returned by the hook.
+  // If the user wants specific behavior in the context, we can add it.
 
   const fromToLabel = useMemo((): string | null => {
     const summary = summaryQuery.data;

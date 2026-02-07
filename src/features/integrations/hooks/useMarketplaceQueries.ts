@@ -34,3 +34,22 @@ export function useCategoryMappings(connectionId: string, catalogId?: string | n
     enabled: !!connectionId && !!catalogId,
   });
 }
+
+export function useCategoryMappingsByConnection(
+  connectionId: string,
+  options?: { enabled?: boolean }
+): UseQueryResult<CategoryMappingWithDetails[]> {
+  const isEnabled = options?.enabled ?? !!connectionId;
+
+  return useQuery({
+    queryKey: ['category-mappings', connectionId, 'all'],
+    queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
+      const res = await fetch(`/api/marketplace/mappings?connectionId=${connectionId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch mappings');
+      }
+      return (await res.json()) as CategoryMappingWithDetails[];
+    },
+    enabled: isEnabled && !!connectionId,
+  });
+}

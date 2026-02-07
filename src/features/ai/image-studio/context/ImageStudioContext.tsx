@@ -1,9 +1,19 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useStudioProjects, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { 
+  useCreateStudioProject, 
+  useDeleteStudioProject, 
+  useCreateStudioSlots, 
+  useUpdateStudioSlot, 
+  useDeleteStudioSlot, 
+  useUploadStudioAssets, 
+  useImportStudioAssetsFromDrive 
+} from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
@@ -197,26 +207,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
 
   const [projectId, setProjectId] = useState<string>('');
 
-  const projectsQuery = useQuery({
-    queryKey: ['image-studio', 'projects'],
-    queryFn: async (): Promise<string[]> => {
-      const res = await fetch('/api/image-studio/projects');
-      if (!res.ok) throw new Error('Failed to load projects');
-      const data = (await res.json()) as StudioProjectsResponse;
-      return Array.isArray(data.projects) ? data.projects : [];
-    },
-    staleTime: 10_000,
-  });
-
-  const slotsQuery = useQuery({
-    queryKey: ['image-studio', 'slots', projectId],
-    enabled: Boolean(projectId),
-    queryFn: async (): Promise<StudioSlotsResponse> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
-      if (!res.ok) throw new Error('Failed to load slots');
-      return (await res.json()) as StudioSlotsResponse;
-    },
-  });
+  const projectsQuery = useStudioProjects();
+  const slotsQuery = useStudioSlots(projectId);
 
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
@@ -244,40 +236,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const [slotBase64Draft, setSlotBase64Draft] = useState<string>('');
   const [moveTargetFolder, setMoveTargetFolder] = useState<string>('');
 
-  const createProjectMutation = useMutation({
-    mutationFn: async (id: string): Promise<string> => {
-      const res = await fetch('/api/image-studio/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: id }),
-      });
-      const data = (await res.json()) as { projectId?: string; error?: string };
-      if (!res.ok) throw new Error(data?.error || 'Failed to create project');
-      return data.projectId!;
-    },
-    onSuccess: (createdId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
-      setProjectId(createdId);
-      toast('Project created.', { variant: 'success' });
-    },
-  }) as UseMutationResult<string, Error, string>;
-
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (id: string): Promise<string> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete project');
-      return id;
-    },
-    onSuccess: (deletedId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
-      if (projectId === deletedId) {
-        setProjectId('');
-      }
-      toast('Project deleted.', { variant: 'success' });
-    },
-  }) as UseMutationResult<string, Error, string>;
+  const createProjectMutation = useCreateStudioProject();
+  const deleteProjectMutation = useDeleteStudioProject();
 
   const handleDeleteProject = async (id: string) => {
     if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;
@@ -349,7 +309,6 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     [pathname, router, searchParams]
   );
 
-  // Line 348 fix:
   const treeKey = useMemo(() => projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null, [projectId]);
   const treeSettingsRaw = treeKey ? heavyMap.get(treeKey) : undefined;
 
@@ -372,44 +331,14 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     });
   }, [treeKey, updateSetting]);
 
+  const createSlotsMutation = useCreateStudioSlots(projectId);
   const createSlots = useCallback(async (slotsToCreate: Array<Partial<ImageStudioSlotRecord>>) => {
-    if (!projectId) throw new Error('No project selected');
-    const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slots: slotsToCreate }),
-    });
-    const data = (await res.json()) as StudioSlotsResponse & { error?: string };
-    if (!res.ok) throw new Error(data.error || 'Failed to create slots');
-    queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
+    const data = await createSlotsMutation.mutateAsync(slotsToCreate);
     return data.slots;
-  }, [projectId, queryClient]);
+  }, [createSlotsMutation]);
 
-  const updateSlotMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
-      const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to update slot');
-      return (await res.json()) as ImageStudioSlotRecord;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
-    },
-  });
-
-  const deleteSlotMutation = useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const res = await fetch(`/api/image-studio/slots/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete slot');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
-      toast('Slot deleted.', { variant: 'success' });
-    },
-  });
+  const updateSlotMutation = useUpdateStudioSlot(projectId);
+  const deleteSlotMutation = useDeleteStudioSlot(projectId);
 
   const moveSlotMutation = useMutation({
     mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
@@ -428,7 +357,6 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     }));
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
-    // In a real app, you'd also update all slots in these folders via API
     queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
   }, [virtualFolders, persistFolders, queryClient, projectId]);
 
@@ -446,38 +374,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     },
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: async ({ files, folder: _folder }: { files: File[]; folder: string }): Promise<{ assets: string[] }> => {
-      const formData = new FormData();
-      files.forEach(f => formData.append('files', f));
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      return (await res.json()) as { assets: string[] };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
-      toast('Upload complete.', { variant: 'success' });
-    },
-  });
-
-  const importFromDriveMutation = useMutation({
-    mutationFn: async ({ files, folder: _folder }: { files: ImageFileSelection[]; folder: string }): Promise<{ assets: string[] }> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files, folder: _folder }),
-      });
-      if (!res.ok) throw new Error('Import failed');
-      return (await res.json()) as { assets: string[] };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
-      toast('Import complete.', { variant: 'success' });
-    },
-  });
+  const uploadMutation = useUploadStudioAssets(projectId);
+  const importFromDriveMutation = useImportStudioAssetsFromDrive(projectId);
 
   const handleParamChange = useCallback((path: string, value: unknown) => {
     setParamsState(prev => prev ? setDeepValue(prev, path, value) : null);

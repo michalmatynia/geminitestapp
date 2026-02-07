@@ -23,8 +23,8 @@ import type {
   ProductRepository,
 } from '@/features/products/types/services/product-repository';
 import {
-  productCreateSchema,
-  productUpdateSchema,
+  validateProductCreate,
+  validateProductUpdate,
 } from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -167,9 +167,16 @@ async function createProduct(
 ): Promise<ProductWithImages | null> {
   await ErrorSystem.logInfo('Creating product...');
   try {
-    const validatedData = productCreateSchema.parse(
-      Object.fromEntries(formData.entries()),
-    );
+    const rawData = Object.fromEntries(formData.entries());
+    const validationResult = await validateProductCreate(rawData, true);
+    
+    if (!validationResult.success) {
+      throw badRequestError('Validation failed', { 
+        errors: validationResult.errors 
+      });
+    }
+    
+    const validatedData = validationResult.data as any; // Cast to expected type after successful validation
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const product = await productRepository.createProduct(validatedData);
@@ -216,9 +223,16 @@ async function updateProduct(
 ): Promise<ProductWithImages | null> {
   await ErrorSystem.logInfo(`Updating product ${id}...`);
   try {
-    const validatedData = productUpdateSchema.parse(
-      Object.fromEntries(formData.entries()),
-    );
+    const rawData = Object.fromEntries(formData.entries());
+    const validationResult = await validateProductUpdate(rawData, true);
+
+    if (!validationResult.success) {
+      throw badRequestError('Validation failed', { 
+        errors: validationResult.errors 
+      });
+    }
+
+    const validatedData = validationResult.data as any;
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const updatedProduct = await productRepository.updateProduct(

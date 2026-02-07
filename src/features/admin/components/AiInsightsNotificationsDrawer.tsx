@@ -1,49 +1,31 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useAiInsightsNotifications,
+  useClearAiInsightsNotifications,
+} from '@/features/admin/hooks/useAiInsightsNotifications';
 import { XIcon } from 'lucide-react';
-
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import type { AiInsightNotification } from '@/shared/types';
 import { Button } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
-type NotificationsResponse = { notifications: AiInsightNotification[] };
-
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
   const { aiDrawerOpen: open, setAiDrawerOpen } = useAdminLayout();
   const onClose = () => setAiDrawerOpen(false);
   const { toast } = useToast();
-  const notificationsQuery = useQuery({
-    queryKey: ['ai-insights', 'notifications'],
-    queryFn: async (): Promise<NotificationsResponse> => {
-      const res = await fetch('/api/ai-insights/notifications?limit=30');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to load AI notifications.');
-      }
-      return (await res.json()) as NotificationsResponse;
-    },
-    enabled: open,
-  });
+  const notificationsQuery = useAiInsightsNotifications({ enabled: open });
 
-  const clearMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/ai-insights/notifications', { method: 'DELETE' });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to clear notifications.');
-      }
-      return true;
-    },
-    onSuccess: () => {
+  const clearMutation = useClearAiInsightsNotifications();
+
+  const handleClear = async () => {
+    try {
+      await clearMutation.mutateAsync();
       toast('AI notifications cleared.', { variant: 'success' });
-      void notificationsQuery.refetch();
-    },
-    onError: (error: unknown) => {
+    } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to clear notifications.', { variant: 'error' });
-    },
-  });
+    }
+  };
 
   if (!open) return null;
 
@@ -62,7 +44,7 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => clearMutation.mutate()}
+              onClick={() => void handleClear()}
               disabled={clearMutation.isPending || notifications.length === 0}
               className="h-7 px-2 text-[11px]"
             >

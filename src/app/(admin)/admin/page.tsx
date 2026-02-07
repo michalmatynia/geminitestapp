@@ -4,11 +4,13 @@ import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { JSX, useState } from 'react';
 
+import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { Button } from '@/shared/ui';
 
 
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
+  const { data, isLoading, error } = useHealthStatus();
 
   // useEffect(() => {
   //   const ws = new WebSocket("ws://localhost:3000");
@@ -44,6 +46,13 @@ export default function AdminDashboard(): JSX.Element {
               <Link href="/admin/image-studio">Image Studio</Link>
             </Button>
           </div>
+        </div>
+        <div className="rounded-lg bg-gray-950 p-6">
+          <h2 className="text-xl font-bold mb-3">System Health</h2>
+          {isLoading && <p>Loading health status...</p>}
+          {error && <p className="text-red-500">Error: {error.message}</p>}
+          {data && data.ok && <p className="text-green-500">API is healthy!</p>}
+          {data && !data.ok && <p className="text-red-500">API is not healthy.</p>}
         </div>
         <Collapsible.Root
           open={recentActivityOpen}

@@ -28,11 +28,7 @@ type ProductListingsModalProps = {
   onListingsUpdated?: (() => void) | undefined;
 };
 
-function ProductListingsModalContent({
-  onClose,
-  onStartListing,
-  filterIntegrationSlug,
-}: Omit<ProductListingsModalProps, 'product' | 'onListingsUpdated'>): React.JSX.Element {
+function ProductListingsModalContent(): React.JSX.Element {
   const {
     product,
     listings,
@@ -44,6 +40,9 @@ function ProductListingsModalContent({
     setLogsOpen,
     lastExportListingId,
     handleImageRetry,
+    onClose,
+    onStartListing,
+    filterIntegrationSlug,
   } = useProductListingsContext();
 
   const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
@@ -95,7 +94,7 @@ function ProductListingsModalContent({
           </Alert>
         ) : (
           <div className="space-y-3">
-            {canStartListing && <ProductListingsStartPanel onStartListing={onStartListing} />}
+            {canStartListing && <ProductListingsStartPanel />}
             
             {filteredListings.length === 0 ? (
               <div className="rounded-md border bg-card/50 px-4 py-8 text-center">
@@ -157,12 +156,11 @@ export function ProductListingsModal(props: ProductListingsModalProps): React.JS
     <ProductListingsProvider 
       product={props.product} 
       onListingsUpdated={props.onListingsUpdated}
+      onClose={props.onClose}
+      onStartListing={props.onStartListing}
+      filterIntegrationSlug={props.filterIntegrationSlug}
     >
-      <ProductListingsModalContent 
-        onClose={props.onClose}
-        onStartListing={props.onStartListing}
-        filterIntegrationSlug={props.filterIntegrationSlug}
-      />
+      <ProductListingsModalContent />
     </ProductListingsProvider>
   );
 }

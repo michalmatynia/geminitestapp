@@ -25,7 +25,7 @@ import {
 } from "@/features/integrations/services/imports/base-client";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
-import { productCreateSchema } from "@/features/products/validations/schemas";
+import { validateProductCreate } from "@/features/products/validations";
 import type { ProductCreateInput } from "@/features/products/validations/schemas";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -72,9 +72,8 @@ type MappedItem = {
   image: string | null;
 };
 
-async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body: unknown = await _req.json();
-  const data = requestSchema.parse(body);
+async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const data = ctx.body as z.infer<typeof requestSchema>;
   let token = data.token;
 
   if (!token) {
@@ -467,11 +466,17 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
 
       // mapped.imageLinks already contains base images + mapped overrides
       const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
-      const payload = productCreateSchema.parse({
+      const validationResult = await validateProductCreate({
         ...mapped,
         defaultPriceGroupId: resolvedDefault.id,
         imageLinks: imageUrls
       });
+      
+      if (!validationResult.success) {
+        throw new Error(`Validation failed for product ${mapped.sku}: ${JSON.stringify(validationResult.errors)}`);
+      }
+      
+      const payload = validationResult.data as any;
       const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
       if (!created && payload.sku) {
         throw new Error("Failed to create product.");
@@ -530,12 +535,18 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
           const fallbackSku = mapped.baseProductId
             ? `BASE-${mapped.baseProductId}`
             : undefined;
-          const payload = productCreateSchema.parse({
+          const validationResult = await validateProductCreate({
             ...mapped,
             sku: fallbackSku,
             defaultPriceGroupId: resolvedDefault.id,
             imageLinks: imageUrls
           });
+          
+          if (!validationResult.success) {
+            throw new Error(`Validation failed for fallback product: ${JSON.stringify(validationResult.errors)}`);
+          }
+          
+          const payload = validationResult.data as any;
           const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
           if (created) {
             await productRepository.replaceProductCatalogs(created.id, [
@@ -607,4 +618,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.POST", requireCsrf: false });
+ { 
+   source: "products.imports.base.POST", 
+   requireCsrf: false,
+   parseJsonBody: true,
+   bodySchema: requestSchema
+ });

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import type {
@@ -14,9 +15,16 @@ import {
   withImageRetryPresetLabels,
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
+import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { Button, Input, Checkbox, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
+  const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
+    'categoryid',
+    'category_id',
+    'category',
+  ]);
+
   const {
     baseConnections,
     selectedBaseConnectionId,
@@ -27,6 +35,7 @@ export function ExportTab(): React.JSX.Element {
     exportActiveTemplateId,
     setExportActiveTemplateId,
     exportTemplates,
+    exportTemplateMappings,
     loadingExportTemplates,
     applyTemplate,
     exportWarehouseId,
@@ -51,6 +60,33 @@ export function ExportTab(): React.JSX.Element {
     debugWarehouses,
     setDebugWarehouses,
   } = useImportExport();
+
+  const usesCategoryMapper = useMemo(
+    (): boolean =>
+      exportTemplateMappings.some((mapping) =>
+        CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(mapping.targetField.trim().toLowerCase())
+      ),
+    [exportTemplateMappings]
+  );
+
+  const categoryMappingsQuery = useCategoryMappingsByConnection(selectedBaseConnectionId, {
+    enabled: usesCategoryMapper && !!selectedBaseConnectionId,
+  });
+  const activeCategoryMappings = useMemo(
+    () =>
+      (categoryMappingsQuery.data ?? []).filter(
+        (mapping) => mapping.isActive
+      ),
+    [categoryMappingsQuery.data]
+  );
+  const mappedInternalCategoryCount = useMemo(
+    () => new Set(activeCategoryMappings.map((mapping) => mapping.internalCategoryId)).size,
+    [activeCategoryMappings]
+  );
+  const mappedExternalCategoryCount = useMemo(
+    () => new Set(activeCategoryMappings.map((mapping) => mapping.externalCategoryId)).size,
+    [activeCategoryMappings]
+  );
 
   const exportStockFallbackLoaded = true;
   const imageRetryPresetsLoaded = true;
@@ -176,6 +212,67 @@ export function ExportTab(): React.JSX.Element {
             </p>
           </div>
         </div>
+
+        <SectionPanel variant="subtle" className="border border-border/70 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                Category Mapping Status
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Pre-export validation for template category field mapping.
+              </p>
+            </div>
+            {!usesCategoryMapper ? (
+              <span className="rounded border border-slate-500/40 bg-slate-500/10 px-2 py-1 text-[11px] text-slate-200">
+                Not used by template
+              </span>
+            ) : !selectedBaseConnectionId ? (
+              <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+                Select connection
+              </span>
+            ) : categoryMappingsQuery.isLoading ? (
+              <span className="rounded border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[11px] text-blue-200">
+                Checking mappings...
+              </span>
+            ) : activeCategoryMappings.length > 0 ? (
+              <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200">
+                Ready
+              </span>
+            ) : (
+              <span className="rounded border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200">
+                Missing mappings
+              </span>
+            )}
+          </div>
+          <div className="mt-2 text-xs text-gray-400">
+            {!usesCategoryMapper ? (
+              <span>
+                Current export template does not map product category field (`categoryId`).
+              </span>
+            ) : !selectedBaseConnectionId ? (
+              <span>Select a Base connection to validate category mappings.</span>
+            ) : categoryMappingsQuery.isError ? (
+              <span>
+                Failed to load category mappings for this connection.
+              </span>
+            ) : activeCategoryMappings.length === 0 ? (
+              <span>
+                No active mappings found for this connection. Add mappings in{' '}
+                <Link href="/admin/integrations/marketplaces/category-mapper" className="text-amber-300 underline">
+                  Category Mapper
+                </Link>
+                .
+              </span>
+            ) : (
+              <span>
+                Found {activeCategoryMappings.length} active mapping(s),{' '}
+                {mappedInternalCategoryCount} internal category(ies) and{' '}
+                {mappedExternalCategoryCount} Base category(ies).
+              </span>
+            )}
+          </div>
+        </SectionPanel>
 
         <div>
           <Label className="text-xs text-gray-400">Default Warehouse ID</Label>

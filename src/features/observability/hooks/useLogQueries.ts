@@ -2,7 +2,8 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import type { SystemLogMetrics, SystemLogRecord } from '@/shared/types/system-logs';
+import { api } from '@/shared/lib/api-client';
+import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 
 export type LogFilters = {
   page?: number;
@@ -19,6 +20,7 @@ export const logKeys = {
   list: (filters: LogFilters) => ['system-logs', 'list', filters] as const,
   metrics: (filters: Omit<LogFilters, 'page' | 'pageSize'>) => ['system-logs', 'metrics', filters] as const,
   diagnostics: ['mongo-index-diagnostics'] as const,
+  insights: () => ['system-logs', 'insights'] as const,
 };
 
 export interface SystemLogsResponse {
@@ -31,20 +33,18 @@ export interface SystemLogsResponse {
 export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsResponse, Error> {
   return useQuery({
     queryKey: logKeys.list(filters),
-    queryFn: async (): Promise<SystemLogsResponse> => {
-      const params = new URLSearchParams();
-      if (filters.page) params.set('page', String(filters.page));
-      if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
-      if (filters.level && filters.level !== 'all') params.set('level', filters.level);
-      if (filters.query?.trim()) params.set('query', filters.query.trim());
-      if (filters.source?.trim()) params.set('source', filters.source.trim());
-      if (filters.from) params.set('from', filters.from);
-      if (filters.to) params.set('to', filters.to);
-
-      const res = await fetch(`/api/system/logs?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to load system logs.');
-      return res.json() as Promise<SystemLogsResponse>;
-    },
+    queryFn: () => 
+      api.get<SystemLogsResponse>('/api/system/logs', {
+        params: {
+          page: filters.page,
+          pageSize: filters.pageSize,
+          level: filters.level !== 'all' ? filters.level : undefined,
+          query: filters.query?.trim() || undefined,
+          source: filters.source?.trim() || undefined,
+          from: filters.from || undefined,
+          to: filters.to || undefined,
+        }
+      }),
   });
 }
 
@@ -55,28 +55,33 @@ export interface SystemLogMetricsResponse {
 export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): UseQueryResult<SystemLogMetricsResponse, Error> {
   return useQuery({
     queryKey: logKeys.metrics(filters),
-    queryFn: async (): Promise<SystemLogMetricsResponse> => {
-      const params = new URLSearchParams();
-      if (filters.level && filters.level !== 'all') params.set('level', filters.level);
-      if (filters.query?.trim()) params.set('query', filters.query.trim());
-      if (filters.source?.trim()) params.set('source', filters.source.trim());
-      if (filters.from) params.set('from', filters.from);
-      if (filters.to) params.set('to', filters.to);
-
-      const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to load system log metrics.');
-      return res.json() as Promise<SystemLogMetricsResponse>;
-    },
+    queryFn: () => 
+      api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
+        params: {
+          level: filters.level !== 'all' ? filters.level : undefined,
+          query: filters.query?.trim() || undefined,
+          source: filters.source?.trim() || undefined,
+          from: filters.from || undefined,
+          to: filters.to || undefined,
+        }
+      }),
   });
 }
 
 export function useMongoDiagnostics(): UseQueryResult<unknown, Error> {
   return useQuery({
     queryKey: logKeys.diagnostics,
-    queryFn: async (): Promise<unknown> => {
-      const res = await fetch('/api/system/diagnostics/mongo-indexes');
-      if (!res.ok) throw new Error('Failed to load Mongo index diagnostics.');
-      return res.json() as Promise<unknown>;
-    },
+    queryFn: () => api.get<unknown>('/api/system/diagnostics/mongo-indexes'),
+  });
+}
+
+export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: logKeys.insights(),
+    queryFn: () => 
+      api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
+        params: { limit: options.limit ?? 5 }
+      }),
+    enabled: options.enabled,
   });
 }

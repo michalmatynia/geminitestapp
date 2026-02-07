@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
+import { ErrorSystem } from '@/features/observability/server';
 import type { ProductWithImages } from '@/features/products';
 
 type ExportTemplateMapping = {
@@ -291,6 +292,9 @@ const normalizeExportTargetField = (targetField: string): string => {
   const normalized = trimmed.toLowerCase();
   if (IMAGE_EXPORT_ALIASES.has(normalized)) {
     return 'images';
+  }
+  if (normalized === 'category' || normalized === 'categoryid') {
+    return 'category_id';
   }
   return trimmed;
 };
@@ -691,6 +695,9 @@ const getProductValue = (
   if (!sourceKey) return null;
 
   const normalized = sourceKey.trim().toLowerCase();
+  if (normalized === 'category' || normalized === 'category_id' || normalized === 'categoryid') {
+    return (product as unknown as Record<string, unknown>).categoryId ?? null;
+  }
   const slotMatch = normalized.match(/^image_(slot|file|link)_(\d+)$/);
   if (slotMatch) {
     const index = Number.parseInt(slotMatch[2] ?? '', 10) - 1;
@@ -1118,17 +1125,11 @@ export async function exportProductToBase(
       ...(productId ? { productId } : {}),
     };
   } catch (error) {
-    try {
-      const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
-        message: '[base-exporter] Export failed',
-        error,
-        source: 'base-exporter',
-        context: { action: 'exportProductToBase', productId: product.id }
-      });
-    } catch (logError) {
-      console.error('[base-exporter] Export failed (and logging failed)', error, logError);
-    }
+    void ErrorSystem.captureException(error, { 
+      service: 'base-exporter',
+      action: 'exportProductToBase', 
+      productId: product.id 
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -1176,17 +1177,12 @@ export async function exportProductImagesToBase(
       productId,
     };
   } catch (error) {
-    try {
-      const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
-        message: '[base-exporter] Image-only export failed',
-        error,
-        source: 'base-exporter',
-        context: { action: 'exportProductImagesToBase', productId: product.id, externalProductId }
-      });
-    } catch (logError) {
-      console.error('[base-exporter] Image-only export failed (and logging failed)', error, logError);
-    }
+    void ErrorSystem.captureException(error, { 
+      service: 'base-exporter',
+      action: 'exportProductImagesToBase', 
+      productId: product.id, 
+      externalProductId 
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

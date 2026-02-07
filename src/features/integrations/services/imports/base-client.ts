@@ -54,6 +54,13 @@ const toStringId = (value: unknown): string | null => {
   return null;
 };
 
+const normalizeBaseParentId = (value: unknown): string | null => {
+  const parentId = toStringId(value);
+  if (!parentId) return null;
+  if (parentId === '0') return null;
+  return parentId;
+};
+
 const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
   const candidates = [
     payload.inventories,
@@ -580,48 +587,94 @@ export type BaseCategory = {
   parentId: string | null;
 };
 
+type FetchBaseCategoriesOptions = {
+  inventoryId?: string | null;
+};
+
+const dedupeCategories = (categories: BaseCategory[]): BaseCategory[] => {
+  const byId = new Map<string, BaseCategory>();
+  for (const category of categories) {
+    if (!category.id) continue;
+    if (!byId.has(category.id)) {
+      byId.set(category.id, category);
+    }
+  }
+  return Array.from(byId.values());
+};
+
 /**
  * Fetches categories from Base.com inventory.
- * Uses the getInventoryCategories API method.
+ * Tries global categories first, then inventory-scoped categories when required.
  */
-export async function fetchBaseCategories(token: string): Promise<BaseCategory[]> {
-  const payload = await callBaseApi(token, 'getInventoryCategories', {});
+export async function fetchBaseCategories(
+  token: string,
+  options?: FetchBaseCategoriesOptions
+): Promise<BaseCategory[]> {
+  let lastError: Error | null = null;
+  const preferredInventoryId =
+    typeof options?.inventoryId === 'string' ? options.inventoryId.trim() : '';
 
-  // Categories may be returned as an object keyed by ID or as an array
-  const rawCategories =
-    payload.categories ??
-    (payload.data as Record<string, unknown> | undefined)?.categories ??
-    payload;
+  const singlePassInventoryIds: string[] = [];
+  if (preferredInventoryId && preferredInventoryId !== '0') {
+    singlePassInventoryIds.push(preferredInventoryId);
+  }
 
-  // Handle object format (keyed by category_id)
-  if (rawCategories && typeof rawCategories === 'object' && !Array.isArray(rawCategories)) {
-    return Object.entries(rawCategories as Record<string, unknown>)
-      .filter(([key]: [string, unknown]) => key !== 'status' && key !== 'error_code' && key !== 'error_message')
-      .map(([key, value]: [string, unknown]) => {
-        const cat = value as Record<string, unknown>;
-        const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
-        const name =
-          (typeof cat.name === 'string' && cat.name.trim()) ||
-          (typeof cat.label === 'string' && cat.label.trim()) ||
-          id;
-        const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
-        return { id, name, parentId };
+  // First attempt without inventory_id for connectors returning global category trees.
+  try {
+    const payload = await callBaseApi(token, 'getInventoryCategories', {});
+    const categories = fetchBaseCategoriesFromPayload(payload);
+    if (categories.length > 0) return dedupeCategories(categories);
+  } catch (error: unknown) {
+    lastError = error instanceof Error ? error : new Error('Base API error.');
+  }
+
+  // Then try with preferred inventory_id (if present).
+  for (const inventoryId of singlePassInventoryIds) {
+    try {
+      const payload = await callBaseApi(token, 'getInventoryCategories', {
+        inventory_id: inventoryId,
       });
+      const categories = fetchBaseCategoriesFromPayload(payload);
+      if (categories.length > 0) return dedupeCategories(categories);
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
   }
 
-  // Handle array format
-  if (Array.isArray(rawCategories)) {
-    return rawCategories.map((cat: Record<string, unknown>) => {
-      const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? '';
-      const name =
-        (typeof cat.name === 'string' && cat.name.trim()) ||
-        (typeof cat.label === 'string' && cat.label.trim()) ||
-        id;
-      const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
-      return { id, name, parentId };
-    });
+  // Final fallback: load inventories and aggregate category trees across each one.
+  const aggregated: BaseCategory[] = [];
+  let inventoryIds: string[] = [];
+  try {
+    const inventories = await fetchBaseInventories(token);
+    inventoryIds = inventories
+      .map((inventory: BaseInventory): string => inventory.id)
+      .filter((id: string): boolean => Boolean(id && id.trim()));
+  } catch (error: unknown) {
+    lastError = error instanceof Error ? error : new Error('Base API error.');
   }
 
+  const seenInventoryIds = new Set<string>(singlePassInventoryIds);
+  for (const inventoryId of inventoryIds) {
+    if (seenInventoryIds.has(inventoryId)) continue;
+    seenInventoryIds.add(inventoryId);
+    try {
+      const payload = await callBaseApi(token, 'getInventoryCategories', {
+        inventory_id: inventoryId,
+      });
+      const categories = fetchBaseCategoriesFromPayload(payload);
+      if (categories.length > 0) {
+        aggregated.push(...categories);
+      }
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
+  }
+
+  if (aggregated.length > 0) {
+    return dedupeCategories(aggregated);
+  }
+
+  if (lastError) throw lastError;
   return [];
 }
 
@@ -657,7 +710,7 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
           (typeof cat.name === 'string' && cat.name.trim()) ||
           (typeof cat.label === 'string' && cat.label.trim()) ||
           id;
-        const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+        const parentId = normalizeBaseParentId(cat.parent_id ?? cat.parent_category_id);
         return { id, name, parentId };
       });
   }
@@ -669,7 +722,7 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
         (typeof cat.name === 'string' && cat.name.trim()) ||
         (typeof cat.label === 'string' && cat.label.trim()) ||
         id;
-      const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+      const parentId = normalizeBaseParentId(cat.parent_id ?? cat.parent_category_id);
       return { id, name, parentId };
     });
   }

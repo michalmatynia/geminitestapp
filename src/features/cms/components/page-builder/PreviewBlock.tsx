@@ -43,8 +43,8 @@ import {
   getVerticalAlign,
   type ColorSchemeColors,
 } from '../frontend/theme-styles';
-import { usePreviewEditor } from './preview/context/PreviewEditorContext';
 import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
+import { usePreviewEditor } from './preview/context/PreviewEditorContext';
 import {
   buildImageElementPresentation,
   renderBackgroundImageLayer,
@@ -1210,7 +1210,7 @@ export function PreviewSection({
                                                     ...(columnAlign
                                                       ? { alignItems: columnAlign }
                                                       : {}),
-                                                }}
+                                                  }}
                                                 >
                                                   {contentBlocks.map(
                                                     (

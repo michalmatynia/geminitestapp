@@ -4,8 +4,8 @@ import { useQuery, useMutation, type UseQueryResult, type UseMutationResult } fr
 import { useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { useClearLogsMutation, useRebuildIndexesMutation } from '@/features/observability/hooks/useLogMutations';
-import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from '@/features/observability/hooks/useLogQueries';
+import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
+import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
@@ -167,65 +167,37 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const logsQuery = useSystemLogs(filters);
   const metricsQuery = useSystemLogMetrics(metricsFilters);
   const mongoDiagnosticsQuery = useMongoDiagnostics();
-  const insightsQuery = useQuery({
-    queryKey: ['system', 'logs', 'insights'],
-    queryFn: async () => {
-      const res = await fetch('/api/system/logs/insights?limit=5');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to load log insights.');
-      }
-      return (await res.json()) as { insights: AiInsightRecord[] };
-    },
-  });
+  const insightsQuery = useLogInsights({ limit: 5 });
 
-  const runInsightMutation = useMutation<AiInsightRecord | null, Error, void>({
-    mutationFn: async () => {
-      const res = await fetch('/api/system/logs/insights', { method: 'POST' });
-      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.error ?? 'Failed to generate log insight.');
-      }
-      return data?.insight ?? null;
-    },
-    onSuccess: (insight: AiInsightRecord | null) => {
-      if (insight) {
+  const runInsightMutation = useRunLogInsight();
+
+  const handleRunInsight = async () => {
+    try {
+      const data = await runInsightMutation.mutateAsync();
+      if (data.insight) {
         toast('AI log insight generated.', { variant: 'success' });
-        void insightsQuery.refetch();
       }
-    },
-    onError: (error: Error) => {
-      toast(error.message, { variant: 'error' });
-    },
-  });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to generate log insight.', { variant: 'error' });
+    }
+  };
 
-  const interpretLogMutation = useMutation<AiInsightRecord | null, Error, string>({
-    mutationFn: async (logId: string) => {
-      const res = await fetch('/api/system/logs/interpret', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logId }),
-      });
-      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.error ?? 'Failed to interpret log.');
-      }
-      return data?.insight ?? null;
-    },
-    onSuccess: (insight: AiInsightRecord | null) => {
-      if (!insight) return;
-      const logId = insight.context?.logId;
-      const key = typeof logId === 'string' ? logId : insight.id;
+  const interpretLogMutation = useInterpretLog();
+
+  const handleInterpretLog = async (logId: string) => {
+    try {
+      const data = await interpretLogMutation.mutateAsync(logId);
+      if (!data.insight) return;
+      const key = typeof data.insight.context?.logId === 'string' ? data.insight.context.logId : data.insight.id;
       setLogInterpretations((prev: Record<string, AiInsightRecord>) => ({
         ...prev,
-        [key]: insight,
+        [key]: data.insight,
       }));
       toast('AI interpretation added.', { variant: 'success' });
-    },
-    onError: (error: Error) => {
-      toast(error.message, { variant: 'error' });
-    },
-  });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to interpret log.', { variant: 'error' });
+    }
+  };
 
   const clearLogsMutation = useClearLogsMutation();
   const rebuildIndexesMutation = useRebuildIndexesMutation();

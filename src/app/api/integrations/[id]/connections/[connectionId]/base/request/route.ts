@@ -3,8 +3,8 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
 import { callBaseApi, fetchBaseProducts } from "@/features/integrations/server";
+import { resolveBaseConnectionToken } from "@/features/integrations/services/base-token-resolver";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -56,16 +56,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     throw notFoundError("Connection not found.", { connectionId });
   }
 
-  let baseToken: string | null = null;
-  if (connection.baseApiToken) {
-    baseToken = decryptSecret(connection.baseApiToken);
-  } else if (connection.password) {
-    baseToken = decryptSecret(connection.password);
+  const tokenResolution = resolveBaseConnectionToken(connection);
+  if (!tokenResolution.token) {
+    throw badRequestError(tokenResolution.error ?? "No Base API token configured.");
   }
-
-  if (!baseToken) {
-    throw badRequestError("No Base API token configured.");
-  }
+  const baseToken = tokenResolution.token;
 
   const isOrdersLogRequest = method === "getOrdersLog";
   if (method === "getInventoryProductsDetailed") {

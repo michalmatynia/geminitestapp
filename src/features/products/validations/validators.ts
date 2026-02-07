@@ -1,6 +1,17 @@
 import { productCreateSchema, productUpdateSchema } from './schemas';
 
 import type { ZodIssue } from 'zod';
+const reportValidationError = async (
+  message: string,
+  context: Record<string, unknown> = {}
+): Promise<void> => {
+  try {
+    const { reportValidationError: report } = await import('@/shared/utils/observability/validation-reporter');
+    await report(message, context);
+  } catch {
+    console.error('[validators] Failed to report validation error:', message);
+  }
+};
 
 // Core validation types
 export type ValidationError = {
@@ -70,26 +81,46 @@ function createMetadata(startTime: number): ValidationMetadata {
 
 export async function validateProductCreate(
   data: unknown,
+  report: boolean = false,
 ): Promise<ValidationResult<unknown>> {
   const startTime = performance.now();
   const result = productCreateSchema.safeParse(data);
   const metadata = createMetadata(startTime);
 
   if (!result.success) {
-    return { success: false, errors: zodIssuesToErrors(result.error.issues), metadata };
+    const errors = zodIssuesToErrors(result.error.issues);
+    if (report) {
+      void reportValidationError('Product creation validation failed', {
+        service: 'product-service',
+        action: 'validateProductCreate',
+        errors: errors.map(e => ({ field: e.field, message: e.message })),
+        data: data // Consider redacting if it contains sensitive info
+      });
+    }
+    return { success: false, errors, metadata };
   }
   return { success: true, data: result.data, metadata };
 }
 
 export async function validateProductUpdate(
   data: unknown,
+  report: boolean = false,
 ): Promise<ValidationResult<unknown>> {
   const startTime = performance.now();
   const result = productUpdateSchema.safeParse(data);
   const metadata = createMetadata(startTime);
 
   if (!result.success) {
-    return { success: false, errors: zodIssuesToErrors(result.error.issues), metadata };
+    const errors = zodIssuesToErrors(result.error.issues);
+    if (report) {
+      void reportValidationError('Product update validation failed', {
+        service: 'product-service',
+        action: 'validateProductUpdate',
+        errors: errors.map(e => ({ field: e.field, message: e.message })),
+        data: data
+      });
+    }
+    return { success: false, errors, metadata };
   }
   return { success: true, data: result.data, metadata };
 }

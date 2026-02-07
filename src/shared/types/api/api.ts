@@ -22,6 +22,7 @@ export interface ApiHandlerContext {
   getElapsedMs: () => number;
   params?: Record<string, string | string[]>;
   body?: unknown;
+  query?: unknown;
   rateLimitHeaders?: Record<string, string>;
 }
 
@@ -54,6 +55,10 @@ export interface ApiHandlerOptions {
    * Optional Zod schema to validate parsed JSON body.
    */
   bodySchema?: ZodSchema;
+  /**
+   * Optional Zod schema to validate query parameters.
+   */
+  querySchema?: ZodSchema;
   /**
    * Enforce CSRF token validation for state-changing requests.
    * Defaults to true for unsafe methods when a session cookie is present.

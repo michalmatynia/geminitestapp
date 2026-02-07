@@ -2,16 +2,15 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
+import type { AiInsightRecord } from '@/shared/types';
+
 import { logKeys } from './useLogQueries';
 
 export function useClearLogsMutation(): UseMutationResult<boolean, Error, void> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/system/logs', { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to clear logs.');
-      return true;
-    },
+    mutationFn: () => api.delete<boolean>('/api/system/logs'),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: logKeys.all });
     },
@@ -21,15 +20,27 @@ export function useClearLogsMutation(): UseMutationResult<boolean, Error, void> 
 export function useRebuildIndexesMutation(): UseMutationResult<unknown, Error, void> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (): Promise<unknown> => {
-      const res = await fetch('/api/system/diagnostics/mongo-indexes', {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error('Failed to rebuild Mongo indexes.');
-      return res.json() as Promise<unknown>;
-    },
+    mutationFn: () => api.post<unknown>('/api/system/diagnostics/mongo-indexes'),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: logKeys.diagnostics });
     },
+  });
+}
+
+export function useRunLogInsight() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights'),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: logKeys.insights() });
+    },
+  });
+}
+
+export function useInterpretLog() {
+  return useMutation({
+    mutationFn: (logId: string) => 
+      api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', { logId }),
   });
 }

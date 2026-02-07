@@ -5,8 +5,8 @@ import NextImage from 'next/image';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
-import { usePreviewEditor } from './context/PreviewEditorContext';
 import { useBlockContext } from './context/BlockContext';
+import { usePreviewEditor } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 

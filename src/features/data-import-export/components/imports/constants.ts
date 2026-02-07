@@ -1,6 +1,7 @@
 export const PRODUCT_FIELDS = [
   { value: 'sku', label: 'SKU' },
   { value: 'baseProductId', label: 'Base Product ID' },
+  { value: 'categoryId', label: 'Category ID' },
   { value: 'ean', label: 'EAN' },
   { value: 'gtin', label: 'GTIN' },
   { value: 'asin', label: 'ASIN' },
@@ -67,6 +68,14 @@ import type { ExportParameterDoc } from '@/features/data-import-export/types/imp
 
 export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: 'sku', description: 'Unique product SKU/code.' },
+  {
+    key: 'category_id',
+    description: 'Target Base.com category identifier.',
+  },
+  {
+    key: 'category',
+    description: 'Category field alias (normalized to category_id on export).',
+  },
   { key: 'ean', description: 'EAN barcode.' },
   { key: 'weight', description: 'Weight (kg).' },
   { key: 'name', description: 'Product name (default language).' },

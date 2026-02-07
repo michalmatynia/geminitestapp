@@ -1,9 +1,10 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
 import { fetchBaseCategories } from "@/features/integrations/server";
 import { getExternalCategoryRepository } from "@/features/integrations/server";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { resolveBaseConnectionToken } from "@/features/integrations/services/base-token-resolver";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -25,42 +26,48 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
     throw badRequestError("connectionId is required");
   }
 
-  // Get the connection to retrieve the API token
-  const connection = await prisma.integrationConnection.findUnique({
-    where: { id: connectionId },
-    include: { integration: true },
-  });
+  const repo = await getIntegrationRepository();
+  const connection = await repo.getConnectionById(connectionId);
 
   if (!connection) {
     throw notFoundError("Connection not found");
   }
 
+  const integration = await repo.getIntegrationById(connection.integrationId);
+  if (!integration) {
+    throw notFoundError("Integration not found");
+  }
+
   // Check if this is a Base.com connection
-  const integrationSlug = connection.integration?.slug?.toLowerCase();
+  const integrationSlug = integration.slug?.toLowerCase();
   if (integrationSlug !== "baselinker" && integrationSlug !== "base") {
     throw badRequestError("Only Base.com connections are supported for category fetch");
   }
 
-  // Get the API token
-  const token = connection.baseApiToken;
-  if (!token) {
-    throw badRequestError("Base.com API token not configured for this connection");
+  const tokenResolution = resolveBaseConnectionToken(connection);
+  if (!tokenResolution.token) {
+    throw badRequestError(
+      tokenResolution.error ?? "Base.com API token not configured for this connection"
+    );
   }
 
   // Fetch categories from Base.com API
-  const categories = await fetchBaseCategories(token);
+  const categories = await fetchBaseCategories(tokenResolution.token, {
+    inventoryId: connection.baseLastInventoryId ?? null,
+  });
 
   if (categories.length === 0) {
     return NextResponse.json({
       fetched: 0,
       total: 0,
-      message: "No categories found in Base.com",
+      message:
+        "No categories found in Base.com. Verify categories exist in the selected inventory and test the connection again.",
     });
   }
 
   // Sync categories to local database
-  const repo = getExternalCategoryRepository();
-  const syncedCount = await repo.syncFromBase(connectionId, categories);
+  const externalCategoryRepo = getExternalCategoryRepository();
+  const syncedCount = await externalCategoryRepo.syncFromBase(connectionId, categories);
 
   return NextResponse.json({
     fetched: syncedCount,

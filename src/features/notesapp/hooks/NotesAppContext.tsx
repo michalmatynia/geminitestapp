@@ -14,6 +14,7 @@ import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
+import { api } from '@/shared/lib/api-client';
 import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord } from '@/shared/types/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -205,12 +206,9 @@ export function NotesAppProvider({
   // Handlers
   const handleSelectNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
     try {
-      const response: Response = await fetch(`/api/notes/${noteId}`);
-      if (response.ok) {
-        const note: NoteWithRelations = (await response.json()) as NoteWithRelations;
-        setSelectedNote(note);
-        setIsEditing(false);
-      }
+      const note = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
+      setSelectedNote(note);
+      setIsEditing(false);
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'NotesAppProvider', action: 'fetchNote', noteId } });
     }

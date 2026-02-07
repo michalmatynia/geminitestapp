@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient, useMutation, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
+import { api } from '@/shared/lib/api-client';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import type { DeleteResponse } from '@/shared/types/api';
@@ -40,23 +41,19 @@ export const useNotes = (
 
   return useQuery<NoteWithRelations[], Error>({
     queryKey: ['notes', debouncedFilters],
-    queryFn: async (): Promise<NoteWithRelations[]> => {
-      const params = new URLSearchParams();
-      
-      if (debouncedFilters.search) params.append('search', debouncedFilters.search);
-      if (debouncedFilters.searchScope) params.append('searchScope', debouncedFilters.searchScope);
-      if (debouncedFilters.isPinned !== undefined) params.append('isPinned', String(debouncedFilters.isPinned));
-      if (debouncedFilters.isArchived !== undefined) params.append('isArchived', String(debouncedFilters.isArchived));
-      if (debouncedFilters.isFavorite !== undefined) params.append('isFavorite', String(debouncedFilters.isFavorite));
-      if (debouncedFilters.notebookId) params.append('notebookId', debouncedFilters.notebookId);
-      if (debouncedFilters.tagIds?.length) params.append('tagIds', debouncedFilters.tagIds.join(','));
-      if (debouncedFilters.categoryIds?.length) params.append('categoryIds', debouncedFilters.categoryIds.join(','));
-      if (debouncedFilters.truncateContent) params.append('truncateContent', 'true');
-
-      const response = await fetch(`/api/notes?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch notes');
-      return response.json() as Promise<NoteWithRelations[]>;
-    },
+    queryFn: () => api.get<NoteWithRelations[]>('/api/notes', {
+      params: {
+        search: debouncedFilters.search || undefined,
+        searchScope: debouncedFilters.searchScope || undefined,
+        isPinned: debouncedFilters.isPinned !== undefined ? String(debouncedFilters.isPinned) : undefined,
+        isArchived: debouncedFilters.isArchived !== undefined ? String(debouncedFilters.isArchived) : undefined,
+        isFavorite: debouncedFilters.isFavorite !== undefined ? String(debouncedFilters.isFavorite) : undefined,
+        notebookId: debouncedFilters.notebookId || undefined,
+        tagIds: debouncedFilters.tagIds?.length ? debouncedFilters.tagIds.join(',') : undefined,
+        categoryIds: debouncedFilters.categoryIds?.length ? debouncedFilters.categoryIds.join(',') : undefined,
+        truncateContent: debouncedFilters.truncateContent ? 'true' : undefined,
+      }
+    }),
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
   });
@@ -68,11 +65,7 @@ export const useNote = (
 ): UseQueryResult<NoteWithRelations, Error> => {
   return useQuery<NoteWithRelations, Error>({
     queryKey: ['notes', noteId],
-    queryFn: async (): Promise<NoteWithRelations> => {
-      const response = await fetch(`/api/notes/${noteId}`);
-      if (!response.ok) throw new Error('Failed to fetch note');
-      return response.json() as Promise<NoteWithRelations>;
-    },
+    queryFn: () => api.get<NoteWithRelations>(`/api/notes/${noteId}`),
     enabled: !!noteId && (options?.enabled ?? true),
     staleTime: NOTES_STALE_MS,
   });
@@ -81,11 +74,7 @@ export const useNote = (
 export const useNoteTree = (options?: { enabled?: boolean }): UseQueryResult<NotebookRecord[], Error> => {
   return useQuery<NotebookRecord[], Error>({
     queryKey: ['notes', 'notebooks'],
-    queryFn: async (): Promise<NotebookRecord[]> => {
-      const response = await fetch('/api/notes/notebooks');
-      if (!response.ok) throw new Error('Failed to fetch notebooks');
-      return response.json() as Promise<NotebookRecord[]>;
-    },
+    queryFn: () => api.get<NotebookRecord[]>('/api/notes/notebooks'),
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
   });
@@ -94,11 +83,7 @@ export const useNoteTree = (options?: { enabled?: boolean }): UseQueryResult<Not
 export const useNoteTags = (options?: { enabled?: boolean }): UseQueryResult<TagRecord[], Error> => {
   return useQuery<TagRecord[], Error>({
     queryKey: ['notes', 'tags'],
-    queryFn: async (): Promise<TagRecord[]> => {
-      const response = await fetch('/api/notes/tags');
-      if (!response.ok) throw new Error('Failed to fetch tags');
-      return response.json() as Promise<TagRecord[]>;
-    },
+    queryFn: () => api.get<TagRecord[]>('/api/notes/tags'),
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
   });
@@ -107,13 +92,10 @@ export const useNoteTags = (options?: { enabled?: boolean }): UseQueryResult<Tag
 export const useNoteCategories = (notebookId?: string | null, options?: { enabled?: boolean }): UseQueryResult<CategoryRecord[], Error> => {
   return useQuery<CategoryRecord[], Error>({
     queryKey: ['notes', 'categories', notebookId],
-    queryFn: async (): Promise<CategoryRecord[]> => {
-      if (!notebookId) return [] as CategoryRecord[];
-      const params = new URLSearchParams({ notebookId });
-      const response = await fetch(`/api/notes/categories?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      return response.json() as Promise<CategoryRecord[]>;
-    },
+    queryFn: () => 
+      notebookId 
+        ? api.get<CategoryRecord[]>('/api/notes/categories', { params: { notebookId } })
+        : Promise.resolve([] as CategoryRecord[]),
     enabled: (options?.enabled ?? true) && !!notebookId,
     staleTime: NOTES_STALE_MS,
   });
@@ -122,11 +104,7 @@ export const useNoteCategories = (notebookId?: string | null, options?: { enable
 export const useNoteThemes = (options?: { enabled?: boolean }): UseQueryResult<ThemeRecord[], Error> => {
   return useQuery<ThemeRecord[], Error>({
     queryKey: ['notes', 'themes'],
-    queryFn: async (): Promise<ThemeRecord[]> => {
-      const response = await fetch('/api/notes/themes');
-      if (!response.ok) throw new Error('Failed to fetch themes');
-      return response.json() as Promise<ThemeRecord[]>;
-    },
+    queryFn: () => api.get<ThemeRecord[]>('/api/notes/themes'),
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
   });
@@ -138,15 +116,7 @@ export const useCreateNoteMutation = (): UseMutationResult<NoteRecord, Error, No
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: NoteCreateInput): Promise<NoteRecord> => {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create note');
-      return response.json() as Promise<NoteRecord>;
-    },
+    mutationFn: (data: NoteCreateInput) => api.post<NoteRecord>('/api/notes', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
@@ -157,16 +127,8 @@ export const useUpdateNoteMutation = (): UseMutationResult<NoteRecord, Error, No
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: NoteUpdateInput & { id: string }): Promise<NoteRecord> => {
-      const { id, ...updateData } = data;
-      const response = await fetch(`/api/notes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      if (!response.ok) throw new Error('Failed to update note');
-      return response.json() as Promise<NoteRecord>;
-    },
+    mutationFn: ({ id, ...updateData }: NoteUpdateInput & { id: string }) => 
+      api.patch<NoteRecord>(`/api/notes/${id}`, updateData),
     onSuccess: (_: NoteRecord, variables: NoteUpdateInput & { id: string }) => {
       void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
       void queryClient.invalidateQueries({ queryKey: ['notes'] });
@@ -178,11 +140,7 @@ export const useDeleteNoteMutation = (): UseMutationResult<DeleteResponse, Error
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete note');
-      return response.json() as Promise<DeleteResponse>;
-    },
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
@@ -193,15 +151,7 @@ export const useCreateNotebookMutation = (): UseMutationResult<NotebookRecord, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: NotebookCreateInput): Promise<NotebookRecord> => {
-      const response = await fetch('/api/notes/notebooks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create notebook');
-      return response.json() as Promise<NotebookRecord>;
-    },
+    mutationFn: (data: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
     },
@@ -212,16 +162,8 @@ export const useUpdateNotebookMutation = (): UseMutationResult<NotebookRecord, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: NotebookUpdateInput & { id: string }): Promise<NotebookRecord> => {
-      const { id, ...updateData } = data;
-      const response = await fetch(`/api/notes/notebooks/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      if (!response.ok) throw new Error('Failed to update notebook');
-      return response.json() as Promise<NotebookRecord>;
-    },
+    mutationFn: ({ id, ...updateData }: NotebookUpdateInput & { id: string }) => 
+      api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, updateData),
     onSuccess: (_: NotebookRecord, variables: NotebookUpdateInput & { id: string }) => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
       void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
@@ -233,11 +175,7 @@ export const useDeleteNotebookMutation = (): UseMutationResult<DeleteResponse, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/notes/notebooks/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete notebook');
-      return response.json() as Promise<DeleteResponse>;
-    },
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
     },
@@ -248,15 +186,7 @@ export const useCreateTagMutation = (): UseMutationResult<TagRecord, Error, TagC
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: TagCreateInput): Promise<TagRecord> => {
-      const response = await fetch('/api/notes/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create tag');
-      return response.json() as Promise<TagRecord>;
-    },
+    mutationFn: (data: TagCreateInput) => api.post<TagRecord>('/api/notes/tags', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
     },
@@ -267,16 +197,8 @@ export const useUpdateTagMutation = (): UseMutationResult<TagRecord, Error, TagU
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: TagUpdateInput & { id: string }): Promise<TagRecord> => {
-      const { id, ...updateData } = data;
-      const response = await fetch(`/api/notes/tags/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      if (!response.ok) throw new Error('Failed to update tag');
-      return response.json() as Promise<TagRecord>;
-    },
+    mutationFn: ({ id, ...updateData }: TagUpdateInput & { id: string }) => 
+      api.patch<TagRecord>(`/api/notes/tags/${id}`, updateData),
     onSuccess: (_: TagRecord, variables: TagUpdateInput & { id: string }) => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
       void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
@@ -288,11 +210,7 @@ export const useDeleteTagMutation = (): UseMutationResult<DeleteResponse, Error,
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/notes/tags/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete tag');
-      return response.json() as Promise<DeleteResponse>;
-    },
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
     },
@@ -303,15 +221,7 @@ export const useCreateCategoryMutation = (): UseMutationResult<CategoryRecord, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CategoryCreateInput): Promise<CategoryRecord> => {
-      const response = await fetch('/api/notes/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create category');
-      return response.json() as Promise<CategoryRecord>;
-    },
+    mutationFn: (data: CategoryCreateInput) => api.post<CategoryRecord>('/api/notes/categories', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
     },
@@ -322,16 +232,8 @@ export const useUpdateCategoryMutation = (): UseMutationResult<CategoryRecord, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CategoryUpdateInput & { id: string }): Promise<CategoryRecord> => {
-      const { id, ...updateData } = data;
-      const response = await fetch(`/api/notes/categories/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      if (!response.ok) throw new Error('Failed to update category');
-      return response.json() as Promise<CategoryRecord>;
-    },
+    mutationFn: ({ id, ...updateData }: CategoryUpdateInput & { id: string }) => 
+      api.patch<CategoryRecord>(`/api/notes/categories/${id}`, updateData),
     onSuccess: (_: CategoryRecord, variables: CategoryUpdateInput & { id: string }) => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
       void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
@@ -343,11 +245,7 @@ export const useDeleteCategoryMutation = (): UseMutationResult<DeleteResponse, E
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/notes/categories/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete category');
-      return response.json() as Promise<DeleteResponse>;
-    },
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/categories/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
     },
@@ -358,15 +256,7 @@ export const useCreateThemeMutation = (): UseMutationResult<ThemeRecord, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: ThemeCreateInput): Promise<ThemeRecord> => {
-      const response = await fetch('/api/notes/themes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create theme');
-      return response.json() as Promise<ThemeRecord>;
-    },
+    mutationFn: (data: ThemeCreateInput) => api.post<ThemeRecord>('/api/notes/themes', data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
     },
@@ -377,16 +267,8 @@ export const useUpdateThemeMutation = (): UseMutationResult<ThemeRecord, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: ThemeUpdateInput & { id: string }): Promise<ThemeRecord> => {
-      const { id, ...updateData } = data;
-      const response = await fetch(`/api/notes/themes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      if (!response.ok) throw new Error('Failed to update theme');
-      return response.json() as Promise<ThemeRecord>;
-    },
+    mutationFn: ({ id, ...updateData }: ThemeUpdateInput & { id: string }) => 
+      api.patch<ThemeRecord>(`/api/notes/themes/${id}`, updateData),
     onSuccess: (_: ThemeRecord, variables: ThemeUpdateInput & { id: string }) => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
       void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
@@ -398,11 +280,7 @@ export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Erro
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/notes/themes/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete theme');
-      return response.json() as Promise<DeleteResponse>;
-    },
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
     },
@@ -416,20 +294,8 @@ export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResul
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      relationsFrom,
-      relationsTo,
-    }: {
-      relationsFrom?: string[];
-      relationsTo?: string[];
-    }): Promise<void> => {
-      const response = await fetch(`/api/notes/${noteId}/relations`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ relationsFrom, relationsTo }),
-      });
-      if (!response.ok) throw new Error('Failed to update note relations');
-    },
+    mutationFn: (data: { relationsFrom?: string[]; relationsTo?: string[] }) => 
+      api.put<void>(`/api/notes/${noteId}/relations`, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes', noteId] });
     },
@@ -486,13 +352,9 @@ export const useDeleteNoteFileMutation = (noteId?: string): UseMutationResult<De
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (slotIndex: number): Promise<DeleteResponse> => {
+    mutationFn: (slotIndex: number) => {
       if (!noteId) throw new Error('Note ID is required for file deletion');
-      const response = await fetch(`/api/notes/${noteId}/files/${slotIndex}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete note file');
-      return response.json() as Promise<DeleteResponse>;
+      return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);
     },
     onSuccess: () => {
       if (noteId) {

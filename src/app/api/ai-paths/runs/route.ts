@@ -14,6 +14,8 @@ import {
 import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
 import type { AiPathRunListOptions } from "@/features/ai/ai-paths/types/path-run-repository";
 
+const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
+
 const RUN_STATUSES: AiPathRunStatus[] = [
   "queued",
   "running",
@@ -52,6 +54,19 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const offset =
     Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
   const repo = getPathRunRepository();
+  const staleRunningMaxAgeMsRaw = Number.parseInt(
+    process.env.AI_PATHS_STALE_RUNNING_MAX_AGE_MS ?? "",
+    10
+  );
+  const staleRunningMaxAgeMs =
+    Number.isFinite(staleRunningMaxAgeMsRaw) && staleRunningMaxAgeMsRaw > 0
+      ? staleRunningMaxAgeMsRaw
+      : DEFAULT_STALE_RUNNING_MAX_AGE_MS;
+  try {
+    await repo.markStaleRunningRuns(staleRunningMaxAgeMs);
+  } catch {
+    // Non-fatal cleanup best effort.
+  }
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const result = await repo.listRuns({
     ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),

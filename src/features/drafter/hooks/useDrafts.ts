@@ -2,32 +2,23 @@
 
 import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products/types/drafts';
 
-export const draftKeys = {
-  all: ['drafts'] as const,
-  detail: (id: string) => ['drafts', id] as const,
-};
+export const draftKeys = QUERY_KEYS.drafts;
 
 export function useDrafts(): UseQueryResult<ProductDraft[]> {
   return useQuery({
     queryKey: draftKeys.all,
-    queryFn: async (): Promise<ProductDraft[]> => {
-      const res = await fetch('/api/drafts');
-      if (!res.ok) throw new Error('Failed to load drafts');
-      return (await res.json()) as ProductDraft[];
-    },
+    queryFn: () => api.get<ProductDraft[]>('/api/drafts'),
   });
 }
 
 export function useDraft(id: string | null): UseQueryResult<ProductDraft> {
   return useQuery({
     queryKey: draftKeys.detail(id || ''),
-    queryFn: async (): Promise<ProductDraft> => {
-      const res = await fetch(`/api/drafts/${id}`);
-      if (!res.ok) throw new Error('Failed to load draft');
-      return (await res.json()) as ProductDraft;
-    },
+    queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`),
     enabled: !!id,
   });
 }
@@ -35,15 +26,7 @@ export function useDraft(id: string | null): UseQueryResult<ProductDraft> {
 export function useCreateDraft(): UseMutationResult<ProductDraft, Error, CreateProductDraftInput> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateProductDraftInput): Promise<ProductDraft> => {
-      const res = await fetch('/api/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) throw new Error('Failed to create draft');
-      return (await res.json()) as ProductDraft;
-    },
+    mutationFn: (input: CreateProductDraftInput) => api.post<ProductDraft>('/api/drafts', input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
     },
@@ -53,15 +36,8 @@ export function useCreateDraft(): UseMutationResult<ProductDraft, Error, CreateP
 export function useUpdateDraft(): UseMutationResult<ProductDraft, Error, { id: string; input: UpdateProductDraftInput }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: UpdateProductDraftInput }): Promise<ProductDraft> => {
-      const res = await fetch(`/api/drafts/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) throw new Error('Failed to update draft');
-      return (await res.json()) as ProductDraft;
-    },
+    mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftInput }) => 
+      api.put<ProductDraft>(`/api/drafts/${id}`, input),
     onSuccess: (data: ProductDraft) => {
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
       void queryClient.invalidateQueries({ queryKey: draftKeys.detail(data.id) });
@@ -73,10 +49,7 @@ export function useDeleteDraft(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<string> => {
-      const res = await fetch(`/api/drafts/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete draft');
+      await api.delete(`/api/drafts/${id}`);
       return id;
     },
     onSuccess: (deletedId: string): void => {

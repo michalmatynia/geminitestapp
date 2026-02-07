@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
 import { Input, useToast } from '@/shared/ui';
 
 
@@ -21,9 +22,9 @@ export const EditableCell = memo(function EditableCell({
 }: EditableCellProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value ?? ''));
-  const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { mutateAsync: updateField, isPending: isSaving } = useUpdateProductField();
 
   useEffect((): void => {
     if (isEditing && inputRef.current) {
@@ -54,20 +55,8 @@ export const EditableCell = memo(function EditableCell({
       return;
     }
 
-    setIsSaving(true);
-
     try {
-      const res = await fetch(`/api/products/${productId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: numValue }),
-      });
-
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || `Failed to update ${field}`);
-      }
-
+      await updateField({ id: productId, field, value: numValue });
       toast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, { variant: 'success' });
       setIsEditing(false);
       onUpdate(numValue);
@@ -76,8 +65,6 @@ export const EditableCell = memo(function EditableCell({
       toast(error instanceof Error ? error.message : `Failed to update ${field}`, { variant: 'error' });
       setEditValue(String(value ?? ''));
       setIsEditing(false);
-    } finally {
-      setIsSaving(false);
     }
   };
 

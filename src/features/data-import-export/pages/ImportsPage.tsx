@@ -4,6 +4,7 @@ import React from 'react';
 
 import {
   PRODUCT_FIELDS,
+  EXPORT_PARAMETER_KEYS,
 } from '@/features/data-import-export/components/imports/constants';
 import { ExportTab } from '@/features/data-import-export/components/imports/ExportTab';
 import { ImportTab } from '@/features/data-import-export/components/imports/ImportTab';
@@ -69,6 +70,10 @@ function ImportsPageContent(): React.JSX.Element {
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
   const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
   const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
+  const exportSourceFieldOptions = React.useMemo(
+    (): string[] => [...EXPORT_PARAMETER_KEYS].sort((a: string, b: string): number => a.localeCompare(b)),
+    []
+  );
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
     const setMappings = templateScope === 'import' ? setImportTemplateMappings : setExportTemplateMappings;
@@ -149,7 +154,13 @@ function ImportsPageContent(): React.JSX.Element {
                 <div className="space-y-2">
                   {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
                     <div key={i} className="flex gap-2 items-center">
-                      <Input value={m.sourceKey} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })} placeholder="Source" className="flex-1" />
+                      <Input
+                        value={m.sourceKey}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
+                        placeholder={templateScope === 'export' ? 'Source (e.g. category_id)' : 'Source'}
+                        list={templateScope === 'export' ? 'export-source-field-options' : undefined}
+                        className="flex-1"
+                      />
                       <div className="flex-1">
                         <Select
                           value={m.targetField}
@@ -171,6 +182,18 @@ function ImportsPageContent(): React.JSX.Element {
                   ))}
                   <Button variant="secondary" onClick={addMappingRow}>Add Row</Button>
                 </div>
+                {templateScope === 'export' && (
+                  <>
+                    <datalist id="export-source-field-options">
+                      {exportSourceFieldOptions.map((field: string) => (
+                        <option key={field} value={field} />
+                      ))}
+                    </datalist>
+                    <p className="text-xs text-gray-500">
+                      For category mapping use: source <code>category_id</code> and target <code>categoryId</code>.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -3,6 +3,15 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { 
+  useOllamaModels, 
+  useBrainAnalyticsSummary, 
+  useBrainLogMetrics, 
+  useBrainInsights, 
+  useBrainRuntimeAnalytics,
+  type ChatbotModelsResponse,
+  type InsightsSnapshot
+} from '@/features/ai/brain/hooks/useBrainQueries';
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
@@ -283,18 +292,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     }, {} as Record<AiBrainFeature, AiBrainAssignment>);
   }, [settings]);
 
-  const ollamaModelsQuery = useQuery({
-    queryKey: ['brain', 'ollama-models'],
-    queryFn: async (): Promise<ChatbotModelsResponse> => {
-      const res = await fetch('/api/chatbot');
-      if (!res.ok) {
-        throw new Error('Failed to fetch live Ollama models.');
-      }
-      return (await res.json()) as ChatbotModelsResponse;
-    },
-    staleTime: 1000 * 60,
-    refetchInterval: 1000 * 60,
-  });
+  const ollamaModelsQuery = useOllamaModels();
 
   const liveOllamaModels = useMemo((): string[] => {
     const models = Array.isArray(ollamaModelsQuery.data?.models)
@@ -348,68 +346,13 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     return options;
   }, [providerCatalog]);
 
-  const analyticsSummaryQuery = useQuery({
-    queryKey: ['brain', 'metrics', 'analytics-summary'],
-    queryFn: async (): Promise<AnalyticsSummaryDto> => {
-      const res = await fetch('/api/analytics/summary?range=24h&scope=all');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to fetch analytics summary.');
-      }
-      return (await res.json()) as AnalyticsSummaryDto;
-    },
-    refetchInterval: 30_000,
-  });
+  const analyticsSummaryQuery = useBrainAnalyticsSummary();
 
-  const logMetricsQuery = useQuery({
-    queryKey: ['brain', 'metrics', 'logs'],
-    queryFn: async (): Promise<SystemLogMetrics> => {
-      const res = await fetch('/api/system/logs/metrics?level=error');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to fetch log metrics.');
-      }
-      const data = (await res.json()) as { metrics?: SystemLogMetrics };
-      if (!data.metrics) throw new Error('Missing metrics payload.');
-      return data.metrics;
-    },
-    refetchInterval: 30_000,
-  });
+  const logMetricsQuery = useBrainLogMetrics();
 
-  const insightsQuery = useQuery({
-    queryKey: ['brain', 'metrics', 'insights'],
-    queryFn: async (): Promise<InsightsSnapshot> => {
-      const [analyticsRes, logsRes] = await Promise.all([
-        fetch('/api/analytics/insights?limit=5'),
-        fetch('/api/system/logs/insights?limit=5'),
-      ]);
-      if (!analyticsRes.ok || !logsRes.ok) {
-        throw new Error('Failed to fetch AI insight history.');
-      }
-      const analyticsData = (await analyticsRes.json()) as { insights?: AiInsightRecord[] };
-      const logsData = (await logsRes.json()) as { insights?: AiInsightRecord[] };
-      return {
-        analytics: analyticsData.insights ?? [],
-        logs: logsData.insights ?? [],
-      };
-    },
-    refetchInterval: 30_000,
-  });
+  const insightsQuery = useBrainInsights();
 
-  const runtimeAnalyticsQuery = useQuery({
-    queryKey: ['brain', 'metrics', 'runtime-analytics'],
-    queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
-      const res = await fetch('/api/ai-paths/runtime-analytics/summary?range=24h');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to fetch runtime analytics.');
-      }
-      const data = (await res.json()) as { summary?: AiPathRuntimeAnalyticsSummary };
-      if (!data.summary) throw new Error('Missing runtime analytics payload.');
-      return data.summary;
-    },
-    refetchInterval: 30_000,
-  });
+  const runtimeAnalyticsQuery = useBrainRuntimeAnalytics();
 
   const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {
     setSettings((prev: AiBrainSettings) => ({

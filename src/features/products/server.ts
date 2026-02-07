@@ -13,5 +13,30 @@ export * from './services/productService';
 export * from './services/product-provider';
 export * from './types/drafts';
 export * from './types/products-ui';
-export * from './validations';
+// Only re-export server-safe validations (schemas, validators, types).
+// Client hooks (useProductCreateValidation, etc.) and context (ValidationProvider)
+// must be imported directly from './validations' or './validations/hooks'.
+export {
+  productCreateSchema,
+  productUpdateSchema,
+  validateProductCreate,
+  validateProductUpdate,
+  isValidProductCreate,
+  isValidProductUpdate,
+  isProductLike,
+  hasRequiredProductFields,
+  validateProductField,
+  validateProductFields,
+  validateProductsBatch,
+  getValidationSummary,
+  mergeValidationResults,
+  type ProductCreateInput,
+  type ProductUpdateInput,
+  type ValidationResult,
+  type ValidationError,
+  type ValidationMetadata,
+  type FieldValidationResult,
+  type ProductCreateData,
+  type ProductUpdateData,
+} from './validations';
 export * from './utils';

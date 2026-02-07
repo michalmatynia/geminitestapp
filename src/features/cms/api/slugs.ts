@@ -1,86 +1,61 @@
+import { api } from '@/shared/lib/api-client';
 import type { Slug } from '../types';
 
-const safeJson = async <T>(res: Response): Promise<T> => {
-  try {
-    return (await res.json()) as T;
-  } catch {
-    return {} as T;
-  }
-};
-
-const withDomainQuery = (url: string, domainId?: string | null): string => {
-  if (!domainId) return url;
-  const params = new URLSearchParams({ domainId });
-  return `${url}?${params.toString()}`;
-};
-
 export const fetchSlugs = async (domainId?: string | null): Promise<Slug[]> => {
-  const res = await fetch(withDomainQuery('/api/cms/slugs', domainId ?? undefined));
-  if (!res.ok) {
-    throw new Error('Failed to fetch slugs');
-  }
-  return res.json() as Promise<Slug[]>;
+  return api.get<Slug[]>('/api/cms/slugs', {
+    params: { domainId: domainId ?? undefined }
+  });
 };
 
 export const fetchAllSlugs = async (): Promise<Slug[]> => {
-  const res = await fetch('/api/cms/slugs?scope=all');
-  if (!res.ok) {
-    throw new Error('Failed to fetch all slugs');
-  }
-  return res.json() as Promise<Slug[]>;
+  return api.get<Slug[]>('/api/cms/slugs', {
+    params: { scope: 'all' }
+  });
 };
 
 export const fetchSlug = async (id: string, domainId?: string | null): Promise<Slug> => {
-  const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined));
-  if (!res.ok) {
-    throw new Error('Failed to fetch slug');
-  }
-  return res.json() as Promise<Slug>;
+  return api.get<Slug>(`/api/cms/slugs/${id}`, {
+    params: { domainId: domainId ?? undefined }
+  });
 };
 
 export const fetchSlugDomains = async (id: string): Promise<{ domainIds: string[] }> => {
-  const res = await fetch(`/api/cms/slugs/${id}/domains`);
-  if (!res.ok) {
-    throw new Error('Failed to fetch slug domains');
-  }
-  return res.json() as Promise<{ domainIds: string[] }>;
+  return api.get<{ domainIds: string[] }>(`/api/cms/slugs/${id}/domains`);
 };
 
 export const updateSlugDomains = async (id: string, domainIds: string[]): Promise<{ domainIds: string[] }> => {
-  const res = await fetch(`/api/cms/slugs/${id}/domains`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domainIds }),
-  });
-  if (!res.ok) {
-    throw new Error('Failed to update slug domains');
-  }
-  return res.json() as Promise<{ domainIds: string[] }>;
+  return api.put<{ domainIds: string[] }>(`/api/cms/slugs/${id}/domains`, { domainIds });
 };
 
 export const createSlug = async (input: { slug: string; domainId?: string | null }): Promise<{ ok: boolean; payload: Slug }> => {
-  const res = await fetch(withDomainQuery('/api/cms/slugs', input.domainId ?? undefined), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ slug: input.slug }),
-  });
-  const payload = await safeJson<Slug>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.post<Slug>('/api/cms/slugs', { slug: input.slug }, {
+      params: { domainId: input.domainId ?? undefined }
+    });
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as Slug };
+  }
 };
 
 export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: string | null): Promise<{ ok: boolean; payload: Slug }> => {
-  const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<Slug>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.put<Slug>(`/api/cms/slugs/${id}`, input, {
+      params: { domainId: domainId ?? undefined }
+    });
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as Slug };
+  }
 };
 
 export const deleteSlug = async (id: string, domainId?: string | null): Promise<{ ok: boolean }> => {
-  const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
-    method: 'DELETE',
-  });
-  return { ok: res.ok };
+  try {
+    await api.delete(`/api/cms/slugs/${id}`, {
+      params: { domainId: domainId ?? undefined }
+    });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false };
+  }
 };

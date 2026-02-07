@@ -8,6 +8,7 @@ import type { AiPathRunRecord } from '@/shared/types/ai-paths';
 const DEFAULT_MAX_ATTEMPTS = Number(process.env.AI_PATHS_RUN_MAX_ATTEMPTS ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MS ?? '5000');
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MAX_MS ?? '60000');
+const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
 const normalizeNumber = (value: number, fallback: number, min: number = 0): number => {
   if (!Number.isFinite(value)) return fallback;
@@ -84,6 +85,11 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
   console.log(`[aiPathRunQueue] Processing run ${run.id}`);
   try {
     await executePathRun(run);
+    const latest = await (getPathRunRepository()).findRunById(run.id);
+    if (latest && latest.status === 'canceled') {
+      console.log(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
+      return;
+    }
     console.log(`[aiPathRunQueue] Run ${run.id} completed`);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Run failed.';
@@ -92,6 +98,11 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
       pathRunId: run.id,
       pathId: run.pathId,
     });
+    const latest = await (getPathRunRepository()).findRunById(run.id);
+    if (latest && TERMINAL_RUN_STATUSES.has(latest.status)) {
+      // Another flow (e.g. cancel endpoint) already finalized the run.
+      return;
+    }
     if (isNonRetryableRunError(error)) {
       await (getPathRunRepository()).updateRun(run.id, {
         status: 'failed',

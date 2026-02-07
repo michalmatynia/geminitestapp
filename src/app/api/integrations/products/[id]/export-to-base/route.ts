@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getProductRepository } from "@/features/products/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { getProductListingRepository } from "@/features/integrations/server";
+import { getCategoryMappingRepository } from "@/features/integrations/server";
 import {
   getExportWarehouseId
 } from "@/features/integrations/server";
@@ -118,6 +119,12 @@ const logImageDiagnostics = async ({
     });
   }
 };
+
+const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
+  "categoryid",
+  "category_id",
+  "category",
+]);
 
 /**
  * POST /api/integrations/products/[id]/export-to-base
@@ -258,6 +265,64 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         ) {
           exportImagesAsBase64 = template.exportImagesAsBase64;
         }
+      }
+    }
+
+    let exportProduct = product;
+    if (!imagesOnly) {
+      const hasCategoryTemplateMapping = mappings.some((mapping) =>
+        CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(
+          mapping.targetField.trim().toLowerCase()
+        )
+      );
+
+      if (hasCategoryTemplateMapping) {
+        const internalCategoryId =
+          typeof product.categoryId === "string" ? product.categoryId.trim() : "";
+        if (!internalCategoryId) {
+          throw badRequestError(
+            "Product has no internal category assigned. Assign a category before exporting with category mapping."
+          );
+        }
+
+        const categoryMappingRepo = getCategoryMappingRepository();
+        const categoryMappings = await categoryMappingRepo.listByConnection(
+          data.connectionId
+        );
+        const productCatalogIds = new Set(
+          (product.catalogs ?? []).map((catalog) => catalog.catalogId)
+        );
+
+        const matchingMappings = categoryMappings.filter(
+          (mapping) =>
+            mapping.isActive && mapping.internalCategoryId === internalCategoryId
+        );
+        const selectedMapping =
+          matchingMappings.find((mapping) =>
+            productCatalogIds.has(mapping.catalogId)
+          ) ?? matchingMappings[0];
+
+        if (!selectedMapping?.externalCategory?.externalId) {
+          throw badRequestError(
+            `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
+          );
+        }
+
+        exportProduct = {
+          ...product,
+          categoryId: selectedMapping.externalCategory.externalId,
+        };
+
+        await ErrorSystem.logInfo(
+          "[export-to-base] Resolved category mapping for export",
+          {
+            productId,
+            connectionId: data.connectionId,
+            internalCategoryId,
+            mappedExternalCategoryId: selectedMapping.externalCategory.externalId,
+            catalogId: selectedMapping.catalogId,
+          }
+        );
       }
     }
 
@@ -511,7 +576,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       includeStockWithoutWarehouse = false
     ) => {
       const exportData = await buildBaseProductData(
-        product,
+        exportProduct,
         activeMappings,
         targetWarehouseId,
         {
@@ -560,7 +625,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       ? await exportProductImagesToBase(
           token,
           targetInventoryId,
-          product,
+          exportProduct,
           listingExternalId as string,
           {
             imageBaseUrl,
@@ -573,7 +638,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       : await exportProductToBase(
           token,
           targetInventoryId,
-          product,
+          exportProduct,
           effectiveMappings,
           warehouseId,
           {
@@ -619,7 +684,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       result = await exportProductToBase(
         token,
         targetInventoryId,
-        product,
+        exportProduct,
         effectiveMappings,
         warehouseId,
         {
@@ -666,7 +731,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       result = await exportProductToBase(
         token,
         targetInventoryId,
-        product,
+        exportProduct,
         effectiveMappings,
         warehouseId,
         {
@@ -725,7 +790,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           ? await exportProductImagesToBase(
               token,
               targetInventoryId,
-              product,
+              exportProduct,
               listingExternalId as string,
               {
                 imageBaseUrl,
@@ -738,7 +803,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           : await exportProductToBase(
               token,
               targetInventoryId,
-              product,
+              exportProduct,
               effectiveMappings,
               warehouseId,
               {

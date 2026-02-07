@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import React, { useMemo } from 'react';
 
 import { getLanguages } from '@/features/internationalization/api';
@@ -14,6 +14,7 @@ import type {
   Producer
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
+import { api } from '@/shared/lib/api-client';
 import type { Language } from '@/shared/types/internationalization';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
@@ -70,6 +71,27 @@ export function useProducers(): UseQueryResult<Producer[]> {
       const res = await fetch('/api/products/producers');
       if (!res.ok) throw new Error('Failed to load producers');
       return (await res.json()) as Producer[];
+    },
+  });
+}
+
+export function useSaveProducerMutation(): UseMutationResult<Producer, Error, { id?: string; data: { name: string; website: string | null } }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => 
+      id ? api.put<Producer>(`/api/products/producers/${id}`, data) : api.post<Producer>('/api/products/producers', data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.producers });
+    },
+  });
+}
+
+export function useDeleteProducerMutation(): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete<void>(`/api/products/producers/${id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.producers });
     },
   });
 }

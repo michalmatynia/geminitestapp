@@ -1,6 +1,6 @@
 import { getProductRepository } from '@/features/products/services/product-repository';
 import type { ProductRecord } from '@/features/products/types';
-import { productCreateSchema } from '@/features/products/validations';
+import { validateProductCreate } from '@/features/products/validations';
 
 
 export async function createMockProduct(productData: {
@@ -17,7 +17,7 @@ export async function createMockProduct(productData: {
   length?: number;
 }): Promise<ProductRecord> {
   const productRepository = await getProductRepository();
-  const validated = productCreateSchema.parse({
+  const rawData = {
     name_en: productData.name_en || 'Mock Product (EN)',
     name_pl: productData.name_pl || 'Mock Product (PL)',
     name_de: productData.name_de || 'Mock Product (DE)',
@@ -37,7 +37,13 @@ export async function createMockProduct(productData: {
     sizeWidth: 10,
     weight: productData.weight || 100,
     length: productData.length || 20,
-  });
-  const product = await productRepository.createProduct(validated);
+  };
+  
+  const validationResult = await validateProductCreate(rawData);
+  if (!validationResult.success) {
+    throw new Error(`Mock product validation failed: ${JSON.stringify(validationResult.errors)}`);
+  }
+  
+  const product = await productRepository.createProduct(validationResult.data as any);
   return product;
 }

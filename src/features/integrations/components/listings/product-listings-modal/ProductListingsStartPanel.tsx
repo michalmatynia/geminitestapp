@@ -4,17 +4,15 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import {
   Button,
   SectionPanel,
   IntegrationSelector,
 } from '@/shared/ui';
 
-export function ProductListingsStartPanel({ 
-  onStartListing 
-}: { 
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined 
-}): React.JSX.Element {
+export function ProductListingsStartPanel(): React.JSX.Element {
+  const { onStartListing } = useProductListingsContext();
   const {
     integrations,
     loading: loadingIntegrations,

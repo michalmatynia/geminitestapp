@@ -216,6 +216,15 @@ export function apiHandler(
         context.body = parsed.body;
       }
 
+      if (options.querySchema) {
+        const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+        const validation = options.querySchema.safeParse(queryParams);
+        if (!validation.success) {
+          throw validationError('Query validation failed', { issues: validation.error.flatten() });
+        }
+        context.query = validation.data;
+      }
+
       const response = await handler(request, context);
 
       // Log successful requests if configured
@@ -317,6 +326,15 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           schema: options.bodySchema,
         });
         handlerContext.body = parsed.body;
+      }
+
+      if (options.querySchema) {
+        const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+        const validation = options.querySchema.safeParse(queryParams);
+        if (!validation.success) {
+          throw validationError('Query validation failed', { issues: validation.error.flatten() });
+        }
+        handlerContext.query = validation.data;
       }
 
       const params = await routeContext.params;

@@ -1,44 +1,33 @@
+import { api } from '@/shared/lib/api-client';
 import type { CmsDomain } from '../types';
 
-const safeJson = async <T>(res: Response): Promise<T> => {
-  try {
-    return (await res.json()) as T;
-  } catch {
-    return {} as T;
-  }
-};
-
 export const fetchDomains = async (): Promise<CmsDomain[]> => {
-  const res = await fetch('/api/cms/domains');
-  if (!res.ok) {
-    throw new Error('Failed to fetch domains');
-  }
-  return res.json() as Promise<CmsDomain[]>;
+  return api.get<CmsDomain[]>('/api/cms/domains');
 };
 
 export const createDomain = async (input: { domain: string }): Promise<{ ok: boolean; payload: CmsDomain }> => {
-  const res = await fetch('/api/cms/domains', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<CmsDomain>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.post<CmsDomain>('/api/cms/domains', input);
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as CmsDomain };
+  }
 };
 
 export const deleteDomain = async (id: string): Promise<{ ok: boolean }> => {
-  const res = await fetch(`/api/cms/domains/${id}`, {
-    method: 'DELETE',
-  });
-  return { ok: res.ok };
+  try {
+    await api.delete(`/api/cms/domains/${id}`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false };
+  }
 };
 
 export const updateDomain = async (id: string, input: { aliasOf?: string | null }): Promise<{ ok: boolean; payload: CmsDomain }> => {
-  const res = await fetch(`/api/cms/domains/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<CmsDomain>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.put<CmsDomain>(`/api/cms/domains/${id}`, input);
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as CmsDomain };
+  }
 };

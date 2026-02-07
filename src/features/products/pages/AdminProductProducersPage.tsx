@@ -1,10 +1,9 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { useProducers, productMetadataKeys } from '@/features/products/hooks/useProductMetadata';
+import { useProducers, useSaveProducerMutation, useDeleteProducerMutation } from '@/features/products/hooks/useProductMetadata';
 import type { Producer } from '@/features/products/types';
 import { Button, ConfirmDialog, EmptyState, Input, Label, SharedModal, useToast } from '@/shared/ui';
 
@@ -15,8 +14,9 @@ type ProducerFormState = {
 
 export function AdminProductProducersPage(): React.JSX.Element {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const producersQuery = useProducers();
+  const saveMutation = useSaveProducerMutation();
+  const deleteMutation = useDeleteProducerMutation();
 
   const loading = producersQuery.isLoading;
 
@@ -32,43 +32,6 @@ export function AdminProductProducersPage(): React.JSX.Element {
     if (!q) return producersData;
     return producersData.filter((p: Producer) => p.name.toLowerCase().includes(q));
   }, [producersQuery.data, query]);
-
-  const invalidate = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: productMetadataKeys.producers });
-  };
-
-  const saveMutation = useMutation({
-    mutationFn: async (payload: { id?: string; data: { name: string; website: string | null } }) => {
-      const url = payload.id ? `/api/products/producers/${payload.id}` : '/api/products/producers';
-      const method = payload.id ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload.data),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body?.error || 'Failed to save producer');
-      }
-      return (await res.json()) as Producer;
-    },
-    onSuccess: async () => {
-      await invalidate();
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/products/producers/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body?.error || 'Failed to delete producer');
-      }
-    },
-    onSuccess: async () => {
-      await invalidate();
-    },
-  });
 
   const openCreate = (): void => {
     setEditing(null);
@@ -90,13 +53,10 @@ export function AdminProductProducersPage(): React.JSX.Element {
     }
     const website = form.website.trim();
     try {
-      const payload: { id?: string; data: { name: string; website: string | null } } = {
+      await saveMutation.mutateAsync({
+        id: editing?.id,
         data: { name, website: website ? website : null },
-      };
-      if (editing?.id) {
-        payload.id = editing.id;
-      }
-      await saveMutation.mutateAsync(payload);
+      });
       toast(editing ? 'Producer updated.' : 'Producer created.', { variant: 'success' });
       setOpen(false);
     } catch (error) {

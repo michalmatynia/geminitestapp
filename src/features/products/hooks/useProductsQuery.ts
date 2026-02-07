@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { getProducts, countProducts } from '@/features/products/api';
+import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
 
 interface UseProductsFilters {

@@ -15,6 +15,80 @@ type BaseCategoryMapperProps = {
   connectionName: string;
 };
 
+const normalizeParentExternalId = (value: string | null | undefined): string | null => {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate || candidate === '0' || candidate.toLowerCase() === 'null') {
+    return null;
+  }
+  return candidate;
+};
+
+type InternalCategoryOption = {
+  value: string;
+  label: string;
+};
+
+const buildInternalCategoryOptions = (categories: ProductCategoryDto[]): InternalCategoryOption[] => {
+  if (categories.length === 0) return [];
+
+  const byId = new Map<string, ProductCategoryDto>(
+    categories.map((category: ProductCategoryDto): [string, ProductCategoryDto] => [category.id, category])
+  );
+  const childrenByParentId = new Map<string | null, ProductCategoryDto[]>();
+
+  const pushChild = (parentId: string | null, category: ProductCategoryDto): void => {
+    const current = childrenByParentId.get(parentId) ?? [];
+    current.push(category);
+    childrenByParentId.set(parentId, current);
+  };
+
+  for (const category of categories) {
+    const rawParentId = typeof category.parentId === 'string' ? category.parentId.trim() : '';
+    const normalizedParentId =
+      rawParentId.length > 0 && rawParentId !== category.id && byId.has(rawParentId) ? rawParentId : null;
+    pushChild(normalizedParentId, category);
+  }
+
+  for (const [, children] of childrenByParentId) {
+    children.sort((a: ProductCategoryDto, b: ProductCategoryDto): number =>
+      a.name.localeCompare(b.name)
+    );
+  }
+
+  const visited = new Set<string>();
+  const options: InternalCategoryOption[] = [];
+
+  const visit = (parentId: string | null, depth: number, ancestry: string[]): void => {
+    const children = childrenByParentId.get(parentId) ?? [];
+    for (const child of children) {
+      if (visited.has(child.id)) continue;
+      visited.add(child.id);
+      const path = [...ancestry, child.name];
+      const indent = depth > 0 ? `${'\u00A0\u00A0'.repeat(depth)}↳ ` : '';
+      options.push({
+        value: child.id,
+        label: `${indent}${path.join(' / ')}`,
+      });
+      visit(child.id, depth + 1, path);
+    }
+  };
+
+  visit(null, 0, []);
+
+  const unvisited = categories
+    .filter((category: ProductCategoryDto): boolean => !visited.has(category.id))
+    .sort((a: ProductCategoryDto, b: ProductCategoryDto): number => a.name.localeCompare(b.name));
+
+  for (const category of unvisited) {
+    if (visited.has(category.id)) continue;
+    visited.add(category.id);
+    options.push({ value: category.id, label: category.name });
+    visit(category.id, 1, [category.name]);
+  }
+
+  return options;
+};
+
 export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategoryMapperProps): React.JSX.Element {
   const { toast } = useToast();
   
@@ -46,10 +120,23 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const internalCategoriesQuery = useProductCategories(selectedCatalogId ?? undefined);
   const internalCategories = internalCategoriesQuery.data ?? [];
   const internalCategoriesLoading = internalCategoriesQuery.isLoading;
+  const internalCategoryOptions = useMemo(
+    (): InternalCategoryOption[] => buildInternalCategoryOptions(internalCategories),
+    [internalCategories]
+  );
 
   const externalCategoriesQuery = useExternalCategories(connectionId);
   const externalCategories = useMemo(() => externalCategoriesQuery.data ?? [], [externalCategoriesQuery.data]);
   const externalCategoriesLoading = externalCategoriesQuery.isLoading;
+  const externalIds = useMemo(
+    () =>
+      new Set(
+        externalCategories
+          .map((category: ExternalCategory): string => category.externalId.trim())
+          .filter((id: string): boolean => id.length > 0)
+      ),
+    [externalCategories]
+  );
 
   const mappingsQuery = useCategoryMappings(connectionId, selectedCatalogId);
   const mappings = useMemo(() => mappingsQuery.data ?? [], [mappingsQuery.data]);
@@ -63,6 +150,16 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const hasInitializedExpansion = useRef(false);
 
+  const isRootCategory = useCallback(
+    (category: ExternalCategory): boolean => {
+      const parentExternalId = normalizeParentExternalId(category.parentExternalId);
+      if (!parentExternalId) return true;
+      if (parentExternalId === category.externalId) return true;
+      return !externalIds.has(parentExternalId);
+    },
+    [externalIds]
+  );
+
   // Initialize expansion state
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -73,7 +170,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           if (prev.size === 0) {
             return new Set(
               externalCategories
-                .filter((c: ExternalCategory) => c.depth === 0)
+                .filter((c: ExternalCategory) => isRootCategory(c))
                 .map((c: ExternalCategory) => c.id)
             );
           }
@@ -85,7 +182,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [externalCategories]);
+  }, [externalCategories, isRootCategory]);
 
   // Reset pending mappings when catalog changes
   useEffect(() => {
@@ -179,14 +276,10 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Build tree structure for display
   const categoryTree = useMemo((): ExternalCategory[] => {
-    const buildLevel = (parentExternalId: string | null): ExternalCategory[] => {
-      return externalCategories
-        .filter((c: ExternalCategory) => c.parentExternalId === parentExternalId)
-        .sort((a: ExternalCategory, b: ExternalCategory) => a.name.localeCompare(b.name));
-    };
-
-    return buildLevel(null);
-  }, [externalCategories]);
+    return externalCategories
+      .filter((category: ExternalCategory): boolean => isRootCategory(category))
+      .sort((a: ExternalCategory, b: ExternalCategory): number => a.name.localeCompare(b.name));
+  }, [externalCategories, isRootCategory]);
 
   // Count statistics
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
@@ -198,7 +291,10 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Render category row with children
   const renderCategory = (category: ExternalCategory, depth: number = 0): React.JSX.Element => {
-    const children = externalCategories.filter((c: ExternalCategory) => c.parentExternalId === category.externalId);
+    const children = externalCategories.filter(
+      (candidate: ExternalCategory): boolean =>
+        normalizeParentExternalId(candidate.parentExternalId) === category.externalId
+    );
     const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(category.id);
     const currentMapping = getMappingForExternal(category.id);
@@ -238,7 +334,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               disabled={internalCategoriesLoading || !selectedCatalogId}
               options={[
                 { value: '__unmapped__', label: '— Not mapped —' },
-                ...internalCategories.map((ic: ProductCategoryDto) => ({ value: ic.id, label: ic.name }))
+                ...internalCategoryOptions
               ]}
               triggerClassName="w-full bg-gray-800 border-border text-white text-sm h-8"
             />

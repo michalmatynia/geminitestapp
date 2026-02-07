@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
-import { fetchSettingsCached, invalidateSettingsCache, type SettingRecord } from '@/shared/api/settings-client';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Label, UnifiedSelect, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
 
 const STATIC_TRANSLATION_MODELS = [
@@ -13,60 +14,38 @@ const STATIC_TRANSLATION_MODELS = [
 ];
 
 export function AiTranslationSettings(): React.JSX.Element {
-  const [translationModel, setTranslationModel] = useState('');
-  const [ollamaModels, setOllamaModels] = useState<{ value: string; label: string; description: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { data: settingsMap, isLoading: settingsLoading } = useSettingsMap({ scope: 'all' });
+  const { data: chatbotModels = [] } = useChatbotModels();
+  const { mutateAsync: updateSetting, isPending: saving } = useUpdateSetting();
+
+  const [translationModel, setTranslationModel] = useState('');
+
+  const ollamaModels = useMemo(() => 
+    chatbotModels.map((name: string) => ({ value: name, label: name, description: 'Ollama' })),
+    [chatbotModels]
+  );
 
   useEffect(() => {
-    const loadData = async (): Promise<void> => {
-      try {
-        const data = await fetchSettingsCached();
-        const settingsMap = new Map(data.map((item: SettingRecord) => [item.key, item.value]));
-
-        setTranslationModel(settingsMap.get('ai_translation_model') || 'gpt-4o');
-
-        const chatbotRes = await fetch('/api/chatbot');
-        if (chatbotRes.ok) {
-          const data = await chatbotRes.json() as { models?: string[] };
-          if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map((name: string): { value: string; label: string; description: string } => ({ value: name, label: name, description: 'Ollama' })));
-          }
-        }
-      } catch (error) {
-        logClientError(error, { context: { source: 'AiTranslationSettings', action: 'loadData' } });
-        toast('Failed to load configuration.', { variant: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadData();
-  }, [toast]);
+    if (settingsMap) {
+      setTranslationModel(settingsMap.get('ai_translation_model') || 'gpt-4o');
+    }
+  }, [settingsMap]);
 
   const handleSave = async (): Promise<void> => {
-    setSaving(true);
     try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: 'ai_translation_model',
-          value: translationModel,
-        }),
+      await updateSetting({
+        key: 'ai_translation_model',
+        value: translationModel,
       });
-      invalidateSettingsCache();
-
-      toast('Settings saved.', { variant: 'success' });
+      toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AiTranslationSettings', action: 'handleSave' } });
-      toast('Failed to save.', { variant: 'error' });
-    } finally {
-      setSaving(false);
+      toast('Failed to save settings.', { variant: 'error' });
     }
   };
 
-  if (loading) return <div className="text-sm text-gray-400">Loading settings...</div>;
+  if (settingsLoading) return <div className="text-sm text-gray-400">Loading settings...</div>;
 
   return (
     <div className="space-y-8">

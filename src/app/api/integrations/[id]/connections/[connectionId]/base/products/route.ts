@@ -3,8 +3,8 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
 import { fetchBaseProducts } from "@/features/integrations/server";
+import { resolveBaseConnectionToken } from "@/features/integrations/services/base-token-resolver";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -50,18 +50,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     throw badRequestError("This endpoint is for Base.com/Baselinker connections only.");
   }
 
-  // Get the Base API token
-  let baseToken: string | null = null;
-
-  if (connection.baseApiToken) {
-    baseToken = decryptSecret(connection.baseApiToken);
-  } else if (connection.password) {
-    baseToken = decryptSecret(connection.password);
+  const tokenResolution = resolveBaseConnectionToken(connection);
+  if (!tokenResolution.token) {
+    throw badRequestError(
+      tokenResolution.error ?? "No Base API token configured. Please test the connection first."
+    );
   }
-
-  if (!baseToken) {
-    throw badRequestError("No Base API token configured. Please test the connection first.");
-  }
+  const baseToken = tokenResolution.token;
 
   const products = await fetchBaseProducts(baseToken, data.inventoryId, data.limit);
 

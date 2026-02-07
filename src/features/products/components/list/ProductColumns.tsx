@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListContext } from '@/features/products/context/ProductListContext';
+import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
@@ -74,7 +75,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   const product: ProductWithImages = row.original;
   const router = useRouter();
   const { toast } = useToast();
-  const queryClient: QueryClient = useQueryClient();
+  const { mutateAsync: duplicateProduct } = useDuplicateProduct();
 
   const handleDuplicate = async (): Promise<void> => {
     const sku: string | null = window.prompt('Enter a new unique SKU for the duplicate:');
@@ -94,27 +95,17 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       return;
     }
 
-    const res: Response = await fetch(`/api/products/${product.id}/duplicate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sku: trimmedSku }),
-    });
-
-    if (res.ok) {
-      const duplicated: { id?: string } = (await res.json()) as { id?: string };
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
-      void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+    try {
+      const duplicated = await duplicateProduct({ id: product.id, sku: trimmedSku });
       setRefreshTrigger?.((prev: number): number => prev + 1);
 
       if (duplicated.id) {
         toast('Product duplicated.', { variant: 'success' });
         router.push(`/admin/products/${duplicated.id}/edit`);
       }
-      return;
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to duplicate product.', { variant: 'error' });
     }
-
-    const error: { error?: string } = (await res.json()) as { error?: string };
-    toast(error.error || 'Failed to duplicate product.', { variant: 'error' });
   };
 
   return (

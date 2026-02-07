@@ -59,6 +59,11 @@ interface ProductListingsContextType {
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
   refetchListings: () => Promise<void>;
+  
+  // Modal Props
+  onClose: () => void;
+  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  filterIntegrationSlug?: string | null | undefined;
 }
 
 const ProductListingsContext = createContext<ProductListingsContextType | undefined>(undefined);
@@ -67,10 +72,16 @@ export function ProductListingsProvider({
   product,
   children,
   onListingsUpdated,
+  onClose,
+  onStartListing,
+  filterIntegrationSlug,
 }: {
   product: ProductWithImages;
   children: React.ReactNode;
   onListingsUpdated?: (() => void) | undefined;
+  onClose: () => void;
+  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  filterIntegrationSlug?: string | null | undefined;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
@@ -329,12 +340,15 @@ export function ProductListingsProvider({
     handleExportImagesOnly,
     handleImageRetry,
     refetchListings: async () => { await listingsQuery.refetch(); },
+    onClose,
+    onStartListing,
+    filterIntegrationSlug,
   }), [
     product, listings, listingsQuery, error, deletingFromBase, purgingListing, exportingListing,
     savingInventoryId, syncingImages, inventoryOverrides, historyOpenByListing, listingToDelete,
     listingToPurge, isSyncImagesConfirmOpen, exportLogs, logsOpen, lastExportListingId,
     handleDeleteFromBase, handlePurgeListing, handleSaveInventoryId, handleSyncBaseImages,
-    handleExportAgain, handleExportImagesOnly, handleImageRetry
+    handleExportAgain, handleExportImagesOnly, handleImageRetry, onClose, onStartListing, filterIntegrationSlug
   ]);
 
   return (

@@ -19,6 +19,8 @@ import type {
   RuntimeState,
 } from '@/shared/types/ai-paths';
 
+const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+
 const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return { inputs: {}, outputs: {} };
   if (typeof value === 'string') {
@@ -593,24 +595,33 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
 
     const finishedAt = new Date();
+    let finalizedAsCompleted = false;
     try {
-      await repo.updateRun(run.id, {
-        status: 'completed',
-        runtimeState: sanitizeRuntimeState(resultState),
-        finishedAt,
-        errorMessage: null,
-        meta: {
-          ...(run.meta ?? {}),
-          resumeMode: 'replay',
-          retryNodeIds: [],
-        },
-      });
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'info',
-        message: 'Run completed successfully.',
-        metadata: { runStartedAt },
-      });
+      const latestRun = await repo.findRunById(run.id);
+      if (latestRun?.status === 'canceled') {
+        await repo.updateRun(run.id, {
+          runtimeState: sanitizeRuntimeState(resultState),
+        });
+      } else if (!latestRun || !TERMINAL_RUN_STATUSES.has(latestRun.status)) {
+        await repo.updateRun(run.id, {
+          status: 'completed',
+          runtimeState: sanitizeRuntimeState(resultState),
+          finishedAt,
+          errorMessage: null,
+          meta: {
+            ...(run.meta ?? {}),
+            resumeMode: 'replay',
+            retryNodeIds: [],
+          },
+        });
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'info',
+          message: 'Run completed successfully.',
+          metadata: { runStartedAt },
+        });
+        finalizedAsCompleted = true;
+      }
     } catch (finalDbError) {
       void ErrorSystem.logWarning('Failed to record run completion in DB', {
         service: 'ai-paths-executor',
@@ -619,23 +630,25 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    try {
-      const startedAtMs = Date.parse(runStartedAt);
-      const durationMs = Number.isFinite(startedAtMs)
-        ? Math.max(0, finishedAt.getTime() - startedAtMs)
-        : null;
-      await recordRuntimeRunFinished({
-        runId: run.id,
-        status: 'completed',
-        durationMs,
-        timestamp: finishedAt,
-      });
-    } catch (analyticsError) {
-      void ErrorSystem.logWarning('Failed to record completion analytics', {
-        service: 'ai-paths-executor',
-        error: analyticsError,
-        runId: run.id,
-      });
+    if (finalizedAsCompleted) {
+      try {
+        const startedAtMs = Date.parse(runStartedAt);
+        const durationMs = Number.isFinite(startedAtMs)
+          ? Math.max(0, finishedAt.getTime() - startedAtMs)
+          : null;
+        await recordRuntimeRunFinished({
+          runId: run.id,
+          status: 'completed',
+          durationMs,
+          timestamp: finishedAt,
+        });
+      } catch (analyticsError) {
+        void ErrorSystem.logWarning('Failed to record completion analytics', {
+          service: 'ai-paths-executor',
+          error: analyticsError,
+          runId: run.id,
+        });
+      }
     }
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -645,6 +658,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     });
     const errorMessage = error instanceof Error ? error.message : String(error);
     const finishedAt = new Date();
+
+    let latestRun: AiPathRunRecord | null = null;
+    try {
+      latestRun = await repo.findRunById(run.id);
+    } catch {
+      latestRun = null;
+    }
+    if (latestRun && TERMINAL_RUN_STATUSES.has(latestRun.status)) {
+      throw error;
+    }
     
     try {
       await repo.updateRun(run.id, {

@@ -2,6 +2,8 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Template, BaseInventory } from '@/features/data-import-export';
 import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
@@ -13,30 +15,18 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export function useIntegrations(): UseQueryResult<Integration[]> {
   return useQuery({
-    queryKey: ['integrations'],
-    queryFn: async (): Promise<Integration[]> => {
-      const res = await fetch('/api/integrations');
-      if (!res.ok) {
-        const error = (await res.json()) as Record<string, unknown>;
-        throw new Error((error.error as string) || 'Failed to fetch integrations');
-      }
-      return (await res.json()) as Integration[];
-    },
+    queryKey: QUERY_KEYS.integrations.all,
+    queryFn: () => api.get<Integration[]>('/api/integrations'),
   });
 }
 
 export function useIntegrationConnections(integrationId?: string): UseQueryResult<IntegrationConnection[]> {
   return useQuery({
-    queryKey: ['integration-connections', integrationId],
-    queryFn: async (): Promise<IntegrationConnection[]> => {
-      if (!integrationId) return [] as IntegrationConnection[];
-      const res = await fetch(`/api/integrations/${integrationId}/connections`);
-      if (!res.ok) {
-        const error = (await res.json()) as Record<string, unknown>;
-        throw new Error((error.error as string) || 'Failed to fetch connections');
-      }
-      return (await res.json()) as IntegrationConnection[];
-    },
+    queryKey: [...QUERY_KEYS.integrations.connections(), integrationId],
+    queryFn: () => 
+      integrationId 
+        ? api.get<IntegrationConnection[]>(`/api/integrations/${integrationId}/connections`)
+        : Promise.resolve([] as IntegrationConnection[]),
     enabled: !!integrationId,
   });
 }
@@ -46,16 +36,11 @@ export function useConnectionSession(
   options?: { enabled?: boolean }
 ): UseQueryResult<Record<string, unknown> | null> {
   return useQuery({
-    queryKey: ['connection-session', connectionId],
-    queryFn: async (): Promise<Record<string, unknown> | null> => {
-      if (!connectionId) return null;
-      const res = await fetch(`/api/integrations/connections/${connectionId}/session`);
-      if (!res.ok) {
-        const error = (await res.json()) as Record<string, unknown>;
-        throw new Error((error.error as string) || 'Failed to fetch session');
-      }
-      return (await res.json()) as Record<string, unknown>;
-    },
+    queryKey: [...QUERY_KEYS.integrations.all, 'connection-session', connectionId],
+    queryFn: () => 
+      connectionId 
+        ? api.get<Record<string, unknown>>(`/api/integrations/connections/${connectionId}/session`)
+        : Promise.resolve(null),
     enabled: !!connectionId && (options?.enabled ?? true),
     staleTime: 0, // Session cookies might change frequently during testing
   });
@@ -63,21 +48,14 @@ export function useConnectionSession(
 
 export function useIntegrationsWithConnections(): UseQueryResult<IntegrationWithConnections[]> {
   return useQuery({
-    queryKey: ['integrations', 'with-connections'],
-    queryFn: async (): Promise<IntegrationWithConnections[]> => {
-      const res = await fetch('/api/integrations/with-connections');
-      if (!res.ok) {
-        const error = (await res.json()) as Record<string, unknown>;
-        throw new Error((error.error as string) || 'Failed to load integrations');
-      }
-      return (await res.json()) as IntegrationWithConnections[];
-    },
+    queryKey: [...QUERY_KEYS.integrations.all, 'with-connections'],
+    queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
   });
 }
 
 export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   return useQuery({
-    queryKey: ['playwright-personas'],
+    queryKey: [...QUERY_KEYS.settings.all, 'playwright-personas'],
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();
       const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
@@ -92,56 +70,33 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
 
 export function useExportTemplates(): UseQueryResult<Template[]> {
   return useQuery({
-    queryKey: ['export-templates'],
-    queryFn: async (): Promise<Template[]> => {
-      const res = await fetch('/api/integrations/export-templates');
-      if (!res.ok) throw new Error('Failed to load templates');
-      return (await res.json()) as Template[];
-    },
+    queryKey: [...QUERY_KEYS.integrations.all, 'export-templates'],
+    queryFn: () => api.get<Template[]>('/api/integrations/export-templates'),
   });
 }
 
 export function useActiveExportTemplate(): UseQueryResult<{ templateId?: string | null }> {
   return useQuery({
-    queryKey: ['active-export-template'],
-    queryFn: async (): Promise<{ templateId?: string | null }> => {
-      const res = await fetch('/api/integrations/exports/base/active-template');
-      if (!res.ok) return { templateId: null };
-      return (await res.json()) as { templateId?: string | null };
-    },
+    queryKey: [...QUERY_KEYS.integrations.all, 'active-export-template'],
+    queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
   });
 }
 
 export function useDefaultExportInventory(): UseQueryResult<{ inventoryId?: string | null }> {
   return useQuery({
-    queryKey: ['default-export-inventory'],
-    queryFn: async (): Promise<{ inventoryId?: string | null }> => {
-      const res = await fetch('/api/integrations/exports/base/default-inventory');
-      if (!res.ok) return { inventoryId: null };
-      return (await res.json()) as { inventoryId?: string | null };
-    },
+    queryKey: [...QUERY_KEYS.integrations.all, 'default-export-inventory'],
+    queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
   });
 }
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
   return useQuery({
-    queryKey: ['base-inventories', connectionId],
+    queryKey: [...QUERY_KEYS.integrations.all, 'base-inventories', connectionId],
     queryFn: async (): Promise<BaseInventory[]> => {
-      const res = await fetch('/api/integrations/imports/base', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'inventories',
-          connectionId: connectionId,
-        }),
+      const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
+        action: 'inventories',
+        connectionId,
       });
-      if (!res.ok) {
-        throw new Error('Failed to load inventories');
-      }
-      const data = (await res.json()) as {
-        inventories?: BaseInventory[];
-        error?: string;
-      };
       if (data.error) throw new Error(data.error);
       return Array.isArray(data.inventories) ? data.inventories : [];
     },

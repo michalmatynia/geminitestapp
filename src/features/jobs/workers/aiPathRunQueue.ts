@@ -34,14 +34,33 @@ const queue = createManagedQueue<AiPathRunJobData>({
       console.log(`[aiPathRunQueue] Run ${data.runId} has status "${run.status}", skipping`);
       return;
     }
+    let runToProcess = run;
     if (run.status === 'queued') {
-      await repo.updateRun(run.id, {
-        status: 'running',
-        startedAt: new Date(),
-      });
-      await recordRuntimeRunStarted({ runId: run.id });
+      const latest = await repo.findRunById(data.runId);
+      if (!latest) {
+        console.warn(`[aiPathRunQueue] Run ${data.runId} disappeared before claim, skipping`);
+        return;
+      }
+      if (latest.status !== 'queued') {
+        if (latest.status === 'running') {
+          runToProcess = latest;
+        } else {
+          console.log(
+            `[aiPathRunQueue] Run ${data.runId} changed to "${latest.status}" before claim, skipping`
+          );
+          return;
+        }
+      } else {
+        const startedAt = new Date();
+        await repo.updateRun(run.id, {
+          status: 'running',
+          startedAt,
+        });
+        await recordRuntimeRunStarted({ runId: run.id });
+        runToProcess = { ...latest, status: 'running', startedAt };
+      }
     }
-    await processRun({ ...run, status: 'running' });
+    await processRun({ ...runToProcess, status: 'running' });
   },
   onFailed: async (_jobId, error, data) => {
     try {

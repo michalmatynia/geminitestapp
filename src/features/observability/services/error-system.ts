@@ -1,22 +1,6 @@
-export enum ErrorCategory {
-  SYSTEM = 'SYSTEM',
-  USER = 'USER',
-  VALIDATION = 'VALIDATION',
-  EXTERNAL = 'EXTERNAL',
-  AI = 'AI',
-  DATABASE = 'DATABASE'
-}
+import { ErrorCategory, type ErrorContext } from '@/shared/types/observability';
 
-export interface ErrorContext {
-  service?: string | null | undefined;
-  runId?: string | null | undefined; // For agent runs
-  jobId?: string | null | undefined; // For background jobs
-  productId?: string | null | undefined;
-  errorId?: string | null | undefined;
-  category?: ErrorCategory | string | null | undefined;
-  userMessage?: string | null | undefined;
-  [key: string]: unknown;
-}
+export { ErrorCategory, type ErrorContext };
 
 /**
  * Centralized error handling system.
@@ -54,7 +38,7 @@ export const ErrorSystem = {
       // If it's an Agent Run, log to Agent Audit
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import('@/features/ai/agent-runtime/server');
+          const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
           await logAgentAudit(context.runId, 'error', message, {
             errorId: context.errorId || 'unknown',
             ...context
@@ -86,12 +70,34 @@ export const ErrorSystem = {
 
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import('@/features/ai/agent-runtime/server');
+          const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
           console.warn('[ErrorSystem] Failed to log warning to Agent Audit:', auditError);
         }
       }
+    } catch (importError) {
+      console.error('[ErrorSystem] Failed to import dependencies:', importError);
+    }
+  },
+
+  /**
+   * Log a validation error.
+   */
+  logValidationError: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    try {
+      const { logSystemEvent } = await import('@/features/observability/server');
+      const service = context.service || 'unknown';
+      
+      await logSystemEvent({
+        level: 'warn',
+        message: `[Validation] [${service}] ${message}`,
+        source: service,
+        context: {
+          ...context,
+          category: ErrorCategory.VALIDATION
+        }
+      });
     } catch (importError) {
       console.error('[ErrorSystem] Failed to import dependencies:', importError);
     }

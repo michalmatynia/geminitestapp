@@ -54,8 +54,13 @@ export function CategoriesSettings({
   const deleteCategoryMutation = useDeleteCategoryMutation();
 
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
-  const [modalCategories, setModalCategories] = useState<ProductCategoryWithChildren[]>([]);
-  const [modalLoadingCategories, setModalLoadingCategories] = useState<boolean>(false);
+  
+  const { data: fetchedModalCategories, isLoading: modalLoadingCategories } = useProductCategoryTree(modalCatalogId || undefined);
+  
+  const modalCategories = useMemo(() => {
+    if (modalCatalogId === selectedCatalogId) return categories;
+    return fetchedModalCategories || [];
+  }, [modalCatalogId, selectedCatalogId, categories, fetchedModalCategories]);
 
   // Reset expanded state when catalog changes
   useEffect((): void => {
@@ -270,40 +275,6 @@ export function CategoriesSettings({
     (): { id: string; name: string; level: number }[] => categoryOptions.filter((opt: { id: string }): boolean => !excludedParentIds.has(opt.id)),
     [categoryOptions, excludedParentIds]
   );
-
-  const loadModalCategories = useCallback(
-    async (catalogId: string): Promise<void> => {
-      setModalLoadingCategories(true);
-      try {
-        const res: Response = await fetch(
-          `/api/products/categories/tree?catalogId=${catalogId}`
-        );
-        if (!res.ok) {
-          const error: { error?: string } = (await res.json()) as { error?: string };
-          throw new Error(error.error || 'Failed to load categories.');
-        }
-        const data: ProductCategoryWithChildren[] = (await res.json()) as ProductCategoryWithChildren[];
-        setModalCategories(data);
-      } catch (error) {
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to load categories.';
-        toast(message, { variant: 'error' });
-        setModalCategories([]);
-      } finally {
-        setModalLoadingCategories(false);
-      }
-    },
-    [toast]
-  );
-
-  useEffect((): void => {
-    if (!showModal || !modalCatalogId) return;
-    if (modalCatalogId === selectedCatalogId) {
-      setModalCategories(categories);
-      return;
-    }
-    void loadModalCategories(modalCatalogId);
-  }, [showModal, modalCatalogId, selectedCatalogId, categories, loadModalCategories]);
 
   useEffect((): void => {
     if (!showModal) return;

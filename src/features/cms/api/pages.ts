@@ -1,61 +1,42 @@
+import { api } from '@/shared/lib/api-client';
 import type { Page, PageSummary } from '../types';
 
-const safeJson = async <T>(res: Response): Promise<T> => {
-  try {
-    return (await res.json()) as T;
-  } catch {
-    return {} as T;
-  }
-};
-
-const withDomainQuery = (url: string, domainId?: string | null): string => {
-  if (!domainId) return url;
-  const params = new URLSearchParams({ domainId });
-  return `${url}?${params.toString()}`;
-};
-
 export const fetchPages = async (domainId?: string | null): Promise<PageSummary[]> => {
-  const res = await fetch(withDomainQuery('/api/cms/pages', domainId ?? undefined));
-  if (!res.ok) {
-    throw new Error('Failed to fetch pages');
-  }
-  return res.json() as Promise<PageSummary[]>;
+  return api.get<PageSummary[]>('/api/cms/pages', {
+    params: { domainId: domainId ?? undefined }
+  });
 };
 
 export const fetchPage = async (id: string): Promise<Page> => {
-  const res = await fetch(`/api/cms/pages/${id}`);
-  if (!res.ok) {
-    throw new Error('Failed to fetch page');
-  }
-  return res.json() as Promise<Page>;
+  return api.get<Page>(`/api/cms/pages/${id}`);
 };
 
 export const createPage = async (input: {
   name: string;
   slugIds: string[];
 }): Promise<{ ok: boolean; payload: Page }> => {
-  const res = await fetch('/api/cms/pages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<Page>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.post<Page>('/api/cms/pages', input);
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as Page };
+  }
 };
 
 export const updatePage = async (id: string, input: Page & { slugIds?: string[] }): Promise<{ ok: boolean; payload: Page }> => {
-  const res = await fetch(`/api/cms/pages/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<Page>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.put<Page>(`/api/cms/pages/${id}`, input);
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: {} as Page };
+  }
 };
 
 export const deletePage = async (id: string): Promise<{ ok: boolean }> => {
-  const res = await fetch(`/api/cms/pages/${id}`, {
-    method: 'DELETE',
-  });
-  return { ok: res.ok };
+  try {
+    await api.delete(`/api/cms/pages/${id}`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false };
+  }
 };

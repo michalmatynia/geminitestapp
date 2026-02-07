@@ -48,13 +48,12 @@ const currencySchema = z.object({
  * Updates a currency.
  */
 async function PUT_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const body = (await req.json()) as unknown;
-  const data = currencySchema.parse(body);
+  const data = ctx.body as z.infer<typeof currencySchema>;
 
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
@@ -152,6 +151,8 @@ async function DELETE_handler(
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: "currencies.[id].PUT",
+  parseJsonBody: true,
+  bodySchema: currencySchema,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {

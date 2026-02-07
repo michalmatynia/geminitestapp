@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import { usePreviewEditor } from './context/PreviewEditorContext';
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
+import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
 import type { PreviewSectionBlockProps, PreviewBlockItemProps } from './types';

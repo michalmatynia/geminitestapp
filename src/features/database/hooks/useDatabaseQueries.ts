@@ -1,4 +1,3 @@
- 
 'use client';
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
@@ -14,6 +13,7 @@ import {
   executeCrudOperation,
 } from '../api';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   CrudRequest,
   CrudResult,
@@ -26,9 +26,11 @@ import type {
   SqlQueryResult,
 } from '../types';
 
+const dbKeys = QUERY_KEYS.system.databases;
+
 export function useDatabaseBackups(dbType: DatabaseType): UseQueryResult<DatabaseInfo[], Error> {
   return useQuery({
-    queryKey: ['database-backups', dbType],
+    queryKey: dbKeys.backups(dbType),
     queryFn: () => fetchDatabaseBackups(dbType),
   });
 }
@@ -42,7 +44,7 @@ export function useCreateBackupMutation(): UseMutationResult<
   return useMutation({
     mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
     onSuccess: (_, dbType) => {
-      void queryClient.invalidateQueries({ queryKey: ['database-backups', dbType] });
+      void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
     },
   });
 }
@@ -67,7 +69,7 @@ export function useUploadBackupMutation(): UseMutationResult<
   return useMutation({
     mutationFn: ({ dbType, file, onProgress }) => uploadDatabaseBackup(dbType, file, onProgress),
     onSuccess: (_, { dbType }) => {
-      void queryClient.invalidateQueries({ queryKey: ['database-backups', dbType] });
+      void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
     },
   });
 }
@@ -81,7 +83,7 @@ export function useDeleteBackupMutation(): UseMutationResult<
   return useMutation({
     mutationFn: ({ dbType, backupName }) => deleteDatabaseBackup(dbType, backupName),
     onSuccess: (_, { dbType }) => {
-      void queryClient.invalidateQueries({ queryKey: ['database-backups', dbType] });
+      void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
     },
   });
 }
@@ -97,7 +99,7 @@ export function useDatabasePreview(input: {
   const { backupName, mode, type, page, pageSize, enabled = true } = input;
 
   return useQuery({
-    queryKey: ['database-preview', { backupName, mode, type, page, pageSize }],
+    queryKey: dbKeys.preview({ backupName, mode, type, page, pageSize }),
     queryFn: async (): Promise<DatabasePreviewPayload> => {
       const { ok, payload } = await fetchDatabasePreview({
         backupName,
@@ -136,7 +138,7 @@ export function useSqlQueryMutation(): UseMutationResult<
   });
 }
 
-export function useCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
+export function useCreateCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
   return useMutation({
     mutationFn: (input: CrudRequest) => executeCrudOperation(input),
   });

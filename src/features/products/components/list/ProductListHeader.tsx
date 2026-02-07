@@ -9,6 +9,7 @@ import { memo, useState } from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { useProductListContext } from '@/features/products/context/ProductListContext';
+import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog, SectionPanel, SectionHeader } from '@/shared/ui';
@@ -42,16 +43,11 @@ export const ProductListHeader = memo(function ProductListHeader({
 
   const { toast } = useToast();
   const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);
-  const [isConvertingAll, setIsConvertingAll] = useState(false);
+  const { mutateAsync: convertAll, isPending: isConvertingAll } = useConvertAllImagesToBase64();
 
   const handleConvertAllBase64 = async (): Promise<void> => {
-    setIsConvertingAll(true);
     try {
-      const res = await fetch('/api/products/images/base64/all', { method: 'POST' });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || 'Failed to convert images');
-      }
+      await convertAll();
       toast('Base64 images generated for all products.', { variant: 'success' });
     } catch (error) {
       toast(
@@ -59,7 +55,6 @@ export const ProductListHeader = memo(function ProductListHeader({
         { variant: 'error' }
       );
     } finally {
-      setIsConvertingAll(false);
       setShowBase64AllConfirm(false);
     }
   };

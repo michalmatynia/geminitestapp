@@ -6,7 +6,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from '@/shared/utils';
 
-import { useImageStudio, type ImageStudioSlotRecord } from '../context/ImageStudioContext';
+import { useImageStudio } from '../context/ImageStudioContext';
+import type { ImageStudioSlotRecord } from '../types';
 import { normalizeFolderPaths } from '../utils/studio-tree';
 
 type TreeNode = {

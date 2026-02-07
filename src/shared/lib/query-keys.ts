@@ -33,6 +33,8 @@ export const QUERY_KEYS = {
     lists: () => [...QUERY_KEYS.notes.all, 'list'] as const,
     list: (filters: any) => [...QUERY_KEYS.notes.lists(), { filters }] as const,
     detail: (id: string) => [...QUERY_KEYS.notes.all, 'detail', id] as const,
+    search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
+    lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
     notebooks: ['notebooks'] as const,
     tags: ['tags'] as const,
     categories: ['categories'] as const,
@@ -100,6 +102,12 @@ export const QUERY_KEYS = {
       runs: () => [...QUERY_KEYS.ai.aiPaths.all, 'runs'] as const,
       run: (id: string) => [...QUERY_KEYS.ai.aiPaths.runs(), id] as const,
       deadLetter: (filters: any) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
+      runtimeAnalytics: (range: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
+    },
+    insights: {
+      all: ['ai', 'insights'] as const,
+      analytics: () => [...QUERY_KEYS.ai.insights.all, 'analytics'] as const,
+      logs: () => [...QUERY_KEYS.ai.insights.all, 'logs'] as const,
     }
   },
   auth: {

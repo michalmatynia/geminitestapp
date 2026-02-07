@@ -16,38 +16,18 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
-import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelection, ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/files';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { type ParamUiControl } from '../utils/param-ui';
 import { IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings, defaultImageStudioSettings } from '../utils/studio-settings';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 export type StudioTab = 'studio' | 'projects' | 'settings' | 'validation';
-
-export type ImageStudioSlotRecord = {
-  id: string;
-  projectId: string;
-  name: string | null;
-  folderPath: string | null;
-  position?: number | null;
-  imageFileId?: string | null;
-  imageUrl?: string | null;
-  imageBase64?: string | null;
-  asset3dId?: string | null;
-  screenshotFileId?: string | null;
-  metadata?: Record<string, unknown> | null;
-  imageFile?: ImageFileRecord | null;
-  screenshotFile?: ImageFileRecord | null;
-  asset3d?: Asset3DRecord | null;
-};
-
-export type StudioProjectsResponse = { projects: string[] };
-export type StudioSlotsResponse = { slots: ImageStudioSlotRecord[] };
 
 function sanitizeStudioProjectId(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -214,8 +194,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
 
   const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
-  const selectedSlot = useMemo(() => slots.find(s => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
-  const workingSlot = useMemo(() => slots.find(s => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
+  const selectedSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
+  const workingSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
@@ -318,7 +298,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     if (storedFolders.length > 0) {
       setVirtualFolders(storedFolders);
     } else {
-      const derived = normalizeFolderPaths(slots.map(s => s.folderPath || '').filter(Boolean));
+      const derived = normalizeFolderPaths(slots.map((s: ImageStudioSlotRecord) => s.folderPath || '').filter(Boolean));
       setVirtualFolders(derived);
     }
   }, [projectId, treeKey, treeSettingsRaw, settingsStore.isLoading, slots]);
@@ -442,12 +422,12 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const compositeAssetOptions = useMemo(() => {
     const baseId = workingSlotId ?? selectedSlotId;
     return slots
-      .map(s => ({ value: s.id, label: s.folderPath ? `${s.folderPath}/${s.name || s.id}` : (s.name || s.id), disabled: s.id === baseId }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .map((s: ImageStudioSlotRecord) => ({ value: s.id, label: s.folderPath ? `${s.folderPath}/${s.name || s.id}` : (s.name || s.id), disabled: s.id === baseId }))
+      .sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
   }, [slots, selectedSlotId, workingSlotId]);
 
   const compositeAssets = useMemo(() => 
-    compositeAssetIds.map(id => slots.find(s => s.id === id)).filter((s): s is ImageStudioSlotRecord => Boolean(s)),
+    compositeAssetIds.map(id => slots.find((s: ImageStudioSlotRecord) => s.id === id)).filter((s): s is ImageStudioSlotRecord => Boolean(s)),
   [slots, compositeAssetIds]);
 
   const value = {

@@ -3,9 +3,10 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
 
-export const userPreferencesQueryKey = ['user-preferences'] as const;
+const userPreferencesQueryKey = QUERY_KEYS.auth.preferences.all;
 
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({

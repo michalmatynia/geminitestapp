@@ -97,13 +97,47 @@ export function useNotes(params: FetchNotesParams): UseQueryResult<NoteWithRelat
 }
 
 export function useNote(noteId: string | null): UseQueryResult<NoteWithRelations | null> {
+
   return useQuery({
+
     queryKey: QUERY_KEYS.notes.detail(noteId || 'none'),
+
     queryFn: async () => {
+
       if (!noteId) return null;
+
       return api.get<NoteWithRelations>(`/api/notes/${noteId}`);
+
     },
+
     enabled: !!noteId,
+
     staleTime: NOTES_STALE_MS,
+
   });
+
+}
+
+
+
+export function useNotesLookup(noteIds: string[]): UseQueryResult<RelatedNote[], Error> {
+
+  const ids = noteIds.filter(Boolean);
+
+  return useQuery<RelatedNote[], Error>({
+
+    queryKey: QUERY_KEYS.notes.lookup(ids),
+
+    queryFn: () => api.get<RelatedNote[]>('/api/notes/lookup', {
+
+      params: { ids: ids.join(',') }
+
+    }),
+
+    enabled: ids.length > 0,
+
+    staleTime: NOTES_STALE_MS,
+
+  });
+
 }

@@ -14,6 +14,7 @@ import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries'
 import { useCmsThemes } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/features/cms/types';
 import type { ColorScheme, ColorSchemeColors, ThemeSettings } from '@/features/cms/types/theme-settings';
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
 import type { ChatMessage } from '@/shared/types/chatbot';
@@ -341,15 +342,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   const persistTimerRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
-  const preferencesQuery = useQuery({
-    queryKey: userPreferencesQueryKey,
-    queryFn: async (): Promise<{ cmsThemeOpenSections?: string[] | null }> => {
-      const res = await fetch('/api/user/preferences');
-      if (!res.ok) throw new Error('Failed to load user preferences');
-      return (await res.json()) as { cmsThemeOpenSections?: string[] | null };
-    },
-    staleTime: 1000 * 60 * 5,
-  });
+  const preferencesQuery = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const initialOpenSections = useMemo((): Set<string> => {
     if (!preferencesQuery.isFetched) return new Set<string>();
@@ -357,24 +351,6 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     const filtered = saved.filter((item: string): item is string => typeof item === 'string');
     return new Set(filtered);
   }, [preferencesQuery.data, preferencesQuery.isFetched]);
-
-  const [userOpenSections, setUserOpenSections] = useState<Set<string> | null>(null);
-  const openSections = userOpenSections ?? initialOpenSections;
-
-  const lastSavedRef = useRef<string>(JSON.stringify(Array.from(initialOpenSections)));
-
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: { cmsThemeOpenSections: string[] }): Promise<void> => {
-      const res = await fetch('/api/user/preferences', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error('Failed to update user preferences');
-    },
-    onSuccess: (): void => { void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey }); },
-    onError: (error: Error): void => { console.warn('[CMS] Failed to persist theme settings state.', error); },
-  });
 
   useEffect((): void => {
     if (preferencesQuery.isFetched) {

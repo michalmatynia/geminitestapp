@@ -3,7 +3,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import type { ImageStudioSlotRecord, StudioProjectsResponse, StudioSlotsResponse } from '../types';
+import type { StudioProjectsResponse, StudioSlotsResponse } from '../types';
 
 export const studioKeys = {
   all: ['image-studio'] as const,

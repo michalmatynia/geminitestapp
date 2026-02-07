@@ -26,6 +26,12 @@ export type {
   IntegrationWithConnectionsBasic,
 };
 
+type ListingProvider = 'prisma' | 'mongodb';
+type ProductListingRepositoryWithProvider = {
+  provider: ListingProvider;
+  repository: ProductListingRepository;
+};
+
 const LISTINGS_COLLECTION = 'product_listings';
 
 type ProductListingDocument = {
@@ -352,6 +358,201 @@ export const getProductListingRepository = async (): Promise<ProductListingRepos
   // Use the same provider as products since listings are product-related
   const provider = await getProductDataProvider();
   return provider === 'mongodb' ? mongoRepository : prismaRepository;
+};
+
+const isProviderConfigured = (provider: ListingProvider): boolean =>
+  provider === 'mongodb'
+    ? Boolean(process.env.MONGODB_URI)
+    : Boolean(process.env.DATABASE_URL);
+
+const repositoryByProvider = (provider: ListingProvider): ProductListingRepository =>
+  provider === 'mongodb' ? mongoRepository : prismaRepository;
+
+const resolveProviderOrder = async (): Promise<ListingProvider[]> => {
+  const primary = await getProductDataProvider();
+  const secondary: ListingProvider = primary === 'mongodb' ? 'prisma' : 'mongodb';
+  const order: ListingProvider[] = [];
+  if (isProviderConfigured(primary)) order.push(primary);
+  if (secondary !== primary && isProviderConfigured(secondary)) order.push(secondary);
+  if (order.length === 0) order.push(primary);
+  return order;
+};
+
+const listingStatusRank = (status: string | null | undefined): number => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return -1;
+  if (normalized === 'active' || normalized === 'success' || normalized === 'completed') return 5;
+  if (normalized === 'running' || normalized === 'processing' || normalized === 'in_progress') return 4;
+  if (normalized === 'pending' || normalized === 'queued') return 3;
+  if (normalized === 'failed' || normalized === 'error') return 1;
+  if (normalized === 'removed') return 0;
+  return 2;
+};
+
+const toEpochMs = (value: Date | string | null | undefined): number => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
+const mergeListingsByConnection = (
+  entries: Array<{ provider: ListingProvider; repository: ProductListingRepository; listing: ProductListingWithDetails }>
+): Array<{ provider: ListingProvider; repository: ProductListingRepository; listing: ProductListingWithDetails }> => {
+  const byConnection = new Map<string, { provider: ListingProvider; repository: ProductListingRepository; listing: ProductListingWithDetails }>();
+
+  for (const entry of entries) {
+    const key = `${entry.listing.productId}::${entry.listing.connectionId}`;
+    const current = byConnection.get(key);
+    if (!current) {
+      byConnection.set(key, entry);
+      continue;
+    }
+    const currentRank = listingStatusRank(current.listing.status);
+    const nextRank = listingStatusRank(entry.listing.status);
+    if (nextRank > currentRank) {
+      byConnection.set(key, entry);
+      continue;
+    }
+    if (nextRank < currentRank) continue;
+
+    const currentHasExternal = Boolean(current.listing.externalListingId);
+    const nextHasExternal = Boolean(entry.listing.externalListingId);
+    if (nextHasExternal && !currentHasExternal) {
+      byConnection.set(key, entry);
+      continue;
+    }
+    if (!nextHasExternal && currentHasExternal) continue;
+
+    const currentUpdatedAt = toEpochMs(current.listing.updatedAt);
+    const nextUpdatedAt = toEpochMs(entry.listing.updatedAt);
+    if (nextUpdatedAt > currentUpdatedAt) {
+      byConnection.set(key, entry);
+    }
+  }
+
+  return Array.from(byConnection.values()).sort(
+    (a, b) => toEpochMs(b.listing.updatedAt) - toEpochMs(a.listing.updatedAt)
+  );
+};
+
+export const getProductListingRepositoriesForRead = async (): Promise<ProductListingRepositoryWithProvider[]> => {
+  const providers = await resolveProviderOrder();
+  return providers.map((provider) => ({
+    provider,
+    repository: repositoryByProvider(provider),
+  }));
+};
+
+export const listProductListingsByProductIdAcrossProviders = async (
+  productId: string
+): Promise<ProductListingWithDetails[]> => {
+  const repositories = await getProductListingRepositoriesForRead();
+  const entries = await Promise.all(
+    repositories.map(async ({ provider, repository }) => {
+      let listings: ProductListingWithDetails[] = [];
+      try {
+        listings = await repository.getListingsByProductId(productId);
+      } catch {
+        listings = [];
+      }
+      return listings.map((listing) => ({ provider, repository, listing }));
+    })
+  );
+  return mergeListingsByConnection(entries.flat()).map((entry) => entry.listing);
+};
+
+export const listAllProductListingsAcrossProviders = async (): Promise<
+  Array<Pick<ProductListingRecord, 'productId' | 'status'>>
+> => {
+  const repositories = await getProductListingRepositoriesForRead();
+  const all = await Promise.all(
+    repositories.map(async ({ repository }) => {
+      try {
+        return await repository.listAllListings();
+      } catch {
+        return [] as Array<Pick<ProductListingRecord, 'productId' | 'status'>>;
+      }
+    })
+  );
+  return all.flat();
+};
+
+export const listingExistsAcrossProviders = async (
+  productId: string,
+  connectionId: string
+): Promise<boolean> => {
+  const repositories = await getProductListingRepositoriesForRead();
+  for (const { repository } of repositories) {
+    try {
+      if (await repository.listingExists(productId, connectionId)) {
+        return true;
+      }
+    } catch {
+      // Continue checking other providers.
+    }
+  }
+  return false;
+};
+
+export const findProductListingByIdAcrossProviders = async (
+  listingId: string
+): Promise<
+  | {
+      provider: ListingProvider;
+      repository: ProductListingRepository;
+      listing: ProductListingRecord;
+    }
+  | null
+> => {
+  const repositories = await getProductListingRepositoriesForRead();
+  for (const { provider, repository } of repositories) {
+    try {
+      const listing = await repository.getListingById(listingId);
+      if (listing) {
+        return { provider, repository, listing };
+      }
+    } catch {
+      // Continue checking other providers.
+    }
+  }
+  return null;
+};
+
+export const findProductListingByProductAndConnectionAcrossProviders = async (
+  productId: string,
+  connectionId: string
+): Promise<
+  | {
+      provider: ListingProvider;
+      repository: ProductListingRepository;
+      listing: ProductListingWithDetails;
+    }
+  | null
+> => {
+  const repositories = await getProductListingRepositoriesForRead();
+  const matches: Array<{
+    provider: ListingProvider;
+    repository: ProductListingRepository;
+    listing: ProductListingWithDetails;
+  }> = [];
+
+  for (const { provider, repository } of repositories) {
+    let listings: ProductListingWithDetails[] = [];
+    try {
+      listings = await repository.getListingsByProductId(productId);
+    } catch {
+      listings = [];
+    }
+    for (const listing of listings) {
+      if (listing.connectionId === connectionId) {
+        matches.push({ provider, repository, listing });
+      }
+    }
+  }
+
+  const merged = mergeListingsByConnection(matches);
+  return merged[0] ?? null;
 };
 
 export const getIntegrationsWithConnections = async (): Promise<IntegrationWithConnectionsBasic[]> => {

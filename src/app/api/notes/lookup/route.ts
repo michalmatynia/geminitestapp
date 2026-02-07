@@ -34,7 +34,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     uniqueIds.map(async (id: string): Promise<RelatedNote | null> => {
       const note = await noteService.getById(id);
       if (!note) return null;
-      return { id: note.id, title: note.title, color: note.color ?? null };
+      return { 
+        id: note.id, 
+        title: note.title, 
+        color: note.color ?? null,
+        content: note.content 
+      };
     }),
   );
 

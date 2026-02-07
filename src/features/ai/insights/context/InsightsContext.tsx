@@ -3,6 +3,8 @@
 import { useMutation, useQuery, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import React, { createContext, useContext } from 'react';
 
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightRecord } from '@/shared/types';
 import { useToast } from '@/shared/ui';
 
@@ -29,36 +31,22 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
   const { toast } = useToast();
 
   const analyticsQuery = useQuery({
-    queryKey: ['ai-insights', 'analytics'],
-    queryFn: async (): Promise<InsightResponse> => {
-      const res = await fetch('/api/analytics/insights?limit=10');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to load analytics insights.');
-      }
-      return (await res.json()) as InsightResponse;
-    },
+    queryKey: QUERY_KEYS.ai.insights.analytics(),
+    queryFn: () => api.get<InsightResponse>('/api/analytics/insights', {
+      params: { limit: 10 }
+    }),
   });
 
   const logsQuery = useQuery({
-    queryKey: ['ai-insights', 'logs'],
-    queryFn: async (): Promise<InsightResponse> => {
-      const res = await fetch('/api/system/logs/insights?limit=10');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to load log insights.');
-      }
-      return (await res.json()) as InsightResponse;
-    },
+    queryKey: QUERY_KEYS.ai.insights.logs(),
+    queryFn: () => api.get<InsightResponse>('/api/system/logs/insights', {
+      params: { limit: 10 }
+    }),
   });
 
   const runAnalyticsMutation = useMutation<AiInsightRecord | null, Error, void>({
     mutationFn: async () => {
-      const res = await fetch('/api/analytics/insights', { method: 'POST' });
-      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.error ?? 'Failed to generate analytics insight.');
-      }
+      const data = await api.post<{ insight?: AiInsightRecord }>('/api/analytics/insights', {});
       return data?.insight ?? null;
     },
     onSuccess: () => {
@@ -72,11 +60,7 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
 
   const runLogsMutation = useMutation<AiInsightRecord | null, Error, void>({
     mutationFn: async () => {
-      const res = await fetch('/api/system/logs/insights', { method: 'POST' });
-      const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.error ?? 'Failed to generate log insight.');
-      }
+      const data = await api.post<{ insight?: AiInsightRecord }>('/api/system/logs/insights', {});
       return data?.insight ?? null;
     },
     onSuccess: () => {

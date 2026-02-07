@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, RelatedNote } from '@/shared/types/notes';
 import { Button, Input, FormSection } from '@/shared/ui';
 
@@ -14,13 +16,10 @@ type NotesLookupResult = RelatedNote[];
 function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: boolean } {
   const q = query.trim();
   const res = useQuery<NoteWithRelations[]>({
-    queryKey: ['notes-search', q],
-    queryFn: async (): Promise<NoteWithRelations[]> => {
-      const url = `/api/notes?truncateContent=true&searchScope=title&search=${encodeURIComponent(q)}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('Failed to search notes');
-      return (await r.json()) as NoteWithRelations[];
-    },
+    queryKey: QUERY_KEYS.notes.search(q),
+    queryFn: () => api.get<NoteWithRelations[]>('/api/notes', {
+      params: { truncateContent: 'true', searchScope: 'title', search: q }
+    }),
     enabled: q.length >= 2,
   });
 
@@ -30,13 +29,10 @@ function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: b
 function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading: boolean } {
   const ids = noteIds.filter(Boolean);
   const res = useQuery<NotesLookupResult>({
-    queryKey: ['notes-lookup', ids.join(',')],
-    queryFn: async (): Promise<NotesLookupResult> => {
-      const url = `/api/notes/lookup?ids=${encodeURIComponent(ids.join(','))}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('Failed to load linked notes');
-      return (await r.json()) as NotesLookupResult;
-    },
+    queryKey: QUERY_KEYS.notes.lookup(ids),
+    queryFn: () => api.get<NotesLookupResult>('/api/notes/lookup', {
+      params: { ids: ids.join(',') }
+    }),
     enabled: ids.length > 0,
   });
 

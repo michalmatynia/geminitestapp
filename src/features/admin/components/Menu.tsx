@@ -33,6 +33,8 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
+import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -892,6 +894,9 @@ export default function Menu(): React.ReactNode {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
+  const { data: chatbotSessions = [] } = useChatbotSessions();
+  const { mutateAsync: createChatbotSession } = useCreateChatbotSession();
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -929,28 +934,14 @@ export default function Menu(): React.ReactNode {
         return;
       }
       try {
-        const listRes = await fetch('/api/chatbot/sessions');
-        if (listRes.ok) {
-          const data = (await listRes.json()) as {
-            sessions?: Array<{ id: string }>;
-          };
-          const latestId: string | undefined = data.sessions?.[0]?.id;
-          if (latestId) {
-            window.localStorage.setItem('chatbotSessionId', latestId);
-            router.push(`/admin/chatbot?session=${latestId}`);
-            return;
-          }
-        }
-        const createRes = await fetch('/api/chatbot/sessions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        if (!createRes.ok) {
-          router.push('/admin/chatbot');
+        const latestId: string | undefined = chatbotSessions[0]?.id;
+        if (latestId) {
+          window.localStorage.setItem('chatbotSessionId', latestId);
+          router.push(`/admin/chatbot?session=${latestId}`);
           return;
         }
-        const created = (await createRes.json()) as { sessionId?: string };
+        
+        const created = await createChatbotSession({});
         if (created.sessionId) {
           window.localStorage.setItem('chatbotSessionId', created.sessionId);
           router.push(`/admin/chatbot?session=${created.sessionId}`);
@@ -963,7 +954,7 @@ export default function Menu(): React.ReactNode {
     };
 
     void openChat();
-  }, [router]);
+  }, [router, chatbotSessions, createChatbotSession]);
 
   const handleCreatePageClick = useCallback((): void => {
     setIsMenuCollapsed(true);

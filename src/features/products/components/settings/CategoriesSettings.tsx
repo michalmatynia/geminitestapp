@@ -3,6 +3,7 @@
 import { Plus } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
+import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import { useSaveCategoryMutation, useDeleteCategoryMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
 import {

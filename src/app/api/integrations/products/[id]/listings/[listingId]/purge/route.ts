@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getProductListingRepository } from "@/features/integrations/server";
+import { findProductListingByIdAcrossProviders } from "@/features/integrations/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -11,14 +11,12 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   if (!productId || !listingId) {
     throw badRequestError("Product id and listing id are required");
   }
-  const repo = await getProductListingRepository();
-  const listing = await repo.getListingById(listingId);
-
-  if (!listing || listing.productId !== productId) {
+  const resolved = await findProductListingByIdAcrossProviders(listingId);
+  if (!resolved || resolved.listing.productId !== productId) {
     throw notFoundError("Listing not found", { listingId, productId });
   }
 
-  await repo.deleteListing(listingId);
+  await resolved.repository.deleteListing(listingId);
   return new NextResponse(null, { status: 204 });
 }
 

@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductListingRepository } from "@/features/integrations/server";
+import { findProductListingByIdAcrossProviders } from "@/features/integrations/server";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -22,21 +22,18 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
     throw badRequestError("Product id and listing id are required");
   }
 
-  const repo = await getProductListingRepository();
-
-  // Verify the listing exists
-  const listing = await repo.getListingById(listingId);
-
-  if (!listing) {
+  const resolved = await findProductListingByIdAcrossProviders(listingId);
+  if (!resolved) {
     throw notFoundError("Listing not found", { listingId });
   }
+  const listing = resolved.listing;
 
   // Verify it belongs to this product
   if (listing.productId !== productId) {
     throw notFoundError("Listing not found", { listingId, productId });
   }
 
-  await repo.updateListingStatus(listingId, "removed");
+  await resolved.repository.updateListingStatus(listingId, "removed");
 
   return NextResponse.json({ status: "removed" });
 }
@@ -50,10 +47,8 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
   if (!productId || !listingId) {
     throw badRequestError("Product id and listing id are required");
   }
-  const repo = await getProductListingRepository();
-  const listing = await repo.getListingById(listingId);
-
-  if (!listing || listing.productId !== productId) {
+  const resolved = await findProductListingByIdAcrossProviders(listingId);
+  if (!resolved || resolved.listing.productId !== productId) {
     throw notFoundError("Listing not found", { listingId, productId });
   }
 
@@ -64,7 +59,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
     return parsed.response;
   }
   const data = parsed.data;
-  await repo.updateListingInventoryId(listingId, data.inventoryId ?? null);
+  await resolved.repository.updateListingInventoryId(listingId, data.inventoryId ?? null);
   return NextResponse.json({ success: true });
 }
 

@@ -16,6 +16,7 @@ const csp = [
 
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   output: "standalone", // Docker-friendly build output
   experimental: {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.

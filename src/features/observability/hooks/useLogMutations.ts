@@ -26,20 +26,36 @@ export function useRebuildIndexesMutation(): UseMutationResult<unknown, Error, v
   });
 }
 
-export function useRunLogInsight() {
+export function useRunLogInsight(): UseMutationResult<{ insight: AiInsightRecord }, Error, void> {
+
   const queryClient = useQueryClient();
 
+
+
   return useMutation({
+
     mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights'),
+
     onSuccess: () => {
+
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.logs.all });
+
     },
+
   });
+
 }
 
-export function useInterpretLog() {
+
+
+export function useInterpretLog(): UseMutationResult<{ insight: AiInsightRecord }, Error, string> {
+
   return useMutation({
+
     mutationFn: (logId: string) => 
+
       api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', { logId }),
+
   });
+
 }

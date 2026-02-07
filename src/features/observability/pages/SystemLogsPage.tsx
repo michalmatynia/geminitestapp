@@ -3,7 +3,7 @@
 import { Trash2, Copy } from 'lucide-react';
 
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
-import type { SystemLogRecord } from '@/shared/types';
+import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, AdminPageLayout, RefreshButton } from '@/shared/ui';
 
 const formatTimestamp = (value: Date | string): string => {
@@ -256,7 +256,7 @@ function AiLogInterpreter(): React.JSX.Element {
         <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
       ) : (
         <div className="mt-3 space-y-3">
-          {insightsQuery.data?.insights.map((insight) => (
+          {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
             <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10px] uppercase text-gray-500">

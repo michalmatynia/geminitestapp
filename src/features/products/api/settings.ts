@@ -9,15 +9,6 @@ import {
 } from '../types';
 
 import { api } from '@/shared/lib/api-client';
-import { 
-  Catalog, 
-  CatalogRecord,
-  PriceGroup, 
-  ProductCategory, 
-  ProductCategoryWithChildren,
-  ProductTag, 
-  ProductParameter 
-} from '../types';
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {

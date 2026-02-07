@@ -26,6 +26,7 @@ import {
   parseAdminMenuBoolean,
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
@@ -257,14 +258,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       adminMenuCustomEnabled?: boolean | null;
       adminMenuCustomNav?: AdminMenuCustomNode[] | null;
     } | null> => {
-      const res = await fetch('/api/user/preferences?include=admin-menu');
-      if (!res.ok) return null;
-      return (await res.json()) as {
-        adminMenuFavorites?: string[] | null;
-        adminMenuSectionColors?: Record<string, string> | null;
-        adminMenuCustomEnabled?: boolean | null;
-        adminMenuCustomNav?: AdminMenuCustomNode[] | null;
-      };
+      try {
+        return await api.get<any>('/api/user/preferences', {
+          params: { include: 'admin-menu' }
+        });
+      } catch {
+        return null;
+      }
     },
     enabled: settingsQuery.isFetched && !hasAdminMenuSettings,
     staleTime: 0,

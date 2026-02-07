@@ -5,6 +5,8 @@ import { z } from "zod";
 import { getProductRepository } from "@/features/products/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { getProductListingRepository } from "@/features/integrations/server";
+import { findProductListingByIdAcrossProviders } from "@/features/integrations/server";
+import { findProductListingByProductAndConnectionAcrossProviders } from "@/features/integrations/server";
 import { getCategoryMappingRepository } from "@/features/integrations/server";
 import {
   getExportWarehouseId
@@ -28,6 +30,8 @@ import {
 import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations/server";
 import { decryptSecret } from "@/features/integrations/server";
 import { LogCapture } from "@/features/integrations/server";
+import { auth } from "@/features/auth/server";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { parseJsonBody } from "@/features/products/server";
 import { ErrorSystem } from "@/features/observability/server";
 import {
@@ -126,6 +130,10 @@ const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
   "category",
 ]);
 
+const BASE_EXPORT_RUN_PATH_ID = "integration-base-export";
+const BASE_EXPORT_RUN_PATH_NAME = "Base.com Export Jobs";
+const BASE_EXPORT_SOURCE = "integration_base_export";
+
 /**
  * POST /api/integrations/products/[id]/export-to-base
  * Exports a product to Base.com using optional template
@@ -133,6 +141,19 @@ const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const logCapture = new LogCapture();
   logCapture.start();
+  const runRepository = getPathRunRepository();
+  let runId: string | null = null;
+  let runMeta: Record<string, unknown> = {
+    source: BASE_EXPORT_SOURCE,
+    sourceInfo: {
+      tab: "products",
+      location: "product-listing",
+      action: "export_to_base",
+    },
+    executionMode: "server",
+    runMode: "api",
+    integration: "base.com",
+  };
 
   try {
     const { id: productId } = params;
@@ -159,6 +180,55 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       : new URL(_req.url).origin;
     const defaultInventoryId = await getExportDefaultInventoryId();
     const resolvedInventoryId = defaultInventoryId || data.inventoryId;
+    const session = await auth().catch(() => null);
+    const userId = session?.user?.id ?? null;
+    runMeta = {
+      ...runMeta,
+      sourceInfo: {
+        tab: "products",
+        location: "product-listing",
+        action: "export_to_base",
+        productId,
+        connectionId: data.connectionId,
+        inventoryId: resolvedInventoryId,
+        imagesOnly,
+      },
+      templateId: data.templateId ?? null,
+      imagesOnly,
+    };
+    try {
+      const createdRun = await runRepository.createRun({
+        userId,
+        pathId: BASE_EXPORT_RUN_PATH_ID,
+        pathName: BASE_EXPORT_RUN_PATH_NAME,
+        triggerEvent: "export_to_base",
+        triggerNodeId: `product:${productId}`,
+        entityId: productId,
+        entityType: "product",
+        meta: runMeta,
+        maxAttempts: 1,
+        retryCount: 0,
+      });
+      runId = createdRun.id;
+      await runRepository.updateRun(runId, {
+        status: "running",
+        startedAt: new Date(),
+        meta: runMeta,
+      });
+      await runRepository.createRunEvent({
+        runId,
+        level: "info",
+        message: "Export to Base.com started.",
+        metadata: {
+          productId,
+          connectionId: data.connectionId,
+          inventoryId: resolvedInventoryId,
+          imagesOnly,
+        },
+      });
+    } catch {
+      // Keep export flow resilient if runtime-run logging fails.
+    }
 
     await ErrorSystem.logInfo("[export-to-base] Starting export", {
       productId,
@@ -357,7 +427,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       }
     }
 
-    const listingRepo = await getProductListingRepository();
+    const primaryListingRepo = await getProductListingRepository();
+    let listingRepo = primaryListingRepo;
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) =>
       ["baselinker", "base-com"].includes(i.slug)
@@ -367,18 +438,30 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     let listingInventoryId: string | null = null;
     if (baseIntegration) {
       if (imagesOnly) {
-        let existingListing = null;
+        let existingListing: {
+          id: string;
+          productId: string;
+          connectionId: string;
+          externalListingId: string | null;
+          inventoryId?: string | null;
+        } | null = null;
         if (data.listingId) {
-          const listing = await listingRepo.getListingById(data.listingId);
-          if (listing && listing.productId === productId) {
-            existingListing = listing;
+          const resolvedById = await findProductListingByIdAcrossProviders(data.listingId);
+          if (resolvedById && resolvedById.listing.productId === productId) {
+            existingListing = resolvedById.listing;
+            listingRepo = resolvedById.repository;
           }
         }
         if (!existingListing) {
-          const listings = await listingRepo.getListingsByProductId(productId);
-          existingListing = listings.find(
-            (l) => l.connectionId === data.connectionId
-          );
+          const resolvedByConnection =
+            await findProductListingByProductAndConnectionAcrossProviders(
+              productId,
+              data.connectionId
+            );
+          if (resolvedByConnection) {
+            existingListing = resolvedByConnection.listing;
+            listingRepo = resolvedByConnection.repository;
+          }
         }
         if (existingListing) {
           listingId = existingListing.id;
@@ -401,30 +484,31 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           );
         }
       } else {
-        const exists = await listingRepo.listingExists(productId, data.connectionId);
-        if (!exists) {
-          const newListing = await listingRepo.createListing({
+        const resolvedByConnection =
+          await findProductListingByProductAndConnectionAcrossProviders(
+            productId,
+            data.connectionId
+          );
+        if (!resolvedByConnection) {
+          const newListing = await primaryListingRepo.createListing({
             productId,
             integrationId: baseIntegration.id,
             connectionId: data.connectionId,
             externalListingId: null,
             inventoryId: resolvedInventoryId
           });
+          listingRepo = primaryListingRepo;
           listingId = newListing.id;
         } else {
-          const listings = await listingRepo.getListingsByProductId(productId);
-          const existingListing = listings.find(
-            (l) => l.connectionId === data.connectionId
-          );
-          if (existingListing) {
-            listingId = existingListing.id;
-            await listingRepo.updateListingStatus(existingListing.id, "pending");
-            if (existingListing.inventoryId !== resolvedInventoryId) {
-              await listingRepo.updateListingInventoryId(
-                existingListing.id,
-                resolvedInventoryId
-              );
-            }
+          const existingListing = resolvedByConnection.listing;
+          listingRepo = resolvedByConnection.repository;
+          listingId = existingListing.id;
+          await listingRepo.updateListingStatus(existingListing.id, "pending");
+          if (existingListing.inventoryId !== resolvedInventoryId) {
+            await listingRepo.updateListingInventoryId(
+              existingListing.id,
+              resolvedInventoryId
+            );
           }
         }
       }
@@ -437,6 +521,34 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         (event) => event.requestId === requestId && event.status === "success"
       );
       if (prior) {
+        if (runId) {
+          await runRepository
+            .createRunEvent({
+              runId,
+              level: "info",
+              message: "Export already completed (idempotent).",
+              metadata: {
+                productId,
+                listingId,
+                externalListingId:
+                  prior.externalListingId ?? existingListing?.externalListingId ?? null,
+                requestId: requestId ?? null,
+                idempotent: true,
+              },
+            })
+            .catch(() => undefined);
+          await runRepository
+            .updateRun(runId, {
+              status: "completed",
+              finishedAt: new Date(),
+              meta: {
+                ...runMeta,
+                idempotent: true,
+                completedAt: new Date().toISOString(),
+              },
+            })
+            .catch(() => undefined);
+        }
         logCapture.stop();
         const logs = logCapture.getLogs();
         return NextResponse.json({
@@ -445,6 +557,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           externalProductId:
             prior.externalListingId ?? existingListing?.externalListingId ?? null,
           idempotent: true,
+          runId,
           logs
         });
       }
@@ -863,16 +976,72 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     logCapture.stop();
     const logs = logCapture.getLogs();
+    if (runId) {
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: "info",
+          message: "Export to Base.com completed.",
+          metadata: {
+            productId,
+            inventoryId: targetInventoryId,
+            listingId,
+            externalProductId: result.productId ?? null,
+            imagesOnly,
+          },
+        })
+        .catch(() => undefined);
+      await runRepository
+        .updateRun(runId, {
+          status: "completed",
+          finishedAt: new Date(),
+          meta: {
+            ...runMeta,
+            listingId,
+            inventoryId: targetInventoryId,
+            externalProductId: result.productId ?? null,
+            completedAt: new Date().toISOString(),
+          },
+        })
+        .catch(() => undefined);
+    }
 
     return NextResponse.json({
       success: true,
       message: "Product successfully exported to Base.com",
       externalProductId: result.productId,
+      runId,
       logs
     });
   } catch (error) {
     logCapture.stop();
     const logs = logCapture.getLogs();
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to export product to Base.com.";
+    if (runId) {
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: "error",
+          message: `Export failed: ${errorMessage}`,
+          metadata: {
+            logsCount: logs.length,
+          },
+        })
+        .catch(() => undefined);
+      await runRepository
+        .updateRun(runId, {
+          status: "failed",
+          finishedAt: new Date(),
+          errorMessage,
+          meta: {
+            ...runMeta,
+            failedAt: new Date().toISOString(),
+            logsCount: logs.length,
+          },
+        })
+        .catch(() => undefined);
+    }
     // Re-throw with extra logs context
     if (error instanceof Error && "meta" in error) {
       (error as any).meta = { ...(error as any).meta, logs };

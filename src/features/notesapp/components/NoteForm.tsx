@@ -9,10 +9,11 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
 import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useUndo } from '@/shared/hooks/use-undo';
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, ThemeRecord } from '@/shared/types/notes';
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, ThemeRecord, RelatedNote } from '@/shared/types/notes';
 import { Button, useToast, Input, Label } from '@/shared/ui';
-
 
 import { useEditorMode } from '../hooks/useEditorMode';
 import { useNoteFileAttachments } from '../hooks/useNoteFileAttachments';
@@ -169,7 +170,7 @@ export function NoteForm({
   const initialCombinedRelations = useMemo((): RelatedNoteItem[] => {
     if (!note) return [];
     return [
-      ...(note.relations ?? []).map((rel: import('@/shared/types/notes').RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
+      ...(note.relations ?? []).map((rel: RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
       ...(note.relationsFrom ?? []).map((rel: import('@/shared/types/notes').NoteRelationWithTarget) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' })),
       ...(note.relationsTo ?? []).map((rel: import('@/shared/types/notes').NoteRelationWithSource) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' })),
     ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
@@ -179,12 +180,8 @@ export function NoteForm({
 
   const relatedNotesQueries = useQueries({
     queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => ({
-      queryKey: ['notes', rel.id],
-      queryFn: async (): Promise<NoteWithRelations> => {
-        const res = await fetch(`/api/notes/${rel.id}`);
-        if (!res.ok) throw new Error('Failed to fetch related note');
-        return res.json() as Promise<NoteWithRelations>;
-      },
+      queryKey: QUERY_KEYS.notes.detail(rel.id),
+      queryFn: () => api.get<NoteWithRelations>(`/api/notes/${rel.id}`),
       staleTime: 1000 * 60 * 5,
     }))
   });
@@ -212,18 +209,17 @@ export function NoteForm({
   const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
   
   const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = useQuery({
-    queryKey: ['notes-search', { query: relatedNoteQuery, notebookId: selectedNotebookId }],
+    queryKey: QUERY_KEYS.notes.search(relatedNoteQuery),
     queryFn: async (): Promise<NoteWithRelations[]> => {
       if (!relatedNoteQuery) return [];
-      const params = new URLSearchParams({
-        search: relatedNoteQuery,
-        searchScope: 'title',
-      });
       const resolvedNotebookId = selectedNotebookId ?? note?.notebookId ?? null;
-      if (resolvedNotebookId) params.append('notebookId', resolvedNotebookId);
-      const res = await fetch(`/api/notes?${params.toString()}`);
-      if (!res.ok) return [];
-      return res.json() as Promise<NoteWithRelations[]>;
+      return api.get<NoteWithRelations[]>('/api/notes', {
+        params: {
+          search: relatedNoteQuery,
+          searchScope: 'title',
+          ...(resolvedNotebookId ? { notebookId: resolvedNotebookId } : {}),
+        }
+      });
     },
     enabled: !!relatedNoteQuery,
   });

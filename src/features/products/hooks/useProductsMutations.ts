@@ -75,12 +75,54 @@ export function useDeleteProduct(): UseMutationResult<
   });
 }
 
+export function useBulkDeleteProducts(): UseMutationResult<{ success: boolean }, Error, string[], unknown> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: string[]): Promise<{ success: boolean }> => {
+      const responses = await Promise.all(
+        ids.map((id: string) => deleteProduct(id))
+      );
+      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error('Failed to delete some products');
+      return { success: true };
+    },
+    onSuccess: async (): Promise<void> => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['products-count'] }),
+      ]);
+    },
+  });
+}
+
 export function useConvertAllImagesToBase64(): UseMutationResult<{ ok: boolean }, Error, void, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/products/images/base64/all', { method: 'POST' });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error || 'Failed to convert images');
+      }
+      return { ok: true };
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useBulkConvertImagesToBase64(): UseMutationResult<{ ok: boolean }, Error, string[], unknown> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (productIds: string[]) => {
+      const res = await fetch('/api/products/images/base64', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds }),
+      });
       if (!res.ok) {
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || 'Failed to convert images');

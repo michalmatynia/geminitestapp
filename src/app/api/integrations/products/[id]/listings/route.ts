@@ -2,7 +2,11 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductListingRepository } from "@/features/integrations/server";
+import {
+  getProductListingRepository,
+  listingExistsAcrossProviders,
+  listProductListingsByProductIdAcrossProviders,
+} from "@/features/integrations/server";
 import { getProductRepository } from "@/features/products/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { parseJsonBody } from "@/features/products/server";
@@ -24,8 +28,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
   if (!productId) {
     throw badRequestError("Product id is required");
   }
-  const repo = await getProductListingRepository();
-  const listings = await repo.getListingsByProductId(productId);
+  const listings = await listProductListingsByProductIdAcrossProviders(productId);
   return NextResponse.json(listings);
 }
 
@@ -77,7 +80,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
   // Check if listing already exists
   const listingRepo = await getProductListingRepository();
-  const exists = await listingRepo.listingExists(productId, data.connectionId);
+  const exists = await listingExistsAcrossProviders(productId, data.connectionId);
   if (exists) {
     throw conflictError("Product is already listed on this account", {
       productId,

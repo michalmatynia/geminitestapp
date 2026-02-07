@@ -5,7 +5,6 @@ import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
 import { useAnalyticsSummary, useAnalyticsInsights, useRunAnalyticsInsight } from '@/features/analytics/hooks/useAnalytics';
 import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/types';
-import { useToast } from '@/shared/ui';
 
 import { type AnalyticsRange } from '../api';
 
@@ -33,7 +32,6 @@ export function useAnalytics(): AnalyticsContextValue {
 export function AnalyticsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [range, setRange] = useState<AnalyticsRange>('24h');
   const [scope, setScope] = useState<AnalyticsScope | 'all'>('all');
-  const { toast } = useToast();
 
   const summaryQuery = useAnalyticsSummary({ range, scope });
 

@@ -70,13 +70,13 @@ export function useMongoDiagnostics(): UseQueryResult<unknown, Error> {
   });
 }
 
-export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}) {
-  return useQuery({
+export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}): UseQueryResult<{ insights: AiInsightRecord[] }, Error> {
+  return useQuery<{ insights: AiInsightRecord[] }, Error>({
     queryKey: logKeys.insights(options.limit),
     queryFn: () => 
       api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
         params: { limit: options.limit ?? 5 }
       }),
-    enabled: options.enabled,
+    enabled: options.enabled ?? true,
   });
 }

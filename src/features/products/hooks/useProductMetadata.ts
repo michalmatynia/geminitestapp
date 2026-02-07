@@ -75,7 +75,7 @@ export function useProducers(): UseQueryResult<Producer[]> {
   });
 }
 
-export function useSaveProducerMutation(): UseMutationResult<Producer, Error, { id?: string; data: { name: string; website: string | null } }> {
+export function useSaveProducerMutation(): UseMutationResult<Producer, Error, { id: string | undefined; data: { name: string; website: string | null } }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => 

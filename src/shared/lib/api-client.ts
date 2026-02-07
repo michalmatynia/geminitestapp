@@ -9,9 +9,9 @@ export interface ApiClientOptions extends RequestInit {
 
 export class ApiError extends Error {
   status: number;
-  errorId?: string;
+  errorId?: string | undefined;
 
-  constructor(message: string, status: number, errorId?: string) {
+  constructor(message: string, status: number, errorId?: string | undefined) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -101,11 +101,11 @@ export const api = {
   get: <T>(endpoint: string, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'GET' }),
   post: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
-    apiClient<T>(endpoint, { ...options, method: 'POST', body: JSON.stringify(body) }),
+    apiClient<T>(endpoint, { ...options, method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
   put: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
-    apiClient<T>(endpoint, { ...options, method: 'PUT', body: JSON.stringify(body) }),
+    apiClient<T>(endpoint, { ...options, method: 'PUT', body: body instanceof FormData ? body : JSON.stringify(body) }),
   patch: <T>(endpoint: string, body?: any, options?: ApiClientOptions) => 
-    apiClient<T>(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
+    apiClient<T>(endpoint, { ...options, method: 'PATCH', body: body instanceof FormData ? body : JSON.stringify(body) }),
   delete: <T>(endpoint: string, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
 };

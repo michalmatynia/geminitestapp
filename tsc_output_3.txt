@@ -1,0 +1,1 @@
+src/features/observability/pages/SystemLogsPage.tsx(259,55): error TS2304: Cannot find name 'AiInsightRecord'.

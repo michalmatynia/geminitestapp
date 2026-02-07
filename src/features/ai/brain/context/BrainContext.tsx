@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { 
@@ -22,7 +22,6 @@ import { logClientError } from '@/features/observability';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import type {
-  AiInsightRecord,
   AiPathRuntimeAnalyticsSummary,
   AnalyticsSummaryDto,
   SystemLogMetrics,
@@ -49,16 +48,6 @@ import {
 
 type BrainTab = 'routing' | 'providers' | 'reports' | 'metrics';
 
-type InsightsSnapshot = {
-  analytics: AiInsightRecord[];
-  logs: AiInsightRecord[];
-};
-
-type ChatbotModelsResponse = {
-  models?: string[];
-  warning?: { code?: string; message?: string };
-};
-
 const REPORT_FEATURE_KEYS = new Set<AiBrainFeature>([
   'analytics',
   'runtime_analytics',
@@ -75,6 +64,20 @@ const defaultOverridesEnabled: Record<AiBrainFeature, boolean> = {
   runtime_analytics: true,
   system_logs: true,
   error_logs: true,
+};
+
+const hasAnyBrainOrInsightsSetting = (map: Map<string, string>): boolean => {
+  for (const key of map.keys()) {
+    if (
+      key.startsWith('ai_brain_') ||
+      key.startsWith('ai_analytics_') ||
+      key.startsWith('ai_runtime_analytics_') ||
+      key.startsWith('ai_logs_')
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 const parseBooleanSetting = (value: string | null | undefined, fallback: boolean): boolean => {
@@ -239,26 +242,26 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     setAnthropicApiKey(map.get('anthropic_api_key') ?? '');
     setGeminiApiKey(map.get('gemini_api_key') ?? '');
 
-    setAnalyticsScheduleEnabled(
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled), true)
+    setAnalyticsScheduleEnabled((prev: boolean) =>
+      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled), prev)
     );
-    setAnalyticsScheduleMinutes(
-      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes), 30, 5)
+    setAnalyticsScheduleMinutes((prev: number) =>
+      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes), prev, 5)
     );
-    setRuntimeAnalyticsScheduleEnabled(
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled), true)
+    setRuntimeAnalyticsScheduleEnabled((prev: boolean) =>
+      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled), prev)
     );
-    setRuntimeAnalyticsScheduleMinutes(
-      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes), 30, 5)
+    setRuntimeAnalyticsScheduleMinutes((prev: number) =>
+      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes), prev, 5)
     );
-    setLogsScheduleEnabled(
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled), true)
+    setLogsScheduleEnabled((prev: boolean) =>
+      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled), prev)
     );
-    setLogsScheduleMinutes(
-      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes), 15, 5)
+    setLogsScheduleMinutes((prev: number) =>
+      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes), prev, 5)
     );
-    setLogsAutoOnError(
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError), true)
+    setLogsAutoOnError((prev: boolean) =>
+      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError), prev)
     );
 
     setAnalyticsPromptSystem(
@@ -277,8 +280,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   useEffect(() => {
     if (!settingsQuery.data) return;
+    if (!hasAnyBrainOrInsightsSetting(settingsQuery.data)) return;
     hydrateFromSettingsMap(settingsQuery.data);
-  }, [settingsQuery.data, settingsQuery.dataUpdatedAt, hydrateFromSettingsMap]);
+  }, [settingsQuery.dataUpdatedAt, hydrateFromSettingsMap]);
 
   const allFeatureKeys: AiBrainFeature[] = [
     'cms_builder', 'image_studio', 'prompt_engine', 'ai_paths',

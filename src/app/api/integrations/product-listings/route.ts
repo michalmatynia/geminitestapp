@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getProductListingRepository } from "@/features/integrations/server";
+import { listAllProductListingsAcrossProviders } from "@/features/integrations/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -10,8 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Returns a map of product IDs to their most relevant listing status.
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const repo = await getProductListingRepository();
-  const listings = await repo.listAllListings();
+  const listings = await listAllProductListingsAcrossProviders();
 
   const statusRank: Record<string, number> = {
     active: 3,

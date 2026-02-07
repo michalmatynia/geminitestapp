@@ -221,11 +221,7 @@ export function AdminProductsPage(): React.JSX.Element {
       try {
         const draft = await queryClient.fetchQuery({
           queryKey: draftKeys.detail(draftId),
-          queryFn: async () => {
-            const res = await fetch(`/api/drafts/${draftId}`);
-            if (!res.ok) throw new Error('Failed to load draft');
-            return (await res.json()) as ProductDraft;
-          }
+          queryFn: () => api.get<ProductDraft>(`/api/drafts/${draftId}`)
         });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);

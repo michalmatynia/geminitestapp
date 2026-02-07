@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useQuery, useMutation, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

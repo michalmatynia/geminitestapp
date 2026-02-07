@@ -1,4 +1,3 @@
-   change node from 22 to 24
 
 , useAiPathsRuntime would ideally be refactored into a
   dedicated context provider

@@ -28,6 +28,24 @@ type ProductListingsModalProps = {
   onListingsUpdated?: (() => void) | undefined;
 };
 
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com']);
+
+const normalizeSlug = (value: string | null | undefined): string =>
+  (value ?? '').trim().toLowerCase();
+
+const matchesIntegrationSlug = (
+  listingSlug: string,
+  filterIntegrationSlug: string | null | undefined
+): boolean => {
+  const filter = normalizeSlug(filterIntegrationSlug);
+  if (!filter) return true;
+  const listing = normalizeSlug(listingSlug);
+  if (BASE_INTEGRATION_SLUGS.has(filter)) {
+    return BASE_INTEGRATION_SLUGS.has(listing);
+  }
+  return listing === filter;
+};
+
 function ProductListingsModalContent(): React.JSX.Element {
   const {
     product,
@@ -52,12 +70,16 @@ function ProductListingsModalContent(): React.JSX.Element {
 
   const filteredListings: ProductListingWithDetails[] = useMemo(() => {
     return filterIntegrationSlug
-      ? listings.filter((listing: ProductListingWithDetails): boolean => listing.integration.slug === filterIntegrationSlug)
+      ? listings.filter((listing: ProductListingWithDetails): boolean =>
+          matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
+        )
       : listings;
   }, [listings, filterIntegrationSlug]);
 
+  const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
+
   const statusTargetLabel: string =
-    filterIntegrationSlug === 'baselinker'
+    isBaseFilter
       ? 'Base.com'
       : filterIntegrationSlug ?? 'integration';
 
@@ -106,7 +128,7 @@ function ProductListingsModalContent(): React.JSX.Element {
                     <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400">
                       Not connected.
                     </div>
-                    {filterIntegrationSlug === 'baselinker' && <ProductListingsSyncPanel />}
+                    {isBaseFilter && <ProductListingsSyncPanel />}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -128,7 +150,7 @@ function ProductListingsModalContent(): React.JSX.Element {
                     {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
                   </div>
                 )}
-                {filterIntegrationSlug === 'baselinker' && <ProductListingsSyncPanel />}
+                {isBaseFilter && <ProductListingsSyncPanel />}
                 {filteredListings.map((listing: ProductListingWithDetails) => (
                   <ProductListingItem key={listing.id} listing={listing} />
                 ))}

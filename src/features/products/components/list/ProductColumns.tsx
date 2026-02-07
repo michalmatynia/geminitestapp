@@ -20,7 +20,6 @@ import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/pro
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type { QueryClient } from '@tanstack/react-query';
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 
 // Keep the exported name `Product` in case other files import it from here.

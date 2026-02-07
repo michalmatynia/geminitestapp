@@ -96,6 +96,7 @@ export type RelatedNote = {
   id: string;
   title: string;
   color: string | null;
+  content?: string;
 };
 
 export type NoteRelationWithTarget = NoteRelationRecord & {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -81,8 +81,8 @@ type SystemLogsContextValue = {
   metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics }, Error>;
   mongoDiagnosticsQuery: UseQueryResult<unknown, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<AiInsightRecord | null, Error, void>;
-  interpretLogMutation: UseMutationResult<AiInsightRecord | null, Error, string>;
+  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
+  interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
   clearLogsMutation: UseMutationResult<boolean, Error, void>;
   rebuildIndexesMutation: UseMutationResult<unknown, Error, void>;
   isClearLogsConfirmOpen: boolean;
@@ -91,6 +91,8 @@ type SystemLogsContextValue = {
   setIsRebuildIndexesConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleClearLogs: () => Promise<void>;
   handleRebuildMongoIndexes: () => Promise<void>;
+  handleRunInsight: () => Promise<void>;
+  handleInterpretLog: (logId: string) => Promise<void>;
   toast: ToastFn;
 };
 
@@ -311,6 +313,8 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     setIsRebuildIndexesConfirmOpen,
     handleClearLogs,
     handleRebuildMongoIndexes,
+    handleRunInsight,
+    handleInterpretLog,
     toast,
   };
 

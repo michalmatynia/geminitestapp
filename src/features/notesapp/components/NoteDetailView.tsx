@@ -1,16 +1,16 @@
+'use client';
+
 import { ChevronLeft, ChevronRight, Star, X } from 'lucide-react';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import { logClientError } from '@/features/observability';
 import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/notes';
 import { Button, useToast, SectionPanel } from '@/shared/ui';
 
-
 import { NoteForm } from './NoteForm';
 import { buildBreadcrumbPath, renderMarkdownToHtml } from '../utils';
-
 
 export function NoteDetailView(): React.JSX.Element | null {
   const {
@@ -31,7 +31,6 @@ export function NoteDetailView(): React.JSX.Element | null {
   } = useNotesAppContext();
 
   const { toast } = useToast();
-  const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
   if (!selectedNote) return null;
 
@@ -89,38 +88,15 @@ export function NoteDetailView(): React.JSX.Element | null {
     [relatedNotes]
   );
 
-  useEffect(() => {
-    if (!selectedNote || relationIds.length === 0) return;
-    let isActive = true;
-    const fetchRelated = async (): Promise<void> => {
-      try {
-        const notes = await Promise.all(
-          relationIds.map(async (id: string) => {
-            try {
-              const res = await fetch(`/api/notes/${id}`);
-              if (!res.ok) return null;
-              return (await res.json()) as NoteWithRelations;
-            } catch {
-              return null;
-            }
-          })
-        );
-        if (!isActive) return;
-        const nextMap: Record<string, NoteWithRelations> = {};
-        notes.filter((note: NoteWithRelations | null): note is NoteWithRelations => !!note).forEach((note: NoteWithRelations) => {
-          if (note) nextMap[note.id] = note;
-        });
-        setRelatedPreviewNotes(nextMap);
-      } catch (error: unknown) {
-        logClientError(error, { context: { source: 'NoteDetailView', action: 'fetchRelated', noteId: selectedNote.id } });
-      }
-    };
+  const { data: linkedDetails, isLoading: loadingLinked } = useNotesLookup(relationIds);
 
-    void fetchRelated();
-    return (): void => {
-      isActive = false;
-    };
-  }, [selectedNote, relationIds]);
+  const relatedPreviewNotes = useMemo(() => {
+    const map: Record<string, RelatedNote> = {};
+    linkedDetails?.forEach((n: RelatedNote) => {
+      map[n.id] = n;
+    });
+    return map;
+  }, [linkedDetails]);
 
   const getReadableTextColor = (hexColor: string): string => {
     const normalized = hexColor.replace('#', '');

@@ -113,7 +113,14 @@ export function ProductListingsProvider({
     try {
       setDeletingFromBase(listingId);
       const inventoryId = (inventoryOverrides[listingId] || listings.find(l => l.id === listingId)?.inventoryId || '').trim();
-      await deleteFromBaseMutation.mutateAsync({ listingId, inventoryId });
+      const result = await deleteFromBaseMutation.mutateAsync({ listingId, inventoryId });
+      setError(null);
+      toast(
+        result?.runId
+          ? `Delete job started. Track it in Job Queue (run: ${result.runId}).`
+          : 'Delete from Base.com completed.',
+        { variant: 'success' }
+      );
       onListingsUpdated?.();
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'ProductListingsContext', action: 'deleteFromBase', listingId, productId: product.id } });
@@ -122,7 +129,7 @@ export function ProductListingsProvider({
       setDeletingFromBase(null);
       setListingToDelete(null);
     }
-  }, [deleteFromBaseMutation, inventoryOverrides, listings, onListingsUpdated, product.id]);
+  }, [deleteFromBaseMutation, inventoryOverrides, listings, onListingsUpdated, product.id, toast]);
 
   const handlePurgeListing = useCallback(async (listingId: string) => {
     try {

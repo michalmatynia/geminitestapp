@@ -5,8 +5,10 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import {
   AUTH_SETTINGS_KEYS,
+  DEFAULT_AUTH_PERMISSIONS,
   DEFAULT_AUTH_ROLES,
   mergeDefaultRoles,
+  type AuthPermission,
   type AuthRole,
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
@@ -15,6 +17,10 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
+import {
+  DEFAULT_AUTH_USER_PAGE_SETTINGS,
+  type AuthUserPageSettings,
+} from '@/features/auth/utils/auth-user-pages';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -28,9 +34,11 @@ interface AuthContextValue {
   canReadUsers: boolean;
   canManageSecurity: boolean;
   roles: AuthRole[];
+  permissionsLibrary: AuthPermission[];
   userRoles: AuthUserRoleMap;
   defaultRole: string;
   securityPolicy: AuthSecurityPolicy;
+  userPageSettings: AuthUserPageSettings;
   isLoading: boolean;
   updateSetting: ReturnType<typeof useUpdateSetting>;
   refetchSettings: () => Promise<unknown>;
@@ -66,6 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     );
   }, [settingsQuery.data]);
 
+  const permissionsLibrary = useMemo(() => {
+    if (!settingsQuery.data) return DEFAULT_AUTH_PERMISSIONS;
+    return parseJsonSetting<AuthPermission[]>(
+      settingsQuery.data.get(AUTH_SETTINGS_KEYS.permissions),
+      DEFAULT_AUTH_PERMISSIONS
+    );
+  }, [settingsQuery.data]);
+
   const userRoles = useMemo(() => {
     if (!settingsQuery.data) return {};
     return parseJsonSetting<AuthUserRoleMap>(
@@ -87,10 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
     const parsedPolicy = storedPolicyRaw
       ? normalizeAuthSecurityPolicy(
-          parseJsonSetting<Partial<AuthSecurityPolicy>>(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY)
-        )
+        parseJsonSetting<Partial<AuthSecurityPolicy>>(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY)
+      )
       : DEFAULT_AUTH_SECURITY_POLICY;
     return parsedPolicy;
+  }, [settingsQuery.data]);
+
+  const userPageSettings = useMemo(() => {
+    if (!settingsQuery.data) return DEFAULT_AUTH_USER_PAGE_SETTINGS;
+    return parseJsonSetting<AuthUserPageSettings>(
+      settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
+      DEFAULT_AUTH_USER_PAGE_SETTINGS
+    );
   }, [settingsQuery.data]);
 
   const isLoading = status === 'loading' || settingsQuery.isPending;
@@ -104,9 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       canReadUsers,
       canManageSecurity,
       roles,
+      permissionsLibrary,
       userRoles,
       defaultRole,
       securityPolicy,
+      userPageSettings,
       isLoading,
       updateSetting,
       refetchSettings: settingsQuery.refetch,
@@ -119,9 +145,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       canReadUsers,
       canManageSecurity,
       roles,
+      permissionsLibrary,
       userRoles,
       defaultRole,
       securityPolicy,
+      userPageSettings,
       isLoading,
       updateSetting,
       settingsQuery.refetch,

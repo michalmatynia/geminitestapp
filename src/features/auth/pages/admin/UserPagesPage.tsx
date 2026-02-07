@@ -1,36 +1,26 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 
-
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
-  DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
-  const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
-  const didNotifyErrorRef = useRef(false);
+  const {
+    userPageSettings: contextSettings,
+    isLoading,
+    updateSetting,
+    refetchSettings,
+  } = useAuth();
 
-  useEffect(() => {
-    if (!settingsQuery.error) {
-      didNotifyErrorRef.current = false;
-      return;
-    }
-    if (didNotifyErrorRef.current) return;
-    didNotifyErrorRef.current = true;
-    logClientError(settingsQuery.error, { context: { source: 'AuthUserPagesPage', action: 'loadSettings' } });
-    toast('Failed to load user page settings', { variant: 'error' });
-  }, [settingsQuery.error, toast]);
-
-  if (settingsQuery.isPending || !settingsQuery.data) {
+  if (isLoading) {
     return (
       <SectionPanel className="p-6 text-sm text-gray-400">
         Loading user page settings...
@@ -38,23 +28,32 @@ export default function AuthUserPagesPage(): React.JSX.Element {
     );
   }
 
-  const initialSettings = parseJsonSetting<AuthUserPageSettings>(
-    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
-    DEFAULT_AUTH_USER_PAGE_SETTINGS
+  return (
+    <AuthUserPagesForm
+      initialSettings={contextSettings}
+      updateSetting={updateSetting}
+      refetchSettings={refetchSettings}
+    />
   );
-
-  return <AuthUserPagesForm initialSettings={initialSettings} />;
 }
 
 function AuthUserPagesForm({
   initialSettings,
+  updateSetting,
+  refetchSettings,
 }: {
   initialSettings: AuthUserPageSettings;
+  updateSetting: any; // Use proper type if possible
+  refetchSettings: () => Promise<unknown>;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [settings, setSettings] = useState<AuthUserPageSettings>(initialSettings);
   const [dirty, setDirty] = useState(false);
-  const updateSetting = useUpdateSetting();
+
+  useEffect(() => {
+    setSettings(initialSettings);
+    setDirty(false);
+  }, [initialSettings]);
 
   const handleToggle = (key: keyof AuthUserPageSettings): void => {
     setSettings((prev: AuthUserPageSettings) => ({ ...prev, [key]: !prev[key] }));
@@ -68,6 +67,7 @@ function AuthUserPagesForm({
         value: serializeSetting(settings),
       });
       setDirty(false);
+      await refetchSettings();
       toast('User page settings saved', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthUserPagesPage', action: 'saveSettings' } });

@@ -7,6 +7,8 @@ import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, 
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { readBlockDragData, readSectionDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { getBlockDefinition } from '../section-registry';
@@ -20,16 +22,18 @@ export function SlideshowFrameNodeItem({
   frame,
   index,
   sectionId,
-  selectedNodeId,
-  onSelect,
-  onAddElementToSectionBlock,
-  onDropBlock,
-  onDropBlockToSlideshowFrame,
-  onDropSectionToSlideshowFrame,
-  onRemoveBlock,
-  expandedIds,
-  onToggleExpand,
 }: SlideshowFrameNodeItemProps): React.ReactNode {
+  const { state: pbState } = usePageBuilder();
+  const {
+    expandedIds,
+    selectNode,
+    toggleExpand,
+    blockActions,
+    sectionActions,
+  } = useTreeActions();
+
+  const selectedNodeId = pbState.selectedNodeId;
+
   // Drag state from context
   const drag = useDragStateExtract();
   const { startBlockDrag, endBlockDrag, endSectionDrag } = drag.actions;
@@ -56,13 +60,12 @@ export function SlideshowFrameNodeItem({
         label: 'Remove frame',
         icon: <Trash2 className="size-3.5" />,
         tone: 'danger',
-        disabled: !onRemoveBlock,
         onSelect: (): void => {
-          if (onRemoveBlock) onRemoveBlock(sectionId, frame.id);
+          blockActions.remove(sectionId, frame.id);
         },
       },
     ],
-    [onRemoveBlock, sectionId, frame.id]
+    [blockActions, sectionId, frame.id]
   );
 
   return (
@@ -72,11 +75,11 @@ export function SlideshowFrameNodeItem({
           tone="none"
           role="button"
           tabIndex={0}
-          onClick={() => onSelect(frame.id)}
+          onClick={() => selectNode(frame.id)}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onSelect(frame.id);
+              selectNode(frame.id);
             }
           }}
           onDragOver={(e: React.DragEvent) => {
@@ -115,7 +118,7 @@ export function SlideshowFrameNodeItem({
             // Handle section drop (convert section to block in frame)
             if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')) {
             // Convert the section to a block inside the frame
-              onDropSectionToSlideshowFrame(sectionIdToDrop, sectionId, frame.id, (frame.blocks ?? []).length);
+              sectionActions.dropToSlideshowFrame(sectionIdToDrop, sectionId, frame.id, (frame.blocks ?? []).length);
               endSectionDrag();
               return;
             }
@@ -136,7 +139,7 @@ export function SlideshowFrameNodeItem({
             if (dragType === 'SlideshowFrame') {
               if (dragId === frame.id) return;
               const fromSection = blockDrag.fromSectionId ?? sectionId;
-              onDropBlock(dragId, fromSection, sectionId, index);
+              blockActions.drop(dragId, fromSection, sectionId, index);
             }
             // Handle dropping allowed block types INTO the frame
             else if (frameAllowedTypes.includes(dragType)) {
@@ -144,7 +147,7 @@ export function SlideshowFrameNodeItem({
               const fromColumn = blockDrag.fromColumnId ?? undefined;
               const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
               const frameBlockCount = (frame.blocks ?? []).length;
-              onDropBlockToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+              blockActions.dropToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
             } else {
               return;
             }
@@ -196,7 +199,7 @@ export function SlideshowFrameNodeItem({
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse frame' : 'Expand frame'}
-            onToggle={(): void => onToggleExpand(frame.id)}
+            onToggle={(): void => toggleExpand(frame.id)}
             iconClassName="size-3"
             placeholderClassName="block size-3 shrink-0"
           />
@@ -208,18 +211,18 @@ export function SlideshowFrameNodeItem({
           <TreeActionSlot show="always" align="inline">
             <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
               <ColumnBlockPicker
-                onSelect={(elemType: string) => onAddElementToSectionBlock(sectionId, frame.id, elemType)}
+                onSelect={(elemType: string) => blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)}
                 allowedBlockTypes={frameAllowedTypes}
               />
             </div>
           </TreeActionSlot>
-          {onRemoveBlock && !isDragOver && (
+          {!isDragOver && (
             <TreeActionSlot show="hover" align="inline">
               <TreeActionButton
                 tone="danger"
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
-                  onRemoveBlock(sectionId, frame.id);
+                  blockActions.remove(sectionId, frame.id);
                 }}
                 title="Remove frame"
               >
@@ -270,7 +273,7 @@ export function SlideshowFrameNodeItem({
               const fromColumn = blockDrag.fromColumnId ?? undefined;
               const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
               const frameBlockCount = (frame.blocks ?? []).length;
-              onDropBlockToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+              blockActions.dropToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
             }
             endBlockDrag();
           }}
@@ -307,10 +310,6 @@ export function SlideshowFrameNodeItem({
                   index={childIndex}
                   sectionId={sectionId}
                   parentBlockId={frame.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onDropBlock={onDropBlock}
-                  onRemoveBlock={onRemoveBlock}
                   disableDrag
                 />
               </div>

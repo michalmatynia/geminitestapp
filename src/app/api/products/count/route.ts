@@ -14,7 +14,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const filters = Object.fromEntries(searchParams.entries());
 
   const count = await productService.countProducts(filters);
-  return NextResponse.json({ count });
+  return NextResponse.json(
+    { count },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 export const GET = apiHandler(

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 
+import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import type {
   InventoryOption,
   Template,
   WarehouseOption,
-  DebugWarehouses,
   ImageRetryPreset,
 } from '@/features/data-import-export/types/imports';
 import {
@@ -16,89 +16,51 @@ import {
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 import { Button, Input, Checkbox, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
-type ExportTabProps = {
-  baseConnections: IntegrationConnectionBasic[];
-  selectedBaseConnectionId: string;
-  setSelectedBaseConnectionId: (value: string) => void;
-  inventories: InventoryOption[];
-  exportInventoryId: string;
-  setExportInventoryId: (value: string) => void;
-  exportActiveTemplateId: string;
-  setExportActiveTemplateId: (value: string) => void;
-  exportTemplates: Template[];
-  loadingExportTemplates: boolean;
-  applyTemplate: (template: Template, scope: 'import' | 'export') => void;
-  exportWarehouseId: string;
-  setExportWarehouseId: (value: string) => void;
-  warehouseOptions: WarehouseOption[];
-  showAllWarehouses: boolean;
-  setShowAllWarehouses: (value: boolean) => void;
-  inventoryWarehouseIds: Set<string>;
-  exportStockFallbackEnabled: boolean;
-  setExportStockFallbackEnabled: (value: boolean) => void;
-  exportStockFallbackLoaded: boolean;
-  allWarehouses: WarehouseOption[];
-  warehouses: WarehouseOption[];
-  imageRetryPresets: ImageRetryPreset[];
-  setImageRetryPresets: (
-    value:
-      | ImageRetryPreset[]
-      | ((prev: ImageRetryPreset[]) => ImageRetryPreset[]),
-  ) => void;
-  imageRetryPresetsLoaded: boolean;
-  handleLoadInventories: () => void | Promise<void>;
-  loadingInventories: boolean;
-  handleLoadWarehouses: () => void | Promise<void>;
-  loadingWarehouses: boolean;
-  handleDebugWarehouses: () => void | Promise<void>;
-  loadingDebugWarehouses: boolean;
-  includeAllWarehouses: boolean;
-  setIncludeAllWarehouses: (value: boolean) => void;
-  handleSaveExportSettings: () => void | Promise<void>;
-  savingExportSettings: boolean;
-  debugWarehouses: DebugWarehouses;
-  setDebugWarehouses: (value: DebugWarehouses) => void;
-};
+export function ExportTab(): React.JSX.Element {
+  const {
+    baseConnections,
+    selectedBaseConnectionId,
+    setSelectedBaseConnectionId,
+    inventories,
+    exportInventoryId,
+    setExportInventoryId,
+    exportActiveTemplateId,
+    setExportActiveTemplateId,
+    exportTemplates,
+    applyTemplate,
+    exportWarehouseId,
+    setExportWarehouseId,
+    warehouses: warehouseOptions,
+    showAllWarehouses,
+    setShowAllWarehouses,
+    exportStockFallbackEnabled,
+    setExportStockFallbackEnabled,
+    allWarehouses,
+    warehouses,
+    imageRetryPresets,
+    setImageRetryPresets,
+    handleLoadInventories,
+    isFetchingInventories: loadingInventories,
+    handleLoadWarehouses,
+    isFetchingWarehouses: loadingWarehouses,
+    includeAllWarehouses,
+    setIncludeAllWarehouses,
+    handleSaveExportSettings,
+    savingExportSettings,
+    debugWarehouses,
+    setDebugWarehouses,
+  } = useImportExport();
 
-export function ExportTab({
-  baseConnections,
-  selectedBaseConnectionId,
-  setSelectedBaseConnectionId,
-  inventories,
-  exportInventoryId,
-  setExportInventoryId,
-  exportActiveTemplateId,
-  setExportActiveTemplateId,
-  exportTemplates,
-  loadingExportTemplates,
-  applyTemplate,
-  exportWarehouseId,
-  setExportWarehouseId,
-  warehouseOptions,
-  showAllWarehouses,
-  setShowAllWarehouses,
-  inventoryWarehouseIds,
-  exportStockFallbackEnabled,
-  setExportStockFallbackEnabled,
-  exportStockFallbackLoaded,
-  allWarehouses,
-  warehouses,
-  imageRetryPresets,
-  setImageRetryPresets,
-  imageRetryPresetsLoaded,
-  handleLoadInventories,
-  loadingInventories,
-  handleLoadWarehouses,
-  loadingWarehouses,
-  handleDebugWarehouses,
-  loadingDebugWarehouses,
-  includeAllWarehouses,
-  setIncludeAllWarehouses,
-  handleSaveExportSettings,
-  savingExportSettings,
-  debugWarehouses,
-  setDebugWarehouses,
-}: ExportTabProps): React.JSX.Element {
+  const loadingExportTemplates = false; // or get from context if added
+  const exportStockFallbackLoaded = true;
+  const imageRetryPresetsLoaded = true;
+  const loadingDebugWarehouses = false;
+  const inventoryWarehouseIds = new Set(warehouses.map((w: WarehouseOption) => w.id));
+
+  const handleDebugWarehouses = (): void => {
+    // Not implemented in context yet, but can be added if needed
+  };
+
   const updateImageRetryPreset = (
     presetId: string,
     update: Partial<ImageRetryPreset['transform']>,

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { logClientError } from '@/features/observability';
 import {
   Badge,
   Button,
@@ -194,7 +195,7 @@ export function CrudPanel({
       setError(null);
       setSuccessMessage(null);
     }
-  }, [defaultTable]);  
+  }, [defaultTable, selectedTable]);  
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -248,12 +249,16 @@ export function CrudPanel({
                     setTotalRows(total);
                     setLoading(false);
                   },
-                  onError: () => setLoading(false),
+                  onError: (err: Error) => {
+                    logClientError(err, { context: { source: 'CrudPanel', action: 'fetchCount', table: selectedTable } });
+                    setLoading(false);
+                  },
                 }
               );
             }
           },
           onError: (err: Error) => {
+            logClientError(err, { context: { source: 'CrudPanel', action: 'fetchRows', table: selectedTable } });
             setError(err.message);
             setLoading(false);
           },
@@ -278,6 +283,7 @@ export function CrudPanel({
             setLoading(false);
           },
           onError: (err: Error) => {
+            logClientError(err, { context: { source: 'CrudPanel', action: 'fetchRowsMongo', table: selectedTable } });
             setError(err.message);
             setLoading(false);
           },
@@ -290,7 +296,7 @@ export function CrudPanel({
   useEffect(() => {
     if (selectedTable) fetchRows();
      
-  }, [selectedTable, page, pageSize]);
+  }, [selectedTable, page, pageSize, fetchRows]);
 
   const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> => {
     const pk: Record<string, unknown> = {};
@@ -322,7 +328,10 @@ export function CrudPanel({
             fetchRows();
           }
         },
-        onError: (err: Error) => setError(err.message),
+        onError: (err: Error) => {
+          logClientError(err, { context: { source: 'CrudPanel', action: 'insertRow', table: selectedTable } });
+          setError(err.message);
+        },
       }
     );
   };
@@ -348,7 +357,10 @@ export function CrudPanel({
             fetchRows();
           }
         },
-        onError: (err: Error) => setError(err.message),
+        onError: (err: Error) => {
+          logClientError(err, { context: { source: 'CrudPanel', action: 'updateRow', table: selectedTable } });
+          setError(err.message);
+        },
       }
     );
   };
@@ -373,7 +385,10 @@ export function CrudPanel({
             fetchRows();
           }
         },
-        onError: (err: Error) => setError(err.message),
+        onError: (err: Error) => {
+          logClientError(err, { context: { source: 'CrudPanel', action: 'deleteRow', table: selectedTable } });
+          setError(err.message);
+        },
       }
     );
   };

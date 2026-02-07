@@ -2,19 +2,31 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-
+import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
   DEFAULT_AUTH_ROLES,
-  mergeDefaultRoles,
   type AuthPermission,
   type AuthRole,
 } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Input,
+  Label,
+  useToast,
+  SectionHeader,
+  SectionPanel,
+} from '@/shared/ui';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 const slugify = (value: string): string =>
   value
@@ -24,16 +36,14 @@ const slugify = (value: string): string =>
     .replace(/(^-|-$)/g, '');
 
 export default function AuthPermissionsPage(): React.JSX.Element {
-  const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
+  const {
+    roles: contextRoles,
+    permissionsLibrary: contextPermissions,
+    isLoading,
+    refetchSettings,
+  } = useAuth();
 
-  useEffect(() => {
-    if (!settingsQuery.error) return;
-    logClientError(settingsQuery.error, { context: { source: 'AuthPermissionsPage', action: 'loadSettings' } });
-    toast('Failed to load permission settings', { variant: 'error' });
-  }, [settingsQuery.error, toast]);
-
-  if (settingsQuery.isPending || !settingsQuery.data) {
+  if (isLoading) {
     return (
       <SectionPanel className="p-6 text-sm text-gray-400">
         Loading permission settings...
@@ -41,21 +51,11 @@ export default function AuthPermissionsPage(): React.JSX.Element {
     );
   }
 
-  const initialPermissions = parseJsonSetting<AuthPermission[]>(
-    settingsQuery.data.get(AUTH_SETTINGS_KEYS.permissions),
-    DEFAULT_AUTH_PERMISSIONS
-  );
-  const initialRoles = mergeDefaultRoles(
-    parseJsonSetting<AuthRole[]>(
-      settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
-      DEFAULT_AUTH_ROLES
-    )
-  );
-
   return (
     <AuthPermissionsForm
-      initialPermissions={initialPermissions}
-      initialRoles={initialRoles}
+      initialPermissions={contextPermissions}
+      initialRoles={contextRoles}
+      refetchSettings={refetchSettings}
     />
   );
 }
@@ -63,15 +63,23 @@ export default function AuthPermissionsPage(): React.JSX.Element {
 function AuthPermissionsForm({
   initialPermissions,
   initialRoles,
+  refetchSettings,
 }: {
   initialPermissions: AuthPermission[];
   initialRoles: AuthRole[];
+  refetchSettings: () => Promise<unknown>;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [dirty, setDirty] = useState(false);
   const [permissions, setPermissions] = useState<AuthPermission[]>(initialPermissions);
   const [roles, setRoles] = useState<AuthRole[]>(initialRoles);
   const saveSettingsMutation = useUpdateSettingsBulk();
+
+  useEffect(() => {
+    setPermissions(initialPermissions);
+    setRoles(initialRoles);
+    setDirty(false);
+  }, [initialPermissions, initialRoles]);
 
   const [newPermissionId, setNewPermissionId] = useState('');
   const [newPermissionName, setNewPermissionName] = useState('');
@@ -123,7 +131,9 @@ function AuthPermissionsForm({
   };
 
   const handleRemovePermission = (permissionId: string): void => {
-    setPermissions((prev: AuthPermission[]) => prev.filter((permission: AuthPermission) => permission.id !== permissionId));
+    setPermissions((prev: AuthPermission[]) =>
+      prev.filter((permission: AuthPermission) => permission.id !== permissionId)
+    );
     setRoles((prev: AuthRole[]) =>
       prev.map((role: AuthRole) => ({
         ...role,
@@ -179,11 +189,11 @@ function AuthPermissionsForm({
           ? {
             ...role,
             [field]:
-                field === 'level'
-                  ? Number.isNaN(Number(value))
-                    ? role.level ?? 0
-                    : Number(value)
-                  : value,
+              field === 'level'
+                ? Number.isNaN(Number(value))
+                  ? role.level ?? 0
+                  : Number(value)
+                : value,
           }
           : role
       )
@@ -204,6 +214,7 @@ function AuthPermissionsForm({
         },
       ]);
       setDirty(false);
+      await refetchSettings();
       toast('Permission settings saved', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthPermissionsPage', action: 'saveSettings' } });
@@ -237,18 +248,13 @@ function AuthPermissionsForm({
           <CardContent className="space-y-4">
             <div className="space-y-3">
               {permissions.map((permission: AuthPermission) => (
-                <div
-                  key={permission.id}
-                  className="rounded-md border border-border bg-card/40 p-3"
-                >
+                <div key={permission.id} className="rounded-md border border-border bg-card/40 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-white">{permission.name}</div>
                       <div className="text-xs text-gray-400">{permission.id}</div>
                       {permission.description && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {permission.description}
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">{permission.description}</div>
                       )}
                     </div>
                     <Button
@@ -273,7 +279,9 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-name"
                   value={newPermissionName}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewPermissionName(event.target.value)
+                  }
                   placeholder="Manage products"
                   className="bg-gray-900 border text-white"
                 />
@@ -285,7 +293,9 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-id"
                   value={newPermissionId}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionId(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewPermissionId(event.target.value)
+                  }
                   placeholder="products.manage"
                   className="bg-gray-900 border text-white"
                 />
@@ -297,12 +307,17 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-description"
                   value={newPermissionDescription}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionDescription(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewPermissionDescription(event.target.value)
+                  }
                   placeholder="Create and edit product listings"
                   className="bg-gray-900 border text-white"
                 />
               </div>
-              <Button onClick={handleAddPermission} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button
+                onClick={handleAddPermission}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
                 Add Permission
               </Button>
             </div>
@@ -318,16 +333,15 @@ function AuthPermissionsForm({
           </CardHeader>
           <CardContent className="space-y-4">
             {roles.map((role: AuthRole) => (
-              <div
-                key={role.id}
-                className="rounded-md border border-border bg-card/40 p-4 space-y-3"
-              >
+              <div key={role.id} className="rounded-md border border-border bg-card/40 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-2 flex-1">
                     <Label className="text-xs text-gray-400">Role name</Label>
                     <Input
                       value={role.name}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleRoleFieldChange(role.id, 'name', event.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        handleRoleFieldChange(role.id, 'name', event.target.value)
+                      }
                       className="bg-gray-900 border text-white"
                     />
                     <Label className="text-xs text-gray-400">Description</Label>
@@ -392,7 +406,9 @@ function AuthPermissionsForm({
                 <Input
                   id="role-name"
                   value={newRoleName}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoleName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewRoleName(event.target.value)
+                  }
                   placeholder="Editor"
                   className="bg-gray-900 border text-white"
                 />
@@ -404,7 +420,9 @@ function AuthPermissionsForm({
                 <Input
                   id="role-description"
                   value={newRoleDescription}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoleDescription(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewRoleDescription(event.target.value)
+                  }
                   placeholder="Manage content and products"
                   className="bg-gray-900 border text-white"
                 />

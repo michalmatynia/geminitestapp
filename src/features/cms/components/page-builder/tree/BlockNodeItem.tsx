@@ -8,6 +8,8 @@ import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, resolveBlockLabel } from './tree-constants';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { readBlockDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
 
 import type { BlockNodeItemProps } from './tree-types';
@@ -18,14 +20,16 @@ export function BlockNodeItem({
   sectionId,
   columnId,
   parentBlockId,
-  selectedNodeId,
-  onSelect,
-  onDropBlock,
-  onDropBlockToColumn,
-  onDropBlockToSection,
-  onRemoveBlock,
   disableDrag = false,
 }: BlockNodeItemProps): React.ReactNode {
+  const { state: pbState } = usePageBuilder();
+  const {
+    selectNode,
+    blockActions,
+  } = useTreeActions();
+
+  const selectedNodeId = pbState.selectedNodeId;
+
   // Drag state from context
   const drag = useDragStateExtract();
   const { startBlockDrag, endBlockDrag } = drag.actions;
@@ -55,13 +59,13 @@ export function BlockNodeItem({
         label: 'Remove block',
         icon: <Trash2 className="size-3.5" />,
         tone: 'danger',
-        disabled: !onRemoveBlock || isBackgroundMode,
+        disabled: isBackgroundMode,
         onSelect: (): void => {
-          if (onRemoveBlock && !isBackgroundMode) onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
+          if (!isBackgroundMode) blockActions.remove(sectionId, block.id, columnId, parentBlockId);
         },
       },
     ],
-    [onRemoveBlock, isBackgroundMode, sectionId, block.id, columnId, parentBlockId]
+    [isBackgroundMode, blockActions, sectionId, block.id, columnId, parentBlockId]
   );
 
   return (
@@ -71,11 +75,11 @@ export function BlockNodeItem({
         role="button"
         tabIndex={0}
         draggable={canDrag}
-        onClick={() => onSelect(block.id)}
+        onClick={() => selectNode(block.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onSelect(block.id);
+            selectNode(block.id);
           }
         }}
         onDragStart={(e: React.DragEvent) => {
@@ -137,8 +141,8 @@ export function BlockNodeItem({
           const fromSection = blockDrag.fromSectionId ?? sectionId;
           const fromColumn = blockDrag.fromColumnId;
           const fromParent = blockDrag.fromParentBlockId;
-          if (columnId && onDropBlockToColumn) {
-            onDropBlockToColumn(
+          if (columnId) {
+            blockActions.dropToColumn(
               dragId,
               fromSection,
               fromColumn || undefined,
@@ -152,8 +156,8 @@ export function BlockNodeItem({
             return;
           }
           if (!fromSection) return;
-          if ((fromColumn || fromParent) && onDropBlockToSection) {
-            onDropBlockToSection(
+          if (fromColumn || fromParent) {
+            blockActions.dropToSection(
               dragId,
               fromSection,
               fromColumn || undefined,
@@ -162,7 +166,7 @@ export function BlockNodeItem({
               fromParent || undefined
             );
           } else {
-            onDropBlock(dragId, fromSection, sectionId, index);
+            blockActions.drop(dragId, fromSection, sectionId, index);
           }
           endBlockDrag();
         }}
@@ -232,13 +236,13 @@ export function BlockNodeItem({
           <span className="text-[10px] text-emerald-300">Insert here</span>
         )}
         {/* Delete button - visible on hover when selected or always visible on hover */}
-        {onRemoveBlock && !isDragOver && !isBackgroundMode && (
+        {!isDragOver && !isBackgroundMode && (
           <TreeActionSlot show="hover" align="end">
             <TreeActionButton
               tone="danger"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
+                blockActions.remove(sectionId, block.id, columnId, parentBlockId);
               }}
               title="Remove block"
             >

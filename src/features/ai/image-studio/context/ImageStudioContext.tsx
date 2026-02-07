@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -15,7 +15,7 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 
 import { type ParamUiControl } from '../utils/param-ui';
 import { IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings, defaultImageStudioSettings } from '../utils/studio-settings';
-import { expandFolderPath, normalizeFolderPaths } from '../utils/studio-tree';
+import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
 export type StudioTab = 'studio' | 'projects' | 'settings' | 'validation';
 
@@ -66,8 +66,8 @@ interface ImageStudioContextValue {
   projectId: string;
   setProjectId: (id: string) => void;
   projectsQuery: UseQueryResult<string[]>;
-  createProjectMutation: unknown;
-  deleteProjectMutation: unknown;
+  createProjectMutation: UseMutationResult<string, Error, string>;
+  deleteProjectMutation: UseMutationResult<string, Error, string>;
   handleDeleteProject: (id: string) => Promise<void>;
   projectSearch: string;
   setProjectSearch: (s: string) => void;
@@ -86,13 +86,13 @@ interface ImageStudioContextValue {
   setWorkingSlotId: (id: string | null) => void;
   workingSlot: ImageStudioSlotRecord | null;
   createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
-  updateSlotMutation: unknown;
-  deleteSlotMutation: unknown;
-  moveSlotMutation: unknown;
+  updateSlotMutation: UseMutationResult<any, Error, { id: string; data: Partial<ImageStudioSlotRecord> }>;
+  deleteSlotMutation: UseMutationResult<void, Error, string>;
+  moveSlotMutation: UseMutationResult<any, Error, { slot: ImageStudioSlotRecord; targetFolder: string }>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
-  createFolderMutation: unknown;
-  uploadMutation: unknown;
-  importFromDriveMutation: unknown;
+  createFolderMutation: UseMutationResult<string, Error, string>;
+  uploadMutation: UseMutationResult<any, Error, { files: File[]; folder: string }>;
+  importFromDriveMutation: UseMutationResult<any, Error, { files: ImageFileSelection[]; folder: string }>;
   
   // Slot UI
   slotCreateOpen: boolean;
@@ -130,6 +130,8 @@ interface ImageStudioContextValue {
   setMaskShapes: React.Dispatch<React.SetStateAction<VectorShape[]>>;
   activeMaskId: string | null;
   setActiveMaskId: (id: string | null) => void;
+  selectedPointIndex: number | null;
+  setSelectedPointIndex: (index: number | null) => void;
   maskInvert: boolean;
   setMaskInvert: (i: boolean) => void;
   maskFeather: number;
@@ -193,15 +195,42 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
 
+  const [projectId, setProjectId] = useState<string>('');
+
+  const projectsQuery = useQuery({
+    queryKey: ['image-studio', 'projects'],
+    queryFn: async (): Promise<string[]> => {
+      const res = await fetch('/api/image-studio/projects');
+      if (!res.ok) throw new Error('Failed to load projects');
+      const data = (await res.json()) as StudioProjectsResponse;
+      return Array.isArray(data.projects) ? data.projects : [];
+    },
+    staleTime: 10_000,
+  });
+
+  const slotsQuery = useQuery({
+    queryKey: ['image-studio', 'slots', projectId],
+    enabled: Boolean(projectId),
+    queryFn: async (): Promise<StudioSlotsResponse> => {
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
+      if (!res.ok) throw new Error('Failed to load slots');
+      return res.json();
+    },
+  });
+
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
+
+  const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
+  const selectedSlot = useMemo(() => slots.find(s => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
+  const workingSlot = useMemo(() => slots.find(s => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
+
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
   
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
   const [projectSearch, setProjectSearch] = useState<string>('');
-  const [projectId, setProjectId] = useState<string>('');
   const [selectedFolder, setSelectedFolder] = useState<string>('');
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
   const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
   const [virtualFolders, setVirtualFolders] = useState<string[]>([]);
   
@@ -215,9 +244,50 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const [slotBase64Draft, setSlotBase64Draft] = useState<string>('');
   const [moveTargetFolder, setMoveTargetFolder] = useState<string>('');
 
+  const createProjectMutation = useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await fetch('/api/image-studio/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: id }),
+      });
+      const data = (await res.json()) as { projectId?: string; error?: string };
+      if (!res.ok) throw new Error(data?.error || 'Failed to create project');
+      return data.projectId!;
+    },
+    onSuccess: (createdId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
+      setProjectId(createdId);
+      toast('Project created.', { variant: 'success' });
+    },
+  }) as UseMutationResult<string, Error, string>;
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete project');
+      return id;
+    },
+    onSuccess: (deletedId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
+      if (projectId === deletedId) {
+        setProjectId('');
+      }
+      toast('Project deleted.', { variant: 'success' });
+    },
+  }) as UseMutationResult<string, Error, string>;
+
+  const handleDeleteProject = async (id: string) => {
+    if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;
+    await deleteProjectMutation.mutateAsync(id);
+  };
+
   const [tool, setTool] = useState<VectorToolMode>('select');
   const [maskShapes, setMaskShapes] = useState<VectorShape[]>([]);
   const [activeMaskId, setActiveMaskId] = useState<string | null>(null);
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [maskInvert, setMaskInvert] = useState<boolean>(false);
   const [maskFeather, setMaskFeather] = useState<number>(0);
   const [brushRadius, setBrushRadius] = useState<number>(8);
@@ -226,21 +296,20 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const [extractReviewOpen, setExtractReviewOpen] = useState<boolean>(false);
   const [extractDraftPrompt, setExtractDraftPrompt] = useState<string>('');
   const [extractPreviewUiOverrides, setExtractPreviewUiOverrides] = useState<Record<string, ParamUiControl>>({});
-  const [_extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
+  const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
   const [paramsState, setParamsState] = useState<Record<string, unknown> | null>(null);
   const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [paramUiOverrides, setParamUiOverrides] = useState<Record<string, ParamUiControl>>({});
   const [paramFlipMap, setParamFlipMap] = useState<Record<string, boolean>>({});
   const [previewMode, setPreviewMode] = useState<'image' | '3d'>('image');
   const captureRef = useRef<(() => string | null) | null>(null);
-  const [_maskGenLoading, _setMaskGenLoading] = useState<boolean>(false);
+  const [maskGenLoading, _setMaskGenLoading] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'>('ai-polygon');
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const openaiModelFallback = settingsStore.get('openai_model');
-
-
+  
   useEffect(() => {
     if (settingsLoaded) return;
     if (settingsStore.isLoading || heavySettings.isLoading) return;
@@ -280,72 +349,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     [pathname, router, searchParams]
   );
 
-  const projectsQuery = useQuery({
-    queryKey: ['image-studio', 'projects'],
-    queryFn: async (): Promise<string[]> => {
-      const res = await fetch('/api/image-studio/projects');
-      if (!res.ok) throw new Error('Failed to load projects');
-      const data = (await res.json()) as StudioProjectsResponse;
-      return Array.isArray(data.projects) ? data.projects : [];
-    },
-    staleTime: 10_000,
-  });
-
-  const createProjectMutation = useMutation({
-    mutationFn: async (id: string): Promise<string> => {
-      const res = await fetch('/api/image-studio/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: id }),
-      });
-      const data = (await res.json()) as { projectId?: string; error?: string };
-      if (!res.ok) throw new Error(data?.error || 'Failed to create project');
-      return data.projectId!;
-    },
-    onSuccess: (createdId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
-      setProjectId(createdId);
-      toast('Project created.', { variant: 'success' });
-    },
-  });
-
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (id: string): Promise<string> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete project');
-      return id;
-    },
-    onSuccess: (deletedId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['image-studio', 'projects'] });
-      if (projectId === deletedId) {
-        setProjectId('');
-      }
-      toast('Project deleted.', { variant: 'success' });
-    },
-  });
-
-  const handleDeleteProject = async (id: string) => {
-    if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;
-    await deleteProjectMutation.mutateAsync(id);
-  };
-
-  const slotsQuery = useQuery({
-    queryKey: ['image-studio', 'slots', projectId],
-    enabled: Boolean(projectId),
-    queryFn: async (): Promise<StudioSlotsResponse> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
-      if (!res.ok) throw new Error('Failed to load slots');
-      return res.json();
-    },
-  });
-
-  const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
-  const selectedSlot = useMemo(() => slots.find(s => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
-  const workingSlot = useMemo(() => slots.find(s => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
-
-  const treeKey = useMemo(() => projectId ? `${SLOT_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null, [projectId]);
+  // Line 348 fix:
+  const treeKey = useMemo(() => projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null, [projectId]);
   const treeSettingsRaw = treeKey ? heavyMap.get(treeKey) : undefined;
 
   useEffect(() => {
@@ -442,7 +447,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ files, folder }: { files: File[]; folder: string }) => {
+    mutationFn: async ({ files, folder: _folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
       files.forEach(f => formData.append('files', f));
       const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, {
@@ -459,11 +464,11 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   });
 
   const importFromDriveMutation = useMutation({
-    mutationFn: async ({ files, folder }: { files: ImageFileSelection[]; folder: string }) => {
+    mutationFn: async ({ files, folder: _folder }: { files: ImageFileSelection[]; folder: string }) => {
       const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files, folder }),
+        body: JSON.stringify({ files, folder: _folder }),
       });
       if (!res.ok) throw new Error('Import failed');
       return res.json();
@@ -557,7 +562,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     driveImportTargetId, setDriveImportTargetId, slotUpdateBusy, setSlotUpdateBusy, slotInlineEditOpen, setSlotInlineEditOpen,
     slotImageUrlDraft, setSlotImageUrlDraft, slotBase64Draft, setSlotBase64Draft, moveTargetFolder, setMoveTargetFolder,
     compositeAssetIds, setCompositeAssetIds, compositeAssets, compositeAssetOptions, previewMode, setPreviewMode, captureRef,
-    tool, setTool, maskShapes, setMaskShapes, activeMaskId, setActiveMaskId, maskInvert, setMaskInvert, maskFeather, setMaskFeather,
+    tool, setTool, maskShapes, setMaskShapes, activeMaskId, setActiveMaskId, selectedPointIndex, setSelectedPointIndex, maskInvert, setMaskInvert, maskFeather, setMaskFeather,
     brushRadius, setBrushRadius, maskGenLoading, maskGenMode, setMaskGenMode,
     promptText, setPromptText, paramsState, setParamsState, paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath,
     onParamChange: handleParamChange, onParamFlip: handleParamFlip, onParamUiControlChange: handleParamUiControlChange,

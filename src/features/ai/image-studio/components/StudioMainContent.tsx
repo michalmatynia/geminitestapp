@@ -48,6 +48,8 @@ export function StudioMainContent(): React.JSX.Element {
     setMaskShapes,
     activeMaskId,
     setActiveMaskId,
+    selectedPointIndex,
+    setSelectedPointIndex,
     brushRadius,
     promptText,
     setPromptText,
@@ -179,6 +181,7 @@ export function StudioMainContent(): React.JSX.Element {
                   tool={tool}
                   shapes={maskShapes}
                   activeShapeId={activeMaskId}
+                  selectedPointIndex={selectedPointIndex}
                   onSelectShape={setActiveMaskId}
                   onSelectPoint={setSelectedPointIndex}
                   onChange={setMaskShapes}

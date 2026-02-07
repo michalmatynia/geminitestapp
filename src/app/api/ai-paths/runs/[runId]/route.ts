@@ -6,6 +6,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { notFoundError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
+import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
@@ -44,6 +45,7 @@ async function DELETE_handler(
     throw notFoundError("Run not found", { runId });
   }
   assertAiPathRunAccess(access, run);
+  await removePathRunQueueEntries([runId]);
   const deleted = await repo.deleteRun(runId);
   if (!deleted) {
     throw notFoundError("Run not found", { runId });

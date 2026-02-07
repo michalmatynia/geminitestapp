@@ -2,17 +2,19 @@
 
 import { ChevronLeftIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { SessionProvider, useSession } from 'next-auth/react';
+import { SessionProvider } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import Menu from '@/features/admin/components/Menu';
 import { UserNav } from '@/features/admin/components/UserNav';
 import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { AuthProvider, useAuth } from '@/features/auth';
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
+import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { Session } from 'next-auth';
 
@@ -23,8 +25,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     isProgrammaticallyCollapsed,
     setIsProgrammaticallyCollapsed,
   } = useAdminLayout();
+  const { session, status } = useAuth();
   const pathname = usePathname();
-  const { data: session, status } = useSession();
   const didUserToggleRef = useRef(false);
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
@@ -110,7 +112,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 overflow-y-auto">
+          <QueryErrorBoundary>{children}</QueryErrorBoundary>
+        </main>
         <AiInsightsNotificationsDrawer />
       </div>
     </div>
@@ -129,13 +133,15 @@ export function AdminLayout({
   return (
     <SessionProvider session={session}>
       <QueryProvider>
-        <ToastProvider>
-          <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-            <NoteSettingsProvider>
-              <AdminLayoutContent>{children}</AdminLayoutContent>
-            </NoteSettingsProvider>
-          </AdminLayoutProvider>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+              <NoteSettingsProvider>
+                <AdminLayoutContent>{children}</AdminLayoutContent>
+              </NoteSettingsProvider>
+            </AdminLayoutProvider>
+          </ToastProvider>
+        </AuthProvider>
       </QueryProvider>
     </SessionProvider>
   );

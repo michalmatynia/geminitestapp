@@ -40,7 +40,7 @@ import {
   GraphExecutionCancelled,
   runsApi,
 } from '@/features/ai/ai-paths/lib';
-import { extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
+import { buildFallbackEntity, extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 
 import {
@@ -418,6 +418,102 @@ export function useAiPathsRuntime({
     [fetchProductById, fetchNoteById]
   );
 
+  const buildSimulationContext = useCallback(
+    (
+      entityId: string,
+      entityType: string,
+      entity?: Record<string, unknown> | null
+    ): Record<string, unknown> => {
+      const fallbackEntity: Record<string, unknown> = {
+        ...buildFallbackEntity(entityId),
+        id: entityId,
+        entityId,
+        entityType,
+        ...(entityType === 'product' ? { productId: entityId } : {}),
+      };
+      const scopedEntity = entity ?? fallbackEntity;
+      const imageUrls = extractImageUrls(scopedEntity);
+      return {
+        entityId,
+        entityType,
+        ...(entityType === 'product' ? { productId: entityId } : {}),
+        ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
+        entity: scopedEntity,
+        entityJson: scopedEntity,
+        ...(entityType === 'product' ? { product: scopedEntity } : {}),
+      };
+    },
+    []
+  );
+
+  const seedConnectedInputsFromOutputs = useCallback(
+    (
+      inputs: Record<string, RuntimePortValues>,
+      fromNodeId: string,
+      nodeOutputs: RuntimePortValues
+    ): Record<string, RuntimePortValues> => {
+      const nextInputs: Record<string, RuntimePortValues> = {
+        ...inputs,
+      };
+      sanitizedEdges.forEach((edge: Edge): void => {
+        if (edge.from !== fromNodeId || !edge.to) return;
+        const rawFromPort = edge.fromPort?.trim() || 'context';
+        const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
+        const toPort = edge.toPort?.trim() || fromPort;
+        const value = (nodeOutputs as Record<string, unknown>)[fromPort];
+        if (value === undefined) return;
+        nextInputs[edge.to] = {
+          ...(nextInputs[edge.to] ?? {}),
+          [toPort]: value,
+        };
+      });
+      return nextInputs;
+    },
+    [sanitizedEdges]
+  );
+
+  const seedSimulationRuntimeState = useCallback(
+    (simulationNode: AiNode, simulationContext: Record<string, unknown>): void => {
+      if (executionMode !== 'local') return;
+      const entityId =
+        typeof simulationContext.entityId === 'string' ? simulationContext.entityId : null;
+      const entityType =
+        typeof simulationContext.entityType === 'string' ? simulationContext.entityType : null;
+      const productId =
+        typeof simulationContext.productId === 'string' ? simulationContext.productId : null;
+      const simulationOutputs: RuntimePortValues = {
+        context: simulationContext,
+        ...(entityId ? { entityId } : {}),
+        ...(entityType ? { entityType } : {}),
+        ...(productId ? { productId } : {}),
+        ...(simulationContext.entityJson !== undefined
+          ? { entityJson: simulationContext.entityJson }
+          : {}),
+      };
+      setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const nextInputs = seedConnectedInputsFromOutputs(
+          prev.inputs,
+          simulationNode.id,
+          simulationOutputs
+        );
+        const next: RuntimeState = {
+          ...prev,
+          inputs: nextInputs,
+          outputs: {
+            ...prev.outputs,
+            [simulationNode.id]: {
+              ...((prev.outputs[simulationNode.id] ?? {}) as Record<string, unknown>),
+              ...simulationOutputs,
+            },
+          },
+        };
+        runtimeStateRef.current = next;
+        return next;
+      });
+    },
+    [executionMode, seedConnectedInputsFromOutputs, setRuntimeState]
+  );
+
   const buildActivePathConfig = useCallback(
     (updatedAt: string): PathConfig => ({
       id: activePathId ?? 'default',
@@ -471,6 +567,57 @@ export function useAiPathsRuntime({
     );
   };
 
+  const mergeRuntimeStateSnapshot = useCallback(
+    (
+      current: RuntimeState,
+      incoming: RuntimeState,
+      runId?: string | null,
+      runStartedAt?: string
+    ): RuntimeState => {
+      const nextInputs: Record<string, RuntimePortValues> = {
+        ...(current.inputs ?? {}),
+        ...(incoming.inputs ?? {}),
+      };
+      const nextOutputs: Record<string, RuntimePortValues> = {
+        ...(current.outputs ?? {}),
+        ...(incoming.outputs ?? {}),
+      };
+
+      const incomingHashes = incoming.hashes ?? undefined;
+      const hasIncomingHashes =
+        !!incomingHashes && Object.keys(incomingHashes).length > 0;
+      const mergedHashes =
+        hasIncomingHashes
+          ? { ...(current.hashes ?? {}), ...(incomingHashes ?? {}) }
+          : current.hashes;
+
+      const incomingHistory = incoming.history ?? undefined;
+      const hasIncomingHistory =
+        !!incomingHistory && Object.keys(incomingHistory).length > 0;
+      const mergedHistory =
+        hasIncomingHistory
+          ? { ...(current.history ?? {}), ...(incomingHistory ?? {}) }
+          : current.history;
+
+      const next: RuntimeState = {
+        ...current,
+        ...incoming,
+        inputs: nextInputs,
+        outputs: nextOutputs,
+        ...(runId ? { runId } : {}),
+        ...(runStartedAt ? { runStartedAt } : {}),
+      };
+      if (mergedHashes !== undefined) {
+        next.hashes = mergedHashes;
+      }
+      if (mergedHistory !== undefined) {
+        next.history = mergedHistory;
+      }
+      return next;
+    },
+    []
+  );
+
   const stopServerRunStream = useCallback((): void => {
     const source = serverRunStreamRef.current;
     if (source) {
@@ -509,11 +656,13 @@ export function useAiPathsRuntime({
     if (!run.runtimeState) return;
     const parsed = parseRuntimeState(run.runtimeState);
     const runStartedAt = resolveRunStartedAt(run, parsed) ?? undefined;
-    const nextState: RuntimeState = {
-      ...parsed,
-      ...(run.id ? { runId: run.id } : {}),
-      ...(runStartedAt ? { runStartedAt } : {}),
-    };
+    const nextState = mergeRuntimeStateSnapshot(
+      runtimeStateRef.current,
+      parsed,
+      run.id ?? undefined,
+      runStartedAt
+    );
+    runtimeStateRef.current = nextState;
     setRuntimeState(nextState);
     currentRunIdRef.current = run.id ?? null;
     if (runStartedAt) {
@@ -531,7 +680,15 @@ export function useAiPathsRuntime({
         },
       }));
     }
-  }, [activePathId, appendRuntimeEvent, buildActivePathConfig, setLastRunAt, setPathConfigs, setRuntimeState]);
+  }, [
+    activePathId,
+    appendRuntimeEvent,
+    buildActivePathConfig,
+    mergeRuntimeStateSnapshot,
+    setLastRunAt,
+    setPathConfigs,
+    setRuntimeState,
+  ]);
 
   const startServerRunStream = useCallback((runId: string): void => {
     if (!runId) return;
@@ -1512,24 +1669,30 @@ export function useAiPathsRuntime({
     const immediateInputs = simulationContext ?? contextOverride ?? null;
     if (executionMode === 'local') {
       setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const next: RuntimeState = {
-          ...prev,
-          runId,
-          runStartedAt: startedAt,
-          outputs: {
-            ...prev.outputs,
-            [triggerNode.id]: immediateOutputs,
-          },
-        };
-        if (immediateInputs) {
-          next.inputs = {
+        const seededInputs: Record<string, RuntimePortValues> = immediateInputs
+          ? {
             ...prev.inputs,
             [triggerNode.id]: {
               ...(prev.inputs[triggerNode.id] ?? {}),
               context: immediateInputs,
             },
-          };
-        }
+          }
+          : { ...prev.inputs };
+        const nextInputs = seedConnectedInputsFromOutputs(
+          seededInputs,
+          triggerNode.id,
+          immediateOutputs
+        );
+        const next: RuntimeState = {
+          ...prev,
+          runId,
+          runStartedAt: startedAt,
+          inputs: nextInputs,
+          outputs: {
+            ...prev.outputs,
+            [triggerNode.id]: immediateOutputs,
+          },
+        };
         runtimeStateRef.current = next;
         return next;
       });
@@ -1595,6 +1758,7 @@ export function useAiPathsRuntime({
     createRunId,
     executionMode,
     runLocalLoop,
+    seedConnectedInputsFromOutputs,
     updateRunStatus,
     finalizeLocalRunOutcome,
   ]);
@@ -2042,22 +2206,21 @@ export function useAiPathsRuntime({
         toast('Enter an Entity ID in the simulation node.', { variant: 'error' });
         return;
       }
-      const entity = await fetchEntityByType(entityType, entityId);
-      const imageUrls = entity ? extractImageUrls(entity) : [];
-      const simulationContext: Record<string, unknown> = {
-        entityId,
-        entityType,
-        ...(entityType === 'product' ? { productId: entityId } : {}),
-        ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
-        ...(entity
-          ? {
-            entity,
-            entityJson: entity,
-            ...(entityType === 'product' ? { product: entity } : {}),
-          }
-          : {}),
+      const initialContext = buildSimulationContext(entityId, entityType, null);
+      pendingSimulationContextRef.current = {
+        ...(pendingSimulationContextRef.current ?? {}),
+        ...initialContext,
       };
-      pendingSimulationContextRef.current = simulationContext;
+      seedSimulationRuntimeState(simulationNode, initialContext);
+
+      const enrichContext = async (): Promise<Record<string, unknown> | null> => {
+        const entity = await fetchEntityByType(entityType, entityId);
+        if (!entity) return null;
+        const enrichedContext = buildSimulationContext(entityId, entityType, entity);
+        seedSimulationRuntimeState(simulationNode, enrichedContext);
+        return enrichedContext;
+      };
+
       let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
       if (!triggerEvent) {
         const adjacency = new Map<string, Set<string>>();
@@ -2102,22 +2265,40 @@ export function useAiPathsRuntime({
         }
         if (!triggerNode) {
           toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
+          pendingSimulationContextRef.current = null;
           return;
         }
+        const enrichedContext = await enrichContext();
+        const simulationContext = enrichedContext ?? initialContext;
+        pendingSimulationContextRef.current = {
+          ...(pendingSimulationContextRef.current ?? {}),
+          ...simulationContext,
+        };
         eventName = triggerNode.config?.trigger?.event ?? eventName;
         await runGraphForTrigger(triggerNode, undefined, simulationContext);
-      }
-      dispatchTrigger(eventName, entityId, entityType);
-      if (!entity) {
-        toast(`No entity found for ${entityType} ${entityId}. Using fallback context.`, {
-          variant: 'info',
-        });
+        dispatchTrigger(eventName, entityId, entityType);
+        if (!enrichedContext) {
+          toast(`No entity found for ${entityType} ${entityId}. Using fallback context.`, {
+            variant: 'info',
+          });
+        }
+      } else {
+        void enrichContext();
+        dispatchTrigger(eventName, entityId, entityType);
       }
       toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {
         variant: 'success',
       });
     },
-    [sanitizedEdges, fetchEntityByType, normalizedNodes, runGraphForTrigger, toast]
+    [
+      buildSimulationContext,
+      sanitizedEdges,
+      seedSimulationRuntimeState,
+      fetchEntityByType,
+      normalizedNodes,
+      runGraphForTrigger,
+      toast,
+    ]
   );
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {

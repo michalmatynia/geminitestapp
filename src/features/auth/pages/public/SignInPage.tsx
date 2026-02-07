@@ -3,27 +3,16 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
-import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from '@/features/auth/utils/auth-user-pages';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Button, Input, Label, Alert } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-
 
 function SignInPageLoader(): React.JSX.Element {
-  const [isClient, setIsClient] = useState(false);
+  const { userPageSettings, isLoading } = useAuth();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const settingsQuery = useSettingsMap({ enabled: isClient });
-
-  if (!isClient || settingsQuery.isLoading || !settingsQuery.data) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
         <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg animate-pulse">
@@ -57,11 +46,7 @@ function SignInPageLoader(): React.JSX.Element {
     );
   }
 
-  const userPages = parseJsonSetting(
-    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
-    DEFAULT_AUTH_USER_PAGE_SETTINGS
-  );
-  const allowSocialLogin = Boolean(userPages.allowSocialLogin);
+  const allowSocialLogin = Boolean(userPageSettings.allowSocialLogin);
 
   return <SignInForm allowSocialLogin={allowSocialLogin} />;
 }

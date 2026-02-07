@@ -59,6 +59,7 @@ import { useAiPathsPresets } from './useAiPathsPresets';
 import { useAiPathsRunHistory } from './useAiPathsRunHistory';
 import { useAiPathsRuntime } from './useAiPathsRuntime';
 import {
+  buildPersistedRuntimeState,
   parseRuntimeState,
 } from '../AiPathsSettingsUtils';
 
@@ -399,6 +400,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     time: string;
     pathId?: string | null;
   } | null>(null);
+  const runtimePersistenceKeyRef = React.useRef<string>('');
 
   const lastGraphModelPayload = useMemo(() => {
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
@@ -1262,8 +1264,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     }
     const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
     setNodes((prev: AiNode[]): AiNode[] => {
+      let foundTarget = false;
       const next = prev.map((node: AiNode): AiNode => {
         if (node.id !== targetNodeId) return node;
+        foundTarget = true;
         const nextNode: AiNode = { ...node, ...patch };
         if (patch.config) {
           const currentConfig = node.config ?? {};
@@ -1288,6 +1292,20 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         }
         return nextNode;
       });
+      if (!foundTarget) {
+        const isFullNodePatch =
+          patch.id === targetNodeId &&
+          typeof patch.type === 'string' &&
+          typeof patch.title === 'string' &&
+          typeof patch.description === 'string' &&
+          Array.isArray(patch.inputs) &&
+          Array.isArray(patch.outputs) &&
+          typeof patch.position?.x === 'number' &&
+          typeof patch.position?.y === 'number';
+        if (isFullNodePatch) {
+          next.push(patch as AiNode);
+        }
+      }
       if (shouldSanitizeEdges) {
         setEdges((current: Edge[]): Edge[] => sanitizeEdges(next, current));
       }
@@ -1758,6 +1776,49 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       toast('Failed to copy wiring.', { variant: 'error' });
     }
   };
+
+  React.useEffect((): void | (() => void) => {
+    if (loading || !activePathId) return;
+
+    const runtimeSnapshot = buildPersistedRuntimeState(runtimeState, nodes);
+    const snapshotKey = `${activePathId}:${lastRunAt ?? ''}:${runtimeSnapshot}`;
+    if (snapshotKey === runtimePersistenceKeyRef.current) return;
+
+    const timeout = setTimeout((): void => {
+      runtimePersistenceKeyRef.current = snapshotKey;
+      const updatedAt = new Date().toISOString();
+      let configToPersist: PathConfig | null = null;
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const baseConfig = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        const nextConfig: PathConfig = {
+          ...baseConfig,
+          id: activePathId,
+          updatedAt,
+          runtimeState,
+          lastRunAt,
+        };
+        configToPersist = nextConfig;
+        return {
+          ...prev,
+          [activePathId]: nextConfig,
+        };
+      });
+      if (!configToPersist) return;
+      void persistPathSettings(paths, activePathId, configToPersist).catch((error: unknown): void => {
+        console.warn('[AI Paths] Failed to persist runtime state.', error);
+      });
+    }, 750);
+
+    return (): void => clearTimeout(timeout);
+  }, [
+    activePathId,
+    lastRunAt,
+    loading,
+    nodes,
+    paths,
+    persistPathSettings,
+    runtimeState,
+  ]);
 
   const autoSaveLabel = loading
     ? 'Loading AI Paths...'

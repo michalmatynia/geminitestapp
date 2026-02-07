@@ -6,7 +6,7 @@ import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
-async function GET_handler(req: NextRequest,
+async function GET_handler(_req: NextRequest,
   { params }: { params: Promise<{ snapshotId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
@@ -32,6 +32,6 @@ async function GET_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (_req, _ctx, params) => GET_handler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.snapshots.[snapshotId].GET' }
 );

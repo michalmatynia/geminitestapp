@@ -1804,8 +1804,8 @@ export const handleDatabase: NodeHandler = async ({
     const insertTemplate: string = queryConfig.queryTemplate?.trim() ?? '';
     const parsedTemplatePayload: unknown = insertTemplate
       ? parseJsonSafe(
-          renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''),
-        )
+        renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''),
+      )
       : null;
     const templatePayload: unknown =
       parsedTemplatePayload && typeof parsedTemplatePayload === 'object' && !Array.isArray(parsedTemplatePayload)

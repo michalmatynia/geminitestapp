@@ -56,7 +56,7 @@ import { useMemo } from 'react';
 
 import type { AiNode, DbQueryPreset, DbNodePreset, NodeConfig } from '@/features/ai/ai-paths/lib';
 
-import { useGraphState, useGraphActions } from '../../context/GraphContext';
+import { useGraphState } from '../../context/GraphContext';
 import { usePresetsState, usePresetsActions } from '../../context/PresetsContext';
 import { useRuntimeState, useRuntimeActions } from '../../context/RuntimeContext';
 import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
@@ -126,7 +126,6 @@ export function NodeConfigDialogMigrated({
 }: NodeConfigDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
   const { nodes, edges, isPathLocked, activePathId } = useGraphState();
-  const { updateNode } = useGraphActions();
 
   // Read state from SelectionContext
   const { selectedNodeId, configOpen } = useSelectionState();
@@ -200,10 +199,7 @@ export function NodeConfigDialogMigrated({
       setDbNodePresets={setDbNodePresets}
       // Callback props passed through
       updateSelectedNode={updateSelectedNode}
-      updateSelectedNodeConfig={(config: NodeConfig) => {
-        updateSelectedNodeConfig(config);
-        if (selectedNodeId) updateNode(selectedNodeId, { config });
-      }}
+      updateSelectedNodeConfig={(config: NodeConfig) => updateSelectedNodeConfig(config)}
       handleFetchParserSample={handleFetchParserSample}
       handleFetchUpdaterSample={handleFetchUpdaterSample}
       handleRunSimulation={handleRunSimulation}

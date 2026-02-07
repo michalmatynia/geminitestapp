@@ -51,7 +51,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
     },
   });
 
-  const runInsightMutation = useMutation({
+  const runInsightMutation = useMutation<AiInsightRecord | null, Error, void>({
     mutationFn: async () => {
       const res = await fetch('/api/analytics/insights', { method: 'POST' });
       const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
@@ -66,8 +66,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
         void insightsQuery.refetch();
       }
     },
-    onError: (error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to generate insight.', { variant: 'error' });
+    onError: (error: Error) => {
+      toast(error.message, { variant: 'error' });
     },
   });
 

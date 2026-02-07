@@ -52,7 +52,7 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
     },
   });
 
-  const runAnalyticsMutation = useMutation({
+  const runAnalyticsMutation = useMutation<AiInsightRecord | null, Error, void>({
     mutationFn: async () => {
       const res = await fetch('/api/analytics/insights', { method: 'POST' });
       const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
@@ -65,12 +65,12 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
       toast('AI analytics insight generated.', { variant: 'success' });
       void analyticsQuery.refetch();
     },
-    onError: (error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to generate analytics insight.', { variant: 'error' });
+    onError: (error: Error) => {
+      toast(error.message, { variant: 'error' });
     },
   });
 
-  const runLogsMutation = useMutation({
+  const runLogsMutation = useMutation<AiInsightRecord | null, Error, void>({
     mutationFn: async () => {
       const res = await fetch('/api/system/logs/insights', { method: 'POST' });
       const data = (await res.json().catch(() => null)) as { insight?: AiInsightRecord; error?: string } | null;
@@ -83,8 +83,8 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
       toast('AI log insight generated.', { variant: 'success' });
       void logsQuery.refetch();
     },
-    onError: (error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to generate log insight.', { variant: 'error' });
+    onError: (error: Error) => {
+      toast(error.message, { variant: 'error' });
     },
   });
 

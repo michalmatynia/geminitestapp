@@ -39,18 +39,27 @@ describe('Agent Runtime - Finalize', () => {
 
   it('should finalize run and call LLM reviews', async () => {
     const input = {
-      run: { id: 'run-1', prompt: 'Prompt' },
+      context: {
+        run: { id: 'run-1', prompt: 'Prompt' },
+        settings: {} as any,
+        preferences: {} as any,
+        memoryContext: [],
+        plannerModel: 'm1',
+        memorySummarizationModel: 'm2',
+        memoryKey: null,
+        resolvedModel: 'm1',
+        memoryValidationModel: null,
+        selfCheckModel: 'm1',
+        loopGuardModel: 'm1',
+        approvalGateModel: null,
+        browserContext: null,
+      } as any,
       planSteps: [],
       taskType: 'web_task' as const,
       overallOk: true,
       requiresHuman: false,
       lastError: null,
       summaryCheckpoint: 0,
-      settings: {} as any,
-      preferences: {} as any,
-      memoryContext: [],
-      plannerModel: 'm1',
-      memorySummarizationModel: 'm2',
     };
 
     (browserContextModule.getBrowserContextSummary as any).mockResolvedValue({ url: 'http://test.com' });

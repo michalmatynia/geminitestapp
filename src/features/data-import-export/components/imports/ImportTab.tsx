@@ -2,105 +2,61 @@
 
 import NextImage from 'next/image';
 
+import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import type {
   CatalogOption,
   ImportListItem,
-  ImportResponse,
   InventoryOption,
   Template,
-  ImportListStats,
 } from '@/features/data-import-export/types/imports';
 import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
-type ImportTabProps = {
-  inventories: InventoryOption[];
-  loadingInventories: boolean;
-  inventoryId: string;
-  setInventoryId: (value: string) => void;
-  handleLoadInventories: () => void | Promise<void>;
-  handleClearInventory: () => void | Promise<void>;
-  limit: string;
-  setLimit: (value: string) => void;
-  catalogs: CatalogOption[];
-  loadingCatalogs: boolean;
-  catalogId: string;
-  setCatalogId: (value: string) => void;
-  importTemplateId: string;
-  setImportTemplateId: (value: string) => void;
-  importTemplates: Template[];
-  loadingImportTemplates: boolean;
-  imageMode: 'links' | 'download';
-  setImageMode: (value: 'links' | 'download') => void;
-  allowDuplicateSku: boolean;
-  setAllowDuplicateSku: (value: boolean) => void;
-  importing: boolean;
-  handleImport: () => void | Promise<void>;
-  importNameSearch: string;
-  setImportNameSearch: (value: string) => void;
-  importSkuSearch: string;
-  setImportSkuSearch: (value: string) => void;
-  importListPage: number;
-  setImportListPage: (value: number) => void;
-  importListPageSize: number;
-  setImportListPageSize: (value: number) => void;
-  uniqueOnly: boolean;
-  setUniqueOnly: (value: boolean) => void;
-  handleLoadImportList: () => void | Promise<void>;
-  loadingImportList: boolean;
-  importListStats: ImportListStats | null;
-  importList: ImportListItem[];
-  selectedImportIds: Set<string>;
-  setSelectedImportIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  selectedImportCount: number;
-  allVisibleSelected: boolean;
-  isSomeVisibleSelected: boolean;
-  lastResult: ImportResponse | null;
-};
+export function ImportTab(): React.JSX.Element {
+  const {
+    inventories,
+    isFetchingInventories: loadingInventories,
+    inventoryId,
+    setInventoryId,
+    handleLoadInventories,
+    handleClearInventory,
+    limit,
+    setLimit,
+    catalogsData: catalogs,
+    loadingCatalogs,
+    catalogId,
+    setCatalogId,
+    importTemplateId,
+    setImportTemplateId,
+    importTemplates,
+    imageMode,
+    setImageMode,
+    allowDuplicateSku,
+    setAllowDuplicateSku,
+    importing,
+    handleImport,
+    importNameSearch,
+    setImportNameSearch,
+    importSkuSearch,
+    setImportSkuSearch,
+    importListPage,
+    setImportListPage,
+    importListPageSize,
+    setImportListPageSize,
+    uniqueOnly,
+    setUniqueOnly,
+    handleLoadImportList,
+    loadingImportList,
+    importListStats,
+    importList,
+    selectedImportIds,
+    setSelectedImportIds,
+    lastResult,
+  } = useImportExport();
 
-export function ImportTab({
-  inventories,
-  loadingInventories,
-  inventoryId,
-  setInventoryId,
-  handleLoadInventories,
-  handleClearInventory,
-  limit,
-  setLimit,
-  catalogs,
-  loadingCatalogs,
-  catalogId,
-  setCatalogId,
-  importTemplateId,
-  setImportTemplateId,
-  importTemplates,
-  loadingImportTemplates,
-  imageMode,
-  setImageMode,
-  allowDuplicateSku,
-  setAllowDuplicateSku,
-  importing,
-  handleImport,
-  importNameSearch,
-  setImportNameSearch,
-  importSkuSearch,
-  setImportSkuSearch,
-  importListPage,
-  setImportListPage,
-  importListPageSize,
-  setImportListPageSize,
-  uniqueOnly,
-  setUniqueOnly,
-  handleLoadImportList,
-  loadingImportList,
-  importListStats,
-  importList,
-  selectedImportIds,
-  setSelectedImportIds,
-  selectedImportCount,
-  allVisibleSelected,
-  isSomeVisibleSelected,
-  lastResult,
-}: ImportTabProps): React.JSX.Element {
+  const selectedImportCount = selectedImportIds.size;
+  const allVisibleSelected = importList.length > 0 && importList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
+  const isSomeVisibleSelected = importList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
+
   return (
     <div className="space-y-4">
       <SectionPanel variant="subtle" className="p-4">

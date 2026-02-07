@@ -1,60 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import React from 'react';
 
-import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
-import { logClientError } from '@/features/observability';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Checkbox, PanelHeader, useToast, SectionPanel } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
+import { Button, Checkbox, PanelHeader, SectionPanel } from '@/shared/ui';
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
-  const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
-  const { toast } = useToast();
-  
-  const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
-  const initialEnabled = useMemo<Set<AppEmbedId>>(() => {
-    const stored = parseJsonSetting<AppEmbedId[]>(
-      enabledEmbedsRaw,
-      []
-    );
-    return new Set(stored);
-  }, [enabledEmbedsRaw]);
+  return (
+    <AppEmbedsProvider>
+      <AppEmbedsPanelContent showHeader={showHeader} />
+    </AppEmbedsProvider>
+  );
+}
 
-  const [userEnabled, setUserEnabled] = useState<Set<AppEmbedId> | null>(null);
-  const enabled: Set<AppEmbedId> = userEnabled ?? initialEnabled;
+function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.ReactNode {
+  const { enabled, toggleOption, save, isLoading, isSaving } = useAppEmbeds();
 
-  const toggleOption = (id: AppEmbedId, checked: boolean): void => {
-    setUserEnabled((prev: Set<AppEmbedId> | null) => {
-      const current = prev ?? initialEnabled;
-      const next = new Set(current);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  };
-
-  const handleSave = async (): Promise<void> => {
-    try {
-      await updateSetting.mutateAsync({
-        key: APP_EMBED_SETTING_KEY,
-        value: serializeSetting(Array.from(enabled)),
-      });
-      setUserEnabled(null); // Reset to follow server data after save
-      toast('App embeds saved.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'AppEmbedsPanel', action: 'saveSettings' } });
-      toast('Failed to save app embeds.', { variant: 'error' });
-    }
-  };
-
-  if (settingsStore.isLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-xs text-gray-500">
         Loading app embeds...
@@ -108,11 +72,11 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
       </div>
       <div className="border-t border-border px-4 py-3">
         <Button
-          onClick={() => void handleSave()}
-          disabled={updateSetting.isPending}
+          onClick={() => void save()}
+          disabled={isSaving}
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
-          {updateSetting.isPending ? 'Saving...' : 'Save'}
+          {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </div>

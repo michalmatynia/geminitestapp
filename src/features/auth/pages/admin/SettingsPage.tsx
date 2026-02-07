@@ -2,36 +2,50 @@
 
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useState } from 'react';
 
-
 import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import {
   AUTH_SETTINGS_KEYS,
-  DEFAULT_AUTH_ROLES,
-  mergeDefaultRoles,
   type AuthRole,
 } from '@/features/auth/utils/auth-management';
 import {
-  DEFAULT_AUTH_SECURITY_POLICY,
-  normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, SectionHeader, SectionPanel, Checkbox } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+  SectionHeader,
+  SectionPanel,
+  Checkbox,
+} from '@/shared/ui';
 
 export default function AuthSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { data: session } = useSession();
-  const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
-  const [defaultRole, setDefaultRole] = useState<string>('viewer');
+  const {
+    session,
+    roles: contextRoles,
+    defaultRole: contextDefaultRole,
+    securityPolicy: contextSecurityPolicy,
+    isLoading: authLoading,
+    updateSetting,
+    refetchSettings,
+  } = useAuth();
+
+  const [roles, setRoles] = useState<AuthRole[]>(contextRoles);
+  const [defaultRole, setDefaultRole] = useState<string>(contextDefaultRole);
   const [securityPolicy, setSecurityPolicy] = useState<AuthSecurityPolicy>(
-    DEFAULT_AUTH_SECURITY_POLICY
+    contextSecurityPolicy
   );
   const [defaultDirty, setDefaultDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
@@ -41,23 +55,15 @@ export default function AuthSettingsPage(): React.JSX.Element {
   const [mfaToken, setMfaToken] = useState('');
   const [mfaDisableCode, setMfaDisableCode] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const settingsQuery = useSettingsMap();
-  const updateDefaultRole = useUpdateSetting();
-  const updateSecurityPolicy = useUpdateSetting();
+
   const mfaSetupMutation = useMutation({ mutationFn: setupMfa });
   const mfaVerifyMutation = useMutation({ mutationFn: verifyMfa });
   const mfaDisableMutation = useMutation({ mutationFn: disableMfa });
   const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
 
-  useEffect(() => {
-    if (!settingsQuery.error) return;
-    logClientError(settingsQuery.error, { context: { source: 'AuthSettingsPage', action: 'loadSettings' } });
-    toast('Failed to load auth settings.', { variant: 'error' });
-  }, [settingsQuery.error, toast]);
-
   const roleOptions = useMemo(
     () =>
-      mergeDefaultRoles(roles).map((role: AuthRole) => ({
+      roles.map((role: AuthRole) => ({
         id: role.id,
         name: role.name,
       })),
@@ -65,31 +71,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
   );
 
   useEffect(() => {
-    if (!settingsQuery.data) return;
-    const storedRoles = mergeDefaultRoles(
-      parseJsonSetting<AuthRole[]>(
-        settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
-        DEFAULT_AUTH_ROLES
-      )
-    );
-    setRoles(storedRoles);
-    const storedDefault = settingsQuery.data.get(AUTH_SETTINGS_KEYS.defaultRole);
-    const nextDefault =
-      storedDefault && storedRoles.some((role: AuthRole) => role.id === storedDefault)
-        ? storedDefault
-        : storedRoles.find((role: AuthRole) => role.id === 'viewer')?.id ??
-          storedRoles[0]?.id ??
-          'viewer';
-    setDefaultRole(nextDefault);
+    setRoles(contextRoles);
+    setDefaultRole(contextDefaultRole);
+    setSecurityPolicy(contextSecurityPolicy);
     setDefaultDirty(false);
-
-    const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
-    const parsedPolicy = storedPolicyRaw
-      ? normalizeAuthSecurityPolicy(parseJsonSetting<Partial<AuthSecurityPolicy>>(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY))
-      : DEFAULT_AUTH_SECURITY_POLICY;
-    setSecurityPolicy(parsedPolicy);
     setSecurityDirty(false);
-  }, [settingsQuery.data]);
+  }, [contextRoles, contextDefaultRole, contextSecurityPolicy]);
 
   useEffect(() => {
     if (!userSecurityQuery.data) return;
@@ -98,11 +85,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
 
   const saveDefaultRole = async (): Promise<void> => {
     try {
-      await updateDefaultRole.mutateAsync({
+      await updateSetting.mutateAsync({
         key: AUTH_SETTINGS_KEYS.defaultRole,
         value: defaultRole,
       });
       setDefaultDirty(false);
+      await refetchSettings();
       toast('Default role saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveDefaultRole' } });
@@ -115,11 +103,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
 
   const saveSecurityPolicy = async (): Promise<void> => {
     try {
-      await updateSecurityPolicy.mutateAsync({
+      await updateSetting.mutateAsync({
         key: AUTH_SETTINGS_KEYS.securityPolicy,
         value: JSON.stringify(securityPolicy),
       });
       setSecurityDirty(false);
+      await refetchSettings();
       toast('Security policy saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveSecurityPolicy' } });
@@ -223,7 +212,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
               setDefaultRole(value);
               setDefaultDirty(true);
             }}
-            disabled={settingsQuery.isPending}
+            disabled={authLoading}
           >
             <SelectTrigger className="w-64 bg-gray-900 border text-white">
               <SelectValue placeholder="Select default role" />
@@ -238,9 +227,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
           </Select>
           <Button
             onClick={() => void saveDefaultRole()}
-            disabled={!defaultDirty || updateDefaultRole.isPending}
+            disabled={!defaultDirty || updateSetting.isPending}
           >
-            {updateDefaultRole.isPending ? 'Saving...' : 'Save'}
+            {updateSetting.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </div>
@@ -274,7 +263,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
             <Label className="text-xs text-gray-300">Require strong password</Label>
             <div className="flex items-center gap-3">
               <Checkbox
-                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked: boolean | 'indeterminate') => {
+                checked={securityPolicy.requireStrongPassword}
+                onCheckedChange={(checked: boolean | 'indeterminate') => {
                   setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                     ...prev,
                     requireStrongPassword: Boolean(checked),
@@ -298,21 +288,27 @@ export default function AuthSettingsPage(): React.JSX.Element {
                   ['requireNumber', 'Number'],
                   ['requireSymbol', 'Symbol'],
                 ] as const
-              ).map(([key, label]: readonly ['requireUppercase' | 'requireLowercase' | 'requireNumber' | 'requireSymbol', string]) => (
-                <Label key={key} className="flex items-center gap-2">
-                  <Checkbox
-                    checked={securityPolicy[key]} onCheckedChange={(checked: boolean | 'indeterminate') => {
-                      setSecurityPolicy((prev: AuthSecurityPolicy) => ({
-                        ...prev,
-                        [key]: Boolean(checked),
-                      }));
-                      setSecurityDirty(true);
-                    }}
-                    className="h-4 w-4 rounded border bg-gray-900"
-                  />
-                  {label}
-                </Label>
-              ))}
+              ).map(
+                ([key, label]: readonly [
+                  'requireUppercase' | 'requireLowercase' | 'requireNumber' | 'requireSymbol',
+                  string,
+                ]) => (
+                  <Label key={key} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={securityPolicy[key]}
+                      onCheckedChange={(checked: boolean | 'indeterminate') => {
+                        setSecurityPolicy((prev: AuthSecurityPolicy) => ({
+                          ...prev,
+                          [key]: Boolean(checked),
+                        }));
+                        setSecurityDirty(true);
+                      }}
+                      className="h-4 w-4 rounded border bg-gray-900"
+                    />
+                    {label}
+                  </Label>
+                )
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -421,9 +417,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
         <div className="flex justify-end">
           <Button
             onClick={() => void saveSecurityPolicy()}
-            disabled={!securityDirty || updateSecurityPolicy.isPending}
+            disabled={!securityDirty || updateSetting.isPending}
           >
-            {updateSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
+            {updateSetting.isPending ? 'Saving...' : 'Save security policy'}
           </Button>
         </div>
       </div>
@@ -435,9 +431,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
             Enable MFA for your account and store recovery codes securely.
           </p>
         </div>
-        <div className="text-xs text-gray-400">
-          Status: {mfaEnabled ? 'Enabled' : 'Disabled'}
-        </div>
+        <div className="text-xs text-gray-400">Status: {mfaEnabled ? 'Enabled' : 'Disabled'}</div>
         {!mfaEnabled ? (
           <div className="space-y-3">
             <Button onClick={() => void handleMfaSetup()} disabled={mfaSetupMutation.isPending}>
@@ -454,7 +448,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 <Label className="text-xs text-gray-300">Enter MFA code</Label>
                 <Input
                   value={mfaToken}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMfaToken(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setMfaToken(event.target.value)
+                  }
                   className="bg-gray-900 border text-white"
                   placeholder="123456"
                 />
@@ -479,7 +475,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
             <Label className="text-xs text-gray-300">Disable MFA (enter code)</Label>
             <Input
               value={mfaDisableCode}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMfaDisableCode(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setMfaDisableCode(event.target.value)
+              }
               className="bg-gray-900 border text-white"
               placeholder="MFA code or recovery code"
             />

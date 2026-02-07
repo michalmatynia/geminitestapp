@@ -222,9 +222,10 @@ export function NodeConfigDialog({
       toast('This path is locked. Unlock it to save node settings.', { variant: 'info' });
       return;
     }
-    const nextNodes = nodes.map((node: AiNode): AiNode =>
-      node.id === draftNode.id ? draftNode : node
-    );
+    const hasDraftNode = nodes.some((node: AiNode): boolean => node.id === draftNode.id);
+    const nextNodes = hasDraftNode
+      ? nodes.map((node: AiNode): AiNode => (node.id === draftNode.id ? draftNode : node))
+      : [...nodes, draftNode];
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
     void savePathConfig?.({
       silent: true,

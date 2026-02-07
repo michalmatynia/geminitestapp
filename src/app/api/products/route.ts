@@ -51,7 +51,9 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
       console.log("[timing] products.GET", { provider, ...timings });
     }
 
-    const response = NextResponse.json(products);
+    const response = NextResponse.json(products, {
+      headers: { "Cache-Control": "no-store" },
+    });
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {

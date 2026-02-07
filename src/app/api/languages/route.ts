@@ -100,7 +100,7 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  * GET /api/languages
  * Fetches available languages (seeds defaults if empty).
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
     if (!process.env.MONGODB_URI) {

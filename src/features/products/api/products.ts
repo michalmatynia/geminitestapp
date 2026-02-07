@@ -27,7 +27,7 @@ export async function getProducts(filters: {
   if (filters.searchLanguage) query.append('searchLanguage', filters.searchLanguage);
 
   try {
-    const res = await fetch(`/api/products?${query.toString()}`);
+    const res = await fetch(`/api/products?${query.toString()}`, { cache: 'no-store' });
     if (!res.ok) {
       let payload: { error?: string; errorId?: string } | null = null;
       try {
@@ -74,7 +74,7 @@ export async function countProducts(filters: {
   if (filters.searchLanguage) query.append('searchLanguage', filters.searchLanguage);
 
   try {
-    const res = await fetch(`/api/products/count?${query.toString()}`);
+    const res = await fetch(`/api/products/count?${query.toString()}`, { cache: 'no-store' });
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
       logClientError(new Error('Failed to fetch product count'), {

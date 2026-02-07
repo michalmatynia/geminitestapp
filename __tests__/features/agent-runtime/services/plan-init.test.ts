@@ -24,15 +24,22 @@ vi.mock('@/features/ai/agent-runtime/planning/utils', () => ({
 
 describe('Agent Runtime - Plan Initialization', () => {
   const mockInput = {
-    run: { id: 'run-1', prompt: 'Prompt' },
-    checkpoint: null,
-    memoryContext: [],
-    browserContext: null,
-    settings: { maxSteps: 10, maxStepAttempts: 3 } as any,
-    preferences: {},
-    plannerModel: 'm1',
-    loopGuardModel: 'm2',
-    memorySummarizationModel: 'm3',
+    context: {
+      run: { id: 'run-1', prompt: 'Prompt' },
+      memoryContext: [],
+      browserContext: null,
+      settings: { maxSteps: 10, maxStepAttempts: 3 } as any,
+      preferences: {},
+      plannerModel: 'm1',
+      loopGuardModel: 'm2',
+      memorySummarizationModel: 'm3',
+      memoryKey: null,
+      resolvedModel: 'm1',
+      memoryValidationModel: null,
+      selfCheckModel: 'm1',
+      approvalGateModel: null,
+    } as any,
+    checkpoint: null as any,
   };
 
   beforeEach(() => {

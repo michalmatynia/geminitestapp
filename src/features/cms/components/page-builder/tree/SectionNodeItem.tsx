@@ -7,6 +7,8 @@ import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, 
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { readBlockDragData, readSectionDragData, setSectionDragData } from '../../../utils/page-builder-dnd';
 import { BlockPicker } from '../BlockPicker';
 import { getSectionDefinition } from '../section-registry';
@@ -26,31 +28,19 @@ import type { BlockInstance, PageZone } from '../../../types/page-builder';
 export function SectionNodeItem({
   section,
   sectionIndex,
-  selectedNodeId,
-  onSelect,
-  onAddBlock,
-  onDropBlock,
-  onDropBlockToSection,
-  onAddBlockToColumn,
-  onDropBlockToColumn,
-  onAddGridRow,
-  onRemoveGridRow,
-  onAddColumnToRow,
-  onRemoveColumnFromRow,
-  onAddElementToNestedBlock,
-  onAddElementToSectionBlock,
-  onDropSection,
-  onToggleSectionVisibility,
-  onRemoveSection,
-  onConvertSectionToBlock,
-  expandedIds,
-  onToggleExpand,
-  onDropBlockToRow,
-  onDropSectionToColumn,
-  onDropBlockToSlideshowFrame,
-  onDropSectionToSlideshowFrame,
-  onRemoveBlock,
 }: SectionNodeItemProps): React.ReactNode {
+  const { state: pbState } = usePageBuilder();
+  const {
+    expandedIds,
+    selectNode,
+    toggleExpand,
+    blockActions,
+    sectionActions,
+    gridActions,
+  } = useTreeActions();
+
+  const selectedNodeId = pbState.selectedNodeId;
+
   // Drag state from context
   const drag = useDragStateExtract();
   const { endBlockDrag, startSectionDrag, endSectionDrag } = drag.actions;
@@ -92,13 +82,14 @@ export function SectionNodeItem({
   const [sectionDropPosition, setSectionDropPosition] = useState<'above' | 'below' | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings['isHidden']);
+
   const sectionMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
         id: 'toggle-visibility',
         label: isHidden ? 'Show section' : 'Hide section',
         icon: isHidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />,
-        onSelect: () => onToggleSectionVisibility(section.id, !isHidden),
+        onSelect: () => sectionActions.toggleVisibility(section.id, !isHidden),
       },
       { id: 'separator-1', separator: true },
       {
@@ -106,16 +97,18 @@ export function SectionNodeItem({
         label: 'Delete section',
         icon: <Trash2 className="size-3.5" />,
         tone: 'danger',
-        onSelect: () => onRemoveSection(section.id),
+        onSelect: () => sectionActions.remove(section.id),
       },
     ],
-    [isHidden, onToggleSectionVisibility, onRemoveSection, section.id]
+    [isHidden, sectionActions, section.id]
   );
+
   const gridRows = section.blocks.filter((b: BlockInstance) => b.type === 'Row');
   const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === 'Column');
   const gridLayerEntries = section.blocks.flatMap((block: BlockInstance, index: number) =>
     block.type !== 'Row' && block.type !== 'Column' ? [{ block, index }] : []
   );
+
   const resolveSectionDropPosition = (clientY: number, rect: DOMRect): 'above' | 'below' | null => {
     const position = resolveVerticalDropPosition(clientY, rect, { thresholdRatio: 0.3, thresholdPx: 8 });
     if (position === 'before') return 'above';
@@ -128,11 +121,11 @@ export function SectionNodeItem({
       <TreeContextMenu items={sectionMenuItems}>
         <TreeRow
           tone="none"
-          onClick={() => onSelect(section.id)}
+          onClick={() => selectNode(section.id)}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onSelect(section.id);
+              selectNode(section.id);
             }
           }}
           onDragOver={(e: React.DragEvent) => {
@@ -194,28 +187,28 @@ export function SectionNodeItem({
             const dragSectionType = sectionDrag.type;
             if (dragSectionId && dragSectionId !== section.id) {
               if (dragSectionType === 'TextElement' && targetAllowsTextElement) {
-                onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+                sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
               } else if (dragSectionType === 'TextAtom' && targetAllowsTextAtom) {
-                onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+                sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
               } else if (dragSectionType === 'ImageElement' && targetAllowsImageElement) {
-                onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+                sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
               } else if (dragSectionType === 'ButtonElement' && targetAllowsButton) {
-                onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+                sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
               } else if (section.type === 'Grid') {
                 if (CONVERTIBLE_SECTION_TYPES.includes(dragSectionType ?? '') && !dropPosition) {
                   const firstColumn =
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === 'Column') ??
                   gridColumns.find((b: BlockInstance) => b.type === 'Column');
                   if (firstColumn) {
-                    onDropSectionToColumn(dragSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
+                    sectionActions.dropToColumn(dragSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
                   }
                 } else {
                   const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                  onDropSection(dragSectionId, targetIndex);
+                  sectionActions.dropInZone(dragSectionId, section.zone as PageZone, targetIndex);
                 }
               } else {
                 const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                onDropSection(dragSectionId, targetIndex);
+                sectionActions.dropInZone(dragSectionId, section.zone as PageZone, targetIndex);
               }
               endSectionDrag();
             } else if (draggedBlockId && !isFileSection) {
@@ -234,7 +227,7 @@ export function SectionNodeItem({
               const isImageElement = blockType === 'ImageElement';
               if (section.type === 'Grid') {
                 if (isImageElement) {
-                  onDropBlockToSection(
+                  blockActions.dropToSection(
                     draggedBlockId,
                     fromSection,
                     fromColumn || undefined,
@@ -247,7 +240,7 @@ export function SectionNodeItem({
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === 'Column') ??
                   gridColumns.find((b: BlockInstance) => b.type === 'Column');
                   if (firstColumn) {
-                    onDropBlockToColumn(
+                    blockActions.dropToColumn(
                       draggedBlockId,
                       fromSection,
                       fromColumn || undefined,
@@ -259,7 +252,7 @@ export function SectionNodeItem({
                   }
                 }
               } else if (fromColumn || fromParent) {
-                onDropBlockToSection(
+                blockActions.dropToSection(
                   draggedBlockId,
                   fromSection,
                   fromColumn || undefined,
@@ -268,7 +261,7 @@ export function SectionNodeItem({
                   fromParent || undefined
                 );
               } else {
-                onDropBlock(draggedBlockId, fromSection, section.id, section.blocks.length);
+                blockActions.drop(draggedBlockId, fromSection, section.id, section.blocks.length);
               }
               endBlockDrag();
             }
@@ -322,7 +315,7 @@ export function SectionNodeItem({
             isOpen={isExpanded}
             hasChildren={canToggle}
             ariaLabel={isExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
-            onToggle={canToggle ? (): void => onToggleExpand(section.id) : undefined}
+            onToggle={canToggle ? (): void => toggleExpand(section.id) : undefined}
             placeholderClassName="block size-3.5 shrink-0 pointer-events-none"
           />
           <Icon className="size-4 shrink-0 pointer-events-none" />
@@ -344,7 +337,7 @@ export function SectionNodeItem({
             <TreeActionButton
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                onToggleSectionVisibility(section.id, !isHidden);
+                sectionActions.toggleVisibility(section.id, !isHidden);
               }}
               onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
               className="pointer-events-auto"
@@ -356,7 +349,7 @@ export function SectionNodeItem({
               tone="danger"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                onRemoveSection(section.id);
+                sectionActions.remove(section.id);
               }}
               onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
               className="pointer-events-auto"
@@ -378,20 +371,7 @@ export function SectionNodeItem({
                 row={row}
                 rowIndex={rowIndex}
                 sectionId={section.id}
-                selectedNodeId={selectedNodeId}
-                onSelect={onSelect}
                 rowCount={gridRows.length}
-                onRemoveGridRow={onRemoveGridRow}
-                onAddColumnToRow={onAddColumnToRow}
-                onRemoveColumnFromRow={onRemoveColumnFromRow}
-                onAddBlockToColumn={onAddBlockToColumn}
-                onDropBlockToColumn={onDropBlockToColumn}
-                onDropBlockToRow={onDropBlockToRow}
-                onAddElementToNestedBlock={onAddElementToNestedBlock}
-                onRemoveBlock={onRemoveBlock}
-                expandedIds={expandedIds}
-                onToggleExpand={onToggleExpand}
-                onDropSectionToColumn={onDropSectionToColumn}
               />
             ))
           ) : gridColumns.length > 0 ? (
@@ -401,17 +381,7 @@ export function SectionNodeItem({
                 column={column}
                 columnIndex={colIndex}
                 sectionId={section.id}
-                selectedNodeId={selectedNodeId}
-                onSelect={onSelect}
-                onAddBlockToColumn={onAddBlockToColumn}
-                onDropBlockToColumn={onDropBlockToColumn}
-                onAddElementToNestedBlock={onAddElementToNestedBlock}
-                onRemoveColumnFromRow={onRemoveColumnFromRow}
-                onRemoveBlock={onRemoveBlock}
                 rowColumnCount={gridColumns.length}
-                expandedIds={expandedIds}
-                onToggleExpand={onToggleExpand}
-                onDropSectionToColumn={onDropSectionToColumn}
               />
             ))
           ) : (
@@ -428,12 +398,6 @@ export function SectionNodeItem({
                   block={block}
                   index={index}
                   sectionId={section.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onDropBlock={onDropBlock}
-                  onDropBlockToSection={onDropBlockToSection}
-                  onDropBlockToColumn={onDropBlockToColumn}
-                  onRemoveBlock={onRemoveBlock}
                 />
               ))}
             </div>
@@ -442,7 +406,7 @@ export function SectionNodeItem({
             type="button"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              onAddGridRow(section.id);
+              gridActions.addRow(section.id);
             }}
             className="mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:bg-muted/40 hover:text-gray-200"
           >
@@ -489,9 +453,9 @@ export function SectionNodeItem({
             const fromColumn = blockDrag.fromColumnId;
             const fromParent = blockDrag.fromParentBlockId;
             if (fromColumn || fromParent) {
-              onDropBlockToSection(dragId, fromSection, fromColumn || undefined, section.id, section.blocks.length, fromParent || undefined);
+              blockActions.dropToSection(dragId, fromSection, fromColumn || undefined, section.id, section.blocks.length, fromParent || undefined);
             } else {
-              onDropBlock(dragId, fromSection, section.id, section.blocks.length);
+              blockActions.drop(dragId, fromSection, section.id, section.blocks.length);
             }
             endBlockDrag();
           }}
@@ -504,15 +468,6 @@ export function SectionNodeItem({
                   frame={block}
                   index={index}
                   sectionId={section.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onAddElementToSectionBlock={onAddElementToSectionBlock}
-                  onDropBlock={onDropBlock}
-                  onDropBlockToSlideshowFrame={onDropBlockToSlideshowFrame}
-                  onDropSectionToSlideshowFrame={onDropSectionToSlideshowFrame}
-                  onRemoveBlock={onRemoveBlock}
-                  expandedIds={expandedIds}
-                  onToggleExpand={onToggleExpand}
                 />
               ) : (
                 <BlockNodeItem
@@ -520,11 +475,6 @@ export function SectionNodeItem({
                   block={block}
                   index={index}
                   sectionId={section.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onDropBlock={onDropBlock}
-                  onDropBlockToSection={onDropBlockToSection}
-                  onRemoveBlock={onRemoveBlock}
                 />
               )
             ))
@@ -534,7 +484,7 @@ export function SectionNodeItem({
           <div className="mt-1">
             <BlockPicker
               sectionType={section.type}
-              onSelect={(blockType: string) => onAddBlock(section.id, blockType)}
+              onSelect={(blockType: string) => blockActions.add(section.id, blockType)}
             />
           </div>
         </div>

@@ -7,6 +7,8 @@ import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, 
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
 import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
@@ -20,15 +22,18 @@ export function SectionBlockNodeItem({
   index,
   sectionId,
   columnId,
-  selectedNodeId,
-  onSelect,
-  onAddElementToNestedBlock,
-  onDropBlockToColumn,
-  expandedIds,
-  onToggleExpand,
-  onDropSectionToColumn,
-  onRemoveBlock,
 }: SectionBlockNodeItemProps): React.ReactNode {
+  const { state: pbState } = usePageBuilder();
+  const {
+    expandedIds,
+    selectNode,
+    toggleExpand,
+    blockActions,
+    sectionActions,
+  } = useTreeActions();
+
+  const selectedNodeId = pbState.selectedNodeId;
+
   // Drag state from context
   const drag = useDragStateExtract();
   const { startBlockDrag, endBlockDrag, endSectionDrag } = drag.actions;
@@ -49,6 +54,7 @@ export function SectionBlockNodeItem({
   const isDragging = draggedBlockId === block.id;
   const isTextAtom = block.type === 'TextAtom';
   const blockLabel = resolveBlockLabel(block, block.type);
+
   const sectionBlockMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
@@ -56,13 +62,12 @@ export function SectionBlockNodeItem({
         label: 'Remove block',
         icon: <Trash2 className="size-3.5" />,
         tone: 'danger',
-        disabled: !onRemoveBlock,
         onSelect: (): void => {
-          if (onRemoveBlock) onRemoveBlock(sectionId, block.id, columnId);
+          blockActions.remove(sectionId, block.id, columnId);
         },
       },
     ],
-    [onRemoveBlock, sectionId, block.id, columnId]
+    [blockActions, sectionId, block.id, columnId]
   );
 
   return (
@@ -73,11 +78,11 @@ export function SectionBlockNodeItem({
           role="button"
           tabIndex={0}
           draggable
-          onClick={() => onSelect(block.id)}
+          onClick={() => selectNode(block.id)}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onSelect(block.id);
+              selectNode(block.id);
             }
           }}
           onDragStart={(e: React.DragEvent) => {
@@ -138,7 +143,7 @@ export function SectionBlockNodeItem({
               if (!dragId || dragId === block.id) return;
               const draggedType = blockDrag.type ?? '';
               const shouldNest = draggedType === 'TextAtomLetter';
-              onDropBlockToColumn(
+              blockActions.dropToColumn(
                 dragId,
                 fromSection,
                 fromColumn || undefined,
@@ -152,7 +157,7 @@ export function SectionBlockNodeItem({
               return;
             }
             if (dragId && dragId !== block.id) {
-              onDropBlockToColumn(
+              blockActions.dropToColumn(
                 dragId,
                 fromSection,
                 fromColumn || undefined,
@@ -164,7 +169,7 @@ export function SectionBlockNodeItem({
               );
               endBlockDrag();
             } else if (draggedSectionId && draggedSectionId !== sectionId) {
-              onDropSectionToColumn(draggedSectionId, sectionId, columnId, (block.blocks ?? []).length, block.id);
+              sectionActions.dropToColumn(draggedSectionId, sectionId, columnId, (block.blocks ?? []).length, block.id);
               endSectionDrag();
             }
           }}
@@ -214,7 +219,7 @@ export function SectionBlockNodeItem({
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse block' : 'Expand block'}
-            onToggle={(): void => onToggleExpand(block.id)}
+            onToggle={(): void => toggleExpand(block.id)}
             iconClassName="size-3"
             placeholderClassName="block size-3 shrink-0"
           />
@@ -227,19 +232,19 @@ export function SectionBlockNodeItem({
             <TreeActionSlot show="always" align="inline">
               <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                 <ColumnBlockPicker
-                  onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+                  onSelect={(elemType: string) => blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)}
                 />
               </div>
             </TreeActionSlot>
           )}
           {/* Delete button for section-type blocks */}
-          {onRemoveBlock && !isDragOver && (
+          {!isDragOver && (
             <TreeActionSlot show="hover" align="inline">
               <TreeActionButton
                 tone="danger"
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
-                  onRemoveBlock(sectionId, block.id, columnId);
+                  blockActions.remove(sectionId, block.id, columnId);
                 }}
                 title="Remove block"
               >
@@ -260,11 +265,6 @@ export function SectionBlockNodeItem({
               sectionId={sectionId}
               columnId={columnId}
               parentBlockId={block.id}
-              selectedNodeId={selectedNodeId}
-              onSelect={onSelect}
-              onDropBlock={() => {}}
-              onDropBlockToColumn={onDropBlockToColumn}
-              onRemoveBlock={onRemoveBlock}
             />
           ))}
         </div>

@@ -1,9 +1,10 @@
 'use client';
 
 import { LogOut, LogIn, SparklesIcon } from 'lucide-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAuth } from '@/features/auth';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -21,9 +22,8 @@ import {
   ThemeToggle as ThemeToggleComponent,
 } from '@/shared/ui';
 
-
 export function UserNav(): React.ReactNode {
-  const { data: session } = useSession();
+  const { session } = useAuth();
   const { setAiDrawerOpen } = useAdminLayout();
   const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();

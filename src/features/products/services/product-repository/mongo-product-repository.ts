@@ -2,6 +2,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { ObjectId, type Document, type Filter, type WithId } from 'mongodb';
+
 import { mongoImageFileRepository } from '@/features/files/server';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
 import type { ProductRecord, ProductWithImages, ProductImageRecord, CatalogRecord } from '@/features/products/types';
@@ -14,8 +16,6 @@ import type {
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/files';
-
-import type { Document, Filter, WithId } from 'mongodb';
 
 type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
   _id: string;
@@ -30,6 +30,18 @@ type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
 };
 
 const productCollectionName = 'products';
+
+const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
+  const normalized = id.trim();
+  const conditions: Array<Record<string, unknown>> = [
+    { id: normalized },
+    { _id: normalized },
+  ];
+  if (ObjectId.isValid(normalized)) {
+    conditions.push({ _id: new ObjectId(normalized) });
+  }
+  return { $or: conditions } as Filter<ProductDocument>;
+};
 
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
   id: doc.id ?? doc._id,
@@ -233,7 +245,7 @@ export const mongoProductRepository: ProductRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<ProductDocument>(productCollectionName)
-      .findOne({ $or: [{ _id: id }, { id }] });
+      .findOne(buildProductIdFilter(id));
     return doc ? toProductResponse({ ...doc, _id: doc._id }) : null;
   },
 
@@ -385,7 +397,7 @@ export const mongoProductRepository: ProductRepository = {
     const result = await db
       .collection<ProductDocument>(productCollectionName)
       .findOneAndUpdate(
-        { $or: [{ _id: id }, { id }] },
+        buildProductIdFilter(id),
         { $set: updateDoc },
         { returnDocument: 'after' }
       );
@@ -400,7 +412,7 @@ export const mongoProductRepository: ProductRepository = {
     const db = await getMongoDb();
     const result = await db
       .collection<ProductDocument>(productCollectionName)
-      .findOneAndDelete({ $or: [{ _id: id }, { id }] });
+      .findOneAndDelete(buildProductIdFilter(id));
     if (!result) return null;
     return toProductBase({
       ...(result as ProductDocument),
@@ -412,7 +424,7 @@ export const mongoProductRepository: ProductRepository = {
     const db = await getMongoDb();
     const existing = await db
       .collection<ProductDocument>(productCollectionName)
-      .findOne({ $or: [{ _id: id }, { id }] });
+      .findOne(buildProductIdFilter(id));
     if (!existing) return null;
 
     const skuExists = await db
@@ -484,7 +496,7 @@ export const mongoProductRepository: ProductRepository = {
     }));
     const product = await db
       .collection<ProductDocument>(productCollectionName)
-      .findOne({ $or: [{ _id: productId }, { id: productId }] });
+      .findOne(buildProductIdFilter(productId));
     const existing = Array.isArray(product?.images) ? product.images : [];
     const merged = [
       ...existing.filter(
@@ -498,7 +510,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { images: merged, updatedAt: new Date() } }
       );
   },
@@ -509,7 +521,7 @@ export const mongoProductRepository: ProductRepository = {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
-          { $or: [{ _id: productId }, { id: productId }] },
+          buildProductIdFilter(productId),
           { $set: { catalogs: [], updatedAt: new Date() } }
         );
       return;
@@ -526,7 +538,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { catalogs: catalogEntries, updatedAt: new Date() } }
       );
   },
@@ -538,7 +550,7 @@ export const mongoProductRepository: ProductRepository = {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
-          { $or: [{ _id: productId }, { id: productId }] },
+          buildProductIdFilter(productId),
           { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
         );
       return;
@@ -551,7 +563,7 @@ export const mongoProductRepository: ProductRepository = {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
-          { $or: [{ _id: productId }, { id: productId }] },
+          buildProductIdFilter(productId),
           { $set: { categories: [], categoryId: null, updatedAt: new Date() } }
         );
       return;
@@ -567,7 +579,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { categories: categoryEntries, categoryId: categoryEntries[0]?.categoryId ?? null, updatedAt: new Date() } }
       );
   },
@@ -578,7 +590,7 @@ export const mongoProductRepository: ProductRepository = {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
-          { $or: [{ _id: productId }, { id: productId }] },
+          buildProductIdFilter(productId),
           { $set: { tags: [], updatedAt: new Date() } }
         );
       return;
@@ -597,7 +609,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { tags: tagEntries, updatedAt: new Date() } }
       );
   },
@@ -608,7 +620,7 @@ export const mongoProductRepository: ProductRepository = {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
-          { $or: [{ _id: productId }, { id: productId }] },
+          buildProductIdFilter(productId),
           { $set: { producers: [], updatedAt: new Date() } }
         );
       return;
@@ -627,7 +639,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { producers: producerEntries, updatedAt: new Date() } }
       );
   },
@@ -640,7 +652,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         { $set: { noteIds: uniqueIds, updatedAt: new Date() } },
       );
   },
@@ -650,7 +662,7 @@ export const mongoProductRepository: ProductRepository = {
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
-        { $or: [{ _id: productId }, { id: productId }] },
+        buildProductIdFilter(productId),
         {
           $pull: {
             images: {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger, ClientOnly } from '@/shared/ui';
 
 import { AdminImageStudioValidationPatternsPage } from './AdminImageStudioValidationPatternsPage';

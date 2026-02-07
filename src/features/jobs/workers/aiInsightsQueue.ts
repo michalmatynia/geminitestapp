@@ -80,9 +80,17 @@ export const startAiInsightsQueue = (): void => {
       { type: 'scheduled-tick' },
       { repeat: { every: AI_INSIGHTS_REPEAT_EVERY_MS }, jobId: 'ai-insights-tick' },
     )
-    .catch((error) => {
+    .catch(async (error) => {
       aiInsightsQueueState.schedulerRegistered = false;
-      console.error('[aiInsightsQueue] Failed to register repeat scheduler', error);
+      try {
+        const { ErrorSystem } = await import('@/features/observability/services/error-system');
+        void ErrorSystem.captureException(error, {
+          service: 'ai-insights-queue',
+          action: 'registerScheduler'
+        });
+      } catch {
+        console.error('[aiInsightsQueue] Failed to register repeat scheduler', error);
+      }
     });
 };
 

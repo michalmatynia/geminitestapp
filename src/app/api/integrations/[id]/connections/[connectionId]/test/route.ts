@@ -27,7 +27,7 @@ type TestLogEntry = {
  * POST /api/integrations/[id]/connections/[connectionId]/test
  * Performs a lightweight credential check for the integration connection.
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let integrationConnectionId: string | null = null;
   const steps: TestLogEntry[] = [];

@@ -7,6 +7,8 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import type { AiPathRunStatus } from "@/shared/types/ai-paths";
 import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
+import type { AiPathRunListOptions } from "@/features/ai/ai-paths/types/path-run-repository";
 
 const RUN_STATUSES: AiPathRunStatus[] = [
   "queued",
@@ -70,11 +72,27 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   const sourceMode = sourceModeParam === "exclude" ? "exclude" : "include";
 
   const repo = getPathRunRepository();
+  const listOptions: AiPathRunListOptions = {};
+  if (!access.isElevated) {
+    listOptions.userId = access.userId;
+  }
+  if (pathId) {
+    listOptions.pathId = pathId;
+  }
+  if (source) {
+    listOptions.source = source;
+    listOptions.sourceMode = sourceMode;
+  }
+  if (scope === "terminal") {
+    listOptions.statuses = TERMINAL_STATUSES;
+  }
+  const { runs } = await repo.listRuns(listOptions);
+  const runIds = runs.map((run) => run.id).filter((runId): runId is string => Boolean(runId));
+  if (runIds.length > 0) {
+    await removePathRunQueueEntries(runIds);
+  }
   const result = await repo.deleteRuns({
-    ...(!access.isElevated ? { userId: access.userId } : {}),
-    ...(pathId ? { pathId } : {}),
-    ...(source ? { source, sourceMode } : {}),
-    ...(scope === "terminal" ? { statuses: TERMINAL_STATUSES } : {}),
+    ...listOptions,
   });
 
   return NextResponse.json({ deleted: result.count, scope });

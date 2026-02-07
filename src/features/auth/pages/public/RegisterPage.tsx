@@ -4,20 +4,15 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
-import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from '@/features/auth/utils/auth-user-pages';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Button, Input, Label, Alert } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-
 
 export default function RegisterPage(): React.JSX.Element {
-  const settingsQuery = useSettingsMap();
+  const { userPageSettings, isLoading } = useAuth();
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
         <div className="text-gray-400">Loading...</div>
@@ -25,11 +20,7 @@ export default function RegisterPage(): React.JSX.Element {
     );
   }
 
-  const userPages = parseJsonSetting(
-    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
-    DEFAULT_AUTH_USER_PAGE_SETTINGS
-  );
-  const allowSignup = Boolean(userPages.allowSignup);
+  const allowSignup = Boolean(userPageSettings.allowSignup);
 
   return <RegisterForm allowSignup={allowSignup} />;
 }
@@ -40,7 +31,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const registerUserMutation = useRegisterUser();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {

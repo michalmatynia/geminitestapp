@@ -3,7 +3,6 @@
 import { RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Button,
   Input,
@@ -28,8 +27,6 @@ export function StudioSettingsContent(): React.JSX.Element {
     handleRefreshSettings,
     settingsLoaded,
   } = useImageStudio();
-
-  const _updateSetting = useUpdateSetting();
 
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
     JSON.stringify(studioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)

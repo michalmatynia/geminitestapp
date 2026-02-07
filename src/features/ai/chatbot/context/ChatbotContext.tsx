@@ -4,7 +4,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 
 import { useChatbotLogic, UseChatbotLogicReturn } from '../hooks/useChatbotLogic';
 
-const ChatbotContext = createContext<UseChatbotLogicReturn | undefined>(undefined);
+export const ChatbotContext = createContext<UseChatbotLogicReturn | undefined>(undefined);
 
 export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const logic = useChatbotLogic();

@@ -150,17 +150,14 @@ export function CanvasBoard({
   const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
   const [inputPulseNodes, setInputPulseNodes] = React.useState<Set<string>>(() => new Set());
   const [outputPulseNodes, setOutputPulseNodes] = React.useState<Set<string>>(() => new Set());
-  const [flowActiveTick, setFlowActiveTick] = React.useState<number>(0);
   const prevHashesRef = React.useRef<RuntimeHashes | null>(null);
   const edgePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const flowActiveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRuntimeEventIdRef = React.useRef<string | null>(null);
 
   // --- Constants & Derived ---
   const FLOW_ANIMATION_MS = 1600;
   const NODE_PULSE_MS = 1400;
-  const FLOW_ACTIVE_WINDOW_MS = Math.max(900, FLOW_ANIMATION_MS * 2);
   const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
   const flowEnabled = resolvedFlowIntensity !== 'off';
 
@@ -468,10 +465,6 @@ export function CanvasBoard({
     return visited;
   }, [nodes, edges]);
 
-  const hasTriggers = React.useMemo(
-    (): boolean => nodes.some((node) => node.type === 'trigger'),
-    [nodes]
-  );
   const edgeMetaMap = React.useMemo(
     (): Map<string, Edge> => new Map(edges.map((edge) => [edge.id, edge])),
     [edges]
@@ -518,55 +511,6 @@ export function CanvasBoard({
     });
     return map;
   }, [edges]);
-
-  const blockingFlowEdgeIds = React.useMemo((): Set<string> => {
-    const result = new Set<string>();
-    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
-    const blockerTypes = new Set<string>(['poll', 'model', 'agent', 'delay']);
-    const outputs = runtimeState.outputs ?? {};
-    nodes.forEach((node) => {
-      if (!blockerTypes.has(node.type)) return;
-      const nodeOutputs = outputs[node.id] as Record<string, unknown> | undefined;
-      const rawStatus = nodeOutputs?.status;
-      if (typeof rawStatus !== 'string') return;
-      const status = rawStatus.trim().toLowerCase();
-      if (!status) return;
-      if (status === 'completed' || status === 'failed') return;
-
-      edges.forEach((edge) => {
-        if (edge.to !== node.id) return;
-        if (!edge.from || !edge.to) return;
-        if (!edge.fromPort || !edge.toPort) return;
-        if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
-          return;
-        }
-
-        const inputVal = getPortValue('input', edge.to, edge.toPort);
-        const outputVal = getPortValue('output', edge.from, edge.fromPort);
-        if (inputVal === undefined && outputVal === undefined) return;
-        result.add(edge.id);
-      });
-    });
-    return result;
-  }, [edges, getPortValue, hasTriggers, nodes, runtimeState.outputs, triggerConnected]);
-
-  const signalEdgeIds = React.useMemo((): Set<string> => {
-    const result = new Set<string>();
-    const shouldGateByTrigger = hasTriggers && triggerConnected.size > 0;
-    edges.forEach((edge) => {
-      if (!edge.from || !edge.to) return;
-      if (!edge.fromPort || !edge.toPort) return;
-      if (shouldGateByTrigger && (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to))) {
-        return;
-      }
-      const outputVal = getPortValue('output', edge.from, edge.fromPort);
-      const inputVal = getPortValue('input', edge.to, edge.toPort);
-      if (outputVal !== undefined || inputVal !== undefined) {
-        result.add(edge.id);
-      }
-    });
-    return result;
-  }, [edges, getPortValue, hasTriggers, triggerConnected]);
 
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
@@ -648,18 +592,6 @@ export function CanvasBoard({
     [NODE_PULSE_MS]
   );
 
-  const markFlowActive = React.useCallback((): void => {
-    const now = Date.now();
-    setFlowActiveTick(now);
-    if (flowActiveTimeoutRef.current) {
-      clearTimeout(flowActiveTimeoutRef.current);
-    }
-    flowActiveTimeoutRef.current = setTimeout(() => {
-      setFlowActiveTick((prev) => (Date.now() - prev >= FLOW_ACTIVE_WINDOW_MS ? 0 : prev));
-      flowActiveTimeoutRef.current = null;
-    }, FLOW_ACTIVE_WINDOW_MS);
-  }, [FLOW_ACTIVE_WINDOW_MS]);
-
   React.useEffect(() => {
     if (!runtimeEvents || runtimeEvents.length === 0) {
       lastRuntimeEventIdRef.current = null;
@@ -681,24 +613,11 @@ export function CanvasBoard({
           ? event.status.trim().toLowerCase()
           : '';
       const nodeId = event.nodeId?.trim() ?? '';
-      if (!nodeId) {
-        if (
-          event.kind === 'run_started' ||
-          event.kind === 'run_completed' ||
-          event.kind === 'run_failed' ||
-          event.kind === 'run_canceled'
-        ) {
-          markFlowActive();
-        }
-        return;
-      }
+      if (!nodeId) return;
 
       const isStartSignal =
         event.kind === 'node_started' ||
-        normalizedStatus === 'running' ||
-        normalizedStatus === 'queued' ||
-        normalizedStatus === 'polling' ||
-        normalizedStatus === 'waiting_callback';
+        normalizedStatus === 'running';
       const isFinishSignal =
         event.kind === 'node_finished' ||
         normalizedStatus === 'completed' ||
@@ -709,9 +628,6 @@ export function CanvasBoard({
         normalizedStatus === 'timeout' ||
         normalizedStatus === 'canceled';
 
-      if (isStartSignal || isFinishSignal || isFailureSignal) {
-        markFlowActive();
-      }
       if (isStartSignal || isFailureSignal) {
         scheduleNodePulse(nodeId, 'input');
         (incomingEdgeIdsByNode.get(nodeId) ?? []).forEach((edgeId: string) => {
@@ -729,7 +645,6 @@ export function CanvasBoard({
     lastRuntimeEventIdRef.current = runtimeEvents[runtimeEvents.length - 1]?.id ?? null;
   }, [
     incomingEdgeIdsByNode,
-    markFlowActive,
     outgoingEdgeIdsByNode,
     runtimeEvents,
     scheduleEdgePulse,
@@ -763,7 +678,6 @@ export function CanvasBoard({
       });
     });
     if (outputChanges.length === 0 && inputChanges.length === 0) return;
-    markFlowActive();
     const edgeIds = new Set<string>();
     const inputNodes = new Set<string>();
     const outputNodes = new Set<string>();
@@ -806,7 +720,6 @@ export function CanvasBoard({
     edgesByFromPort,
     edgesByToPort,
     getPortValue,
-    markFlowActive,
     nodeById,
     runtimeEvents,
     scheduleEdgePulse,
@@ -819,10 +732,6 @@ export function CanvasBoard({
     return (): void => {
       epTimeouts.forEach((timeout) => clearTimeout(timeout));
       npTimeouts.forEach((timeout) => clearTimeout(timeout));
-      if (flowActiveTimeoutRef.current) {
-        clearTimeout(flowActiveTimeoutRef.current);
-        flowActiveTimeoutRef.current = null;
-      }
       epTimeouts.clear();
       npTimeouts.clear();
     };
@@ -929,12 +838,7 @@ export function CanvasBoard({
           {(edgePaths as EdgePath[]).map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
-            const allowSignalFlow =
-              blockingFlowEdgeIds.size > 0 || flowActiveTick > 0;
-            const isFlowing =
-              activeEdgeIds.has(edge.id) ||
-              blockingFlowEdgeIds.has(edge.id) ||
-              (allowSignalFlow && signalEdgeIds.has(edge.id));
+            const isFlowing = activeEdgeIds.has(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
             const fromNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.from) : null;

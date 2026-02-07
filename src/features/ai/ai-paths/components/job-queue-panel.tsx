@@ -294,6 +294,19 @@ const getExecutionBadgeClass = (execution: RunExecutionKind): string => {
   return 'border-border/60 bg-card/60 text-gray-300';
 };
 
+const isRunningStatus = (status: unknown): boolean =>
+  typeof status === 'string' && status.trim().toLowerCase() === 'running';
+
+const RunningIndicator = ({ label = 'Running' }: { label?: string }): React.JSX.Element => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[1px] text-[9px] uppercase text-sky-200">
+    <span className="relative inline-flex h-2 w-2">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-300" />
+    </span>
+    {label}
+  </span>
+);
+
 export function JobQueuePanel({
   activePathId,
   sourceFilter,
@@ -845,8 +858,9 @@ export function JobQueuePanel({
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Worker</div>
-          <div className="mt-1 text-sm text-white">
+          <div className="mt-1 flex items-center gap-2 text-sm text-white">
             {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
+            {queueStatus?.running ? <RunningIndicator label="Active" /> : null}
           </div>
           <div className="mt-1 text-[11px] text-gray-400">
             Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
@@ -857,8 +871,9 @@ export function JobQueuePanel({
           <div className="mt-1 text-sm text-white">
             {queueStatus?.concurrency ?? '-'}
           </div>
-          <div className="mt-1 text-[11px] text-gray-400">
-            Active runs: {queueStatus?.activeRuns ?? 0}
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-400">
+            <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
+            {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label="Busy" /> : null}
           </div>
         </div>
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
@@ -926,11 +941,17 @@ export function JobQueuePanel({
         </div>
         <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
           <div className="text-[10px] uppercase text-gray-500">Brain Analytics Queue</div>
-          <div className="mt-1 text-sm text-white">
+          <div className="mt-1 flex items-center gap-2 text-sm text-white">
             {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
+            {queueStatus?.brainQueue?.running ? <RunningIndicator label="Active" /> : null}
           </div>
-          <div className="mt-1 text-[11px] text-gray-400">
-            Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-400">
+            <span>
+              Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
+            </span>
+            {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
+              <RunningIndicator label="Busy" />
+            ) : null}
           </div>
           <div className="mt-2 text-[10px] text-gray-400">
             Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
@@ -1122,6 +1143,7 @@ export function JobQueuePanel({
             const detailLoading = runDetailLoading.has(run.id);
             const detailError = runDetailErrors[run.id];
             const detailRun = detail?.run ?? run;
+            const isRunning = isRunningStatus(detailRun.status);
             const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
             const streamStatus = pausedStreams.has(run.id)
               ? 'paused'
@@ -1155,7 +1177,10 @@ export function JobQueuePanel({
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <div className="text-[10px] uppercase text-gray-400">{detailRun.status}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-[10px] uppercase text-gray-400">{detailRun.status}</div>
+                      {isRunning ? <RunningIndicator /> : null}
+                    </div>
                     {isScheduledRun ? (
                       <div className="mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
                         Scheduled

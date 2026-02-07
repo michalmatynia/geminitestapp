@@ -213,30 +213,6 @@ function ZoneGroup({
                   <SectionNodeItem
                     section={section}
                     sectionIndex={index}
-                    selectedNodeId={selectedNodeId}
-                    onSelect={selectNode}
-                    onAddBlock={blockActions.add}
-                    onDropBlock={blockActions.drop}
-                    onDropBlockToSection={blockActions.dropToSection}
-                    onAddBlockToColumn={blockActions.addToColumn}
-                    onDropBlockToColumn={blockActions.dropToColumn}
-                    onAddGridRow={gridActions.addRow}
-                    onRemoveGridRow={gridActions.removeRow}
-                    onAddColumnToRow={gridActions.addColumn}
-                    onRemoveColumnFromRow={gridActions.removeColumn}
-                    onAddElementToNestedBlock={blockActions.addElementToNestedBlock}
-                    onAddElementToSectionBlock={blockActions.addElementToSectionBlock}
-                    onDropSection={(sectionId: string, toIndex: number) => sectionActions.dropInZone(sectionId, zone, toIndex)}
-                    onToggleSectionVisibility={sectionActions.toggleVisibility}
-                    onRemoveSection={sectionActions.remove}
-                    expandedIds={expandedIds}
-                    onToggleExpand={toggleExpand}
-                    onDropBlockToRow={blockActions.dropToRow}
-                    onDropSectionToColumn={sectionActions.dropToColumn}
-                    onDropBlockToSlideshowFrame={blockActions.dropToSlideshowFrame}
-                    onDropSectionToSlideshowFrame={sectionActions.dropToSlideshowFrame}
-                    onConvertSectionToBlock={sectionActions.convertToBlock}
-                    onRemoveBlock={blockActions.remove}
                   />
                 </React.Fragment>
               ))}

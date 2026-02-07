@@ -2,29 +2,42 @@
 
 import React, { useRef, useEffect } from 'react';
 
+import { ChatMessage } from '@/shared/types/chatbot';
 import { Button, Input } from '@/shared/ui';
 
 import { ChatMessageContent } from './ChatMessageContent';
-import { useChatbot } from '../context/ChatbotContext';
+import { ChatbotContext } from '../context/ChatbotContext';
 
-export function ChatInterface(): React.JSX.Element {
-  const {
-    messages,
-    input,
-    setInput,
-    isSending,
-    sendMessage,
-  } = useChatbot();
+export interface ChatInterfaceProps {
+  messages?: ChatMessage[];
+  input?: string;
+  setInput?: (val: string) => void;
+  isSending?: boolean;
+  onSend?: (e: React.FormEvent) => void;
+  renderFormattedMessage?: (content: string) => string;
+}
+
+export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
+  const chatbot = React.useContext(ChatbotContext);
+  
+  const messages = props.messages ?? chatbot?.messages ?? [];
+  const input = props.input ?? chatbot?.input ?? '';
+  const setInput = props.setInput ?? chatbot?.setInput ?? ((): void => {});
+  const isSending = props.isSending ?? chatbot?.isSending ?? false;
+  const sendMessage = chatbot?.sendMessage ?? (async (): Promise<void> => {});
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect((): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const onSend = (e: React.FormEvent): void => {
+  const defaultOnSend = (e: React.FormEvent): void => {
     e.preventDefault();
     void sendMessage();
   };
+
+  const onSend = props.onSend ?? defaultOnSend;
 
   return (
     <div className="flex h-full flex-col">
@@ -35,7 +48,7 @@ export function ChatInterface(): React.JSX.Element {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg, index: number): React.JSX.Element => (
+            {messages.map((msg: ChatMessage, index: number): React.JSX.Element => (
               <div
                 key={index}
                 className={`flex ${

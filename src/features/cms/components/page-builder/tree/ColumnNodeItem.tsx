@@ -7,6 +7,8 @@ import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, 
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
@@ -20,19 +22,21 @@ export function ColumnNodeItem({
   column,
   columnIndex,
   sectionId,
-  selectedNodeId,
-  onSelect,
-  onAddBlockToColumn,
-  onDropBlockToColumn,
-  onAddElementToNestedBlock,
-  onRemoveColumnFromRow,
   rowId,
   rowColumnCount,
-  expandedIds,
-  onToggleExpand,
-  onDropSectionToColumn,
-  onRemoveBlock,
 }: ColumnNodeItemProps): React.ReactNode {
+  const { state: pbState } = usePageBuilder();
+  const {
+    expandedIds,
+    selectNode,
+    toggleExpand,
+    blockActions,
+    sectionActions,
+    gridActions,
+  } = useTreeActions();
+
+  const selectedNodeId = pbState.selectedNodeId;
+
   // Drag state from context
   const drag = useDragStateExtract();
   const { endBlockDrag, endSectionDrag } = drag.actions;
@@ -51,6 +55,7 @@ export function ColumnNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
   const columnLabel = resolveNodeLabel(`Column ${columnIndex + 1}`, column.settings['label']);
+
   const columnMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
       {
@@ -60,11 +65,11 @@ export function ColumnNodeItem({
         tone: 'danger',
         disabled: !canRemove,
         onSelect: (): void => {
-          if (canRemove) onRemoveColumnFromRow(sectionId, column.id, rowId);
+          if (canRemove) gridActions.removeColumn(sectionId, column.id, rowId);
         },
       },
     ],
-    [canRemove, onRemoveColumnFromRow, sectionId, column.id, rowId]
+    [canRemove, gridActions, sectionId, column.id, rowId]
   );
 
   const handleColumnDragOver = (e: React.DragEvent): void => {
@@ -99,7 +104,7 @@ export function ColumnNodeItem({
       const sectionIdToDrop = draggedSectionId || draggedSectionIdFromTransfer;
       const sectionTypeToDrop = draggedSectionType || draggedSectionTypeFromTransfer;
       if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')) {
-        onDropSectionToColumn(sectionIdToDrop, sectionId, column.id, (column.blocks ?? []).length);
+        sectionActions.dropToColumn(sectionIdToDrop, sectionId, column.id, (column.blocks ?? []).length);
         endSectionDrag();
       }
       return;
@@ -118,7 +123,7 @@ export function ColumnNodeItem({
     const fromColumn = blockDrag.fromColumnId;
     const fromParent = blockDrag.fromParentBlockId;
     if (dragId) {
-      onDropBlockToColumn(
+      blockActions.dropToColumn(
         dragId,
         fromSection,
         fromColumn || undefined,
@@ -153,13 +158,13 @@ export function ColumnNodeItem({
           tabIndex={0}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
-            onSelect(column.id);
+            selectNode(column.id);
           }}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               e.stopPropagation();
-              onSelect(column.id);
+              selectNode(column.id);
             }
           }}
           onDragOver={handleColumnDragOver}
@@ -173,14 +178,14 @@ export function ColumnNodeItem({
               ? 'bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50'
               : isSelected
                 ? 'bg-blue-600/80 text-white'
-                : 'text-gray-300 hover:bg-muted/40'
+                : 'text-gray-200 hover:bg-muted/50'
           }`}
         >
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse column' : 'Expand column'}
-            onToggle={(): void => onToggleExpand(column.id)}
+            onToggle={(): void => toggleExpand(column.id)}
             iconClassName="size-3"
             placeholderClassName="block size-3 shrink-0"
           />
@@ -195,7 +200,7 @@ export function ColumnNodeItem({
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 if (!canRemove) return;
-                onRemoveColumnFromRow(sectionId, column.id, rowId);
+                gridActions.removeColumn(sectionId, column.id, rowId);
               }}
               disabled={!canRemove}
               className="disabled:cursor-not-allowed disabled:opacity-40"
@@ -204,7 +209,7 @@ export function ColumnNodeItem({
               <Minus className="size-3" />
             </TreeActionButton>
             <ColumnBlockPicker
-              onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
+              onSelect={(blockType: string) => blockActions.addToColumn(sectionId, column.id, blockType)}
             />
           </TreeActionSlot>
         </TreeRow>
@@ -229,14 +234,6 @@ export function ColumnNodeItem({
                   index={index}
                   sectionId={sectionId}
                   columnId={column.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onAddElementToNestedBlock={onAddElementToNestedBlock}
-                  onDropBlockToColumn={onDropBlockToColumn}
-                  onRemoveBlock={onRemoveBlock}
-                  expandedIds={expandedIds}
-                  onToggleExpand={onToggleExpand}
-                  onDropSectionToColumn={onDropSectionToColumn}
                 />
               ) : (
                 <BlockNodeItem
@@ -245,11 +242,6 @@ export function ColumnNodeItem({
                   index={index}
                   sectionId={sectionId}
                   columnId={column.id}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelect}
-                  onDropBlock={() => {}}
-                  onDropBlockToColumn={onDropBlockToColumn}
-                  onRemoveBlock={onRemoveBlock}
                 />
               )
             )

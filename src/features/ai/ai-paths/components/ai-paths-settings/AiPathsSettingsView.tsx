@@ -627,6 +627,64 @@ export function AiPathsSettingsView({
             </div>
           </SharedModal>
 
+          <div
+            className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${
+              isFocusMode ? 'h-full gap-0 xl:grid-cols-[0px_1fr]' : 'gap-6 xl:grid-cols-[280px_1fr]'
+            }`}
+          >
+            <div
+              className={`space-y-4 transition-all duration-300 ease-in-out ${
+                isFocusMode ? 'pointer-events-none opacity-0 -translate-x-2 max-h-0 overflow-hidden' : 'opacity-100'
+              }`}
+              aria-hidden={isFocusMode}
+            >
+              <CanvasSidebarWrapper
+                palette={palette}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
+                onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
+                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
+                onClearWires={() => void handleClearWires()}
+                runStatus={runtimeRunStatus}
+                onPauseRun={handlePauseActiveRun}
+                onResumeRun={handleResumeActiveRun}
+                onStepRun={handleStepActiveRun}
+                onCancelRun={handleCancelActiveRun}
+              />
+              <ClusterPresetsPanelMigrated
+                onPresetFromSelection={handlePresetFromSelection}
+                onSavePreset={() => void handleSavePreset()}
+                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
+                onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
+                onExportPresets={handleExportPresets}
+                presetDraft={presetDraft}
+                setPresetDraft={setPresetDraft}
+              />
+              <GraphModelDebugPanel payload={lastGraphModelPayload} />
+              <RunHistoryPanelMigrated
+                runs={runList}
+                isRefreshing={runsQuery.isFetching}
+                onRefresh={() => { void runsQuery.refetch(); }}
+                onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
+                onResumeRun={(runId: string, mode: 'resume' | 'replay') => void handleResumeRun(runId, mode)}
+                onCancelRun={(runId: string) => void handleCancelRun(runId)}
+                onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
+                runFilter={runFilter}
+                setRunFilter={setRunFilter}
+                expandedRunHistory={expandedRunHistory}
+                setExpandedRunHistory={setExpandedRunHistory}
+                runHistorySelection={runHistorySelection}
+                setRunHistorySelection={setRunHistorySelection}
+              />
+            </div>
+            <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
+              <CanvasBoardMigrated
+                runtimeNodeStatuses={runtimeNodeStatuses}
+                runtimeEvents={runtimeEvents}
+                viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
+                onFireTrigger={(node) => void handleFireTrigger(node)}
+              />
+            </div>
+          </div>
           {!isFocusMode ? (
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-3 rounded-lg border border-border/60 bg-card/50 p-4">
@@ -751,65 +809,6 @@ export function AiPathsSettingsView({
               </div>
             </div>
           ) : null}
-
-          <div
-            className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${
-              isFocusMode ? 'h-full gap-0 xl:grid-cols-[0px_1fr]' : 'gap-6 xl:grid-cols-[280px_1fr]'
-            }`}
-          >
-            <div
-              className={`space-y-4 transition-all duration-300 ease-in-out ${
-                isFocusMode ? 'pointer-events-none opacity-0 -translate-x-2 max-h-0 overflow-hidden' : 'opacity-100'
-              }`}
-              aria-hidden={isFocusMode}
-            >
-              <CanvasSidebarWrapper
-                palette={palette}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
-                onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
-                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
-                onClearWires={() => void handleClearWires()}
-                runStatus={runtimeRunStatus}
-                onPauseRun={handlePauseActiveRun}
-                onResumeRun={handleResumeActiveRun}
-                onStepRun={handleStepActiveRun}
-                onCancelRun={handleCancelActiveRun}
-              />
-              <ClusterPresetsPanelMigrated
-                onPresetFromSelection={handlePresetFromSelection}
-                onSavePreset={() => void handleSavePreset()}
-                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
-                onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
-                onExportPresets={handleExportPresets}
-                presetDraft={presetDraft}
-                setPresetDraft={setPresetDraft}
-              />
-              <GraphModelDebugPanel payload={lastGraphModelPayload} />
-              <RunHistoryPanelMigrated
-                runs={runList}
-                isRefreshing={runsQuery.isFetching}
-                onRefresh={() => { void runsQuery.refetch(); }}
-                onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
-                onResumeRun={(runId: string, mode: 'resume' | 'replay') => void handleResumeRun(runId, mode)}
-                onCancelRun={(runId: string) => void handleCancelRun(runId)}
-                onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
-                runFilter={runFilter}
-                setRunFilter={setRunFilter}
-                expandedRunHistory={expandedRunHistory}
-                setExpandedRunHistory={setExpandedRunHistory}
-                runHistorySelection={runHistorySelection}
-                setRunHistorySelection={setRunHistorySelection}
-              />
-            </div>
-            <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
-              <CanvasBoardMigrated
-                runtimeNodeStatuses={runtimeNodeStatuses}
-                runtimeEvents={runtimeEvents}
-                viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
-                onFireTrigger={(node) => void handleFireTrigger(node)}
-              />
-            </div>
-          </div>
           {!isFocusMode && (
             <div className="mt-4 flex justify-end">
               <Button

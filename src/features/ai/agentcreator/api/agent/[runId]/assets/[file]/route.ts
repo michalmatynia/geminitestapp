@@ -15,7 +15,7 @@ const getContentType = (filename: string) => {
   return 'application/octet-stream';
 };
 
-async function GET_handler(req: NextRequest,
+async function GET_handler(_req: NextRequest,
   { params }: { params: Promise<{ runId: string; file: string }> }
 ): Promise<Response> {
   const { runId, file } = await params;
@@ -37,6 +37,6 @@ async function GET_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string; file: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (_req, _ctx, params) => GET_handler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].assets.[file].GET' }
 );

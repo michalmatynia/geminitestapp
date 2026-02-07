@@ -60,7 +60,21 @@ vi.mock('@/features/ai/agent-runtime/execution/loop-guard', () => ({
 
 describe('Agent Runtime - Step Runner', () => {
   const mockInput = {
-    run: { id: 'run-1', prompt: 'Prompt' },
+    context: {
+      run: { id: 'run-1', prompt: 'Prompt' },
+      settings: { maxSteps: 10, maxStepAttempts: 3, loopGuardThreshold: 1, maxReplanCalls: 3, maxSelfChecks: 3, replanEverySteps: 5 } as any,
+      preferences: { requireHumanApproval: false } as any,
+      memoryContext: [],
+      memoryKey: 'mem-1',
+      memoryValidationModel: null,
+      memorySummarizationModel: 'm1',
+      plannerModel: 'm2',
+      selfCheckModel: 'm3',
+      loopGuardModel: 'm4',
+      approvalGateModel: null,
+      resolvedModel: 'm5',
+      browserContext: { url: 'http://test.com' },
+    } as any,
     sharedBrowser: null,
     sharedContext: null,
     planSteps: [
@@ -69,19 +83,7 @@ describe('Agent Runtime - Step Runner', () => {
     ],
     stepIndex: 0,
     taskType: 'web_task' as const,
-    settings: { maxSteps: 10, maxStepAttempts: 3, loopGuardThreshold: 1, maxReplanCalls: 3, maxSelfChecks: 3, replanEverySteps: 5 } as any,
-    preferences: { requireHumanApproval: false } as any,
-    memoryContext: [],
     summaryCheckpoint: 0,
-    memoryKey: 'mem-1',
-    memoryValidationModel: null,
-    memorySummarizationModel: 'm1',
-    plannerModel: 'm2',
-    selfCheckModel: 'm3',
-    loopGuardModel: 'm4',
-    approvalGateModel: null,
-    resolvedModel: 'm5',
-    browserContext: { url: 'http://test.com' },
   };
 
   beforeEach(() => {
@@ -103,7 +105,10 @@ describe('Agent Runtime - Step Runner', () => {
   it('should stop and return if approval is required', async () => {
     const inputWithApproval = {
       ...mockInput,
-      preferences: { requireHumanApproval: true } as any,
+      context: {
+        ...mockInput.context,
+        preferences: { requireHumanApproval: true } as any,
+      },
     };
     (auditGate.requiresHumanApproval as any).mockReturnValue(true);
 

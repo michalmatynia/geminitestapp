@@ -3,6 +3,8 @@
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
 
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { Button, type ButtonProps } from './button';
 import { Input } from './input';
 
@@ -97,7 +99,7 @@ export function FileUploadButton({
       if (onError) {
         onError(error);
       } else {
-        console.error('FileUploadButton: upload failed', error);
+        logClientError(error, { context: { source: 'FileUploadButton' } });
       }
     } finally {
       setIsUploading(false);
@@ -230,7 +232,7 @@ export function FileUploadTrigger({
       if (onError) {
         onError(error);
       } else {
-        console.error('FileUploadTrigger: upload failed', error);
+        logClientError(error, { context: { source: 'FileUploadTrigger' } });
       }
     } finally {
       setIsUploading(false);

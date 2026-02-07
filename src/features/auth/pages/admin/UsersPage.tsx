@@ -1,8 +1,8 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
+import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   useAuthUsers,
   useAuthUserSecurity,
@@ -14,16 +14,13 @@ import {
 import type { AuthUserSummary } from '@/features/auth/types';
 import {
   AUTH_SETTINGS_KEYS,
-  DEFAULT_AUTH_ROLES,
-  mergeDefaultRoles,
   type AuthRole,
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
 
@@ -31,9 +28,18 @@ const EMPTY_CREATE = { name: '', email: '', password: '', roleId: 'none', verifi
 
 export default function AuthUsersPage(): React.JSX.Element {
   const { toast } = useToast();
+  const {
+    roles,
+    userRoles,
+    canReadUsers,
+    canManageSecurity,
+    isLoading: authLoading,
+    updateSetting,
+    refetchSettings,
+  } = useAuth();
+
   const [users, setUsers] = useState<AuthUserSummary[]>([]);
-  const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
-  const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
+  const [localUserRoles, setLocalUserRoles] = useState<AuthUserRoleMap>({});
   const [search, setSearch] = useState('');
   const [dirtyRoles, setDirtyRoles] = useState(false);
 
@@ -54,39 +60,23 @@ export default function AuthUsersPage(): React.JSX.Element {
   const [mockStatus, setMockStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [mockMessage, setMockMessage] = useState('');
   const [mockOpen, setMockOpen] = useState(false);
-  const { data: session } = useSession();
-  const lastSettingsRef = useRef<{ roles: string | null; userRoles: string | null } | null>(null);
-  const canReadUsers = Boolean(
-    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.read')
-  );
+
   const authUsersQuery = useAuthUsers(canReadUsers);
-  const settingsQuery = useSettingsMap();
-  const updateSetting = useUpdateSetting();
   const updateAuthUserMutation = useUpdateAuthUser();
   const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
   const registerUserMutation = useRegisterUser();
   const mockSignInMutation = useMockSignIn();
-  const canManageSecurity = Boolean(
-    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write')
-  );
+
   const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
-  const loading = (canReadUsers && authUsersQuery.isPending) || settingsQuery.isPending;
+  const loading = (canReadUsers && authUsersQuery.isPending) || authLoading;
   const loadingSecurity = canManageSecurity && userSecurityQuery.isPending;
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
-  const rolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles) ?? null;
-  const userRolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles) ?? null;
 
   useEffect(() => {
     if (!authUsersQuery.error || !canReadUsers) return;
     logClientError(authUsersQuery.error, { context: { source: 'AuthUsersPage', action: 'loadUsers' } });
     toast('Failed to load users', { variant: 'error' });
   }, [authUsersQuery.error, toast, canReadUsers]);
-
-  useEffect(() => {
-    if (!settingsQuery.error) return;
-    logClientError(settingsQuery.error, { context: { source: 'AuthUsersPage', action: 'loadRoles' } });
-    toast('Failed to load user roles', { variant: 'error' });
-  }, [settingsQuery.error, toast]);
 
   useEffect(() => {
     if (!userSecurityQuery.error || !canManageSecurity) return;
@@ -103,28 +93,9 @@ export default function AuthUsersPage(): React.JSX.Element {
   }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt, canReadUsers]);
 
   useEffect(() => {
-    if (!settingsQuery.data) return;
-    if (
-      lastSettingsRef.current?.roles === rolesSettingRaw &&
-      lastSettingsRef.current?.userRoles === userRolesSettingRaw
-    ) {
-      return;
-    }
-    const storedRoles = mergeDefaultRoles(
-      parseJsonSetting<AuthRole[]>(
-        settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
-        DEFAULT_AUTH_ROLES
-      )
-    );
-    const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
-      settingsQuery.data.get(AUTH_SETTINGS_KEYS.userRoles),
-      {}
-    );
-    setRoles(storedRoles);
-    setUserRoles(storedUserRoles);
+    setLocalUserRoles(userRoles);
     setDirtyRoles(false);
-    lastSettingsRef.current = { roles: rolesSettingRaw, userRoles: userRolesSettingRaw };
-  }, [rolesSettingRaw, userRolesSettingRaw, settingsQuery.data, settingsQuery.dataUpdatedAt]);
+  }, [userRoles]);
 
   const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();
@@ -139,7 +110,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   }, [search, users]);
 
   const handleRoleChange = (userId: string, roleId: string): void => {
-    setUserRoles((prev: AuthUserRoleMap) => {
+    setLocalUserRoles((prev: AuthUserRoleMap) => {
       const next = { ...prev };
       if (!roleId || roleId === 'none') {
         delete next[userId];
@@ -155,7 +126,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     try {
       await updateSetting.mutateAsync({
         key: AUTH_SETTINGS_KEYS.userRoles,
-        value: serializeSetting(userRoles),
+        value: serializeSetting(localUserRoles),
       });
       setDirtyRoles(false);
       toast('User roles updated', { variant: 'success' });
@@ -280,14 +251,15 @@ export default function AuthUsersPage(): React.JSX.Element {
       const created = res.payload;
 
       if (createForm.roleId && createForm.roleId !== 'none') {
-        const nextRoles = { ...userRoles, [created.id]: createForm.roleId };
+        const nextRoles = { ...localUserRoles, [created.id]: createForm.roleId };
         try {
           await updateSetting.mutateAsync({
             key: AUTH_SETTINGS_KEYS.userRoles,
             value: serializeSetting(nextRoles),
           });
-          setUserRoles(nextRoles);
+          setLocalUserRoles(nextRoles);
           setDirtyRoles(false);
+          await refetchSettings();
         } catch (roleError) {
           logClientError(roleError, { context: { source: 'AuthUsersPage', action: 'assignRoleAfterCreate', userId: created.id, roleId: createForm.roleId } });
         }
@@ -363,7 +335,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                   variant="outline"
                   onClick={() => {
                     void authUsersQuery.refetch();
-                    void settingsQuery.refetch();
+                    void refetchSettings();
                   }}
                   disabled={loading}
                 >
@@ -441,7 +413,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                     </TableCell>
                     <TableCell className="min-w-[180px]">
                       {(() : React.ReactNode => {
-                        const currentRoleId = userRoles[user.id];
+                        const currentRoleId = localUserRoles[user.id];
                         const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
                         const selectValue = isValidRole ? currentRoleId : 'none';
                         return (

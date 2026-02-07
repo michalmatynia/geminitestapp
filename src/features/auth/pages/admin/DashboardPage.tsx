@@ -1,30 +1,24 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import React, { useEffect, useMemo } from 'react';
 
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthUserSummary } from '@/features/auth/types';
-import {
-  AUTH_SETTINGS_KEYS,
-  DEFAULT_AUTH_ROLES,
-  mergeDefaultRoles,
-  type AuthRole,
-  type AuthUserRoleMap,
-} from '@/features/auth/utils/auth-management';
+import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { data: session } = useSession();
-  const canReadUsers = Boolean(
-    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.read')
-  );
+  const {
+    roles,
+    userRoles,
+    canReadUsers,
+    isLoading: authLoading,
+  } = useAuth();
+
   const authUsersQuery = useAuthUsers(canReadUsers);
-  const settingsQuery = useSettingsMap();
 
   useEffect(() => {
     if (!authUsersQuery.error || !canReadUsers) return;
@@ -32,32 +26,11 @@ export default function AuthDashboardPage(): React.JSX.Element {
     toast('Failed to load auth dashboard data', { variant: 'error' });
   }, [authUsersQuery.error, toast, canReadUsers]);
 
-  useEffect(() => {
-    if (!settingsQuery.error) return;
-    logClientError(settingsQuery.error, { context: { source: 'AuthDashboardPage', action: 'loadRoles' } });
-    toast('Failed to load auth settings', { variant: 'error' });
-  }, [settingsQuery.error, toast]);
-
   const users = useMemo<AuthUserSummary[]>(
     () => (canReadUsers ? authUsersQuery.data?.users ?? [] : []),
     [authUsersQuery.data?.users, canReadUsers]
   );
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
-  const roles = useMemo<AuthRole[]>(() => {
-    const storedRoles = parseJsonSetting<AuthRole[]>(
-      settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles),
-      DEFAULT_AUTH_ROLES
-    );
-    return mergeDefaultRoles(storedRoles);
-  }, [settingsQuery.data]);
-  const userRoles = useMemo<AuthUserRoleMap>(
-    () =>
-      parseJsonSetting<AuthUserRoleMap>(
-        settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles),
-        {}
-      ),
-    [settingsQuery.data]
-  );
 
   const metrics = useMemo(() => {
     const total = users.length;
@@ -88,7 +61,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
     );
   }
 
-  if (authUsersQuery.isPending || settingsQuery.isPending) {
+  if (authUsersQuery.isPending || authLoading) {
     return (
       <SectionPanel className="p-6 text-sm text-gray-400">
         Loading auth metrics...

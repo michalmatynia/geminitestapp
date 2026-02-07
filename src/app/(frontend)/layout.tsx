@@ -1,3 +1,5 @@
+import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
+
 import type { JSX } from 'react';
 
 export default function FrontendLayout({
@@ -6,6 +8,10 @@ export default function FrontendLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <div>{children}</div>
+    <div className="min-h-screen bg-background">
+      <QueryErrorBoundary>
+        {children}
+      </QueryErrorBoundary>
+    </div>
   );
 }

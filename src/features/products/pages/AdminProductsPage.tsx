@@ -26,6 +26,7 @@ import {
 } from '@/features/products/hooks/useProductEnhancements';
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
+import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
@@ -52,6 +53,8 @@ export function AdminProductsPage(): React.JSX.Element {
 
   const { data: allDrafts = [] } = useDrafts();
   const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
+
+  const queuedProductIds = useQueuedProductIds();
 
   // Enhanced TanStack Query features
   useProductCacheWarmup();
@@ -511,6 +514,7 @@ export function AdminProductsPage(): React.JSX.Element {
           onExportSettingsClick: handleOpenExportSettings,
           integrationBadgeIds,
           integrationBadgeStatuses,
+          queuedProductIds,
           getRowId,
           isLoading: !isMounted || isLoading,
           skeletonRows: tableSkeleton,

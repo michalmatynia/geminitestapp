@@ -13,7 +13,8 @@ import { useRouter } from 'next/navigation';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
-import type { PriceGroupForCalculation, ProductWithImages } from '@/features/products/types';
+import { useProductListContext } from '@/features/products/context/ProductListContext';
+import type { ProductWithImages } from '@/features/products/types';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -233,32 +234,23 @@ export const getProductColumns = (
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
-    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
+      const {
+        productNameKey,
+        onProductNameClick,
+        queuedProductIds,
+      } = useProductListContext();
 
-      const meta: {
-            productNameKey?: ProductNameKey;
-            onProductNameClick?: (p: ProductWithImages) => void;
-            queuedProductIds?: Set<string>;
-          } | undefined = table.options.meta as
-        | {
-            productNameKey?: ProductNameKey;
-            onProductNameClick?: (p: ProductWithImages) => void;
-            queuedProductIds?: Set<string>;
-          }
-        | undefined;
-
-      const nameKey: ProductNameKey = meta?.productNameKey ?? 'name_en';
+      const nameKey: ProductNameKey = productNameKey ?? 'name_en';
       const nameValue: string | null | undefined =
         product[nameKey] ??
         product.name_en ??
         product.name_pl ??
         product.name_de;
 
-      const handleNameClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductNameClick;
-
       const isImported: boolean = !!product.baseProductId;
-      const isQueued: boolean = meta?.queuedProductIds?.has(product.id) ?? false;
+      const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
 
       return (
         <div>
@@ -266,15 +258,14 @@ export const getProductColumns = (
             className={[
               'inline whitespace-normal break-words',
               'select-text',
-              handleNameClick ? 'cursor-pointer hover:underline' : 'cursor-text',
+              'cursor-pointer hover:underline',
               'text-sm font-normal text-white/90',
               'hover:text-white/80',
             ].join(' ')}
             onClick={(): void => {
-              if (!handleNameClick) return;
               const selection = typeof window !== 'undefined' ? window.getSelection() : null;
               if (selection && selection.toString().trim().length > 0) return; // user is selecting for copy
-              handleNameClick(product);
+              onProductNameClick(product);
             }}
           >
             {nameValue || '—'}
@@ -327,25 +318,14 @@ export const getProductColumns = (
         </Button>
       );
     },
-    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const meta: {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            currencyCode?: string;
-            priceGroups?: PriceGroupForCalculation[];
-            queryClient?: QueryClient;
-          } | undefined = table.options.meta as
-        | {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            currencyCode?: string;
-            priceGroups?: PriceGroupForCalculation[];
-            queryClient?: QueryClient;
-          }
-        | undefined;
-
-      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
-      const currencyCode: string = meta?.currencyCode || '';
-      const priceGroups: PriceGroupForCalculation[] = meta?.priceGroups || [];
+      const {
+        setRefreshTrigger,
+        currencyCode,
+        priceGroups,
+      } = useProductListContext();
+      const queryClient = useQueryClient();
 
       // Calculate price for the selected currency
       const {
@@ -399,25 +379,23 @@ export const getProductColumns = (
             productId={product.id}
             field="price"
             onUpdate={(nextValue: number): void => {
-              if (meta?.queryClient) {
-                meta.queryClient.setQueriesData(
-                  { queryKey: ['products'] },
-                  (old: ProductWithImages[] | undefined) => {
-                    if (!Array.isArray(old)) return old;
-                    let changed = false;
-                    const next = old.map((item: ProductWithImages) => {
-                      if (item.id !== product.id) return item;
-                      changed = true;
-                      return { ...item, price: nextValue };
-                    });
-                    return changed ? next : old;
-                  }
-                );
-                meta.queryClient.setQueriesData(
-                  { queryKey: ['products', product.id] },
-                  (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
-                );
-              }
+              queryClient.setQueriesData(
+                { queryKey: ['products'] },
+                (old: ProductWithImages[] | undefined) => {
+                  if (!Array.isArray(old)) return old;
+                  let changed = false;
+                  const next = old.map((item: ProductWithImages) => {
+                    if (item.id !== product.id) return item;
+                    changed = true;
+                    return { ...item, price: nextValue };
+                  });
+                  return changed ? next : old;
+                }
+              );
+              queryClient.setQueriesData(
+                { queryKey: ['products', product.id] },
+                (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
+              );
               setRefreshTrigger((prev: number): number => prev + 1);
             }}
           />
@@ -439,19 +417,11 @@ export const getProductColumns = (
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
-    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const meta: {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            queryClient?: QueryClient;
-          } | undefined = table.options.meta as
-        | {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            queryClient?: QueryClient;
-          }
-        | undefined;
+      const { setRefreshTrigger } = useProductListContext();
+      const queryClient = useQueryClient();
 
-      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
       if (!setRefreshTrigger) {
         return <div>{product.stock !== null ? product.stock : '-'}</div>;
       }
@@ -462,25 +432,23 @@ export const getProductColumns = (
           productId={product.id}
           field="stock"
           onUpdate={(nextValue: number): void => {
-            if (meta?.queryClient) {
-              meta.queryClient.setQueriesData(
-                { queryKey: ['products'] },
-                (old: ProductWithImages[] | undefined) => {
-                  if (!Array.isArray(old)) return old;
-                  let changed = false;
-                  const next = old.map((item: ProductWithImages) => {
-                    if (item.id !== product.id) return item;
-                    changed = true;
-                    return { ...item, stock: nextValue };
-                  });
-                  return changed ? next : old;
-                }
-              );
-              meta.queryClient.setQueriesData(
-                { queryKey: ['products', product.id] },
-                (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
-              );
-            }
+            queryClient.setQueriesData(
+              { queryKey: ['products'] },
+              (old: ProductWithImages[] | undefined) => {
+                if (!Array.isArray(old)) return old;
+                let changed = false;
+                const next = old.map((item: ProductWithImages) => {
+                  if (item.id !== product.id) return item;
+                  changed = true;
+                  return { ...item, stock: nextValue };
+                });
+                return changed ? next : old;
+              }
+            );
+            queryClient.setQueriesData(
+              { queryKey: ['products', product.id] },
+              (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
+            );
             setRefreshTrigger((prev: number): number => prev + 1);
           }}
         />
@@ -501,30 +469,19 @@ export const getProductColumns = (
   {
     id: 'integrations',
     header: '',
-    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element | null => {
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
       const product: ProductWithImages = row.original;
-      const meta: {
-            onIntegrationsClick?: (p: ProductWithImages) => void;
-            onExportSettingsClick?: (p: ProductWithImages) => void;
-            integrationBadgeIds?: Set<string>;
-            integrationBadgeStatuses?: Map<string, string>;
-            queryClient?: QueryClient;
-          } | undefined = table.options.meta as
-        | {
-            onIntegrationsClick?: (p: ProductWithImages) => void;
-            onExportSettingsClick?: (p: ProductWithImages) => void;
-            integrationBadgeIds?: Set<string>;
-            integrationBadgeStatuses?: Map<string, string>;
-            queryClient?: QueryClient;
-          }
-        | undefined;
+      const {
+        onIntegrationsClick: handleClick,
+        onExportSettingsClick: handleExportClick,
+        integrationBadgeIds,
+        integrationBadgeStatuses,
+      } = useProductListContext();
 
-      const handleClick: ((p: ProductWithImages) => void) | undefined = meta?.onIntegrationsClick;
-      const handleExportClick: ((p: ProductWithImages) => void) | undefined = meta?.onExportSettingsClick;
       if (!handleClick) return null;
       const showMarketplaceBadge: boolean =
-        meta?.integrationBadgeIds?.has(product.id) ?? false;
-      const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? 'not_started';
+        integrationBadgeIds?.has(product.id) ?? false;
+      const status: string = integrationBadgeStatuses?.get(product.id) ?? 'not_started';
       const getStatusToneClass = (value: string): string => {
         const normalized = value.toLowerCase();
         if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
@@ -575,24 +532,12 @@ export const getProductColumns = (
 
   {
     id: 'actions',
-    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element | null => {
-      const meta: {
-            onProductEditClick?: (p: ProductWithImages) => void;
-            onProductDeleteClick?: (p: ProductWithImages) => void;
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            queryClient?: QueryClient;
-          } | undefined = table.options.meta as
-        | {
-            onProductEditClick?: (p: ProductWithImages) => void;
-            onProductDeleteClick?: (p: ProductWithImages) => void;
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-            queryClient?: QueryClient;
-          }
-        | undefined;
-
-      const onProductEditClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductEditClick;
-      const onProductDeleteClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductDeleteClick;
-      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
+      const {
+        onProductEditClick,
+        onProductDeleteClick,
+        setRefreshTrigger,
+      } = useProductListContext();
 
       return (
         <ActionsCell

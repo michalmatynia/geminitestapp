@@ -1096,13 +1096,12 @@ export async function evaluateGraph({
       entityCache.set(key, data);
       return data;
     } catch (error) {
-      void ErrorSystem.logWarning(`Runtime failure fetching entity ${entityType} ${entityId}`, {
+      reportAiPathsError(error, {
         service: 'ai-paths-runtime',
-        error,
         runId: resolvedRunId,
         entityType,
         entityId,
-      });
+      }, `Runtime failure fetching entity ${entityType} ${entityId}`);
       // We don't rethrow here to allow other nodes to potentially still execute if they don't depend on this entity.
       return null;
     }
@@ -1339,12 +1338,11 @@ export async function evaluateGraph({
       try {
         nextInputs[node.id] = collectNodeInputs(node.id);
       } catch (collectError) {
-        void ErrorSystem.logWarning(`Critical failure collecting inputs for node ${node.id}`, {
+        reportAiPathsError(collectError, {
           service: 'ai-paths-runtime',
-          error: collectError,
           runId: resolvedRunId,
           nodeId: node.id,
-        });
+        }, `Critical failure collecting inputs for node ${node.id}`);
         nextInputs[node.id] = {};
       }
     });
@@ -1358,12 +1356,11 @@ export async function evaluateGraph({
         try {
           nodeInputs = deriveDatabaseInputs(nodeInputs);
         } catch (deriveError) {
-          void ErrorSystem.logWarning(`Failed to derive database inputs for node ${node.id}`, {
+          reportAiPathsError(deriveError, {
             service: 'ai-paths-runtime',
-            error: deriveError,
             runId: resolvedRunId,
             nodeId: node.id,
-          });
+          }, `Failed to derive database inputs for node ${node.id}`);
           // Fallback to snapshot if derivation fails.
         }
       }
@@ -1771,11 +1768,10 @@ export async function evaluateGraph({
           changed,
         });
       } catch (profileError) {
-        void ErrorSystem.logWarning('Profiling event emission failed', {
+        reportAiPathsError(profileError, {
           service: 'ai-paths-runtime',
-          error: profileError,
           runId: resolvedRunId,
-        });
+        }, 'Profiling event emission failed');
       }
     }
     iterationCount += 1;
@@ -1821,11 +1817,10 @@ export async function evaluateGraph({
         });
       }
     } catch (summaryError) {
-      void ErrorSystem.logWarning('Profiling summary emission failed', {
+      reportAiPathsError(summaryError, {
         service: 'ai-paths-runtime',
-        error: summaryError,
         runId: resolvedRunId,
-      });
+      }, 'Profiling summary emission failed');
     }
     
     if (profileEnabled) {
@@ -1842,11 +1837,10 @@ export async function evaluateGraph({
           iterationCount,
         });
       } catch (finalProfileError) {
-        void ErrorSystem.logWarning('Final profiling event emission failed', {
+        reportAiPathsError(finalProfileError, {
           service: 'ai-paths-runtime',
-          error: finalProfileError,
           runId: resolvedRunId,
-        });
+        }, 'Final profiling event emission failed');
       }
     }
   }
@@ -1913,7 +1907,7 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
     }
     return current;
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    options.reportAiPathsError(error, {
       service: 'ai-paths-engine',
       action: 'evaluateWithIterator',
       runId: resolvedRunId,

@@ -77,6 +77,7 @@ export interface ProductListContextType {
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
+  queuedProductIds: Set<string>;
 
   // Modal State
   isCreateOpen: boolean;

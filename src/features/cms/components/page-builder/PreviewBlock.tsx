@@ -44,6 +44,7 @@ import {
   type ColorSchemeColors,
 } from '../frontend/theme-styles';
 import { usePreviewEditor } from './preview/context/PreviewEditorContext';
+import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
 import {
   buildImageElementPresentation,
   renderBackgroundImageLayer,
@@ -122,7 +123,6 @@ export function PreviewSection({
     inspectorSettings,
     hoveredNodeId,
     onSelect,
-    onHoverNode,
     onOpenMedia,
     onRemoveSection,
     onToggleSectionVisibility,
@@ -235,23 +235,29 @@ export function PreviewSection({
     />
   );
   const wrapInspector = (node: React.ReactNode): React.ReactNode => (
-    <InspectorHover
-      enabled={inspectorActive}
-      showTooltip={inspectorSettings.showTooltip}
-      nodeId={section.id}
-      onHover={onHoverNode}
-      fallbackNodeId={null}
-      content={inspectorContent}
-      className="w-full"
+    <BlockContextProvider
+      value={{
+        sectionId: section.id,
+        sectionType: section.type,
+        sectionZone: section.zone,
+        mediaStyles,
+      }}
     >
-      <GsapAnimationWrapper config={animConfig}>
-        <CssAnimationWrapper config={cssAnimConfig}>
-          <EventEffectsWrapper settings={section.settings} disableClick>
-            {node}
-          </EventEffectsWrapper>
-        </CssAnimationWrapper>
-      </GsapAnimationWrapper>
-    </InspectorHover>
+      <InspectorHover
+        nodeId={section.id}
+        fallbackNodeId={null}
+        content={inspectorContent}
+        className="w-full"
+      >
+        <GsapAnimationWrapper config={animConfig}>
+          <CssAnimationWrapper config={cssAnimConfig}>
+            <EventEffectsWrapper settings={section.settings} disableClick>
+              {node}
+            </EventEffectsWrapper>
+          </CssAnimationWrapper>
+        </GsapAnimationWrapper>
+      </InspectorHover>
+    </BlockContextProvider>
   );
 
   // Toggle: clicking an already-selected section deselects it
@@ -531,11 +537,6 @@ export function PreviewSection({
                     block={block}
                     isSelected={selectedNodeId === block.id}
                     contained
-                    selectedNodeId={selectedNodeId}
-                    sectionId={section.id}
-                    sectionType={section.type}
-                    sectionZone={section.zone}
-                    mediaStyles={mediaStyles}
                   />
                 ))
               )}
@@ -561,12 +562,6 @@ export function PreviewSection({
             block={block}
             isSelected={selectedNodeId === block.id}
             contained
-            selectedNodeId={selectedNodeId}
-            sectionId={section.id}
-            sectionType={section.type}
-            sectionZone={section.zone}
-            onOpenMedia={onOpenMedia}
-            mediaStyles={mediaStyles}
           />
         ))}
       </div>
@@ -1097,10 +1092,7 @@ export function PreviewSection({
                                   return (
                                     <InspectorHover
                                       key={column.id}
-                                      enabled={inspectorActive}
-                                      showTooltip={inspectorSettings.showTooltip}
                                       nodeId={column.id}
-                                      onHover={onHoverNode}
                                       fallbackNodeId={section.id}
                                       content={columnTooltip}
                                       className="w-full"
@@ -1200,69 +1192,63 @@ export function PreviewSection({
                                               ? undefined
                                               : columnGapStyle;
                                             return (
-                                              <div
-                                                className={`relative z-10 flex flex-col ${shouldStretch ? 'h-full' : resolvedGapClass} ${
-                                                  isInspecting
-                                                    ? ''
-                                                    : 'pointer-events-none'
-                                                }`}
-                                                style={{
-                                                  ...(resolvedGapStyle ?? {}),
-                                                  ...(columnJustify
-                                                    ? {
-                                                      justifyContent:
-                                                        columnJustify,
-                                                    }
-                                                    : {}),
-                                                  ...(columnAlign
-                                                    ? { alignItems: columnAlign }
-                                                    : {}),
-                                                }}
-                                              >
-                                                {contentBlocks.map(
-                                                  (
-                                                    block: BlockInstance,
-                                                    blockIndex: number,
-                                                  ) => (
-                                                    <div
-                                                      key={block.id}
-                                                      className={
-                                                        shouldStretch
-                                                          ? 'flex-1'
-                                                          : ''
+                                              <BlockContextProvider value={{ columnId: column.id }}>
+                                                <div
+                                                  className={`relative z-10 flex flex-col ${shouldStretch ? 'h-full' : resolvedGapClass} ${
+                                                    isInspecting
+                                                      ? ''
+                                                      : 'pointer-events-none'
+                                                  }`}
+                                                  style={{
+                                                    ...(resolvedGapStyle ?? {}),
+                                                    ...(columnJustify
+                                                      ? {
+                                                        justifyContent:
+                                                          columnJustify,
                                                       }
-                                                      style={{
-                                                        minHeight: `${getBlockMinHeight(block.type)}px`,
-                                                        ...(shouldStretch
-                                                          ? { height: '100%' }
-                                                          : {}),
-                                                        position: 'relative',
-                                                        zIndex:
-                                                        contentBlocks.length -
-                                                        blockIndex,
-                                                      }}
-                                                    >
-                                                      <PreviewBlockItem
-                                                        block={block}
-                                                        isSelected={
-                                                          selectedNodeId ===
-                                                        block.id
+                                                      : {}),
+                                                    ...(columnAlign
+                                                      ? { alignItems: columnAlign }
+                                                      : {}),
+                                                }}
+                                                >
+                                                  {contentBlocks.map(
+                                                    (
+                                                      block: BlockInstance,
+                                                      blockIndex: number,
+                                                    ) => (
+                                                      <div
+                                                        key={block.id}
+                                                        className={
+                                                          shouldStretch
+                                                            ? 'flex-1'
+                                                            : ''
                                                         }
-                                                        contained
-                                                        selectedNodeId={
-                                                          selectedNodeId
-                                                        }
-                                                        sectionId={section.id}
-                                                        sectionType={section.type}
-                                                        sectionZone={section.zone}
-                                                        columnId={column.id}
-                                                        mediaStyles={mediaStyles}
-                                                        stretch={shouldStretch}
-                                                      />
-                                                    </div>
-                                                  ),
-                                                )}
-                                              </div>
+                                                        style={{
+                                                          minHeight: `${getBlockMinHeight(block.type)}px`,
+                                                          ...(shouldStretch
+                                                            ? { height: '100%' }
+                                                            : {}),
+                                                          position: 'relative',
+                                                          zIndex:
+                                                          contentBlocks.length -
+                                                          blockIndex,
+                                                        }}
+                                                      >
+                                                        <PreviewBlockItem
+                                                          block={block}
+                                                          isSelected={
+                                                            selectedNodeId ===
+                                                          block.id
+                                                          }
+                                                          contained
+                                                          stretch={shouldStretch}
+                                                        />
+                                                      </div>
+                                                    ),
+                                                  )}
+                                                </div>
+                                              </BlockContextProvider>
                                             );
                                           })()
                                         ) : showEditorChrome ? (
@@ -1328,7 +1314,7 @@ export function PreviewSection({
               e.stopPropagation();
               onOpenMedia({
                 kind: 'section',
-                sectionId: section.id,
+                sectionId: section.id ?? '',
                 key: 'image',
               });
             }}
@@ -1372,11 +1358,6 @@ export function PreviewSection({
                     block={block}
                     isSelected={selectedNodeId === block.id}
                     contained
-                    selectedNodeId={selectedNodeId}
-                    sectionId={section.id}
-                    sectionType={section.type}
-                    sectionZone={section.zone}
-                    mediaStyles={mediaStyles}
                   />
                 ))
               ) : showEditorChrome ? (
@@ -1419,7 +1400,7 @@ export function PreviewSection({
               e.stopPropagation();
               onOpenMedia({
                 kind: 'section',
-                sectionId: section.id,
+                sectionId: section.id ?? '',
                 key: 'image',
               });
             }}
@@ -1456,12 +1437,6 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
                 />
               ))}
             </div>
@@ -1495,7 +1470,7 @@ export function PreviewSection({
               e.stopPropagation();
               onOpenMedia({
                 kind: 'section',
-                sectionId: section.id,
+                sectionId: section.id ?? '',
                 key: 'src',
               });
             }}
@@ -1518,12 +1493,6 @@ export function PreviewSection({
                 block={block}
                 isSelected={selectedNodeId === block.id}
                 contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                sectionType={section.type}
-                sectionZone={section.zone}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
               />
             ))}
             {showEditorChrome && section.blocks.length === 0 && (
@@ -1611,7 +1580,7 @@ export function PreviewSection({
               e.stopPropagation();
               onOpenMedia({
                 kind: 'section',
-                sectionId: section.id,
+                sectionId: section.id ?? '',
                 key: 'src',
               });
             }}
@@ -1872,12 +1841,6 @@ export function PreviewSection({
                   block={letter}
                   isSelected={selectedNodeId === letter.id}
                   contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
                 />
               ))}
             </div>
@@ -1890,12 +1853,6 @@ export function PreviewSection({
                 block={letter}
                 isSelected={selectedNodeId === letter.id}
                 contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                sectionType={section.type}
-                sectionZone={section.zone}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
               />
             ))}
           </div>
@@ -1972,12 +1929,6 @@ export function PreviewSection({
                         block={item.heading}
                         isSelected={selectedNodeId === item.heading.id}
                         contained
-                        selectedNodeId={selectedNodeId}
-                        sectionId={section.id}
-                        sectionType={section.type}
-                        sectionZone={section.zone}
-                        onOpenMedia={onOpenMedia}
-                        mediaStyles={mediaStyles}
                       />
                       <span className="ml-4 shrink-0 text-gray-400 text-xl">
                         {index === 0 ? '−' : '+'}
@@ -1989,12 +1940,6 @@ export function PreviewSection({
                           block={item.text}
                           isSelected={selectedNodeId === item.text.id}
                           contained
-                          selectedNodeId={selectedNodeId}
-                          sectionId={section.id}
-                          sectionType={section.type}
-                          sectionZone={section.zone}
-                          onOpenMedia={onOpenMedia}
-                          mediaStyles={mediaStyles}
                         />                      </div>
                     )}
                   </div>
@@ -2058,12 +2003,6 @@ export function PreviewSection({
                     block={block}
                     isSelected={selectedNodeId === block.id}
                     contained
-                    selectedNodeId={selectedNodeId}
-                    sectionId={section.id}
-                    sectionType={section.type}
-                    sectionZone={section.zone}
-                    onOpenMedia={onOpenMedia}
-                    mediaStyles={mediaStyles}
                   />                </div>
               ))}
             </div>
@@ -2328,13 +2267,6 @@ export function PreviewSection({
                                   block={child}
                                   isSelected={selectedNodeId === child.id}
                                   contained
-                                  selectedNodeId={selectedNodeId}
-                                  sectionId={section.id}
-                                  sectionType={section.type}
-                                  sectionZone={section.zone}
-                                  parentBlockId={frame.id}
-                                  onOpenMedia={onOpenMedia}
-                                  mediaStyles={null}
                                   stretch={shouldFillBlock}
                                 />
                               </div>
@@ -2446,12 +2378,6 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
                 />
               ))}
             </div>
@@ -2580,12 +2506,12 @@ function PreviewBlockItem({
   block,
   isSelected,
   contained,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
-  parentBlockId,
-  mediaStyles,
+  sectionId: propSectionId,
+  sectionType: propSectionType,
+  sectionZone: propSectionZone,
+  columnId: propColumnId,
+  parentBlockId: propParentBlockId,
+  mediaStyles: propMediaStyles,
   stretch = false,
 }: PreviewBlockItemProps): React.ReactNode {
   const {
@@ -2593,9 +2519,17 @@ function PreviewBlockItem({
     inspectorSettings,
     hoveredNodeId,
     onSelect,
-    onHoverNode,
     onOpenMedia,
   } = usePreviewEditor();
+  
+  const blockContext = useBlockContext();
+  const sectionId = propSectionId ?? blockContext.sectionId;
+  const sectionType = propSectionType ?? blockContext.sectionType;
+  const sectionZone = propSectionZone ?? blockContext.sectionZone;
+  const columnId = propColumnId ?? blockContext.columnId;
+  const parentBlockId = propParentBlockId ?? blockContext.parentBlockId;
+  const mediaStyles = propMediaStyles ?? blockContext.mediaStyles;
+
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const animConfig = block.settings['gsapAnimation'] as
@@ -2695,28 +2629,27 @@ function PreviewBlockItem({
   );
   const fallbackNodeId = parentBlockId ?? columnId ?? sectionId;
   const wrapBlock = (node: React.ReactNode): React.ReactNode => (
-    <InspectorHover
-      enabled={inspectorActive}
-      showTooltip={inspectorSettings?.showTooltip}
-      nodeId={block.id}
-      onHover={onHoverNode}
-      fallbackNodeId={fallbackNodeId}
-      content={inspectorContent}
-      className={stretchClass}
-    >
-      <GsapAnimationWrapper config={animConfig}>
-        <CssAnimationWrapper config={cssAnimConfig}>
-          <EventEffectsWrapper
-            settings={block.settings}
-            disableClick
-            nodeId={inlineCustomNodeId ?? ''}
-            customCss={inlineCustomCss}
-          >
-            {node}{' '}
-          </EventEffectsWrapper>
-        </CssAnimationWrapper>
-      </GsapAnimationWrapper>
-    </InspectorHover>
+    <BlockContextProvider value={{ parentBlockId: block.id }}>
+      <InspectorHover
+        nodeId={block.id}
+        fallbackNodeId={fallbackNodeId}
+        content={inspectorContent}
+        className={stretchClass}
+      >
+        <GsapAnimationWrapper config={animConfig}>
+          <CssAnimationWrapper config={cssAnimConfig}>
+            <EventEffectsWrapper
+              settings={block.settings}
+              disableClick
+              nodeId={inlineCustomNodeId ?? ''}
+              customCss={inlineCustomCss}
+            >
+              {node}{' '}
+            </EventEffectsWrapper>
+          </CssAnimationWrapper>
+        </GsapAnimationWrapper>
+      </InspectorHover>
+    </BlockContextProvider>
   );
   const handleSelect = (event: React.SyntheticEvent): void => {
     event.stopPropagation();
@@ -2756,78 +2689,43 @@ function PreviewBlockItem({
             {block.type === 'ImageWithText' && (
               <PreviewImageWithTextBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'Hero' && (
               <PreviewHeroBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'RichText' && (
               <PreviewRichTextBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'Block' && (
               <PreviewBlockSectionBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'TextAtom' && (
               <PreviewTextAtomBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'Carousel' && (
               <PreviewCarouselBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
             {block.type === 'Slideshow' && (
               <PreviewSlideshowBlock
                 block={block}
-                sectionId={sectionId}
-                sectionType={sectionType}
-                sectionZone={sectionZone}
-                columnId={columnId}
                 stretch={stretch}
-                mediaStyles={mediaStyles}
               />
             )}
           </div>
@@ -2839,7 +2737,7 @@ function PreviewBlockItem({
               e.stopPropagation();
               onOpenMedia?.({
                 kind: 'block',
-                sectionId,
+                sectionId: sectionId ?? '',
                 blockId: block.id,
                 columnId,
                 parentBlockId,
@@ -3126,7 +3024,7 @@ function PreviewBlockItem({
               e.stopPropagation();
               onOpenMedia?.({
                 kind: 'block',
-                sectionId,
+                sectionId: sectionId ?? '',
                 blockId: block.id,
                 columnId,
                 parentBlockId,
@@ -3426,7 +3324,7 @@ function PreviewBlockItem({
               e.stopPropagation();
               onOpenMedia?.({
                 kind: 'block',
-                sectionId,
+                sectionId: sectionId ?? '',
                 blockId: block.id,
                 columnId,
                 parentBlockId,

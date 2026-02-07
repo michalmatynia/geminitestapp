@@ -31,6 +31,15 @@ import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
 import type { SettingsField, InspectorSettings, BlockInstance } from '../../types/page-builder';
 
+interface ConnectionSettings {
+  enabled: boolean;
+  source: string;
+  path: string;
+  fallback: string;
+}
+
+type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai';
+
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
     state,
@@ -225,12 +234,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return options.length > 0 ? options : [{ label: 'No app embeds enabled', value: '' }];
   }, [settingsStore]);
 
-  const connectionSettings = useMemo(() => {
-    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.connection ?? {}) as any;
+  const connectionSettings = useMemo((): ConnectionSettings => {
+    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.connection ?? {}) as Partial<ConnectionSettings>;
     return { enabled: raw.enabled ?? false, source: raw.source ?? '', path: raw.path ?? '', fallback: raw.fallback ?? '' };
   }, [selectedSection, selectedColumn, selectedBlock]);
 
-  const updateConnectionSetting = useCallback((patch: any): void => {
+  const updateConnectionSetting = useCallback((patch: Partial<ConnectionSettings>): void => {
     const next = { ...connectionSettings, ...patch };
     if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('connection', next);
     else if (selectedColumn) handleColumnSettingChange('connection', next);
@@ -297,7 +306,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           </div>
         )}
         {!state.currentPage ? (<div className="flex-1 overflow-y-auto p-4"><p className="text-sm text-gray-500">Select a page first.</p></div>) : !hasSelection ? (<PageSettingsTab />) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
               <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
               <TabsTrigger value="animation" className="flex-1 text-xs">Anim</TabsTrigger>

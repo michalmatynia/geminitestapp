@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 
 import { usePreviewEditor } from './context/PreviewEditorContext';
+import { useBlockContext, BlockContextProvider } from './context/BlockContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
 import type { PreviewSectionBlockProps, PreviewBlockItemProps } from './types';
@@ -23,12 +24,30 @@ export function registerCarouselPreviewBlockItem(component: React.ComponentType<
 
 
 
-function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia'>): React.ReactNode {
+function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'mediaStyles'>): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerCarouselPreviewBlockItem first.');
   }
-  const { isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
-  return <_PreviewBlockItem {...props} isInspecting={isInspecting} inspectorSettings={inspectorSettings} hoveredNodeId={hoveredNodeId} onSelect={onSelect} onHoverNode={onHoverNode} onOpenMedia={onOpenMedia} />;
+  const { selectedNodeId, isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
+  const { sectionId, sectionType, sectionZone, columnId, mediaStyles } = useBlockContext();
+
+  return (
+    <_PreviewBlockItem 
+      {...props} 
+      isSelected={selectedNodeId === props.block.id}
+      isInspecting={isInspecting} 
+      inspectorSettings={inspectorSettings} 
+      hoveredNodeId={hoveredNodeId} 
+      onSelect={onSelect} 
+      onHoverNode={onHoverNode} 
+      onOpenMedia={onOpenMedia}
+      sectionId={sectionId}
+      sectionType={sectionType}
+      sectionZone={sectionZone}
+      columnId={columnId}
+      mediaStyles={mediaStyles}
+    />
+  );
 }
 
 
@@ -47,15 +66,9 @@ export const parseCarouselBoolSetting = (value: unknown, defaultValue: boolean =
 
 export function PreviewCarouselBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
   const {
-    selectedNodeId,
     inspectorSettings,
   } = usePreviewEditor();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
@@ -172,19 +185,14 @@ export function PreviewCarouselBlock({
               className={`flex flex-col ${alignmentClass} ${verticalAlignmentClass}`}
               style={frameStyle}
             >
-              {frameChildren.map((child: BlockInstance) => (
-                <PreviewBlockItemProxy
-                  key={child.id}
-                  block={child}
-                  isSelected={selectedNodeId === child.id}
-                  sectionId={sectionId}
-                  sectionType={sectionType}
-                  sectionZone={sectionZone}
-                  columnId={columnId}
-                  parentBlockId={frame.id}
-                  mediaStyles={mediaStyles}
-                />
-              ))}
+              <BlockContextProvider value={{ parentBlockId: frame.id }}>
+                {frameChildren.map((child: BlockInstance) => (
+                  <PreviewBlockItemProxy
+                    key={child.id}
+                    block={child}
+                  />
+                ))}
+              </BlockContextProvider>
             </div>
           );
         })}
@@ -240,14 +248,9 @@ export function PreviewCarouselBlock({
 
 export function PreviewSlideshowBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
   const {
-    selectedNodeId,
     inspectorSettings,
     pauseSlideshowOnHoverInEditor,
   } = usePreviewEditor();
@@ -404,41 +407,36 @@ export function PreviewSlideshowBlock({
                   }
                 >
                   <div className="flex h-full w-full flex-col" style={frameStyle}>
-                    {frameChildren.length > 0 ? (
-                      frameChildren.map((child: BlockInstance, blockIdx: number) => {
-                        const blockDelay = animationDelay + blockIdx * stagger;
-                        const animationStyle: React.CSSProperties =
-                          isActiveFrame && resolvedAnimationType !== 'none'
-                            ? {
-                              animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
-                            }
-                            : {};
-                        const shouldFillBlock = fillContent && (child.type === 'Image' || child.type === 'ImageElement');
-                        const wrapperStyle: React.CSSProperties = shouldFillBlock
-                          ? { ...animationStyle, width: '100%', height: '100%', alignSelf: 'stretch' }
-                          : animationStyle;
-                        const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
-                        return (
-                          <div key={triggerKey} style={wrapperStyle}>
-                            <PreviewBlockItemProxy
-                              block={child}
-                              isSelected={selectedNodeId === child.id}
-                              sectionId={sectionId}
-                              sectionType={sectionType}
-                              sectionZone={sectionZone}
-                              columnId={columnId}
-                              parentBlockId={frame.id}
-                              mediaStyles={null}
-                              stretch={shouldFillBlock}
-                            />
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
-                        Empty slide
-                      </div>
-                    )}
+                    <BlockContextProvider value={{ parentBlockId: frame.id }}>
+                      {frameChildren.length > 0 ? (
+                        frameChildren.map((child: BlockInstance, blockIdx: number) => {
+                          const blockDelay = animationDelay + blockIdx * stagger;
+                          const animationStyle: React.CSSProperties =
+                            isActiveFrame && resolvedAnimationType !== 'none'
+                              ? {
+                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                              }
+                              : {};
+                          const shouldFillBlock = fillContent && (child.type === 'Image' || child.type === 'ImageElement');
+                          const wrapperStyle: React.CSSProperties = shouldFillBlock
+                            ? { ...animationStyle, width: '100%', height: '100%', alignSelf: 'stretch' }
+                            : animationStyle;
+                          const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
+                          return (
+                            <div key={triggerKey} style={wrapperStyle}>
+                              <PreviewBlockItemProxy
+                                block={child}
+                                stretch={shouldFillBlock}
+                              />
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                          Empty slide
+                        </div>
+                      )}
+                    </BlockContextProvider>
                   </div>
                 </div>
               );

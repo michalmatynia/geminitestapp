@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { usePreviewEditor } from './context/PreviewEditorContext';
+import { useBlockContext } from './context/BlockContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
@@ -25,12 +26,30 @@ export function registerPreviewBlockItem(component: React.ComponentType<PreviewB
   _PreviewBlockItem = component;
 }
 
-function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia'>): React.ReactNode {
+function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'mediaStyles'>): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.');
   }
-  const { isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
-  return <_PreviewBlockItem {...props} isInspecting={isInspecting} inspectorSettings={inspectorSettings} hoveredNodeId={hoveredNodeId} onSelect={onSelect} onHoverNode={onHoverNode} onOpenMedia={onOpenMedia} />;
+  const { selectedNodeId, isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
+  const { sectionId, sectionType, sectionZone, columnId, mediaStyles } = useBlockContext();
+
+  return (
+    <_PreviewBlockItem 
+      {...props} 
+      isSelected={selectedNodeId === props.block.id}
+      isInspecting={isInspecting} 
+      inspectorSettings={inspectorSettings} 
+      hoveredNodeId={hoveredNodeId} 
+      onSelect={onSelect} 
+      onHoverNode={onHoverNode} 
+      onOpenMedia={onOpenMedia}
+      sectionId={sectionId ?? ''}
+      sectionType={sectionType}
+      sectionZone={sectionZone}
+      columnId={columnId}
+      mediaStyles={mediaStyles}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -39,17 +58,13 @@ function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isInspecting'
 
 export function PreviewImageWithTextBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
   const {
-    selectedNodeId,
     inspectorSettings,
   } = usePreviewEditor();
+  const { mediaStyles } = useBlockContext();
+  
   const placement = block.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
   const children = block.blocks ?? [];
@@ -86,15 +101,8 @@ export function PreviewImageWithTextBlock({
             <PreviewBlockItemProxy
               key={child.id}
               block={child}
-              isSelected={selectedNodeId === child.id}
               contained
-              selectedNodeId={selectedNodeId}
-              sectionId={sectionId}
-              sectionType={sectionType}
-              sectionZone={sectionZone}
-              columnId={columnId}
               parentBlockId={block.id}
-              mediaStyles={mediaStyles}
             />
           ))
         ) : showEditorChrome ? (
@@ -111,16 +119,9 @@ export function PreviewImageWithTextBlock({
 
 export function PreviewHeroBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const {
-    selectedNodeId,
-  } = usePreviewEditor();
+  const { mediaStyles } = useBlockContext();
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
 
@@ -147,15 +148,8 @@ export function PreviewHeroBlock({
             <PreviewBlockItemProxy
               key={child.id}
               block={child}
-              isSelected={selectedNodeId === child.id}
               contained
-              selectedNodeId={selectedNodeId}
-              sectionId={sectionId}
-              sectionType={sectionType}
-              sectionZone={sectionZone}
-              columnId={columnId}
               parentBlockId={block.id}
-              mediaStyles={mediaStyles}
             />
           ))
         ) : (
@@ -172,14 +166,9 @@ export function PreviewHeroBlock({
 
 export function PreviewRichTextBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
   const stretchStyle = stretch ? { height: '100%' } : undefined;
@@ -196,15 +185,8 @@ export function PreviewRichTextBlock({
           <PreviewBlockItemProxy
             key={child.id}
             block={child}
-            isSelected={selectedNodeId === child.id}
             contained
-            selectedNodeId={selectedNodeId}
-            sectionId={sectionId}
-            sectionType={sectionType}
-            sectionZone={sectionZone}
-            columnId={columnId}
             parentBlockId={block.id}
-            mediaStyles={mediaStyles}
           />
         ))
       ) : showEditorChrome ? (
@@ -220,14 +202,9 @@ export function PreviewRichTextBlock({
 
 export function PreviewBlockSectionBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = {
     ...getSectionStyles(block.settings),
@@ -269,15 +246,8 @@ export function PreviewBlockSectionBlock({
             <PreviewBlockItemProxy
               key={child.id}
               block={child}
-              isSelected={selectedNodeId === child.id}
               contained
-              selectedNodeId={selectedNodeId}
-              sectionId={sectionId}
-              sectionType={sectionType}
-              sectionZone={sectionZone}
-              columnId={columnId}
               parentBlockId={block.id}
-              mediaStyles={mediaStyles}
               stretch={shouldStretchChildren}
             />
           ))}
@@ -293,14 +263,9 @@ export function PreviewBlockSectionBlock({
 
 export function PreviewTextAtomBlock({
   block,
-  sectionId,
-  sectionType,
-  sectionZone,
-  columnId,
   stretch = false,
-  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditor();
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const text = (block.settings['text'] as string) || '';
   const alignment = (block.settings['alignment'] as string) || 'left';
@@ -343,15 +308,8 @@ export function PreviewTextAtomBlock({
           <PreviewBlockItemProxy
             key={child.id}
             block={child}
-            isSelected={selectedNodeId === child.id}
             contained
-            selectedNodeId={selectedNodeId}
-            sectionId={sectionId}
-            sectionType={sectionType}
-            sectionZone={sectionZone}
-            columnId={columnId}
             parentBlockId={block.id}
-            mediaStyles={mediaStyles}
           />
         ))
       ) : showEditorChrome ? (

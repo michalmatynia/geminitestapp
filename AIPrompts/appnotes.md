@@ -1,16 +1,11 @@
    change node from 22 to 24
 
+, useAiPathsRuntime would ideally be refactored into a
+  dedicated context provider
+  
+Nodes streaming wires is still not perfect
 
-in My AI-Patha EasyP Path I'm testing out connectivity of my Database Query Nodes to the actual database.
-
-I'm tryin to fetch a product by ID in PostgresQL database in node node-d82e31a2, however, when I fire trigger to fetch product with id {
-  "id": "{{value}}" , where value is d9f3568e-8981-44f9-81d9-84fa403bbc44 from simulation, the result I get in the output is 
-}
- 
-{
-  "result": {
-    "id": "d9f3568e-8981-44f9-81d9-84fa403bbc44"
-  }
+Nodes should retain what is ready for the output even if next node is not connected yet
 
 I can't fetch the whole product. The database provider is Prisma Postgresql 
 

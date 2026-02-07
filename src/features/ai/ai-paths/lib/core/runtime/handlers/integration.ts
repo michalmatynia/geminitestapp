@@ -1,4 +1,3 @@
-import { ErrorSystem } from '@/features/observability/server';
 import type {
   DbSchemaConfig,
   DatabaseConfig,
@@ -87,6 +86,7 @@ export const handleTrigger: NodeHandler = async ({
   simulationEntityType,
   triggerContext,
   fetchEntityCached,
+  reportAiPathsError,
   activePathId,
   resolvedEntity,
   fallbackEntityId,
@@ -136,11 +136,10 @@ export const handleTrigger: NodeHandler = async ({
     try {
       hydratedEntity = await fetchEntityCached(effectiveEntityType, effectiveEntityId);
     } catch (err) {
-      void ErrorSystem.logWarning(`Trigger hydration failed for ${effectiveEntityType}:${effectiveEntityId}`, {
+      reportAiPathsError(err, {
         service: 'ai-paths-runtime',
         nodeId: node.id,
-        error: err
-      });
+      }, `Trigger hydration failed for ${effectiveEntityType}:${effectiveEntityId}`);
     }
   }
   const resolvedContext: Record<string, unknown> = {
@@ -217,6 +216,7 @@ export const handleNotification: NodeHandler = ({
   nodes,
   executed,
   toast,
+  reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   if (executed.notification.has(node.id)) return prevOutputs;
   const hasMeaningfulValue = (value: unknown): boolean => {
@@ -271,10 +271,9 @@ export const handleNotification: NodeHandler = ({
         derivedPromptMessage = derivedPrompt.promptOutput;
       }
     } catch (err) {
-      void ErrorSystem.logWarning(`Prompt building failed for notification node ${node.id}`, {
+      reportAiPathsError(err, {
         service: 'ai-paths-runtime',
-        error: err
-      });
+      }, `Prompt building failed for notification node ${node.id}`);
     }
   }
   const messageSource: unknown =

@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState, useId, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
+
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;
 const INSPECTOR_TOOLTIP_GAP = 10;
@@ -96,16 +98,16 @@ export const InspectorTooltip = ({
 };
 
 export const InspectorHover = ({
-  enabled,
-  showTooltip = true,
+  enabled: propEnabled,
+  showTooltip: propShowTooltip,
   nodeId,
-  onHover,
+  onHover: propOnHover,
   fallbackNodeId,
   content,
   children,
   className,
 }: {
-  enabled: boolean;
+  enabled?: boolean | undefined;
   showTooltip?: boolean | undefined;
   nodeId: string;
   onHover?: ((nodeId: string | null) => void) | undefined;
@@ -114,6 +116,12 @@ export const InspectorHover = ({
   children: React.ReactNode;
   className?: string | undefined;
 }): React.ReactNode => {
+  const previewEditor = useOptionalPreviewEditor();
+  
+  const enabled = propEnabled ?? previewEditor?.isInspecting ?? false;
+  const showTooltip = propShowTooltip ?? previewEditor?.inspectorSettings?.showTooltip ?? true;
+  const onHover = propOnHover ?? previewEditor?.onHoverNode;
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);

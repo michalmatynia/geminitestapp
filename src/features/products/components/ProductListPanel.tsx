@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import { Profiler, memo, useMemo } from 'react';
 
 import { useProductListContext } from '@/features/products/context/ProductListContext';
-import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import { DataTable, Button, ListPanel, Alert } from '@/shared/ui';
 
 const ProductListHeader = dynamic(
@@ -40,23 +39,10 @@ export const ProductListPanel = memo(function ProductListPanel() {
     setRowSelection,
     handleProductsTableRender,
     tableColumns,
-    setRefreshTrigger,
-    productNameKey,
-    currencyCode,
-    priceGroups,
-    onProductNameClick,
-    onProductEditClick,
-    onProductDeleteClick,
-    onIntegrationsClick,
-    onExportSettingsClick,
-    integrationBadgeIds,
-    integrationBadgeStatuses,
     getRowId,
     isLoading,
     skeletonRows,
   } = useProductListContext();
-
-  const queuedProductIds = useQueuedProductIds();
 
   const tableProps = useMemo(
     () => ({
@@ -67,20 +53,6 @@ export const ProductListPanel = memo(function ProductListPanel() {
       onRowSelectionChange: setRowSelection,
       isLoading,
       skeletonRows,
-      meta: {
-        setRefreshTrigger,
-        productNameKey,
-        currencyCode,
-        priceGroups,
-        onProductNameClick,
-        onProductEditClick,
-        onProductDeleteClick,
-        onIntegrationsClick,
-        onExportSettingsClick,
-        integrationBadgeIds,
-        integrationBadgeStatuses,
-        queuedProductIds,
-      },
     }),
     [
       tableColumns,
@@ -90,18 +62,6 @@ export const ProductListPanel = memo(function ProductListPanel() {
       setRowSelection,
       isLoading,
       skeletonRows,
-      setRefreshTrigger,
-      productNameKey,
-      currencyCode,
-      priceGroups,
-      onProductNameClick,
-      onProductEditClick,
-      onProductDeleteClick,
-      onIntegrationsClick,
-      onExportSettingsClick,
-      integrationBadgeIds,
-      integrationBadgeStatuses,
-      queuedProductIds,
     ]
   );
 

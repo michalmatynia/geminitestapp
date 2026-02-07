@@ -17,7 +17,7 @@ export interface PreviewBlockItemProps {
   onSelect?: ((nodeId: string) => void) | undefined;
   contained?: boolean | undefined;
   selectedNodeId?: string | null | undefined;
-  sectionId: string;
+  sectionId?: string | undefined;
   sectionType?: string | undefined;
   sectionZone?: PageZone | undefined;
   columnId?: string | undefined;
@@ -29,17 +29,5 @@ export interface PreviewBlockItemProps {
 
 export interface PreviewSectionBlockProps {
   block: BlockInstance;
-  sectionId: string;
-  sectionType?: string | undefined;
-  sectionZone?: PageZone | undefined;
-  columnId?: string | undefined;
   stretch?: boolean | undefined;
-  mediaStyles?: React.CSSProperties | null | undefined;
-  selectedNodeId?: string | null | undefined;
-  isInspecting?: boolean | undefined;
-  inspectorSettings?: InspectorSettings | undefined;
-  hoveredNodeId?: string | null | undefined;
-  onSelect?: ((nodeId: string) => void) | undefined;
-  onHoverNode?: ((nodeId: string | null) => void) | undefined;
-  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
 }

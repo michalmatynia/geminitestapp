@@ -1,4 +1,3 @@
-import { ErrorSystem } from '@/features/observability/server';
 import type { RegexConfig, RuntimePortValues, StringMutatorOperation } from '@/shared/types/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
 
@@ -54,6 +53,7 @@ export const handleParser: NodeHandler = ({
   nodeInputs,
   resolvedEntity,
   fallbackEntityId,
+  reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {
     const contextInput = coerceInput(nodeInputs.context);
@@ -165,12 +165,11 @@ export const handleParser: NodeHandler = ({
       return parsed;
     }
   } catch (error) {
-    void ErrorSystem.logWarning(`Node ${node.id} failed`, {
+    reportAiPathsError(error, {
       service: 'ai-paths-runtime',
       nodeId: node.id,
       nodeType: node.type,
-      error: error instanceof Error ? error.message : String(error)
-    });
+    }, `Node ${node.id} failed`);
     return {};
   }
 };
@@ -182,6 +181,7 @@ export const handleMapper: NodeHandler = ({
   executed,
   runId,
   toast,
+  reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {
     const sources = {
@@ -254,12 +254,11 @@ export const handleMapper: NodeHandler = ({
     }
     return mapped;
   } catch (error) {
-    void ErrorSystem.logWarning(`Node ${node.id} failed`, {
+    reportAiPathsError(error, {
       service: 'ai-paths-runtime',
       nodeId: node.id,
       nodeType: node.type,
-      error: error instanceof Error ? error.message : String(error)
-    });
+    }, `Node ${node.id} failed`);
     return {};
   }
 };

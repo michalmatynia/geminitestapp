@@ -110,11 +110,18 @@ function stringifyContext(value: unknown, limit?: number | null): string {
   }
 }
 
-function serializeBlock(block: BlockInstance | any): Record<string, unknown> {
+interface SerializedBlock {
+  id: string;
+  type: string;
+  settings: Record<string, unknown>;
+  blocks: SerializedBlock[];
+}
+
+function serializeBlock(block: BlockInstance): SerializedBlock {
   return {
     id: block.id,
     type: block.type,
-    settings: block.settings ?? {},
+    settings: (block.settings ?? {}) as Record<string, unknown>,
     blocks: (block.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
   };
 }
@@ -142,7 +149,16 @@ export function InspectorAiProvider({
   onUpdateCustomCssAiConfig,
   contentAiAllowedKeys = [],
 }: InspectorAiProviderProps): React.JSX.Element {
-  const { state, selectedSection, selectedBlock, selectedColumn, selectedColumnParentSection, selectedParentSection, selectedParentColumn, selectedParentBlock } = usePageBuilder() as any;
+  const {
+    state,
+    selectedSection,
+    selectedBlock,
+    selectedColumn,
+    selectedColumnParentSection,
+    selectedParentSection,
+    selectedParentColumn,
+    selectedParentBlock,
+  } = usePageBuilder();
   const { toast } = useToast();
 
   // --- State: CSS AI ---

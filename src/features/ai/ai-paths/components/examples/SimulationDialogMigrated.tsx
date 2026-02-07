@@ -51,6 +51,12 @@ export type SimulationDialogMigratedProps = {
   onClose?: () => void;
   nodes?: AiNode[];
   isPathLocked?: boolean;
+  savePathConfig?: ((options?: {
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
+  }) => Promise<void>) | undefined;
 };
 
 /**
@@ -63,6 +69,7 @@ export function SimulationDialogMigrated({
   onClose: onCloseProp,
   nodes: nodesProp,
   isPathLocked: isPathLockedProp,
+  savePathConfig,
 }: SimulationDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
   const { nodes: nodesContext, isPathLocked: isPathLockedContext } = useGraphState();
@@ -80,6 +87,7 @@ export function SimulationDialogMigrated({
       setNodes={setNodesProp ?? setNodesContext}
       isPathLocked={isPathLockedProp ?? isPathLockedContext}
       onRunSimulation={onRunSimulation}
+      savePathConfig={savePathConfig}
     />
   );
 }

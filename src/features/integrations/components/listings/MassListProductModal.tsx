@@ -2,17 +2,18 @@
 
 import { useState } from 'react';
 
+import {
+  ListingSettingsProvider,
+  useListingSettingsContext,
+} from '@/features/integrations/context/ListingSettingsContext';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { logClientError } from '@/features/observability';
 import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
-import { useBaseComSettings } from './hooks/useBaseComSettings';
-import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from '../../hooks/useProductListingMutations';
-
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -22,7 +23,7 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
-export function MassListProductModal({
+function MassListProductModalContent({
   productIds,
   integrationId: initialIntegrationId,
   connectionId: initialConnectionId,
@@ -32,26 +33,16 @@ export function MassListProductModal({
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
 
-  // Integration & connection selection
+  // Consume from context
   const {
-    loading: loadingIntegrations,
+    loadingIntegrations: loading,
     selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
-  
-  // Base.com specific settings
-  const {
-    templates,
-    selectedTemplateId,
-    setSelectedTemplateId,
-    inventories,
     selectedInventoryId,
-    setSelectedInventoryId,
-    loadingInventories,
+    selectedTemplateId,
     allowDuplicateSku,
-    setAllowDuplicateSku,
-  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
+  } = useListingSettingsContext();
   
   // Export logging - for mass operations, store all logs
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
@@ -122,7 +113,6 @@ export function MassListProductModal({
     }
   };
 
-  const loading = loadingIntegrations;
   const submitting = exportMutation.isPending || createListingMutation.isPending;
 
   return (
@@ -168,17 +158,7 @@ export function MassListProductModal({
             ) : (
               <>
                 {isBaseComIntegration && (
-                  <BaseListingSettings
-                    inventories={inventories}
-                    selectedInventoryId={selectedInventoryId}
-                    onInventoryIdChange={setSelectedInventoryId}
-                    loadingInventories={loadingInventories}
-                    templates={templates}
-                    selectedTemplateId={selectedTemplateId}
-                    onTemplateIdChange={setSelectedTemplateId}
-                    allowDuplicateSku={allowDuplicateSku}
-                    onAllowDuplicateSkuChange={setAllowDuplicateSku}
-                  />
+                  <BaseListingSettings />
                 )}
               </>
             )}
@@ -195,6 +175,17 @@ export function MassListProductModal({
         )}
       </div>
     </FormModal>
+  );
+}
+
+export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element {
+  return (
+    <ListingSettingsProvider
+      initialIntegrationId={props.integrationId}
+      initialConnectionId={props.connectionId}
+    >
+      <MassListProductModalContent {...props} />
+    </ListingSettingsProvider>
   );
 }
 

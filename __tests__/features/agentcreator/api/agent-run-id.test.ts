@@ -1,13 +1,31 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
-    const resolvedParams = ctx?.params && typeof ctx.params.then === 'function'
-      ? ctx.params
-      : Promise.resolve(ctx?.params ?? {});
-    return resolvedParams.then((params: any) => handler(req, ctx, params));
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      return await handler(req, { requestId: 'test', body });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
+  apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      const context = {
+        ...ctx,
+        requestId: 'test',
+        body,
+      };
+      const resolvedParams =
+        ctx?.params && typeof ctx.params.then === 'function'
+          ? await ctx.params
+          : (ctx?.params ?? {});
+      return await handler(req, context, resolvedParams);
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
   },
 }));
 

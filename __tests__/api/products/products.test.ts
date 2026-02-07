@@ -1,16 +1,31 @@
 import { Product } from '@prisma/client';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 
 // Mock the api-handler module
 vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
-    const resolvedParams =
-      ctx?.params && typeof ctx.params.then === 'function'
-        ? ctx.params
-        : Promise.resolve(ctx?.params ?? {});
-    return resolvedParams.then((params: any) => handler(req, ctx, params));
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      return await handler(req, { requestId: 'test', getElapsedMs: () => 0 });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
+  apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
+    try {
+      const context = {
+        ...ctx,
+        requestId: 'test',
+        getElapsedMs: () => 0,
+      };
+      const resolvedParams =
+        ctx?.params && typeof ctx.params.then === 'function'
+          ? await ctx.params
+          : (ctx?.params ?? {});
+      return await handler(req, context, resolvedParams);
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
   },
 }));
 

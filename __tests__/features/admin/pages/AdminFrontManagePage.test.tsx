@@ -1,50 +1,65 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/useSettings';
+import { useSettingsMap, useUpdateSetting, useLiteSettingsMap } from '@/shared/hooks/use-settings';
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 // Mock shared hooks
-vi.mock('@/shared/hooks/useSettings', () => ({
+vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
   useUpdateSetting: vi.fn(),
+  useLiteSettingsMap: vi.fn(),
 }));
 
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
 // Mock useToast
-vi.mock('@/shared/ui', async () => ({
-  ...(await vi.importActual<any>('@/shared/ui')),
-  useToast: vi.fn(() => ({ toast: vi.fn() })),
-  Button: ({ children, onClick, disabled, className }: any) => (
-    <button onClick={onClick} disabled={disabled} className={className}>{children}</button>
-  ),
-  SectionHeader: ({ title, description, eyebrow }: any) => (
-    <div>
-      {eyebrow}
-      <h2>{title}</h2>
-      <p>{description}</p>
-    </div>
-  ),
-  SectionPanel: ({ children }: any) => <div>{children}</div>,
-}));
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({ toast: vi.fn() })),
+  };
+});
 
 describe('AdminFrontManagePage', () => {
   const mockMutateAsync = vi.fn();
   const mockToast = vi.fn();
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useUpdateSetting as any).mockReturnValue({
+    queryClient = createTestQueryClient();
+    vi.mocked(useUpdateSetting).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
-    });
-    (useToast as any).mockReturnValue({ toast: mockToast });
+    } as any);
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast } as any);
+    vi.mocked(useLiteSettingsMap).mockReturnValue({
+      isPending: false,
+      data: new Map(),
+    } as any);
   });
+
+  const renderPage = () => render(
+    <QueryClientProvider client={queryClient}>
+      <SettingsStoreProvider>
+        <AdminFrontManagePage />
+      </SettingsStoreProvider>
+    </QueryClientProvider>
+  );
 
   it('renders loading state', () => {
     (useSettingsMap as any).mockReturnValue({ isPending: true });
-    render(<AdminFrontManagePage />);
+    renderPage();
     expect(screen.getByText(/Loading front page settings/i)).toBeInTheDocument();
   });
 
@@ -54,10 +69,10 @@ describe('AdminFrontManagePage', () => {
       data: new Map([['front_page_app', 'chatbot']]),
     });
 
-    render(<AdminFrontManagePage />);
+    renderPage();
     
     // The "Chatbot" button should have the selected styling (blue-500/10)
-    const chatbotButton = screen.getByRole('button', { name: /Chatbot Open the admin chatbot workspace/i });
+    const chatbotButton = screen.getByRole('button', { name: /Chatbot Open the admin chatbot workspace on the home page/i });
     expect(chatbotButton).toHaveClass('border-blue-500/60');
   });
 
@@ -67,10 +82,10 @@ describe('AdminFrontManagePage', () => {
       data: new Map([['front_page_app', 'products']]),
     });
 
-    render(<AdminFrontManagePage />);
+    renderPage();
 
     // Select "Notes"
-    const notesButton = screen.getByRole('button', { name: /Notes Open the admin notes workspace/i });
+    const notesButton = screen.getByRole('button', { name: /Notes Open the admin notes workspace on the home page/i });
     fireEvent.click(notesButton);
 
     // Save

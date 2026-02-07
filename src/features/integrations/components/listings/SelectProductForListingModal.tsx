@@ -1,87 +1,78 @@
 'use client';
-import { useState } from 'react';
 
-import type {
-  ImageRetryPreset,
-} from '@/features/data-import-export';
-import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import type { ProductWithImages } from '@/features/products';
-import { useProducts } from '@/features/products/hooks/useProductsQuery';
-import { Button, Label, UnifiedSelect, SharedModal, useToast, Alert, ImageRetryDropdown } from '@/shared/ui';
+import React, { useState } from 'react';
+
+import {
+  ListingSettingsProvider,
+  useListingSettingsContext,
+} from '@/features/integrations/context/ListingSettingsContext';
+import {
+  useExportToBaseMutation,
+  useCreateListingMutation,
+  type ExportToBaseVariables,
+} from '@/features/integrations/hooks/useProductListingMutations';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
+import { logClientError } from '@/features/observability';
+import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
+import type { ProductWithImages } from '@/features/products/types';
+import {
+  UnifiedSelect,
+  Label,
+  SectionPanel,
+  FormModal,
+  SearchInput,
+} from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
-import { ExportLogViewer } from './ExportLogViewer';
-import { useBaseComSettings } from './hooks/useBaseComSettings';
-import { useIntegrationSelection } from './hooks/useIntegrationSelection';
-import { IntegrationAccountSummary } from './IntegrationAccountSummary';
-import { useImageRetryPresets } from './useImageRetryPresets';
-import { isImageExportError } from './utils';
-import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from '../../hooks/useProductListingMutations';
 
 type SelectProductForListingModalProps = {
-  integrationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
+  initialIntegrationId?: string | null;
+  initialConnectionId?: string | null;
 };
 
-export default function SelectProductForListingModal({
-  integrationId: initialIntegrationId,
-  connectionId: initialConnectionId,
+function SelectProductForListingModalContent({
   onClose,
   onSuccess,
 }: SelectProductForListingModalProps): React.JSX.Element {
-  const [error, setError] = useState<string | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
-  const { toast } = useToast();
-
-  const { data: products = [] } = useProducts({ pageSize: 1000 });
-
-  // Integration & connection selection
   const {
-    loading: loadingIntegrations,
+    integrations,
+    loadingIntegrations,
     selectedIntegrationId,
     selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
-
-  // Base.com specific settings
-  const {
-    templates,
-    selectedTemplateId,
-    setSelectedTemplateId,
-    inventories,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
     selectedInventoryId,
-    setSelectedInventoryId,
-    loadingInventories,
+    selectedTemplateId,
     allowDuplicateSku,
-    setAllowDuplicateSku,
-  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
+  } = useListingSettingsContext();
 
-  // Export logging
-  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
-  const [logsOpen, setLogsOpen] = useState(false);
-  const imageRetryPresets = useImageRetryPresets();
+  const [productSearch, setProductSearch] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  const productsQuery = useProductsWithCount({
+    pageSize: 10,
+    search: productSearch,
+  });
 
-  const exportMutation = useGenericExportToBaseMutation();
-  const createListingMutation = useGenericCreateListingMutation();
-
-  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
-    (c: { id: string; name: string }) => c.id === selectedConnectionId
-  )?.name || '';
+  const exportToBaseMutation = useExportToBaseMutation(selectedProductId || '');
+  const createListingMutation = useCreateListingMutation(selectedProductId || '');
+  
+  const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
 
   const handleSubmit = async (): Promise<void> => {
     if (!selectedProductId) {
       setError('Please select a product');
       return;
     }
-
-    if (!selectedConnectionId) {
-      setError('Please select an account');
+    if (!selectedIntegrationId || !selectedConnectionId) {
+      setError('Please select both a marketplace and an account');
       return;
     }
-
     if (isBaseComIntegration && !selectedInventoryId) {
       setError('Please select a Base.com inventory');
       return;
@@ -89,177 +80,144 @@ export default function SelectProductForListingModal({
 
     try {
       setError(null);
-      setExportLogs([]);
-      setLogsOpen(true);
-
       if (isBaseComIntegration) {
-        const payload: ExportToBaseVariables = {
-          connectionId: selectedConnectionId || '',
-          inventoryId: selectedInventoryId || '',
+        const exportData: ExportToBaseVariables = {
+          connectionId: selectedConnectionId,
+          inventoryId: selectedInventoryId,
           allowDuplicateSku,
         };
-        if (selectedTemplateId && selectedTemplateId !== 'none') payload.templateId = selectedTemplateId;
-                
-        const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });        if (result.logs) setExportLogs(result.logs);
-        toast('Product exported to Base.com', { variant: 'success' });
-        onSuccess();
+        if (selectedTemplateId && selectedTemplateId !== 'none') exportData.templateId = selectedTemplateId;
+        await exportToBaseMutation.mutateAsync(exportData);
       } else {
         await createListingMutation.mutateAsync({
-          productId: selectedProductId,
           integrationId: selectedIntegrationId,
           connectionId: selectedConnectionId,
         });
-        toast('Product listing created', { variant: 'success' });
-        onSuccess();
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to list product');
-      if (err instanceof Error && 'logs' in err) {
-        const errWithLogs = err as Error & { logs: CapturedLog[] };
-        if (Array.isArray(errWithLogs.logs)) {
-          setExportLogs(errWithLogs.logs);
-        }
-      }
-    }
-  };
-
-  const handleImageRetry = async (preset: ImageRetryPreset): Promise<void> => {
-    if (!selectedProductId || !isBaseComIntegration || !selectedInventoryId) {
-      return;
-    }
-    try {
-      setError(null);
-      setExportLogs([]);
-      setLogsOpen(true);
-              
-      const payload: ExportToBaseVariables = {
-        connectionId: selectedConnectionId || '',
-        inventoryId: selectedInventoryId || '',
-        allowDuplicateSku,
-        imageBase64Mode: preset.imageBase64Mode,
-        imageTransform: preset.transform,
-        exportImagesAsBase64: true,
-      };
-      if (selectedTemplateId && selectedTemplateId !== 'none') payload.templateId = selectedTemplateId;
-      
-      const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });      if (result.logs) setExportLogs(result.logs);
-      toast('Product exported with new image settings', { variant: 'success' });
       onSuccess();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to export product');
+      logClientError(err, { context: { source: 'SelectProductForListingModal', action: 'submit' } });
+      setError(err instanceof Error ? err.message : 'Failed to list product');
     }
   };
 
-  const getProductDisplayName = (product: ProductWithImages): string => {
-    return product.name_en || product.name_pl || product.name_de || product.sku || 'Unnamed product';
-  };
-
-  const loading = loadingIntegrations;
+  const integrationsWithConnections = integrations.filter(
+    (i: IntegrationWithConnections) => i.connections.length > 0
+  );
 
   return (
-    <SharedModal
-      open={true}
-      title={`List Product to ${selectedIntegration?.name || 'Marketplace'}`}
+    <FormModal
+      isOpen={true}
       onClose={onClose}
-      size="md"
-      showClose={false}
-      footer={
-        <>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-gray-800 text-white hover:bg-gray-700"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={(): void => { void handleSubmit(); }}
-            disabled={
-              exportMutation.isPending ||
-              createListingMutation.isPending ||
-              !selectedProductId ||
-              (isBaseComIntegration && !selectedInventoryId)
-            }
-          >
-            {exportMutation.isPending || createListingMutation.isPending
-              ? isBaseComIntegration
-                ? 'Exporting...'
-                : 'Listing...'
-              : isBaseComIntegration
-                ? 'Export to Base.com'
-                : 'List Product'}
-          </Button>
-        </>
-      }
+      title="List Product on Marketplace"
+      onSave={() => { void handleSubmit(); }}
+      isSaving={submitting}
+      saveText="List Product"
+      size="xl"
     >
-      <div className="space-y-6">
-        {error && (
-          <Alert variant="error">
-            <div className="flex flex-col gap-3">
-              <span>{error}</span>
-              {isBaseComIntegration && isImageExportError(error) ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <ImageRetryDropdown
-                    presets={imageRetryPresets}
-                    onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
-                    disabled={exportMutation.isPending || createListingMutation.isPending}
-                  />
-                  <span className="text-xs text-red-200/80">
-                    Applies JPEG resize/compression and retries automatically.
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          </Alert>
-        )}
-
-        <IntegrationAccountSummary 
-          integrationName={selectedIntegration?.name}
-          connectionName={connectionName}
-        />
-
-        {loading ? (
-          <p className="text-sm text-gray-400">Loading products...</p>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="product">Select Product</Label>
-              <UnifiedSelect
-                value={selectedProductId}
-                onValueChange={setSelectedProductId}
-                options={products.map((product: ProductWithImages) => ({
-                  value: product.id,
-                  label: `${getProductDisplayName(product)} (${product.sku})`
-                }))}
-                placeholder="Select a product..."
-              />
-            </div>
-
-            {isBaseComIntegration && (
-              <BaseListingSettings
-                inventories={inventories}
-                selectedInventoryId={selectedInventoryId}
-                onInventoryIdChange={setSelectedInventoryId}
-                loadingInventories={loadingInventories}
-                templates={templates}
-                selectedTemplateId={selectedTemplateId}
-                onTemplateIdChange={setSelectedTemplateId}
-                allowDuplicateSku={allowDuplicateSku}
-                onAllowDuplicateSkuChange={setAllowDuplicateSku}
-              />
-            )}
-          </>
-        )}
-        {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border pt-4">
-            <ExportLogViewer
-              logs={exportLogs}
-              isOpen={logsOpen}
-              onToggle={setLogsOpen}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-4">
+          <SectionPanel variant="subtle" className="p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-white">1. Select Product</h3>
+            <SearchInput
+              placeholder="Search products..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              onClear={() => setProductSearch('')}
             />
-          </div>
-        )}
+            
+            <div className="space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border">
+              {productsQuery.isLoading ? (
+                <p className="p-4 text-center text-xs text-gray-500">Loading products...</p>
+              ) : (productsQuery.products || []).length === 0 ? (
+                <p className="p-4 text-center text-xs text-gray-500">No products found.</p>
+              ) : (
+                (productsQuery.products || []).map((product: ProductWithImages) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => setSelectedProductId(product.id)}
+                    className={`w-full flex items-center justify-between p-3 text-left transition-colors border-b border-border last:border-0 ${
+                      selectedProductId === product.id 
+                        ? 'bg-primary/10 border-l-2 border-l-primary' 
+                        : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-white line-clamp-1">
+                        {product.name_en || product.name_pl || 'Unnamed Product'}
+                      </p>
+                      <p className="text-xs text-gray-500">SKU: {product.sku || '—'}</p>
+                    </div>
+                    {selectedProductId === product.id && (
+                      <div className="size-2 rounded-full bg-primary" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </SectionPanel>
+        </div>
+
+        <div className="space-y-4">
+          <SectionPanel variant="subtle" className="p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-white">2. Integration Settings</h3>
+            
+            {loadingIntegrations ? (
+              <p className="text-xs text-gray-500">Loading integrations...</p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Marketplace</Label>
+                  <UnifiedSelect
+                    value={selectedIntegrationId}
+                    onValueChange={setSelectedIntegrationId}
+                    options={integrationsWithConnections.map(i => ({ value: i.id, label: i.name }))}
+                    placeholder="Select marketplace..."
+                  />
+                </div>
+
+                {selectedIntegration && (
+                  <div className="space-y-2">
+                    <Label>Account</Label>
+                    <UnifiedSelect
+                      value={selectedConnectionId}
+                      onValueChange={setSelectedConnectionId}
+                      options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({ value: c.id, label: c.name }))}
+                      placeholder="Select account..."
+                    />
+                  </div>
+                )}
+
+                {isBaseComIntegration && selectedConnectionId && (
+                  <div className="pt-4 border-t border-border">
+                    <BaseListingSettings />
+                  </div>
+                )}
+              </>
+            )}
+          </SectionPanel>
+
+          {error && (
+            <SectionPanel variant="subtle-compact" className="border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+              {error}
+            </SectionPanel>
+          )}
+        </div>
       </div>
-    </SharedModal>
+    </FormModal>
   );
 }
+
+export function SelectProductForListingModal(props: SelectProductForListingModalProps): React.JSX.Element {
+  return (
+    <ListingSettingsProvider
+      initialIntegrationId={props.initialIntegrationId ?? null}
+      initialConnectionId={props.initialConnectionId ?? null}
+    >
+      <SelectProductForListingModalContent {...props} />
+    </ListingSettingsProvider>
+  );
+}
+
+export default SelectProductForListingModal;

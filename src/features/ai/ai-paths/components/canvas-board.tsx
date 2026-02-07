@@ -64,6 +64,7 @@ type RuntimeHashes = {
 };
 
 type CanvasBoardProps = {
+  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping';
   /** Runtime events passed from parent (TODO: move to context) */
   runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
   /** Runtime events passed from parent (TODO: move to context) */
@@ -133,6 +134,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 ]);
 
 export function CanvasBoard({
+  runtimeRunStatus = 'idle',
   runtimeNodeStatuses,
   runtimeEvents,
   viewportClassName,
@@ -1038,10 +1040,13 @@ export function CanvasBoard({
         {nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
+          const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
           const statusFromRuntimeState = runtimeState.outputs[node.id]?.status;
           const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
-            (typeof statusFromRuntimeState === 'string' ? statusFromRuntimeState : null);
+            (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
+              ? statusFromRuntimeState
+              : null);
           const runtimeNodeStatus =
             typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0
               ? runtimeNodeStatusRaw.trim().toLowerCase()

@@ -5,6 +5,8 @@ import { POST } from '@/app/api/client-errors/route';
 import { ErrorSystem } from '@/features/observability/server';
 
 vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
   ErrorSystem: {
     captureException: vi.fn().mockResolvedValue(undefined),
   },

@@ -1,10 +1,15 @@
 'use client';
+
 import { useState } from 'react';
 
 import type {
   ImageRetryPreset,
   ImageTransformOptions,
 } from '@/features/data-import-export';
+import {
+  ListingSettingsProvider,
+  useListingSettingsContext,
+} from '@/features/integrations/context/ListingSettingsContext';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -18,14 +23,9 @@ import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, Dropdo
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
-import { useBaseComSettings } from './hooks/useBaseComSettings';
-import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { useImageRetryPresets } from './useImageRetryPresets';
 import { isImageExportError } from './utils';
-
-
-
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -35,37 +35,26 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
-export function ListProductModal({
+function ListProductModalContent({
   product,
   onClose,
   onSuccess,
   initialIntegrationId,
   initialConnectionId,
 }: ListProductModalProps): React.JSX.Element {
-  // Integration & connection selection
+  // Consume from context
   const {
     integrations,
-    loading,
+    loadingIntegrations: loading,
     selectedIntegrationId,
     selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
-
-  // Base.com specific settings
-  const {
-    templates,
-    selectedTemplateId,
-    setSelectedTemplateId,
-    inventories,
     selectedInventoryId,
-    setSelectedInventoryId,
-    loadingInventories,
-    allowDuplicateSku,
-    setAllowDuplicateSku,
-  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
+    selectedTemplateId,
+  } = useListingSettingsContext();
 
   // Mutations
   const exportToBaseMutation = useExportToBaseMutation(product.id);
@@ -279,17 +268,7 @@ export function ListProductModal({
             )}
 
             {isBaseComIntegration && selectedConnectionId && (
-              <BaseListingSettings
-                inventories={inventories}
-                selectedInventoryId={selectedInventoryId}
-                onInventoryIdChange={setSelectedInventoryId}
-                loadingInventories={loadingInventories}
-                templates={templates}
-                selectedTemplateId={selectedTemplateId}
-                onTemplateIdChange={setSelectedTemplateId}
-                allowDuplicateSku={allowDuplicateSku}
-                onAllowDuplicateSkuChange={setAllowDuplicateSku}
-              />
+              <BaseListingSettings />
             )}
           </>
         )}
@@ -304,6 +283,17 @@ export function ListProductModal({
         )}
       </div>
     </FormModal>
+  );
+}
+
+export function ListProductModal(props: ListProductModalProps): React.JSX.Element {
+  return (
+    <ListingSettingsProvider
+      initialIntegrationId={props.initialIntegrationId ?? null}
+      initialConnectionId={props.initialConnectionId ?? null}
+    >
+      <ListProductModalContent {...props} />
+    </ListingSettingsProvider>
   );
 }
 

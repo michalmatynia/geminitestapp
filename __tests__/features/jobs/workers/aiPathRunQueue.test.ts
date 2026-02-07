@@ -26,7 +26,7 @@ describe('AI Path Run Queue Worker', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getPathRunRepository).mockResolvedValue(mockRepo as any);
+    vi.mocked(getPathRunRepository).mockReturnValue(mockRepo as any);
   });
 
   describe('computeBackoffMs', () => {

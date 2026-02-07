@@ -1794,6 +1794,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           ...baseConfig,
           id: activePathId,
           updatedAt,
+          nodes,
+          edges,
           runtimeState,
           lastRunAt,
         };
@@ -1812,6 +1814,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     return (): void => clearTimeout(timeout);
   }, [
     activePathId,
+    edges,
     lastRunAt,
     loading,
     nodes,

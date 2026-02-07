@@ -2,21 +2,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 
-import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
 import { Button, Input, SectionPanel, StatusBadge } from '@/shared/ui';
 
-type BaselinkerSettingsProps = {
-  activeConnection: IntegrationConnection | null;
-  onTest: () => void;
-  isTesting: boolean;
-};
-
-export function BaselinkerSettings({
-  activeConnection,
-  onTest,
-  isTesting,
-}: BaselinkerSettingsProps): React.JSX.Element {
+export function BaselinkerSettings(): React.JSX.Element {
+  const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
+  const activeConnection = connections[0] || null;
   const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
@@ -130,7 +122,7 @@ export function BaselinkerSettings({
           <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              onClick={onTest}
+              onClick={() => { void handleBaselinkerTest(activeConnection); }}
               disabled={isTesting}
               className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
             >

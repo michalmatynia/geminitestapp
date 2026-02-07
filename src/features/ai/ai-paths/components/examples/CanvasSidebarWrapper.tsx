@@ -43,6 +43,13 @@ export type CanvasSidebarWrapperProps = {
   onCancelRun?: () => void;
   /** Callback to clear all wires */
   onClearWires: () => void;
+  /** Save path config - for persisting node changes */
+  savePathConfig?: ((options?: {
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
+  }) => Promise<void>) | undefined;
 };
 
 /**

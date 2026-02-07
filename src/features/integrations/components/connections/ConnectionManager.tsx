@@ -1,42 +1,29 @@
 'use client';
 
-import { Dispatch, SetStateAction } from 'react';
-
-import { Integration, IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
 import { Button, Input, Label, SectionPanel } from '@/shared/ui';
 
+export function ConnectionManager(): React.JSX.Element {
+  const {
+    activeIntegration,
+    connections,
+    editingConnectionId,
+    connectionForm,
+    setConnectionForm,
+    handleSaveConnection,
+    handleDeleteConnection,
+    handleTestConnection,
+    handleBaselinkerTest,
+    handleAllegroTest,
+    isTesting,
+    testLog,
+    setSelectedStep,
+    setShowTestLogModal,
+  } = useIntegrationsContext();
 
+  if (!activeIntegration) return <></>;
 
-type ConnectionManagerProps = {
-  activeIntegration: Integration;
-  connections: IntegrationConnection[];
-  editingConnectionId: string | null;
-  setEditingConnectionId: (id: string | null) => void;
-  connectionForm: { name: string; username: string; password: string };
-  setConnectionForm: Dispatch<
-    SetStateAction<{ name: string; username: string; password: string }>
-  >;
-  onSave: () => void;
-  onDelete: (connection: IntegrationConnection) => void;
-  onTest: (connection: IntegrationConnection) => void;
-  isTesting: boolean;
-  testLog: TestLogEntry[];
-  onShowLog: (step: TestLogEntry) => void;
-};
-
-export function ConnectionManager({
-  activeIntegration,
-  connections,
-  editingConnectionId,
-  connectionForm,
-  setConnectionForm,
-  onSave,
-  onDelete,
-  onTest,
-  isTesting,
-  testLog,
-  onShowLog,
-}: ConnectionManagerProps): React.JSX.Element {
   const integrationSlug = activeIntegration.slug;
   const isTradera = integrationSlug === 'tradera';
   const isAllegro = integrationSlug === 'allegro';
@@ -128,7 +115,7 @@ export function ConnectionManager({
           <Button
             className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
             type="button"
-            onClick={onSave}
+            onClick={() => { void handleSaveConnection(); }}
           >
             {editingConnectionId ? 'Update connection' : 'Save connection'}
           </Button>
@@ -163,7 +150,11 @@ export function ConnectionManager({
                           : 'text-sky-300 hover:text-sky-200'
                     }`}
                     type="button"
-                    onClick={(): void => onTest(connection)}
+                    onClick={(): void => {
+                      if (isBaselinker) void handleBaselinkerTest(connection);
+                      else if (isAllegro) void handleAllegroTest(connection);
+                      else void handleTestConnection(connection);
+                    }}
                     disabled={isTesting}
                   >
                     {isTesting ? 'Testing...' : 'Test'}
@@ -171,7 +162,7 @@ export function ConnectionManager({
                   <Button
                     className="text-xs text-red-400 hover:text-red-300"
                     type="button"
-                    onClick={(): void => onDelete(connection)}
+                    onClick={(): void => handleDeleteConnection(connection)}
                   >
                     Remove
                   </Button>
@@ -211,7 +202,14 @@ export function ConnectionManager({
                             ? 'bg-emerald-500/20 text-emerald-200'
                             : 'bg-red-500/20 text-red-200'
                         }`}
-                        onClick={(): void => onShowLog(entry)}
+                        onClick={(): void => {
+                          setSelectedStep(
+                            entry.status !== 'pending'
+                              ? (entry as TestLogEntry & { status: 'ok' | 'failed' })
+                              : null
+                          );
+                          setShowTestLogModal(true);
+                        }}
                       >
                         {entry.status === 'ok' ? 'OK' : 'FAILED'}
                       </Button>

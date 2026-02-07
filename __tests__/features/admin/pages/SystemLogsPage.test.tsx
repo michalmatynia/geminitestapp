@@ -17,6 +17,12 @@ vi.mock('@tanstack/react-query', () => ({
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
 }));
 
 // Mock useToast and UI components
@@ -67,31 +73,33 @@ describe('SystemLogsPage', () => {
     // Default mock for logs
     (useQuery as any).mockImplementation(({ queryKey }: any) => {
       if (queryKey[0] === 'system-logs') {
-        return {
-          isPending: false,
-          data: {
-            logs: [
-              { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
-              { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
-            ],
-            total: 2,
-          },
-        };
-      }
-      if (queryKey[0] === 'system-log-metrics') {
-        return {
-          isPending: false,
-          data: {
-            metrics: {
+        if (queryKey[1] === 'list') {
+          return {
+            isPending: false,
+            data: {
+              logs: [
+                { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
+                { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
+              ],
               total: 2,
-              last24Hours: 1,
-              last7Days: 2,
-              levels: { error: 1, warn: 0, info: 1 },
-              topSources: [{ source: 'api', count: 1 }],
-              topPaths: [{ path: '/api/test', count: 1 }],
             },
-          },
-        };
+          };
+        }
+        if (queryKey[1] === 'metrics') {
+          return {
+            isPending: false,
+            data: {
+              metrics: {
+                total: 2,
+                last24Hours: 1,
+                last7Days: 2,
+                levels: { error: 1, warn: 0, info: 1 },
+                topSources: [{ source: 'api', count: 1 }],
+                topPaths: [{ path: '/api/test', count: 1 }],
+              },
+            },
+          };
+        }
       }
       return { isPending: false, data: null };
     });

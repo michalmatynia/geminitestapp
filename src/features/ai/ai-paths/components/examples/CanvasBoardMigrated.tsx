@@ -21,6 +21,7 @@ import { CanvasBoard } from '../canvas-board';
 
 
 export type CanvasBoardMigratedProps = {
+  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping';
   flowIntensity?: PathFlowIntensity;
   runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
   runtimeEvents?: AiPathRuntimeEvent[] | undefined;

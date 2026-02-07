@@ -10,8 +10,8 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
-import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import { AppErrorCodes, badRequestError, isAppError } from "@/shared/errors/app-error";
+import { requireAiPathsAccess, requireAiPathsRunAccess } from "@/features/ai/ai-paths/server";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
 const SETTINGS_COLLECTION = "settings";
@@ -172,7 +172,19 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
 };
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  await requireAiPathsAccess();
+  try {
+    await requireAiPathsRunAccess();
+  } catch (error) {
+    // Trigger buttons are rendered across multiple surfaces. For users without
+    // AI-paths permissions, treat this as an empty list rather than a noisy API error.
+    if (
+      isAppError(error) &&
+      (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)
+    ) {
+      return NextResponse.json([]);
+    }
+    throw error;
+  }
   const raw = await readTriggerButtonsRaw();
   const triggerButtons = parseTriggerButtons(raw);
   return NextResponse.json(triggerButtons);

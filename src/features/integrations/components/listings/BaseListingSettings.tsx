@@ -3,31 +3,22 @@
 import React from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import { Label, UnifiedSelect, Checkbox } from '@/shared/ui';
 
-interface BaseListingSettingsProps {
-  inventories: BaseInventory[];
-  selectedInventoryId: string;
-  onInventoryIdChange: (id: string) => void;
-  loadingInventories: boolean;
-  templates: Template[];
-  selectedTemplateId: string;
-  onTemplateIdChange: (id: string) => void;
-  allowDuplicateSku: boolean;
-  onAllowDuplicateSkuChange: (allowed: boolean) => void;
-}
+export function BaseListingSettings(): React.JSX.Element {
+  const {
+    inventories,
+    selectedInventoryId,
+    setSelectedInventoryId,
+    loadingInventories,
+    templates,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    allowDuplicateSku,
+    setAllowDuplicateSku,
+  } = useListingSettingsContext();
 
-export function BaseListingSettings({
-  inventories,
-  selectedInventoryId,
-  onInventoryIdChange,
-  loadingInventories,
-  templates,
-  selectedTemplateId,
-  onTemplateIdChange,
-  allowDuplicateSku,
-  onAllowDuplicateSkuChange,
-}: BaseListingSettingsProps): React.JSX.Element {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -36,7 +27,7 @@ export function BaseListingSettings({
         </Label>
         <UnifiedSelect
           value={selectedInventoryId}
-          onValueChange={onInventoryIdChange}
+          onValueChange={setSelectedInventoryId}
           disabled={loadingInventories || inventories.length === 0}
           options={inventories
             .filter((inventory: BaseInventory): boolean => !!inventory.id)
@@ -57,7 +48,7 @@ export function BaseListingSettings({
         <Label htmlFor="template">Template (Optional)</Label>
         <UnifiedSelect
           value={selectedTemplateId}
-          onValueChange={onTemplateIdChange}
+          onValueChange={setSelectedTemplateId}
           options={[
             { value: 'none', label: 'No template' },
             ...templates
@@ -78,7 +69,7 @@ export function BaseListingSettings({
         <Checkbox
           id="allowDuplicateSku"
           checked={allowDuplicateSku} 
-          onCheckedChange={(checked: boolean | 'indeterminate'): void => onAllowDuplicateSkuChange(Boolean(checked))}
+          onCheckedChange={(checked: boolean | 'indeterminate'): void => setAllowDuplicateSku(Boolean(checked))}
           className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
         />
         <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

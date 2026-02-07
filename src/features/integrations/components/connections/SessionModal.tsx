@@ -2,6 +2,9 @@
 
 
 
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { AppModal, Badge } from '@/shared/ui';
+
 type SessionCookie = {
   name?: string;
   value?: string;
@@ -13,34 +16,20 @@ type SessionCookie = {
   sameSite?: string;
 };
 
-type SessionOrigin = {
-  origin?: string;
-  localStorage?: { name?: string; value?: string }[];
-};
+export function SessionModal(): React.JSX.Element {
+  const {
+    sessionLoading: loading,
+    sessionError: error,
+    sessionCookies: cookies,
+    sessionOrigins: origins,
+    sessionUpdatedAt: updatedAt,
+    setShowSessionModal,
+  } = useIntegrationsContext();
 
-type SessionModalProps = {
-  loading: boolean;
-  error: string | null;
-  cookies: SessionCookie[];
-  origins: SessionOrigin[];
-  updatedAt: string | null;
-  onClose: () => void;
-};
-
-import { AppModal, Badge } from '@/shared/ui';
-
-export function SessionModal({
-  loading,
-  error,
-  cookies,
-  origins,
-  updatedAt,
-  onClose,
-}: SessionModalProps): React.JSX.Element {
   return (
     <AppModal
       open={true}
-      onClose={onClose}
+      onClose={() => setShowSessionModal(false)}
       title="Session cookies"
       size="lg"
     >

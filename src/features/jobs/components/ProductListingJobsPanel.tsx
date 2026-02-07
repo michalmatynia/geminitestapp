@@ -7,11 +7,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { useCancelListingMutation } from '@/features/jobs/hooks/useJobMutations';
-import { useIntegrationJobs } from '@/features/jobs/hooks/useJobQueries';
-import { logClientError } from '@/features/observability';
+import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
 import type { ListingJob, ProductJob } from '@/shared/types/listing-jobs';
 import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
@@ -41,6 +39,7 @@ const getStatusIcon = (status: string): React.JSX.Element => {
     case 'error':
       return <XCircle className="size-3" />;
     case 'processing':
+    case 'running':
     case 'in_progress':
       return <Loader2 className="size-3 animate-spin" />;
     default:
@@ -48,35 +47,24 @@ const getStatusIcon = (status: string): React.JSX.Element => {
   }
 };
 
-export default function ProductListingJobsPanel({
+function ProductListingJobsPanelContent({
   showBackToProducts = true,
 }: ProductListingJobsPanelProps): React.JSX.Element {
-  // Queries
-  const jobsQuery = useIntegrationJobs();
-  const jobs = useMemo(() => (jobsQuery.data as ProductJob[]) || [], [jobsQuery.data]);
-
-  // Mutations
-  const cancelMutation = useCancelListingMutation();
-
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [selectedListing, setSelectedListing] = useState<{
-    job: ProductJob;
-    listing: ListingJob;
-  } | null>(null);
-
-  const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
-    if (!window.confirm('Cancel this listing job? This will remove it from the queue.')) {
-      return;
-    }
-
-    try {
-      await cancelMutation.mutateAsync({ productId, listingId });
-    } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ProductListingJobsPanel', action: 'cancelListing', productId, listingId } });
-    }
-  };
+  const {
+    listingJobs: jobs,
+    listingJobsLoading: isLoading,
+    listingJobsRefreshing: isRefreshing,
+    refetchListingJobs: refetch,
+    listingJobsError: error,
+    query,
+    setQuery,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    selectedListing,
+    setSelectedListing,
+  } = useJobsContext();
 
   const formatDateTime = (value: Date | string | null): string => {
     if (!value) return '—';
@@ -136,8 +124,8 @@ export default function ProductListingJobsPanel({
       actions={
         <>
           <RefreshButton
-            onRefresh={() => void jobsQuery.refetch()}
-            isRefreshing={jobsQuery.isFetching}
+            onRefresh={() => void refetch()}
+            isRefreshing={isRefreshing}
           />
           {showBackToProducts && (
             <Button asChild variant="outline" size="sm">
@@ -153,7 +141,7 @@ export default function ProductListingJobsPanel({
     { key: 'query', label: 'Search', type: 'search', placeholder: 'Search by product, SKU, integration, or ID...' },
   ];
 
-  const filters = !jobsQuery.isLoading && !jobsQuery.error ? (
+  const filters = !isLoading && !error ? (
     <DynamicFilters
       fields={filterFields}
       values={{ query }}
@@ -163,7 +151,7 @@ export default function ProductListingJobsPanel({
     />
   ) : null;
 
-  const footer = !jobsQuery.isLoading && !jobsQuery.error ? (
+  const footer = !isLoading && !error ? (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
       <div className="text-xs text-gray-400">
         Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
@@ -185,20 +173,20 @@ export default function ProductListingJobsPanel({
       <ListPanel
         header={header}
         alerts={
-          jobsQuery.error ? (
+          error ? (
             <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-              {(jobsQuery.error).message}
+              {error.message}
             </div>
           ) : null
         }
         filters={filters}
         footer={footer}
       >
-        {jobsQuery.isLoading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="size-8 animate-spin text-gray-500" />
           </div>
-        ) : !jobsQuery.error ? (
+        ) : !error ? (
           <JobTable
             data={pagedRows.map((row: ListingRow): JobRowData => {
               const { job, listing } = row;
@@ -217,16 +205,7 @@ export default function ProductListingJobsPanel({
                 finishedAt: listing.updatedAt,
               };
             })}
-            isLoading={jobsQuery.isLoading}
-            onViewDetails={(id: string) => {
-              const row = pagedRows.find((r: ListingRow) => r.listing.id === id);
-              if (row) setSelectedListing(row);
-            }}
-            onCancel={(id: string) => {
-              const row = pagedRows.find((r: ListingRow) => r.listing.id === id);
-              if (row) void handleCancelListing(row.job.productId, row.listing.id);
-            }}
-            isCancelling={(id: string) => cancelMutation.isPending && cancelMutation.variables?.listingId === id}
+            isLoading={isLoading}
           />
         ) : null}
       </ListPanel>
@@ -366,5 +345,13 @@ export default function ProductListingJobsPanel({
         </SharedModal>
       )}
     </>
+  );
+}
+
+export default function ProductListingJobsPanel(props: ProductListingJobsPanelProps): React.JSX.Element {
+  return (
+    <JobsProvider>
+      <ProductListingJobsPanelContent {...props} />
+    </JobsProvider>
   );
 }

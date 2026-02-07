@@ -2,25 +2,22 @@
 
 import * as React from 'react';
 
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { AppModal } from '@/shared/ui';
 
-type TestResultModalProps = {
-  success: boolean;
-  message: string | null;
-  meta?: {
-    errorId?: string;
-    integrationId?: string | null;
-    connectionId?: string | null;
-  } | null;
-  onClose: () => void;
-};
+export function TestResultModal(): React.JSX.Element | null {
+  const {
+    showTestSuccessModal: success,
+    testSuccessMessage,
+    testError,
+    testErrorMeta: meta,
+    setShowTestSuccessModal,
+    setShowTestErrorModal,
+  } = useIntegrationsContext();
 
-export function TestResultModal({
-  success,
-  message,
-  meta,
-  onClose,
-}: TestResultModalProps): React.JSX.Element | null {
+  const message = success ? testSuccessMessage : testError;
+  const onClose = success ? () => setShowTestSuccessModal(false) : () => setShowTestErrorModal(false);
+
   if (!message) return null;
 
   const metaLines = [

@@ -70,6 +70,15 @@ const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<string>([
   'skipped',
   'timeout',
 ]);
+const TRANSIENT_RUNTIME_NODE_STATUSES = new Set<string>([
+  'queued',
+  'running',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+  'pending',
+  'processing',
+]);
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
@@ -383,9 +392,16 @@ export function useAiPathsRuntime({
   }, [normalizedNodes, resetRuntimeNodeStatuses]);
 
   useEffect((): void => {
+    const hasActiveRun =
+      runInFlightRef.current ||
+      serverRunActiveRef.current ||
+      runStatusRef.current !== 'idle';
     Object.entries(runtimeState.outputs ?? {}).forEach(([nodeId, nodeOutputs]: [string, RuntimePortValues]) => {
       const status = (nodeOutputs as Record<string, unknown>)?.status;
       if (typeof status !== 'string') return;
+      const normalizedStatus = normalizeNodeStatus(status);
+      if (!normalizedStatus) return;
+      if (!hasActiveRun && TRANSIENT_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
       const node = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
       setNodeStatus({
         nodeId,
@@ -395,7 +411,7 @@ export function useAiPathsRuntime({
         nodeTitle: node?.title ?? null,
       });
     });
-  }, [executionMode, normalizedNodes, runtimeState.outputs, setNodeStatus]);
+  }, [executionMode, normalizeNodeStatus, normalizedNodes, runtimeState.outputs, setNodeStatus]);
 
   const fetchProductById = useCallback(
     async (productId: string): Promise<Record<string, unknown> | null> => {

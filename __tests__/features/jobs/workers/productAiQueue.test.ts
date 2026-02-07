@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('openai');
+
 const { mockPollQueue } = vi.hoisted(() => ({
   mockPollQueue: vi.fn(),
 }));
@@ -26,6 +28,8 @@ vi.mock('@/features/products/server', () => ({
 }));
 
 vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
   ErrorSystem: {
     captureException: vi.fn(),
   },

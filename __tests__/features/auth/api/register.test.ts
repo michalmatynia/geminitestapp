@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { POST } from '@/app/api/auth/register/route';
@@ -40,11 +40,6 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 // Mock bcryptjs
 vi.mock('bcryptjs', () => ({
   hash: vi.fn().mockResolvedValue('hashed_password'),
-}));
-
-// Mock apiHandler
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
 }));
 
 describe('Auth Register API', () => {

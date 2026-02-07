@@ -1,9 +1,20 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET } from '@/app/api/system/logs/metrics/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
+
+// Mock apiHandler
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      return await handler(req, { requestId: 'test' });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
+}));
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({

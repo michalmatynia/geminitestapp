@@ -3,17 +3,15 @@
 import { Eye, XCircle, Loader2, Trash2, Clock, CheckCircle } from 'lucide-react';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import { useJobsContext } from '@/features/jobs/context/JobsContext';
 import { DataTable, StatusBadge } from '@/shared/ui';
 import { Button } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-
-
-
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
 
 export interface JobRowData {
   id: string;
@@ -32,7 +30,7 @@ export interface JobRowData {
 interface JobTableProps {
   data: JobRowData[];
   isLoading?: boolean | undefined;
-  onViewDetails: (jobId: string) => void;
+  onViewDetails?: (jobId: string) => void;
   onCancel?: (jobId: string) => void;
   onDelete?: (jobId: string) => void;
   isCancelling?: (jobId: string) => boolean;
@@ -51,6 +49,7 @@ const getStatusIcon = (status: string): React.JSX.Element => {
     case 'removed':
     case 'failed':
     case 'error':
+    case 'canceled':
     case 'cancelled':
       return <XCircle className="size-3" />;
     case 'processing':
@@ -65,12 +64,31 @@ const getStatusIcon = (status: string): React.JSX.Element => {
 export function JobTable({
   data,
   isLoading,
-  onViewDetails,
-  onCancel,
+  onViewDetails: onViewDetailsProp,
+  onCancel: onCancelProp,
   onDelete,
-  isCancelling,
+  isCancelling: isCancellingProp,
   isDeleting,
 }: JobTableProps): React.JSX.Element {
+  const { 
+    setSelectedListing, 
+    listingJobs, 
+    handleCancelListing, 
+    isCancellingListing 
+  } = useJobsContext();
+
+  const handleViewDetails = useMemo(() => onViewDetailsProp || ((id: string) => {
+    const row = listingJobs.flatMap(j => j.listings.map(l => ({ job: j, listing: l }))).find(r => r.listing.id === id);
+    if (row) setSelectedListing(row);
+  }), [onViewDetailsProp, listingJobs, setSelectedListing]);
+
+  const handleCancel = useMemo(() => onCancelProp || ((id: string) => {
+    const row = listingJobs.flatMap(j => j.listings.map(l => ({ job: j, listing: l }))).find(r => r.listing.id === id);
+    if (row) void handleCancelListing(row.job.productId, row.listing.id);
+  }), [onCancelProp, listingJobs, handleCancelListing]);
+
+  const isCancelling = isCancellingProp || isCancellingListing;
+
   const columns = useMemo<ColumnDef<JobRowData>[]>(
     () => [
       {
@@ -160,17 +178,17 @@ export function JobTable({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                onClick={() => onViewDetails(job.id)}
+                onClick={() => handleViewDetails(job.id)}
                 aria-label="View details"
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              {onCancel && (job.status === 'pending' || job.status === 'running') && (
+              {(job.status === 'pending' || job.status === 'running') && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-yellow-500 hover:text-yellow-400"
-                  onClick={() => onCancel(job.id)}
+                  onClick={() => handleCancel(job.id)}
                   disabled={isCancelling?.(job.id)}
                   aria-label="Cancel job"
                 >
@@ -198,7 +216,7 @@ export function JobTable({
         },
       },
     ],
-    [onViewDetails, onCancel, onDelete, isCancelling, isDeleting]
+    [handleViewDetails, handleCancel, onDelete, isCancelling, isDeleting]
   );
 
   return (

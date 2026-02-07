@@ -1,31 +1,45 @@
 /**
  * @vitest-environment jsdom
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { signIn } from 'next-auth/react';
+import { SessionProvider } from 'next-auth/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
+import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import RegisterPage from '@/features/auth/pages/public/RegisterPage';
-import { useSettingsMap } from '@/shared/hooks/useSettings';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
+  SessionProvider: ({ children }: any) => children,
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
 }));
 
 vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
   useRegisterUser: vi.fn(),
 }));
 
-vi.mock('@/shared/hooks/useSettings', () => ({
-  useSettingsMap: vi.fn(),
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: vi.fn(), useUpdateSetting: vi.fn(), useLiteSettingsMap: vi.fn(),
 }));
 
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
 describe('RegisterPage', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
     
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
@@ -39,8 +53,18 @@ describe('RegisterPage', () => {
     } as any);
   });
 
+  const renderPage = () => render(
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RegisterPage />
+        </AuthProvider>
+      </QueryClientProvider>
+    </SessionProvider>
+  );
+
   it('renders correctly', () => {
-    render(<RegisterPage />);
+    renderPage();
     expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
@@ -55,7 +79,7 @@ describe('RegisterPage', () => {
     });
     vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as any);
 
-    render(<RegisterPage />);
+    renderPage();
 
     await user.type(screen.getByLabelText(/email/i), 'new@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -82,7 +106,7 @@ describe('RegisterPage', () => {
       ]),
     } as any);
 
-    render(<RegisterPage />);
+    renderPage();
 
     expect(screen.getByText(/self-service registration is disabled/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled();
@@ -96,7 +120,7 @@ describe('RegisterPage', () => {
     });
     vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as any);
 
-    render(<RegisterPage />);
+    renderPage();
 
     await user.type(screen.getByLabelText(/email/i), 'taken@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');

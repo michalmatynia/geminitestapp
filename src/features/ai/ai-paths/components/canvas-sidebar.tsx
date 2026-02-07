@@ -34,6 +34,13 @@ type CanvasSidebarProps = {
   onCancelRun?: () => void;
   /** Callback to clear all wires */
   onClearWires: () => void;
+  /** Save path config - for persisting node changes */
+  savePathConfig?: ((options?: {
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
+  }) => Promise<void>) | undefined;
 };
 
 export function CanvasSidebar({
@@ -51,6 +58,7 @@ export function CanvasSidebar({
   onStepRun,
   onCancelRun,
   onClearWires,
+  savePathConfig,
 }: CanvasSidebarProps): React.JSX.Element {
   // --- Context Hooks ---
   const { nodes, edges, executionMode: executionModeContext } = useGraphState();
@@ -265,6 +273,11 @@ export function CanvasSidebar({
                       updateNode(selectedNode.id, patch);
                     }
                   }}
+                  onBlur={() => {
+                    if (savePathConfig) {
+                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -278,6 +291,11 @@ export function CanvasSidebar({
                       onUpdateSelectedNode(patch, { nodeId: selectedNode.id });
                     } else {
                       updateNode(selectedNode.id, patch);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (savePathConfig) {
+                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
                     }
                   }}
                 />

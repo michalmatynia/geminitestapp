@@ -91,7 +91,7 @@ export function AiPathsSettingsView({
   const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs } = useGraphState();
 
   // Domain: Selection — read from context
-  const { nodeConfigDirty, nodeConfigDraft } = useSelectionState();
+  const { nodeConfigDirty } = useSelectionState();
 
   // Utility — imported directly
   const { toast } = useToast();
@@ -463,20 +463,8 @@ export function AiPathsSettingsView({
                       className="rounded-md border text-sm text-white hover:bg-muted/60"
                       onClick={() => {
                         if (nodeConfigDirty) {
-                          if (nodeConfigDraft) {
-                            const nextNodes = nodes.map((node: AiNode): AiNode =>
-                              node.id === nodeConfigDraft.id ? nodeConfigDraft : node
-                            );
-                            updateSelectedNode(nodeConfigDraft, { nodeId: nodeConfigDraft.id });
-                            void handleSave({
-                              includeNodeConfig: true,
-                              force: true,
-                              nodesOverride: nextNodes,
-                            });
-                            return;
-                          }
                           toast(
-                            'Saving path settings only. Unsaved node changes in the config dialog are not included.',
+                            'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
                             { variant: 'info' }
                           );
                         }
@@ -661,19 +649,20 @@ export function AiPathsSettingsView({
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
                 onUpdateSelectedNode={(patch, options) => updateSelectedNode(patch, options)}
-                onDeleteSelectedNode={() => handleDeleteSelectedNode()}
-                onRemoveEdge={(edgeId: string) => handleRemoveEdge(edgeId)}
-                onClearWires={() => void handleClearWires()}
+                onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
+                onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
+                onClearWires={() => { void handleClearWires(); }}
                 runStatus={runtimeRunStatus}
                 onPauseRun={handlePauseActiveRun}
                 onResumeRun={handleResumeActiveRun}
                 onStepRun={handleStepActiveRun}
                 onCancelRun={handleCancelActiveRun}
+                savePathConfig={handleSave}
               />
               <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
                 onSavePreset={() => void handleSavePreset()}
-                onApplyPreset={(preset: ClusterPreset) => void handleApplyPreset(preset)}
+                onApplyPreset={(preset: ClusterPreset) => { void handleApplyPreset(preset); }}
                 onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
                 onExportPresets={handleExportPresets}
                 presetDraft={presetDraft}
@@ -698,15 +687,16 @@ export function AiPathsSettingsView({
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
               <CanvasBoardMigrated
+                runtimeRunStatus={runtimeRunStatus}
                 runtimeNodeStatuses={runtimeNodeStatuses}
                 runtimeEvents={runtimeEvents}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
                 onFireTrigger={(node) => void handleFireTrigger(node)}
-                onRemoveEdge={(edgeId) => handleRemoveEdge(edgeId)}
-                onDeleteSelectedNode={() => handleDeleteSelectedNode()}
-                onDisconnectPort={(direction, nodeId, port) =>
-                  handleDisconnectPort(direction, nodeId, port)
-                }
+                onRemoveEdge={(edgeId) => { handleRemoveEdge(edgeId); }}
+                onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
+                onDisconnectPort={(direction, nodeId, port) => {
+                  handleDisconnectPort(direction, nodeId, port);
+                }}
                 onReconnectInput={(event, nodeId, port) =>
                   handleReconnectInput(event, nodeId, port)
                 }
@@ -716,10 +706,10 @@ export function AiPathsSettingsView({
                 onStartConnection={(event, node, port) =>
                   handleStartConnection(event, node, port)
                 }
-                onCompleteConnection={(event, node, port) =>
-                  handleCompleteConnection(event, node, port)
-                }
-                onDrop={(event) => handleDrop(event)}
+                onCompleteConnection={(event, node, port) => {
+                  handleCompleteConnection(event, node, port);
+                }}
+                onDrop={(event) => { handleDrop(event); }}
                 onDragOver={(event) => handleDragOver(event)}
                 onPanStart={(event) => handlePanStart(event)}
                 onPanMove={(event) => handlePanMove(event)}
@@ -940,6 +930,7 @@ export function AiPathsSettingsView({
         onClose={() => setSimulationOpenNodeId(null)}
         nodes={nodes}
         isPathLocked={isPathLocked}
+        savePathConfig={handleSave}
       />
     </div>
   );

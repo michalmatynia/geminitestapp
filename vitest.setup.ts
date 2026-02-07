@@ -513,6 +513,10 @@ vi.mock("@/shared/lib/db/prisma", () => {
     categoryMapping: createMockModel("categoryMapping"),
     asset3D: createMockModel("asset3D"),
     productDraft: createMockModel("productDraft"),
+    setting: createMockModel("setting"),
+    fileUploadEvent: createMockModel("fileUploadEvent"),
+    aiConfiguration: createMockModel("aiConfiguration"),
+    productAiJob: createMockModel("productAiJob"),
 
     $resetAll: () => {
       store = new Map<string, any[]>();
@@ -523,6 +527,30 @@ vi.mock("@/shared/lib/db/prisma", () => {
     default: mockPrismaClient,
   };
 });
+
+// Mock observability server module
+vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
+  getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
+  listSystemLogs: vi.fn().mockResolvedValue({ logs: [], total: 0 }),
+  createSystemLog: vi.fn().mockResolvedValue({}),
+  clearSystemLogs: vi.fn().mockResolvedValue({ deleted: 0 }),
+  getSystemLogMetrics: vi.fn().mockResolvedValue({
+    total: 0,
+    last24Hours: 0,
+    last7Days: 0,
+    levels: { error: 0, warn: 0, info: 0 },
+    topSources: [],
+    topPaths: [],
+  }),
+  ErrorSystem: {
+    captureException: vi.fn().mockResolvedValue(undefined),
+    logWarning: vi.fn().mockResolvedValue(undefined),
+    logError: vi.fn().mockResolvedValue(undefined),
+    logInfo: vi.fn().mockResolvedValue(undefined),
+  },
+}));
 
 // Mock next/image
 vi.mock("next/image", () => ({
@@ -540,61 +568,101 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock next/server (for NextRequest/NextResponse in API routes)
-vi.mock("next/server", () => ({
-  NextRequest: class NextRequest extends Request {
-    constructor(input: RequestInfo, init?: RequestInit) {
-      super(input, init);
-    }
-  },
-  NextResponse: class NextResponse extends Response {
-    constructor(body?: BodyInit | null, init?: ResponseInit) {
-      super(body, init);
-    }
-    static override json = vi.fn((data: any, init?: ResponseInit) => {
-      return new NextResponse(JSON.stringify(data), {
+vi.mock("next/server", () => {
+  class MockResponse extends Response {
+    static override json(data: any, init?: ResponseInit) {
+      const res = new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
-    });
-  },
-}));
+      return res;
+    }
+  }
+
+  return {
+    NextRequest: class NextRequest extends Request {
+      constructor(input: RequestInfo, init?: RequestInit) {
+        super(input, init);
+      }
+    },
+    NextResponse: MockResponse,
+  };
+});
 
 // Mock next/server.js specifically, as suggested by the error message
-vi.mock("next/server.js", () => ({
-  NextRequest: class NextRequest extends Request {
-    constructor(input: RequestInfo, init?: RequestInit) {
-      super(input, init);
-    }
-  },
-  NextResponse: class NextResponse extends Response {
-    constructor(body?: BodyInit | null, init?: ResponseInit) {
-      super(body, init);
-    }
-    static override json = vi.fn((data: any, init?: ResponseInit) => {
-      return new NextResponse(JSON.stringify(data), {
+vi.mock("next/server.js", () => {
+  class MockResponse extends Response {
+    static override json(data: any, init?: ResponseInit) {
+      const res = new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
-    });
-  },
-}));
+      return res;
+    }
+  }
 
-// Mock next-auth entirely to prevent internal module resolution issues
-vi.mock('next-auth', () => ({
-  default: vi.fn(() => ({
-    handlers: { GET: vi.fn(), POST: vi.fn() },
-    auth: vi.fn(),
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-  })),
-  Auth: vi.fn(),
-}));
+  return {
+    NextRequest: class NextRequest extends Request {
+      constructor(input: RequestInfo, init?: RequestInit) {
+        super(input, init);
+      }
+    },
+    NextResponse: MockResponse,
+  };
+});
+
+// Mock apiHandler globally
+vi.mock('@/shared/lib/api/api-handler', () => {
+  const { NextResponse } = require('next/server');
+  return {
+    apiHandler: (handler: any) => async (req: any) => {
+      try {
+        const body = req.body && typeof req.json === 'function' ? await req.json().catch(() => ({})) : {};
+        return await handler(req, { requestId: 'global-test-id', body, getElapsedMs: () => 0 });
+      } catch (error: any) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: error.httpStatus || 500 }
+        );
+      }
+    },
+    apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
+      try {
+        const body = req.body && typeof req.json === 'function' ? await req.json().catch(() => ({})) : {};
+        const context = {
+          ...ctx,
+          requestId: 'global-test-id',
+          body,
+          getElapsedMs: () => 0,
+        };
+        const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' ? await ctx.params : (ctx?.params ?? {});
+        return await handler(req, context, resolvedParams);
+      } catch (error: any) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: error.httpStatus || 500 }
+        );
+      }
+    },
+    getQueryParams: (req: any) => new URL(req.url).searchParams,
+    getRequiredParam: (searchParams: URLSearchParams, name: string) => {
+      const val = searchParams.get(name);
+      if (!val) throw new Error(`Missing required parameter: ${name}`);
+      return val;
+    },
+    getPaginationParams: (searchParams: URLSearchParams) => ({
+      page: Number(searchParams.get('page') ?? '1'),
+      pageSize: Number(searchParams.get('pageSize') ?? '20'),
+      skip: 0,
+    }),
+  };
+});
 
 vi.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: any) => children,

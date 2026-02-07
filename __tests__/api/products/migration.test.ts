@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { vi, beforeEach } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
@@ -6,7 +6,14 @@ import { GET } from '@/app/api/products/migrate/route';
 
 // Mock the api-handler module
 vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      return await handler(req, { requestId: 'test', body });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
 }));
 
 // Mock products server

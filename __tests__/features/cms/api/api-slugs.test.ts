@@ -5,6 +5,16 @@ import { GET as listSlugs, POST as createSlug } from '@/app/api/cms/slugs/route'
 import { getSlugsForDomain, getSlugForDomainById } from '@/features/cms/services/cms-domain';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 
+vi.mock('@/features/cms/services/cms-repository', () => ({
+  getCmsRepository: vi.fn(),
+}));
+
+vi.mock('@/features/cms/services/cms-domain', () => ({
+  getSlugsForDomain: vi.fn(),
+  getSlugForDomainById: vi.fn(),
+  resolveCmsDomainFromRequest: vi.fn().mockResolvedValue({ id: 'd1', domain: 'localhost' }),
+}));
+
 describe('CMS Slugs API', () => {
   const mockRepo = {
     getSlugs: vi.fn(),

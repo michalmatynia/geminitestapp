@@ -1,5 +1,6 @@
 import { MoreVertical } from 'lucide-react';
 
+import { useInternationalizationContext } from '@/features/internationalization';
 import { Catalog } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Badge } from '@/shared/ui';
@@ -8,7 +9,6 @@ import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMe
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;
   catalogs: Catalog[];
-  languages: Language[];
   handleOpenCatalogModal: () => void;
   handleEditCatalog: (catalog: Catalog) => void;
   handleDeleteCatalog: (catalog: Catalog) => void;
@@ -17,11 +17,11 @@ type CatalogsSettingsProps = {
 export function CatalogsSettings({
   loadingCatalogs,
   catalogs,
-  languages,
   handleOpenCatalogModal,
   handleEditCatalog,
   handleDeleteCatalog,
 }: CatalogsSettingsProps): React.JSX.Element {
+  const { languages } = useInternationalizationContext();
   const getLanguageDisplay = (languageId: string): string => {
     const language = languages.find((l: Language) => l.id === languageId);
     return language ? `${language.name} (${language.code})` : languageId;

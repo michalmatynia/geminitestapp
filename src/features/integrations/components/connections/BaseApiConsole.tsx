@@ -1,32 +1,23 @@
 'use client';
 
-import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 
 import { ApiConsole, type ApiPreset } from './ApiConsole';
 
-type BaseApiConsoleProps = {
-  activeConnection: IntegrationConnection | null;
-  method: string;
-  setMethod: (value: string) => void;
-  params: string;
-  setParams: (value: string) => void;
-  loading: boolean;
-  error: string | null;
-  response: { data: unknown } | null;
-  onRequest: () => void;
-};
+export function BaseApiConsole(): React.JSX.Element {
+  const {
+    connections,
+    baseApiMethod,
+    setBaseApiMethod,
+    baseApiParams,
+    setBaseApiParams,
+    baseApiLoading,
+    baseApiError,
+    baseApiResponse,
+    handleBaseApiRequest,
+  } = useIntegrationsContext();
 
-export function BaseApiConsole({
-  activeConnection,
-  method,
-  setMethod,
-  params,
-  setParams,
-  loading,
-  error,
-  response,
-  onRequest,
-}: BaseApiConsoleProps): React.JSX.Element {
+  const activeConnection = connections[0] || null;
   const defaultInventoryId = activeConnection?.baseLastInventoryId ?? '';
   
   const baseApiPresets: ApiPreset[] = [
@@ -56,15 +47,15 @@ export function BaseApiConsole({
       title="Base.com API Console"
       description="Send Base.com API requests using the active connection token."
       presets={baseApiPresets}
-      method={method}
-      setMethod={setMethod}
-      bodyOrParams={params}
-      setBodyOrParams={setParams}
+      method={baseApiMethod}
+      setMethod={setBaseApiMethod}
+      bodyOrParams={baseApiParams}
+      setBodyOrParams={setBaseApiParams}
       bodyOrParamsLabel="Parameters (JSON)"
-      loading={loading}
-      error={error}
-      response={response}
-      onRequest={onRequest}
+      loading={baseApiLoading}
+      error={baseApiError}
+      response={baseApiResponse}
+      onRequest={() => { void handleBaseApiRequest(); }}
       baseUrl="https://api.baselinker.com/connector.php"
       methodType="input"
     />

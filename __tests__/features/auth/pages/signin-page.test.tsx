@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { signIn } from 'next-auth/react';
+import { SessionProvider } from 'next-auth/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
 import SignInPage from '@/features/auth/pages/public/SignInPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-
 
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => ({
@@ -20,6 +21,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
+  SessionProvider: ({ children }: any) => children,
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
 }));
 
 vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
@@ -27,7 +30,7 @@ vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: vi.fn(),
+  useSettingsMap: vi.fn(), useUpdateSetting: vi.fn(), useLiteSettingsMap: vi.fn(),
 }));
 
 const createTestQueryClient = () => new QueryClient({
@@ -56,12 +59,18 @@ describe('SignInPage', () => {
     } as any);
   });
 
-  it('renders correctly', async () => {
-    render(
+  const renderPage = () => render(
+    <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <SignInPage />
+        <AuthProvider>
+          <SignInPage />
+        </AuthProvider>
       </QueryClientProvider>
-    );
+    </SessionProvider>
+  );
+
+  it('renders correctly', async () => {
+    renderPage();
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
@@ -76,11 +85,7 @@ describe('SignInPage', () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SignInPage />
-      </QueryClientProvider>
-    );
+    renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'test@example.com');
@@ -108,11 +113,7 @@ describe('SignInPage', () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SignInPage />
-      </QueryClientProvider>
-    );
+    renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'wrong@example.com');
@@ -130,11 +131,7 @@ describe('SignInPage', () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SignInPage />
-      </QueryClientProvider>
-    );
+    renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'mfa@example.com');
@@ -148,11 +145,7 @@ describe('SignInPage', () => {
 
   it('calls social sign in', async () => {
     const user = userEvent.setup();
-    render(
-      <QueryClientProvider client={queryClient}>
-        <SignInPage />
-      </QueryClientProvider>
-    );
+    renderPage();
 
     const googleBtn = await screen.findByRole('button', { name: /continue with google/i });
     await user.click(googleBtn);

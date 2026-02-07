@@ -1,43 +1,27 @@
 'use client';
 
-import { IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 
 import { ApiConsole, type ApiPreset } from './ApiConsole';
 
-type AllegroApiConsoleProps = {
-  activeConnection: IntegrationConnection | null;
-  method: string;
-  setMethod: (value: string) => void;
-  path: string;
-  setPath: (value: string) => void;
-  body: string;
-  setBody: (value: string) => void;
-  loading: boolean;
-  error: string | null;
-  response: {
-    status: number;
-    statusText: string;
-    data: unknown;
-    refreshed?: boolean;
-  } | null;
-  onRequest: () => void;
-  isConnected: boolean;
-};
+export function AllegroApiConsole(): React.JSX.Element {
+  const {
+    connections,
+    allegroApiMethod,
+    setAllegroApiMethod,
+    allegroApiPath,
+    setAllegroApiPath,
+    allegroApiBody,
+    setAllegroApiBody,
+    allegroApiLoading,
+    allegroApiError,
+    allegroApiResponse,
+    handleAllegroApiRequest,
+  } = useIntegrationsContext();
 
-export function AllegroApiConsole({
-  activeConnection,
-  method,
-  setMethod,
-  path,
-  setPath,
-  body,
-  setBody,
-  loading,
-  error,
-  response,
-  onRequest,
-  isConnected,
-}: AllegroApiConsoleProps): React.JSX.Element {
+  const activeConnection = connections[0] || null;
+  const isConnected = Boolean(activeConnection?.hasAllegroAccessToken);
+
   const allegroApiPresets: ApiPreset[] = [
     { label: 'Categories', method: 'GET', path: '/sale/categories' },
     { label: 'Offers', method: 'GET', path: '/sale/offers?limit=10' },
@@ -53,17 +37,28 @@ export function AllegroApiConsole({
       title="Allegro API Console"
       description="Send requests using the active Allegro connection token."
       presets={allegroApiPresets}
-      method={method}
-      setMethod={setMethod}
-      path={path}
-      setPath={setPath}
-      bodyOrParams={body}
-      setBodyOrParams={setBody}
+      method={allegroApiMethod}
+      setMethod={setAllegroApiMethod}
+      path={allegroApiPath}
+      setPath={setAllegroApiPath}
+      bodyOrParams={allegroApiBody}
+      setBodyOrParams={setAllegroApiBody}
       bodyOrParamsLabel="JSON body"
-      loading={loading}
-      error={error}
-      response={response}
-      onRequest={onRequest}
+      loading={allegroApiLoading}
+      error={allegroApiError}
+      response={
+        allegroApiResponse
+          ? {
+            status: allegroApiResponse.status,
+            statusText: allegroApiResponse.statusText,
+            data: allegroApiResponse.data,
+            ...(allegroApiResponse.refreshed !== undefined && {
+              refreshed: allegroApiResponse.refreshed,
+            }),
+          }
+          : null
+      }
+      onRequest={() => { void handleAllegroApiRequest(); }}
       isConnected={isConnected}
       connectionWarning="Connect Allegro to enable API requests."
       baseUrl={activeConnection?.allegroUseSandbox

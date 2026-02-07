@@ -1,8 +1,8 @@
 import React from 'react';
 
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { logClientError } from '@/features/observability';
-import type { CurrencyOption } from '@/shared/types/internationalization';
 import {
   Input,
   Label,
@@ -15,19 +15,16 @@ import {
   FormModal,
 } from '@/shared/ui';
 
-interface CurrencyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  currency?: CurrencyOption | null;
-}
+export function CurrencyModal(): React.JSX.Element {
+  const {
+    showCurrencyModal: isOpen,
+    setCurrencyModalOpen,
+    editingCurrency: currency,
+  } = useInternationalizationContext();
 
-export function CurrencyModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  currency,
-}: CurrencyModalProps): React.JSX.Element {
+  const onClose = () => setCurrencyModalOpen(false);
+  const onSuccess = () => setCurrencyModalOpen(false);
+
   const { toast } = useToast();
   const saveMutation = useSaveCurrencyMutation();
   const [form, setForm] = React.useState({

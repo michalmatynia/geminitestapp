@@ -1,3 +1,5 @@
+'use client';
+
 import { ChevronDown, Copy, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
 

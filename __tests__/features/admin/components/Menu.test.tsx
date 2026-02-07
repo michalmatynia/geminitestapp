@@ -1,8 +1,10 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import Menu from '@/features/admin/components/Menu';
 import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -13,11 +15,22 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
 const renderMenu = () => {
+  const queryClient = createTestQueryClient();
   return render(
-    <AdminLayoutProvider>
-      <Menu />
-    </AdminLayoutProvider>
+    <QueryClientProvider client={queryClient}>
+      <SettingsStoreProvider>
+        <AdminLayoutProvider>
+          <Menu />
+        </AdminLayoutProvider>
+      </SettingsStoreProvider>
+    </QueryClientProvider>
   );
 };
 
@@ -28,15 +41,20 @@ describe('Menu Component', () => {
 
   it('renders main menu categories', () => {
     renderMenu();
-    expect(screen.getByText('Products')).toBeInTheDocument();
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('Workspace')).toBeInTheDocument();
+    expect(screen.getByText('Commerce')).toBeInTheDocument();
     expect(screen.getByText('Integrations')).toBeInTheDocument();
-    expect(screen.getByText('Notes')).toBeInTheDocument();
-    expect(screen.getByText('Files')).toBeInTheDocument();
-    expect(screen.getByText('System Logs')).toBeInTheDocument();
   });
 
   it('opens collapsible section when clicked', () => {
     renderMenu();
+    const commerceTrigger = screen.getByText('Commerce');
+    fireEvent.click(commerceTrigger);
+    
+    // Now "Products" should be visible
+    expect(screen.getByText('Products')).toBeInTheDocument();
+    
     const productsTrigger = screen.getByText('Products');
     fireEvent.click(productsTrigger);
     
@@ -47,6 +65,9 @@ describe('Menu Component', () => {
 
   it('navigates to create page and collapses menu when Create Page is clicked', () => {
     renderMenu();
+    const contentTrigger = screen.getByText('Content');
+    fireEvent.click(contentTrigger);
+    
     const cmsTrigger = screen.getByText('CMS');
     fireEvent.click(cmsTrigger);
     
@@ -59,10 +80,15 @@ describe('Menu Component', () => {
   it('contains correctly linked standalone sections', async () => {
     renderMenu();
     
+    const workspaceTrigger = screen.getByText('Workspace');
+    fireEvent.click(workspaceTrigger);
+    
     // Use findByRole to wait for potential effects/updates
     const filesLink = await screen.findByRole('link', { name: /Files/i });
     expect(filesLink).toHaveAttribute('href', '/admin/files');
     
+    const systemTrigger = screen.getByText('System');
+    fireEvent.click(systemTrigger);
     const systemLogsLink = await screen.findByRole('link', { name: /System Logs/i });
     expect(systemLogsLink).toHaveAttribute('href', '/admin/system/logs');
   });

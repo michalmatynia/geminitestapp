@@ -9,6 +9,8 @@ import { DraftCreator } from '@/features/drafter/components/DraftCreator';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   useParams: () => ({ id: '1' }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock useToast

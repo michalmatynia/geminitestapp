@@ -223,19 +223,23 @@ export function NodeConfigDialog({
       return;
     }
     const hasDraftNode = nodes.some((node: AiNode): boolean => node.id === draftNode.id);
-    const nextNodes = hasDraftNode
+    const updatedNodes = hasDraftNode
       ? nodes.map((node: AiNode): AiNode => (node.id === draftNode.id ? draftNode : node))
       : [...nodes, draftNode];
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
-    void savePathConfig?.({
-      silent: true,
-      includeNodeConfig: true,
-      force: true,
-      nodesOverride: nextNodes,
-    });
     setDraftNode(null);
-    toast('Node settings updated.', { variant: 'success' });
-  }, [draftNode, isPathLocked, nodes, savePathConfig, toast, updateSelectedNode]);
+    if (savePathConfig) {
+      void savePathConfig({
+        silent: true,
+        includeNodeConfig: true,
+        force: true,
+        nodesOverride: updatedNodes,
+      });
+      toast('Node settings saved.', { variant: 'success' });
+    } else {
+      toast('Node settings updated in canvas. Click "Save Path" to persist.', { variant: 'success' });
+    }
+  }, [draftNode, isPathLocked, nodes, toast, updateSelectedNode, savePathConfig]);
 
   const handleDiscardChanges = useCallback((): void => {
     if (!hasUnsavedChanges) return;
@@ -307,7 +311,7 @@ export function NodeConfigDialog({
                 <div className="text-[11px] text-gray-400">
                   {hasUnsavedChanges
                     ? 'Unsaved changes (manual update required).'
-                    : 'All changes saved for this node.'}
+                    : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

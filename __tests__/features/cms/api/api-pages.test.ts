@@ -16,6 +16,8 @@ vi.mock('@/features/cms/services/cms-domain', () => ({
 }));
 
 vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
   ErrorSystem: {
     captureException: vi.fn(),
   },

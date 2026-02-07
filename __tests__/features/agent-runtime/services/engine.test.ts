@@ -54,6 +54,8 @@ vi.mock('@/features/ai/agent-runtime/audit', () => ({
   logAgentAudit: vi.fn(),
 }));
 vi.mock('@/features/observability/server', () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
   ErrorSystem: {
     captureException: vi.fn(),
   },

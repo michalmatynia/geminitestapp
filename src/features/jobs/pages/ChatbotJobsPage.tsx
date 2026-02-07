@@ -1,41 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import {
-  useChatbotJobMutation, 
-  useClearChatbotJobsMutation 
-} from '@/features/jobs/hooks/useJobMutations';
-import { useChatbotJobs } from '@/features/jobs/hooks/useJobQueries';
+  JobsProvider,
+  useJobsContext,
+  type ChatbotJob
+} from '@/features/jobs/context/JobsContext';
 import { Button, SectionHeader, SectionPanel, Input } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-type ChatbotJob = {
-  id: string;
-  sessionId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
-  model: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  payload?: unknown;
-};
 
-export default function ChatbotJobsPage(): React.JSX.Element {
-  const [query, setQuery] = useState('');
-  const [jobToDelete, setJobToDelete] = useState<{ id: string; force: boolean } | null>(null);
-
-  const jobsQuery = useChatbotJobs('all');
-  
-  const chatbotMutation = useChatbotJobMutation();
-  const clearMutation = useClearChatbotJobsMutation();
-  const deleteMutation = clearMutation;
-
-  const jobs = useMemo((): ChatbotJob[] => {
-    const data = jobsQuery.data as { jobs?: ChatbotJob[] } | undefined;
-    return data?.jobs || [];
-  }, [jobsQuery.data]);
+function ChatbotJobsPageContent(): React.JSX.Element {
+  const {
+    chatbotJobs: jobs,
+    chatbotJobsLoading: isLoading,
+    chatbotJobsRefreshing: isRefreshing,
+    refetchChatbotJobs: refetch,
+    chatbotJobsError: error,
+    query,
+    setQuery,
+    handleCancelChatbotJob,
+    isCancellingChatbotJob,
+    handleClearCompletedChatbotJobs,
+    isClearingChatbotJobs,
+  } = useJobsContext();
 
   const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();
@@ -63,14 +51,6 @@ export default function ChatbotJobsPage(): React.JSX.Element {
     });
   }, [jobs, query]);
 
-  const cancelJob = async (jobId: string): Promise<void> => {
-    try {
-      await chatbotMutation.mutateAsync({ jobId, action: 'cancel' });
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'ChatbotJobsPage', action: 'cancelJob', jobId } });
-    }
-  };
-
   return (
     <div className="container mx-auto py-10">
       <SectionHeader
@@ -97,25 +77,25 @@ export default function ChatbotJobsPage(): React.JSX.Element {
             <Button
               variant="outline"
               size="sm"
-              onClick={(): void => { void jobsQuery.refetch(); }}
-              disabled={jobsQuery.isFetching}
+              onClick={(): void => { void refetch(); }}
+              disabled={isRefreshing}
             >
-              {jobsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button
               variant="destructive"
               size="sm"
-              onClick={(): void => clearMutation.mutate({ scope: 'completed' })}
-              disabled={clearMutation.isPending}
+              onClick={handleClearCompletedChatbotJobs}
+              disabled={isClearingChatbotJobs}
             >
-              {clearMutation.isPending ? 'Deleting jobs...' : 'Delete completed jobs'}
+              {isClearingChatbotJobs ? 'Deleting jobs...' : 'Delete completed jobs'}
             </Button>
           </div>
         </div>
-        {jobsQuery.isLoading ? (
+        {isLoading ? (
           <p className="text-sm text-gray-400">Loading jobs...</p>
-        ) : jobsQuery.error ? (
-          <p className="text-sm text-red-400">{jobsQuery.error.message}</p>
+        ) : error ? (
+          <p className="text-sm text-red-400">{error.message}</p>
         ) : filteredJobs.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-400">No jobs yet</p>
@@ -174,30 +154,10 @@ export default function ChatbotJobsPage(): React.JSX.Element {
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={chatbotMutation.isPending && chatbotMutation.variables?.jobId === job.id}
-                        onClick={(): void => { void cancelJob(job.id); }}
+                        disabled={isCancellingChatbotJob(job.id)}
+                        onClick={(): void => { void handleCancelChatbotJob(job.id); }}
                       >
-                        {chatbotMutation.isPending && chatbotMutation.variables?.jobId === job.id ? 'Canceling...' : 'Cancel'}
-                      </Button>
-                    ) : null}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={deleteMutation.isPending && deleteMutation.variables?.scope === job.id}
-                      onClick={(): void => setJobToDelete({ id: job.id, force: false })}
-                    >
-                      {deleteMutation.isPending && deleteMutation.variables?.scope === job.id && jobToDelete?.id === job.id && !jobToDelete.force ? 'Deleting...' : 'Delete'}
-                    </Button>
-                    {job.status === 'running' ? (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={deleteMutation.isPending && deleteMutation.variables?.scope === job.id}
-                        onClick={(): void => setJobToDelete({ id: job.id, force: true })}
-                      >
-                        {deleteMutation.isPending && deleteMutation.variables?.scope === job.id && jobToDelete?.id === job.id && jobToDelete.force
-                          ? 'Deleting...'
-                          : 'Force delete'}
+                        {isCancellingChatbotJob(job.id) ? 'Canceling...' : 'Cancel'}
                       </Button>
                     ) : null}
                   </div>
@@ -208,5 +168,13 @@ export default function ChatbotJobsPage(): React.JSX.Element {
         )}
       </SectionPanel>
     </div>
+  );
+}
+
+export default function ChatbotJobsPage(): React.JSX.Element {
+  return (
+    <JobsProvider>
+      <ChatbotJobsPageContent />
+    </JobsProvider>
   );
 }

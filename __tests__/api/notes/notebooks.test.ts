@@ -4,6 +4,13 @@ import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 import { GET, POST } from '@/app/api/notes/notebooks/route';
 import { noteService } from '@/features/notesapp/server';
 
+vi.mock('@/features/notesapp/server', () => ({
+  noteService: {
+    getAllNotebooks: vi.fn(),
+    createNotebook: vi.fn(),
+  },
+}));
+
 describe('Notes Notebooks API', () => {
   beforeEach(() => {
     vi.clearAllMocks();

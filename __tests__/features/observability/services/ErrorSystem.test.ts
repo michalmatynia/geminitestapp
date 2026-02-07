@@ -6,7 +6,8 @@ import { ErrorSystem } from '@/features/observability/services/error-system';
 
 // Mock dependencies
 vi.mock('@/features/observability/server', () => ({
-  logSystemEvent: vi.fn(),
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/ai/agent-runtime/server', () => ({

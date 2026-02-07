@@ -1,47 +1,29 @@
 import { MoreVertical } from 'lucide-react';
 
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Badge, Alert, SearchInput } from '@/shared/ui';
 
+export function InternationalizationSettings(): React.JSX.Element {
+  const {
+    loadingCurrencies,
+    currencies: currencyOptions,
+    handleOpenCurrencyModal,
+    handleDeleteCurrency,
+    loadingCountries,
+    filteredCountries,
+    countrySearch,
+    setCountrySearch,
+    handleOpenCountryModal,
+    handleDeleteCountry,
+    languagesLoading,
+    languagesError,
+    languages,
+    handleOpenLanguageModal,
+    handleDeleteLanguage,
+  } = useInternationalizationContext();
 
-type InternationalizationSettingsProps = {
-  loadingCurrencies: boolean;
-  currencyOptions: CurrencyOption[];
-  handleOpenCurrencyModal: (currency?: CurrencyOption) => void;
-  handleDeleteCurrency: (currency: CurrencyOption) => void;
-  loadingCountries: boolean;
-  filteredCountries: CountryOption[];
-  countrySearch: string;
-  setCountrySearch: (value: string) => void;
-  handleOpenCountryModal: (country?: CountryOption) => void;
-  handleDeleteCountry: (country: CountryOption) => void;
-  languagesLoading: boolean;
-  languagesError: string | null;
-  languages: Language[];
-  handleOpenNewLanguageModal: () => void;
-  handleOpenLanguageModal: (language: Language) => void;
-  handleDeleteLanguage: (language: Language) => void;
-};
-
-export function InternationalizationSettings({
-  loadingCurrencies,
-  currencyOptions,
-  handleOpenCurrencyModal,
-  handleDeleteCurrency,
-  loadingCountries,
-  filteredCountries,
-  countrySearch,
-  setCountrySearch,
-  handleOpenCountryModal,
-  handleDeleteCountry,
-  languagesLoading,
-  languagesError,
-  languages,
-  handleOpenNewLanguageModal,
-  handleOpenLanguageModal,
-  handleDeleteLanguage,
-}: InternationalizationSettingsProps): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
@@ -235,7 +217,7 @@ export function InternationalizationSettings({
             <Button
               className="min-w-[100px] border border-white/20 hover:border-white/40"
               type="button"
-              onClick={(): void => handleOpenNewLanguageModal()}
+              onClick={(): void => handleOpenLanguageModal()}
             >
               Add Language
             </Button>
@@ -317,7 +299,7 @@ export function InternationalizationSettings({
                         className="text-red-300 focus:text-red-300"
                         onSelect={(event: Event): void => {
                           event.preventDefault();
-                          handleDeleteLanguage(language);
+                          void handleDeleteLanguage(language);
                         }}
                       >
                         Delete

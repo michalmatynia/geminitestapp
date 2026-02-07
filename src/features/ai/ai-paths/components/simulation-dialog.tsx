@@ -20,6 +20,12 @@ type SimulationDialogProps = {
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   isPathLocked?: boolean;
   onRunSimulation: (node: AiNode) => void | Promise<void>;
+  savePathConfig?: ((options?: {
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
+  }) => Promise<void>) | undefined;
 };
 
 export function SimulationDialog({
@@ -29,6 +35,7 @@ export function SimulationDialog({
   setNodes,
   isPathLocked = false,
   onRunSimulation,
+  savePathConfig,
 }: SimulationDialogProps): React.JSX.Element | null {
   if (!openNodeId) return null;
   const simulationNode = nodes.find((node: AiNode): boolean => node.id === openNodeId);
@@ -44,6 +51,14 @@ export function SimulationDialog({
       open={Boolean(openNodeId)}
       onOpenChange={(open: boolean): void => {
         if (!open) {
+          if (savePathConfig) {
+            void savePathConfig({
+              silent: true,
+              includeNodeConfig: true,
+              force: true,
+              nodesOverride: nodes,
+            });
+          }
           onClose();
         }
       }}

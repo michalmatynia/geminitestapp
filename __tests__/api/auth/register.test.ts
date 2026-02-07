@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 
 import { POST } from '@/app/api/auth/register/route';
@@ -42,15 +42,16 @@ vi.mock('bcryptjs', () => ({
   hash: vi.fn().mockResolvedValue('hashed_password'),
 }));
 
-// Mock apiHandler
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-}));
-
 describe('Auth Register API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.MONGODB_URI = 'mongodb://mock';
+    
+    // Set default mock return value
+    vi.mocked(getAuthUserPageSettings).mockResolvedValue({
+      allowSignup: true,
+      requireEmailVerification: false,
+    } as any);
   });
 
   afterAll(() => {

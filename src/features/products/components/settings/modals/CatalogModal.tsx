@@ -1,8 +1,8 @@
 'use client';
 
-
 import React from 'react';
 
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, PriceGroup } from '@/features/products/types';
 import type { Language } from '@/shared/types/internationalization';
@@ -29,9 +29,6 @@ interface CatalogModalProps {
   onClose: () => void;
   onSuccess: () => void;
   catalog?: Catalog | null;
-  languages: Language[];
-  languagesLoading: boolean;
-  languagesError: string | null;
   priceGroups: PriceGroup[];
   loadingGroups: boolean;
   defaultGroupId: string;
@@ -42,13 +39,16 @@ export function CatalogModal({
   onClose,
   onSuccess,
   catalog,
-  languages,
-  languagesLoading,
-  languagesError,
   priceGroups,
   loadingGroups,
   defaultGroupId,
 }: CatalogModalProps): React.JSX.Element {
+  const { 
+    languages, 
+    languagesLoading, 
+    languagesError 
+  } = useInternationalizationContext();
+
   const { toast } = useToast();
   const saveMutation = useSaveCatalogMutation();
   const [error, setError] = React.useState<string | null>(null);

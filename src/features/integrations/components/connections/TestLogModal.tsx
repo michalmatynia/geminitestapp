@@ -1,21 +1,17 @@
 'use client';
 
-import { TestLogEntry } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { AppModal } from '@/shared/ui';
 
-
-type TestLogModalProps = {
-  selectedStep: (TestLogEntry & { status: 'ok' | 'failed' }) | null;
-  onClose: () => void;
-};
-
-export function TestLogModal({ selectedStep, onClose }: TestLogModalProps): React.JSX.Element | null {
+export function TestLogModal(): React.JSX.Element | null {
+  const { selectedStep, setShowTestLogModal } = useIntegrationsContext();
+  
   if (!selectedStep) return null;
 
   return (
     <AppModal
       open={true}
-      onClose={onClose}
+      onClose={() => setShowTestLogModal(false)}
       title="Playwright Log"
       size="md"
     >

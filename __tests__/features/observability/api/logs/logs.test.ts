@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
@@ -7,7 +7,14 @@ import prisma from '@/shared/lib/db/prisma';
 
 // Mock apiHandler to bypass CSRF
 vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: vi.fn((handler) => handler),
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      return await handler(req, { requestId: 'test', body });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
 }));
 
 // Mock Prisma

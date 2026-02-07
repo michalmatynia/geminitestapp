@@ -67,7 +67,8 @@
       "Bash(redis-cli:*)",
       "Bash(psql:*)",
       "Bash(npx tsx:*)",
-      "Bash(brew list:*)"
+      "Bash(brew list:*)",
+      "Bash(kill:*)"
     ]
   }
 }

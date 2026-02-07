@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { InternationalizationSettings } from '@/features/internationalization';
-import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { InternationalizationSettings, InternationalizationProvider } from '@/features/internationalization';
 import { logClientError } from '@/features/observability';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
@@ -17,13 +15,11 @@ import { PriceGroupsSettings } from '@/features/products/components/settings/pri
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
-import type { CountryOption, CurrencyOption, Language } from '@/shared/types/internationalization';
 import { Button, SectionHeader, SectionPanel, useToast } from '@/shared/ui';
 
 import {
   settingSections,
-} from './ProductSettingsConstants'; // TODO: This is a bit awkward, maybe move constants to feature too
-
+} from './ProductSettingsConstants';
 
 export function ProductSettingsPage(): React.JSX.Element {
   const [activeSection, setActiveSection] =
@@ -32,23 +28,14 @@ export function ProductSettingsPage(): React.JSX.Element {
   // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
   const [showPriceGroupModal, setShowPriceGroupModal] = useState(false);
   const [editingPriceGroup, setEditingPriceGroup] = useState<PriceGroup | null>(null);
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [editingCurrency, setEditingCurrency] = useState<CurrencyOption | null>(null);
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const [editingCountry, setEditingCountry] = useState<CountryOption | null>(null);
 
   const { toast } = useToast();
 
   // Queries
   const { data: priceGroups = [], isLoading: loadingGroups } = usePriceGroups();
   const { data: catalogs = [], isLoading: loadingCatalogs } = useCatalogs();
-  const { data: currencies = [], isLoading: loadingCurrencies } = useCurrencies();
-  const { data: countries = [], isLoading: loadingCountries } = useCountries();
-  const { data: languages = [], isLoading: languagesLoading, error: languagesError } = useLanguages();
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
@@ -60,9 +47,6 @@ export function ProductSettingsPage(): React.JSX.Element {
   const updatePriceGroupMutation = useUpdatePriceGroupMutation();
   const deletePriceGroupMutation = useDeletePriceGroupMutation();
   const deleteCatalogMutation = useDeleteCatalogMutation();
-  const deleteCurrencyMutation = useDeleteCurrencyMutation();
-  const deleteCountryMutation = useDeleteCountryMutation();
-  const deleteLanguageMutation = useDeleteLanguageMutation();
 
   const defaultGroupId = priceGroups.find((g: import('@/features/products/types').PriceGroup) => g.isDefault)?.id ?? '';
 
@@ -119,160 +103,103 @@ export function ProductSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel className="p-6">
-      <SectionHeader
-        title="Product Settings"
-        className="mb-6"
-      />
-      <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-        <SectionPanel className="p-4">
-          <div className="flex flex-col gap-2">
-            {settingSections.map((section: typeof settingSections[number]) => (
-              <Button
-                key={section}
-                onClick={() => setActiveSection(section)}
-                className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
-                  activeSection === section
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-300 hover:bg-muted/50/60'
-                }`}
-              >
-                {section}
-              </Button>
-            ))}
-          </div>
-        </SectionPanel>
-        <SectionPanel className="p-6">
-          {activeSection === 'Categories' && (
-            <CategoriesSettings
-              loading={loadingCategories}
-              categories={productCategories}
-              catalogs={catalogs}
-              selectedCatalogId={selectedCategoryCatalogId}
-              onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); }}
-              onRefresh={() => void refetchCategories()}
-            />
-          )}
-          {activeSection === 'Tags' && (
-            <TagsSettings
-              loading={loadingTags}
-              tags={productTags}
-              catalogs={catalogs}
-              selectedCatalogId={selectedTagCatalogId}
-              onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); }}
-              onRefresh={() => void refetchTags()}
-            />
-          )}
-          {activeSection === 'Price Groups' && (
-            <PriceGroupsSettings
-              loadingGroups={loadingGroups}
-              priceGroups={priceGroups}
-              defaultGroupId={defaultGroupId}
-              onDefaultGroupChange={(id: string): void => { void handleSetDefaultGroup(id); }}
-              defaultGroupSaving={updatePriceGroupMutation.isPending}
-              handleOpenCreate={(): void => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
-              handleEditGroup={(g: PriceGroup): void => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
-              handleDeleteGroup={(g: PriceGroup): void => { void handleDeleteGroup(g); }}
-            />
-          )}
-          {activeSection === 'Catalogs' && (
-            <CatalogsSettings
-              loadingCatalogs={loadingCatalogs}
-              catalogs={catalogs}
-              languages={languages}
-              handleOpenCatalogModal={(): void => { setEditingCatalog(null); setShowCatalogModal(true); }}
-              handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
-              handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
-            />
-          )}
-          {activeSection === 'Internationalization' && (
-            <InternationalizationSettings
-              loadingCurrencies={loadingCurrencies}
-              currencyOptions={currencies}
-              handleOpenCurrencyModal={(c: CurrencyOption | undefined): void => { setEditingCurrency(c ?? null); setShowCurrencyModal(true); }}
-              handleDeleteCurrency={(c: CurrencyOption): void => { 
-                void (async (): Promise<void> => {
-                  if (confirm(`Delete ${c.code}?`)) {
-                    await deleteCurrencyMutation.mutateAsync(c.id);
-                  }
-                })();
-              }}
-              loadingCountries={loadingCountries}
-              filteredCountries={countries}
-              countrySearch=""
-              setCountrySearch={() => {}}
-              handleOpenCountryModal={(c: CountryOption | undefined): void => { setEditingCountry(c ?? null); setShowCountryModal(true); }}
-              handleDeleteCountry={(c: CountryOption): void => {
-                void (async (): Promise<void> => {
-                  if (confirm(`Delete ${c.name}?`)) {
-                    await deleteCountryMutation.mutateAsync(c.id);
-                  }
-                })();
-              }}
-              languagesLoading={languagesLoading}
-              languagesError={languagesError instanceof Error ? languagesError.message : (languagesError || null)}
-              languages={languages}
-              handleOpenNewLanguageModal={(): void => { setEditingLanguage(null); setShowLanguageModal(true); }}
-              handleOpenLanguageModal={(l: Language): void => { setEditingLanguage(l); setShowLanguageModal(true); }}
-              handleDeleteLanguage={(l: Language): void => {
-                void (async (): Promise<void> => {
-                  if (confirm(`Delete ${l.name}?`)) {
-                    await deleteLanguageMutation.mutateAsync(l.id);
-                  }
-                })();
-              }}
-            />
-          )}
-        </SectionPanel>
-      </div>
+    <InternationalizationProvider>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Product Settings"
+          className="mb-6"
+        />
+        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
+          <SectionPanel className="p-4">
+            <div className="flex flex-col gap-2">
+              {settingSections.map((section: typeof settingSections[number]) => (
+                <Button
+                  key={section}
+                  onClick={() => setActiveSection(section)}
+                  className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
+                    activeSection === section
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-muted/50/60'
+                  }`}
+                >
+                  {section}
+                </Button>
+              ))}
+            </div>
+          </SectionPanel>
+          <SectionPanel className="p-6">
+            {activeSection === 'Categories' && (
+              <CategoriesSettings
+                loading={loadingCategories}
+                categories={productCategories}
+                catalogs={catalogs}
+                selectedCatalogId={selectedCategoryCatalogId}
+                onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); }}
+                onRefresh={() => void refetchCategories()}
+              />
+            )}
+            {activeSection === 'Tags' && (
+              <TagsSettings
+                loading={loadingTags}
+                tags={productTags}
+                catalogs={catalogs}
+                selectedCatalogId={selectedTagCatalogId}
+                onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); }}
+                onRefresh={() => void refetchTags()}
+              />
+            )}
+            {activeSection === 'Price Groups' && (
+              <PriceGroupsSettings
+                loadingGroups={loadingGroups}
+                priceGroups={priceGroups}
+                defaultGroupId={defaultGroupId}
+                onDefaultGroupChange={(id: string): void => { void handleSetDefaultGroup(id); }}
+                defaultGroupSaving={updatePriceGroupMutation.isPending}
+                handleOpenCreate={(): void => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
+                handleEditGroup={(g: PriceGroup): void => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
+                handleDeleteGroup={(g: PriceGroup): void => { void handleDeleteGroup(g); }}
+              />
+            )}
+            {activeSection === 'Catalogs' && (
+              <CatalogsSettings
+                loadingCatalogs={loadingCatalogs}
+                catalogs={catalogs}
+                handleOpenCatalogModal={(): void => { setEditingCatalog(null); setShowCatalogModal(true); }}
+                handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
+                handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
+              />
+            )}
+            {activeSection === 'Internationalization' && (
+              <InternationalizationSettings />
+            )}
+          </SectionPanel>
+        </div>
 
-      {/* Modals */}
-      <CatalogModal
-        isOpen={showCatalogModal}
-        onClose={() => setShowCatalogModal(false)}
-        onSuccess={(): void => { setShowCatalogModal(false); }}
-        catalog={editingCatalog}
-        languages={languages}
-        languagesLoading={languagesLoading}
-        languagesError={languagesError instanceof Error ? languagesError.message : (languagesError || null)}
-        priceGroups={priceGroups}
-        loadingGroups={loadingGroups}
-        defaultGroupId={defaultGroupId}
-      />
+        {/* Modals */}
+        <CatalogModal
+          isOpen={showCatalogModal}
+          onClose={() => setShowCatalogModal(false)}
+          onSuccess={(): void => { setShowCatalogModal(false); }}
+          catalog={editingCatalog}
+          priceGroups={priceGroups}
+          loadingGroups={loadingGroups}
+          defaultGroupId={defaultGroupId}
+        />
 
-      <LanguageModal
-        isOpen={showLanguageModal}
-        onClose={() => setShowLanguageModal(false)}
-        onSuccess={(): void => { setShowLanguageModal(false); }}
-        language={editingLanguage}
-        countries={countries}
-      />
+        <LanguageModal />
 
-      <PriceGroupModal
-        isOpen={showPriceGroupModal}
-        onClose={() => setShowPriceGroupModal(false)}
-        onSuccess={(): void => { setShowPriceGroupModal(false); }}
-        priceGroup={editingPriceGroup}
-        currencyOptions={currencies}
-        loadingCurrencies={loadingCurrencies}
-        priceGroups={priceGroups}
-      />
+        <PriceGroupModal
+          isOpen={showPriceGroupModal}
+          onClose={() => setShowPriceGroupModal(false)}
+          onSuccess={(): void => { setShowPriceGroupModal(false); }}
+          priceGroup={editingPriceGroup}
+          priceGroups={priceGroups}
+        />
 
-      <CurrencyModal
-        isOpen={showCurrencyModal}
-        onClose={() => setShowCurrencyModal(false)}
-        onSuccess={(): void => { setShowCurrencyModal(false); }}
-        currency={editingCurrency}
-      />
+        <CurrencyModal />
 
-      <CountryModal
-        isOpen={showCountryModal}
-        onClose={() => setShowCountryModal(false)}
-        onSuccess={(): void => { setShowCountryModal(false); }}
-        country={editingCountry}
-        currencyOptions={currencies}
-        loadingCurrencies={loadingCurrencies}
-      />
-    </SectionPanel>
+        <CountryModal />
+      </SectionPanel>
+    </InternationalizationProvider>
   );
 }

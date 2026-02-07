@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
@@ -24,8 +24,23 @@ vi.mock('@/features/ai/agent-runtime/server', () => ({
 }));
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
-  apiHandlerWithParams: (handler: any) => handler,
+  apiHandler: (handler: any) => async (req: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      return await handler(req, { requestId: 'test', body });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
+  apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
+    try {
+      const body = req.body ? await req.json().catch(() => ({})) : {};
+      const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' ? await ctx.params : (ctx?.params ?? {});
+      return await handler(req, { requestId: 'test', body }, resolvedParams);
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
+    }
+  },
 }));
 
 describe('Agent Creator API', () => {

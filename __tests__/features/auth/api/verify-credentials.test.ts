@@ -1,11 +1,12 @@
 import bcrypt from 'bcryptjs';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { POST } from '@/app/api/auth/verify-credentials/route';
 
 
 vi.mock('bcryptjs', () => ({
+  compare: vi.fn(),
   default: {
     compare: vi.fn(),
   },
@@ -19,10 +20,6 @@ vi.mock('@/features/auth/server', () => ({
   recordLoginFailure: vi.fn(),
   getAuthUserPageSettings: vi.fn().mockResolvedValue({ requireEmailVerification: false }),
   createLoginChallenge: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => handler,
 }));
 
 describe('Auth Verify Credentials API', () => {

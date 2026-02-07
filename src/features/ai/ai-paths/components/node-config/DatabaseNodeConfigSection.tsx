@@ -266,7 +266,12 @@ type DatabaseNodeConfigSectionProps = {
   updaterSamples: Record<string, UpdaterSampleState>;
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   updaterSampleLoading: boolean;
-  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
@@ -449,7 +454,9 @@ export function DatabaseNodeConfigSection({
     lastAutoFetchedRef.current = fetchKey;
 
     // Auto-fetch the sample
-    void handleFetchUpdaterSample(selectedNode.id, finalCollection, detectedId);
+    void handleFetchUpdaterSample(selectedNode.id, finalCollection, detectedId, {
+      notify: false,
+    });
   }, [selectedNode.id, selectedNode.type, selectedNode.config?.database, runtimeState, updaterSamples, handleFetchUpdaterSample]);
 
   React.useEffect(() => {

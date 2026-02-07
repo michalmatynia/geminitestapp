@@ -50,7 +50,7 @@ export type CanvasSidebarWrapperProps = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>) | undefined;
+  }) => Promise<boolean>) | undefined;
 };
 
 /**

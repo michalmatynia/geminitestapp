@@ -20,6 +20,7 @@ import * as THREE from 'three';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { useOptionalViewer3D } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
@@ -407,35 +408,35 @@ function ScreenshotCapture({
 
 export function Viewer3D({
   modelUrl,
-  backgroundColor = '#1a1a2e',
-  enableDithering = false,
-  ditheringIntensity = 1.0,
-  enableOrderedDithering = false,
-  orderedDitheringGridSize = 4,
-  orderedDitheringPixelSizeRatio = 1,
-  orderedDitheringGrayscaleOnly = false,
-  orderedDitheringInvertColor = false,
-  orderedDitheringLuminanceMethod = 1,
-  enablePixelation = false,
-  pixelSize = 6,
+  backgroundColor: propBackgroundColor,
+  enableDithering: propEnableDithering,
+  ditheringIntensity: propDitheringIntensity,
+  enableOrderedDithering: propEnableOrderedDithering,
+  orderedDitheringGridSize: propOrderedDitheringGridSize,
+  orderedDitheringPixelSizeRatio: propOrderedDitheringPixelSizeRatio,
+  orderedDitheringGrayscaleOnly: propOrderedDitheringGrayscaleOnly,
+  orderedDitheringInvertColor: propOrderedDitheringInvertColor,
+  orderedDitheringLuminanceMethod: propOrderedDitheringLuminanceMethod,
+  enablePixelation: propEnablePixelation,
+  pixelSize: propPixelSize,
   className,
   onLoad,
   onError,
-  autoRotate = true,
-  autoRotateSpeed = 2,
-  environment = 'studio',
-  lighting = 'studio',
-  lightIntensity = 1,
-  enableShadows = true,
-  enableBloom = false,
-  bloomIntensity = 0.5,
-  enableToneMapping = true,
-  exposure = 1,
-  showGround = false,
-  enableContactShadows = true,
-  enableVignette = false,
+  autoRotate: propAutoRotate,
+  autoRotateSpeed: propAutoRotateSpeed,
+  environment: propEnvironment,
+  lighting: propLighting,
+  lightIntensity: propLightIntensity,
+  enableShadows: propEnableShadows,
+  enableBloom: propEnableBloom,
+  bloomIntensity: propBloomIntensity,
+  enableToneMapping: propEnableToneMapping,
+  exposure: propExposure,
+  showGround: propShowGround,
+  enableContactShadows: propEnableContactShadows,
+  enableVignette: propEnableVignette,
   autoFit = true,
-  enableAntiAliasing = true,
+  enableAntiAliasing: propEnableAntiAliasing,
   presentationMode = false,
   allowUserControls = true,
   modelPosition,
@@ -443,6 +444,41 @@ export function Viewer3D({
   modelScale,
   captureRef,
 }: Viewer3DProps): React.JSX.Element {
+  const context = useOptionalViewer3D();
+
+  // Helper to get value from prop if defined, otherwise from context, otherwise fallback to default
+  const getValue = <T,>(prop: T | undefined, contextValue: T | undefined, defaultValue: T): T => {
+    if (prop !== undefined) return prop;
+    if (contextValue !== undefined) return contextValue;
+    return defaultValue;
+  };
+
+  const backgroundColor = getValue(propBackgroundColor, context?.backgroundColor, '#1a1a2e');
+  const enableDithering = getValue(propEnableDithering, context?.enableDithering, false);
+  const ditheringIntensity = getValue(propDitheringIntensity, context?.ditheringIntensity, 1.0);
+  const enableOrderedDithering = getValue(propEnableOrderedDithering, context?.enableOrderedDithering, false);
+  const orderedDitheringGridSize = getValue(propOrderedDitheringGridSize, context?.orderedDitheringGridSize, 4);
+  const orderedDitheringPixelSizeRatio = getValue(propOrderedDitheringPixelSizeRatio, context?.orderedDitheringPixelSizeRatio, 1);
+  const orderedDitheringGrayscaleOnly = getValue(propOrderedDitheringGrayscaleOnly, context?.orderedDitheringGrayscaleOnly, false);
+  const orderedDitheringInvertColor = getValue(propOrderedDitheringInvertColor, context?.orderedDitheringInvertColor, false);
+  const orderedDitheringLuminanceMethod = getValue(propOrderedDitheringLuminanceMethod, context?.orderedDitheringLuminanceMethod, 1);
+  const enablePixelation = getValue(propEnablePixelation, context?.enablePixelation, false);
+  const pixelSize = getValue(propPixelSize, context?.pixelSize, 6);
+  const autoRotate = getValue(propAutoRotate, context?.autoRotate, true);
+  const autoRotateSpeed = getValue(propAutoRotateSpeed, context?.autoRotateSpeed, 2);
+  const environment = getValue(propEnvironment, context?.environment, 'studio' as EnvironmentPreset);
+  const lighting = getValue(propLighting, context?.lighting, 'studio' as LightingPreset);
+  const lightIntensity = getValue(propLightIntensity, context?.lightIntensity, 1);
+  const enableShadows = getValue(propEnableShadows, context?.enableShadows, true);
+  const enableBloom = getValue(propEnableBloom, context?.enableBloom, false);
+  const bloomIntensity = getValue(propBloomIntensity, context?.bloomIntensity, 0.5);
+  const enableToneMapping = getValue(propEnableToneMapping, context?.enableToneMapping, true);
+  const exposure = getValue(propExposure, context?.exposure, 1);
+  const showGround = getValue(propShowGround, context?.showGround, false);
+  const enableContactShadows = getValue(propEnableContactShadows, context?.enableContactShadows, true);
+  const enableVignette = getValue(propEnableVignette, context?.enableVignette, false);
+  const enableAntiAliasing = getValue(propEnableAntiAliasing, undefined, true); // Anti-aliasing not in context for now
+
   const hasPostProcessing =
     enableDithering ||
     enableOrderedDithering ||

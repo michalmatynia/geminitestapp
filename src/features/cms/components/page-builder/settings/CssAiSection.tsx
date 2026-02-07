@@ -5,136 +5,43 @@ import React, { useMemo, useState } from 'react';
 import type { CustomCssAiProvider } from '@/features/cms/types/custom-css-ai';
 import { Button, Label, Switch, Textarea, SectionPanel, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect } from '@/shared/ui';
 
-// ---------------------------------------------------------------------------
-// Utility functions extracted from ComponentSettingsPanel
-// ---------------------------------------------------------------------------
-
-function extractCssFromResponse(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) return '';
-  const fenceMatch = trimmed.match(/```(?:css)?\s*([\s\S]*?)```/i);
-  if (fenceMatch?.[1]) {
-    return fenceMatch[1].trim();
-  }
-  return trimmed.replace(/```/g, '').trim();
-}
-
-function extractJsonFromResponse(raw: string): Record<string, unknown> | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
-  const first = candidate.indexOf('{');
-  const last = candidate.lastIndexOf('}');
-  const jsonText = first >= 0 && last > first ? candidate.slice(first, last + 1) : candidate;
-  try {
-    const parsed = JSON.parse(jsonText) as unknown;
-    if (!parsed || typeof parsed !== 'object') return null;
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function buildDiffLines(
-  prev: string,
-  next: string,
-  limit: number = 220
-): { lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }>; truncated: boolean } {
-  const prevLines = prev.split('\n');
-  const nextLines = next.split('\n');
-  const max = Math.max(prevLines.length, nextLines.length);
-  const lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }> = [];
-  let truncated = false;
-  for (let index = 0; index < max; index += 1) {
-    const prevLine = prevLines[index];
-    const nextLine = nextLines[index];
-    if (prevLine === nextLine) {
-      if (prevLine !== undefined) {
-        lines.push({ type: 'same', text: prevLine });
-      }
-    } else {
-      if (prevLine !== undefined) {
-        lines.push({ type: 'remove', text: prevLine });
-      }
-      if (nextLine !== undefined) {
-        lines.push({ type: 'add', text: nextLine });
-      }
-    }
-    if (lines.length >= limit) {
-      truncated = true;
-      break;
-    }
-  }
-  return { lines, truncated };
-}
+import { useInspectorAi } from '../context/InspectorAiContext';
+import { buildDiffLines } from '../utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
 // CssAiSection component — renders the CSS AI assistant panel
 // ---------------------------------------------------------------------------
 
-interface CssAiSectionProps {
-  customCssValue: string;
-  cssAiOutput: string;
-  cssAiError: string | null;
-  cssAiLoading: boolean;
-  cssAiAutoApply: boolean;
-  setCssAiAutoApply: (value: boolean) => void;
-  cssAiAppend: boolean;
-  setCssAiAppend: (value: boolean) => void;
-  onGenerateCss: () => void;
-  onCancelCss: () => void;
-  onApplyGeneratedCss: (mode: 'append' | 'replace') => void;
-  customCssAiConfig: {
-    provider?: CustomCssAiProvider;
-    modelId?: string;
-    agentId?: string;
-    prompt?: string;
-  };
-  onCustomCssAiChange: (patch: Partial<{ provider: CustomCssAiProvider; modelId: string; agentId: string; prompt: string }>) => void;
-  providerOptions: Array<{ label: string; value: string }>;
-  modelOptions: string[];
-  agentOptions: Array<{ label: string; value: string }>;
-  contextPreviewOpen: boolean;
-  setContextPreviewOpen: (value: boolean) => void;
-  contextPreviewTab: 'page' | 'element';
-  setContextPreviewTab: (value: 'page' | 'element') => void;
-  contextPreviewFull: boolean;
-  setContextPreviewFull: (value: boolean) => void;
-  setContextPreviewNonce: React.Dispatch<React.SetStateAction<number>>;
-  pageContextPreview: string;
-  elementContextPreview: string;
-  onCopyContext: (value: string) => void;
-}
+function CssAiSection(): React.JSX.Element {
+  const {
+    customCssValue,
+    cssAiOutput,
+    cssAiError,
+    cssAiLoading,
+    cssAiAutoApply,
+    setCssAiAutoApply,
+    cssAiAppend,
+    setCssAiAppend,
+    generateCss,
+    cancelCss,
+    applyCss,
+    customCssAiConfig,
+    updateCustomCssAiConfig,
+    providerOptions,
+    modelOptions,
+    agentOptions,
+    contextPreviewOpen,
+    setContextPreviewOpen,
+    contextPreviewTab,
+    setContextPreviewTab,
+    contextPreviewFull,
+    setContextPreviewFull,
+    setContextPreviewNonce,
+    pageContextPreview,
+    elementContextPreview,
+    copyContext,
+  } = useInspectorAi();
 
-function CssAiSection({
-  customCssValue,
-  cssAiOutput,
-  cssAiError,
-  cssAiLoading,
-  cssAiAutoApply,
-  setCssAiAutoApply,
-  cssAiAppend,
-  setCssAiAppend,
-  onGenerateCss,
-  onCancelCss,
-  onApplyGeneratedCss,
-  customCssAiConfig,
-  onCustomCssAiChange,
-  providerOptions,
-  modelOptions,
-  agentOptions,
-  contextPreviewOpen,
-  setContextPreviewOpen,
-  contextPreviewTab,
-  setContextPreviewTab,
-  contextPreviewFull,
-  setContextPreviewFull,
-  setContextPreviewNonce,
-  pageContextPreview,
-  elementContextPreview,
-  onCopyContext,
-}: CssAiSectionProps): React.ReactNode {
   const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
   const contextPlaceholder = '{{page_context}}\n{{element_context}}';
 
@@ -174,7 +81,7 @@ function CssAiSection({
         <UnifiedSelect
           value={customCssAiConfig.provider ?? 'model'}
           onValueChange={(value: string): void =>
-            onCustomCssAiChange({ provider: value as CustomCssAiProvider })
+            updateCustomCssAiConfig({ provider: value as CustomCssAiProvider })
           }
           options={providerOptions}
           placeholder="Select provider"
@@ -186,7 +93,7 @@ function CssAiSection({
           <UnifiedSelect
             value={customCssAiConfig.modelId ?? ''}
             onValueChange={(value: string): void =>
-              onCustomCssAiChange({ modelId: value })
+              updateCustomCssAiConfig({ modelId: value })
             }
             options={modelOptions.map((model: string) => ({ value: model, label: model }))}
             placeholder={modelOptions.length ? 'Select model' : 'No models available'}
@@ -198,7 +105,7 @@ function CssAiSection({
           <UnifiedSelect
             value={customCssAiConfig.agentId ?? ''}
             onValueChange={(value: string): void =>
-              onCustomCssAiChange({ agentId: value })
+              updateCustomCssAiConfig({ agentId: value })
             }
             options={
               agentOptions.length
@@ -214,7 +121,7 @@ function CssAiSection({
         <Textarea
           value={customCssAiConfig.prompt ?? ''}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-            onCustomCssAiChange({ prompt: e.target.value })
+            updateCustomCssAiConfig({ prompt: e.target.value })
           }
           placeholder={`Describe the CSS you want.\n\nContext:\n${contextPlaceholder}`}
           className="min-h-[120px] text-xs"
@@ -232,7 +139,7 @@ function CssAiSection({
             const nextPrompt = current.length
               ? `${current}\n\n${contextPlaceholder}`
               : contextPlaceholder;
-            onCustomCssAiChange({ prompt: nextPrompt });
+            updateCustomCssAiConfig({ prompt: nextPrompt });
           }}
         >
           Insert placeholders
@@ -297,7 +204,7 @@ function CssAiSection({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={(): void => void onCopyContext(pageContextPreview)}
+                  onClick={(): void => void copyContext(pageContextPreview)}
                 >
                   Copy
                 </Button>
@@ -315,7 +222,7 @@ function CssAiSection({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={(): void => void onCopyContext(elementContextPreview)}
+                  onClick={(): void => void copyContext(elementContextPreview)}
                 >
                   Copy
                 </Button>
@@ -346,7 +253,7 @@ function CssAiSection({
         <Button
           type="button"
           size="sm"
-          onClick={(): void => void onGenerateCss()}
+          onClick={(): void => void generateCss()}
           disabled={cssAiLoading}
         >
           {cssAiLoading ? 'Generating\u2026' : 'Generate CSS'}
@@ -356,7 +263,7 @@ function CssAiSection({
             type="button"
             size="sm"
             variant="outline"
-            onClick={onCancelCss}
+            onClick={cancelCss}
           >
             Cancel
           </Button>
@@ -385,7 +292,7 @@ function CssAiSection({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={(): void => onApplyGeneratedCss('append')}
+                onClick={(): void => applyCss('append')}
               >
                 Apply append
               </Button>
@@ -393,7 +300,7 @@ function CssAiSection({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={(): void => onApplyGeneratedCss('replace')}
+                onClick={(): void => applyCss('replace')}
               >
                 Apply replace
               </Button>
@@ -452,4 +359,4 @@ function CssAiSection({
   );
 }
 
-export { CssAiSection, extractCssFromResponse, extractJsonFromResponse, buildDiffLines };
+export { CssAiSection };

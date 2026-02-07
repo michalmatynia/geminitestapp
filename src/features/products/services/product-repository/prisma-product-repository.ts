@@ -25,6 +25,16 @@ function removeUndefined<T extends object>(obj: T): T {
   return newObj;
 }
 
+const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
+  const unique = new Set<string>();
+  for (const rawId of imageFileIds) {
+    const trimmed = rawId.trim();
+    if (!trimmed || unique.has(trimmed)) continue;
+    unique.add(trimmed);
+  }
+  return Array.from(unique);
+};
+
 const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
 
@@ -141,6 +151,32 @@ const toCatalogRecord = (catalog: {
     : [],
 });
 
+const toProductImageRecord = (image: {
+  productId: string;
+  imageFileId: string;
+  assignedAt: Date;
+  imageFile?: {
+    id: string;
+    filename: string;
+    filepath: string;
+    mimetype: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+    tags: string[] | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+}) => {
+  if (!image.imageFile) return null;
+  return {
+    productId: image.productId,
+    imageFileId: image.imageFileId,
+    assignedAt: image.assignedAt,
+    imageFile: toImageFileRecord(image.imageFile),
+  };
+};
+
 const toProductRecord = (product: {
   id: string;
   sku: string | null;
@@ -239,12 +275,14 @@ export const prismaProductRepository: ProductRepository = {
         ...product,
         imageBase64s: [],
       }),
-      images: product.images.map((image: typeof product.images[number]) => ({
-        productId: image.productId,
-        imageFileId: image.imageFileId,
-        assignedAt: image.assignedAt,
-        imageFile: toImageFileRecord(image.imageFile),
-      })),
+      images: product.images
+        .map((image: typeof product.images[number]) => toProductImageRecord(image))
+        .filter(
+          (
+            image,
+          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
+            image !== null
+        ),
       catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
@@ -294,12 +332,14 @@ export const prismaProductRepository: ProductRepository = {
         ...product,
         imageBase64s: [],
       }),
-      images: product.images.map((image: typeof product.images[number]) => ({
-        productId: image.productId,
-        imageFileId: image.imageFileId,
-        assignedAt: image.assignedAt,
-        imageFile: toImageFileRecord(image.imageFile),
-      })),
+      images: product.images
+        .map((image: typeof product.images[number]) => toProductImageRecord(image))
+        .filter(
+          (
+            image,
+          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
+            image !== null
+        ),
       catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
@@ -439,10 +479,33 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async addProductImages(productId: string, imageFileIds: string[]) {
-    if (imageFileIds.length === 0) return;
+    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    if (normalizedIds.length === 0) return;
+    const now = Date.now();
     await prisma.productImage.createMany({
-      data: imageFileIds.map((imageFileId: string) => ({ productId, imageFileId })),
+      data: normalizedIds.map((imageFileId: string, index: number) => ({
+        productId,
+        imageFileId,
+        assignedAt: new Date(now - index),
+      })),
       skipDuplicates: true,
+    });
+  },
+
+  async replaceProductImages(productId: string, imageFileIds: string[]) {
+    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.productImage.deleteMany({ where: { productId } });
+      if (normalizedIds.length === 0) return;
+
+      const now = Date.now();
+      await tx.productImage.createMany({
+        data: normalizedIds.map((imageFileId: string, index: number) => ({
+          productId,
+          imageFileId,
+          assignedAt: new Date(now - index),
+        })),
+      });
     });
   },
 

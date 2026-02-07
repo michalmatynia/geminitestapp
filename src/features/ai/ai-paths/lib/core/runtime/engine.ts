@@ -448,6 +448,29 @@ const buildDatabaseInputHash = (
   });
 };
 
+const isDatabaseWriteNode = (node: AiNode): boolean => {
+  if (node.type !== 'database') return false;
+  const dbConfig = node.config?.database ?? { operation: 'query' };
+  const operation = dbConfig.operation ?? 'query';
+  if (operation === 'insert' || operation === 'update' || operation === 'delete') {
+    return true;
+  }
+  const actionCategory = dbConfig.actionCategory ?? null;
+  if (
+    dbConfig.useMongoActions &&
+    (actionCategory === 'create' || actionCategory === 'update' || actionCategory === 'delete')
+  ) {
+    return true;
+  }
+  const action = (dbConfig.action ?? '').toLowerCase();
+  return (
+    action.startsWith('insert') ||
+    action.startsWith('update') ||
+    action.startsWith('delete') ||
+    action.startsWith('replace')
+  );
+};
+
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
   notification: handleNotification,
@@ -1362,7 +1385,8 @@ export async function evaluateGraph({
       }
 
       const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
-      const isCacheable = cacheMode !== 'disabled';
+      const isWriteNode = isDatabaseWriteNode(node);
+      const isCacheable = cacheMode !== 'disabled' && !isWriteNode;
       if (!isCacheable && inputHashes.has(node.id)) {
         inputHashes.delete(node.id);
       }

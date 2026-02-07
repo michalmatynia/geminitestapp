@@ -73,7 +73,12 @@ export type DatabaseNodeConfigSectionMigratedProps = {
   onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
 
   // Callbacks for sample fetching
-  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
 
   // Callbacks for preset persistence
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;

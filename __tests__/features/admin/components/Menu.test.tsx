@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import Menu from '@/features/admin/components/Menu';
@@ -63,18 +63,20 @@ describe('Menu Component', () => {
     expect(screen.getByText('Drafts')).toBeInTheDocument();
   });
 
-  it('navigates to create page and collapses menu when Create Page is clicked', () => {
+  it('navigates to create page and collapses menu when Create Page is clicked', async () => {
     renderMenu();
-    const contentTrigger = screen.getByText('Content');
+    const contentTrigger = await screen.findByText('Content');
     fireEvent.click(contentTrigger);
     
-    const cmsTrigger = screen.getByText('CMS');
+    const cmsTrigger = await screen.findByText('CMS');
     fireEvent.click(cmsTrigger);
     
-    const createPageButton = screen.getByText('Create Page');
+    const createPageButton = await screen.findByText('Create Page');
     fireEvent.click(createPageButton);
     
-    expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
+    });
   });
 
   it('contains correctly linked standalone sections', async () => {

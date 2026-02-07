@@ -9,6 +9,10 @@ import type {
   AiPathRunRecord,
 } from '@/shared/types/ai-paths';
 import type { AiNode } from '@/shared/types/ai-paths';
+import {
+  AI_PATHS_RUN_SOURCE_TABS,
+  AI_PATHS_RUN_SOURCE_VALUES,
+} from '@/features/ai/ai-paths/lib/run-sources';
 
 import {
   AiPathRunEventCreateInput,
@@ -192,20 +196,20 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
   const source = options.source?.trim();
   const sourceMode = options.sourceMode ?? 'include';
   if (source) {
-    const aiPathsSources = ['ai_paths_ui', 'ai_paths_direct', 'trigger_button', 'product_panel'];
-    const aiPathsTabs = ['product', 'note'];
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {
-        andFilters.push({ 'meta.source': { $nin: aiPathsSources } });
-        andFilters.push({ 'meta.source.tab': { $nin: aiPathsTabs } });
+        andFilters.push({ 'meta.source': { $nin: [...AI_PATHS_RUN_SOURCE_VALUES] } });
+        andFilters.push({ 'meta.source.tab': { $nin: [...AI_PATHS_RUN_SOURCE_TABS] } });
+        andFilters.push({ 'meta.sourceInfo.tab': { $nin: [...AI_PATHS_RUN_SOURCE_TABS] } });
       } else {
         andFilters.push({ 'meta.source': { $ne: source } });
       }
     } else if (source === 'ai_paths_ui') {
       andFilters.push({
         $or: [
-          { 'meta.source': { $in: aiPathsSources } },
-          { 'meta.source.tab': { $in: aiPathsTabs } },
+          { 'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] } },
+          { 'meta.source.tab': { $in: [...AI_PATHS_RUN_SOURCE_TABS] } },
+          { 'meta.sourceInfo.tab': { $in: [...AI_PATHS_RUN_SOURCE_TABS] } },
         ],
       });
     } else {

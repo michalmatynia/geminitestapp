@@ -43,6 +43,16 @@ const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
   return { $or: conditions } as Filter<ProductDocument>;
 };
 
+const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
+  const unique = new Set<string>();
+  for (const rawId of imageFileIds) {
+    const trimmed = rawId.trim();
+    if (!trimmed || unique.has(trimmed)) continue;
+    unique.add(trimmed);
+  }
+  return Array.from(unique);
+};
+
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
   id: doc.id ?? doc._id,
   sku: doc.sku ?? null,
@@ -482,10 +492,11 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async addProductImages(productId: string, imageFileIds: string[]) {
-    if (imageFileIds.length === 0) return;
+    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    if (normalizedIds.length === 0) return;
     const db = await getMongoDb();
     const imageFiles = await mongoImageFileRepository.findImageFilesByIds(
-      imageFileIds
+      normalizedIds
     );
     const now = new Date();
     const incoming = imageFiles.map((imageFile: ImageFileRecord) => ({
@@ -512,6 +523,46 @@ export const mongoProductRepository: ProductRepository = {
       .updateOne(
         buildProductIdFilter(productId),
         { $set: { images: merged, updatedAt: new Date() } }
+      );
+  },
+
+  async replaceProductImages(productId: string, imageFileIds: string[]) {
+    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    const db = await getMongoDb();
+    if (normalizedIds.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          buildProductIdFilter(productId),
+          { $set: { images: [], updatedAt: new Date() } }
+        );
+      return;
+    }
+
+    const imageFiles = await mongoImageFileRepository.findImageFilesByIds(
+      normalizedIds
+    );
+    const imageFileById = new Map<string, ImageFileRecord>(
+      imageFiles.map((imageFile: ImageFileRecord) => [imageFile.id, imageFile])
+    );
+    const now = new Date();
+    const images: ProductImageRecord[] = [];
+    normalizedIds.forEach((imageFileId: string, index: number): void => {
+      const imageFile = imageFileById.get(imageFileId);
+      if (!imageFile) return;
+      images.push({
+        productId,
+        imageFileId,
+        assignedAt: new Date(now.getTime() - index),
+        imageFile,
+      });
+    });
+
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateOne(
+        buildProductIdFilter(productId),
+        { $set: { images, updatedAt: new Date() } }
       );
   },
 

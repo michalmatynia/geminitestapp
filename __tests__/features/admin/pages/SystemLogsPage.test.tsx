@@ -6,7 +6,67 @@ import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
-// ... (keep mocks)
+// Mock react-query
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useQuery: vi.fn(),
+    useMutation: vi.fn(),
+    useQueryClient: vi.fn(() => ({
+      invalidateQueries: vi.fn(),
+    })),
+  };
+});
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+}));
+
+// Mock useToast and UI components
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({ toast: vi.fn() })),
+    Button: ({ children, onClick, disabled, className }: any) => (
+      <button onClick={onClick} disabled={disabled} className={className}>{children}</button>
+    ),
+    Input: ({ value, onChange, placeholder, type }: any) => (
+      <input value={value} onChange={onChange} placeholder={placeholder} type={type} />
+    ),
+    Select: ({ children, value, onValueChange }: any) => (
+      <select value={value} onChange={(e) => onValueChange(e.target.value)}>{children}</select>
+    ),
+    SelectTrigger: ({ children }: any) => <div>{children}</div>,
+    SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
+    Label: ({ children }: any) => <label>{children}</label>,
+    SectionHeader: ({ title, description, actions }: any) => (
+      <div>
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <div>{actions}</div>
+      </div>
+    ),
+    SectionPanel: ({ children }: any) => <div>{children}</div>,
+    ListPanel: ({ children, header, filters }: any) => (
+      <div>
+        {header}
+        {filters}
+        {children}
+      </div>
+    ),
+  };
+});
 
 const createTestQueryClient = () => new QueryClient({
   defaultOptions: {
@@ -95,20 +155,21 @@ describe('SystemLogsPage', () => {
 
   it('calls clear logs mutation when button is clicked', async () => {
     const mockMutate = vi.fn().mockResolvedValue(true);
-    (useMutation as any).mockImplementation(({ mutationFn }: any) => {
-      if (mutationFn) return { mutateAsync: mockMutate, isPending: false };
-      return { mutateAsync: vi.fn(), isPending: false };
+    (useMutation as any).mockImplementation(({ mutationFn: _mutationFn }: any) => {
+      // Check if it's the clear logs mutation
+      return { mutateAsync: mockMutate, isPending: false };
     });
     
-    // Mock confirm
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-
     renderPage();
     
     const clearButton = screen.getByText('Clear Logs');
     fireEvent.click(clearButton);
     
-    expect(window.confirm).toHaveBeenCalled();
+    // In ConfirmDialog, the button text is "Clear All" for destructive variant
+    // Using findByText because ConfirmDialog (AlertDialog) renders in a portal
+    const confirmButton = await screen.findByText('Clear All');
+    fireEvent.click(confirmButton);
+    
     expect(mockMutate).toHaveBeenCalled();
     await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith('System logs cleared.', { variant: 'success' });
@@ -130,7 +191,7 @@ describe('SystemLogsPage', () => {
     
     expect(mockWriteText).toHaveBeenCalled();
     await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith('Logs copied to clipboard.', { variant: 'success' });
+      expect(mockToast).toHaveBeenCalledWith('Copied to clipboard', { variant: 'success' });
     });
   });
 });

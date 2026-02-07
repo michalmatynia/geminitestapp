@@ -10,6 +10,10 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/features/ai/ai-paths/lib';
+import {
+  AI_PATHS_RUN_SOURCE_TABS,
+  AI_PATHS_RUN_SOURCE_VALUES,
+} from '@/features/ai/ai-paths/lib/run-sources';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   Button,
@@ -101,13 +105,8 @@ const STATUS_FILTERS = [
   { id: 'canceled', label: 'Canceled' },
   { id: 'dead_lettered', label: 'Dead-lettered' },
 ] as const;
-const AI_PATHS_RUN_SOURCES = new Set([
-  'ai_paths_ui',
-  'ai_paths_direct',
-  'trigger_button',
-  'product_panel',
-]);
-const AI_PATHS_SOURCE_TABS = new Set(['product', 'note']);
+const AI_PATHS_RUN_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+const AI_PATHS_SOURCE_TABS = new Set<string>(AI_PATHS_RUN_SOURCE_TABS);
 
 const formatDate = (value?: Date | string | null): string => {
   if (!value) return '-';
@@ -178,6 +177,24 @@ const resolveRunSource = (run: AiPathRunRecord): string | null => {
   }
 
   return null;
+};
+
+const resolveRunSourceDebug = (run: AiPathRunRecord): string => {
+  const meta = readMetaRecord(run.meta);
+  if (!meta) return 'src=- infoTab=-';
+
+  const sourceRaw = meta.source;
+  const sourceValue = readStringValue(sourceRaw)?.toLowerCase() ?? (
+    sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw) ? 'object' : '-'
+  );
+
+  const sourceInfoRaw = meta.sourceInfo;
+  const sourceInfoTab =
+    sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)
+      ? readStringValue((sourceInfoRaw as Record<string, unknown>).tab)?.toLowerCase() ?? '-'
+      : '-';
+
+  return `src=${sourceValue} infoTab=${sourceInfoTab}`;
 };
 
 const resolveRunOrigin = (run: AiPathRunRecord): RunOrigin => {
@@ -1162,6 +1179,7 @@ export function JobQueuePanel({
             const runOrigin = resolveRunOrigin(detailRun);
             const runExecution = resolveRunExecutionKind(detailRun);
             const runSource = resolveRunSource(detailRun) ?? 'unknown';
+            const runSourceDebug = resolveRunSourceDebug(detailRun);
             const nodes = detail?.nodes ?? [];
             const events = detail?.events ?? [];
             const history = (detailRun.runtimeState?.history ?? undefined);
@@ -1205,6 +1223,12 @@ export function JobQueuePanel({
                       </span>
                       <span className="rounded-full border border-border/60 bg-card/60 px-2 py-[1px] text-[9px] uppercase text-gray-300">
                         Source: {runSource}
+                      </span>
+                      <span
+                        className="rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-[1px] text-[9px] text-sky-200"
+                        title={runSourceDebug}
+                      >
+                        Debug: {runSourceDebug}
                       </span>
                     </div>
                     <div className="text-sm text-white">{detailRun.pathName ?? 'AI Path'}</div>
@@ -1313,6 +1337,10 @@ export function JobQueuePanel({
                           <div>
                             <span className="uppercase text-gray-500">Source</span>
                             <div className="text-white">{runSource}</div>
+                          </div>
+                          <div className="sm:col-span-2 lg:col-span-3">
+                            <span className="uppercase text-gray-500">Source debug</span>
+                            <div className="font-mono text-sky-200">{runSourceDebug}</div>
                           </div>
                           <div>
                             <span className="uppercase text-gray-500">Started</span>

@@ -13,6 +13,7 @@ import { getProductColumns } from '@/features/products/components/list/ProductCo
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
 import { ProductModals } from '@/features/products/components/ProductModals';
+import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
   useProductData,
@@ -455,97 +456,101 @@ export function AdminProductsPage(): React.JSX.Element {
         variant="destructive"
         loading={bulkDeleteMutation.isPending}
       />
-      <ProductListPanel
-        onCreateProduct={handleOpenCreate}
-        onCreateFromDraft={handleCreateFromDraft}
-        activeDrafts={activeDrafts}
-        page={page}
-        totalPages={totalPages}
-        setPage={handleSetPage}
-        pageSize={pageSize}
-        setPageSize={handleSetPageSize}
-        nameLocale={preferences.nameLocale}
-        setNameLocale={handleSetNameLocale}
-        languageOptions={languageOptions}
-        currencyCode={currencyCode}
-        setCurrencyCode={handleSetCurrencyCode}
-        currencyOptions={currencyOptions}
-        catalogFilter={catalogFilter}
-        setCatalogFilter={handleSetCatalogFilter}
-        catalogs={catalogs}
-        loadError={loadError?.message || null}
-        actionError={actionError}
-        onDismissActionError={handleDismissActionError}
-        search={search}
-        setSearch={setSearch}
-        sku={sku}
-        setSku={setSku}
-        minPrice={minPrice}
-        setMinPrice={setMinPrice}
-        maxPrice={maxPrice}
-        setMaxPrice={setMaxPrice}
-        startDate={startDate || ''}
-        setStartDate={setStartDate}
-        endDate={endDate || ''}
-        setEndDate={setEndDate}
-        data={isMounted ? data : []}
-        rowSelection={rowSelection}
-        setRowSelection={setRowSelection}
-        onSelectAllGlobal={async (): Promise<void> => {
-          await handleSelectAllGlobal();
+      <ProductListProvider
+        value={{
+          onCreateProduct: handleOpenCreate,
+          onCreateFromDraft: handleCreateFromDraft,
+          activeDrafts,
+          page,
+          totalPages,
+          setPage: handleSetPage,
+          pageSize,
+          setPageSize: handleSetPageSize,
+          nameLocale: preferences.nameLocale,
+          setNameLocale: handleSetNameLocale,
+          languageOptions,
+          currencyCode,
+          setCurrencyCode: handleSetCurrencyCode,
+          currencyOptions,
+          catalogFilter,
+          setCatalogFilter: handleSetCatalogFilter,
+          catalogs,
+          loadError: loadError?.message || null,
+          actionError,
+          onDismissActionError: handleDismissActionError,
+          search,
+          setSearch,
+          sku,
+          setSku,
+          minPrice,
+          setMinPrice,
+          maxPrice,
+          setMaxPrice,
+          startDate: startDate || '',
+          setStartDate,
+          endDate: endDate || '',
+          setEndDate,
+          data: isMounted ? data : [],
+          rowSelection,
+          setRowSelection,
+          onSelectAllGlobal: async (): Promise<void> => {
+            await handleSelectAllGlobal();
+          },
+          loadingGlobal: loadingGlobalSelection,
+          onDeleteSelected: async (): Promise<void> => { await Promise.resolve(setIsMassDeleteConfirmOpen(true)); },
+          onAddToMarketplace: handleAddToMarketplace,
+          handleProductsTableRender,
+          tableColumns: columns,
+          setRefreshTrigger,
+          productNameKey: preferences.nameLocale,
+          priceGroups,
+          onProductNameClick: handleOpenEditModal,
+          onProductEditClick: handleOpenEditModal,
+          onProductDeleteClick: setProductToDelete,
+          onIntegrationsClick: handleOpenIntegrationsModal,
+          onExportSettingsClick: handleOpenExportSettings,
+          integrationBadgeIds,
+          integrationBadgeStatuses,
+          getRowId,
+          isLoading: !isMounted || isLoading,
+          skeletonRows: tableSkeleton,
+          // Modals
+          isCreateOpen,
+          initialSku,
+          createDraft,
+          initialCatalogId:
+                  catalogFilter !== 'all' && catalogFilter !== 'unassigned'
+                    ? catalogFilter
+                    : null,
+          onCloseCreate: handleCloseCreate,
+          onCreateSuccess: () => {
+            handleCreateSuccess();
+            setCreateDraft(null);
+          },
+          editingProduct,
+          onCloseEdit: handleCloseEdit,
+          onEditSuccess: handleEditSuccess,
+          onEditSave: handleEditSave,
+          integrationsProduct,
+          onCloseIntegrations: handleCloseIntegrations,
+          onStartListing: handleStartListing,
+          showListProductModal,
+          onCloseListProduct: handleCloseListProduct,
+          onListProductSuccess: handleListProductSuccess,
+          listProductPreset,
+          exportSettingsProduct,
+          onCloseExportSettings: () => setExportSettingsProduct(null),
+          onListingsUpdated: () => void refreshListingBadges(),
+          massListIntegration,
+          massListProductIds,
+          onCloseMassList: handleCloseMassList,
+          onMassListSuccess: handleMassListSuccess,
         }}
-        loadingGlobal={loadingGlobalSelection}
-        onDeleteSelected={async (): Promise<void> => { await Promise.resolve(setIsMassDeleteConfirmOpen(true)); }}
-        onAddToMarketplace={handleAddToMarketplace}
-        handleProductsTableRender={handleProductsTableRender}
-        tableColumns={columns}
-        setRefreshTrigger={setRefreshTrigger}
-        productNameKey={preferences.nameLocale}
-        priceGroups={priceGroups}
-        onProductNameClick={handleOpenEditModal}
-        onProductEditClick={handleOpenEditModal}
-        onProductDeleteClick={setProductToDelete}
-        onIntegrationsClick={handleOpenIntegrationsModal}
-        onExportSettingsClick={handleOpenExportSettings}
-        integrationBadgeIds={integrationBadgeIds}
-        integrationBadgeStatuses={integrationBadgeStatuses}
-        getRowId={getRowId}
-        isLoading={!isMounted || isLoading}
-        skeletonRows={tableSkeleton}
-      />
-      <ProductModals
-        isCreateOpen={isCreateOpen}
-        initialSku={initialSku}
-        createDraft={createDraft}
-        initialCatalogId={
-          catalogFilter !== 'all' && catalogFilter !== 'unassigned'
-            ? catalogFilter
-            : null
-        }
-        onCloseCreate={handleCloseCreate}
-        onCreateSuccess={() => {
-          handleCreateSuccess();
-          setCreateDraft(null);
-        }}
-        editingProduct={editingProduct}
-        onCloseEdit={handleCloseEdit}
-        onEditSuccess={handleEditSuccess}
-        onEditSave={handleEditSave}
-        integrationsProduct={integrationsProduct}
-        onCloseIntegrations={handleCloseIntegrations}
-        onStartListing={handleStartListing}
-        showListProductModal={showListProductModal}
-        onCloseListProduct={handleCloseListProduct}
-        onListProductSuccess={handleListProductSuccess}
-        listProductPreset={listProductPreset}
-        exportSettingsProduct={exportSettingsProduct}
-        onCloseExportSettings={() => setExportSettingsProduct(null)}
-        onListingsUpdated={() => void refreshListingBadges()}
-        massListIntegration={massListIntegration}
-        massListProductIds={massListProductIds}
-        onCloseMassList={handleCloseMassList}
-        onMassListSuccess={handleMassListSuccess}
-      />
+      >
+        <ProductListPanel />
+        <ProductModals />
+      </ProductListProvider>
+      
 
       {showIntegrationModal && (
         <SelectIntegrationModal

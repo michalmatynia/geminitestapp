@@ -26,12 +26,13 @@
  * 4. Remove sync hooks when migration is complete
  */
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 import type { AiNode, Edge, RuntimeState, ClusterPreset, PathMeta, PathConfig, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/features/ai/ai-paths/lib';
+import { stableStringify } from '@/features/ai/ai-paths/lib';
 
 import { useCanvasActions } from '../CanvasContext';
-import { useGraphActions } from '../GraphContext';
+import { useGraphActions, useGraphState } from '../GraphContext';
 import { usePersistenceActions } from '../PersistenceContext';
 import { usePresetsActions } from '../PresetsContext';
 import { useRunHistoryActions } from '../RunHistoryContext';
@@ -161,6 +162,8 @@ export function useLegacySyncCanvas({
 export interface LegacySyncGraphProps {
   nodes: AiNode[];
   edges: Edge[];
+  onNodesChangeFromContext?: ((nodes: AiNode[]) => void) | undefined;
+  onEdgesChangeFromContext?: ((edges: Edge[]) => void) | undefined;
   activePathId?: string | null | undefined;
   pathName?: string | undefined;
   isPathLocked?: boolean | undefined;
@@ -179,6 +182,8 @@ export interface LegacySyncGraphProps {
 export function useLegacySyncGraph({
   nodes,
   edges,
+  onNodesChangeFromContext,
+  onEdgesChangeFromContext,
   activePathId,
   pathName,
   isPathLocked,
@@ -191,14 +196,41 @@ export function useLegacySyncGraph({
   pathConfigs,
 }: LegacySyncGraphProps): void {
   const actions = useGraphActions();
+  const { nodes: contextNodes, edges: contextEdges } = useGraphState();
+  const skipNextContextNodesSyncRef = useRef(false);
+  const skipNextContextEdgesSyncRef = useRef(false);
 
   useEffect(() => {
+    skipNextContextNodesSyncRef.current = true;
     actions.setNodes(nodes);
   }, [nodes, actions]);
 
   useEffect(() => {
+    skipNextContextEdgesSyncRef.current = true;
     actions.setEdges(edges);
   }, [edges, actions]);
+
+  useLayoutEffect((): void => {
+    if (!onNodesChangeFromContext) return;
+    if (skipNextContextNodesSyncRef.current) {
+      skipNextContextNodesSyncRef.current = false;
+      return;
+    }
+    if (contextNodes === nodes) return;
+    if (stableStringify(contextNodes) === stableStringify(nodes)) return;
+    onNodesChangeFromContext(contextNodes);
+  }, [contextNodes, nodes, onNodesChangeFromContext]);
+
+  useLayoutEffect((): void => {
+    if (!onEdgesChangeFromContext) return;
+    if (skipNextContextEdgesSyncRef.current) {
+      skipNextContextEdgesSyncRef.current = false;
+      return;
+    }
+    if (contextEdges === edges) return;
+    if (stableStringify(contextEdges) === stableStringify(edges)) return;
+    onEdgesChangeFromContext(contextEdges);
+  }, [contextEdges, edges, onEdgesChangeFromContext]);
 
   useEffect(() => {
     if (activePathId !== undefined) {
@@ -460,6 +492,8 @@ export interface LegacySyncAllProps {
   // Graph
   nodes: AiNode[];
   edges: Edge[];
+  onNodesChangeFromContext?: ((nodes: AiNode[]) => void) | undefined;
+  onEdgesChangeFromContext?: ((edges: Edge[]) => void) | undefined;
   activePathId?: string | null | undefined;
   pathName?: string | undefined;
   isPathLocked?: boolean | undefined;
@@ -516,6 +550,8 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
   useLegacySyncGraph({
     nodes: props.nodes,
     edges: props.edges,
+    onNodesChangeFromContext: props.onNodesChangeFromContext,
+    onEdgesChangeFromContext: props.onEdgesChangeFromContext,
     activePathId: props.activePathId,
     pathName: props.pathName,
     isPathLocked: props.isPathLocked,

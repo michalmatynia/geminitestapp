@@ -8,51 +8,38 @@ import { memo, useState } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { useProductListContext } from '@/features/products/context/ProductListContext';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog, SectionPanel, SectionHeader } from '@/shared/ui';
 
 interface ProductListHeaderProps {
-  onCreateProduct: () => void;
-  onCreateFromDraft?: (draftId: string) => void;
-  activeDrafts?: ProductDraft[];
-  page: number;
-  totalPages: number;
-  setPage: (page: number) => void;
-  pageSize: number;
-  setPageSize: (size: number) => void;
-  nameLocale: 'name_en' | 'name_pl' | 'name_de';
-  setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
-  languageOptions: Array<{ value: 'name_en' | 'name_pl' | 'name_de'; label: string }>;
-  currencyCode: string;
-  setCurrencyCode: (code: string) => void;
-  currencyOptions: string[];
-  catalogFilter: string;
-  setCatalogFilter: (filter: string) => void;
-  catalogs: Catalog[];
   showHeader?: boolean;
 }
 
 export const ProductListHeader = memo(function ProductListHeader({
-  onCreateProduct,
-  onCreateFromDraft,
-  activeDrafts = [],
-  page,
-  totalPages,
-  setPage,
-  pageSize,
-  setPageSize,
-  nameLocale,
-  setNameLocale,
-  languageOptions,
-  currencyCode,
-  setCurrencyCode,
-  currencyOptions,
-  catalogFilter,
-  setCatalogFilter,
-  catalogs,
   showHeader = true,
 }: ProductListHeaderProps) {
+  const {
+    onCreateProduct,
+    onCreateFromDraft,
+    activeDrafts,
+    page,
+    totalPages,
+    setPage,
+    pageSize,
+    setPageSize,
+    nameLocale,
+    setNameLocale,
+    languageOptions,
+    currencyCode,
+    setCurrencyCode,
+    currencyOptions,
+    catalogFilter,
+    setCatalogFilter,
+    catalogs,
+  } = useProductListContext();
+
   const { toast } = useToast();
   const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);
   const [isConvertingAll, setIsConvertingAll] = useState(false);

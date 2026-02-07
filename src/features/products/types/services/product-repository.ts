@@ -34,6 +34,7 @@ export type ProductRepository = {
   deleteProduct(id: string): Promise<ProductRecord | null>;
   duplicateProduct(id: string, sku: string): Promise<ProductRecord | null>;
   addProductImages(productId: string, imageFileIds: string[]): Promise<void>;
+  replaceProductImages(productId: string, imageFileIds: string[]): Promise<void>;
   replaceProductCatalogs(
     productId: string,
     catalogIds: string[]

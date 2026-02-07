@@ -1,6 +1,8 @@
+import React from 'react';
 import { vi } from 'vitest';
 
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
+import { ProductListContext } from '@/features/products/context/ProductListContext';
 
 import { render, screen, fireEvent } from '../../../test-utils';
 
@@ -15,8 +17,10 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 describe('ProductListHeader Component', () => {
-  const mockProps = {
+  const mockContextValue = {
     onCreateProduct: vi.fn(),
+    onCreateFromDraft: vi.fn(),
+    activeDrafts: [],
     page: 1,
     totalPages: 5,
     setPage: vi.fn(),
@@ -58,32 +62,48 @@ describe('ProductListHeader Component', () => {
     ],
   };
 
+  const renderWithContext = (ui: React.ReactNode, contextValue = mockContextValue) => {
+    return render(
+      <ProductListContext.Provider value={contextValue as any}>
+        {ui}
+      </ProductListContext.Provider>
+    );
+  };
+
   it('renders title and buttons', () => {
-    render(<ProductListHeader {...mockProps} />);
+    renderWithContext(<ProductListHeader />);
 
     expect(screen.getByText('Products')).toBeInTheDocument();
     expect(screen.getByLabelText('Create new product')).toBeInTheDocument();
   });
 
   it('calls onCreateProduct when create button is clicked', () => {
-    render(<ProductListHeader {...mockProps} />);
+    renderWithContext(<ProductListHeader />);
     fireEvent.click(screen.getByLabelText('Create new product'));
-    expect(mockProps.onCreateProduct).toHaveBeenCalled();
+    expect(mockContextValue.onCreateProduct).toHaveBeenCalled();
   });
 
   it('renders pagination info correctly', () => {
-    render(<ProductListHeader {...mockProps} />);
+    renderWithContext(<ProductListHeader />);
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('/')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('calls setPage when Prev/Next buttons are clicked', () => {
-    render(<ProductListHeader {...mockProps} page={2} />);
-    fireEvent.click(screen.getByLabelText('Previous page'));
-    expect(mockProps.setPage).toHaveBeenCalledWith(1);
+    // Override page to 2 for this test to enable 'Previous' button logic if needed,
+    // though Pagination component might handle disabled states.
+    // Here we just check calls.
+    renderWithContext(<ProductListHeader />, { ...mockContextValue, page: 2 });
+    
+    // Check for previous button. Note: The exact label/text depends on the Pagination component implementation.
+    // Assuming standard accessible labels or text.
+    const prevButton = screen.getByLabelText('Previous page'); // Adjust selector if needed based on Pagination component
+    fireEvent.click(prevButton);
+    expect(mockContextValue.setPage).toHaveBeenCalledWith(1);
 
-    fireEvent.click(screen.getByLabelText('Next page'));
-    expect(mockProps.setPage).toHaveBeenCalledWith(3);
+    const nextButton = screen.getByLabelText('Next page'); // Adjust selector if needed
+    fireEvent.click(nextButton);
+    expect(mockContextValue.setPage).toHaveBeenCalledWith(3);
   });
 });

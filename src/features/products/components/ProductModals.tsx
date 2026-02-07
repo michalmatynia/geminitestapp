@@ -8,68 +8,42 @@ import { MassListProductModal } from '@/features/integrations/components/listing
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
-import type { ProductWithImages } from '@/features/products/types';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import { useProductListContext } from '@/features/products/context/ProductListContext';
 import { AppModal, Button } from '@/shared/ui';
+
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
 });
-interface ProductModalsProps {
-  isCreateOpen: boolean;
-  initialSku: string;
-  createDraft?: ProductDraft | null;
-  initialCatalogId?: string | null;
-  onCloseCreate: () => void;
-  onCreateSuccess: (info?: { queued?: boolean }) => void;
-  editingProduct: ProductWithImages | null;
-  onCloseEdit: () => void;
-  onEditSuccess: (info?: { queued?: boolean }) => void;
-  onEditSave: (saved: ProductWithImages) => void;
-  integrationsProduct: ProductWithImages | null;
-  onCloseIntegrations: () => void;
-  onStartListing: (integrationId: string, connectionId: string) => void;
-  showListProductModal: boolean;
-  onCloseListProduct: () => void;
-  onListProductSuccess: () => void;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
-  // Export settings (opened via Store icon)
-  exportSettingsProduct?: ProductWithImages | null;
-  onCloseExportSettings?: () => void;
-  onListingsUpdated?: () => void;
-  // Mass Listing
-  massListIntegration?: { integrationId: string; connectionId: string } | null;
-  massListProductIds?: string[];
-  onCloseMassList?: () => void;
-  onMassListSuccess?: () => void;
-}
 
-export function ProductModals({
-  isCreateOpen,
-  initialSku,
-  createDraft,
-  initialCatalogId,
-  onCloseCreate,
-  onCreateSuccess,
-  editingProduct,
-  onCloseEdit,
-  onEditSuccess,
-  onEditSave,
-  integrationsProduct,
-  onCloseIntegrations,
-  onStartListing,
-  showListProductModal,
-  onCloseListProduct,
-  onListProductSuccess,
-  listProductPreset,
-  exportSettingsProduct,
-  onCloseExportSettings,
-  onListingsUpdated,
-  massListIntegration,
-  massListProductIds,
-  onCloseMassList,
-  onMassListSuccess,
-}: ProductModalsProps): React.JSX.Element {
+export function ProductModals(): React.JSX.Element {
+  const {
+    isCreateOpen,
+    initialSku,
+    createDraft,
+    initialCatalogId,
+    onCloseCreate,
+    onCreateSuccess,
+    editingProduct,
+    onCloseEdit,
+    onEditSuccess,
+    onEditSave,
+    integrationsProduct,
+    onCloseIntegrations,
+    onStartListing,
+    showListProductModal,
+    onCloseListProduct,
+    onListProductSuccess,
+    listProductPreset,
+    exportSettingsProduct,
+    onCloseExportSettings,
+    onListingsUpdated,
+    massListIntegration,
+    massListProductIds,
+    onCloseMassList,
+    onMassListSuccess,
+  } = useProductListContext();
+
   return (
     <>
       {isCreateOpen && (

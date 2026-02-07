@@ -59,7 +59,12 @@ type NodeConfigDialogProps = {
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
   clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
@@ -82,7 +87,8 @@ type NodeConfigDialogProps = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>;
+    edgesOverride?: Edge[] | undefined;
+  }) => Promise<boolean>;
 };
 
 export function NodeConfigDialog({
@@ -231,8 +237,11 @@ export function NodeConfigDialog({
         includeNodeConfig: true,
         force: true,
         nodeOverride: draftNode,
+      }).then((saved: boolean): void => {
+        toast(saved ? 'Node settings saved.' : 'Failed to save node settings.', {
+          variant: saved ? 'success' : 'error',
+        });
       });
-      toast('Node settings saved.', { variant: 'success' });
     } else {
       toast('Node settings updated in canvas. Click "Save Path" to persist.', { variant: 'success' });
     }

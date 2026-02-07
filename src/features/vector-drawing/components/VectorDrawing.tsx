@@ -2,10 +2,11 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { VectorDrawingCanvas } from './VectorDrawingCanvas';
-import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
+import { VectorDrawingProvider, type VectorDrawingContextValue } from '../context/VectorDrawingContext';
 import { smoothShape, simplifyShape } from '../geometry';
 import { vectorShapesToPath } from '../utils';
+import { VectorDrawingCanvas } from './VectorDrawingCanvas';
+import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
 
 import type { VectorShape, VectorToolMode } from '../types';
 
@@ -99,38 +100,68 @@ export function VectorDrawing({
     handleChange(shapes.map((shape: VectorShape) => simplifyShape(shape, 0.0025)));
   }, [handleChange, shapes]);
 
-  const resolvedBrushRadius = brushRadius ?? 6;
-  const resolvedImageSrc = imageSrc ?? null;
-  const resolvedActiveShapeId = activeShapeId ?? null;
-  const resolvedSelectedPointIndex = selectedPointIndex ?? null;
-  const handleSelectShape = onSelectShape ?? ((): void => {});
+  const [internalActiveShapeId, setInternalActiveShapeId] = useState<string | null>(null);
+  const [internalSelectedPointIndex, setInternalSelectedPointIndex] = useState<number | null>(null);
+
+  const resolvedActiveShapeId = activeShapeId ?? internalActiveShapeId;
+  const resolvedSelectedPointIndex = selectedPointIndex ?? internalSelectedPointIndex;
+
+  const handleSelectShape = useCallback((id: string | null) => {
+    setInternalActiveShapeId(id);
+    onSelectShape?.(id);
+  }, [onSelectShape]);
+
+  const handleSelectPoint = useCallback((index: number | null) => {
+    setInternalSelectedPointIndex(index);
+    onSelectPoint?.(index);
+  }, [onSelectPoint]);
+
+  const contextValue = useMemo<VectorDrawingContextValue>(() => ({
+    shapes,
+    tool: currentTool,
+    activeShapeId: resolvedActiveShapeId,
+    selectedPointIndex: resolvedSelectedPointIndex,
+    brushRadius: brushRadius ?? 6,
+    imageSrc: imageSrc ?? null,
+    allowWithoutImage: allowWithoutImage ?? false,
+    showEmptyState: showEmptyState ?? true,
+    emptyStateLabel: emptyStateLabel ?? 'Select an image slot to preview.',
+    setShapes: handleChange,
+    setTool: handleToolChange,
+    setActiveShapeId: handleSelectShape,
+    setSelectedPointIndex: handleSelectPoint,
+    onSmooth: handleSmooth,
+    onSimplify: handleSimplify,
+  }), [
+    shapes,
+    currentTool,
+    resolvedActiveShapeId,
+    resolvedSelectedPointIndex,
+    brushRadius,
+    imageSrc,
+    allowWithoutImage,
+    showEmptyState,
+    emptyStateLabel,
+    handleChange,
+    handleToolChange,
+    handleSelectShape,
+    handleSelectPoint,
+    handleSmooth,
+    handleSimplify,
+  ]);
 
   return (
-    <div className={className}>
-      <VectorDrawingCanvas
-        {...(allowWithoutImage !== undefined ? { allowWithoutImage } : {})}
-        {...(showEmptyState !== undefined ? { showEmptyState } : {})}
-        {...(emptyStateLabel !== undefined ? { emptyStateLabel } : {})}
-        src={resolvedImageSrc}
-        tool={currentTool}
-        shapes={shapes}
-        onChange={handleChange}
-        brushRadius={resolvedBrushRadius}
-        activeShapeId={resolvedActiveShapeId}
-        selectedPointIndex={resolvedSelectedPointIndex}
-        onSelectShape={handleSelectShape}
-        {...(onSelectPoint ? { onSelectPoint } : {})}
-        {...(canvasClassName ? { className: canvasClassName } : {})}
-      />
-      <VectorDrawingToolbar
-        {...(toolbarClassName ? { className: toolbarClassName } : {})}
-        tool={currentTool}
-        onSelectTool={handleToolChange}
-        onSmooth={handleSmooth}
-        onSimplify={handleSimplify}
-        variant={toolbarVariant}
-      />
-      {onOutput ? null : <span className="sr-only">{output.path}</span>}
-    </div>
+    <VectorDrawingProvider value={contextValue}>
+      <div className={className}>
+        <VectorDrawingCanvas
+          {...(canvasClassName ? { className: canvasClassName } : {})}
+        />
+        <VectorDrawingToolbar
+          {...(toolbarClassName ? { className: toolbarClassName } : {})}
+          variant={toolbarVariant}
+        />
+        {onOutput ? null : <span className="sr-only">{output.path}</span>}
+      </div>
+    </VectorDrawingProvider>
   );
 }

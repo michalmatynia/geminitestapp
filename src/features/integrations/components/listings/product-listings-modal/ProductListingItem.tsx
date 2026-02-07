@@ -1,0 +1,266 @@
+'use client';
+
+import { Trash2 } from 'lucide-react';
+import React from 'react';
+
+import type { ImageRetryPreset } from '@/features/data-import-export';
+import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import type { ProductListingWithDetails, ProductListingExportEvent } from '@/features/integrations/types/listings';
+import {
+  Button,
+  Input,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Label,
+  StatusBadge,
+} from '@/shared/ui';
+
+const formatTimestamp = (value: string | Date | null | undefined): string => {
+  if (!value) return '—';
+  const date: Date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString();
+};
+
+const formatListValue = (value: string | null | undefined): string =>
+  value ? value : '—';
+
+export function ProductListingItem({ listing }: { listing: ProductListingWithDetails }): React.JSX.Element {
+  const {
+    product,
+    exportingListing,
+    inventoryOverrides,
+    setInventoryOverrides,
+    historyOpenByListing,
+    setHistoryOpenByListing,
+    savingInventoryId,
+    handleExportAgain,
+    handleExportImagesOnly,
+    handleSaveInventoryId,
+    setListingToDelete,
+    setListingToPurge,
+  } = useProductListingsContext();
+
+  const imageRetryPresets = useImageRetryPresets();
+
+  const getExportFieldsLabel = (): string => {
+    const fields: string[] = [];
+    if (product.sku) fields.push('SKU');
+    if (product.ean) fields.push('EAN');
+    if (product.weight !== null && product.weight !== undefined) fields.push('Weight');
+    if (product.name_en) fields.push('Name');
+    if (product.description_en) fields.push('Description');
+    if (product.price !== null && product.price !== undefined) fields.push('Price');
+    if (product.stock !== null && product.stock !== undefined) fields.push('Stock');
+    return fields.length > 0 ? fields.join(', ') : 'No exportable fields detected';
+  };
+
+  return (
+    <div className="flex items-center justify-between rounded-md border bg-card/50 px-4 py-3">
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-white">
+            {listing.integration.name}
+          </span>
+          <StatusBadge status={listing.status} />
+        </div>
+        <p className="mt-1 text-xs text-gray-400">
+          Account: {listing.connection.name}
+        </p>
+        {listing.externalListingId && (
+          <p className="text-xs text-gray-500">
+            External ID: {listing.externalListingId}
+          </p>
+        )}
+        {listing.inventoryId && (
+          <p className="text-xs text-gray-500">
+            Inventory ID: {listing.inventoryId}
+          </p>
+        )}
+        <div className="mt-2 space-y-1 text-xs text-gray-500">
+          <p>Last export: {formatTimestamp(listing.listedAt)}</p>
+          <p>Created: {formatTimestamp(listing.createdAt)}</p>
+          <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
+          {['baselinker', 'base-com'].includes(listing.integration.slug) && (
+            <p>Exported fields: {getExportFieldsLabel()}</p>
+          )}
+        </div>
+        {listing.exportHistory && listing.exportHistory.length > 0 ? (
+          <div className="mt-3 rounded border border-border bg-card/50 p-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                Export history
+              </p>
+              <Button
+                type="button"
+                onClick={(): void =>
+                  setHistoryOpenByListing((prev) => ({
+                    ...prev,
+                    [listing.id]: !(prev[listing.id] ?? false),
+                  }))
+                }
+                className="text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
+              >
+                {(historyOpenByListing[listing.id] ?? false)
+                  ? 'Hide'
+                  : 'Show'}
+              </Button>
+            </div>
+            {(historyOpenByListing[listing.id] ?? false) ? (
+              <div className="mt-2 space-y-2 text-xs text-gray-400">
+                {listing.exportHistory.slice(0, 5).map((event: ProductListingExportEvent, index: number) => (
+                  <div key={`${listing.id}-export-${index}`} className="grid gap-1">
+                    <div className="flex items-center justify-between text-gray-300">
+                      <span>{formatTimestamp(event.exportedAt)}</span>
+                      <span className="uppercase text-[10px] text-gray-500">
+                        {event.status ?? 'success'}
+                      </span>
+                    </div>
+                    <div className="grid gap-1">
+                      <span>Inventory: {formatListValue(event.inventoryId)}</span>
+                      <span>Template: {formatListValue(event.templateId)}</span>
+                      <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                      {event.externalListingId && (
+                        <span>External ID: {event.externalListingId}</span>
+                      )}
+                      {event.fields && event.fields.length > 0 ? (
+                        <span>Fields: {event.fields.join(', ')}</span>
+                      ) : (
+                        <span>Fields: &mdash;</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>
+        )}
+      </div>
+      <div className="ml-4 flex flex-col gap-2">
+        {['baselinker', 'base-com'].includes(listing.integration.slug) && (
+          <>
+            {listing.status === 'failed' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={(): void => { void handleExportAgain(listing.id); }}
+                disabled={exportingListing === listing.id}
+                className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+              >
+                Export again
+              </Button>
+            )}
+            {listing.status !== 'removed' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      exportingListing === listing.id ||
+                      !listing.externalListingId
+                    }
+                    className="border-sky-500/40 text-sky-200 hover:bg-sky-500/10"
+                  >
+                    Re-export images only
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="bg-card border-border"
+                >
+                  <DropdownMenuItem
+                    onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
+                    className="text-gray-200 focus:bg-gray-800/70"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm">No resize (base-only)</span>
+                      <span className="text-xs text-gray-400">
+                        Re-send images without extra compression.
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
+                  {imageRetryPresets.map((preset: ImageRetryPreset) => (
+                    <DropdownMenuItem
+                      key={preset.id}
+                      onSelect={(): void => {
+                        void handleExportImagesOnly(listing.id, preset);
+                      }}
+                      className="text-gray-200 focus:bg-gray-800/70"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm">{preset.label}</span>
+                        <span className="text-xs text-gray-400">
+                          {preset.description}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {!listing.inventoryId && (
+              <div className="space-y-1 text-xs text-gray-400">
+                <Label htmlFor={`inventory-${listing.id}`}>
+                  Inventory ID
+                </Label>
+                <Input
+                  id={`inventory-${listing.id}`}
+                  value={inventoryOverrides[listing.id] ?? ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setInventoryOverrides((prev) => ({
+                      ...prev,
+                      [listing.id]: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter inventory ID"
+                  className="h-7 border bg-card/60 text-gray-200"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(): void => { void handleSaveInventoryId(listing.id); }}
+                  disabled={savingInventoryId === listing.id}
+                  className="h-7 border text-gray-200 hover:bg-muted/50"
+                >
+                  Save inventory ID
+                </Button>
+              </div>
+            )}
+            {listing.status !== 'removed' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={(): void => setListingToDelete(listing.id)}
+                disabled={useProductListingsContext().deletingFromBase === listing.id}
+                className="border-red-500/40 text-red-300 hover:bg-red-500/10"
+              >
+                Delete from Base.com
+              </Button>
+            )}
+          </>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={(): void => setListingToPurge(listing.id)}
+          disabled={useProductListingsContext().purgingListing === listing.id}
+          className="text-gray-400 hover:bg-muted/50 hover:text-red-400"
+        >
+          <Trash2 className="mr-1 size-3" />
+          Remove history
+        </Button>
+      </div>
+    </div>
+  );
+}

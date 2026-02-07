@@ -57,7 +57,7 @@ export type SimulationDialogMigratedProps = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>) | undefined;
+  }) => Promise<boolean>) | undefined;
 };
 
 /**

@@ -66,4 +66,36 @@ describe('prismaProductRepository', () => {
     expect(expensive.length).toBe(1);
     expect(expensive[0]?.name_en).toBe('Banana');
   });
+
+  it('should replace product images in submitted order', async () => {
+    const created = await prismaProductRepository.createProduct({ name_en: 'Image Sort', sku: 'IMG-SORT' });
+    const imageA = await prisma.imageFile.create({
+      data: {
+        filename: 'img-a.jpg',
+        filepath: '/uploads/products/img-a.jpg',
+        mimetype: 'image/jpeg',
+        size: 100,
+      },
+    });
+    const imageB = await prisma.imageFile.create({
+      data: {
+        filename: 'img-b.jpg',
+        filepath: '/uploads/products/img-b.jpg',
+        mimetype: 'image/jpeg',
+        size: 100,
+      },
+    });
+
+    await prismaProductRepository.replaceProductImages(created.id, [imageA.id, imageB.id]);
+    await prismaProductRepository.replaceProductImages(created.id, [imageB.id, imageA.id]);
+
+    const links = await prisma.productImage.findMany({
+      where: { productId: created.id },
+      orderBy: { assignedAt: 'desc' },
+    });
+    expect(links.map((entry) => entry.imageFileId)).toEqual([
+      imageB.id,
+      imageA.id,
+    ]);
+  });
 });

@@ -161,6 +161,45 @@ describe('productService', () => {
       
       expect(updated?.sku).toBe('NEW-SKU');
     });
+
+    it('should persist reordered imageFileIds on update', async () => {
+      const original = await createMockProduct({ name_en: 'With Images', sku: 'IMG-ORDER' });
+      const imageA = await prisma.imageFile.create({
+        data: {
+          filename: 'a.jpg',
+          filepath: '/uploads/products/a.jpg',
+          mimetype: 'image/jpeg',
+          size: 100,
+        },
+      });
+      const imageB = await prisma.imageFile.create({
+        data: {
+          filename: 'b.jpg',
+          filepath: '/uploads/products/b.jpg',
+          mimetype: 'image/jpeg',
+          size: 100,
+        },
+      });
+
+      const firstUpdate = new FormData();
+      firstUpdate.append('imageFileIds', imageA.id);
+      firstUpdate.append('imageFileIds', imageB.id);
+      await productService.updateProduct(original.id, firstUpdate);
+
+      const reorderUpdate = new FormData();
+      reorderUpdate.append('imageFileIds', imageB.id);
+      reorderUpdate.append('imageFileIds', imageA.id);
+      await productService.updateProduct(original.id, reorderUpdate);
+
+      const links = await prisma.productImage.findMany({
+        where: { productId: original.id },
+        orderBy: { assignedAt: 'desc' },
+      });
+      expect(links.map((entry) => entry.imageFileId)).toEqual([
+        imageB.id,
+        imageA.id,
+      ]);
+    });
   });
 
   describe('unlinkImageFromProduct', () => {

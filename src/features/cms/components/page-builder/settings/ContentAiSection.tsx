@@ -4,51 +4,37 @@ import React from 'react';
 
 import { Button, Label, Textarea, SectionPanel, UnifiedSelect } from '@/shared/ui';
 
+import { useInspectorAi } from '../context/InspectorAiContext';
+
 interface ContentAiSectionProps {
   selectedLabel: string;
-  contentAiProvider: 'model' | 'agent';
-  setContentAiProvider: (value: 'model' | 'agent') => void;
-  contentAiModelId: string;
-  setContentAiModelId: (value: string) => void;
-  contentAiAgentId: string;
-  setContentAiAgentId: (value: string) => void;
-  contentAiPrompt: string;
-  setContentAiPrompt: (value: string) => void;
-  contentAiLoading: boolean;
-  contentAiError: string | null;
-  contentAiOutput: string;
-  contentAiAllowedKeys: string[];
-  contentAiPlaceholder: string;
-  providerOptions: Array<{ label: string; value: string }>;
-  modelOptions: string[];
-  agentOptions: Array<{ label: string; value: string }>;
-  onGenerateContentAi: () => void;
-  onCancelContentAi: () => void;
-  onApplyContentAi: () => void;
 }
 
 function ContentAiSection({
   selectedLabel,
-  contentAiProvider,
-  setContentAiProvider,
-  contentAiModelId,
-  setContentAiModelId,
-  contentAiAgentId,
-  setContentAiAgentId,
-  contentAiPrompt,
-  setContentAiPrompt,
-  contentAiLoading,
-  contentAiError,
-  contentAiOutput,
-  contentAiAllowedKeys,
-  contentAiPlaceholder,
-  providerOptions,
-  modelOptions,
-  agentOptions,
-  onGenerateContentAi,
-  onCancelContentAi,
-  onApplyContentAi,
-}: ContentAiSectionProps): React.ReactNode {
+}: ContentAiSectionProps): React.JSX.Element {
+  const {
+    contentAiProvider,
+    setContentAiProvider,
+    contentAiModelId,
+    setContentAiModelId,
+    contentAiAgentId,
+    setContentAiAgentId,
+    contentAiPrompt,
+    setContentAiPrompt,
+    contentAiLoading,
+    contentAiError,
+    contentAiOutput,
+    contentAiAllowedKeys,
+    contentAiPlaceholder,
+    providerOptions,
+    modelOptions,
+    agentOptions,
+    generateContent,
+    cancelContent,
+    applyContent,
+  } = useInspectorAi();
+
   return (
     <div className="space-y-3">
       <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
@@ -130,7 +116,7 @@ function ContentAiSection({
           <Button
             type="button"
             size="sm"
-            onClick={(): void => void onGenerateContentAi()}
+            onClick={(): void => void generateContent()}
             disabled={contentAiLoading}
           >
             {contentAiLoading ? 'Generating\u2026' : 'Generate JSON'}
@@ -140,7 +126,7 @@ function ContentAiSection({
               type="button"
               size="sm"
               variant="outline"
-              onClick={onCancelContentAi}
+              onClick={cancelContent}
             >
               Cancel
             </Button>
@@ -157,7 +143,7 @@ function ContentAiSection({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={onApplyContentAi}
+                onClick={applyContent}
               >
                 Apply to settings
               </Button>

@@ -80,7 +80,12 @@ export type NodeConfigDialogMigratedProps = {
 
   // Callbacks for sample fetching
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
 
   // Callbacks for simulation
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
@@ -104,7 +109,7 @@ export type NodeConfigDialogMigratedProps = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>) | undefined;
+  }) => Promise<boolean>) | undefined;
 };
 
 /**

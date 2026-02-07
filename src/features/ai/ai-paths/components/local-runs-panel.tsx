@@ -5,6 +5,7 @@ import React from 'react';
 
 import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
 import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, ConfirmDialog, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -32,7 +33,7 @@ const formatEntity = (run: AiPathLocalRunRecord): string => {
   return run.entityType ?? run.entityId ?? '-';
 };
 
-const AI_PATHS_SOURCES = new Set(['ai_paths_ui', 'ai_paths_direct', 'trigger_button', 'product_panel']);
+const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);
 
 type LocalRunsPanelProps = {

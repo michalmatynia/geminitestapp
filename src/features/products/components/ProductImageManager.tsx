@@ -125,8 +125,7 @@ export default function ProductImageManager(): React.JSX.Element {
   };
 
   const handleSlotFileUpload = (slotIndex: number, files: File[]): void => {
-    const file = files[0];
-    if (!file) {
+    if (files.length === 0) {
       pushDebug({
         action: 'file-change',
         message: 'No file selected',
@@ -135,17 +134,55 @@ export default function ProductImageManager(): React.JSX.Element {
       return;
     }
 
-    try {
-      handleSlotImageChange(file, slotIndex);
-    } catch (error: unknown) {
+    let addedCount = 0;
+    let nextSearchIndex = slotIndex + 1;
+
+    files.forEach((file: File, fileIndex: number): void => {
+      const targetIndex =
+        fileIndex === 0
+          ? slotIndex
+          : (() => {
+            for (let i = nextSearchIndex; i < imageSlots.length; i += 1) {
+              if (imageSlots[i] === null) {
+                nextSearchIndex = i + 1;
+                return i;
+              }
+            }
+            return -1;
+          })();
+
+      if (targetIndex < 0) {
+        return;
+      }
+
       pushDebug({
         action: 'file-change',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to assign image to slot',
-        slotIndex,
+        message: fileIndex === 0 ? 'Image selected' : 'Additional image selected',
+        slotIndex: targetIndex,
         filename: file.name,
+      });
+
+      try {
+        handleSlotImageChange(file, targetIndex);
+        addedCount += 1;
+      } catch (error: unknown) {
+        pushDebug({
+          action: 'file-change',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to assign image to slot',
+          slotIndex: targetIndex,
+          filename: file.name,
+        });
+      }
+    });
+
+    if (addedCount < files.length) {
+      pushDebug({
+        action: 'file-change',
+        message: `Added ${addedCount}/${files.length} image(s). No more free slots.`,
+        slotIndex,
       });
     }
   };
@@ -486,6 +523,7 @@ export default function ProductImageManager(): React.JSX.Element {
                 }}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   const files = Array.from(event.target.files ?? []);

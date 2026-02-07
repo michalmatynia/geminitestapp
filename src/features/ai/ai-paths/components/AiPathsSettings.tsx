@@ -71,6 +71,12 @@ function AiPathsSettingsInner({
     // Graph
     nodes: state.nodes,
     edges: state.edges,
+    onNodesChangeFromContext: (nextNodes: AiPathsSettingsState['nodes']) => {
+      state.setNodes(nextNodes);
+    },
+    onEdgesChangeFromContext: (nextEdges: AiPathsSettingsState['edges']) => {
+      state.setEdges(nextEdges);
+    },
     activePathId: state.activePathId,
     pathName: state.pathName,
     isPathLocked: state.isPathLocked,

@@ -142,9 +142,19 @@ type UseAiPathsPersistenceResult = {
     pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>;
+    edgesOverride?: Edge[] | undefined;
+  }) => Promise<boolean>;
   persistActivePathPreference: (pathId: string | null) => Promise<void>;
-  persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
+  persistPathSettings: (
+    nextPaths: PathMeta[],
+    configId: string,
+    config: PathConfig
+  ) => Promise<PathConfig | null>;
+  persistRuntimePathState: (
+    configId: string,
+    runtimeState: RuntimeState,
+    lastRunAt: string | null
+  ) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   saving: boolean;
@@ -211,7 +221,7 @@ export function useAiPathsPersistence({
   const settingsQuery = useQuery({
     queryKey: ['settings', 'heavy'],
     queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
-      return await fetchSettingsCached({ scope: 'heavy' });
+      return await fetchSettingsCached({ scope: 'heavy', bypassCache: true });
     },
     enabled: false,
   });
@@ -239,6 +249,23 @@ export function useAiPathsPersistence({
   const lastUserPrefsActivePathIdRef = useRef<string | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
+  const nodesRef = useRef<AiNode[]>(nodes);
+  const edgesRef = useRef<Edge[]>(edges);
+  const pathsRef = useRef<PathMeta[]>(paths);
+  const pathConfigsRef = useRef<Record<string, PathConfig>>(pathConfigs);
+
+  useEffect((): void => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+  useEffect((): void => {
+    edgesRef.current = edges;
+  }, [edges]);
+  useEffect((): void => {
+    pathsRef.current = paths;
+  }, [paths]);
+  useEffect((): void => {
+    pathConfigsRef.current = pathConfigs;
+  }, [pathConfigs]);
 
   const normalizeConfigForHash = useCallback(
     (config: PathConfig): PathConfig => ({
@@ -637,15 +664,19 @@ export function useAiPathsPersistence({
   }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, persistUiState, persistUserPreferences]);
 
   const persistPathSettings = useCallback(
-    async (nextPaths: PathMeta[], configId: string, config: PathConfig): Promise<void> => {
+    async (
+      nextPaths: PathMeta[],
+      configId: string,
+      config: PathConfig
+    ): Promise<PathConfig | null> => {
       const sanitizedConfig = sanitizePathConfig(config);
       const payloadKey = stableStringify({
         index: nextPaths,
         configId,
         config: normalizeConfigForHash(sanitizedConfig),
       });
-      if (payloadKey === lastSettingsPayloadRef.current) return;
-      await updateSettingsBulkMutation.mutateAsync([
+      if (payloadKey === lastSettingsPayloadRef.current) return sanitizedConfig;
+      const responses = await updateSettingsBulkMutation.mutateAsync([
         { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
         {
           key: `${PATH_CONFIG_PREFIX}${configId}`,
@@ -653,8 +684,44 @@ export function useAiPathsPersistence({
         },
       ]);
       lastSettingsPayloadRef.current = payloadKey;
+      const configResponse = responses[1];
+      if (!configResponse) return sanitizedConfig;
+      try {
+        const payload = (await configResponse.clone().json()) as { key?: unknown; value?: unknown };
+        if (
+          payload &&
+          typeof payload.key === 'string' &&
+          payload.key === `${PATH_CONFIG_PREFIX}${configId}` &&
+          typeof payload.value === 'string'
+        ) {
+          const parsed = safeParseJson(payload.value).value;
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed as PathConfig;
+          }
+        }
+      } catch {
+        // Fallback to the client-side sanitized config when response payload parsing fails.
+      }
+      return sanitizedConfig;
     },
     [normalizeConfigForHash, updateSettingsBulkMutation]
+  );
+
+  const persistRuntimePathState = useCallback(
+    async (
+      configId: string,
+      nextRuntimeState: RuntimeState,
+      nextLastRunAt: string | null
+    ): Promise<void> => {
+      const runtimeOnlyPayload = JSON.stringify({
+        runtimeState: nextRuntimeState,
+        lastRunAt: nextLastRunAt,
+      });
+      await updateSettingsBulkMutation.mutateAsync([
+        { key: `${PATH_CONFIG_PREFIX}${configId}`, value: runtimeOnlyPayload },
+      ]);
+    },
+    [updateSettingsBulkMutation]
   );
 
   const stripNodeConfig = useCallback(
@@ -726,7 +793,12 @@ export function useAiPathsPersistence({
   );
 
   const buildActivePathConfig = useCallback(
-    (updatedAt: string, nodesOverride?: AiNode[], nameOverride?: string): PathConfig => ({
+    (
+      updatedAt: string,
+      nodesOverride?: AiNode[],
+      nameOverride?: string,
+      edgesOverride?: Edge[]
+    ): PathConfig => ({
       id: activePathId ?? 'default',
       version: STORAGE_VERSION,
       name: nameOverride ?? pathName,
@@ -735,8 +807,8 @@ export function useAiPathsPersistence({
       executionMode,
       flowIntensity,
       runMode,
-      nodes: nodesOverride ?? nodes,
-      edges,
+      nodes: nodesOverride ?? nodesRef.current,
+      edges: edgesOverride ?? edgesRef.current,
       updatedAt,
       isLocked: isPathLocked,
       isActive: isPathActive,
@@ -756,8 +828,6 @@ export function useAiPathsPersistence({
       executionMode,
       flowIntensity,
       runMode,
-      nodes,
-      edges,
       isPathLocked,
       isPathActive,
       parserSamples,
@@ -776,6 +846,7 @@ export function useAiPathsPersistence({
       pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
       nodeOverride?: AiNode | undefined;
+      edgesOverride?: Edge[] | undefined;
     }): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
@@ -802,7 +873,7 @@ export function useAiPathsPersistence({
       if (!silent) setSaving(true);
       try {
         const updatedAt = new Date().toISOString();
-        const baseNodes = options?.nodesOverride ?? nodes;
+        const baseNodes = options?.nodesOverride ?? nodesRef.current;
         const resolvedNodes = options?.nodeOverride
           ? (() => {
             const targetNode = options.nodeOverride as AiNode;
@@ -818,14 +889,37 @@ export function useAiPathsPersistence({
         const nodesForSave = includeNodeConfig
           ? resolvedNodes
           : buildNodesForAutoSave(resolvedNodes);
-        const config = buildActivePathConfig(updatedAt, nodesForSave, resolvedName);
-        const nextPaths = paths.map((path: PathMeta): PathMeta =>
+        const config = buildActivePathConfig(
+          updatedAt,
+          nodesForSave,
+          resolvedName,
+          options?.edgesOverride
+        );
+        const nextPaths = pathsRef.current.map((path: PathMeta): PathMeta =>
           path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
         );
-        const nextConfigs = { ...pathConfigs, [activePathId]: config };
-        setPathConfigs(nextConfigs);
-        setPaths(nextPaths);
-        await persistPathSettings(nextPaths, activePathId, config);
+        const persistedConfig = await persistPathSettings(nextPaths, activePathId, config);
+        const finalConfig = persistedConfig ?? config;
+        if (options?.nodeOverride) {
+          const expectedNode = options.nodeOverride;
+          const persistedNode = finalConfig.nodes.find(
+            (node: AiNode): boolean => node.id === expectedNode.id
+          );
+          const expectedConfigHash = stableStringify(expectedNode.config ?? null);
+          const persistedConfigHash = stableStringify(persistedNode?.config ?? null);
+          if (!persistedNode || expectedConfigHash !== persistedConfigHash) {
+            throw new Error(`Node save verification failed for ${expectedNode.id}`);
+          }
+        }
+        const finalUpdatedAt =
+          typeof finalConfig.updatedAt === 'string' && finalConfig.updatedAt.trim().length > 0
+            ? finalConfig.updatedAt
+            : updatedAt;
+        const finalPaths = nextPaths.map((path: PathMeta): PathMeta =>
+          path.id === activePathId ? { ...path, updatedAt: finalUpdatedAt } : path
+        );
+        setPathConfigs({ ...pathConfigsRef.current, [activePathId]: finalConfig });
+        setPaths(finalPaths);
         setLastError(null);
         void persistLastError(null);
         lastSavedSnapshotRef.current = buildPathSnapshot(resolvedName);
@@ -850,11 +944,8 @@ export function useAiPathsPersistence({
     [
       activePathId,
       pathName,
-      paths,
-      pathConfigs,
       buildActivePathConfig,
       buildNodesForAutoSave,
-      nodes,
       isPathLocked,
       isPathActive,
       persistPathSettings,
@@ -876,7 +967,8 @@ export function useAiPathsPersistence({
       pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
       nodeOverride?: AiNode | undefined;
-    }): Promise<void> => {
+      edgesOverride?: Edge[] | undefined;
+    }): Promise<boolean> => {
       const silent = options?.silent ?? false;
       if (isPathLocked || !isPathActive) {
         if (!silent) {
@@ -887,7 +979,7 @@ export function useAiPathsPersistence({
             { variant: 'info' }
           );
         }
-        return;
+        return false;
       }
       const ok = await persistPathConfig({
         force: options?.force ?? true,
@@ -896,14 +988,16 @@ export function useAiPathsPersistence({
         pathNameOverride: options?.pathNameOverride,
         nodesOverride: options?.nodesOverride,
         nodeOverride: options?.nodeOverride,
+        edgesOverride: options?.edgesOverride,
       });
-      if (silent) return;
+      if (silent) return ok;
       if (ok) {
         setAutoSaveStatus('saved');
         setAutoSaveAt(new Date().toISOString());
       } else {
         setAutoSaveStatus('error');
       }
+      return ok;
     },
     [isPathActive, isPathLocked, persistPathConfig, toast]
   );
@@ -960,6 +1054,7 @@ export function useAiPathsPersistence({
     handleSave,
     persistActivePathPreference,
     persistPathSettings,
+    persistRuntimePathState,
     persistSettingsBulk,
     savePathIndex,
     saving,

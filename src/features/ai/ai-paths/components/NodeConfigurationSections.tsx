@@ -61,7 +61,12 @@ type NodeConfigurationSectionsProps = {
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  handleFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
   onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;

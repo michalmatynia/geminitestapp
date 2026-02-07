@@ -1,7 +1,7 @@
 'use client';
 
 import { GripVertical, Trash2 } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import {
@@ -44,52 +44,55 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Keep in sync with server data, but do not reset local drag state mid-drag.
+    if (draggingId) return;
     setLocalRows(data);
-  }, [data]);
+  }, [data, draggingId]);
 
-  const handleDragStart = useCallback((id: string): void => {
+  const applyOrder = useCallback(
+    (rows: AiTriggerButtonRecord[], sourceId: string, targetId: string): AiTriggerButtonRecord[] => {
+      if (sourceId === targetId) return rows;
+      const sourceIndex = rows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === sourceId);
+      const targetIndex = rows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return rows;
+
+      const nextRows = [...rows];
+      const [dragged] = nextRows.splice(sourceIndex, 1);
+      if (!dragged) return rows;
+      nextRows.splice(targetIndex, 0, dragged);
+      return nextRows;
+    },
+    []
+  );
+
+  const handleDragStart = useCallback((event: React.DragEvent, id: string): void => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', id);
     setDraggingId(id);
-  }, []);
-
-  const handleDragEnter = useCallback((id: string): void => {
     setOverId(id);
   }, []);
 
-  const handleDragEnd = useCallback((): void => {
-    if (draggingId && overId) {
-      const newRows = [...localRows];
-      const draggedItem = newRows.find((row: AiTriggerButtonRecord): boolean => row.id === draggingId);
-      if (draggedItem) {
-        const filteredRows = newRows.filter((row: AiTriggerButtonRecord): boolean => row.id !== draggingId);
-        const overIndex = filteredRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === overId);
-        if (overIndex !== -1) {
-          filteredRows.splice(overIndex, 0, draggedItem);
-          setLocalRows(filteredRows);
-          onOrderChange(filteredRows.map((row: AiTriggerButtonRecord): string => row.id));
-        }
-      }
+  const handleDragEnter = useCallback((id: string): void => {
+    if (!draggingId) return;
+    if (id === overId) return;
+    setOverId(id);
+  }, [draggingId, overId]);
+
+  const handleDrop = useCallback((targetId: string): void => {
+    if (!draggingId) return;
+    const nextRows = applyOrder(localRows, draggingId, targetId);
+    if (nextRows !== localRows) {
+      setLocalRows(nextRows);
+      onOrderChange(nextRows.map((row: AiTriggerButtonRecord): string => row.id));
     }
     setDraggingId(null);
     setOverId(null);
-  }, [draggingId, overId, localRows, onOrderChange]);
+  }, [applyOrder, draggingId, localRows, onOrderChange]);
 
-  const sortedRows = useMemo((): AiTriggerButtonRecord[] => {
-    if (!draggingId || !overId) {
-      return localRows;
-    }
-    const newRows = [...localRows];
-    const draggedIndex = newRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === draggingId);
-    const overIndex = newRows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === overId);
-
-    if (draggedIndex === -1 || overIndex === -1) {
-      return localRows;
-    }
-
-    const [reorderedItem] = newRows.splice(draggedIndex, 1);
-    if (!reorderedItem) return localRows;
-    newRows.splice(overIndex, 0, reorderedItem);
-    return newRows;
-  }, [localRows, draggingId, overId]);
+  const handleDragEnd = useCallback((): void => {
+    setDraggingId(null);
+    setOverId(null);
+  }, []);
 
   if (isLoading && localRows.length === 0) {
     return <p>Loading trigger buttons...</p>;
@@ -113,14 +116,21 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sortedRows.map((row: AiTriggerButtonRecord) => (
+        {localRows.map((row: AiTriggerButtonRecord) => (
           <TableRow
             key={row.id}
             draggable
-            onDragStart={(): void => handleDragStart(row.id)}
+            onDragStart={(event: React.DragEvent): void => handleDragStart(event, row.id)}
             onDragEnter={(): void => handleDragEnter(row.id)}
             onDragEnd={handleDragEnd}
-            onDragOver={(e: React.DragEvent): void => e.preventDefault()}
+            onDragOver={(event: React.DragEvent): void => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={(event: React.DragEvent): void => {
+              event.preventDefault();
+              handleDrop(row.id);
+            }}
             className={cn(
               'cursor-grab',
               draggingId === row.id && 'opacity-50',

@@ -737,8 +737,19 @@ export const handleDatabase: NodeHandler = async ({
     });
   }
 
-  const templateContext: Record<string, unknown> = {
+  // Backward-compat aliases: many legacy paths still map translator output to `value`
+  // while update templates expect `{{result}}` (and vice-versa).
+  const templateInputs: RuntimePortValues = {
     ...resolvedInputs,
+  };
+  if (templateInputs.result === undefined && templateInputs.value !== undefined) {
+    templateInputs.result = templateInputs.value;
+  }
+  if (templateInputs.value === undefined && templateInputs.result !== undefined) {
+    templateInputs.value = templateInputs.result;
+  }
+  const templateContext: Record<string, unknown> = {
+    ...templateInputs,
     ...placeholderContext,
   };
   const aiPrompt: string = aiPromptTemplate.trim()
@@ -884,6 +895,10 @@ export const handleDatabase: NodeHandler = async ({
       const count: number =
         data.count ??
         (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+      toast(
+        `Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`,
+        { variant: 'success' },
+      );
       return {
         result,
         bundle: {
@@ -981,7 +996,14 @@ export const handleDatabase: NodeHandler = async ({
         toast(insertResult.error || 'Database insert failed.', { variant: 'error' });
         return { result: null, bundle: { error: 'Insert failed' }, aiPrompt };
       }
-      toast('Insert completed.', { variant: 'success' });
+      const insertedCount: number =
+        typeof (insertResult.data as Record<string, unknown> | null)?.insertedCount === 'number'
+          ? ((insertResult.data as Record<string, unknown>).insertedCount as number)
+          : 1;
+      toast(
+        `Entity created in ${collection} (${insertedCount} row${insertedCount === 1 ? '' : 's'}).`,
+        { variant: 'success' },
+      );
       return {
         result: insertResult.data,
         bundle: insertResult.data as Record<string, unknown>,
@@ -1054,7 +1076,7 @@ export const handleDatabase: NodeHandler = async ({
           const sourcePort: string = mapping.sourcePort;
           if (!sourcePort) return;
           requiredSourcePorts.add(sourcePort);
-          const sourceValue: unknown = resolvedInputs[sourcePort];
+          const sourceValue: unknown = templateInputs[sourcePort];
           if (sourceValue === undefined) return;
           let value: unknown = coerceInput(sourceValue);
           if (value && typeof value === 'object' && mapping.sourcePath) {
@@ -1093,7 +1115,7 @@ export const handleDatabase: NodeHandler = async ({
           }
         });
         const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
-          (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
+          (sourcePort: string): boolean => templateInputs[sourcePort] === undefined,
         );
         return {
           updates,
@@ -1122,7 +1144,7 @@ export const handleDatabase: NodeHandler = async ({
               rootPort &&
               rootPort !== 'value' &&
               rootPort !== 'current' &&
-              resolvedInputs[rootPort] === undefined
+              templateInputs[rootPort] === undefined
             ) {
               missing.add(rootPort);
             }
@@ -1211,6 +1233,13 @@ export const handleDatabase: NodeHandler = async ({
               ? resolvedInputs.productId
               : null;
         if (entityIdValue && entityIdValue.trim()) return entityIdValue;
+        const fallbackEntityId: string = resolveEntityIdFromInputs(
+          resolvedInputs as RuntimePortValues,
+          dbConfig.idField ?? 'entityId',
+          simulationEntityType,
+          simulationEntityId,
+        );
+        if (fallbackEntityId.trim()) return fallbackEntityId;
         const filterId =
           typeof resolvedFilter.id === 'string'
             ? resolvedFilter.id
@@ -1219,8 +1248,12 @@ export const handleDatabase: NodeHandler = async ({
               : null;
         return filterId && filterId.trim() ? filterId : null;
       };
+      const normalizedCollection: string = collection.trim().toLowerCase();
+      const normalizedEntityType: string = (dbConfig.entityType ?? '').trim().toLowerCase();
+      const isProductCollection: boolean =
+        normalizedCollection === 'product' || normalizedCollection === 'products';
       const shouldUseEntityUpdate =
-        collection === 'products' && action === 'updateOne';
+        action === 'updateOne' && (isProductCollection || normalizedEntityType === 'product');
       if (shouldUseEntityUpdate) {
         const updateDocRecord =
           updateDoc && typeof updateDoc === 'object' && !Array.isArray(updateDoc)
@@ -1244,7 +1277,23 @@ export const handleDatabase: NodeHandler = async ({
         }
         const entityIdValue = resolveEntityId();
         if (!entityIdValue) {
-          return prevOutputs;
+          reportAiPathsError(
+            new Error('Database update missing entity id'),
+            {
+              action: 'updateEntity',
+              collection,
+              nodeId: node.id,
+              provider: queryPayload.provider,
+            },
+            'Database update skipped:',
+          );
+          toast('Database update skipped: missing entity ID.', { variant: 'error' });
+          return {
+            result: null,
+            bundle: { error: 'Missing entity id' },
+            debugPayload,
+            aiPrompt,
+          };
         }
         const updateResult = await entityApi.update({
           entityType: 'product',
@@ -1267,7 +1316,14 @@ export const handleDatabase: NodeHandler = async ({
             aiPrompt,
           };
         }
-        toast('Update completed.', { variant: 'success' });
+        const modifiedCount: number =
+          typeof (updateResult.data as Record<string, unknown> | null)?.modifiedCount === 'number'
+            ? ((updateResult.data as Record<string, unknown>).modifiedCount as number)
+            : 1;
+        toast(
+          `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
+          { variant: 'success' },
+        );
         const primaryValue: unknown = updates[primaryTarget];
         return {
           content_en:
@@ -1280,6 +1336,32 @@ export const handleDatabase: NodeHandler = async ({
           debugPayload,
           aiPrompt,
         };
+      }
+      if (action === 'updateOne') {
+        const hasFilter: boolean =
+          resolvedFilter &&
+          typeof resolvedFilter === 'object' &&
+          Object.keys(resolvedFilter).length > 0;
+        if (!hasFilter) {
+          const fallbackEntityId = resolveEntityId();
+          if (fallbackEntityId) {
+            resolvedFilter = { id: fallbackEntityId };
+          }
+        }
+        if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
+          reportAiPathsError(
+            new Error('Database update missing filter'),
+            { action: 'dbUpdate', collection, nodeId: node.id, provider: queryPayload.provider },
+            'Database update skipped:',
+          );
+          toast('Database update skipped: missing query filter.', { variant: 'error' });
+          return {
+            result: null,
+            bundle: { error: 'Missing query filter' },
+            debugPayload,
+            aiPrompt,
+          };
+        }
       }
       const updateResult: ApiResponse<unknown> = await dbApi.action({
         ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
@@ -1304,7 +1386,14 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      toast('Update completed.', { variant: 'success' });
+      const modifiedCount: number =
+        typeof (updateResult.data as Record<string, unknown> | null)?.modifiedCount === 'number'
+          ? ((updateResult.data as Record<string, unknown>).modifiedCount as number)
+          : 1;
+      toast(
+        `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
+        { variant: 'success' },
+      );
       const primaryValue: unknown = updates[primaryTarget];
       return {
         content_en:
@@ -1547,6 +1636,7 @@ export const handleDatabase: NodeHandler = async ({
         { action: 'dbQuery', collection: queryConfig.collection, query },
         'Database query failed:',
       );
+      toast(queryResult.error || 'Database query failed.', { variant: 'error' });
       return {
         result: null,
         bundle: {
@@ -1561,12 +1651,21 @@ export const handleDatabase: NodeHandler = async ({
     const result: unknown = queryConfig.single
       ? (queryResult.data.item ?? null)
       : (queryResult.data.items ?? []);
+    const count: number =
+      queryResult.data.count ??
+      (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+    const collectionLabel =
+      typeof queryConfig.collection === 'string' && queryConfig.collection.trim()
+        ? queryConfig.collection
+        : 'collection';
+    toast(
+      `Database query succeeded for ${collectionLabel} (${count} result${count === 1 ? '' : 's'}).`,
+      { variant: 'success' },
+    );
     return {
       result,
       bundle: {
-        count:
-          queryResult.data.count ??
-          (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0),
+        count,
         query,
         collection: queryConfig.collection,
       },
@@ -1657,6 +1756,13 @@ export const handleDatabase: NodeHandler = async ({
     }
     const updateStrategy = dbConfig.updateStrategy ?? 'one';
     const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+    const configuredCollection = queryConfig.collection?.trim() ?? '';
+    const configuredCollectionKey = configuredCollection.toLowerCase();
+    const forceCollectionUpdate =
+      configuredCollection.length > 0 &&
+      !['product', 'products', 'note', 'notes'].includes(configuredCollectionKey);
+    const shouldUseEntityUpdate =
+      !forceCollectionUpdate && (entityType === 'product' || entityType === 'note');
     const idField = dbConfig.idField ?? 'entityId';
     const entityId = resolveEntityIdFromInputs(
       resolvedInputs as RuntimePortValues,
@@ -1668,12 +1774,13 @@ export const handleDatabase: NodeHandler = async ({
       mode: 'legacy',
       updateStrategy,
       entityType,
+      collection: configuredCollection || null,
+      forceCollectionUpdate,
       idField,
       entityId,
       updates,
       mappings,
     };
-    const needsEntityId = entityType !== 'custom';
     let updateResult: unknown = updates;
 
     if (updateStrategy === 'many') {
@@ -1750,16 +1857,9 @@ export const handleDatabase: NodeHandler = async ({
           }
         }
       }
-    } else {
-      if (needsEntityId && !entityId) {
-        return prevOutputs;
-      }
-
-      if (
-        (!needsEntityId || entityId) &&
-        !executed.updater.has(node.id)
-      ) {
-        if (dryRun) {
+    } else if (!executed.updater.has(node.id)) {
+      if (dryRun) {
+        if (shouldUseEntityUpdate) {
           updateResult = {
             dryRun: true,
             entityType,
@@ -1767,30 +1867,130 @@ export const handleDatabase: NodeHandler = async ({
             updates,
             mode: dbConfig.mode ?? 'replace',
           };
+        } else {
+          const queryPayload = buildDbQueryPayload(
+            resolvedInputs as RuntimePortValues,
+            queryConfig,
+          );
+          const queryFromPayload =
+            queryPayload.query &&
+            typeof queryPayload.query === 'object' &&
+            !Array.isArray(queryPayload.query)
+              ? (queryPayload.query as Record<string, unknown>)
+              : {};
+          const fallbackQuery =
+            Object.keys(queryFromPayload).length > 0
+              ? queryFromPayload
+              : entityId && idField.trim().length > 0
+                ? { [idField]: entityId }
+                : {};
+          const collection =
+            queryPayload.collection?.trim() || configuredCollection || entityType;
+          updateResult = {
+            dryRun: true,
+            updateMany: false,
+            collection,
+            query: fallbackQuery,
+            updates,
+            mode: dbConfig.mode ?? 'replace',
+          };
+        }
+        executed.updater.add(node.id);
+      } else if (shouldUseEntityUpdate) {
+        if (!entityId) {
+          return prevOutputs;
+        }
+        try {
+          const entityUpdateResult = await entityApi.update({
+            entityType,
+            entityId,
+            updates,
+            mode: dbConfig.mode ?? 'replace',
+          });
+          if (!entityUpdateResult.ok) {
+            throw new Error(entityUpdateResult.error);
+          }
+          updateResult = entityUpdateResult.data ?? updates;
+          executed.updater.add(node.id);
+          const suffix = entityId ? ` ${entityId}` : '';
+          toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
+        } catch (error: unknown) {
+          reportAiPathsError(
+            error,
+            { action: 'updateEntity', entityType, entityId, nodeId: node.id },
+            'Database update failed:',
+          );
+          toast(`Failed to update ${entityType}.`, { variant: 'error' });
+          executed.updater.add(node.id);
+        }
+      } else {
+        const queryPayload = buildDbQueryPayload(
+          resolvedInputs as RuntimePortValues,
+          queryConfig,
+        );
+        const queryFromPayload =
+          queryPayload.query &&
+          typeof queryPayload.query === 'object' &&
+          !Array.isArray(queryPayload.query)
+            ? (queryPayload.query as Record<string, unknown>)
+            : {};
+        const query =
+          Object.keys(queryFromPayload).length > 0
+            ? queryFromPayload
+            : entityId && idField.trim().length > 0
+              ? { [idField]: entityId }
+              : {};
+        const collection =
+          queryPayload.collection?.trim() || configuredCollection || entityType;
+
+        if (Object.keys(query).length === 0) {
+          reportAiPathsError(
+            new Error('Database update missing query filter'),
+            {
+              action: 'dbUpdateOne',
+              collection,
+              entityType,
+              entityId,
+              nodeId: node.id,
+            },
+            'Database update failed:',
+          );
+          toast('Database update requires a query filter.', { variant: 'error' });
+          updateResult = { error: 'missing_query', collection, updates };
           executed.updater.add(node.id);
         } else {
-          try {
-            const entityUpdateResult = await entityApi.update({
-              entityType,
-              ...(entityId ? { entityId } : {}),
-              updates,
-              mode: dbConfig.mode ?? 'replace',
-            });
-            if (!entityUpdateResult.ok) {
-              throw new Error(entityUpdateResult.error);
-            }
-            updateResult = entityUpdateResult.data ?? updates;
-            executed.updater.add(node.id);
-            const suffix = entityId ? ` ${entityId}` : '';
-            toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
-          } catch (error: unknown) {
+          const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({
+            provider: queryPayload.provider,
+            collection,
+            query,
+            updates,
+            single: true,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+          });
+          executed.updater.add(node.id);
+          if (!dbUpdateResult.ok) {
             reportAiPathsError(
-              error,
-              { action: 'updateEntity', entityType, entityId, nodeId: node.id },
+              new Error(dbUpdateResult.error),
+              {
+                action: 'dbUpdateOne',
+                collection,
+                entityType,
+                nodeId: node.id,
+              },
               'Database update failed:',
             );
-            toast(`Failed to update ${entityType}.`, { variant: 'error' });
-            executed.updater.add(node.id);
+            toast(dbUpdateResult.error || `Failed to update ${collection}.`, {
+              variant: 'error',
+            });
+          } else {
+            updateResult = dbUpdateResult.data;
+            const modified: number = dbUpdateResult.data?.modifiedCount ?? 0;
+            const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
+            const countLabel = modified || matched;
+            toast(
+              `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${collection}.`,
+              { variant: 'success' },
+            );
           }
         }
       }
@@ -1816,6 +2016,11 @@ export const handleDatabase: NodeHandler = async ({
 
   if (operation === 'insert') {
     const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
+    const configuredCollection = queryConfig.collection?.trim() ?? '';
+    const configuredCollectionKey = configuredCollection.toLowerCase();
+    const forceCollectionInsert =
+      configuredCollection.length > 0 &&
+      !['product', 'products', 'note', 'notes'].includes(configuredCollectionKey);
     const writeSource = dbConfig.writeSource ?? 'bundle';
 
     // Resolve queryTemplate first (config-based payload with {{placeholder}} support),
@@ -1901,11 +2106,54 @@ export const handleDatabase: NodeHandler = async ({
         insertResult = {
           dryRun: true,
           entityType,
+          ...(configuredCollection ? { collection: configuredCollection } : {}),
           payload,
         };
         executed.updater.add(node.id);
       } else {
-        if (entityType === 'product') {
+        if (forceCollectionInsert) {
+          const queryPayload = buildDbQueryPayload(
+            templateContext as RuntimePortValues,
+            queryConfig,
+          );
+          const collection =
+            queryPayload.collection?.trim() || configuredCollection || entityType;
+          const customInsertPayload = {
+            ...(queryPayload.provider
+              ? {
+                provider: queryPayload.provider as
+                  | 'auto'
+                  | 'mongodb'
+                  | 'prisma',
+              }
+              : {}),
+            action: 'insertOne' as const,
+            collection,
+            document: payload,
+          };
+          const customInsertResult: ApiResponse<unknown> = await dbApi.action(
+            customInsertPayload,
+          );
+          executed.updater.add(node.id);
+          if (!customInsertResult.ok) {
+            reportAiPathsError(
+              new Error(customInsertResult.error),
+              {
+                action: 'insertEntity',
+                entityType,
+                collection,
+                nodeId: node.id,
+              },
+              'Database insert failed:',
+            );
+            toast(customInsertResult.error || `Failed to insert ${collection}.`, {
+              variant: 'error',
+            });
+          } else {
+            insertResult = customInsertResult.data;
+            toast(`Inserted ${collection}`, { variant: 'success' });
+          }
+        } else if (entityType === 'product') {
           const productResult: ApiResponse<unknown> = await entityApi.createProduct(
             buildFormData(payload),
           );
@@ -1936,13 +2184,49 @@ export const handleDatabase: NodeHandler = async ({
             toast(`Inserted ${entityType}`, { variant: 'success' });
           }
         } else {
-          toast('Custom inserts are not supported yet.', { variant: 'error' });
-          executed.updater.add(node.id);
-          return {
-            result: payload,
-            bundle: payload,
-            aiPrompt,
+          const queryPayload = buildDbQueryPayload(
+            templateContext as RuntimePortValues,
+            queryConfig,
+          );
+          const collection =
+            queryPayload.collection?.trim() ||
+            queryConfig.collection?.trim() ||
+            entityType;
+          const customInsertPayload = {
+            ...(queryPayload.provider
+              ? {
+                provider: queryPayload.provider as
+                  | 'auto'
+                  | 'mongodb'
+                  | 'prisma',
+              }
+              : {}),
+            action: 'insertOne' as const,
+            collection,
+            document: payload,
           };
+          const customInsertResult: ApiResponse<unknown> = await dbApi.action(
+            customInsertPayload,
+          );
+          executed.updater.add(node.id);
+          if (!customInsertResult.ok) {
+            reportAiPathsError(
+              new Error(customInsertResult.error),
+              {
+                action: 'insertEntity',
+                entityType,
+                collection,
+                nodeId: node.id,
+              },
+              'Database insert failed:',
+            );
+            toast(customInsertResult.error || `Failed to insert ${collection}.`, {
+              variant: 'error',
+            });
+          } else {
+            insertResult = customInsertResult.data;
+            toast(`Inserted ${collection}`, { variant: 'success' });
+          }
         }
       }
     }

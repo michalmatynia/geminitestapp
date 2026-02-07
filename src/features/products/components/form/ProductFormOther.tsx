@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ProductFormData, CatalogRecord, ProductCategory, ProductTag, PriceGroupWithDetails, Producer } from '@/features/products/types';
-import { Input, UnifiedSelect, FormSection, FormField, MultiSelect } from '@/shared/ui';
+import { Button, Input, UnifiedSelect, FormSection, FormField, MultiSelect } from '@/shared/ui';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
@@ -223,6 +223,18 @@ export default function ProductFormOther(): React.JSX.Element {
             searchPlaceholder="Search categories..."
             single
           />
+          {selectedCategoryId ? (
+            <div className="-mt-2 flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-7 px-2 text-xs text-gray-300 hover:text-white"
+                onClick={(): void => setCategoryId(null)}
+              >
+                Clear category
+              </Button>
+            </div>
+          ) : null}
 
           <MultiSelect
             label="Tags"

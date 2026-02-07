@@ -79,6 +79,12 @@ const TRANSIENT_RUNTIME_NODE_STATUSES = new Set<string>([
   'pending',
   'processing',
 ]);
+const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<string>([
+  'completed',
+  'cached',
+  'canceled',
+  'cancelled',
+]);
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
@@ -401,7 +407,13 @@ export function useAiPathsRuntime({
       if (typeof status !== 'string') return;
       const normalizedStatus = normalizeNodeStatus(status);
       if (!normalizedStatus) return;
-      if (!hasActiveRun && TRANSIENT_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
+      if (
+        !hasActiveRun &&
+        (TRANSIENT_RUNTIME_NODE_STATUSES.has(normalizedStatus) ||
+          IDLE_REHYDRATION_BLOCKED_NODE_STATUSES.has(normalizedStatus))
+      ) {
+        return;
+      }
       const node = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
       setNodeStatus({
         nodeId,
@@ -412,6 +424,27 @@ export function useAiPathsRuntime({
       });
     });
   }, [executionMode, normalizeNodeStatus, normalizedNodes, runtimeState.outputs, setNodeStatus]);
+
+  useEffect((): void => {
+    const hasActiveRun =
+      runInFlightRef.current ||
+      serverRunActiveRef.current ||
+      runStatusRef.current !== 'idle';
+    if (hasActiveRun) return;
+    const current = runtimeNodeStatusesRef.current;
+    let changed = false;
+    const next: AiPathRuntimeNodeStatusMap = {};
+    Object.entries(current).forEach(([nodeId, status]: [string, AiPathRuntimeNodeStatus]) => {
+      if (IDLE_REHYDRATION_BLOCKED_NODE_STATUSES.has(status)) {
+        changed = true;
+        return;
+      }
+      next[nodeId] = status;
+    });
+    if (!changed) return;
+    runtimeNodeStatusesRef.current = next;
+    setRuntimeNodeStatuses(next);
+  }, [runStatus, runtimeNodeStatuses]);
 
   const fetchProductById = useCallback(
     async (productId: string): Promise<Record<string, unknown> | null> => {

@@ -29,8 +29,11 @@ async function fetchSettingsFromApi(
   try {
     const scopeValue = normalizeScope(scope);
     const url = scopeValue === 'all' ? '/api/settings?scope=all' : `/api/settings?scope=${scopeValue}`;
+    // Heavy settings drive AI Paths graph/config hydration; always bypass browser HTTP cache
+    // to prevent stale config on hard refresh after recent writes.
+    const cacheMode: RequestCache = bypassCache || scopeValue === 'heavy' ? 'no-store' : 'default';
     const res = await fetch(url, {
-      cache: bypassCache ? 'no-store' : 'default',
+      cache: cacheMode,
       credentials: 'include',
     });
     if (!res.ok) {

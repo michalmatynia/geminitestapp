@@ -10,6 +10,10 @@ import type {
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
 } from '@/features/ai/ai-paths/types/path-run-repository';
+import {
+  AI_PATHS_RUN_SOURCE_TABS,
+  AI_PATHS_RUN_SOURCE_VALUES,
+} from '@/features/ai/ai-paths/lib/run-sources';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   AiPathRunEventRecord,
@@ -135,18 +139,22 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
     andFilters.push({ status: options.status });
   }
   if (source) {
-    const aiPathsSources = ['ai_paths_ui', 'ai_paths_direct', 'trigger_button', 'product_panel'];
-    const aiPathsTabs = ['product', 'note'];
+    const sourceTabPaths: Array<['source', 'tab'] | ['sourceInfo', 'tab']> = [
+      ['source', 'tab'],
+      ['sourceInfo', 'tab'],
+    ];
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {
         andFilters.push({
           AND: [
-            ...aiPathsSources.map((value) => ({
+            ...AI_PATHS_RUN_SOURCE_VALUES.map((value) => ({
               NOT: { meta: { path: ['source'], equals: value } },
             })),
-            ...aiPathsTabs.map((tab) => ({
-              NOT: { meta: { path: ['source', 'tab'], equals: tab } },
-            })),
+            ...sourceTabPaths.flatMap((path) =>
+              AI_PATHS_RUN_SOURCE_TABS.map((tab) => ({
+                NOT: { meta: { path, equals: tab } },
+              }))
+            ),
           ],
         });
       } else {
@@ -159,12 +167,14 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
     } else if (source === 'ai_paths_ui') {
       andFilters.push({
         OR: [
-          ...aiPathsSources.map((value) => ({
+          ...AI_PATHS_RUN_SOURCE_VALUES.map((value) => ({
             meta: { path: ['source'], equals: value },
           })),
-          ...aiPathsTabs.map((tab) => ({
-            meta: { path: ['source', 'tab'], equals: tab },
-          })),
+          ...sourceTabPaths.flatMap((path) =>
+            AI_PATHS_RUN_SOURCE_TABS.map((tab) => ({
+              meta: { path, equals: tab },
+            }))
+          ),
         ],
       });
     } else {

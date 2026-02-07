@@ -3,43 +3,26 @@
 import { Store } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
-
-
-
+import { useProductListContext } from '@/features/products/context/ProductListContext';
 import type { ProductWithImages } from '@/features/products/types';
 import { DynamicFilters, SelectionBar, DropdownMenuItem, type FilterField } from '@/shared/ui';
 
-import type { RowSelectionState } from '@tanstack/react-table';
+export const ProductFilters = memo(function ProductFilters(): React.JSX.Element {
+  const {
+    search,
+    setSearch,
+    sku,
+    setSku,
+    minPrice,
+    setMinPrice,
+    maxPrice,
+    setMaxPrice,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+  } = useProductListContext();
 
-interface ProductFiltersProps {
-  search: string;
-  setSearch: (value: string) => void;
-  sku: string;
-  setSku: (value: string) => void;
-  minPrice: number | undefined;
-  setMinPrice: (value: number | undefined) => void;
-  maxPrice: number | undefined;
-  setMaxPrice: (value: number | undefined) => void;
-  startDate: string;
-  setStartDate: (value: string) => void;
-  endDate: string;
-  setEndDate: (value: string) => void;
-}
-
-export const ProductFilters = memo(function ProductFilters({
-  search,
-  setSearch,
-  sku,
-  setSku,
-  minPrice,
-  setMinPrice,
-  maxPrice,
-  setMaxPrice,
-  startDate,
-  setEndDate,
-  endDate,
-  setStartDate,
-}: ProductFiltersProps): React.JSX.Element {
   const hasActiveFilters = Boolean(search || sku || minPrice || maxPrice || startDate || endDate);
 
   const filterFields: FilterField[] = useMemo(() => [
@@ -81,25 +64,17 @@ export const ProductFilters = memo(function ProductFilters({
   );
 });
 
-interface ProductSelectionActionsProps {
-  data?: ProductWithImages[];
-  rowSelection?: RowSelectionState;
-  setRowSelection?: (selection: RowSelectionState) => void;
-  onSelectAllGlobal?: (() => Promise<void>) | undefined;
-  loadingGlobal?: boolean | undefined;
-  onDeleteSelected?: (() => Promise<void>) | undefined;
-  onAddToMarketplace?: (() => void) | undefined;
-}
+export const ProductSelectionActions = memo(function ProductSelectionActions() {
+  const {
+    data,
+    rowSelection,
+    setRowSelection,
+    onSelectAllGlobal,
+    loadingGlobal,
+    onDeleteSelected,
+    onAddToMarketplace,
+  } = useProductListContext();
 
-export const ProductSelectionActions = memo(function ProductSelectionActions({
-  data = [],
-  rowSelection = {},
-  setRowSelection = (): void => {},
-  onSelectAllGlobal,
-  loadingGlobal,
-  onDeleteSelected,
-  onAddToMarketplace,
-}: ProductSelectionActionsProps) {
   const getRowId = useCallback((p: ProductWithImages) => p.id, []);
 
   return (
@@ -108,9 +83,9 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
       getRowId={getRowId}
       rowSelection={rowSelection}
       setRowSelection={setRowSelection}
-      {...(onSelectAllGlobal ? { onSelectAllGlobal } : {})}
-      {...(loadingGlobal !== undefined ? { loadingGlobal } : {})}
-      {...(onDeleteSelected ? { onDeleteSelected } : {})}
+      onSelectAllGlobal={onSelectAllGlobal}
+      loadingGlobal={loadingGlobal}
+      onDeleteSelected={onDeleteSelected}
       className="border-t pt-3"
       actions={
         <DropdownMenuItem

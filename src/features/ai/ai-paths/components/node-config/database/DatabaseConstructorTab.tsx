@@ -132,7 +132,12 @@ type DatabaseConstructorTabProps = {
   setUpdaterSamples: React.Dispatch<
     React.SetStateAction<Record<string, UpdaterSampleState>>
   >;
-  onFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  onFetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   updateQueryConfig: (patch: Partial<DbQueryConfig>) => void;
   connectedPlaceholders: string[];
@@ -1158,7 +1163,9 @@ export function DatabaseConstructorTab({
                     },
                   }));
                   // Auto-fetch first document from selected collection
-                  void onFetchUpdaterSample(selectedNodeId, value, '');
+                  void onFetchUpdaterSample(selectedNodeId, value, '', {
+                    notify: false,
+                  });
                 }}
               >
                 <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">

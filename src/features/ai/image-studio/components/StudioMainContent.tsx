@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { VectorDrawingCanvas, VectorDrawingToolbar } from '@/features/vector-drawing';
+import { VectorDrawingCanvas, VectorDrawingToolbar, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import {
   Button,
@@ -65,6 +65,33 @@ export function StudioMainContent(): React.JSX.Element {
     if (workingSlot.imageBase64) return workingSlot.imageBase64;
     return workingSlot.imageUrl || workingSlot.imageFile?.filepath || null;
   }, [workingSlot]);
+
+  const vectorContextValue = useMemo(() => ({
+    shapes: maskShapes,
+    tool,
+    activeShapeId: activeMaskId,
+    selectedPointIndex,
+    brushRadius,
+    imageSrc: workingSlotImageSrc,
+    allowWithoutImage: false,
+    showEmptyState: true,
+    emptyStateLabel: 'Select an image slot to preview.',
+    setShapes: setMaskShapes,
+    setTool,
+    setActiveShapeId: setActiveMaskId,
+    setSelectedPointIndex,
+  }), [
+    maskShapes,
+    tool,
+    activeMaskId,
+    selectedPointIndex,
+    brushRadius,
+    workingSlotImageSrc,
+    setMaskShapes,
+    setTool,
+    setActiveMaskId,
+    setSelectedPointIndex,
+  ]);
 
   const autoFormatPrompt = () => {
     console.log('Auto format triggered');
@@ -168,33 +195,23 @@ export function StudioMainContent(): React.JSX.Element {
           />
           <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
             <div className="flex-1 relative">
-              {previewMode === '3d' && workingSlot?.asset3dId ? (
-                <Viewer3D
-                  modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
-                  allowUserControls
-                  captureRef={captureRef}
-                  className="h-full w-full"
+              <VectorDrawingProvider value={vectorContextValue}>
+                {previewMode === '3d' && workingSlot?.asset3dId ? (
+                  <Viewer3D
+                    modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
+                    allowUserControls
+                    captureRef={captureRef}
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <VectorDrawingCanvas />
+                )}
+                <VectorDrawingToolbar
+                  className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
+                  onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
+                  disableClear={maskShapes.length === 0}
                 />
-              ) : (
-                <VectorDrawingCanvas
-                  src={workingSlotImageSrc ?? ''}
-                  tool={tool}
-                  shapes={maskShapes}
-                  activeShapeId={activeMaskId}
-                  selectedPointIndex={selectedPointIndex}
-                  onSelectShape={setActiveMaskId}
-                  onSelectPoint={setSelectedPointIndex}
-                  onChange={setMaskShapes}
-                  brushRadius={brushRadius}
-                />
-              )}
-              <VectorDrawingToolbar
-                className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
-                tool={tool}
-                onSelectTool={setTool}
-                onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
-                disableClear={maskShapes.length === 0}
-              />
+              </VectorDrawingProvider>
             </div>
           </div>
         </SectionPanel>

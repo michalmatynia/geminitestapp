@@ -19,13 +19,15 @@ import React from 'react';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useVectorDrawing } from '../context/VectorDrawingContext';
+
 import type { VectorToolMode } from '../types';
 
 export type VectorDrawingToolbarVariant = 'full' | 'min';
 
 export interface VectorDrawingToolbarProps {
-  tool: VectorToolMode;
-  onSelectTool: (tool: VectorToolMode) => void;
+  tool?: VectorToolMode;
+  onSelectTool?: (tool: VectorToolMode) => void;
   onUndo?: (() => void) | undefined;
   onClose?: (() => void) | undefined;
   onDetach?: (() => void) | undefined;
@@ -62,24 +64,55 @@ const MIN_TOOLS: ToolOption[] = [
   { key: 'polygon', label: 'Pen', icon: <Pentagon className="size-4" /> },
 ];
 
-export function VectorDrawingToolbar({
-  tool,
-  onSelectTool,
-  onUndo,
-  onClose,
-  onDetach,
-  onClear,
-  onSmooth,
-  onSimplify,
-  disableUndo,
-  disableClose,
-  disableDetach,
-  disableClear,
-  disableSmooth,
-  disableSimplify,
-  className,
-  variant = 'full',
-}: VectorDrawingToolbarProps): React.JSX.Element {
+export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JSX.Element {
+  let contextValues: Partial<VectorDrawingToolbarProps> = {};
+  
+  try {
+    const context = useVectorDrawing();
+    contextValues = {
+      tool: context.tool,
+      onSelectTool: context.setTool,
+      onSmooth: context.onSmooth,
+      onSimplify: context.onSimplify,
+      onUndo: context.onUndo,
+      onClear: context.onClear,
+      onClose: context.onCloseShape,
+      onDetach: context.onDetach,
+      disableUndo: context.disableUndo,
+      disableClear: context.disableClear,
+      disableClose: context.disableClose,
+      disableDetach: context.disableDetach,
+      disableSmooth: context.disableSmooth,
+      disableSimplify: context.disableSimplify,
+    };
+  } catch {
+    // Context not available
+  }
+
+  const merged = { ...contextValues, ...props };
+  const {
+    tool,
+    onSelectTool,
+    onUndo,
+    onClose,
+    onDetach,
+    onClear,
+    onSmooth,
+    onSimplify,
+    disableUndo,
+    disableClose,
+    disableDetach,
+    disableClear,
+    disableSmooth,
+    disableSimplify,
+    className,
+    variant = 'full',
+  } = merged;
+
+  if (!tool || !onSelectTool) {
+    return <div />;
+  }
+
   const toolOptions = variant === 'min' ? MIN_TOOLS : FULL_TOOLS;
   const hasActions = Boolean(onUndo || onClose || onDetach || onClear || onSmooth || onSimplify);
 

@@ -4,7 +4,6 @@ import React from 'react';
 import type {
   AiNode,
   AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatusMap,
   PathFlowIntensity,
   Edge,
 } from '@/features/ai/ai-paths/lib';
@@ -65,35 +64,10 @@ type RuntimeHashes = {
 
 type CanvasBoardProps = {
   runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping';
-  /** Runtime events passed from parent (TODO: move to context) */
-  runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
-  /** Runtime events passed from parent (TODO: move to context) */
-  runtimeEvents?: AiPathRuntimeEvent[] | undefined;
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
   /** Callback to fire a trigger (TODO: move to context) */
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-
-  onRemoveEdge?: (edgeId: string) => void;
-  onDeleteSelectedNode?: (() => void) | undefined;
-  onDisconnectPort?: (direction: 'input' | 'output', nodeId: string, port: string) => void;
-  onReconnectInput?: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
-  onPointerDownNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onPointerMoveNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onPointerUpNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
-  onStartConnection?: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
-  onCompleteConnection?: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
-  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
-  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
-  onPanStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPanMove?: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPanEnd?: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onZoomTo?: (scale: number) => void;
-  onFitToNodes?: () => void;
-  onResetView?: () => void;
-
-  fitToNodes?: () => void;
-  resetView?: () => void;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -135,76 +109,37 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 
 export function CanvasBoard({
   runtimeRunStatus = 'idle',
-  runtimeNodeStatuses,
-  runtimeEvents,
   viewportClassName,
   onFireTrigger,
-  onRemoveEdge,
-  onDeleteSelectedNode,
-  onDisconnectPort,
-  onReconnectInput,
-  onPointerDownNode,
-  onPointerMoveNode,
-  onPointerUpNode,
-  onStartConnection,
-  onCompleteConnection,
-  onDrop,
-  onDragOver,
-  onPanStart,
-  onPanMove,
-  onPanEnd,
-  onZoomTo,
-  onFitToNodes,
-  onResetView,
-  fitToNodes: fitToNodesProp,
-  resetView: resetViewProp,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
   const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { nodes, edges, flowIntensity } = useGraphState();
-  const { runtimeState } = useRuntimeState();
+  const { runtimeState, runtimeNodeStatuses, runtimeEvents } = useRuntimeState();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
   const {
     edgePaths,
-    handlePointerDownNode: handlePointerDownNodeCtx,
-    handlePointerMoveNode: handlePointerMoveNodeCtx,
-    handlePointerUpNode: handlePointerUpNodeCtx,
-    handlePanStart: handlePanStartCtx,
-    handlePanMove: handlePanMoveCtx,
-    handlePanEnd: handlePanEndCtx,
-    handleRemoveEdge: handleRemoveEdgeCtx,
-    handleDeleteSelectedNode: handleDeleteSelectedNodeCtx,
-    handleDisconnectPort: handleDisconnectPortCtx,
-    handleStartConnection: handleStartConnectionCtx,
-    handleCompleteConnection: handleCompleteConnectionCtx,
-    handleReconnectInput: handleReconnectInputCtx,
+    handlePointerDownNode,
+    handlePointerMoveNode,
+    handlePointerUpNode,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
+    handleRemoveEdge,
+    handleDeleteSelectedNode,
+    handleDisconnectPort,
+    handleStartConnection,
+    handleCompleteConnection,
+    handleReconnectInput,
     handleSelectNode,
-    handleDrop: handleDropCtx,
-    handleDragOver: handleDragOverCtx,
-    zoomTo: zoomToCtx,
-    fitToNodes: fitToNodesContext,
-    resetView: resetViewContext,
+    handleDrop,
+    handleDragOver,
+    zoomTo,
+    fitToNodes,
+    resetView,
   } = useCanvasInteractions();
-
-  const handlePointerDownNode = onPointerDownNode ?? handlePointerDownNodeCtx;
-  const handlePointerMoveNode = onPointerMoveNode ?? handlePointerMoveNodeCtx;
-  const handlePointerUpNode = onPointerUpNode ?? handlePointerUpNodeCtx;
-  const handlePanStart = onPanStart ?? handlePanStartCtx;
-  const handlePanMove = onPanMove ?? handlePanMoveCtx;
-  const handlePanEnd = onPanEnd ?? handlePanEndCtx;
-  const handleRemoveEdge = onRemoveEdge ?? handleRemoveEdgeCtx;
-  const handleDeleteSelectedNode = onDeleteSelectedNode ?? handleDeleteSelectedNodeCtx;
-  const handleDisconnectPort = onDisconnectPort ?? handleDisconnectPortCtx;
-  const handleStartConnection = onStartConnection ?? handleStartConnectionCtx;
-  const handleCompleteConnection = onCompleteConnection ?? handleCompleteConnectionCtx;
-  const handleReconnectInput = onReconnectInput ?? handleReconnectInputCtx;
-  const handleDrop = onDrop ?? handleDropCtx;
-  const handleDragOver = onDragOver ?? handleDragOverCtx;
-  const zoomTo = onZoomTo ?? zoomToCtx;
-  const fitToNodes = onFitToNodes ?? fitToNodesProp ?? fitToNodesContext;
-  const resetView = onResetView ?? resetViewProp ?? resetViewContext;
 
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
@@ -273,11 +208,10 @@ export function CanvasBoard({
     []
   );
 
-  const canRemoveSelectedEdge = Boolean(onRemoveEdge);
-  const canDeleteSelectedNode = Boolean(onDeleteSelectedNode);
+  const canRemoveSelectedEdge = true;
+  const canDeleteSelectedNode = true;
 
   React.useEffect((): void | (() => void) => {
-    if (!canRemoveSelectedEdge && !canDeleteSelectedNode) return;
     const isTypingTarget = (target: EventTarget | null): boolean => {
       const element = target as HTMLElement | null;
       if (!element) return false;

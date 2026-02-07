@@ -95,7 +95,8 @@ export interface UseAiPathsSettingsStateReturn {
     pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>;
+    edgesOverride?: Edge[] | undefined;
+  }) => Promise<boolean>;
   handleReset: () => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   activePathId: string | null;
@@ -139,6 +140,7 @@ export interface UseAiPathsSettingsStateReturn {
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   edges: Edge[];
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   runtimeState: RuntimeState;
   edgePaths: {
     id: string;
@@ -282,7 +284,8 @@ export interface UseAiPathsSettingsStateReturn {
   handleFetchUpdaterSample: (
     nodeId: string,
     entityType: string,
-    entityId: string
+    entityId: string,
+    options?: { notify?: boolean }
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode, triggerEvent?: string) => void;
   handlePauseActiveRun: () => void;
@@ -536,19 +539,43 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     },
   });
 
+  type FetchUpdaterSampleVariables = {
+    nodeId: string;
+    entityType: string;
+    entityId: string;
+    notify?: boolean;
+  };
+
+  type FetchUpdaterSampleResult = {
+    nodeId: string;
+    entityType: string;
+    entityId: string;
+    sample: unknown | null;
+    error?: string;
+    notify: boolean;
+  };
+
   // Updater sample fetching mutation
-  const fetchUpdaterSampleMutation = useMutation({
+  const fetchUpdaterSampleMutation = useMutation<
+    FetchUpdaterSampleResult,
+    Error,
+    FetchUpdaterSampleVariables
+  >({
     mutationFn: async ({
       nodeId,
       entityType,
       entityId,
-    }: {
-      nodeId: string;
-      entityType: string;
-      entityId: string;
-    }): Promise<{ nodeId: string; entityType: string; entityId: string; sample: unknown | null; error?: string }> => {
+      notify = true,
+    }: FetchUpdaterSampleVariables): Promise<FetchUpdaterSampleResult> => {
       if (entityType === 'custom') {
-        return { nodeId, entityType, entityId, sample: null, error: 'Use pasted JSON for custom samples.' };
+        return {
+          nodeId,
+          entityType,
+          entityId,
+          sample: null,
+          error: 'Use pasted JSON for custom samples.',
+          notify,
+        };
       }
       let sample: unknown = null;
       let fetchedId = entityId;
@@ -625,13 +652,22 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       }
 
       if (!sample) {
-        return { nodeId, entityType, entityId: fetchedId, sample: null, error: 'No sample found.' };
+        return {
+          nodeId,
+          entityType,
+          entityId: fetchedId,
+          sample: null,
+          error: 'No sample found.',
+          notify,
+        };
       }
-      return { nodeId, entityType, entityId: fetchedId, sample };
+      return { nodeId, entityType, entityId: fetchedId, sample, notify };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample, error }: { nodeId: string; entityType: string; entityId: string; sample: unknown | null; error?: string }): void => {
+    onSuccess: ({ nodeId, entityType, entityId, sample, error, notify }: FetchUpdaterSampleResult): void => {
       if (!sample) {
-        toast(error ?? 'No sample found.', { variant: 'error' });
+        if (notify) {
+          toast(error ?? 'No sample found.', { variant: 'error' });
+        }
         return;
       }
       setUpdaterSamples((prev: Record<string, UpdaterSampleState>) => ({
@@ -644,9 +680,17 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           includeContainers: prev[nodeId]?.includeContainers ?? false,
         },
       }));
-      toast('Sample fetched.', { variant: 'success' });
+      if (notify) {
+        toast('Sample fetched.', { variant: 'success' });
+      }
     },
-    onError: (error: Error): void => {
+    onError: (
+      error: Error,
+      variables: FetchUpdaterSampleVariables
+    ): void => {
+      if (variables?.notify === false) {
+        return;
+      }
       toast(error instanceof Error ? error.message : 'Failed to fetch sample.', { variant: 'error' });
     },
   });
@@ -930,6 +974,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleSave,
     persistActivePathPreference,
     persistPathSettings,
+    persistRuntimePathState,
     persistSettingsBulk,
     savePathIndex,
   } = useAiPathsPersistence({
@@ -1363,9 +1408,15 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const handleFetchUpdaterSample = async (
     nodeId: string,
     entityType: string,
-    entityId: string
+    entityId: string,
+    options?: { notify?: boolean }
   ): Promise<void> => {
-    await fetchUpdaterSampleMutation.mutateAsync({ nodeId, entityType, entityId });
+    await fetchUpdaterSampleMutation.mutateAsync({
+      nodeId,
+      entityType,
+      entityId,
+      notify: options?.notify ?? true,
+    });
   };
 
   const updateActivePathMeta = (name: string): void => {
@@ -1789,7 +1840,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const timeout = setTimeout((): void => {
       runtimePersistenceKeyRef.current = snapshotKey;
       const updatedAt = new Date().toISOString();
-      let configToPersist: PathConfig | null = null;
       setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
         const baseConfig = prev[activePathId] ?? createDefaultPathConfig(activePathId);
         const nextConfig: PathConfig = {
@@ -1799,14 +1849,16 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           runtimeState,
           lastRunAt,
         };
-        configToPersist = nextConfig;
         return {
           ...prev,
           [activePathId]: nextConfig,
         };
       });
-      if (!configToPersist) return;
-      void persistPathSettings(paths, activePathId, configToPersist).catch((error: unknown): void => {
+      void persistRuntimePathState(
+        activePathId,
+        runtimeState,
+        lastRunAt
+      ).catch((error: unknown): void => {
         console.warn('[AI Paths] Failed to persist runtime state.', error);
       });
     }, 750);
@@ -1818,8 +1870,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     loading,
     nodes,
     pathConfigs,
-    paths,
-    persistPathSettings,
+    persistRuntimePathState,
     runtimeState,
   ]);
 
@@ -1901,6 +1952,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     nodes,
     setNodes,
     edges,
+    setEdges,
     runtimeState,
     edgePaths,
     view,

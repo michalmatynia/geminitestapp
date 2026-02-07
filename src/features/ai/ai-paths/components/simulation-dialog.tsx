@@ -28,7 +28,7 @@ type SimulationDialogProps = {
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
-  }) => Promise<void>) | undefined;
+  }) => Promise<boolean>) | undefined;
 };
 
 export function SimulationDialog({

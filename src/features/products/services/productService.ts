@@ -180,6 +180,7 @@ async function createProduct(
       images,
       imageFileIds,
       validatedData.sku,
+      { mode: 'append' },
     );
     await updateProductCatalogs(product.id, catalogIds);
     await updateProductCategory(product.id, categoryId);
@@ -222,7 +223,9 @@ async function updateProduct(
 
     const images = formData.getAll('images') as File[];
     const imageFileIds = formData.getAll('imageFileIds') as string[];
-    await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
+    await linkImagesToProduct(id, images, imageFileIds, validatedData.sku, {
+      mode: 'replace',
+    });
     if (validatedData.sku) {
       await moveLinkedTempImagesToSku(id, validatedData.sku);
     }
@@ -403,8 +406,10 @@ async function linkImagesToProduct(
   images: File[],
   imageFileIds: string[],
   productSku?: string | null,
+  options?: { mode?: 'append' | 'replace' },
 ): Promise<void> {
   const productRepository = await resolveProductRepository();
+  const mode = options?.mode ?? 'append';
   const allImageFileIds = [...imageFileIds];
 
   if (images.length > 0) {
@@ -422,6 +427,11 @@ async function linkImagesToProduct(
 
   if (productSku && imageFileIds.length > 0) {
     await moveTempImageFilesToSku(imageFileIds, productSku);
+  }
+
+  if (mode === 'replace') {
+    await productRepository.replaceProductImages(productId, allImageFileIds);
+    return;
   }
 
   if (allImageFileIds.length > 0) {
